@@ -1,35 +1,31 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Routes, Route } from 'react-router-dom';
+import { useTheme } from './hooks/useTheme';
+import { useResearch } from './hooks/useResearch';
+import Layout from './components/Layout';
+import ResearchList from './components/ResearchList';
+import Toolbox from './components/Toolbox';
 
-function App() {
-  const [count, setCount] = useState(0)
-
+function StagePlaceholder({ label }) {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div style={{ opacity: 0.5, fontSize: 13 }}>
+      {label} — coming in a later phase.
+    </div>
+  );
 }
 
-export default App
+export default function App() {
+  const { isDark, toggleTheme } = useTheme();
+  const { reports, createReport, updateReport, deleteReport, getReport } = useResearch();
+
+  return (
+    <Layout onNewResearch={createReport} isDark={isDark} toggleTheme={toggleTheme}>
+      <Routes>
+        <Route path="/" element={<ResearchList reports={reports} onDelete={deleteReport} />} />
+        <Route path="/research/:id/toolbox" element={<Toolbox getReport={getReport} updateReport={updateReport} />} />
+        <Route path="/research/:id/one-pager" element={<StagePlaceholder label="One Pager" />} />
+        <Route path="/research/:id/pitch-deck" element={<StagePlaceholder label="Pitch Deck" />} />
+        <Route path="/research/:id/full-story" element={<StagePlaceholder label="Full Story" />} />
+      </Routes>
+    </Layout>
+  );
+}
