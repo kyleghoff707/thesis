@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { C } from '../theme';
 import { computeKeyMetrics, KEY_METRICS_ROWS } from '../engines/keyMetrics';
 
@@ -267,12 +267,11 @@ function fmtVal(value, opts = {}) {
   if (value == null) return '–';
   if (opts.format === 'pct') return fmtNum(value, 2) + '%';
   if (opts.perShare) return '$' + fmtNum(value, 2);
-  if (opts.shares) return fmtNum(value / 1e6, 1) + 'M';
+  if (opts.shares) return fmtNum(value / 1e6, 1);
   if (opts.negate) value = -Math.abs(value);
-  if (Math.abs(value) >= 1e9) return '$' + fmtNum(value / 1e9, 2) + 'B';
-  if (Math.abs(value) >= 1e6) return '$' + fmtNum(value / 1e6, 1) + 'M';
-  if (Math.abs(value) >= 1e3) return '$' + fmtNum(value / 1e3, 1) + 'K';
-  return '$' + fmtNum(value, 0);
+  // Display in millions (matches header: "All Numbers in Millions")
+  const inMillions = value / 1e6;
+  return '$' + fmtNum(inMillions, 1);
 }
 
 function fmtMetric(value, format) {
@@ -293,11 +292,27 @@ function fmtMetric(value, format) {
 
 // ─── Component ───────────────────────────────────────────────
 
-export default function FinancialStatements({ edgarStatements, latestPrice, ticker, version, onVersionChange }) {
+export default function FinancialStatements({ edgarStatements, edgarQuarterly, latestPrice, ticker, version, onVersionChange, dataView, onDataViewChange, settings }) {
   const [view, setView] = useState('financials');
   const [tab, setTab] = useState('income');
-  const [layout, setLayout] = useState('expanded');
-  const [periods, setPeriods] = useState('13');
+  const [layout, setLayout] = useState(settings?.defaultLayout || 'expanded');
+  const [periods, setPeriods] = useState(settings?.defaultPeriods || '13');
+  const [qtrPeriods, setQtrPeriods] = useState(settings?.defaultQtrPeriods || '8');
+  const [keyMetricsDisplay, setKeyMetricsDisplay] = useState(settings?.keyMetricsDisplay || 'both');
+  const [hoverState, setHoverState] = useState({ row: null, col: null });
+
+  const handleTableMouseMove = useCallback((e) => {
+    const cell = e.target.closest('td, th');
+    if (!cell) return;
+    const row = cell.dataset.row;
+    const col = cell.dataset.col;
+    if (row == null && col == null) return;
+    setHoverState(prev => (prev.row === row && prev.col === col) ? prev : { row, col });
+  }, []);
+
+  const clearHover = useCallback(() => {
+    setHoverState({ row: null, col: null });
+  }, []);
 
   const keyMetrics = useMemo(() => {
     if (!edgarStatements) return null;
@@ -307,10 +322,40 @@ export default function FinancialStatements({ edgarStatements, latestPrice, tick
   if (!edgarStatements) return null;
 
   const { years, income, balance, cashFlow, fiscalMonths, ttm } = edgarStatements;
+  const isQuarterly = dataView === 'quarterly';
   const periodCount = periods === 'all' ? years.length : parseInt(periods);
   const annualYears = years.slice(0, periodCount);
-  // Prepend TTM column if quarterly data exists
-  const displayYears = ttm ? ['TTM', ...annualYears] : annualYears;
+
+  // Build quarterly columns: "Q4 2025", "Q3 2025", etc. (most recent first)
+  const quarterlyColumns = useMemo(() => {
+    if (!isQuarterly || !edgarQuarterly?.quarterly) return [];
+    const cols = [];
+    for (const fy of edgarQuarterly.fiscalYears || []) {
+      for (const qtr of ['Q4', 'Q3', 'Q2', 'Q1']) {
+        if (edgarQuarterly.quarterly[fy]?.[qtr]) {
+          cols.push({ key: `${qtr}_${fy}`, label: `${qtr} ${fy}`, fy, qtr });
+        }
+      }
+    }
+    return cols;
+  }, [isQuarterly, edgarQuarterly]);
+
+  const qtrCount = qtrPeriods === 'all' ? quarterlyColumns.length : parseInt(qtrPeriods);
+  const displayQuarterColumns = quarterlyColumns.slice(0, qtrCount);
+
+  // Columns for the table (either annual or quarterly)
+  const displayColumns = isQuarterly
+    ? displayQuarterColumns.map(c => c.key)
+    : (ttm ? ['TTM', ...annualYears] : annualYears);
+
+  // Column labels for quarterly mode
+  const quarterlyLabelMap = useMemo(() => {
+    const map = {};
+    for (const c of displayQuarterColumns) {
+      map[c.key] = c;
+    }
+    return map;
+  }, [displayQuarterColumns]);
 
   // ── Financial Statements View ──
   if (view === 'financials') {
@@ -321,8 +366,21 @@ export default function FinancialStatements({ edgarStatements, latestPrice, tick
 
     const ttmStmtMap = ttm ? { income: ttm.income, balance: ttm.balance, cashFlow: ttm.cashFlow } : {};
 
-    function getValue(row, year) {
-      if (year === 'TTM') {
+    function getValue(row, col) {
+      // Quarterly mode — col is "Q1_2025" etc.
+      const qCol = quarterlyLabelMap[col];
+      if (qCol) {
+        const qData = edgarQuarterly?.quarterly?.[qCol.fy]?.[qCol.qtr];
+        if (!qData) return null;
+        const source = row.source || tab;
+        const val = qData[source]?.[row.key];
+        if (val == null) return null;
+        if (row.negate) return -Math.abs(val);
+        if (row.hideNegative && val <= 0) return null;
+        return val;
+      }
+      // TTM column
+      if (col === 'TTM') {
         const source = row.source ? ttmStmtMap[row.source] : ttmStmtMap[tab];
         const val = source?.[row.key];
         if (val == null) return null;
@@ -330,8 +388,9 @@ export default function FinancialStatements({ edgarStatements, latestPrice, tick
         if (row.hideNegative && val <= 0) return null;
         return val;
       }
+      // Annual mode
       const source = row.source ? stmtMap[row.source] : stmtMap[tab];
-      const val = source?.[year]?.[row.key];
+      const val = source?.[col]?.[row.key];
       if (val == null) return null;
       if (row.negate) return -Math.abs(val);
       if (row.hideNegative && val <= 0) return null;
@@ -340,13 +399,18 @@ export default function FinancialStatements({ edgarStatements, latestPrice, tick
 
     const tabLabel = TABS.find(t => t.key === tab)?.label || tab;
 
+    // Column header labels and fiscal months for quarterly
+    const columnHeaders = isQuarterly
+      ? displayQuarterColumns.map(c => ({ key: c.key, label: c.label, fiscalMonth: null }))
+      : displayColumns.map(col => ({ key: col, label: String(col), fiscalMonth: col !== 'TTM' ? fiscalMonths?.[col] : null }));
+
     return (
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <ViewToggle view={view} setView={setView} />
           <CsvButton onClick={() => {
-            const csv = buildFinancialsCsv(displayYears, rows, getValue, fiscalMonths);
-            downloadCsv(csv, `${ticker || 'financials'}_${tabLabel.replace(/\s+/g, '_')}_${layout}_${version}.csv`);
+            const csv = buildFinancialsCsv(displayColumns, rows, getValue, fiscalMonths);
+            downloadCsv(csv, `${ticker || 'financials'}_${tabLabel.replace(/\s+/g, '_')}_${layout}_${version}${isQuarterly ? '_quarterly' : ''}.csv`);
           }} />
         </div>
         <DropdownBar
@@ -354,14 +418,26 @@ export default function FinancialStatements({ edgarStatements, latestPrice, tick
           version={version} onVersionChange={onVersionChange}
           periods={periods} setPeriods={setPeriods}
           disableLayout={false}
+          dataView={dataView} onDataViewChange={onDataViewChange}
+          qtrPeriods={qtrPeriods} setQtrPeriods={setQtrPeriods}
+          showKeyMetricsDisplay={false}
         />
+        {isQuarterly && !edgarQuarterly && (
+          <div style={{ padding: '12px 16px', background: C.yellowBg || '#fef3cd', color: C.yellow || '#856404', borderRadius: 6, fontSize: 13, marginBottom: 12 }}>
+            Loading quarterly data...
+          </div>
+        )}
         <TabBar tab={tab} setTab={setTab} />
         <StatementTable
-          columns={displayYears}
+          columns={displayColumns}
           rows={rows}
           getValue={getValue}
           fiscalMonths={fiscalMonths}
           ttmQuarter={ttm?.quarter}
+          columnHeaders={columnHeaders}
+          hoverState={hoverState}
+          onMouseMove={handleTableMouseMove}
+          onMouseLeave={clearHover}
         />
       </div>
     );
@@ -385,21 +461,31 @@ export default function FinancialStatements({ edgarStatements, latestPrice, tick
         version={version} onVersionChange={onVersionChange}
         periods={periods} setPeriods={setPeriods}
         disableLayout={true}
+        dataView={dataView} onDataViewChange={onDataViewChange}
+        qtrPeriods={qtrPeriods} setQtrPeriods={setQtrPeriods}
+        showKeyMetricsDisplay={true}
+        keyMetricsDisplay={keyMetricsDisplay}
+        setKeyMetricsDisplay={setKeyMetricsDisplay}
       />
       <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '75vh' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, whiteSpace: 'nowrap' }}>
+        <table
+          style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, whiteSpace: 'nowrap' }}
+          onMouseMove={handleTableMouseMove}
+          onMouseLeave={clearHover}
+        >
           <thead>
             <tr style={{ borderBottom: `2px solid ${C.border}` }}>
-              <th style={{
+              <th data-col="label" style={{
                 position: 'sticky', left: 0, top: 0, background: C.bgCard,
                 textAlign: 'left', padding: '6px 12px', color: C.textSecondary,
                 fontSize: 11, fontWeight: 600, minWidth: 220, zIndex: 3,
               }}>Metric</th>
               {metricYears.map(y => (
-                <th key={y} style={{
+                <th key={y} data-col={String(y)} style={{
                   position: 'sticky', top: 0, background: C.bgCard,
                   textAlign: 'right', padding: '6px 10px', color: C.text,
                   fontSize: 13, fontWeight: 700, minWidth: 80, zIndex: 2,
+                  boxShadow: hoverState.col === String(y) ? `inset 0 0 0 1000px ${C.accent}0c` : undefined,
                 }}>
                   {y}
                   {fiscalMonths?.[y] && <div style={{ fontSize: 10, fontWeight: 500, color: C.textSecondary }}>{fiscalMonths[y]}</div>}
@@ -409,7 +495,15 @@ export default function FinancialStatements({ edgarStatements, latestPrice, tick
           </thead>
           <tbody>
             {metricCategories.map(([catKey, cat]) => {
-              const catHasData = cat.rows.some(row =>
+              // Filter rows based on display mode
+              const filteredRows = cat.rows.filter(row => {
+                const isChangeRow = row.key.endsWith('Change');
+                if (keyMetricsDisplay === 'values') return !isChangeRow;
+                if (keyMetricsDisplay === 'change') return isChangeRow;
+                return true;
+              });
+
+              const catHasData = filteredRows.some(row =>
                 metricYears.some(y => keyMetrics?.metrics?.[y]?.[catKey]?.[row.key] != null)
               );
               if (!catHasData) return null;
@@ -423,26 +517,39 @@ export default function FinancialStatements({ edgarStatements, latestPrice, tick
                     borderBottom: `1px solid ${C.accent}`,
                   }}>{cat.label}</td>
                 </tr>,
-                ...cat.rows.map(row => {
+                ...filteredRows.map(row => {
                   const hasData = metricYears.some(y =>
                     keyMetrics?.metrics?.[y]?.[catKey]?.[row.key] != null
                   );
                   if (!hasData) return null;
 
+                  const rowId = `km-${row.key}`;
                   return (
                     <tr key={row.key} style={{ borderBottom: `1px solid ${C.borderLight}` }}>
-                      <td style={{
+                      <td data-row={rowId} data-col="label" style={{
                         position: 'sticky', left: 0, background: C.bgCard,
                         padding: '5px 12px', color: C.text, fontWeight: 400, zIndex: 1,
+                        boxShadow: hoverState.row === rowId ? `inset 0 0 0 1000px ${C.accent}0c` : undefined,
                       }}>{row.label}</td>
-                      {metricYears.map(y => (
-                        <td key={y} style={{
-                          textAlign: 'right', padding: '5px 10px', color: C.text,
-                          fontVariantNumeric: 'tabular-nums',
-                        }}>
-                          {fmtMetric(keyMetrics?.metrics?.[y]?.[catKey]?.[row.key], row.format)}
-                        </td>
-                      ))}
+                      {metricYears.map(y => {
+                        const colId = String(y);
+                        const isRow = hoverState.row === rowId;
+                        const isCol = hoverState.col === colId;
+                        const shadow = (isRow && isCol)
+                          ? `inset 0 0 0 1000px ${C.accent}18`
+                          : (isRow || isCol)
+                          ? `inset 0 0 0 1000px ${C.accent}0c`
+                          : undefined;
+                        return (
+                          <td key={y} data-row={rowId} data-col={colId} style={{
+                            textAlign: 'right', padding: '5px 10px', color: C.text,
+                            fontVariantNumeric: 'tabular-nums',
+                            boxShadow: shadow,
+                          }}>
+                            {fmtMetric(keyMetrics?.metrics?.[y]?.[catKey]?.[row.key], row.format)}
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 }),
@@ -491,7 +598,8 @@ function ViewToggle({ view, setView }) {
   );
 }
 
-function DropdownBar({ layout, setLayout, version, onVersionChange, periods, setPeriods, disableLayout }) {
+function DropdownBar({ layout, setLayout, version, onVersionChange, periods, setPeriods, disableLayout, dataView, onDataViewChange, qtrPeriods, setQtrPeriods, showKeyMetricsDisplay, keyMetricsDisplay, setKeyMetricsDisplay }) {
+  const isQuarterly = dataView === 'quarterly';
   return (
     <div style={{
       display: 'flex', gap: 16, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap',
@@ -512,20 +620,44 @@ function DropdownBar({ layout, setLayout, version, onVersionChange, periods, set
         ]}
       />
       <DropdownControl
-        label="View" value="annual" onChange={() => {}}
+        label="View" value={dataView || 'annual'} onChange={onDataViewChange || (() => {})}
         options={[
           { value: 'annual', label: 'Annual' },
+          { value: 'quarterly', label: 'Quarterly' },
         ]}
       />
-      <DropdownControl
-        label="Periods" value={periods} onChange={setPeriods}
-        options={[
-          { value: '5', label: '5' },
-          { value: '10', label: '10' },
-          { value: '13', label: '13' },
-          { value: 'all', label: 'All' },
-        ]}
-      />
+      {isQuarterly ? (
+        <DropdownControl
+          label="Periods" value={qtrPeriods} onChange={setQtrPeriods}
+          options={[
+            { value: '4', label: '4 Qtrs' },
+            { value: '8', label: '8 Qtrs' },
+            { value: '12', label: '12 Qtrs' },
+            { value: '20', label: '20 Qtrs' },
+            { value: 'all', label: 'All' },
+          ]}
+        />
+      ) : (
+        <DropdownControl
+          label="Periods" value={periods} onChange={setPeriods}
+          options={[
+            { value: '5', label: '5' },
+            { value: '10', label: '10' },
+            { value: '13', label: '13' },
+            { value: 'all', label: 'All' },
+          ]}
+        />
+      )}
+      {showKeyMetricsDisplay && (
+        <DropdownControl
+          label="Display" value={keyMetricsDisplay} onChange={setKeyMetricsDisplay}
+          options={[
+            { value: 'both', label: 'Values & % Change' },
+            { value: 'values', label: 'Values Only' },
+            { value: 'change', label: '% Change Only' },
+          ]}
+        />
+      )}
     </div>
   );
 }
@@ -576,31 +708,39 @@ function TabBar({ tab, setTab }) {
   );
 }
 
-function StatementTable({ columns, rows, getValue, fiscalMonths, ttmQuarter }) {
+function StatementTable({ columns, rows, getValue, fiscalMonths, ttmQuarter, columnHeaders, hoverState, onMouseMove, onMouseLeave }) {
   return (
     <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '75vh' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, whiteSpace: 'nowrap' }}>
+      <table
+        style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, whiteSpace: 'nowrap' }}
+        onMouseMove={onMouseMove}
+        onMouseLeave={onMouseLeave}
+      >
         <thead>
           <tr style={{ borderBottom: `2px solid ${C.border}` }}>
-            <th style={{
+            <th data-col="label" style={{
               position: 'sticky', left: 0, top: 0, background: C.bgCard,
               textAlign: 'left', padding: '6px 12px', color: C.textSecondary,
               fontSize: 11, fontWeight: 600, minWidth: 260, zIndex: 3,
             }}>
-              All Numbers in Millions except per share data
+              All numbers in millions except per share data
             </th>
-            {columns.map(col => (
-              <th key={col} style={{
-                position: 'sticky', top: 0, background: col === 'TTM' ? C.bgHover || C.bgCard : C.bgCard,
-                textAlign: 'right', padding: '6px 10px', color: C.text,
-                fontSize: 13, fontWeight: 700, minWidth: 90, zIndex: 2,
-                borderLeft: col === 'TTM' ? `2px solid ${C.accent}` : undefined,
-              }}>
-                {col}
-                {col === 'TTM' && ttmQuarter && <div style={{ fontSize: 10, fontWeight: 500, color: C.textSecondary }}>{ttmQuarter}</div>}
-                {col !== 'TTM' && fiscalMonths?.[col] && <div style={{ fontSize: 10, fontWeight: 500, color: C.textSecondary }}>{fiscalMonths[col]}</div>}
-              </th>
-            ))}
+            {(columnHeaders || columns.map(col => ({ key: col, label: String(col), fiscalMonth: fiscalMonths?.[col] }))).map(hdr => {
+              const colId = String(hdr.key);
+              return (
+                <th key={hdr.key} data-col={colId} style={{
+                  position: 'sticky', top: 0, background: hdr.key === 'TTM' ? C.bgHover || C.bgCard : C.bgCard,
+                  textAlign: 'right', padding: '6px 10px', color: C.text,
+                  fontSize: 13, fontWeight: 700, minWidth: 90, zIndex: 2,
+                  borderLeft: hdr.key === 'TTM' ? `2px solid ${C.accent}` : undefined,
+                  boxShadow: hoverState?.col === colId ? `inset 0 0 0 1000px ${C.accent}0c` : undefined,
+                }}>
+                  {hdr.label}
+                  {hdr.key === 'TTM' && ttmQuarter && <div style={{ fontSize: 10, fontWeight: 500, color: C.textSecondary }}>{ttmQuarter}</div>}
+                  {hdr.fiscalMonth && <div style={{ fontSize: 10, fontWeight: 500, color: C.textSecondary }}>{hdr.fiscalMonth}</div>}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -624,22 +764,33 @@ function StatementTable({ columns, rows, getValue, fiscalMonths, ttmQuarter }) {
             const hasData = columns.some(col => getValue(row, col) != null);
             if (!hasData) return null;
 
+            const rowId = `${row.key}-${idx}`;
             return (
-              <tr key={`${row.key}-${idx}`} style={{ borderBottom: `1px solid ${C.borderLight}` }}>
-                <td style={{
+              <tr key={rowId} style={{ borderBottom: `1px solid ${C.borderLight}` }}>
+                <td data-row={rowId} data-col="label" style={{
                   position: 'sticky', left: 0, background: C.bgCard,
                   padding: '5px 12px', color: C.text,
                   fontWeight: row.bold ? 700 : 400, zIndex: 1,
+                  boxShadow: hoverState?.row === rowId ? `inset 0 0 0 1000px ${C.accent}0c` : undefined,
                 }}>{row.label}</td>
                 {columns.map(col => {
                   const val = getValue(row, col);
+                  const colId = String(col);
+                  const isRow = hoverState?.row === rowId;
+                  const isCol = hoverState?.col === colId;
+                  const shadow = (isRow && isCol)
+                    ? `inset 0 0 0 1000px ${C.accent}18`
+                    : (isRow || isCol)
+                    ? `inset 0 0 0 1000px ${C.accent}0c`
+                    : undefined;
                   return (
-                    <td key={col} style={{
+                    <td key={col} data-row={rowId} data-col={colId} style={{
                       textAlign: 'right', padding: '5px 10px', color: C.text,
                       fontWeight: row.bold ? 600 : 400,
                       fontVariantNumeric: 'tabular-nums',
                       borderLeft: col === 'TTM' ? `2px solid ${C.accent}` : undefined,
                       background: col === 'TTM' ? (C.bgHover || 'transparent') : undefined,
+                      boxShadow: shadow,
                     }}>
                       {fmtVal(val, { perShare: row.perShare, shares: row.shares, negate: row.negate, format: row.format })}
                     </td>

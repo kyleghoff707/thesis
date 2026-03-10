@@ -15,16 +15,17 @@ import FinancialStatements from './FinancialStatements';
 import GrowthAnalysis from './GrowthAnalysis';
 import CollapsibleSection from './CollapsibleSection';
 
-export default function Toolbox({ getReport, updateReport }) {
+export default function Toolbox({ getReport, updateReport, settings }) {
   const { id } = useParams();
   const report = getReport(id);
   const ticker = report?.ticker;
 
-  const [priceRange, setPriceRange] = useState('5y');
-  const [statementsVersion, setStatementsVersion] = useState('restated');
+  const [priceRange, setPriceRange] = useState(settings?.defaultPriceRange || '5y');
+  const [statementsVersion, setStatementsVersion] = useState(settings?.defaultVersion || 'restated');
+  const [dataView, setDataView] = useState(settings?.defaultView || 'annual');
   const { company, loading: finLoading, error: finError } = useFinancials(ticker);
   const { prices, latest, loading: priceLoading, error: priceError } = usePrices(ticker, priceRange);
-  const { edgarData, edgarStatements, loading: edgarLoading, error: edgarError } = useEdgar(ticker, statementsVersion);
+  const { edgarData, edgarStatements, edgarQuarterly, loading: edgarLoading, error: edgarError } = useEdgar(ticker, statementsVersion, dataView);
 
   // Update report with company name once we have it
   if (company?.name && report && !report.companyName) {
@@ -189,16 +190,21 @@ export default function Toolbox({ getReport, updateReport }) {
             <GrowthAnalysis
               growthRates={growthRates}
               series={growthRates?._series}
+              settings={settings}
             />
           </CollapsibleSection>
 
           <CollapsibleSection title="Financial Statements" defaultOpen={false}>
             <FinancialStatements
               edgarStatements={edgarStatements}
+              edgarQuarterly={edgarQuarterly}
               latestPrice={latest?.close}
               ticker={ticker}
               version={statementsVersion}
               onVersionChange={setStatementsVersion}
+              dataView={dataView}
+              onDataViewChange={setDataView}
+              settings={settings}
             />
           </CollapsibleSection>
         </>

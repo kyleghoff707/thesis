@@ -31,7 +31,11 @@ if (!existsSync(BUNDLE_PATH)) {
 }
 
 // Dynamic import of the bundled engines
-const { fetchEdgarStatements, computeKeyMetrics } = await import(BUNDLE_PATH);
+const { fetchEdgarStatements, fetchEdgarQuarterly, computeKeyMetrics } = await import(BUNDLE_PATH);
+
+// Flag: include quarterly data in export
+const includeQuarterly = args.includes('--quarterly');
+const filteredArgs = args.filter(a => a !== '--quarterly');
 
 // Load validation companies list
 const companiesFile = resolve(ROOT, 'src/data/validationCompanies.js');
@@ -42,7 +46,7 @@ const ALL_TICKERS = tickerMatches.map(m => m[1]);
 
 // Determine which tickers to export
 const args = process.argv.slice(2);
-const tickers = args.length > 0 ? args.map(t => t.toUpperCase()) : ALL_TICKERS;
+const tickers = filteredArgs.length > 0 ? filteredArgs.map(t => t.toUpperCase()) : ALL_TICKERS;
 
 console.log(`Exporting ${tickers.length} companies...`);
 
@@ -78,6 +82,12 @@ for (const ticker of tickers) {
 
     const keyMetrics = computeKeyMetrics(statements);
 
+    let quarterly = null;
+    if (includeQuarterly) {
+      const qResult = await fetchEdgarQuarterly(ticker, { version: 'restated' });
+      quarterly = qResult?.quarterly || null;
+    }
+
     const output = {
       ticker,
       exportedAt: new Date().toISOString(),
@@ -87,6 +97,7 @@ for (const ticker of tickers) {
       balance: statements.balance,
       cashFlow: statements.cashFlow,
       keyMetrics: keyMetrics?.metrics || null,
+      ...(quarterly && { quarterly }),
     };
 
     writeFileSync(outPath, JSON.stringify(output, null, 2));

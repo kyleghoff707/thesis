@@ -6,13 +6,16 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // EODHD doesn't send Access-Control-Allow-Origin, so browser blocks direct calls.
-      // This proxy routes /api/eodhd/* to eodhd.com in dev mode.
+      // Yahoo Finance doesn't send CORS headers, so browser blocks direct calls.
+      // This proxy routes /api/yahoo/* to query1.finance.yahoo.com in dev mode.
       // In Tauri production builds, the native webview doesn't enforce CORS.
-      '/api/eodhd': {
-        target: 'https://eodhd.com',
+      '/api/yahoo': {
+        target: 'https://query1.finance.yahoo.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/eodhd/, '/api'),
+        rewrite: (path) => path.replace(/^\/api\/yahoo/, ''),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        },
       },
       // SEC www.sec.gov — ticker map file (no CORS headers).
       // SEC requires User-Agent with contact info for all automated requests.

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { C } from '../theme';
 import { cellColor } from '../engines/ruleOneScore';
@@ -12,6 +13,13 @@ const METRIC_LABELS = {
 };
 
 const PERIOD_LABELS = ['10yr', '7yr', '5yr', '3yr', '1yr'];
+
+const CHART_YEAR_OPTIONS = [
+  { value: '5', label: '5 Years' },
+  { value: '10', label: '10 Years' },
+  { value: '13', label: '13 Years' },
+  { value: 'all', label: 'All' },
+];
 
 function GrowthChart({ series, label }) {
   if (!series || series.length === 0) return null;
@@ -130,19 +138,44 @@ function GrowthRateTable({ growthRates }) {
   );
 }
 
-export default function GrowthAnalysis({ growthRates, series }) {
+export default function GrowthAnalysis({ growthRates, series, settings }) {
+  const [chartYears, setChartYears] = useState(settings?.growthChartYears || 'all');
+
   if (!growthRates) return null;
+
+  const yearCount = chartYears === 'all' ? Infinity : parseInt(chartYears);
 
   return (
     <div>
       {/* CAGR table */}
       <GrowthRateTable growthRates={growthRates} />
 
+      {/* Chart years control */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 16, marginBottom: 4 }}>
+        <span style={{ fontSize: 12, color: C.textSecondary, fontWeight: 600 }}>Chart Years:</span>
+        <select
+          value={chartYears}
+          onChange={e => setChartYears(e.target.value)}
+          style={{
+            padding: '5px 10px', fontSize: 12, fontWeight: 500,
+            background: C.bgInput || C.bgCard, color: C.text,
+            border: `1px solid ${C.border}`, borderRadius: 4,
+            cursor: 'pointer', fontFamily: 'inherit', outline: 'none',
+          }}
+        >
+          {CHART_YEAR_OPTIONS.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
+
       {/* Bar charts for each metric */}
-      <div style={{ marginTop: 20 }}>
-        {Object.entries(METRIC_LABELS).map(([key, label]) => (
-          <GrowthChart key={key} series={series?.[key]} label={label} />
-        ))}
+      <div style={{ marginTop: 8 }}>
+        {Object.entries(METRIC_LABELS).map(([key, label]) => {
+          const data = series?.[key];
+          const sliced = data && yearCount < Infinity ? data.slice(-yearCount) : data;
+          return <GrowthChart key={key} series={sliced} label={label} />;
+        })}
       </div>
     </div>
   );

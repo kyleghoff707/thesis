@@ -924,7 +924,9 @@ function getQuarterlyInstant(entries, fy, fp) {
   if (matches.length === 0) return null;
   let best = matches[0];
   for (const e of matches) {
-    if (e.filed > best.filed) best = e;
+    // Prefer latest end date (current quarter, not comparative FY-end)
+    // Then latest filed date as tiebreaker
+    if (e.end > best.end || (e.end === best.end && e.filed > best.filed)) best = e;
   }
   return best.val;
 }
@@ -995,6 +997,155 @@ function computeTTM(companyFacts, latestQtr) {
   };
 }
 
+// ─── Quarterly Data Extraction ──────────────────────────────
+// Extracts individual quarter values for all fiscal years that have 10-Q filings.
+// Flow items (income, CF): YTD values are de-cumulated to get individual quarters.
+//   Q1 = Q1_YTD, Q2 = Q2_YTD - Q1_YTD, Q3 = Q3_YTD - Q2_YTD, Q4 = FY - Q3_YTD
+// Balance sheet: point-in-time from each quarter; Q4 = FY 10-K value.
+
+function findQuarterlyFiscalYears(companyFacts) {
+  const candidates = ['Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'Assets'];
+  const fys = new Set();
+
+  for (const tag of candidates) {
+    const facts = companyFacts?.facts?.['us-gaap']?.[tag];
+    if (!facts) continue;
+    for (const entries of Object.values(facts.units || {})) {
+      for (const e of entries) {
+        if (e.form === '10-Q' && e.fy) fys.add(e.fy);
+      }
+    }
+  }
+
+  return [...fys].sort((a, b) => b - a);
+}
+
+function extractQuarterlySection(companyFacts, taxonomy, sectionType, fy) {
+  const quarters = { Q1: {}, Q2: {}, Q3: {}, Q4: {} };
+
+  for (const { field, tags, unit } of taxonomy) {
+    // Skip per-share USD items — will be derived from totals later
+    if (unit === 'USD/shares') continue;
+
+    let found = false;
+    for (const tag of tags) {
+      if (found) break;
+
+      const facts = companyFacts?.facts?.['us-gaap']?.[tag];
+      if (!facts) continue;
+      const entries = facts.units?.[unit] || [];
+
+      if (sectionType === 'balance') {
+        // Balance sheet: point-in-time from each quarter
+        let anyFound = false;
+        for (const fp of ['Q1', 'Q2', 'Q3']) {
+          if (quarters[fp][field] != null) continue;
+          const val = getQuarterlyInstant(entries, fy, fp);
+          if (val != null) { quarters[fp][field] = val; anyFound = true; }
+        }
+        // Q4 balance sheet = FY 10-K value
+        if (quarters.Q4[field] == null) {
+          const val = getAnnualTotal(entries, fy);
+          if (val != null) { quarters.Q4[field] = val; anyFound = true; }
+        }
+        if (anyFound) found = true;
+      } else {
+        // Flow items + share counts: extract YTD, then de-cumulate
+        const q1ytd = getQuarterlyYTD(entries, fy, 'Q1');
+        const q2ytd = getQuarterlyYTD(entries, fy, 'Q2');
+        const q3ytd = getQuarterlyYTD(entries, fy, 'Q3');
+        const fyTotal = getAnnualTotal(entries, fy);
+
+        let anyFound = false;
+        if (quarters.Q1[field] == null && q1ytd != null) { quarters.Q1[field] = q1ytd; anyFound = true; }
+        if (quarters.Q2[field] == null && q2ytd != null && q1ytd != null) { quarters.Q2[field] = q2ytd - q1ytd; anyFound = true; }
+        if (quarters.Q3[field] == null && q3ytd != null && q2ytd != null) { quarters.Q3[field] = q3ytd - q2ytd; anyFound = true; }
+        if (quarters.Q4[field] == null && fyTotal != null && q3ytd != null) { quarters.Q4[field] = fyTotal - q3ytd; anyFound = true; }
+        if (anyFound) found = true;
+      }
+    }
+  }
+
+  return quarters;
+}
+
+export async function fetchEdgarQuarterly(ticker, options = {}) {
+  const { version = 'restated' } = options;
+
+  const cik = await lookupCIK(ticker);
+  if (!cik) return null;
+
+  const [facts, splits] = await Promise.all([
+    fetchCompanyFacts(cik),
+    fetchSplits(ticker),
+  ]);
+  if (!facts) return null;
+
+  const cacheKey = `edgar-quarterly:${ticker.toUpperCase()}:s${splits.length}:${version}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  const availableFYs = findQuarterlyFiscalYears(facts);
+
+  const quarterly = {};
+  for (const fy of availableFYs) {
+    const incQ = extractQuarterlySection(facts, INCOME_TAXONOMY, 'income', fy);
+    const balQ = extractQuarterlySection(facts, BALANCE_TAXONOMY, 'balance', fy);
+    const cfQ = extractQuarterlySection(facts, CASHFLOW_TAXONOMY, 'cashFlow', fy);
+
+    quarterly[fy] = {};
+    for (const qtr of ['Q1', 'Q2', 'Q3', 'Q4']) {
+      const inc = incQ[qtr];
+      const bal = balQ[qtr];
+      const cf = cfQ[qtr];
+
+      // Only include quarters that have some data
+      const hasData = Object.keys(inc).length > 0 || Object.keys(bal).length > 0 || Object.keys(cf).length > 0;
+      if (hasData) {
+        // Compute derived fields for this quarter
+        const incMap = { [qtr]: inc };
+        const balMap = { [qtr]: bal };
+        const cfMap = { [qtr]: cf };
+        computeDerivedFields([qtr], incMap, balMap, cfMap);
+
+        quarterly[fy][qtr] = { income: incMap[qtr], balance: balMap[qtr], cashFlow: cfMap[qtr] };
+      }
+    }
+  }
+
+  // Apply split adjustment to quarterly per-share/share-count fields
+  for (const fy of availableFYs) {
+    const factor = cumulativeSplitFactor(splits, fy);
+    if (factor === 1) continue;
+    for (const qtr of ['Q1', 'Q2', 'Q3', 'Q4']) {
+      const q = quarterly[fy]?.[qtr];
+      if (!q) continue;
+      if (q.income) {
+        for (const f of PER_SHARE_FIELDS.income) {
+          if (q.income[f] != null) q.income[f] /= factor;
+        }
+        for (const f of SHARE_COUNT_FIELDS.income) {
+          if (q.income[f] != null) q.income[f] *= factor;
+        }
+      }
+      if (q.balance) {
+        for (const f of SHARE_COUNT_FIELDS.balance) {
+          if (q.balance[f] != null) q.balance[f] *= factor;
+        }
+      }
+    }
+  }
+
+  const fiscalMonths = extractFiscalYearEnds(facts);
+  const result = { quarterly, fiscalYears: availableFYs, fiscalMonths };
+
+  const qtrCount = Object.values(quarterly).reduce((sum, fy) => sum + Object.keys(fy).length, 0);
+  console.log(`EDGAR quarterly ${ticker} [${version}]: ${availableFYs.length} FYs, ${qtrCount} quarters total`);
+
+  cacheSet(cacheKey, result, 'financials');
+  return result;
+}
+
 // ─── Public API ──────────────────────────────────────────────
 
 export async function fetchEdgarStatements(ticker, options = {}) {
@@ -1060,4 +1211,4 @@ export async function fetchEdgarStatements(ticker, options = {}) {
   return result;
 }
 
-export { INCOME_TAXONOMY, BALANCE_TAXONOMY, CASHFLOW_TAXONOMY };
+export { INCOME_TAXONOMY, BALANCE_TAXONOMY, CASHFLOW_TAXONOMY, findQuarterlyFiscalYears };

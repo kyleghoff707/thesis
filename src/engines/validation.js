@@ -134,6 +134,21 @@ function runIdentityChecks(income, balance, cashFlow) {
     ));
   }
 
+  // Operating Income ≈ Gross Profit - Itemized OpEx
+  // 5% tolerance — not all OpEx sub-items may be captured in XBRL
+  if (income.gross_profit != null && income.operating_income_loss != null) {
+    const itemizedOpEx = (income.sga ?? 0) + (income.research_and_development ?? 0)
+      + (income.depreciation_amortization_is ?? 0) + (income.other_operating_expenses ?? 0);
+    if (itemizedOpEx > 0) {
+      checks.push(identityCheck(
+        'Operating Income ≈ GP - Itemized OpEx',
+        income.operating_income_loss,
+        income.gross_profit - itemizedOpEx,
+        0.05
+      ));
+    }
+  }
+
   return checks;
 }
 
@@ -279,6 +294,52 @@ function checkYoY(years, income, balance) {
   return flags;
 }
 
+// ─── Retained Earnings Reconciliation ────────────────────────────────
+// For consecutive FYs: Beginning RE + NI - Dividends ≈ Ending RE
+// Uses generous tolerance — buybacks, comprehensive income, and other
+// equity transactions all flow through retained earnings.
+
+function checkRetainedEarnings(years, income, balance, cashFlow) {
+  const checks = [];
+  const sortedYears = [...years].sort((a, b) => a - b);
+
+  for (let i = 1; i < sortedYears.length; i++) {
+    const priorYear = sortedYears[i - 1];
+    const currentYear = sortedYears[i];
+
+    const beginRE = balance[priorYear]?.retained_earnings;
+    const endRE = balance[currentYear]?.retained_earnings;
+    const ni = income[currentYear]?.net_income_loss;
+
+    if (beginRE == null || endRE == null || ni == null) continue;
+
+    const dividendsPaid = cashFlow[currentYear]?.dividends_paid != null
+      ? Math.abs(cashFlow[currentYear].dividends_paid)
+      : 0;
+
+    const expectedEndRE = beginRE + ni - dividendsPaid;
+    const diff = Math.abs(endRE - expectedEndRE);
+
+    // 10% tolerance or $1B, whichever is larger
+    // Buybacks charged to RE are common and large (e.g., AAPL tens of billions/yr)
+    const tol = Math.max(1_000_000_000, Math.abs(endRE || 1) * 0.10);
+    const pass = diff <= tol;
+
+    checks.push({
+      year: currentYear,
+      beginRE,
+      endRE,
+      ni,
+      dividendsPaid,
+      expectedEndRE,
+      diff,
+      status: pass ? 'pass' : 'warning',
+    });
+  }
+
+  return checks;
+}
+
 // ─── Frames Cross-Check ─────────────────────────────────────────────
 
 async function runFramesCrossCheck(ticker, years, income, balance, cashFlow, fiscalMonths) {
@@ -318,10 +379,89 @@ async function runFramesCrossCheck(ticker, years, income, balance, cashFlow, fis
   return results;
 }
 
+// ─── Quarterly Roll-Up Validation ────────────────────────────────────
+// Checks that Q1 + Q2 + Q3 + Q4 ≈ FY annual value for flow items,
+// and Q4 balance sheet ≈ FY balance sheet for instant items.
+
+const QUARTERLY_FLOW_FIELDS = [
+  { section: 'income', field: 'revenues', label: 'Revenue' },
+  { section: 'income', field: 'net_income_loss', label: 'Net Income' },
+  { section: 'income', field: 'operating_income_loss', label: 'Operating Income' },
+  { section: 'cashFlow', field: 'net_cash_flow_from_operating_activities', label: 'Operating CF' },
+  { section: 'cashFlow', field: 'capital_expenditures', label: 'CapEx' },
+  { section: 'cashFlow', field: 'net_cash_flow_from_investing_activities', label: 'Investing CF' },
+  { section: 'cashFlow', field: 'net_cash_flow_from_financing_activities', label: 'Financing CF' },
+];
+
+const QUARTERLY_INSTANT_FIELDS = [
+  { section: 'balance', field: 'assets', label: 'Total Assets' },
+  { section: 'balance', field: 'equity', label: 'Stockholder Equity' },
+  { section: 'balance', field: 'liabilities', label: 'Total Liabilities' },
+];
+
+function checkQuarterlyRollup(years, income, balance, cashFlow, quarterlyData) {
+  const checks = [];
+
+  for (const fyStr of Object.keys(quarterlyData)) {
+    const fy = Number(fyStr);
+    if (!years.includes(fy)) continue;
+    const qData = quarterlyData[fy];
+    if (!qData) continue;
+
+    // Flow field checks: Q1+Q2+Q3+Q4 ≈ Annual
+    for (const { section, field, label } of QUARTERLY_FLOW_FIELDS) {
+      const annual = section === 'income' ? income : cashFlow;
+      const annualVal = annual[fy]?.[field];
+      if (annualVal == null) continue;
+
+      const q1 = qData.Q1?.[section]?.[field];
+      const q2 = qData.Q2?.[section]?.[field];
+      const q3 = qData.Q3?.[section]?.[field];
+      const q4 = qData.Q4?.[section]?.[field];
+
+      const available = [q1, q2, q3, q4].filter(v => v != null);
+      if (available.length < 3) continue;
+
+      const qSum = (q1 ?? 0) + (q2 ?? 0) + (q3 ?? 0) + (q4 ?? 0);
+      const diff = Math.abs(qSum - annualVal);
+      const pctDiff = annualVal !== 0 ? (diff / Math.abs(annualVal)) * 100 : null;
+
+      checks.push({
+        fy, field, label, type: 'flow',
+        annualVal, quarterSum: qSum,
+        quartersAvailable: available.length,
+        diff, pctDiff: pctDiff != null ? Math.round(pctDiff * 100) / 100 : null,
+        status: pctDiff != null && pctDiff <= 1 ? 'match'
+              : pctDiff != null && pctDiff <= 5 ? 'warning'
+              : 'error',
+      });
+    }
+
+    // Instant field checks: Q4 ≈ FY (balance sheet at fiscal year end)
+    for (const { section, field, label } of QUARTERLY_INSTANT_FIELDS) {
+      const annualVal = balance[fy]?.[field];
+      const q4Val = qData.Q4?.[section]?.[field];
+      if (annualVal == null || q4Val == null) continue;
+
+      const diff = Math.abs(q4Val - annualVal);
+      const pctDiff = annualVal !== 0 ? (diff / Math.abs(annualVal)) * 100 : null;
+
+      checks.push({
+        fy, field, label, type: 'instant',
+        annualVal, q4Val: q4Val,
+        diff, pctDiff: pctDiff != null ? Math.round(pctDiff * 100) / 100 : null,
+        status: pctDiff != null && pctDiff <= 0.1 ? 'match' : 'error',
+      });
+    }
+  }
+
+  return checks;
+}
+
 // ─── Main Validation Function ────────────────────────────────────────
 
 export async function validateCompany(ticker, edgarStatements, options = {}) {
-  const { skipFrames = false } = options;
+  const { skipFrames = false, quarterlyData = null } = options;
   const { years, income, balance, cashFlow, fiscalMonths } = edgarStatements;
 
   // 1. Accounting identity checks (per year)
@@ -347,6 +487,15 @@ export async function validateCompany(ticker, edgarStatements, options = {}) {
   let framesChecks = {};
   if (!skipFrames) {
     framesChecks = await runFramesCrossCheck(ticker, years, income, balance, cashFlow, fiscalMonths);
+  }
+
+  // 6. Retained earnings reconciliation
+  const retainedEarningsChecks = checkRetainedEarnings(years, income, balance, cashFlow);
+
+  // 7. Quarterly roll-up check (only when quarterly data provided)
+  let quarterlyRollupChecks = [];
+  if (quarterlyData) {
+    quarterlyRollupChecks = checkQuarterlyRollup(years, income, balance, cashFlow, quarterlyData);
   }
 
   // ─── Summary ───────────────────────────────────────────────────
@@ -387,6 +536,13 @@ export async function validateCompany(ticker, edgarStatements, options = {}) {
   if (identityPassRate < 90 || framesMatchRate < 80) overallStatus = 'FAIL';
   else if (identityPassRate < 100 || framesMatchRate < 95 || framesWarn > 0 || yoyFlags.length > 3) overallStatus = 'WARNINGS';
 
+  const reWarnings = retainedEarningsChecks.filter(c => c.status === 'warning').length;
+  const reTotal = retainedEarningsChecks.length;
+
+  const qrMatches = quarterlyRollupChecks.filter(c => c.status === 'match').length;
+  const qrTotal = quarterlyRollupChecks.length;
+  const qrMatchRate = qrTotal > 0 ? Math.round(qrMatches / qrTotal * 100) : null;
+
   return {
     ticker: ticker.toUpperCase(),
     timestamp: new Date().toISOString(),
@@ -396,6 +552,8 @@ export async function validateCompany(ticker, edgarStatements, options = {}) {
     derivedChecks,
     yoyFlags,
     framesChecks,
+    retainedEarningsChecks,
+    quarterlyRollupChecks,
     summary: {
       identityPassRate,
       completenessScore,
@@ -404,6 +562,10 @@ export async function validateCompany(ticker, edgarStatements, options = {}) {
       framesWarnings: framesWarn,
       framesErrors: framesErr,
       yoyFlagsCount: yoyFlags.length,
+      retainedEarningsWarnings: reWarnings,
+      retainedEarningsTotal: reTotal,
+      quarterlyRollupMatchRate: qrMatchRate,
+      quarterlyRollupTotal: qrTotal,
       overallStatus,
     },
   };

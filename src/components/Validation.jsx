@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { C } from '../theme';
-import { fetchEdgarStatements } from '../engines/edgarFinancials';
+import { fetchEdgarStatements, fetchEdgarQuarterly } from '../engines/edgarFinancials';
 import { validateCompany } from '../engines/validation';
 import VALIDATION_COMPANIES from '../data/validationCompanies';
 
@@ -76,6 +76,8 @@ function CompanyResult({ result, expanded, onToggle }) {
         <span style={{ flex: 1, color: C.textSecondary, fontSize: 11 }}>
           Identity {s.identityPassRate}% · Completeness {s.completenessScore}% · Derived {s.derivedMatchRate}% · Frames {s.framesMatchRate}%
           {s.yoyFlagsCount > 0 && ` · ${s.yoyFlagsCount} YoY flags`}
+          {s.retainedEarningsWarnings > 0 && ` · ${s.retainedEarningsWarnings} RE warnings`}
+          {s.quarterlyRollupMatchRate != null && ` · Qtr ${s.quarterlyRollupMatchRate}%`}
         </span>
         <span style={{ color: C.textMuted, fontSize: 11 }}>{expanded ? '▼' : '▶'}</span>
       </div>
@@ -139,6 +141,50 @@ function CompanyResult({ result, expanded, onToggle }) {
             </div>
           )}
 
+          {/* Quarterly Roll-Up */}
+          {result.quarterlyRollupChecks?.length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, marginBottom: 4 }}>
+                Quarterly Roll-Up (Q1+Q2+Q3+Q4 ≈ FY)
+                <span style={{ fontWeight: 400, color: C.textMuted, marginLeft: 8 }}>
+                  {result.quarterlyRollupChecks.filter(c => c.status === 'match').length} match / {result.quarterlyRollupChecks.length} checks
+                  {result.summary.quarterlyRollupMatchRate != null && ` (${result.summary.quarterlyRollupMatchRate}%)`}
+                </span>
+              </div>
+              {result.quarterlyRollupChecks.filter(c => c.status !== 'match').map((c, i) => {
+                const color = c.status === 'warning' ? C.yellow : C.red;
+                return (
+                  <div key={i} style={{ fontSize: 11, color, paddingLeft: 16 }}>
+                    {c.label} ({c.fy}): {c.type === 'flow'
+                      ? `Sum ${fmt(c.quarterSum)} vs Annual ${fmt(c.annualVal)}`
+                      : `Q4 ${fmt(c.q4Val)} vs Annual ${fmt(c.annualVal)}`
+                    } ({c.pctDiff}% diff, {c.quartersAvailable || 'n/a'} qtrs)
+                  </div>
+                );
+              })}
+              {result.quarterlyRollupChecks.every(c => c.status === 'match') && (
+                <div style={{ fontSize: 11, color: C.green, paddingLeft: 16 }}>All checks match within tolerance</div>
+              )}
+            </div>
+          )}
+
+          {/* Retained Earnings Reconciliation */}
+          {result.retainedEarningsChecks?.length > 0 && result.retainedEarningsChecks.some(c => c.status === 'warning') && (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, marginBottom: 4 }}>
+                Retained Earnings Reconciliation
+                <span style={{ fontWeight: 400, color: C.textMuted, marginLeft: 8 }}>
+                  ({result.retainedEarningsChecks.filter(c => c.status === 'warning').length} warnings / {result.retainedEarningsChecks.length} years)
+                </span>
+              </div>
+              {result.retainedEarningsChecks.filter(c => c.status === 'warning').map((c, i) => (
+                <div key={i} style={{ fontSize: 11, color: C.yellow, paddingLeft: 16 }}>
+                  {c.year}: Begin RE {fmt(c.beginRE)} + NI {fmt(c.ni)} − Div {fmt(c.dividendsPaid)} = Expected {fmt(c.expectedEndRE)} vs Actual {fmt(c.endRE)} (diff {fmt(c.diff)})
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Frames Cross-Check */}
           {Object.keys(result.framesChecks).length > 0 && (
             <div>
@@ -178,6 +224,9 @@ function AggregateSummary({ results }) {
   const avgFrames = scored.length > 0 ? Math.round(scored.reduce((s, r) => s + r.summary.framesMatchRate, 0) / scored.length) : 0;
   const avgCompleteness = scored.length > 0 ? Math.round(scored.reduce((s, r) => s + r.summary.completenessScore, 0) / scored.length) : 0;
 
+  const withQuarterly = scored.filter(r => r.summary.quarterlyRollupMatchRate != null);
+  const avgQuarterly = withQuarterly.length > 0 ? Math.round(withQuarterly.reduce((s, r) => s + r.summary.quarterlyRollupMatchRate, 0) / withQuarterly.length) : null;
+
   return (
     <div style={{
       display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
@@ -192,6 +241,7 @@ function AggregateSummary({ results }) {
       <MetricCard label="Avg Identity" value={`${avgIdentity}%`} />
       <MetricCard label="Avg Frames" value={`${avgFrames}%`} />
       <MetricCard label="Avg Completeness" value={`${avgCompleteness}%`} />
+      {avgQuarterly != null && <MetricCard label="Avg Qtr Roll-Up" value={`${avgQuarterly}%`} />}
     </div>
   );
 }
@@ -228,6 +278,7 @@ export default function Validation() {
   const [expandedTicker, setExpandedTicker] = useState(null);
   const [filter, setFilter] = useState('all');
   const [skipFrames, setSkipFrames] = useState(false);
+  const [includeQuarterly, setIncludeQuarterly] = useState(false);
   const abortRef = useRef(false);
 
   const resultsList = Object.values(results).sort((a, b) => {
@@ -261,7 +312,12 @@ export default function Validation() {
             error: 'No EDGAR data available (delisted or CIK not found)',
           };
         } else {
-          const result = await validateCompany(ticker, statements, { skipFrames });
+          let quarterlyData = null;
+          if (includeQuarterly) {
+            const qResult = await fetchEdgarQuarterly(ticker);
+            quarterlyData = qResult?.quarterly || null;
+          }
+          const result = await validateCompany(ticker, statements, { skipFrames, quarterlyData });
           updated[ticker] = result;
         }
       } catch (err) {
@@ -280,7 +336,7 @@ export default function Validation() {
     }
 
     setRunning(false);
-  }, [results, skipFrames]);
+  }, [results, skipFrames, includeQuarterly]);
 
   const runAll = () => {
     const unvalidated = VALIDATION_COMPANIES
@@ -378,6 +434,16 @@ export default function Validation() {
             disabled={running}
           />
           Skip Frames API (faster)
+        </label>
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: C.textSecondary }}>
+          <input
+            type="checkbox"
+            checked={includeQuarterly}
+            onChange={(e) => setIncludeQuarterly(e.target.checked)}
+            disabled={running}
+          />
+          Include Quarterly Roll-Up
         </label>
 
         <div style={{ flex: 1 }} />

@@ -24,8 +24,10 @@ await build({
   // Use a virtual entry that re-exports both
   stdin: {
     contents: `
-      export { fetchEdgarStatements, INCOME_TAXONOMY, BALANCE_TAXONOMY, CASHFLOW_TAXONOMY } from '${resolve(ROOT, 'src/engines/edgarFinancials.js').replace(/\\/g, '/')}';
+      export { fetchEdgarStatements, fetchEdgarQuarterly, INCOME_TAXONOMY, BALANCE_TAXONOMY, CASHFLOW_TAXONOMY } from '${resolve(ROOT, 'src/engines/edgarFinancials.js').replace(/\\/g, '/')}';
       export { computeKeyMetrics } from '${resolve(ROOT, 'src/engines/keyMetrics.js').replace(/\\/g, '/')}';
+      export { validateCompany } from '${resolve(ROOT, 'src/engines/validation.js').replace(/\\/g, '/')}';
+      export { lookupCIK, fetchCompanyFacts } from '${resolve(ROOT, 'src/engines/edgar.js').replace(/\\/g, '/')}';
     `,
     resolveDir: resolve(ROOT, 'src/engines'),
     loader: 'js',
