@@ -87,8 +87,11 @@ export default function StockAtGlance({
   // Return metrics — latest 1yr averages (now from EDGAR)
   const latestReturns = returns?.averages?.['1yr'];
 
-  // Shares outstanding from EDGAR balance sheet (EOP), fallback to company details
-  const sharesOut = bal.shares_outstanding ?? company?.sharesOutstanding ?? inc.basic_average_shares;
+  // Shares outstanding from EDGAR balance sheet (EOP), fallback to weighted average
+  const sharesOut = bal.shares_outstanding ?? inc.basic_average_shares;
+
+  // Market cap computed from shares × current price
+  const marketCap = (sharesOut && currentPrice) ? sharesOut * currentPrice : null;
 
   // Buybacks per share from EDGAR cash flow (share repurchases / shares outstanding)
   const repurchases = Math.abs(cf.share_repurchases ?? 0);
@@ -130,7 +133,7 @@ export default function StockAtGlance({
           {/* Column 2 */}
           <div style={{ flex: 1 }}>
             <MetricRow label="52-week Low" value={fmtDollar(week52Low)} />
-            <MetricRow label="Market Cap*" value={company?.marketCap != null ? '$' + fmtM(company.marketCap) : '-'} />
+            <MetricRow label="Market Cap*" value={marketCap != null ? '$' + fmtM(marketCap) : '-'} />
             <MetricRow label="Buybacks per Share" value={fmtDollar(buybacksPerShare)} />
             <MetricRow label="EPS TTM" value={fmtDollar(ttmEPS)} />
             <MetricRow label="Return on Equity (ROE)" value={pct(latestReturns?.roe)} />

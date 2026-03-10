@@ -4,6 +4,7 @@ import TickerSearch from './TickerSearch';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: '◫' },
+  { to: '/validation', label: 'Validation', icon: '✓' },
 ];
 
 export default function Layout({ children, onNewResearch, isDark, toggleTheme }) {

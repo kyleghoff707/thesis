@@ -1,6 +1,6 @@
 // Rule One Score — Moat + Management scoring algorithm
 // Reverse-engineered from Rule One Toolbox screenshots (AMAT, MNST, ILMN)
-// Validated against Polygon data — see CLAUDE.md for full algorithm
+// Validated — see CLAUDE.md for full algorithm
 
 // Scoring thresholds (per period)
 // Rate >= 10% → 2 points (green)

@@ -1,5 +1,4 @@
-// SEC EDGAR XBRL data — line items not available from Polygon
-// (CapEx, D&A, dividends, retained earnings, etc.)
+// SEC EDGAR — single source of truth for financial data, company details, and ticker search.
 // Free, no API key needed. Requires User-Agent header.
 // Rate limit: 10 requests/second.
 //
@@ -27,28 +26,52 @@ function secCompanyFactsUrl(cik) {
     : `https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`;
 }
 
+function secSubmissionsUrl(cik) {
+  return IS_DEV
+    ? `/api/edgar/submissions/CIK${cik}.json`
+    : `https://data.sec.gov/submissions/CIK${cik}.json`;
+}
+
 // ─── CIK Lookup ──────────────────────────────────────────────
 
 // Cache the full tickers map (loaded once, reused for all lookups)
 let tickerMapPromise = null;
+// Search index: array of { ticker, name, cik } for autocomplete
+let tickerSearchIndex = null;
 
 async function loadTickerMap() {
   const cacheKey = 'edgar:ticker-map';
   const cached = cacheGet(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    // Rebuild search index from cached map if needed
+    if (!tickerSearchIndex) {
+      tickerSearchIndex = Object.entries(cached.cikMap).map(([ticker, cik]) => ({
+        ticker,
+        name: cached.names?.[ticker] || '',
+        cik,
+      }));
+    }
+    return cached.cikMap;
+  }
 
   const res = await fetch(secTickerMapUrl());
   if (!res.ok) throw new Error(`EDGAR ticker map: ${res.status}`);
   const data = await res.json();
 
-  // Build ticker → CIK map
-  const map = {};
+  // Build ticker → CIK map + search index
+  const cikMap = {};
+  const names = {};
+  tickerSearchIndex = [];
   for (const entry of Object.values(data)) {
-    map[entry.ticker.toUpperCase()] = String(entry.cik_str).padStart(10, '0');
+    const ticker = entry.ticker.toUpperCase();
+    const cik = String(entry.cik_str).padStart(10, '0');
+    cikMap[ticker] = cik;
+    names[ticker] = entry.title || '';
+    tickerSearchIndex.push({ ticker, name: entry.title || '', cik });
   }
 
-  cacheSet(cacheKey, map, 'financials'); // 24hr cache
-  return map;
+  cacheSet(cacheKey, { cikMap, names }, 'financials'); // 24hr cache
+  return cikMap;
 }
 
 export async function lookupCIK(ticker) {
@@ -61,6 +84,75 @@ export async function lookupCIK(ticker) {
   }
   const map = await tickerMapPromise;
   return map[ticker.toUpperCase()] || null;
+}
+
+// ─── Ticker Search ─────────
+// Searches the EDGAR ticker map locally by ticker prefix or company name substring.
+
+export async function searchEdgarTickers(query, limit = 8) {
+  if (!query || query.length < 1) return [];
+
+  // Ensure ticker map is loaded
+  if (!tickerMapPromise) {
+    tickerMapPromise = loadTickerMap().catch(err => {
+      tickerMapPromise = null;
+      throw err;
+    });
+  }
+  await tickerMapPromise;
+  if (!tickerSearchIndex) return [];
+
+  const q = query.toUpperCase().trim();
+
+  // Score and filter
+  const scored = [];
+  for (const entry of tickerSearchIndex) {
+    let score = 0;
+    if (entry.ticker === q) score = 100;           // exact ticker match
+    else if (entry.ticker.startsWith(q)) score = 50; // ticker prefix
+    else if (entry.name.toUpperCase().includes(q)) score = 10; // name substring
+    else continue;
+    scored.push({ ...entry, score });
+  }
+
+  scored.sort((a, b) => b.score - a.score || a.ticker.localeCompare(b.ticker));
+  return scored.slice(0, limit).map(({ ticker, name }) => ({ ticker, name }));
+}
+
+// ─── Company Info ─────────
+// Fetches from EDGAR submissions endpoint: name, SIC, exchange, etc.
+
+export async function fetchCompanyInfo(ticker) {
+  const cik = await lookupCIK(ticker);
+  if (!cik) return null;
+
+  const cacheKey = `edgar:company:${cik}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  const url = secSubmissionsUrl(cik);
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.warn(`EDGAR submissions failed: ${res.status} for CIK ${cik}`);
+    return null;
+  }
+  const data = await res.json();
+
+  const info = {
+    ticker: ticker.toUpperCase(),
+    name: data.name || '',
+    sic: data.sic || '',
+    sicDescription: data.sicDescription || '',
+    exchange: data.exchanges?.[0] || '',
+    cik,
+    stateOfIncorporation: data.stateOfIncorporation || '',
+    fiscalYearEnd: data.fiscalYearEnd || '',
+    phone: data.phone || '',
+    website: data.website || '',
+  };
+
+  cacheSet(cacheKey, info, 'companyDetails');
+  return info;
 }
 
 // ─── Company Facts ───────────────────────────────────────────

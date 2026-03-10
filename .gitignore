@@ -25,3 +25,8 @@ dist-ssr
 
 # Knowledge folder (course curriculum, personal research — local only)
 knowledge/
+
+# Validation data (cached API responses, reports, bundled engines — local only)
+validation/data/
+validation/reports/
+validation/scripts/bundled-engines.mjs

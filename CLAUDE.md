@@ -24,7 +24,7 @@ The user is NOT a programmer. Keep explanations in plain English.
 - **Styling**: inline styles (dark/light palette object, no CSS framework — same approach as stickeR1)
 - **Storage**: localStorage for saved reports (single user, no auth needed)
 - **AI**: Claude API called directly from the app (no proxy needed — API key lives in local `.env.local`)
-- **Financial Data**: SEC EDGAR XBRL (primary source — income statement, balance sheet, cash flow, all line items, 13+ years, free), Polygon.io (company details, ticker search — NOT used for financial statements), EODHD (historical stock price data/charts — proxied through Vite in dev), SEC EDGAR 13F (guru holdings — free, no key needed)
+- **Financial Data**: SEC EDGAR XBRL (primary source — income statement, balance sheet, cash flow, company details, ticker search, all line items, 13+ years, free, also used for stock split detection), EODHD (historical stock price data/charts — proxied through Vite in dev), SEC EDGAR 13F (guru holdings — free, no key needed)
 - **Charts**: Recharts (growth metrics, valuation visuals, price charts)
 - **Dev**: `npm run dev` → localhost:5173 in browser. Hot-reload works normally.
 - **Desktop build**: `npm run tauri:build` → produces a native `.app` for macOS
@@ -35,13 +35,11 @@ Stored in `.env.local` (gitignored via `*.local` pattern). No Cloudflare proxy n
 ```
 VITE_CLAUDE_KEY=...    # Claude API — for AI report generation
 VITE_EODHD_KEY=...     # EODHD — for historical stock price data (NOT fundamentals — forbidden on current tier)
-VITE_POLYGON_KEY=...   # Polygon.io — for company details (name, SIC, market cap) and ticker search only
 ```
 
 ### API Notes (Validated)
 - **SEC EDGAR (Primary — Financial Statements)**: Free, no key needed. Requires `User-Agent` header. The XBRL company facts endpoint (`/api/xbrl/companyfacts/CIK{cik}.json`) returns ALL financial data for a company in one call — income statement, balance sheet, cash flow, every line item. `edgarFinancials.js` maps ~112 XBRL tags across all three statements using a taxonomy with fallback tags per field (handles ASC 606 revenue transition, ASC 842 lease accounting, different debt tags, etc.). Tags are **merged** across fallbacks (not first-match-wins) so older years using legacy tags are included. Supports `USD`, `USD/shares`, and `shares` unit types. Fiscal year extracted from XBRL `fy` field (not `getFullYear()`) — correctly handles companies with non-calendar fiscal years (e.g., SFM ends in early January). Supports **version modes**: `restated` (default — latest filing per FY via `extractAnnualFact`) and `original` (earliest filing per FY via `extractAnnualFactOriginal`). Split-sensitive fields always use `extractAnnualFactOriginal` regardless of version to prevent double-adjustment from restated comparatives. Cache key includes version: `edgar-statements:TICKER:s3:restated`. Auto-computes derived fields: Gross Profit, EPS, EBIT, EBITDA, non-current totals, total debt, net debt, FCF, net investments, net change in cash, total expenses, effective tax rate, working capital, invested capital, net tangible assets, total capitalization, beginning/ending cash position. Rate limit: 10 req/sec. **CORS note**: `User-Agent` is a forbidden header in browser fetch — browsers silently drop it. Both `www.sec.gov` and `data.sec.gov` are proxied through Vite in dev (`/api/sec` → `www.sec.gov`, `/api/edgar` → `data.sec.gov`) with proper headers injected server-side. In Tauri production, the native webview doesn't enforce CORS so direct calls work. `edgar.js` auto-detects dev vs production via `import.meta.env.DEV`.
 - **SEC EDGAR (13F Guru Holdings)**: Same EDGAR infrastructure. Uses `/submissions/CIK{cik}.json` + infotable XML parsing for guru 13F holdings.
-- **Polygon.io**: Used for company details (`/v3/reference/tickers/{ticker}` — name, description, SIC, market cap), ticker search (`/v3/reference/tickers?search=` — autocomplete), and stock split history (`/v3/reference/splits?ticker=` — for normalizing historical per-share EDGAR data). **NOT used for financial statements or scoring** — EDGAR is the single source of truth for all statement data AND all score/growth/return calculations. Polygon's legacy `financials.js` engine still exists but is only used for TTM fallback in StockAtGlance.
 - **EODHD**: Use ONLY for historical stock price data (`/api/eod/{TICKER}.US`). The fundamentals endpoint returns Forbidden on the current plan tier. Do NOT use for financial statements. **CORS note**: EODHD doesn't send `Access-Control-Allow-Origin`, so browser calls fail. In dev, requests are proxied through Vite (`/api/eodhd` → `eodhd.com`). In Tauri production, the native webview doesn't enforce CORS.
 - **Claude API**: Direct calls from the app. The app constructs messages with financial data + Rule One methodology context, sends to Claude, receives structured analysis. Claude also reads 10K/10Q filings from EDGAR to extract quantitative data (CapEx, FCF, maintenance CapEx) and qualitative insight (management discussion, risk factors, business description).
 
@@ -56,7 +54,7 @@ VITE_POLYGON_KEY=...   # Polygon.io — for company details (name, SIC, market c
   - **Debt to Total Capital**: Was `Total Debt / (Equity + Total Debt)`. Fixed to `LT Debt / (Equity + LT Debt)` matching Toolbox.
   - **ROE**: Uses ending equity (matches Toolbox). Morningstar uses average equity — intentional methodology difference.
   - **Remaining minor differences**: EBIT Margin (Toolbox uses PreTax + Interest Expense; app uses Operating Income — differs 1-2% in historical years with non-operating items). Inventory Turnover (~14% off, likely Original vs Restated inventory values). Fixed Asset Turnover (varies 2-5%, version-related PP&E differences). BVPS (~1.6% off vs Toolbox). These are low priority.
-- **FinancialStatements rebuilt** — Now uses EDGAR as single source (no more Polygon hybrid). Financials/Key Metrics toggle. 4 dropdown controls matching Rule One Toolbox: **Layout** (Consolidated ~100 rows / Expanded ~140 rows — expanded adds PP&E sub-items, cash breakdown, receivables detail, EBIT/EBITDA, working capital, invested capital, beginning/ending cash, etc.), **Version** (Original / Restated — triggers EDGAR refetch), **View** (Annual, Quarterly planned), **Periods** (5 / 10 / 13 / All year columns). Expanded rows use `expanded: true` flag, filtered at render time. Version state lives in parent Toolbox.jsx (triggers refetch); Layout and Periods are local state (UI-only). CSV export respects current layout/version/periods settings.
+- **FinancialStatements rebuilt** — Uses EDGAR as single source. Financials/Key Metrics toggle. 4 dropdown controls matching Rule One Toolbox: **Layout** (Consolidated ~100 rows / Expanded ~140 rows — expanded adds PP&E sub-items, cash breakdown, receivables detail, EBIT/EBITDA, working capital, invested capital, beginning/ending cash, etc.), **Version** (Original / Restated — triggers EDGAR refetch), **View** (Annual, Quarterly planned), **Periods** (5 / 10 / 13 / All year columns). Expanded rows use `expanded: true` flag, filtered at render time. Version state lives in parent Toolbox.jsx (triggers refetch); Layout and Periods are local state (UI-only). CSV export respects current layout/version/periods settings.
 - Dependencies installed: recharts, @anthropic-ai/sdk, uuid, react-router-dom
 - Tauri CLI installed (`@tauri-apps/cli` in devDependencies)
 - GitHub repo created (private)
@@ -68,17 +66,18 @@ VITE_POLYGON_KEY=...   # Polygon.io — for company details (name, SIC, market c
 - **EDGAR fiscal year fix**: Uses XBRL `fy` field for year mapping (not `getFullYear()` on end date). Correctly handles companies with non-calendar fiscal years (e.g., SFM ends in early January). Deduplicates by latest period end date per fiscal year to avoid picking up prior-year comparatives.
 - **EDGAR unit support**: `extractAnnualFact` accepts `unit` parameter — `USD` (default), `USD/shares` (EPS, dividends per share), `shares` (share counts).
 - **EPS gap fix**: `edgarFinancials.js` auto-computes EPS from Net Income / Diluted Shares when EDGAR doesn't report it directly.
-- **Ticker autocomplete**: Polygon `/v3/reference/tickers?search=` — works with both ticker symbols and company names.
+- **Ticker autocomplete**: EDGAR `company_tickers.json` searched locally — works with both ticker symbols and company names.
 - **Guru 13F engine**: All 41 guru CIK numbers verified against live EDGAR data. Fetches, parses, and caches 13F holdings.
-- **Score/growth engines migrated to EDGAR** — `growthRates.js`, `returnMetrics.js`, and `freeCashFlow.js` all rewritten to consume EDGAR statements directly (single source of truth). No more Polygon dependency for scoring. `Toolbox.jsx` passes `edgarStatements` to all score engines. `StockAtGlance.jsx` uses EDGAR as primary source for latest-year financials, with Polygon TTM as fallback only.
+- **Score/growth engines migrated to EDGAR** — `growthRates.js`, `returnMetrics.js`, and `freeCashFlow.js` all rewritten to consume EDGAR statements directly (single source of truth). `Toolbox.jsx` passes `edgarStatements` to all score engines. `StockAtGlance.jsx` uses EDGAR as sole source for financials. Market cap computed locally (shares_outstanding × current_price).
 - **BVPS+Div+Buybacks composite metric** — Growth rate now uses cumulative running total: BVPS + all dividends per share ever paid + all buyback value per share ever returned. Prevents companies with heavy buybacks (like AAPL) from showing negative BVPS growth when they're creating enormous shareholder value. Validated against Rule One Toolbox AAPL.
 - **ROIC formula corrected** — Changed from `Net Income / (Equity + LT Debt - Cash)` to `Net Income / (Equity + LT Debt)` — no cash subtraction, matching Toolbox. Verified: AAPL pre-debt years show ROIC = ROE exactly. Applied in both `returnMetrics.js` (scoring) and `keyMetrics.js` (display).
-- **TTM support**: `financials.js` (Polygon, legacy) fetches last 4 quarterly filings and computes TTM. Used as fallback for StockAtGlance TTM data only. Not yet in EDGAR engine (FinancialStatements currently shows annual only). TODO: add quarterly extraction for TTM to EDGAR engine.
+- **Earnings Growth fix**: Moat scoring uses total Net Income (not EPS) for "Earnings Growth" metric. EPS inflates growth for heavy-buyback companies (e.g., AAPL shares 23B→15B). Validated against Rule One Toolbox AAPL — Earnings Score now matches (50 vs previous 88).
+- **TTM support**: Not yet in EDGAR engine (FinancialStatements currently shows annual only). TODO: add quarterly XBRL extraction for TTM to EDGAR engine.
 - **Toolbox UI matches Rule One Toolbox**: ScoreTable uses solid colored cell backgrounds (green/yellow/red) with white text, teal section headers, "X.X Years" debt display. StockAtGlance shows all Toolbox metrics in two-column layout with dollar signs and comma formatting for US currency.
-- **Growth Analysis**: 6 metrics — BVPS+Dividends, Earnings, Revenue, Operating Cash Flow, FCF, Retained Earnings. CAGR table (color-coded) + bar charts. Retained earnings data sourced from EDGAR.
+- **Growth Analysis**: 6 metrics — BVPS+Dividends, Earnings (Net Income), Revenue, Operating Cash Flow, FCF, Retained Earnings. CAGR table (color-coded) + bar charts. All data sourced from EDGAR.
 - **Debt display for net cash companies**: Shows "0.0 Years" in green cell with score 100, matching real Toolbox behavior (validated against AMAT, SFM screenshots).
 - **Binary debt scoring**: ≤3 years or net cash → 100 (green), >3 years → 0 (red). Intermediate thresholds TBD.
-- **Stock split adjustment**: `splits.js` fetches split history from Polygon `/v3/reference/splits`. `edgarFinancials.js` extracts per-share/share-count fields using `extractAnnualFactOriginal` (prefers earliest filing to avoid double-adjustment from restated comparatives), then applies cumulative split factors. Per-share values ÷ factor, share counts × factor. Runs before derived field computation so auto-computed EPS uses adjusted shares. Cache key includes split count and version (`edgar-statements:TICKER:s3:restated`) so stale data cached before splits loaded or with different version is automatically invalidated.
+- **Stock split adjustment**: `splits.js` detects splits from EDGAR XBRL data (explicit `StockholdersEquityNoteStockSplitConversionRatio1` tag, with share-count-jump fallback via `dei:EntityCommonStockSharesOutstanding`). No external API needed. `edgarFinancials.js` extracts per-share/share-count fields using `extractAnnualFactOriginal` (prefers earliest filing to avoid double-adjustment from restated comparatives), then applies cumulative split factors. Per-share values ÷ factor, share counts × factor. Runs before derived field computation so auto-computed EPS uses adjusted shares. Cache key includes split count and version (`edgar-statements:TICKER:s3:restated`) so stale data cached before splits loaded or with different version is automatically invalidated.
 - **Fiscal year end months**: `extractFiscalYearEnds()` in `edgar.js` extracts the FY end month from XBRL `end` dates. Displayed as abbreviation (e.g., "Sep", "Jan") below each year column in FinancialStatements headers.
 - **FinancialStatements UI enhancements**: Sticky header row (years stay visible on vertical scroll), bold/larger year headers (13px/700), comma-formatted numbers throughout, CSV export button (Financials exports current tab, Key Metrics exports all categories). Filenames include ticker, tab label, layout, and version (e.g., `AAPL_Income_Statement_expanded_restated.csv`).
 - **Toolbox validation (AAPL)**: App financials compared line-by-line against Rule One Toolbox AAPL export. All major totals match (Revenue, Net Income, Total Assets, Total Liabilities, Stockholder Equity, Investing CF, Change in Cash). Five fixes applied:
@@ -94,6 +93,18 @@ VITE_POLYGON_KEY=...   # Polygon.io — for company details (name, SIC, market c
   - Net Debt matches Toolbox for scoring years (traditional debt - cash).
   - Operating Income has classification differences (~$5-39M varies by year) where Toolbox reclassifies items above the operating line. Pre-Tax Income matches exactly.
   - Cash Flow D&A differs (app ~$158M vs Toolbox ~$304M for 2025) because Toolbox includes ROU amortization. Operating CF total matches exactly.
+- **Validation system built — 3 layers, 89 companies, all complete.** Full details in `knowledge/validation-summary-2026-03-10.md`. EDGAR engine is **production-ready** — no data bugs found, all discrepancies explained by methodology/classification/timing differences.
+  - **Layer 1 — EDGAR self-validation** at `/validation` route. 5 checks: accounting identities (A=L+E, GP=Rev-COGS, etc.), completeness (13 critical fields), derived field consistency, YoY sanity flags, Frames API cross-check (9 tags × 5 years). Final results: 23 PASS / 48 WARNINGS / 18 FAIL. Avg identity 98%, completeness 94.7%, derived 97.5%, frames 84.9%. All 18 FAILs explained by non-calendar FY Frames quirks or corporate events (ABBV Allergan reclassification, GE Aerospace spinoff). "Skip Frames" option for faster local-only pass.
+  - **Layer 2 — Financial statements vs yfinance** (`validation/layer2_statements.py`). 50 fields × 89 companies × ~4 years = 18,112 comparisons. **77.1% exact match, 82% within 5%.** Critical scoring fields (Revenue, Net Income, OCF, Equity, EPS, Shares, Dividends) all >87% exact match with <3% avg diff. mstarpy tested as secondary source but unreliable (34.4%, returns wrong entity data for some companies). FY alignment fix: bidirectional year-offset fallback for non-December FY companies.
+  - **Layer 3 — Key metrics vs yfinance `.info`** (`validation/layer3_metrics.py`). 11 derived metrics × 89 companies = 932 comparisons. 36.8% exact match — lower rate expected because yfinance returns TTM values while our metrics are annual FY. Top metrics (current ratio 72.7%, EPS 67.4%, profit margin 67.4%) match well given timing gap.
+  - **Validation infrastructure**: esbuild bundler (`validation/scripts/bundle.mjs`) compiles browser ES modules to Node.js. Batch exporter (`validation/scripts/export-financials.mjs`) produces 89 JSON files. All cached data in `validation/data/`, reports in `validation/reports/`.
+- **Validation fixes applied (Layer 1 iterative runs)** — Run 1: 11 PASS/56 FAIL → Run 3: 23 PASS/18 FAIL. Avg identity 84.8%→98%, avg derived 57.2%→97.5%. Key fixes:
+  - **Liabilities auto-derivation**: Three-tier: (1) direct `Liabilities` tag, (2) `CL + NCL`, (3) `L&E - Equity - NCI`. Fixed 39 companies.
+  - **A=L+E identity check**: Added NCI to equity side. 1% tolerance for mezzanine equity.
+  - **Invested Capital validation**: Formula aligned (Equity + LT Debt). Derived match: 6%→100%.
+  - **Net Income check**: Uses ProfitLoss + 5% tolerance for discontinued ops. Pass: 58.5%→91.7%.
+  - **LT Debt removed from critical fields**: Null = zero debt, not missing. Fixed 59 false flags.
+  - **SKIP status**: Delisted/no-data companies excluded from aggregates.
 - **Known remaining Toolbox differences**: (1) Payables disaggregation — app shows narrower `AccountsPayableCurrent`, Toolbox shows broader amount; Current Liabilities totals match. (2) Operating CF sub-line items (D&A, working capital components) differ in classification; Operating CF total matches. (3) Interest Income/Expense breakdown varies by company — partially resolved by Original/Restated toggle (Original shows values that Restated may blank out for recent years); Pre-Tax Income totals match. (4) PP&E vs Operating Lease ROU classification — app separates, Toolbox combines; differences visible in Original vs Restated (e.g., AAPL 2022 Gross PPE ~$124B Original vs ~$114B Restated due to reclassification); Non-Current Asset totals match. (5) SGA for companies that changed expense reporting structure (e.g., SFM pre-2018); Operating Income from XBRL is correct.
 
 ---
@@ -389,7 +400,7 @@ src/
 ├── theme.js                  ✅ C_LIGHT, C_DARK palette objects, mutable C, applyTheme()
 ├── components/
 │   ├── Layout.jsx            ✅ app shell: sidebar + header + main content area
-│   ├── TickerSearch.jsx      ✅ autocomplete search (Polygon ticker search, dropdown, ticker or name)
+│   ├── TickerSearch.jsx      ✅ autocomplete search (EDGAR local ticker search, dropdown, ticker or name)
 │   ├── ResearchList.jsx      ✅ dashboard: saved reports table with scores, stages, dates
 │   ├── Toolbox.jsx           ✅ main toolbox container (collapsible sections, fetches data, runs calcs)
 │   ├── CompanyHeader.jsx     ✅ ticker, name, SIC, price, Moat/Mgmt/R1 Score badges
@@ -412,34 +423,48 @@ src/
 │   │   ├── ChecklistSection.jsx  — numbered items with status + evidence fields
 │   │   ├── InversionSection.jsx  — thesis → inversion → rebuttal table
 │   │   └── TradingStrategy.jsx   — price-to-value chart, PACE plan
+│   ├── Validation.jsx        ✅ Layer 1 validation page — batch runner, results display, aggregate summary, export JSON
 │   ├── ExportView.jsx        — clean export/print view (hides edit controls)
 │   └── ReferenceList.jsx     — citation manager (numbered refs, bracket inserts)
+├── data/
+│   └── validationCompanies.js ✅ 89-company test list across 12 categories (no financials/banks)
 ├── engines/
 │   ├── config.js             ✅ env var helper (trims spaces from .env.local keys)
-│   ├── edgar.js              ✅ SEC EDGAR XBRL core — CIK lookup, company facts fetch, fact extraction (Vite proxy in dev, direct in Tauri)
+│   ├── edgar.js              ✅ SEC EDGAR core — CIK lookup, company facts fetch, fact extraction, ticker search (local), company info (submissions endpoint). Vite proxy in dev, direct in Tauri.
 │   ├── edgarFinancials.js    ✅ EDGAR-based financial statements — full XBRL taxonomy (~112 tags), income/balance/cash flow, ~20 derived fields (EBIT, EBITDA, FCF, total/net debt, working capital, invested capital, etc.). Supports version parameter (original/restated). Single source for FinancialStatements UI.
 │   ├── keyMetrics.js         ✅ 62 derived metrics (Per Share, Shares, Liquidity, Profitability, Debt, Operating, Price) matching Rule One Toolbox Key Metrics
-│   ├── financials.js         ✅ Polygon.io fetch + parse (LEGACY — only used for TTM fallback in StockAtGlance)
-│   ├── companyDetails.js     ✅ Polygon.io company details (name, SIC, market cap)
+│   ├── companyDetails.js     ✅ EDGAR company details via submissions endpoint (name, SIC, sicDescription, exchange). Thin wrapper around edgar.js fetchCompanyInfo.
 │   ├── prices.js             ✅ EODHD historical prices (daily OHLCV, Vite proxy in dev)
-│   ├── tickerSearch.js       ✅ Polygon ticker/company search (for autocomplete)
+│   ├── tickerSearch.js       ✅ EDGAR local ticker/company search (for autocomplete). Thin wrapper around edgar.js searchEdgarTickers.
 │   ├── cache.js              ✅ two-tier cache (memory + localStorage) with TTL per category
 │   ├── gurus.js              ✅ SEC EDGAR 13F engine — 41 guru CIKs, fetch/parse holdings, portfolio search
-│   ├── splits.js             ✅ Polygon stock split history — cumulative factor calc for per-share normalization
+│   ├── splits.js             ✅ Stock split detection via EDGAR XBRL (no external API) — cumulative factor calc for per-share normalization
 │   ├── growthRates.js        ✅ CAGR for 6 metrics × 5 periods + outlier year exclusion. Uses EDGAR statements directly. BVPS+Div+BB uses cumulative composite metric.
 │   ├── freeCashFlow.js       ✅ FCF = Operating CF - CapEx, per-share, CapEx ratio. Uses EDGAR statements directly.
 │   ├── returnMetrics.js      ✅ ROE/ROIC/ROA averages + debt ratios + FCF ratio. Uses EDGAR statements directly. ROIC = NI/(Equity+LTDebt).
 │   ├── ruleOneScore.js       ✅ Moat + Management scoring algorithm (reverse-engineered, validated)
 │   ├── valuation.js          ✅ MOS, PBT, Ten Cap, Equity Bond, Bond Comparison + sensitivity tables
 │   ├── fgr.js                ✅ FGR 5-input structure + average + Rule of 72
+│   ├── validation.js         ✅ Layer 1 validation engine — identity checks, completeness, derived fields, YoY, Frames cross-check
+│   ├── edgarFrames.js        ✅ EDGAR Frames API fetcher — cross-checks extracted values against EDGAR aggregated data
 │   └── aiResearch.js         — Claude API calls + prompt builders per stage
 └── hooks/
     ├── useResearch.js        ✅ localStorage CRUD for research reports
-    ├── useFinancials.js      ✅ React hook wrapping financials + companyDetails engines
+    ├── useFinancials.js      ✅ React hook wrapping companyDetails engine (EDGAR company info only)
     ├── usePrices.js          ✅ React hook for price data (with range param)
     ├── useEdgar.js           ✅ React hook for EDGAR data (supplementary fields + full statements via edgarFinancials.js). Accepts version parameter ('restated'/'original'), refetches when version changes.
     ├── useGurus.js           ✅ React hook for guru 13F data (fetch one, fetch all, search)
     └── useTheme.js           ✅ dark/light toggle, persists preference to localStorage
+
+validation/                       ✅ 3-layer validation system (not part of app bundle)
+├── scripts/
+│   ├── bundle.mjs            ✅ esbuild bundler — compiles browser ES modules to Node.js-compatible ESM
+│   ├── bundled-engines.mjs   ✅ auto-generated bundle output (gitignored)
+│   └── export-financials.mjs ✅ batch JSON exporter — runs EDGAR engine for 89 companies
+├── data/                     ✅ cached validation data (thesis/, yfinance/, mstarpy/ — gitignored)
+├── reports/                  ✅ raw + summary JSON per layer run (gitignored)
+├── layer2_statements.py      ✅ Layer 2 — compares 50 statement fields vs yfinance + mstarpy
+└── layer3_metrics.py         ✅ Layer 3 — compares 11 derived metrics vs yfinance .info TTM
 ```
 
 ---
@@ -498,7 +523,7 @@ Each research report is a single object stored in localStorage:
 
 ## Rule One Score Engine (Reverse-Engineered)
 
-The Rule One Toolbox score was reverse-engineered from 3 example screenshots (AMAT, MNST, ILMN). All scoring now uses EDGAR financial statements as the single source of truth (migrated from Polygon).
+The Rule One Toolbox score was reverse-engineered from 3 example screenshots (AMAT, MNST, ILMN). All scoring uses EDGAR financial statements as the single source of truth.
 
 ### Overall Formula
 ```
@@ -586,12 +611,12 @@ Build order: **Toolbox first** (data + calculations), **then** AI-driven report 
 | Step | What | Files |
 |------|------|-------|
 | 2.1 | Env variable helper (trim spaces from `.env.local` keys) | `src/engines/config.js` |
-| 2.2 | Polygon financials — fetch + parse 17yr income/balance/cash flow + auto-compute EPS | `src/engines/financials.js` |
-| 2.3 | Polygon company details — name, description, SIC, market cap | `src/engines/companyDetails.js` |
+| 2.2 | EDGAR financial statements — full XBRL taxonomy (~112 tags), all statements | `src/engines/edgarFinancials.js` |
+| 2.3 | EDGAR company details — name, SIC, exchange (via submissions endpoint) | `src/engines/companyDetails.js` |
 | 2.4 | EODHD prices — daily OHLCV with date range (Vite proxy for CORS) | `src/engines/prices.js`, `vite.config.js` |
 | 2.5 | Cache layer (in-memory + localStorage, 24hr TTL financials, 1hr prices) | `src/engines/cache.js` |
 | 2.6 | React hooks — `useFinancials(ticker)`, `usePrices(ticker, range)` | `src/hooks/useFinancials.js`, `src/hooks/usePrices.js` |
-| 2.7 | Polygon ticker search (autocomplete by ticker or company name) | `src/engines/tickerSearch.js` |
+| 2.7 | EDGAR ticker search (local autocomplete by ticker or company name) | `src/engines/tickerSearch.js` |
 | 2.8 | SEC EDGAR 13F guru engine — 41 guru CIKs, fetch/parse holdings, search | `src/engines/gurus.js`, `src/hooks/useGurus.js` |
 
 ### Phase 3 — Calculation Engines (pure math, no UI) ✅ COMPLETE
@@ -659,8 +684,8 @@ Phase 1 (Shell) ──→ Phase 2 (Data) ──→ Phase 3 (Calc) ──→ Phas
 
 ### Known Risks
 - **XBRL tag variation**: Different companies use different XBRL tags for the same concept. The taxonomy in `edgarFinancials.js` handles ~95% of large/mid-cap US companies with ~100 fallback tags per field, but edge cases may need new tags added.
-- **Polygon legacy code remains**: `financials.js` and `useFinancials.js` still exist. `financials.js` is only used for TTM fallback in StockAtGlance. `useFinancials.js` still fetches Polygon data for company details (name, SIC, market cap) and TTM. Comprehensive Polygon removal is planned — will keep only company details and ticker search.
-- **TTM not yet in EDGAR engine**: Polygon's `financials.js` computes TTM from quarterly filings. The EDGAR engine only has annual data so far. Need to add quarterly extraction for TTM to fully remove Polygon TTM dependency.
+- **TTM not yet in EDGAR engine**: EDGAR engine only has annual data so far. Need to add quarterly XBRL extraction for TTM support.
+- **EDGAR company details missing some fields**: EDGAR submissions endpoint doesn't provide `description` or `totalEmployees`. These are deferred — may add later from 10-K parsing or other source.
 - **Stock split adjustment**: Per-share values from EDGAR may diverge from Toolbox for historical years due to different split-adjustment methodologies. Progressive ratio observed (1.0 recent → ~1.46 for 2016 AAPL). Deferred for later investigation.
 - **Claude API cost**: Generate sections individually (not whole reports) to control tokens. Use claude-sonnet-4-20250514 for efficiency.
 - **localStorage size**: Store raw financials in cache (separate key), only computed results + user input in report objects.

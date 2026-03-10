@@ -1,6 +1,6 @@
 // EDGAR-based financial statements — single source of truth
 // Fetches all income statement, balance sheet, and cash flow data from SEC XBRL.
-// Replaces Polygon for statement data. Polygon still used for company details + ticker search.
+// Single source of truth for all financial statement data.
 //
 // Taxonomy covers ~100 line items matching both Rule One Toolbox and Morningstar structures.
 // Each field uses ordered fallback tags — first tag's value wins per year, later tags fill gaps.
@@ -319,8 +319,14 @@ const BALANCE_TAXONOMY = [
   { field: 'other_noncurrent_liabilities', unit: 'USD', tags: [
     'OtherLiabilitiesNoncurrent',
   ]},
+  { field: 'noncurrent_liabilities', unit: 'USD', tags: [
+    'LiabilitiesNoncurrent',
+  ]},
   { field: 'liabilities', unit: 'USD', tags: [
     'Liabilities',
+  ]},
+  { field: 'liabilities_and_equity', unit: 'USD', tags: [
+    'LiabilitiesAndStockholdersEquity',
   ]},
 
   // ── Stockholders' Equity ──
@@ -688,6 +694,17 @@ function computeDerivedFields(years, income, balance, cashFlow) {
     // Non-Current Liabilities = Total Liabilities - Current Liabilities
     if (bal.noncurrent_liabilities == null && bal.liabilities != null && bal.current_liabilities != null) {
       bal.noncurrent_liabilities = bal.liabilities - bal.current_liabilities;
+    }
+
+    // Total Liabilities = Current + Non-Current (when aggregate tag missing — 39+ companies)
+    if (bal.liabilities == null && bal.current_liabilities != null && bal.noncurrent_liabilities != null) {
+      bal.liabilities = bal.current_liabilities + bal.noncurrent_liabilities;
+    }
+
+    // Total Liabilities = LiabilitiesAndEquity - Equity (last resort when neither
+    // Liabilities nor LiabilitiesNoncurrent tags exist — 31+ companies)
+    if (bal.liabilities == null && bal.liabilities_and_equity != null && bal.equity != null) {
+      bal.liabilities = bal.liabilities_and_equity - bal.equity - (bal.minority_interest ?? 0);
     }
 
     // Traditional Debt = Short-Term Debt + Current Portion LT Debt + Long-Term Debt

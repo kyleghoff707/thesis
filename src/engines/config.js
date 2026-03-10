@@ -7,4 +7,3 @@ function env(key) {
 
 export const CLAUDE_KEY = env('VITE_CLAUDE_KEY');
 export const EODHD_KEY = env('VITE_EODHD_KEY');
-export const POLYGON_KEY = env('VITE_POLYGON_KEY');

@@ -4,6 +4,7 @@ import { useResearch } from './hooks/useResearch';
 import Layout from './components/Layout';
 import ResearchList from './components/ResearchList';
 import Toolbox from './components/Toolbox';
+import Validation from './components/Validation';
 
 function StagePlaceholder({ label }) {
   return (
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/research/:id/one-pager" element={<StagePlaceholder label="One Pager" />} />
         <Route path="/research/:id/pitch-deck" element={<StagePlaceholder label="Pitch Deck" />} />
         <Route path="/research/:id/full-story" element={<StagePlaceholder label="Full Story" />} />
+        <Route path="/validation" element={<Validation />} />
       </Routes>
     </Layout>
   );
