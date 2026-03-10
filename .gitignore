@@ -23,11 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 
-# Screenshots in knowledge folder (local reference only)
-knowledge/**/*.png
-knowledge/**/*.jpg
-knowledge/**/*.jpeg
-knowledge/**/*.gif
-knowledge/**/*.webp
-knowledge/**/*.PNG
-knowledge/**/*.JPG
+# Knowledge folder (course curriculum, personal research — local only)
+knowledge/
