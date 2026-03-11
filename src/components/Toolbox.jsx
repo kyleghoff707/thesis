@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { C } from '../theme';
 import { useFinancials } from '../hooks/useFinancials';
@@ -13,16 +13,28 @@ import StockAtGlance from './StockAtGlance';
 import ScoreTable from './ScoreTable';
 import FinancialStatements from './FinancialStatements';
 import GrowthAnalysis from './GrowthAnalysis';
-import CollapsibleSection from './CollapsibleSection';
+
+const TABS = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'scores', label: 'Scores' },
+  { key: 'financials', label: 'Financials' },
+  { key: 'growth', label: 'Growth' },
+];
 
 export default function Toolbox({ getReport, updateReport, settings }) {
   const { id } = useParams();
   const report = getReport(id);
   const ticker = report?.ticker;
 
+  const [activeTab, setActiveTab] = useState('overview');
   const [priceRange, setPriceRange] = useState(settings?.defaultPriceRange || '5y');
   const [statementsVersion, setStatementsVersion] = useState(settings?.defaultVersion || 'restated');
   const [dataView, setDataView] = useState(settings?.defaultView || 'annual');
+
+  // Sync local state with settings changes (e.g., from Settings modal)
+  useEffect(() => { setPriceRange(settings?.defaultPriceRange || '5y'); }, [settings?.defaultPriceRange]);
+  useEffect(() => { setStatementsVersion(settings?.defaultVersion || 'restated'); }, [settings?.defaultVersion]);
+  useEffect(() => { setDataView(settings?.defaultView || 'annual'); }, [settings?.defaultView]);
   const { company, loading: finLoading, error: finError } = useFinancials(ticker);
   const { prices, latest, loading: priceLoading, error: priceError } = usePrices(ticker, priceRange);
   const { edgarData, edgarStatements, edgarQuarterly, loading: edgarLoading, error: edgarError } = useEdgar(ticker, statementsVersion, dataView);
@@ -34,31 +46,26 @@ export default function Toolbox({ getReport, updateReport, settings }) {
 
   // ─── All scoring now uses EDGAR as single source of truth ───
 
-  // Compute FCF from EDGAR statements (OpCF + CapEx both from EDGAR)
   const fcfResult = useMemo(() => {
     if (!edgarStatements) return null;
     return computeFreeCashFlow(edgarStatements);
   }, [edgarStatements]);
 
-  // Compute growth rates from EDGAR statements
   const growthRates = useMemo(() => {
     if (!edgarStatements) return null;
     return computeAllGrowthRates(edgarStatements);
   }, [edgarStatements]);
 
-  // Compute return metrics from EDGAR statements
   const returns = useMemo(() => {
     if (!edgarStatements) return null;
     return computeReturnMetrics(edgarStatements);
   }, [edgarStatements]);
 
-  // Compute debt metrics from EDGAR statements
   const debt = useMemo(() => {
     if (!edgarStatements) return null;
     return computeDebtMetrics(edgarStatements);
   }, [edgarStatements]);
 
-  // Compute scores
   const moat = useMemo(() => {
     if (!growthRates) return null;
     return computeMoatScore(growthRates);
@@ -91,7 +98,7 @@ export default function Toolbox({ getReport, updateReport, settings }) {
     score: moat?.metricScores?.[m.key],
   }));
 
-  // Build Management rows (3 return metrics + 2 debt metrics, all in one table)
+  // Build Management rows (3 return metrics + 2 debt metrics)
   const mgmtRows = [
     { label: 'Return On Equity', key: 'roe' },
     { label: 'Return On Invested Capital', key: 'roic' },
@@ -108,7 +115,6 @@ export default function Toolbox({ getReport, updateReport, settings }) {
     score: management?.metricScores?.[m.key],
   }));
 
-  // Debt rows merged into management table
   mgmtRows.push({
     label: 'Net Debt to Earnings',
     type: 'debt',
@@ -137,21 +143,61 @@ export default function Toolbox({ getReport, updateReport, settings }) {
         ruleOneScore={overallScore}
       />
 
-      {loading && (
+      {/* Tab navigation */}
+      <div style={{
+        display: 'flex',
+        gap: 0,
+        borderBottom: `1px solid ${C.border}`,
+        marginBottom: 20,
+      }}>
+        {TABS.map(t => (
+          <button
+            key={t.key}
+            onClick={() => setActiveTab(t.key)}
+            style={{
+              padding: '10px 20px',
+              fontSize: 13,
+              fontWeight: activeTab === t.key ? 600 : 500,
+              color: activeTab === t.key ? C.accent : C.textSecondary,
+              background: 'transparent',
+              border: 'none',
+              borderBottom: activeTab === t.key ? `2px solid ${C.accent}` : '2px solid transparent',
+              cursor: 'pointer',
+              transition: 'color .15s, border-color .15s',
+              marginBottom: -1,
+              fontFamily: 'inherit',
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {loading && !edgarStatements && (
         <div style={{ padding: '20px 0', color: C.textSecondary, fontSize: 13 }}>
           Loading financial data...
         </div>
       )}
 
       {error && (
-        <div style={{ padding: '12px 16px', background: C.redBg, color: C.red, borderRadius: 6, fontSize: 13, marginBottom: 12 }}>
+        <div style={{
+          padding: '12px 16px',
+          background: C.redBg,
+          color: C.red,
+          borderRadius: 8,
+          fontSize: 13,
+          marginBottom: 12,
+          border: `1px solid ${C.red}20`,
+        }}>
           {error}
         </div>
       )}
 
-      {!loading && edgarStatements && (
-        <>
-          <CollapsibleSection title="Stock At Glance">
+      {edgarStatements && (
+        <div style={{ opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s', pointerEvents: loading ? 'none' : undefined }}>
+
+          {/* Overview tab */}
+          {activeTab === 'overview' && (
             <StockAtGlance
               company={company}
               edgarStatements={edgarStatements}
@@ -163,38 +209,38 @@ export default function Toolbox({ getReport, updateReport, settings }) {
               debt={debt}
               fcfResult={fcfResult}
             />
-          </CollapsibleSection>
+          )}
 
-          <CollapsibleSection title="Rule One Scores">
-            <ScoreTable
-              sectionTitle="MOAT: Compound Growth Rate"
-              rows={moatRows}
-              overallLabel="Rule One Moat Score"
-              overallScore={moat?.moatScore}
-            />
-            {!growthRates?.fcf?.['10yr'] && !edgarLoading && (
-              <div style={{ marginTop: 4, marginBottom: 12, padding: '8px 12px', background: C.yellowBg, color: C.yellow, borderRadius: 4, fontSize: 12 }}>
-                FCF growth requires CapEx data from EDGAR. CapEx data may not cover enough years for 10yr CAGR.
-              </div>
-            )}
+          {/* Scores tab */}
+          {activeTab === 'scores' && (
+            <div>
+              <ScoreTable
+                sectionTitle="MOAT: Compound Growth Rate"
+                rows={moatRows}
+                overallLabel="Rule One Moat Score"
+                overallScore={moat?.moatScore}
+              />
+              {!growthRates?.fcf?.['10yr'] && !edgarLoading && (
+                <div style={{
+                  marginTop: 4, marginBottom: 12, padding: '8px 12px',
+                  background: C.yellowBg, color: C.yellow, borderRadius: 6, fontSize: 12,
+                  border: `1px solid ${C.yellow}20`,
+                }}>
+                  FCF growth requires CapEx data from EDGAR. CapEx data may not cover enough years for 10yr CAGR.
+                </div>
+              )}
 
-            <ScoreTable
-              sectionTitle="Management: Average Rate Of Return"
-              rows={mgmtRows}
-              overallLabel="Rule One Management Score"
-              overallScore={management?.managementScore}
-            />
-          </CollapsibleSection>
+              <ScoreTable
+                sectionTitle="Management: Average Rate Of Return"
+                rows={mgmtRows}
+                overallLabel="Rule One Management Score"
+                overallScore={management?.managementScore}
+              />
+            </div>
+          )}
 
-          <CollapsibleSection title="Growth Analysis" defaultOpen={false}>
-            <GrowthAnalysis
-              growthRates={growthRates}
-              series={growthRates?._series}
-              settings={settings}
-            />
-          </CollapsibleSection>
-
-          <CollapsibleSection title="Financial Statements" defaultOpen={false}>
+          {/* Financials tab */}
+          {activeTab === 'financials' && (
             <FinancialStatements
               edgarStatements={edgarStatements}
               edgarQuarterly={edgarQuarterly}
@@ -206,8 +252,17 @@ export default function Toolbox({ getReport, updateReport, settings }) {
               onDataViewChange={setDataView}
               settings={settings}
             />
-          </CollapsibleSection>
-        </>
+          )}
+
+          {/* Growth tab */}
+          {activeTab === 'growth' && (
+            <GrowthAnalysis
+              growthRates={growthRates}
+              series={growthRates?._series}
+              settings={settings}
+            />
+          )}
+        </div>
       )}
     </div>
   );

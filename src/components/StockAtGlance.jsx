@@ -24,12 +24,17 @@ function MetricRow({ label, value }) {
     <div style={{
       display: 'flex',
       justifyContent: 'space-between',
-      padding: '5px 0',
+      padding: '6px 0',
       borderBottom: `1px solid ${C.borderLight}`,
-      fontSize: 13,
     }}>
-      <span style={{ color: C.textSecondary }}>{label}</span>
-      <span style={{ fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>{value}</span>
+      <span style={{
+        fontSize: 11,
+        textTransform: 'uppercase',
+        letterSpacing: '0.03em',
+        fontWeight: 600,
+        color: C.textMuted,
+      }}>{label}</span>
+      <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>{value}</span>
     </div>
   );
 }
@@ -101,6 +106,14 @@ export default function StockAtGlance({
   // LT Debt from EDGAR
   const ltDebt = bal.long_term_debt ?? 0;
 
+  // % return over the selected range
+  const rangeReturn = useMemo(() => {
+    if (!prices || prices.length < 2 || !currentPrice) return null;
+    const startPrice = prices[0]?.adjustedClose ?? prices[0]?.close;
+    if (!startPrice || startPrice === 0) return null;
+    return ((currentPrice - startPrice) / startPrice) * 100;
+  }, [prices, currentPrice]);
+
   // Chart data
   const chartData = (prices || []).map(p => ({
     date: p.date,
@@ -111,132 +124,163 @@ export default function StockAtGlance({
     <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
       {/* Left: Two-column metrics table matching Toolbox layout */}
       <div style={{ flex: '1 1 500px', minWidth: 400 }}>
-        <div style={{ display: 'flex', gap: 40 }}>
-          {/* Column 1 */}
-          <div style={{ flex: 1 }}>
-            <MetricRow label="52-week High" value={fmtDollar(week52High)} />
-            <MetricRow label="Current PE Ratio" value={peRatio != null ? peRatio.toFixed(2) : '-'} />
-            <MetricRow label="Shares Outstanding*" value={sharesOut != null ? fmtM(sharesOut) : '-'} />
-            <MetricRow label="Revenue*" value={inc.revenues != null ? '$' + fmtM(inc.revenues) : '-'} />
-            <MetricRow label="FCF Ratio" value={fcfRatio != null ? fcfRatio.toFixed(2) : '-'} />
-            <MetricRow label="Return on Inv Cap (ROIC)" value={pct(latestReturns?.roic)} />
-            <MetricRow label="LT Debt to Earnings" value={
-              inc.net_income_loss && inc.net_income_loss > 0
-                ? (ltDebt / inc.net_income_loss).toFixed(1)
-                : ltDebt === 0 ? '0' : '-'
-            } />
-            <MetricRow label="Net Debt to Earnings" value={
-              debt?.isNetCash ? '0.0' : (debt?.netDebtToEarnings != null ? debt.netDebtToEarnings.toFixed(1) : '-')
-            } />
+        <div style={{
+          border: `1px solid ${C.border}`,
+          borderRadius: 8,
+          padding: 16,
+          background: C.bgCard,
+          boxShadow: '0 1px 3px 0 rgba(0,0,0,0.04)',
+        }}>
+          <div style={{ display: 'flex', gap: 40 }}>
+            {/* Column 1 */}
+            <div style={{ flex: 1 }}>
+              <MetricRow label="52-week High" value={fmtDollar(week52High)} />
+              <MetricRow label="Current PE Ratio" value={peRatio != null ? peRatio.toFixed(2) : '-'} />
+              <MetricRow label="Shares Outstanding*" value={sharesOut != null ? fmtM(sharesOut) : '-'} />
+              <MetricRow label="Revenue*" value={inc.revenues != null ? '$' + fmtM(inc.revenues) : '-'} />
+              <MetricRow label="FCF Ratio" value={fcfRatio != null ? fcfRatio.toFixed(2) : '-'} />
+              <MetricRow label="Return on Inv Cap (ROIC)" value={pct(latestReturns?.roic)} />
+              <MetricRow label="LT Debt to Earnings" value={
+                inc.net_income_loss && inc.net_income_loss > 0
+                  ? (ltDebt / inc.net_income_loss).toFixed(1)
+                  : ltDebt === 0 ? '0' : '-'
+              } />
+              <MetricRow label="Net Debt to Earnings" value={
+                debt?.isNetCash ? '0.0' : (debt?.netDebtToEarnings != null ? debt.netDebtToEarnings.toFixed(1) : '-')
+              } />
+            </div>
+
+            {/* Column 2 */}
+            <div style={{ flex: 1 }}>
+              <MetricRow label="52-week Low" value={fmtDollar(week52Low)} />
+              <MetricRow label="Market Cap*" value={marketCap != null ? '$' + fmtM(marketCap) : '-'} />
+              <MetricRow label="Buybacks per Share" value={fmtDollar(buybacksPerShare)} />
+              <MetricRow label="EPS TTM" value={fmtDollar(ttmEPS)} />
+              <MetricRow label="Return on Equity (ROE)" value={pct(latestReturns?.roe)} />
+              <MetricRow label="Return on Assets (ROA)" value={pct(latestReturns?.roa)} />
+              <MetricRow label="LT Debt to FCF" value={
+                latestFCF?.fcf && latestFCF.fcf > 0
+                  ? (ltDebt / latestFCF.fcf).toFixed(1)
+                  : ltDebt === 0 ? '0' : '-'
+              } />
+              <MetricRow label="Net Debt to FCF" value={
+                debt?.isNetCash ? '0.0' : (debt?.netDebtToFCF != null ? debt.netDebtToFCF.toFixed(1) : '-')
+              } />
+            </div>
           </div>
 
-          {/* Column 2 */}
-          <div style={{ flex: 1 }}>
-            <MetricRow label="52-week Low" value={fmtDollar(week52Low)} />
-            <MetricRow label="Market Cap*" value={marketCap != null ? '$' + fmtM(marketCap) : '-'} />
-            <MetricRow label="Buybacks per Share" value={fmtDollar(buybacksPerShare)} />
-            <MetricRow label="EPS TTM" value={fmtDollar(ttmEPS)} />
-            <MetricRow label="Return on Equity (ROE)" value={pct(latestReturns?.roe)} />
-            <MetricRow label="Return on Assets (ROA)" value={pct(latestReturns?.roa)} />
-            <MetricRow label="LT Debt to FCF" value={
-              latestFCF?.fcf && latestFCF.fcf > 0
-                ? (ltDebt / latestFCF.fcf).toFixed(1)
-                : ltDebt === 0 ? '0' : '-'
-            } />
-            <MetricRow label="Net Debt to FCF" value={
-              debt?.isNetCash ? '0.0' : (debt?.netDebtToFCF != null ? debt.netDebtToFCF.toFixed(1) : '-')
-            } />
+          <div style={{ marginTop: 10, fontSize: 11, color: C.textMuted, display: 'flex', justifyContent: 'space-between' }}>
+            <span>Updated: {new Date().toLocaleDateString()}</span>
+            <span>* in millions</span>
           </div>
-        </div>
-
-        <div style={{ marginTop: 8, fontSize: 11, color: C.textMuted, display: 'flex', justifyContent: 'space-between' }}>
-          <span>Updated: {new Date().toLocaleDateString()}</span>
-          <span>* in millions</span>
         </div>
       </div>
 
       {/* Right: Price chart */}
       <div style={{ flex: '1 1 350px', minWidth: 300 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: C.textSecondary, marginBottom: 4 }}>
-          {company?.ticker || ''} Price Chart
-        </div>
-
-        {/* Range selector */}
-        <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
-          {RANGES.map(r => (
-            <button
-              key={r}
-              onClick={() => handleRange(r)}
-              style={{
-                padding: '4px 10px',
-                fontSize: 11,
-                fontWeight: 600,
-                background: selectedRange === r ? C.accent : 'transparent',
-                color: selectedRange === r ? '#fff' : C.textSecondary,
-                border: `1px solid ${selectedRange === r ? C.accent : C.border}`,
-                borderRadius: 4,
-                cursor: 'pointer',
-                textTransform: 'uppercase',
-              }}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-
-        {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="priceGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={C.accent} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={C.accent} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 10, fill: C.textMuted }}
-                tickLine={false}
-                axisLine={{ stroke: C.border }}
-                tickFormatter={d => {
-                  const parts = d.split('-');
-                  return parts[1] + '/' + parts[0].slice(2);
-                }}
-                minTickGap={60}
-              />
-              <YAxis
-                tick={{ fontSize: 10, fill: C.textMuted }}
-                tickLine={false}
-                axisLine={false}
-                domain={['auto', 'auto']}
-                tickFormatter={v => '$' + v.toFixed(0)}
-                width={55}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: C.bgCard,
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 6,
-                  fontSize: 12,
-                  color: C.text,
-                }}
-                formatter={v => ['$' + v.toFixed(2), 'Price']}
-                labelFormatter={l => l}
-              />
-              <Area
-                type="monotone"
-                dataKey="price"
-                stroke={C.accent}
-                strokeWidth={1.5}
-                fill="url(#priceGrad)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        ) : (
-          <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textMuted, fontSize: 13 }}>
-            Loading price data...
+        <div style={{
+          border: `1px solid ${C.border}`,
+          borderRadius: 8,
+          padding: 16,
+          background: C.bgCard,
+          boxShadow: '0 1px 3px 0 rgba(0,0,0,0.04)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.textSecondary }}>
+              {company?.ticker || ''} Price Chart
+            </span>
+            {rangeReturn != null && (
+              <span style={{
+                fontSize: 13, fontWeight: 700,
+                color: rangeReturn >= 0 ? C.green : C.red,
+              }}>
+                {rangeReturn >= 0 ? '+' : ''}{rangeReturn.toFixed(2)}%
+                <span style={{ fontSize: 11, fontWeight: 500, color: C.textSecondary, marginLeft: 4 }}>
+                  {selectedRange === 'max' ? 'all time' : selectedRange.replace('y', 'Y')}
+                </span>
+              </span>
+            )}
           </div>
-        )}
+
+          {/* Range selector */}
+          <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+            {RANGES.map(r => (
+              <button
+                key={r}
+                onClick={() => handleRange(r)}
+                style={{
+                  padding: '3px 10px',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  background: selectedRange === r ? C.accent : C.bgCard,
+                  color: selectedRange === r ? '#fff' : C.textSecondary,
+                  border: `1px solid ${selectedRange === r ? C.accent : C.border}`,
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                  textTransform: 'uppercase',
+                  transition: 'all .15s',
+                }}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="priceGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={C.accent} stopOpacity={0.3} />
+                    <stop offset="100%" stopColor={C.accent} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 10, fill: C.textMuted }}
+                  tickLine={false}
+                  axisLine={{ stroke: C.border }}
+                  tickFormatter={d => {
+                    const parts = d.split('-');
+                    return parts[1] + '/' + parts[0].slice(2);
+                  }}
+                  minTickGap={60}
+                />
+                <YAxis
+                  tick={{ fontSize: 10, fill: C.textMuted }}
+                  tickLine={false}
+                  axisLine={false}
+                  domain={['auto', 'auto']}
+                  tickFormatter={v => '$' + v.toFixed(0)}
+                  width={55}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: C.bgCard,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 8,
+                    fontSize: 12,
+                    color: C.text,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  }}
+                  formatter={v => ['$' + v.toFixed(2), 'Price']}
+                  labelFormatter={l => l}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="price"
+                  stroke={C.accent}
+                  strokeWidth={1.5}
+                  fill="url(#priceGrad)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textMuted, fontSize: 13 }}>
+              Loading price data...
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

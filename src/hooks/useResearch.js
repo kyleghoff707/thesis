@@ -12,8 +12,32 @@ function loadReports() {
   }
 }
 
+function evictCaches() {
+  // Remove sa-cache: entries (EDGAR/guru caches) to free space for user data
+  const toRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && (k.startsWith('sa-cache:') || k.startsWith('guru-'))) {
+      toRemove.push(k);
+    }
+  }
+  toRemove.forEach(k => localStorage.removeItem(k));
+}
+
 function saveReports(reports) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
+  } catch (e) {
+    if (e.name === 'QuotaExceededError') {
+      // Evict caches and retry — user data is more important than caches
+      evictCaches();
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
+      } catch {
+        console.warn('localStorage still full after eviction — reports saved in memory only');
+      }
+    }
+  }
 }
 
 export function useResearch() {

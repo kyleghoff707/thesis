@@ -1,18 +1,19 @@
+import { useNavigate } from 'react-router-dom';
 import { C } from '../theme';
 
 function SettingSelect({ label, value, onChange, options }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0' }}>
-      <span style={{ fontSize: 13, color: C.text }}>{label}</span>
+      <span style={{ fontSize: 13, fontWeight: 500, color: C.text }}>{label}</span>
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
         style={{
-          padding: '5px 10px', fontSize: 12, fontWeight: 500,
+          padding: '6px 10px', fontSize: 13, fontWeight: 500,
           background: C.bgInput || C.bgCard, color: C.text,
-          border: `1px solid ${C.border}`, borderRadius: 4,
+          border: `1px solid ${C.border}`, borderRadius: 6,
           cursor: 'pointer', fontFamily: 'inherit', outline: 'none',
-          minWidth: 130,
+          minWidth: 130, transition: 'border-color .15s',
         }}
       >
         {options.map(opt => (
@@ -26,19 +27,20 @@ function SettingSelect({ label, value, onChange, options }) {
 function SectionHeader({ label }) {
   return (
     <div style={{
-      fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
-      letterSpacing: 0.5, color: C.accent, padding: '16px 0 6px',
-      borderBottom: `1px solid ${C.borderLight}`, marginBottom: 4,
+      fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
+      letterSpacing: '0.04em', color: C.accent, paddingTop: 20, paddingBottom: 6,
+      borderBottom: `1px solid ${C.border}`, marginBottom: 4,
     }}>{label}</div>
   );
 }
 
 export default function Settings({ settings, updateSettings, isDark, toggleTheme, onClose }) {
+  const navigate = useNavigate();
   return (
     <div
       onClick={onClose}
       style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         zIndex: 1000,
       }}
@@ -47,9 +49,8 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
         onClick={e => e.stopPropagation()}
         style={{
           background: C.bgCard, borderRadius: 12,
-          border: `1px solid ${C.border}`,
-          boxShadow: `0 16px 48px ${C.shadow}`,
-          width: 440, maxHeight: '80vh', overflow: 'auto',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
+          width: 440, maxWidth: 720, maxHeight: '80vh', overflow: 'auto',
           padding: '24px',
         }}
       >
@@ -58,9 +59,12 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
           <button
             onClick={onClose}
             style={{
-              background: 'none', border: 'none', color: C.textSecondary,
+              background: 'none', border: 'none', color: C.textMuted,
               fontSize: 20, cursor: 'pointer', padding: '4px 8px', lineHeight: 1,
+              borderRadius: 6, transition: 'all .15s',
             }}
+            onMouseEnter={e => e.currentTarget.style.color = C.text}
+            onMouseLeave={e => e.currentTarget.style.color = C.textMuted}
           >&times;</button>
         </div>
 
@@ -127,18 +131,6 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
           ]}
         />
 
-        <SectionHeader label="Key Metrics" />
-        <SettingSelect
-          label="Default Display"
-          value={settings.keyMetricsDisplay}
-          onChange={v => updateSettings({ keyMetricsDisplay: v })}
-          options={[
-            { value: 'both', label: 'Values & % Change' },
-            { value: 'values', label: 'Values Only' },
-            { value: 'change', label: '% Change Only' },
-          ]}
-        />
-
         <SectionHeader label="Growth Analysis" />
         <SettingSelect
           label="Default Chart Years"
@@ -165,6 +157,63 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
             { value: 'max', label: 'Max' },
           ]}
         />
+
+        <SectionHeader label="Tools" />
+        <div style={{ padding: '8px 0' }}>
+          <button
+            onClick={() => { onClose(); navigate('/validation'); }}
+            style={{
+              background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 6,
+              padding: '6px 12px', fontSize: 13, fontWeight: 500, color: C.textSecondary,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+              transition: 'all .15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSecondary; }}
+          >
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+            </svg>
+            Run Validation
+          </button>
+          <button
+            onClick={() => { onClose(); navigate('/guru-audit'); }}
+            style={{
+              background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 6,
+              padding: '6px 12px', fontSize: 13, fontWeight: 500, color: C.textSecondary,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+              transition: 'all .15s', marginTop: 8,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSecondary; }}
+          >
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
+            </svg>
+            Run Guru Audit
+          </button>
+        </div>
+
+        <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>
+          <button
+            onClick={onClose}
+            style={{
+              width: '100%', padding: '7px 16px', fontSize: 12, fontWeight: 600,
+              background: C.accent, color: '#fff', border: 'none', borderRadius: 6,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              transition: 'all .15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = C.accentHover}
+            onMouseLeave={e => e.currentTarget.style.background = C.accent}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            Save
+          </button>
+        </div>
       </div>
     </div>
   );

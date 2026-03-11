@@ -10,6 +10,7 @@ export default function CollapsibleSection({ title, defaultOpen = true, badge, c
       borderRadius: 8,
       marginBottom: 12,
       background: C.bgCard,
+      boxShadow: '0 1px 3px 0 rgba(0,0,0,0.04)',
     }}>
       <button
         onClick={() => setOpen(o => !o)}
@@ -17,16 +18,17 @@ export default function CollapsibleSection({ title, defaultOpen = true, badge, c
           width: '100%',
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          gap: 10,
           padding: '12px 16px',
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
           color: C.text,
-          fontSize: 14,
-          fontWeight: 600,
+          fontSize: 13,
+          fontWeight: 700,
           textAlign: 'left',
           fontFamily: 'inherit',
+          transition: 'all .15s',
         }}
       >
         <span style={{
@@ -34,7 +36,7 @@ export default function CollapsibleSection({ title, defaultOpen = true, badge, c
           transition: 'transform 0.15s',
           transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
           fontSize: 10,
-          color: C.textSecondary,
+          color: C.textMuted,
         }}>
           ▶
         </span>

@@ -89,6 +89,18 @@ export async function lookupCIK(ticker) {
 // ─── Ticker Search ─────────
 // Searches the EDGAR ticker map locally by ticker prefix or company name substring.
 
+// Expose the ticker search index for external use (e.g., CUSIP-to-ticker fuzzy matching)
+export async function getTickerSearchIndex() {
+  if (!tickerMapPromise) {
+    tickerMapPromise = loadTickerMap().catch(err => {
+      tickerMapPromise = null;
+      throw err;
+    });
+  }
+  await tickerMapPromise;
+  return tickerSearchIndex || [];
+}
+
 export async function searchEdgarTickers(query, limit = 8) {
   if (!query || query.length < 1) return [];
 

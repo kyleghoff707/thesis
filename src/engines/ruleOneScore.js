@@ -17,12 +17,16 @@ function scoreRate(rate) {
 // 1yr is displayed but NOT scored
 // Max points = 4 periods × 2 points = 8
 // Metric score = totalPoints × 12.5 (max 100)
+// Returns null if ALL scored periods are null (no data for this metric)
 function scoreMetric(rates) {
   const scoredPeriods = ['10yr', '7yr', '5yr', '3yr'];
   let totalPoints = 0;
+  let hasData = false;
   for (const p of scoredPeriods) {
+    if (rates[p] != null) hasData = true;
     totalPoints += scoreRate(rates[p]);
   }
+  if (!hasData) return null;
   return totalPoints * 12.5;
 }
 
@@ -53,9 +57,14 @@ export function computeMoatScore(growthRates) {
   for (const m of metrics) {
     const rates = growthRates[m];
     if (rates && Object.keys(rates).length > 0) {
-      scores[m] = scoreMetric(rates);
-      total += scores[m];
-      count++;
+      const score = scoreMetric(rates);
+      if (score != null) {
+        scores[m] = score;
+        total += score;
+        count++;
+      } else {
+        scores[m] = null;
+      }
     } else {
       scores[m] = null;
     }
@@ -80,25 +89,38 @@ export function computeManagementScore(returnAverages, debtMetrics) {
     for (const p of ['10yr', '7yr', '5yr', '3yr']) {
       rates[p] = returnAverages[p]?.[metric] ?? null;
     }
-    scores[metric] = scoreMetric(rates);
-    total += scores[metric];
-    count++;
+    const score = scoreMetric(rates);
+    if (score != null) {
+      scores[metric] = score;
+      total += score;
+      count++;
+    } else {
+      scores[metric] = null;
+    }
   }
 
   // Debt metrics scoring — binary per Rule One methodology
   // Can pay off debt in 3 years or less → green (100)
   // Cannot → red (0)
+  // Null → excluded from score (metric has no data)
   const debtScore = (years) => {
-    if (years == null) return 0;
+    if (years == null) return null;
     if (years <= 0) return 100; // net cash
     if (years <= 3) return 100; // green — payable within 3 years
     return 0; // red — too much debt
   };
 
   scores.netDebtToEarnings = debtScore(debtMetrics.netDebtToEarnings);
+  if (scores.netDebtToEarnings != null) {
+    total += scores.netDebtToEarnings;
+    count++;
+  }
+
   scores.netDebtToFCF = debtScore(debtMetrics.netDebtToFCF);
-  total += scores.netDebtToEarnings + scores.netDebtToFCF;
-  count += 2;
+  if (scores.netDebtToFCF != null) {
+    total += scores.netDebtToFCF;
+    count++;
+  }
 
   const managementScore = count > 0 ? Math.round(total / count) : null;
   return { managementScore, metricScores: scores };

@@ -31,7 +31,14 @@ function GrowthChart({ series, label }) {
 
   return (
     <div style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary, marginBottom: 4 }}>
+      <div style={{
+        fontSize: 11,
+        fontWeight: 600,
+        color: C.textMuted,
+        marginBottom: 4,
+        textTransform: 'uppercase',
+        letterSpacing: '0.03em',
+      }}>
         {label}
       </div>
       <ResponsiveContainer width="100%" height={120}>
@@ -57,9 +64,10 @@ function GrowthChart({ series, label }) {
             contentStyle={{
               background: C.bgCard,
               border: `1px solid ${C.border}`,
-              borderRadius: 6,
+              borderRadius: 8,
               fontSize: 12,
               color: C.text,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
             }}
             formatter={v => {
               if (Math.abs(v) >= 1e9) return ['$' + (v / 1e9).toFixed(2) + 'B', label];
@@ -82,59 +90,81 @@ function GrowthRateTable({ growthRates }) {
   const metrics = Object.keys(METRIC_LABELS);
 
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 8 }}>
-      <thead>
-        <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-          <th style={{ textAlign: 'left', padding: '6px 12px', color: C.textSecondary, fontSize: 11, fontWeight: 600 }}>
-            Growth Metric
-          </th>
-          {PERIOD_LABELS.map(p => (
-            <th key={p} style={{
-              textAlign: 'right',
-              padding: '6px 12px',
-              color: p === '1yr' ? C.textMuted : C.textSecondary,
+    <div style={{
+      border: `1px solid ${C.border}`,
+      borderRadius: 8,
+      overflow: 'hidden',
+      boxShadow: '0 1px 3px 0 rgba(0,0,0,0.04)',
+    }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ background: C.headerBg }}>
+            <th style={{
+              textAlign: 'left',
+              padding: '10px 14px',
+              color: C.textMuted,
               fontSize: 11,
               fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              borderBottom: `1px solid ${C.border}`,
             }}>
-              {p}
+              Growth Metric
             </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {metrics.map(m => {
-          const rates = growthRates[m];
-          if (!rates || Object.keys(rates).length === 0) return null;
+            {PERIOD_LABELS.map(p => (
+              <th key={p} style={{
+                textAlign: 'right',
+                padding: '10px 14px',
+                color: C.textMuted,
+                fontSize: 11,
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                borderBottom: `1px solid ${C.border}`,
+              }}>
+                {p}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {metrics.map(m => {
+            const rates = growthRates[m];
+            if (!rates || Object.keys(rates).length === 0) return null;
 
-          return (
-            <tr key={m} style={{ borderBottom: `1px solid ${C.borderLight}` }}>
-              <td style={{ padding: '6px 12px', color: C.text, fontWeight: 500 }}>
-                {METRIC_LABELS[m]}
-              </td>
-              {PERIOD_LABELS.map(p => {
-                const rate = rates[p];
-                const color = p === '1yr' ? 'gray' : cellColor(rate);
-                const fgMap = { green: C.green, yellow: C.yellow, red: C.red, gray: C.textMuted };
-                const bgMap = { green: C.greenBg, yellow: C.yellowBg, red: C.redBg, gray: 'transparent' };
+            return (
+              <tr key={m} style={{ borderBottom: `1px solid ${C.borderLight}` }}>
+                <td style={{ padding: '8px 14px', color: C.text, fontWeight: 500, fontSize: 12 }}>
+                  {METRIC_LABELS[m]}
+                </td>
+                {PERIOD_LABELS.map(p => {
+                  const rate = rates[p];
+                  const color = p === '1yr' ? 'gray' : cellColor(rate);
+                  const fgMap = { green: C.green, yellow: C.yellow, red: C.red, gray: C.textMuted };
 
-                return (
-                  <td key={p} style={{
-                    textAlign: 'right',
-                    padding: '6px 12px',
-                    fontWeight: 600,
-                    fontVariantNumeric: 'tabular-nums',
-                    color: fgMap[color],
-                    background: bgMap[color],
-                  }}>
-                    {rate != null ? (rate * 100).toFixed(1) + '%' : '--'}
-                  </td>
-                );
-              })}
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+                  return (
+                    <td key={p} style={{
+                      textAlign: 'right',
+                      padding: '8px 14px',
+                      fontWeight: 600,
+                      fontSize: 12,
+                      fontVariantNumeric: 'tabular-nums',
+                      color: fgMap[color],
+                      background: color === 'green' ? C.green + '14'
+                        : color === 'yellow' ? C.yellow + '14'
+                        : color === 'red' ? C.red + '14'
+                        : 'transparent',
+                    }}>
+                      {rate != null ? (rate * 100).toFixed(1) + '%' : '--'}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -152,14 +182,20 @@ export default function GrowthAnalysis({ growthRates, series, settings }) {
 
       {/* Chart years control */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 16, marginBottom: 4 }}>
-        <span style={{ fontSize: 12, color: C.textSecondary, fontWeight: 600 }}>Chart Years:</span>
+        <span style={{
+          fontSize: 11,
+          color: C.textMuted,
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '0.03em',
+        }}>Chart Years:</span>
         <select
           value={chartYears}
           onChange={e => setChartYears(e.target.value)}
           style={{
-            padding: '5px 10px', fontSize: 12, fontWeight: 500,
-            background: C.bgInput || C.bgCard, color: C.text,
-            border: `1px solid ${C.border}`, borderRadius: 4,
+            padding: '6px 10px', fontSize: 13, fontWeight: 500,
+            background: C.bgCard, color: C.text,
+            border: `1px solid ${C.border}`, borderRadius: 6,
             cursor: 'pointer', fontFamily: 'inherit', outline: 'none',
           }}
         >

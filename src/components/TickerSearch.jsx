@@ -8,6 +8,7 @@ export default function TickerSearch({ onSubmit }) {
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(-1);
   const [loading, setLoading] = useState(false);
+  const [focused, setFocused] = useState(false);
   const wrapperRef = useRef(null);
   const debounceRef = useRef(null);
 
@@ -16,6 +17,7 @@ export default function TickerSearch({ onSubmit }) {
     const handleClick = (e) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
         setOpen(false);
+        setFocused(false);
       }
     };
     document.addEventListener('mousedown', handleClick);
@@ -99,25 +101,43 @@ export default function TickerSearch({ onSubmit }) {
 
   return (
     <div ref={wrapperRef} style={{ position: 'relative' }}>
-      <input
-        type="text"
-        value={value}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        onFocus={() => { if (results.length > 0) setOpen(true); }}
-        placeholder="Search ticker or company..."
-        style={{
-          width: 320,
-          padding: '7px 12px',
-          fontSize: 13,
-          background: C.bgInput,
-          color: C.text,
-          border: `1px solid ${open ? C.accent : C.border}`,
-          borderRadius: open ? '6px 6px 0 0' : 6,
-          outline: 'none',
-          fontFamily: 'inherit',
-        }}
-      />
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        {/* Search icon */}
+        <svg
+          width="14" height="14" viewBox="0 0 24 24"
+          fill="none" stroke={focused ? C.accent : C.textMuted}
+          strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          style={{
+            position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+            pointerEvents: 'none', transition: 'stroke .15s',
+          }}
+        >
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          type="text"
+          value={value}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => { setFocused(true); if (results.length > 0) setOpen(true); }}
+          onBlur={() => setFocused(false)}
+          placeholder="Search ticker or company..."
+          style={{
+            width: 340,
+            padding: '8px 14px 8px 34px',
+            fontSize: 13,
+            background: C.bgInput,
+            color: C.text,
+            border: `1px solid ${open ? C.accent : C.border}`,
+            borderRadius: open ? '6px 6px 0 0' : 6,
+            outline: 'none',
+            fontFamily: 'inherit',
+            transition: 'border-color .15s, box-shadow .15s',
+            boxShadow: focused && !open ? `0 0 0 2px ${C.accent}20` : 'none',
+          }}
+        />
+      </div>
 
       {/* Dropdown */}
       {open && (
@@ -125,18 +145,18 @@ export default function TickerSearch({ onSubmit }) {
           position: 'absolute',
           top: '100%',
           left: 0,
-          width: 320,
+          width: 340,
           background: C.bgCard,
           border: `1px solid ${C.accent}`,
           borderTop: 'none',
-          borderRadius: '0 0 6px 6px',
-          boxShadow: `0 8px 24px ${C.shadow}`,
+          borderRadius: '0 0 8px 8px',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
           zIndex: 100,
           maxHeight: 300,
           overflowY: 'auto',
         }}>
           {loading && (
-            <div style={{ padding: '8px 12px', fontSize: 12, color: C.textMuted }}>
+            <div style={{ padding: '8px 14px', fontSize: 12, color: C.textMuted }}>
               Searching...
             </div>
           )}
@@ -149,9 +169,10 @@ export default function TickerSearch({ onSubmit }) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 10,
-                padding: '8px 12px',
+                padding: '8px 14px',
                 cursor: 'pointer',
                 background: i === highlighted ? C.bgHover : 'transparent',
+                transition: 'background .1s',
               }}
             >
               <span style={{

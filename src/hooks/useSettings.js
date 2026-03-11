@@ -7,12 +7,10 @@ export const DEFAULT_SETTINGS = {
   defaultLayout: 'expanded',
   defaultVersion: 'restated',
   defaultView: 'annual',
-  defaultPeriods: '13',
+  defaultPeriods: '10',
   defaultQtrPeriods: '8',
-  // Key Metrics
-  keyMetricsDisplay: 'both', // 'both' | 'values' | 'change'
   // Growth Analysis
-  growthChartYears: 'all', // '5' | '10' | '13' | 'all'
+  growthChartYears: '10', // '5' | '10' | '13' | 'all'
   // Price Chart
   defaultPriceRange: '5y',
 };
