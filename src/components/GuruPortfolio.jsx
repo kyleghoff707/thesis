@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ResponsiveContainer, Tooltip, ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'recharts';
 import { C } from '../theme';
 import { useGurus } from '../hooks/useGurus';
+import { useSettings } from '../hooks/useSettings';
 
 // ─── Format helpers ─────────────────────────────────────────
 
@@ -83,6 +84,7 @@ const RANGE_QUARTERS = { '6m': 2, '1y': 4, '3y': 12, '5y': 20 };
 
 function PortfolioTreemap({ holdings, filter }) {
   const [hoveredIdx, setHoveredIdx] = useState(null);
+  const containerRef = useRef(null);
 
   const treemapData = useMemo(() => {
     const source = (filter === 'all' ? holdings : holdings.filter(h => {
@@ -121,7 +123,7 @@ function PortfolioTreemap({ holdings, filter }) {
 
   return (
     <div style={{ position: 'relative' }}>
-      <div style={{
+      <div ref={containerRef} style={{
         position: 'relative', width: '100%', height: 280,
         borderRadius: 6, overflow: 'hidden', border: `1px solid ${C.border}`,
       }}>
@@ -172,28 +174,81 @@ function PortfolioTreemap({ holdings, filter }) {
         })}
       </div>
 
-      {/* Hover tooltip — anchored to hovered rectangle */}
-      {hoveredIdx != null && rects[hoveredIdx] && (() => {
+      {/* Hover tooltip — speech bubble anchored to hovered rectangle */}
+      {hoveredIdx != null && rects[hoveredIdx] && containerRef.current && (() => {
         const r = rects[hoveredIdx];
-        const cx = r.x + r.w / 2;
-        const aboveRect = r.y > 40;
+        const box = containerRef.current;
+        const cW = box.offsetWidth;
+        const cH = box.offsetHeight;
+
+        // Pixel coords of hovered rect center and edges
+        const rectCxPx = (r.x + r.w / 2) / 100 * cW;
+        const rectTopPx = r.y / 100 * cH;
+        const rectBotPx = (r.y + r.h) / 100 * cH;
+
+        // Show above if rect is in bottom 60%, otherwise below
+        const showAbove = r.y > 35;
+        const arrowSize = 7;
+        const gap = 4;
+
+        // Tooltip top in px (relative to container)
+        // We use a wrapper positioned in px, then the tooltip auto-sizes
+        const tipTopPx = showAbove ? (rectTopPx - gap) : (rectBotPx + gap);
+
+        // Clamp horizontal: tooltip is ~180px wide, keep arrow within bounds
+        const tooltipWidth = 180;
+        const halfTip = tooltipWidth / 2;
+        const clampedCx = Math.max(halfTip + 4, Math.min(rectCxPx, cW - halfTip - 4));
+        // Arrow offset from tooltip center (when tooltip is clamped)
+        const arrowOffsetPx = rectCxPx - clampedCx;
+
         return (
           <div style={{
             position: 'absolute',
-            left: `${Math.min(Math.max(cx, 10), 90)}%`,
-            top: aboveRect ? `${r.y - 2}%` : `${r.y + r.h + 2}%`,
-            transform: aboveRect ? 'translate(-50%, -100%)' : 'translate(-50%, 0)',
-            background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 6,
-            padding: '8px 12px', fontSize: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            pointerEvents: 'none', zIndex: 10, whiteSpace: 'nowrap',
+            left: clampedCx,
+            top: tipTopPx,
+            transform: showAbove ? 'translate(-50%, -100%)' : 'translate(-50%, 0)',
+            pointerEvents: 'none', zIndex: 10,
           }}>
-            <div style={{ fontWeight: 600, color: C.text }}>{r.data.issuer}</div>
-            <div style={{ color: C.accent, fontSize: 11 }}>{r.data.ticker}</div>
-            <div style={{ color: C.textSecondary, marginTop: 2 }}>
-              {fmtValue(r.data.value)} &middot; {fmtPct(r.data.pct)}
-            </div>
-            <div style={{ color: ACTION_COLORS[r.data.action], fontWeight: 600, marginTop: 2 }}>
-              {ACTION_LABELS[r.data.action] || '--'}
+            {/* Tooltip body */}
+            <div style={{
+              position: 'relative',
+              background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 6,
+              padding: '8px 12px', fontSize: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              whiteSpace: 'nowrap',
+            }}>
+              <div style={{ fontWeight: 600, color: C.text }}>{r.data.issuer}</div>
+              <div style={{ color: C.accent, fontSize: 11 }}>{r.data.ticker}</div>
+              <div style={{ color: C.textSecondary, marginTop: 2 }}>
+                {fmtValue(r.data.value)} &middot; {fmtPct(r.data.pct)}
+              </div>
+              <div style={{ color: ACTION_COLORS[r.data.action], fontWeight: 600, marginTop: 2 }}>
+                {ACTION_LABELS[r.data.action] || '--'}
+              </div>
+
+              {/* Arrow pointing at the rect */}
+              {/* Outer arrow (border color) */}
+              <div style={{
+                position: 'absolute',
+                left: `calc(50% + ${arrowOffsetPx}px)`,
+                [showAbove ? 'bottom' : 'top']: -(arrowSize * 2),
+                transform: 'translateX(-50%)',
+                width: 0, height: 0,
+                borderLeft: `${arrowSize}px solid transparent`,
+                borderRight: `${arrowSize}px solid transparent`,
+                [showAbove ? 'borderTop' : 'borderBottom']: `${arrowSize}px solid ${C.border}`,
+              }} />
+              {/* Inner arrow (fill color) */}
+              <div style={{
+                position: 'absolute',
+                left: `calc(50% + ${arrowOffsetPx}px)`,
+                [showAbove ? 'bottom' : 'top']: -(arrowSize * 2 - 1),
+                transform: 'translateX(-50%)',
+                width: 0, height: 0,
+                borderLeft: `${arrowSize}px solid transparent`,
+                borderRight: `${arrowSize}px solid transparent`,
+                [showAbove ? 'borderTop' : 'borderBottom']: `${arrowSize}px solid ${C.bgCard}`,
+              }} />
             </div>
           </div>
         );
@@ -265,8 +320,10 @@ function _layoutRecurse(items, x, y, w, h, rects, horizontal) {
 export default function GuruPortfolio() {
   const { cik } = useParams();
   const navigate = useNavigate();
+  const { settings } = useSettings();
   const {
     gurus, activities, fetchOneWithChanges, fetchHistory, fetchPortfolioHistory,
+    nportData,
   } = useGurus();
 
   const [filter, setFilter] = useState('all');
@@ -284,6 +341,7 @@ export default function GuruPortfolio() {
 
   const guru = useMemo(() => gurus.find(g => g.cik === cik), [gurus, cik]);
   const activity = useMemo(() => activities.find(a => a?.guru?.cik === cik), [activities, cik]);
+  const nport = settings.enableNport !== false ? (nportData[cik] || null) : null;
 
   // Auto-fetch if no activity data exists for this guru
   useEffect(() => {
@@ -493,6 +551,23 @@ export default function GuruPortfolio() {
                 as of close on {toReadableDate(activity.reportDate)}
               </div>
             </div>
+            {nport && (
+              <>
+                <div style={{ width: 1, background: C.border }} />
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 11, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2, display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center' }}>
+                    Cash Position
+                    <span title="From N-PORT filing (fund portfolio data)" style={{ fontSize: 9, background: C.accent, color: '#fff', borderRadius: 3, padding: '1px 4px', fontWeight: 700, letterSpacing: 0, cursor: 'help' }}>N</span>
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>
+                    {fmtValue(nport.cashPosition)}
+                  </div>
+                  <div style={{ fontSize: 12, color: C.accent, fontWeight: 600 }}>
+                    {fmtPct(nport.cashPct)} of fund
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -585,6 +660,11 @@ export default function GuruPortfolio() {
               </tbody>
             </table>
           </div>
+
+          {/* ─── N-PORT Fund Holdings (cash + derivatives) ─── */}
+          {nport && (nport.cashHoldings?.length > 0 || nport.derivativeHoldings?.length > 0) && (
+            <NportHoldingsSection nport={nport} />
+          )}
 
           {/* ─── Portfolio Value Chart (below holdings) ─── */}
           <div style={{
@@ -684,6 +764,130 @@ export default function GuruPortfolio() {
             )}
           </div>
         </>
+      )}
+    </div>
+  );
+}
+
+// ─── N-PORT Holdings Section ─────────────────────────────────
+
+function NportHoldingsSection({ nport }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const cashItems = nport.cashHoldings || [];
+  const derivItems = nport.derivativeHoldings || [];
+  const otherItems = nport.otherHoldings || [];
+  const allItems = [...cashItems, ...derivItems, ...otherItems];
+
+  if (allItems.length === 0) return null;
+
+  const catLabel = (cat) => {
+    if (cat === 'STIV') return 'Money Market';
+    if (cat === 'RF') return 'Repo';
+    if (cat === 'DE' || cat === 'DIR') return 'Derivative';
+    if (cat === 'DBT') return 'Debt';
+    return cat || 'Other';
+  };
+
+  const catColor = (cat) => {
+    if (cat === 'STIV' || cat === 'RF') return '#6366f1'; // indigo
+    if (cat === 'DE' || cat === 'DIR') return '#f59e0b'; // amber
+    if (cat === 'DBT') return '#8b5cf6'; // violet
+    return C.textMuted;
+  };
+
+  return (
+    <div style={{
+      border: `1px solid ${C.border}`, borderRadius: 8,
+      overflow: 'hidden', background: C.bgCard, marginTop: 16,
+    }}>
+      <div
+        onClick={() => setExpanded(!expanded)}
+        style={{
+          padding: '10px 14px', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: C.headerBg,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{
+            fontSize: 10, color: expanded ? C.accent : C.textMuted,
+            display: 'inline-block',
+            transform: expanded ? 'rotate(90deg)' : 'none',
+            transition: 'transform .15s',
+          }}>
+            ▶
+          </span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>
+            Fund Holdings
+          </span>
+          <span style={{ fontSize: 9, background: C.accent, color: '#fff', borderRadius: 3, padding: '1px 4px', fontWeight: 700 }}>N-PORT</span>
+          <span style={{ fontSize: 12, color: C.textMuted }}>
+            {cashItems.length > 0 && `${cashItems.length} cash/money market`}
+            {cashItems.length > 0 && derivItems.length > 0 && ', '}
+            {derivItems.length > 0 && `${derivItems.length} derivatives`}
+            {otherItems.length > 0 && `, ${otherItems.length} other`}
+          </span>
+        </div>
+        <div style={{ fontSize: 12, color: C.textMuted }}>
+          Net Assets: {fmtValue(nport.netAssets)}
+        </div>
+      </div>
+
+      {expanded && (
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              {['Name', 'Type', 'Value', '% of Net Assets'].map((h, i) => (
+                <th key={h} style={{
+                  textAlign: i >= 2 ? 'right' : 'left',
+                  padding: '8px 12px', color: C.textMuted, fontWeight: 600,
+                  fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em',
+                  borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap',
+                }}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {allItems.map((item, idx) => (
+              <tr key={idx} style={{ borderBottom: `1px solid ${C.borderLight}` }}>
+                <td style={{ padding: '7px 12px', fontSize: 13, color: C.text }}>
+                  {item.name || item.title}
+                </td>
+                <td style={{ padding: '7px 12px' }}>
+                  <span style={{
+                    fontSize: 11, fontWeight: 600,
+                    color: catColor(item.assetCat),
+                  }}>
+                    {catLabel(item.assetCat)}
+                  </span>
+                </td>
+                <td style={{
+                  padding: '7px 12px', fontSize: 13, textAlign: 'right',
+                  fontVariantNumeric: 'tabular-nums', fontWeight: 500,
+                  color: item.value < 0 ? '#dc2626' : C.text,
+                }}>
+                  {item.value < 0 ? `-${fmtValue(Math.abs(item.value))}` : fmtValue(item.value)}
+                </td>
+                <td style={{
+                  padding: '7px 12px', fontSize: 13, textAlign: 'right',
+                  fontVariantNumeric: 'tabular-nums', color: C.textSecondary,
+                }}>
+                  {fmtPct(item.pctOfNetAssets)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {expanded && nport.filing && (
+        <div style={{ padding: '8px 14px', fontSize: 11, color: C.textMuted, borderTop: `1px solid ${C.border}` }}>
+          Source: N-PORT filing ({nport.filing.form}) &middot; Report date: {nport.filing.reportDate} &middot; Filed: {nport.filing.filingDate}
+          {nport.seriesName && <> &middot; Series: {nport.seriesName}</>}
+        </div>
       )}
     </div>
   );

@@ -13,6 +13,8 @@ export const DEFAULT_SETTINGS = {
   growthChartYears: '10', // '5' | '10' | '13' | 'all'
   // Price Chart
   defaultPriceRange: '5y',
+  // Gurus
+  enableNport: true, // Fetch N-PORT data (cash/money market positions) for gurus with registered funds
 };
 
 export function useSettings() {

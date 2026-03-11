@@ -36,29 +36,29 @@ export const GURUS = [
   { name: 'Pat Dorsey', fund: 'Dorsey Asset Management', cik: '0001671657' },
   { name: 'Michael Larson', fund: 'Bill & Melinda Gates Foundation Trust', cik: '0001166559' },
   { name: 'Norbert Lou', fund: 'Punch Card Management', cik: '0001631664' },
-  { name: 'Bruce Berkowitz', fund: 'Fairholme Capital Management', cik: '0001056831' },
+  { name: 'Bruce Berkowitz', fund: 'Fairholme Capital Management', cik: '0001056831', fundCik: '0001096344', seriesId: 'S000008484' },
   { name: 'Alex Roepers', fund: 'Atlantic Investment Management', cik: '0001063296' },
-  { name: 'Fred Martin', fund: 'Disciplined Growth Investors', cik: '0001050442' },
+  { name: 'Fred Martin', fund: 'Disciplined Growth Investors', cik: '0001050442', fundCik: '0001936157', seriesId: 'S000093392' },
   { name: 'Li Lu', fund: 'Himalaya Capital Management', cik: '0001709323' },
   { name: 'Glenn Greenberg', fund: 'Brave Warrior Advisors', cik: '0001553733' },
   { name: 'David Einhorn', fund: 'DME Capital Management', cik: '0001489933' },
   { name: 'Ako Capital', fund: 'Ako Capital LLP', cik: '0001376879' },
   { name: 'Stephen Mandel', fund: 'Lone Pine Capital', cik: '0001061165' },
-  { name: 'Terry Smith', fund: 'Fundsmith LLP', cik: '0001569205' },
-  { name: 'David Rolfe', fund: 'Wedgewood Partners', cik: '0000859804' },
-  { name: 'Mason Hawkins', fund: 'Southeastern Asset Management', cik: '0000807985' },
+  { name: 'Terry Smith', fund: 'Fundsmith LLP', cik: '0001569205', fundCik: '0001558107', seriesId: 'S000097194' },
+  { name: 'David Rolfe', fund: 'Wedgewood Partners', cik: '0000859804', fundCik: '0001494928', seriesId: 'S000030032' },
+  { name: 'Mason Hawkins', fund: 'Southeastern Asset Management', cik: '0000807985', fundCik: '0000806636', seriesId: 'S000009311' },
   { name: 'Greg Alexander', fund: 'Conifer Management', cik: '0001773994' },
   { name: 'David Abrams', fund: 'Abrams Capital Management', cik: '0001358706' },
   { name: 'Seth Klarman', fund: 'Baupost Group', cik: '0001061768' },
-  { name: 'Chuck Akre', fund: 'Akre Capital Management', cik: '0001112520' },
+  { name: 'Chuck Akre', fund: 'Akre Capital Management', cik: '0001112520', fundCik: '0000811030', seriesId: 'S000089351' },
   { name: 'Francis Chou', fund: 'Chou Associates Management', cik: '0001389403' },
   { name: 'Mohnish Pabrai', fund: 'Dalal Street LLC', cik: '0001549575' },
   { name: 'Kahn Brothers', fund: 'Kahn Brothers Group', cik: '0001039565' },
-  { name: 'Wallace Weitz', fund: 'Weitz Investment Management', cik: '0000883965' },
-  { name: 'Harry Burn', fund: 'Sound Shore Management', cik: '0000820124' },
-  { name: 'Chris Davis', fund: 'Davis Selected Advisers', cik: '0001036325' },
-  { name: 'Ronald Muhlenkamp', fund: 'Muhlenkamp & Co.', cik: '0001133219' },
-  { name: 'Donald Yacktman', fund: 'Yacktman Asset Management', cik: '0000905567' },
+  { name: 'Wallace Weitz', fund: 'Weitz Investment Management', cik: '0000883965', fundCik: '0001257927', seriesId: 'S000003479' },
+  { name: 'Harry Burn', fund: 'Sound Shore Management', cik: '0000820124', fundCik: '0000764157', seriesId: 'S000004519' },
+  { name: 'Chris Davis', fund: 'Davis Selected Advisers', cik: '0001036325', fundCik: '0000071701', seriesId: 'S000003439' },
+  { name: 'Ronald Muhlenkamp', fund: 'Muhlenkamp & Co.', cik: '0001133219', fundCik: '0001511699', seriesId: 'S000046566' },
+  { name: 'Donald Yacktman', fund: 'Yacktman Asset Management', cik: '0000905567', fundCik: '0001089951', seriesId: 'S000037566' },
   { name: 'Lindsell Train', fund: 'Lindsell Train Ltd', cik: '0001484150' },
   { name: 'Carl Icahn', fund: 'Icahn Carl C', cik: '0000921669' },
   { name: 'Prem Watsa', fund: 'Fairfax Financial Holdings', cik: '0000915191' },
@@ -68,11 +68,11 @@ export const GURUS = [
   { name: 'Warren Buffett', fund: 'Berkshire Hathaway', cik: '0001067983' },
   { name: 'Chris Bloomstran', fund: 'Semper Augustus Investments Group', cik: '0001115373' },
   { name: 'Guy Spier', fund: 'Aquamarine Zurich AG', cik: '0001953324' },
-  { name: 'Tweedy Browne', fund: 'Tweedy, Browne Co. LLC', cik: '0000732905' },
+  { name: 'Tweedy Browne', fund: 'Tweedy, Browne Co. LLC', cik: '0000732905', fundCik: '0000896975', seriesId: 'S000001301' },
   { name: 'William Von Mueffling', fund: 'Cantillon Capital Management', cik: '0001279936' },
   { name: 'Michael Burry', fund: 'Scion Asset Management', cik: '0001649339' },
   { name: 'David Tepper', fund: 'Appaloosa LP', cik: '0001656456' },
-  { name: 'Phil Town', fund: 'Rule One Fund', cik: '0002040263' },
+  { name: 'Phil Town', fund: 'Rule One Fund', cik: '0002040263', fundCik: '0001396092', seriesId: 'S000065131' },
   { name: 'Ray Dalio', fund: 'Bridgewater Associates', cik: '0001350694' },
 ];
 
@@ -81,7 +81,8 @@ export const GURUS = [
 // ============================================================
 
 // Get N most recent 13F filings from EDGAR submissions.
-// Prefers 13F-HR/A (amendments) over 13F-HR for the same reportDate.
+// Handles amendments: RESTATEMENT amendments replace the original,
+// NEW HOLDINGS amendments (confidential treatment disclosures) are merged with the original.
 async function getRecent13Fs(cik, count = 2) {
   // Cache the submissions response to avoid refetching for same guru
   const subsCacheKey = `guru-subs:${cik}`;
@@ -98,28 +99,54 @@ async function getRecent13Fs(cik, count = 2) {
   const filings = data.filings?.recent;
   if (!filings) return [];
 
-  // Group by reportDate, prefer amendments over originals
+  // Group by reportDate, tracking both originals and amendments
   const byReport = new Map();
   for (let i = 0; i < filings.form.length; i++) {
     const form = filings.form[i];
     if (form !== '13F-HR' && form !== '13F-HR/A') continue;
 
     const reportDate = filings.reportDate[i];
-    const existing = byReport.get(reportDate);
+    const entry = {
+      accessionNumber: filings.accessionNumber[i],
+      filingDate: filings.filingDate[i],
+      reportDate,
+      primaryDocument: filings.primaryDocument[i],
+      form,
+    };
 
-    // Prefer 13F-HR/A over 13F-HR for the same quarter
-    if (!existing || (form === '13F-HR/A' && existing.form !== '13F-HR/A')) {
-      byReport.set(reportDate, {
-        accessionNumber: filings.accessionNumber[i],
-        filingDate: filings.filingDate[i],
-        reportDate,
-        primaryDocument: filings.primaryDocument[i],
-        form,
+    if (!byReport.has(reportDate)) {
+      byReport.set(reportDate, { original: null, amendments: [] });
+    }
+    const group = byReport.get(reportDate);
+    if (form === '13F-HR/A') {
+      group.amendments.push(entry);
+    } else {
+      group.original = entry;
+    }
+  }
+
+  // Resolve each reportDate to a filing meta
+  const results = [];
+  for (const [, group] of byReport) {
+    if (group.amendments.length === 0) {
+      // No amendments — use original
+      if (group.original) results.push(group.original);
+    } else if (!group.original) {
+      // Amendment without original (rare) — use latest amendment
+      const latest = group.amendments.sort((a, b) => b.filingDate.localeCompare(a.filingDate))[0];
+      results.push(latest);
+    } else {
+      // Both original and amendment(s) exist — use latest amendment,
+      // but carry originalAccessionNumber so fetchSingleFiling can merge if NEW HOLDINGS
+      const latest = group.amendments.sort((a, b) => b.filingDate.localeCompare(a.filingDate))[0];
+      results.push({
+        ...latest,
+        originalAccessionNumber: group.original.accessionNumber,
       });
     }
   }
 
-  return Array.from(byReport.values())
+  return results
     .sort((a, b) => b.reportDate.localeCompare(a.reportDate))
     .slice(0, count);
 }
@@ -282,23 +309,67 @@ export function enrichHoldings(holdings) {
   };
 }
 
-// Cache version — bump to invalidate stale data (v3: options filter + share class aggregation + infotable detection)
-const GURU_CACHE_V = 'v3';
+// Cache version — bump to invalidate stale data (v4: NEW HOLDINGS amendment merging)
+const GURU_CACHE_V = 'v4';
+
+// Check if a 13F-HR/A amendment is RESTATEMENT or NEW HOLDINGS
+// by reading the primary_doc.xml. Returns 'NEW HOLDINGS', 'RESTATEMENT', or null.
+async function getAmendmentType(cik, accessionNumber) {
+  try {
+    const accessionPath = accessionNumber.replace(/-/g, '');
+    const url = secArchiveUrl(cik, accessionPath, 'primary_doc.xml');
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const text = await res.text();
+    const match = text.match(/<amendmentType>(.*?)<\/amendmentType>/);
+    return match ? match[1].trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+// Fetch and parse a single infotable XML, returning raw parsed holdings
+async function fetchInfoTableHoldings(cik, accessionNumber) {
+  const xmlUrl = await getInfoTableUrl(cik, accessionNumber);
+  if (!xmlUrl) return null;
+  const xmlRes = await fetch(xmlUrl);
+  if (!xmlRes.ok) return null;
+  const xmlText = await xmlRes.text();
+  return parseInfoTable(xmlText);
+}
 
 // Fetch a single filing's holdings with per-filing cache (immutable once filed)
+// Handles NEW HOLDINGS amendments by merging with original filing
 async function fetchSingleFiling(cik, filingMeta) {
   const cacheKey = `guru-filing:${GURU_CACHE_V}:${cik}:${filingMeta.reportDate}`;
   const cached = cacheGet(cacheKey);
   if (cached) return cached;
 
-  const xmlUrl = await getInfoTableUrl(cik, filingMeta.accessionNumber);
-  if (!xmlUrl) return { filing: filingMeta, holdings: [], totalValue: 0, positionCount: 0, error: 'No infotable XML' };
+  let raw;
 
-  const xmlRes = await fetch(xmlUrl);
-  if (!xmlRes.ok) return { filing: filingMeta, holdings: [], totalValue: 0, positionCount: 0, error: `XML fetch: ${xmlRes.status}` };
+  // If this is an amendment with an original filing, check amendment type
+  if (filingMeta.form === '13F-HR/A' && filingMeta.originalAccessionNumber) {
+    const amendType = await getAmendmentType(cik, filingMeta.accessionNumber);
 
-  const xmlText = await xmlRes.text();
-  const raw = parseInfoTable(xmlText);
+    if (amendType === 'NEW HOLDINGS') {
+      // NEW HOLDINGS = amendment adds previously confidential positions to original
+      // Fetch both and merge
+      const [originalHoldings, amendmentHoldings] = await Promise.all([
+        fetchInfoTableHoldings(cik, filingMeta.originalAccessionNumber),
+        fetchInfoTableHoldings(cik, filingMeta.accessionNumber),
+      ]);
+
+      raw = [...(originalHoldings || []), ...(amendmentHoldings || [])];
+    } else {
+      // RESTATEMENT or unknown — amendment replaces original (existing behavior)
+      raw = await fetchInfoTableHoldings(cik, filingMeta.accessionNumber);
+    }
+  } else {
+    raw = await fetchInfoTableHoldings(cik, filingMeta.accessionNumber);
+  }
+
+  if (!raw) return { filing: filingMeta, holdings: [], totalValue: 0, positionCount: 0, error: 'No infotable XML' };
+
   const aggregated = aggregateShareClasses(raw);
   const { holdings, totalValue } = enrichHoldings(aggregated);
 
@@ -822,7 +893,30 @@ export async function auditGurus(onProgress) {
 // Ticker Resolution — fuzzy match issuer names to tickers
 // ============================================================
 
-const CUSIP_TICKER_LS_KEY = 'sa-cusip-ticker-map';
+// Static CUSIP prefix→ticker overrides for known edge cases that
+// can't be resolved by name matching (compound names, abbreviations,
+// companies not in EDGAR's company_tickers.json, etc.)
+const CUSIP_TICKER_OVERRIDES = {
+  '829933': 'SIRI',   // SiriusXM Holdings (13F: "SIRIUSXM" vs EDGAR: "Sirius XM")
+  '929740': 'WAB',    // Wabtec (13F: "WABTEC" vs EDGAR: "Westinghouse Air Brake Technologies")
+  '30231G': 'XOM',    // Exxon Mobil (13F: "ExxonMobil" one word vs EDGAR: "Exxon Mobil" two words)
+  '737630': 'PCH',    // PotlatchDeltic (compound name)
+  '302520': 'FNB',    // F.N.B. Corp (13F: "F N B CORP" with spaces between letters)
+  '200340': 'CMA',    // Comerica
+  '229899': 'CFR',    // Cullen/Frost Bankers (slash in EDGAR name)
+  '89214P': 'TOWN',   // TowneBank (13F adds "PORTSMOUTH VA" location suffix)
+  '03062T': 'CRMT',   // America's Car-Mart
+  '784117': 'SEIC',   // SEI Investments (13F: "Sei Invt Co Pa PV $0.01")
+};
+
+const CUSIP_TICKER_LS_KEY = 'sa-cusip-ticker-map:v2';
+
+// One-time migration: clear old cache key so stale/wrong mappings don't persist
+const CUSIP_MIGRATION_KEY = 'sa-cusip-ticker-migrated-v2';
+if (typeof localStorage !== 'undefined' && !localStorage.getItem(CUSIP_MIGRATION_KEY)) {
+  try { localStorage.removeItem('sa-cusip-ticker-map'); } catch { /* ok */ }
+  try { localStorage.setItem(CUSIP_MIGRATION_KEY, '1'); } catch { /* ok */ }
+}
 
 function loadCusipTickerMap() {
   try {
@@ -835,13 +929,84 @@ function saveCusipTickerMap(map) {
   try { localStorage.setItem(CUSIP_TICKER_LS_KEY, JSON.stringify(map)); } catch { /* full */ }
 }
 
-// Strip common suffixes for fuzzy matching
+// Common SEC 13F abbreviations → full forms
+const SEC_ABBREVIATIONS = {
+  PETE: 'PETROLEUM', PETRO: 'PETROLEUM',
+  FINL: 'FINANCIAL', FIN: 'FINANCIAL',
+  FMRS: 'FARMERS',
+  MKT: 'MARKET', MKTS: 'MARKETS',
+  HLDGS: 'HOLDINGS', HLDG: 'HOLDING',
+  SVCS: 'SERVICES', SVC: 'SERVICE',
+  TECH: 'TECHNOLOGY', TECHS: 'TECHNOLOGIES',
+  INTL: 'INTERNATIONAL',
+  PHARMCL: 'PHARMACEUTICAL', PHARMA: 'PHARMACEUTICAL',
+  SOLUTN: 'SOLUTION', SOLUTNS: 'SOLUTIONS',
+  MGMT: 'MANAGEMENT',
+  AMER: 'AMERICA',
+  COMMUN: 'COMMUNICATIONS', COMMUNS: 'COMMUNICATIONS',
+  INDS: 'INDUSTRIES', IND: 'INDUSTRIES',
+  MFG: 'MANUFACTURING',
+  PPTY: 'PROPERTY', PPTYS: 'PROPERTIES',
+  RLTY: 'REALTY',
+  RES: 'RESOURCES',
+  ENTMT: 'ENTERTAINMENT',
+  DEV: 'DEVELOPMENT',
+  INVT: 'INVESTMENT', INVTS: 'INVESTMENTS',
+  SYS: 'SYSTEMS',
+  PRODS: 'PRODUCTS', PROD: 'PRODUCT',
+  THERA: 'THERAPEUTICS',
+  BIOSCIS: 'BIOSCIENCES', BIOSCI: 'BIOSCIENCE',
+  ENGR: 'ENERGY',
+  GRP: 'GROUP',
+  MTG: 'MORTGAGE',
+  BANCSHRS: 'BANCSHARES',
+  RESTAUR: 'RESTAURANT',
+  TRAV: 'TRAVELERS',
+  ELEC: 'ELECTRIC',
+  ELECTR: 'ELECTRONIC',
+  NATL: 'NATIONAL',
+  SOUTHN: 'SOUTHERN',
+  NORTHN: 'NORTHERN',
+  WESTN: 'WESTERN',
+  EASTN: 'EASTERN',
+  // Additional abbreviations found via ticker audit
+  LABS: 'LABORATORIES',
+  ASSOC: 'ASSOCIATES',
+  INDL: 'INDUSTRIAL',
+  INSTRS: 'INSTRUMENTS',
+  MNG: 'MINING',
+  BKG: 'BANKING',
+  BK: 'BANK',
+  COS: 'COMPANIES',
+  INS: 'INSURANCE',
+  MTNS: 'MOUNTAINS',
+  FAM: 'FAMILY',
+  SOL: 'SOLUTIONS',
+  ACCEP: 'ACCEPTANCE',
+  RIV: 'RIVER',
+  STR: 'STREET',
+  COMM: 'COMMERCE',
+  AMERN: 'AMERICAN',
+  FDS: 'FUNDS',
+  BANKERS: 'BANKERS',
+  CDA: 'CANADA',
+  WTR: 'WATER',
+};
+const SEC_ABBREV_RE = new RegExp(
+  '\\b(' + Object.keys(SEC_ABBREVIATIONS).join('|') + ')\\b', 'g'
+);
+
+function expandAbbreviations(name) {
+  return name.replace(SEC_ABBREV_RE, m => SEC_ABBREVIATIONS[m] || m);
+}
+
+// Strip common suffixes and normalize for fuzzy matching
 function normalizeIssuer(name) {
-  return (name || '')
-    .toUpperCase()
-    .replace(/\b(INC|CORP|CO|LTD|LLC|LP|PLC|NV|SA|SE|AG|GROUP|HOLDINGS|ENTERPRISES|INTERNATIONAL|TECHNOLOGIES)\b/g, '')
-    .replace(/\b(CL\s*[A-C]|CLASS\s*[A-C]|SHS|COM|COMMON|ORD|ORDINARY|NEW|THE)\b/g, '')
-    .replace(/[.,\-/()]/g, '')
+  return expandAbbreviations((name || '').toUpperCase())
+    .replace(/\b(INC|INCORPORATED|CORP|CORPORATION|CO|COMPANY|LTD|LIMITED|LLC|LP|PLC|NV|SA|SE|AG|GROUP|HOLDINGS|ENTERPRISES|INTERNATIONAL|TECHNOLOGIES)\b/g, '')
+    .replace(/\b(CL\s*[A-C]|CLASS\s*[A-C]|SHS|COMMON|ORD|ORDINARY|NEW|THE)\b/g, '')
+    .replace(/[.\-]/g, ' ')
+    .replace(/[,/()&'"]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -876,17 +1041,50 @@ export async function resolveTickersForHoldings(holdings) {
     // Check CUSIP cache
     if (cusipMap[h.cusip]) return { ...h, ticker: cusipMap[h.cusip] };
 
-    // Fuzzy match: exact normalized name
+    // Tier 1.5: static CUSIP prefix overrides for known edge cases
+    const cusip6 = (h.cusip || '').slice(0, 6);
+    if (CUSIP_TICKER_OVERRIDES[cusip6]) {
+      const t = CUSIP_TICKER_OVERRIDES[cusip6];
+      cusipMap[h.cusip] = t;
+      mapDirty = true;
+      return { ...h, ticker: t };
+    }
+
+    // Tier 2: exact normalized name match
     const normIssuer = normalizeIssuer(h.issuer);
     let ticker = nameIndex.get(normIssuer) || null;
 
-    // Fallback: startsWith match (catches "ALPHABET" matching "ALPHABET INC CL A")
+    // Tier 3: startsWith match (catches "ALPHABET" matching "ALPHABET INC CL A")
     if (!ticker) {
       for (const [norm, t] of nameIndex) {
         if (norm.startsWith(normIssuer) || normIssuer.startsWith(norm)) {
           ticker = t;
           break;
         }
+      }
+    }
+
+    // Tier 4: token-overlap match (catches "BANK AMERICA" vs "BANK OF AMERICA",
+    // "DISNEY WALT" vs "WALT DISNEY", etc.)
+    if (!ticker && normIssuer.length > 2) {
+      const STOP_WORDS = new Set(['OF', 'AND', 'THE', 'IN', 'FOR', 'A', 'AN', 'N', 'DEL']);
+      const issuerTokens = normIssuer.split(' ').filter(t => t.length > 1 && !STOP_WORDS.has(t));
+      if (issuerTokens.length >= 1) {
+        let bestScore = 0;
+        let bestTicker = null;
+        for (const [norm, t] of nameIndex) {
+          const edgarTokens = norm.split(' ').filter(tk => tk.length > 1 && !STOP_WORDS.has(tk));
+          if (edgarTokens.length === 0) continue;
+          // At least one significant token must appear in both sides
+          const overlap = issuerTokens.filter(tk => edgarTokens.includes(tk)).length;
+          if (overlap === 0) continue;
+          const score = overlap / Math.max(issuerTokens.length, edgarTokens.length);
+          if (score > bestScore && score >= 0.5) {
+            bestScore = score;
+            bestTicker = t;
+          }
+        }
+        ticker = bestTicker;
       }
     }
 

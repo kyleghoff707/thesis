@@ -7,6 +7,7 @@ import {
   fetchPortfolioValueHistory,
   GURUS,
 } from '../engines/gurus';
+import { fetchNportData, loadCachedNportSummaries } from '../engines/nport';
 
 export function useGurus() {
   const [portfolios, setPortfolios] = useState([]);
@@ -14,6 +15,8 @@ export function useGurus() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, name: '' });
   const [error, setError] = useState(null);
+  const [nportData, setNportData] = useState({});
+  const [nportLoading, setNportLoading] = useState(false);
 
   // Hydrate from cache on mount (instant, no network calls)
   useEffect(() => {
@@ -22,6 +25,46 @@ export function useGurus() {
 
     const cachedActivities = loadCachedActivities();
     if (cachedActivities.length > 0) setActivities(cachedActivities);
+
+    const cachedNport = loadCachedNportSummaries(GURUS);
+    if (Object.keys(cachedNport).length > 0) setNportData(cachedNport);
+  }, []);
+
+  // Fetch N-PORT data for all gurus that have fundCik
+  const fetchNportForAll = useCallback(async () => {
+    const gurusWithFund = GURUS.filter(g => g.fundCik);
+    if (gurusWithFund.length === 0) return;
+
+    setNportLoading(true);
+    const results = { ...nportData };
+
+    for (const guru of gurusWithFund) {
+      try {
+        const data = await fetchNportData(guru);
+        if (data) results[guru.cik] = data;
+      } catch (err) {
+        console.warn(`N-PORT fetch failed for ${guru.name}:`, err.message);
+      }
+    }
+
+    setNportData(results);
+    setNportLoading(false);
+    return results;
+  }, [nportData]);
+
+  // Fetch N-PORT for a single guru
+  const fetchNportForOne = useCallback(async (guru) => {
+    if (!guru.fundCik) return null;
+    try {
+      const data = await fetchNportData(guru);
+      if (data) {
+        setNportData(prev => ({ ...prev, [guru.cik]: data }));
+      }
+      return data;
+    } catch (err) {
+      console.warn(`N-PORT fetch failed for ${guru.name}:`, err.message);
+      return null;
+    }
   }, []);
 
   // Fetch a single guru's holdings (legacy — no change detection)
@@ -67,6 +110,8 @@ export function useGurus() {
           }];
         });
       }
+      // Fetch N-PORT data in background if available
+      if (guru.fundCik) fetchNportForOne(guru);
       return activity;
     } catch (err) {
       setError(err.message);
@@ -74,7 +119,7 @@ export function useGurus() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchNportForOne]);
 
   // Fetch all gurus with change detection
   const fetchAllChanges = useCallback(async () => {
@@ -100,6 +145,10 @@ export function useGurus() {
         holdings: a.holdings, totalValue: a.totalValue,
         positionCount: a.positionCount,
       })));
+
+      // Fetch N-PORT data as a second pass (non-blocking)
+      fetchNportForAll();
+
       return results;
     } catch (err) {
       setError(err.message);
@@ -107,7 +156,7 @@ export function useGurus() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchNportForAll]);
 
   // Fetch all (legacy — no change detection)
   const fetchAll = useCallback(async () => {
@@ -163,10 +212,14 @@ export function useGurus() {
     loading,
     progress,
     error,
+    nportData,
+    nportLoading,
     fetchOne,
     fetchOneWithChanges,
     fetchAll,
     fetchAllChanges,
+    fetchNportForOne,
+    fetchNportForAll,
     searchStock,
     fetchHistory,
     fetchPortfolioHistory,

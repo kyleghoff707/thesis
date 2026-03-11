@@ -12,6 +12,8 @@ import Gurus from './components/Gurus';
 import GuruPortfolio from './components/GuruPortfolio';
 import Validation from './components/Validation';
 import GuruAudit from './components/GuruAudit';
+import TickerAudit from './components/TickerAudit';
+import NportAudit from './components/NportAudit';
 import Settings from './components/Settings';
 
 function StagePlaceholder({ label }) {
@@ -50,6 +52,8 @@ export default function App() {
         <Route path="/gurus/:cik" element={<GuruPortfolio />} />
         <Route path="/validation" element={<Validation />} />
         <Route path="/guru-audit" element={<GuruAudit />} />
+        <Route path="/ticker-audit" element={<TickerAudit />} />
+        <Route path="/nport-audit" element={<NportAudit />} />
       </Routes>
       {showSettings && (
         <Settings

@@ -158,6 +158,32 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
           ]}
         />
 
+        <SectionHeader label="Gurus" />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0' }}>
+          <div>
+            <span style={{ fontSize: 13, fontWeight: 500, color: C.text }}>Enable N-PORT data</span>
+            <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
+              Fetch complete portfolio data (cash, money market) for gurus with registered funds
+            </div>
+          </div>
+          <button
+            onClick={() => updateSettings({ enableNport: !settings.enableNport })}
+            style={{
+              width: 40, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer',
+              background: settings.enableNport ? C.accent : C.border,
+              position: 'relative', transition: 'background .2s', flexShrink: 0,
+            }}
+          >
+            <div style={{
+              width: 16, height: 16, borderRadius: '50%', background: '#fff',
+              position: 'absolute', top: 3,
+              left: settings.enableNport ? 21 : 3,
+              transition: 'left .2s',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+            }} />
+          </button>
+        </div>
+
         <SectionHeader label="Tools" />
         <div style={{ padding: '8px 0' }}>
           <button
@@ -191,6 +217,38 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
               <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
             </svg>
             Run Guru Audit
+          </button>
+          <button
+            onClick={() => { onClose(); navigate('/ticker-audit'); }}
+            style={{
+              background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 6,
+              padding: '6px 12px', fontSize: 13, fontWeight: 500, color: C.textSecondary,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+              transition: 'all .15s', marginTop: 8,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSecondary; }}
+          >
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 7h16M4 12h16M4 17h10" /><circle cx="19" cy="17" r="3" /><path d="M21.5 19.5L23 21" />
+            </svg>
+            Run Ticker Audit
+          </button>
+          <button
+            onClick={() => { onClose(); navigate('/nport-audit'); }}
+            style={{
+              background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 6,
+              padding: '6px 12px', fontSize: 13, fontWeight: 500, color: C.textSecondary,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+              transition: 'all .15s', marginTop: 8,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSecondary; }}
+          >
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><path d="M12 18v-6" /><path d="M9 15h6" />
+            </svg>
+            Run N-PORT Audit
           </button>
         </div>
 

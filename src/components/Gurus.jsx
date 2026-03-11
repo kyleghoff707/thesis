@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { C } from '../theme';
 import { useGurus } from '../hooks/useGurus';
+import { useSettings } from '../hooks/useSettings';
 
 // ─── Format helpers ─────────────────────────────────────────
 
@@ -63,10 +64,13 @@ const TABS = [
 // ─── Main Gurus component ───────────────────────────────────
 
 export default function Gurus() {
+  const { settings } = useSettings();
   const {
     gurus, portfolios, activities, loading, progress, error,
     fetchOne, fetchOneWithChanges, fetchAllChanges, searchStock, latestTabData,
+    nportData: rawNportData,
   } = useGurus();
+  const nportData = settings.enableNport !== false ? rawNportData : {};
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('latest');
   const [loadingCik, setLoadingCik] = useState(null);
@@ -291,6 +295,15 @@ export default function Gurus() {
                       <div style={{ fontSize: 11, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Total Value</div>
                       <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{fmtValue(data.totalValue)}</div>
                     </div>
+                    {nportData[guru.cik] && (
+                      <div style={{ textAlign: 'right', minWidth: 60 }}>
+                        <div style={{ fontSize: 11, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 3, justifyContent: 'flex-end' }}>
+                          Cash
+                          <span style={{ fontSize: 8, background: C.accent, color: '#fff', borderRadius: 2, padding: '0px 3px', fontWeight: 700 }}>N</span>
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: C.accent }}>{fmtPct(nportData[guru.cik].cashPct)}</div>
+                      </div>
+                    )}
                     <div style={{ textAlign: 'right', minWidth: 80 }}>
                       <div style={{ fontSize: 11, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Filed</div>
                       <div style={{ fontSize: 13, color: C.textSecondary }}>{data.filing?.filingDate || data.filingDate || '--'}</div>
@@ -453,6 +466,8 @@ export default function Gurus() {
 
 function LatestTab({ latestTabData, activities, loading, allLoaded, guruCount, onLoadAll, onGuruClick }) {
   const [activitySort, setActivitySort] = useState({ key: 'name', asc: true });
+  const [buysSort, setBuysSort] = useState({ key: 'guruCount', asc: false });
+  const [holdingsSort, setHoldingsSort] = useState({ key: 'guruCount', asc: false });
 
   const sortedActivities = useMemo(() => {
     if (!latestTabData?.guruActivities) return [];
@@ -476,9 +491,51 @@ function LatestTab({ latestTabData, activities, loading, allLoaded, guruCount, o
     return copy;
   }, [latestTabData, activitySort]);
 
+  const sortedBuys = useMemo(() => {
+    if (!latestTabData?.topBuys) return [];
+    const copy = [...latestTabData.topBuys];
+    copy.sort((a, b) => {
+      let av, bv;
+      switch (buysSort.key) {
+        case 'totalValuePurchased': av = a.totalValuePurchased || 0; bv = b.totalValuePurchased || 0; break;
+        case 'maxPortfolioPct': av = a.maxPortfolioPct || 0; bv = b.maxPortfolioPct || 0; break;
+        case 'guruCount': av = a.guruCount || 0; bv = b.guruCount || 0; break;
+        default: av = 0; bv = 0;
+      }
+      return buysSort.asc ? av - bv : bv - av;
+    });
+    return copy;
+  }, [latestTabData, buysSort]);
+
+  const sortedHoldings = useMemo(() => {
+    if (!latestTabData?.topHoldings) return [];
+    const copy = [...latestTabData.topHoldings];
+    copy.sort((a, b) => {
+      let av, bv;
+      switch (holdingsSort.key) {
+        case 'totalValue': av = a.totalValue || 0; bv = b.totalValue || 0; break;
+        case 'maxPortfolioPct': av = a.maxPortfolioPct || 0; bv = b.maxPortfolioPct || 0; break;
+        case 'guruCount': av = a.guruCount || 0; bv = b.guruCount || 0; break;
+        default: av = 0; bv = 0;
+      }
+      return holdingsSort.asc ? av - bv : bv - av;
+    });
+    return copy;
+  }, [latestTabData, holdingsSort]);
+
   const handleSort = (key) => {
     if (activitySort.key === key) setActivitySort({ key, asc: !activitySort.asc });
     else setActivitySort({ key, asc: key === 'name' });
+  };
+
+  const handleBuysSort = (key) => {
+    if (buysSort.key === key) setBuysSort({ key, asc: !buysSort.asc });
+    else setBuysSort({ key, asc: false });
+  };
+
+  const handleHoldingsSort = (key) => {
+    if (holdingsSort.key === key) setHoldingsSort({ key, asc: !holdingsSort.asc });
+    else setHoldingsSort({ key, asc: false });
   };
 
   if (!latestTabData && !loading) {
@@ -605,25 +662,40 @@ function LatestTab({ latestTabData, activities, loading, allLoaded, guruCount, o
           border: `1px solid ${C.border}`, borderRadius: 8,
           overflow: 'hidden', background: C.bgCard,
         }}>
-          {latestTabData?.topBuys?.length > 0 ? (
+          {sortedBuys.length > 0 ? (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {['#', 'Company', 'Value Purchased', 'Max % Portfolio', "# Guru's"].map((h, i) => (
-                    <th key={h} style={{
-                      textAlign: i >= 2 ? 'right' : 'left',
-                      padding: '8px 10px', color: C.textMuted, fontWeight: 600,
-                      fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em',
-                      background: C.headerBg, borderBottom: `1px solid ${C.border}`,
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {h}
+                  {[
+                    { key: null, label: '#', align: 'left' },
+                    { key: null, label: 'Company', align: 'left' },
+                    { key: 'totalValuePurchased', label: 'Value Purchased', align: 'right' },
+                    { key: 'maxPortfolioPct', label: 'Max % Portfolio', align: 'right' },
+                    { key: 'guruCount', label: "# Guru's", align: 'right' },
+                  ].map(col => (
+                    <th
+                      key={col.label}
+                      onClick={col.key ? () => handleBuysSort(col.key) : undefined}
+                      style={{
+                        textAlign: col.align,
+                        padding: '8px 10px', color: C.textMuted, fontWeight: 600,
+                        fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em',
+                        background: C.headerBg, borderBottom: `1px solid ${C.border}`,
+                        whiteSpace: 'nowrap',
+                        cursor: col.key ? 'pointer' : 'default',
+                        userSelect: 'none',
+                      }}
+                    >
+                      {col.label}
+                      {buysSort.key === col.key && (
+                        <span style={{ marginLeft: 4, fontSize: 10 }}>{buysSort.asc ? '↑' : '↓'}</span>
+                      )}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {latestTabData.topBuys.map((buy, idx) => (
+                {sortedBuys.map((buy, idx) => (
                   <tr
                     key={buy.cusip}
                     style={{ borderBottom: `1px solid ${C.borderLight}` }}
@@ -665,25 +737,40 @@ function LatestTab({ latestTabData, activities, loading, allLoaded, guruCount, o
           border: `1px solid ${C.border}`, borderRadius: 8,
           overflow: 'hidden', background: C.bgCard,
         }}>
-          {latestTabData?.topHoldings?.length > 0 ? (
+          {sortedHoldings.length > 0 ? (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {['#', 'Company', 'Total Value*', 'Max % Portfolio', "# Guru's"].map((h, i) => (
-                    <th key={h} style={{
-                      textAlign: i >= 2 ? 'right' : 'left',
-                      padding: '8px 10px', color: C.textMuted, fontWeight: 600,
-                      fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em',
-                      background: C.headerBg, borderBottom: `1px solid ${C.border}`,
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {h}
+                  {[
+                    { key: null, label: '#', align: 'left' },
+                    { key: null, label: 'Company', align: 'left' },
+                    { key: 'totalValue', label: 'Total Value*', align: 'right' },
+                    { key: 'maxPortfolioPct', label: 'Max % Portfolio', align: 'right' },
+                    { key: 'guruCount', label: "# Guru's", align: 'right' },
+                  ].map(col => (
+                    <th
+                      key={col.label}
+                      onClick={col.key ? () => handleHoldingsSort(col.key) : undefined}
+                      style={{
+                        textAlign: col.align,
+                        padding: '8px 10px', color: C.textMuted, fontWeight: 600,
+                        fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em',
+                        background: C.headerBg, borderBottom: `1px solid ${C.border}`,
+                        whiteSpace: 'nowrap',
+                        cursor: col.key ? 'pointer' : 'default',
+                        userSelect: 'none',
+                      }}
+                    >
+                      {col.label}
+                      {holdingsSort.key === col.key && (
+                        <span style={{ marginLeft: 4, fontSize: 10 }}>{holdingsSort.asc ? '↑' : '↓'}</span>
+                      )}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {latestTabData.topHoldings.map((hold, idx) => (
+                {sortedHoldings.map((hold, idx) => (
                   <tr
                     key={hold.cusip}
                     style={{ borderBottom: `1px solid ${C.borderLight}` }}

@@ -28,7 +28,7 @@ await build({
       export { computeKeyMetrics } from '${resolve(ROOT, 'src/engines/keyMetrics.js').replace(/\\/g, '/')}';
       export { validateCompany } from '${resolve(ROOT, 'src/engines/validation.js').replace(/\\/g, '/')}';
       export { lookupCIK, fetchCompanyFacts } from '${resolve(ROOT, 'src/engines/edgar.js').replace(/\\/g, '/')}';
-      export { GURUS, parseInfoTable, aggregateShareClasses, enrichHoldings, fetchGuruFilings, fetchGuruWithChanges, aggregateTopBuys, aggregateTopHoldings } from '${resolve(ROOT, 'src/engines/gurus.js').replace(/\\/g, '/')}';
+      export { GURUS, parseInfoTable, aggregateShareClasses, enrichHoldings, fetchGuruFilings, fetchGuruWithChanges, aggregateTopBuys, aggregateTopHoldings, resolveTickersForHoldings } from '${resolve(ROOT, 'src/engines/gurus.js').replace(/\\/g, '/')}';
     `,
     resolveDir: resolve(ROOT, 'src/engines'),
     loader: 'js',
