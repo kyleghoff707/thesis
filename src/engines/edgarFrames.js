@@ -3,7 +3,7 @@
 // Returns the reported value for ALL companies for a given tag/year.
 // We filter by CIK to find our company's value.
 
-import { cacheGet, cacheSet } from './cache';
+import { cacheGetAsync, cacheSet } from './cache';
 
 const IS_DEV = import.meta.env.DEV;
 
@@ -30,7 +30,7 @@ export const FRAMES_TAGS = [
 // Fetch a Frames response for a specific tag/unit/year. Cached.
 async function fetchFrame(tag, unit, cyYear) {
   const cacheKey = `edgar-frames:${tag}:${unit}:CY${cyYear}`;
-  const cached = cacheGet(cacheKey);
+  const cached = await cacheGetAsync(cacheKey);
   if (cached) return cached;
 
   const url = framesUrl(tag, unit, cyYear);

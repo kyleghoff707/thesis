@@ -6,7 +6,7 @@
 // Each field uses ordered fallback tags — first tag's value wins per year, later tags fill gaps.
 
 import { lookupCIK, fetchCompanyFacts, extractAnnualFact, extractAnnualFactOriginal, extractFiscalYearEnds, findLatestQuarter } from './edgar';
-import { cacheGet, cacheSet } from './cache';
+import { cacheGetAsync, cacheSet } from './cache';
 import { fetchSplits, cumulativeSplitFactor } from './splits';
 
 // ─── XBRL Taxonomy Map ──────────────────────────────────────
@@ -1082,7 +1082,7 @@ export async function fetchEdgarQuarterly(ticker, options = {}) {
   if (!facts) return null;
 
   const cacheKey = `edgar-quarterly:${ticker.toUpperCase()}:s${splits.length}:${version}`;
-  const cached = cacheGet(cacheKey);
+  const cached = await cacheGetAsync(cacheKey);
   if (cached) return cached;
 
   const availableFYs = findQuarterlyFiscalYears(facts);
@@ -1170,7 +1170,7 @@ export async function fetchEdgarStatements(ticker, options = {}) {
 
   // Include split count + version in cache key
   const cacheKey = `edgar-statements:${ticker.toUpperCase()}:s${splits.length}:${version}`;
-  const cached = cacheGet(cacheKey);
+  const cached = await cacheGetAsync(cacheKey);
   if (cached) return cached;
 
   const incSection = extractSection(facts, INCOME_TAXONOMY, version);

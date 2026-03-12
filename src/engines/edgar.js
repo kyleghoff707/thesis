@@ -6,7 +6,7 @@
 // go through Vite proxy in dev. In Tauri production, native webview
 // doesn't enforce CORS and can set arbitrary headers.
 
-import { cacheGet, cacheSet } from './cache';
+import { cacheGet, cacheGetAsync, cacheSet } from './cache';
 
 // ─── SEC URL helpers ────────────────────────────────────────
 
@@ -167,11 +167,52 @@ export async function fetchCompanyInfo(ticker) {
   return info;
 }
 
+// ─── Filings List ───────────────────────────────────────────
+// Fetches full list of SEC filings from the submissions endpoint.
+// Returns array of { form, filingDate, reportDate, accessionNumber, primaryDocument, description, items, cik }
+
+export async function fetchFilings(ticker) {
+  const cik = await lookupCIK(ticker);
+  if (!cik) return [];
+
+  const cacheKey = `edgar:filings:${cik}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  const url = secSubmissionsUrl(cik);
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.warn(`EDGAR filings fetch failed: ${res.status} for CIK ${cik}`);
+    return [];
+  }
+  const data = await res.json();
+  const recent = data.filings?.recent;
+  if (!recent?.form) return [];
+
+  const cleanCik = cik.replace(/^0+/, '');
+  const filings = [];
+  for (let i = 0; i < recent.form.length; i++) {
+    filings.push({
+      form: recent.form[i],
+      filingDate: recent.filingDate[i],
+      reportDate: recent.reportDate?.[i] || '',
+      accessionNumber: recent.accessionNumber[i],
+      primaryDocument: recent.primaryDocument?.[i] || '',
+      description: recent.primaryDocDescription?.[i] || '',
+      items: recent.items?.[i] || '',
+      cik: cleanCik,
+    });
+  }
+
+  cacheSet(cacheKey, filings, 'companyDetails');
+  return filings;
+}
+
 // ─── Company Facts ───────────────────────────────────────────
 
 export async function fetchCompanyFacts(cik) {
   const cacheKey = `edgar:facts:${cik}`;
-  const cached = cacheGet(cacheKey);
+  const cached = await cacheGetAsync(cacheKey);
   if (cached) return cached;
 
   const url = secCompanyFactsUrl(cik);

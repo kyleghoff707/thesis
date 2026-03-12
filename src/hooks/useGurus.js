@@ -17,17 +17,26 @@ export function useGurus() {
   const [error, setError] = useState(null);
   const [nportData, setNportData] = useState({});
   const [nportLoading, setNportLoading] = useState(false);
+  const [lastFetchedAt, setLastFetchedAt] = useState(null);
 
-  // Hydrate from cache on mount (instant, no network calls)
+  // Hydrate from IndexedDB cache on mount
   useEffect(() => {
-    const cachedPortfolios = loadCachedPortfolios();
-    if (cachedPortfolios.length > 0) setPortfolios(cachedPortfolios);
-
-    const cachedActivities = loadCachedActivities();
-    if (cachedActivities.length > 0) setActivities(cachedActivities);
-
-    const cachedNport = loadCachedNportSummaries(GURUS);
-    if (Object.keys(cachedNport).length > 0) setNportData(cachedNport);
+    async function hydrate() {
+      const [cachedPortfolios, cachedActivities, cachedNport] = await Promise.all([
+        loadCachedPortfolios(),
+        loadCachedActivities(),
+        loadCachedNportSummaries(GURUS),
+      ]);
+      if (cachedPortfolios.length > 0) setPortfolios(cachedPortfolios);
+      if (cachedActivities.length > 0) {
+        setActivities(cachedActivities);
+        // Use the most recent activity's filing date as lastFetchedAt proxy
+        const dates = cachedActivities.map(a => a.filingDate).filter(Boolean).sort();
+        if (dates.length > 0) setLastFetchedAt(new Date(dates[dates.length - 1]).getTime());
+      }
+      if (Object.keys(cachedNport).length > 0) setNportData(cachedNport);
+    }
+    hydrate();
   }, []);
 
   // Fetch N-PORT data for all gurus that have fundCik
@@ -110,6 +119,7 @@ export function useGurus() {
           }];
         });
       }
+      setLastFetchedAt(Date.now());
       // Fetch N-PORT data in background if available
       if (guru.fundCik) fetchNportForOne(guru);
       return activity;
@@ -139,6 +149,7 @@ export function useGurus() {
       }
 
       setActivities(results);
+      setLastFetchedAt(Date.now());
       // Also update portfolios for Stock Lookup
       setPortfolios(results.filter(a => a?.holdings).map(a => ({
         guru: a.guru, filing: a.filing,
@@ -214,6 +225,7 @@ export function useGurus() {
     error,
     nportData,
     nportLoading,
+    lastFetchedAt,
     fetchOne,
     fetchOneWithChanges,
     fetchAll,

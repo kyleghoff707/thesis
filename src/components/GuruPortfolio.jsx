@@ -61,6 +61,18 @@ function toQuarterLabel(dateStr) {
   return `${y.slice(2)}/Q${q}`;
 }
 
+function timeAgo(timestamp) {
+  if (!timestamp) return null;
+  const diff = Date.now() - timestamp;
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
 // Readable date (e.g., "2025-12-31" → "Dec 31, 2025")
 function toReadableDate(dateStr) {
   if (!dateStr) return '--';
@@ -323,7 +335,7 @@ export default function GuruPortfolio() {
   const { settings } = useSettings();
   const {
     gurus, activities, fetchOneWithChanges, fetchHistory, fetchPortfolioHistory,
-    nportData,
+    nportData, lastFetchedAt,
   } = useGurus();
 
   const [filter, setFilter] = useState('all');
@@ -549,6 +561,7 @@ export default function GuruPortfolio() {
               </div>
               <div style={{ fontSize: 10, color: C.textMuted, marginTop: 2, fontStyle: 'italic', textTransform: 'none' }}>
                 as of close on {toReadableDate(activity.reportDate)}
+                {lastFetchedAt && <span> · Data fetched: {timeAgo(lastFetchedAt)}</span>}
               </div>
             </div>
             {nport && (

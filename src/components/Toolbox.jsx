@@ -13,12 +13,16 @@ import StockAtGlance from './StockAtGlance';
 import ScoreTable from './ScoreTable';
 import FinancialStatements from './FinancialStatements';
 import GrowthAnalysis from './GrowthAnalysis';
+import Filings from './Filings';
+import Insiders from './Insiders';
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
   { key: 'scores', label: 'Scores' },
   { key: 'financials', label: 'Financials' },
   { key: 'growth', label: 'Growth' },
+  { key: 'filings', label: 'Filings' },
+  { key: 'insiders', label: 'Insiders' },
 ];
 
 export default function Toolbox({ getReport, updateReport, settings }) {
@@ -193,7 +197,17 @@ export default function Toolbox({ getReport, updateReport, settings }) {
         </div>
       )}
 
-      {edgarStatements && (
+      {/* Filings tab — independent data, doesn't need edgarStatements */}
+      {activeTab === 'filings' && (
+        <Filings ticker={ticker} />
+      )}
+
+      {/* Insiders tab — independent data, doesn't need edgarStatements */}
+      {activeTab === 'insiders' && (
+        <Insiders ticker={ticker} />
+      )}
+
+      {edgarStatements && activeTab !== 'filings' && activeTab !== 'insiders' && (
         <div style={{ opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s', pointerEvents: loading ? 'none' : undefined }}>
 
           {/* Overview tab */}

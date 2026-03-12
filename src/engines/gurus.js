@@ -2,7 +2,7 @@
 // 13F filings are quarterly, delayed 45 days. Long equity only (no shorts, options, or non-US).
 // Supports multi-filing fetch for quarter-over-quarter change detection.
 
-import { cacheGet, cacheSet } from './cache';
+import { cacheGetAsync, cacheSet, hydrateFromIDB } from './cache';
 import { getTickerSearchIndex } from './edgar';
 
 // ─── SEC URL helpers (same proxy pattern as edgar.js) ────────
@@ -86,7 +86,7 @@ export const GURUS = [
 async function getRecent13Fs(cik, count = 2) {
   // Cache the submissions response to avoid refetching for same guru
   const subsCacheKey = `guru-subs:${cik}`;
-  let data = cacheGet(subsCacheKey);
+  let data = await cacheGetAsync(subsCacheKey);
 
   if (!data) {
     const url = edgarSubmissionsUrl(cik);
@@ -342,7 +342,7 @@ async function fetchInfoTableHoldings(cik, accessionNumber) {
 // Handles NEW HOLDINGS amendments by merging with original filing
 async function fetchSingleFiling(cik, filingMeta) {
   const cacheKey = `guru-filing:${GURU_CACHE_V}:${cik}:${filingMeta.reportDate}`;
-  const cached = cacheGet(cacheKey);
+  const cached = await cacheGetAsync(cacheKey);
   if (cached) return cached;
 
   let raw;
@@ -571,7 +571,7 @@ export function aggregateTopHoldings(allActivities) {
 // Fetch a single guru with change detection (2 filings)
 export async function fetchGuruWithChanges(guru) {
   const actCacheKey = `guru-activity:${GURU_CACHE_V}:${guru.cik}`;
-  const cached = cacheGet(actCacheKey);
+  const cached = await cacheGetAsync(actCacheKey);
   if (cached) return cached;
 
   const filingData = await fetchGuruFilings(guru, 2);
@@ -597,7 +597,7 @@ export async function fetchAllWithChanges(onProgress) {
     const guru = GURUS[i];
 
     // Check activity cache first
-    const cached = cacheGet(`guru-activity:${GURU_CACHE_V}:${guru.cik}`);
+    const cached = await cacheGetAsync(`guru-activity:${GURU_CACHE_V}:${guru.cik}`);
     if (cached) {
       results.push(cached);
       if (onProgress) onProgress(i + 1, GURUS.length, guru.name);
@@ -666,7 +666,7 @@ export function buildHoldingHistory(filings, cusip) {
 // Fetch portfolio value history for the portfolio value chart
 export async function fetchPortfolioValueHistory(guru, maxQuarters = 20) {
   const cacheKey = `guru-portfolio-history:${GURU_CACHE_V}:${guru.cik}`;
-  const cached = cacheGet(cacheKey);
+  const cached = await cacheGetAsync(cacheKey);
   if (cached) return cached;
 
   const filingMetas = await getRecent13Fs(guru.cik, maxQuarters);
@@ -694,7 +694,7 @@ export async function fetchPortfolioValueHistory(guru, maxQuarters = 20) {
 
 export async function fetchGuruHoldings(guru) {
   const cacheKey = `guru:${guru.cik}`;
-  const cached = cacheGet(cacheKey);
+  const cached = await cacheGetAsync(cacheKey);
   if (cached) return cached;
 
   const metas = await getRecent13Fs(guru.cik, 1);
@@ -747,30 +747,24 @@ export function findGurusOwning(guruPortfolios, query) {
 // ============================================================
 
 // Load old-format portfolio cache (for Stock Lookup backward compat)
-export function loadCachedPortfolios() {
-  const results = [];
-  for (const guru of GURUS) {
-    const cached = cacheGet(`guru:${guru.cik}`);
-    if (cached) results.push(cached);
-  }
-  return results;
+export async function loadCachedPortfolios() {
+  const keys = GURUS.map(g => `guru:${g.cik}`);
+  const results = await hydrateFromIDB('guru-data', keys);
+  return results.map(r => r.data);
 }
 
 // Load activity cache (for Latest tab + GuruPortfolio detail view)
-export function loadCachedActivities() {
-  const results = [];
-  for (const guru of GURUS) {
-    const cached = cacheGet(`guru-activity:${GURU_CACHE_V}:${guru.cik}`);
-    if (cached) results.push(cached);
-  }
-  return results;
+export async function loadCachedActivities() {
+  const keys = GURUS.map(g => `guru-activity:${GURU_CACHE_V}:${g.cik}`);
+  const results = await hydrateFromIDB('guru-data', keys);
+  return results.map(r => r.data);
 }
 
 // Fetch all guru portfolios — legacy (uses old single-filing path)
 export async function fetchAllGuruHoldings(onProgress) {
   const results = [];
   for (let i = 0; i < GURUS.length; i++) {
-    const cached = cacheGet(`guru:${GURUS[i].cik}`);
+    const cached = await cacheGetAsync(`guru:${GURUS[i].cik}`);
     if (cached) {
       results.push(cached);
       if (onProgress) onProgress(i + 1, GURUS.length, GURUS[i].name);

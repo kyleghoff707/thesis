@@ -2,7 +2,7 @@
 // N-PORT provides complete portfolio holdings (equities + cash + money market + derivatives)
 // for registered mutual funds/ETFs. Supplements 13F data with cash position visibility.
 
-import { cacheGet, cacheSet } from './cache';
+import { cacheGet, cacheGetAsync, cacheSet, hydrateFromIDB } from './cache';
 
 const IS_DEV = import.meta.env.DEV;
 const NPORT_CACHE_V = 'v1';
@@ -29,7 +29,7 @@ function sleep(ms) {
 
 async function getRecentNport(fundCik, seriesId) {
   const subsCacheKey = `nport-subs:${NPORT_CACHE_V}:${fundCik}`;
-  let data = cacheGet(subsCacheKey);
+  let data = await cacheGetAsync(subsCacheKey);
 
   if (!data) {
     const url = edgarSubmissionsUrl(fundCik);
@@ -198,7 +198,7 @@ export async function fetchNportData(guru) {
 
   // Check summary cache first
   const summaryKey = `nport-summary:${NPORT_CACHE_V}:${guru.cik}`;
-  const cached = cacheGet(summaryKey);
+  const cached = await cacheGetAsync(summaryKey);
   if (cached) return cached;
 
   // Find the most recent N-PORT filing for this guru's fund series
@@ -207,7 +207,7 @@ export async function fetchNportData(guru) {
 
   // Check per-filing cache (immutable once filed)
   const filingKey = `nport-filing:${NPORT_CACHE_V}:${guru.fundCik}:${filing.reportDate}`;
-  let result = cacheGet(filingKey);
+  let result = await cacheGetAsync(filingKey);
 
   if (!result) {
     // Fetch and parse the full XML
@@ -254,13 +254,17 @@ export async function fetchNportData(guru) {
 // Load cached N-PORT summaries (instant, no network)
 // ============================================================
 
-export function loadCachedNportSummaries(gurus) {
+export async function loadCachedNportSummaries(gurus) {
+  const gurusWithFund = gurus.filter(g => g.fundCik);
+  if (gurusWithFund.length === 0) return {};
+  const keys = gurusWithFund.map(g => `nport-summary:${NPORT_CACHE_V}:${g.cik}`);
+  const hydrated = await hydrateFromIDB('nport-data', keys);
   const results = {};
-  for (const guru of gurus) {
-    if (!guru.fundCik) continue;
-    const summaryKey = `nport-summary:${NPORT_CACHE_V}:${guru.cik}`;
-    const cached = cacheGet(summaryKey);
-    if (cached) results[guru.cik] = cached;
+  for (const r of hydrated) {
+    // Extract CIK from key: nport-summary:v1:{cik}
+    const parts = r.key.split(':');
+    const cik = parts[parts.length - 1];
+    results[cik] = r.data;
   }
   return results;
 }

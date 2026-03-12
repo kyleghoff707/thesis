@@ -13,7 +13,8 @@ function loadReports() {
 }
 
 function evictCaches() {
-  // Remove sa-cache: entries (EDGAR/guru caches) to free space for user data
+  // Safety net: remove any remaining small sa-cache: entries from localStorage.
+  // Most large caches (EDGAR facts, guru data, N-PORT) now live in IndexedDB.
   const toRemove = [];
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
