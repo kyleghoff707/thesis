@@ -1168,8 +1168,8 @@ export async function fetchEdgarStatements(ticker, options = {}) {
     return null;
   }
 
-  // Include split count + version in cache key
-  const cacheKey = `edgar-statements:${ticker.toUpperCase()}:s${splits.length}:${version}`;
+  // Include split count + version in cache key. v2: fp=Q4 fallback for 10-K filings.
+  const cacheKey = `edgar-statements:v2:${ticker.toUpperCase()}:s${splits.length}:${version}`;
   const cached = await cacheGetAsync(cacheKey);
   if (cached) return cached;
 

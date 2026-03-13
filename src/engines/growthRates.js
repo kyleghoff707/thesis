@@ -72,6 +72,124 @@ function findClosest(series, targetYear) {
   return null;
 }
 
+// Compute 3-year smoothed growth rate for each year in a series.
+// The "3 year Average Growth Rate" = arithmetic mean of 3 consecutive YoY growth rates.
+// For year Y: mean(YoY_{Y-2}, YoY_{Y-1}, YoY_Y)
+// This is NOT a 3-year CAGR — verified against Rule One Toolbox screenshots.
+// series: [{ year, value }] sorted oldest→newest
+// Returns [{ year, rate }] where rate is the 3-year smoothed rate (as decimal, e.g. 0.10 = 10%)
+export function compute3YearSmoothedRates(series) {
+  const result = [];
+  const yearMap = new Map(series.map(d => [d.year, d.value]));
+
+  // First compute all YoY growth rates
+  const yoyRates = new Map();
+  for (const d of series) {
+    const prevVal = yearMap.get(d.year - 1);
+    if (prevVal != null && prevVal !== 0) {
+      yoyRates.set(d.year, (d.value - prevVal) / Math.abs(prevVal));
+    }
+  }
+
+  // Then compute 3-year average of YoY rates for each year
+  for (const d of series) {
+    const r0 = yoyRates.get(d.year);
+    const r1 = yoyRates.get(d.year - 1);
+    const r2 = yoyRates.get(d.year - 2);
+    if (r0 != null && r1 != null && r2 != null) {
+      result.push({ year: d.year, rate: (r0 + r1 + r2) / 3 });
+    }
+  }
+  return result;
+}
+
+// Compute weighted average of 3-year smoothed growth rates.
+// Uses linear recency weighting: oldest point gets weight 1, newest gets weight N.
+// Limited to the 10 most recent smoothed rates to match Toolbox behavior — the Toolbox
+// shows 13 years of raw data (→ 12 YoY rates → 10 smoothed rates) and computes the
+// weighted average from exactly those 10 points. Without this limit, companies with
+// longer EDGAR histories (e.g. AAPL back to 2009) include extra old data points that
+// shift the weights and change the result.
+// Formula: Σ(i × rate_i) / Σ(i) where i=1..N, Σ(i) = N(N+1)/2
+export function computeWeightedAvgGrowthRate(smoothedRates, maxPoints = 10) {
+  const valid = smoothedRates.filter(d => d.rate != null);
+  const limited = maxPoints ? valid.slice(-maxPoints) : valid;
+  if (limited.length === 0) return null;
+  const n = limited.length;
+  const weightSum = n * (n + 1) / 2;
+  let weightedSum = 0;
+  for (let i = 0; i < n; i++) {
+    weightedSum += (i + 1) * limited[i].rate;
+  }
+  return weightedSum / weightSum;
+}
+
+// Build total-dollar series for Growth Rate Analysis tab data table + chart.
+// Different from the scoring series: uses total dollars (not per-share), and
+// Book Value Plus Dividends = equity + dividends paid that year (undoes dividend deduction).
+export function buildGrowthAnalysisSeries(statements) {
+  const { years, income, balance, cashFlow } = statements;
+  const sortedYears = [...years].sort((a, b) => a - b);
+
+  const buildSeries = (stmtMap, field) =>
+    sortedYears
+      .map(y => ({ year: y, value: stmtMap[y]?.[field] ?? null }))
+      .filter(d => d.value !== null);
+
+  // Book Value = total equity
+  const bookValueSeries = sortedYears
+    .map(y => {
+      const equity = balance[y]?.equity_attributable_to_parent ?? balance[y]?.equity;
+      return { year: y, value: equity ?? null };
+    })
+    .filter(d => d.value !== null);
+
+  // Book Value Plus Dividends = equity + abs(dividends_paid) for that year
+  // This undoes the dividend deduction from retained earnings, showing total value created
+  const bvPlusDivSeries = sortedYears
+    .map(y => {
+      const equity = balance[y]?.equity_attributable_to_parent ?? balance[y]?.equity;
+      const divPaid = Math.abs(cashFlow[y]?.dividends_paid ?? 0);
+      return { year: y, value: equity != null ? equity + divPaid : null };
+    })
+    .filter(d => d.value !== null);
+
+  const earningsSeries = buildSeries(income, 'net_income_loss');
+  const opCashSeries = buildSeries(cashFlow, 'net_cash_flow_from_operating_activities');
+  const revenueSeries = buildSeries(income, 'revenues');
+
+  let fcfSeries = buildSeries(cashFlow, 'free_cash_flow');
+  if (fcfSeries.length === 0) {
+    for (const y of sortedYears) {
+      const cf = cashFlow[y] || {};
+      const opCF = cf.net_cash_flow_from_operating_activities;
+      const capEx = cf.capital_expenditures;
+      if (opCF != null && capEx != null) {
+        fcfSeries.push({ year: y, value: opCF - Math.abs(capEx) });
+      }
+    }
+  }
+
+  // Retained Earnings
+  const retainedEarningsSeries = buildSeries(balance, 'retained_earnings');
+
+  // Pre-Tax Earnings (income before tax)
+  const pretaxEarningsSeries = buildSeries(income, 'income_before_tax');
+
+  // Market Cap needs price data — computed externally (needs year-end prices)
+
+  return {
+    bookValue: bookValueSeries,
+    bvPlusDiv: bvPlusDivSeries,
+    earnings: earningsSeries,
+    pretaxEarnings: pretaxEarningsSeries,
+    operatingCash: opCashSeries,
+    revenue: revenueSeries,
+    fcf: fcfSeries,
+    retainedEarnings: retainedEarningsSeries,
+  };
+}
+
 // Compute growth rates for all 6 Moat metrics from EDGAR financial statements.
 // statements: output of fetchEdgarStatements() — { years, income, balance, cashFlow }
 // excludeYears: Set of years to exclude (outliers)

@@ -239,18 +239,25 @@ export function extractAnnualFact(companyFacts, tag, unit = 'USD') {
   if (!facts) return null;
 
   const entries = facts.units?.[unit] || [];
-  const annual = entries.filter(e => e.form === '10-K' && e.fp === 'FY');
+  // Include fp=Q4 from 10-K filings as fallback — some companies tag annual
+  // data as Q4 instead of FY (e.g., COST FY2019 has 599 Q4 entries, zero FY).
+  const annual = entries.filter(e => e.form === '10-K' && (e.fp === 'FY' || e.fp === 'Q4'));
   if (annual.length === 0) return null;
 
   // Group by fiscal year, keep the entry with the latest period end date.
   // Each 10-K reports current year + prior year comparative, both with
   // the same fy. We want the current year (latest end date), not the
   // comparative. If end dates tie, prefer the most recently filed.
+  // Always prefer fp=FY over fp=Q4 for the same fiscal year.
   const byFY = {};
   for (const e of annual) {
     const fy = e.fy;
     if (!fy) continue;
-    if (!byFY[fy] || e.end > byFY[fy].end || (e.end === byFY[fy].end && e.filed > byFY[fy].filed)) {
+    const cur = byFY[fy];
+    if (!cur
+      || (e.fp === 'FY' && cur.fp !== 'FY')
+      || (e.fp === cur.fp && (e.end > cur.end || (e.end === cur.end && e.filed > cur.filed)))
+    ) {
       byFY[fy] = e;
     }
   }
@@ -274,16 +281,22 @@ export function extractAnnualFactOriginal(companyFacts, tag, unit = 'USD') {
   if (!facts) return null;
 
   const entries = facts.units?.[unit] || [];
-  const annual = entries.filter(e => e.form === '10-K' && e.fp === 'FY');
+  // Same fp=Q4 fallback as extractAnnualFact (see comment above).
+  const annual = entries.filter(e => e.form === '10-K' && (e.fp === 'FY' || e.fp === 'Q4'));
   if (annual.length === 0) return null;
 
   // Group by fiscal year, keep the entry with the latest period end date
   // but EARLIEST filed date (original filing, not restated comparative).
+  // Always prefer fp=FY over fp=Q4 for the same fiscal year.
   const byFY = {};
   for (const e of annual) {
     const fy = e.fy;
     if (!fy) continue;
-    if (!byFY[fy] || e.end > byFY[fy].end || (e.end === byFY[fy].end && e.filed < byFY[fy].filed)) {
+    const cur = byFY[fy];
+    if (!cur
+      || (e.fp === 'FY' && cur.fp !== 'FY')
+      || (e.fp === cur.fp && (e.end > cur.end || (e.end === cur.end && e.filed < cur.filed)))
+    ) {
       byFY[fy] = e;
     }
   }
@@ -307,13 +320,20 @@ export function extractFiscalYearEnds(companyFacts) {
     const facts = companyFacts?.facts?.['us-gaap']?.[tag];
     if (!facts) continue;
     const entries = facts.units?.USD || [];
-    const annual = entries.filter(e => e.form === '10-K' && e.fp === 'FY' && e.fy && e.end);
+    const annual = entries.filter(e => e.form === '10-K' && (e.fp === 'FY' || e.fp === 'Q4') && e.fy && e.end);
     if (annual.length === 0) continue;
 
-    // Group by fy, keep latest end date (same logic as extractAnnualFact)
+    // Group by fy, keep latest end date (same logic as extractAnnualFact).
+    // Prefer fp=FY over fp=Q4 for the same fiscal year.
     const byFY = {};
     for (const e of annual) {
-      if (!byFY[e.fy] || e.end > byFY[e.fy].end) byFY[e.fy] = e;
+      const cur = byFY[e.fy];
+      if (!cur
+        || (e.fp === 'FY' && cur.fp !== 'FY')
+        || (e.fp === cur.fp && e.end > cur.end)
+      ) {
+        byFY[e.fy] = e;
+      }
     }
 
     const result = {};

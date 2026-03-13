@@ -15,12 +15,14 @@ import FinancialStatements from './FinancialStatements';
 import GrowthAnalysis from './GrowthAnalysis';
 import Filings from './Filings';
 import Insiders from './Insiders';
+import Valuation from './Valuation';
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
   { key: 'scores', label: 'Scores' },
   { key: 'financials', label: 'Financials' },
   { key: 'growth', label: 'Growth' },
+  { key: 'valuation', label: 'Valuation' },
   { key: 'filings', label: 'Filings' },
   { key: 'insiders', label: 'Insiders' },
 ];
@@ -274,6 +276,17 @@ export default function Toolbox({ getReport, updateReport, settings }) {
               growthRates={growthRates}
               series={growthRates?._series}
               settings={settings}
+            />
+          )}
+
+          {/* Valuation tab */}
+          {activeTab === 'valuation' && (
+            <Valuation
+              edgarStatements={edgarStatements}
+              ticker={ticker}
+              latest={latest}
+              settings={settings}
+              returns={returns}
             />
           )}
         </div>

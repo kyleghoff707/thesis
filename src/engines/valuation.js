@@ -137,7 +137,7 @@ export function estimateMaintenanceCapEx(totalCapEx, maintenancePct = 0.70) {
 // 7. Future price = future earnings × historically reasonable P/E
 // 8. Back-track to present value at MARR
 
-export function computeEquityBond({ bvps, roe, retainedRatio, historicalPE, marr = 0.15, years = 10 }) {
+export function computeEquityBond({ bvps, roe, retainedRatio, historicalPE, marr = 0.15, years = 10, currentPrice = null }) {
   if (!bvps || !roe || !retainedRatio || !historicalPE) return null;
 
   // Equity growth rate
@@ -155,8 +155,10 @@ export function computeEquityBond({ bvps, roe, retainedRatio, historicalPE, marr
   // Present value (buy price)
   const buyPrice = futurePrice / Math.pow(1 + marr, years);
 
-  // Projected annual return if bought at buyPrice
-  const projectedReturn = Math.pow(futurePrice / buyPrice, 1 / years) - 1;
+  // Projected annual return at current market price
+  const projectedReturnAtCurrentPrice = (currentPrice && currentPrice > 0)
+    ? round4(Math.pow(futurePrice / currentPrice, 1 / years) - 1)
+    : null;
 
   return {
     equityGrowthRate: round4(equityGrowthRate),
@@ -164,8 +166,57 @@ export function computeEquityBond({ bvps, roe, retainedRatio, historicalPE, marr
     futureEPS: round2(futureEPS),
     futurePrice: round2(futurePrice),
     buyPrice: round2(buyPrice),
-    projectedReturn: round4(projectedReturn),
+    projectedReturnAtCurrentPrice,
     inputs: { bvps, roe, retainedRatio, historicalPE, marr, years },
+  };
+}
+
+// ============================================================
+// 4b. Pretax Equity Bond (from Interpretation of Financial Statements, 2008)
+// ============================================================
+// Treats pretax EPS as a growing bond coupon
+// 1. Current pretax EPS (pretax income / shares)
+// 2. Historical pretax EPS growth rate (CAGR)
+// 3. Capitalize at corporate bond yield → bond-equivalent value
+// 4. OR: project forward at growth rate × historical P/E → discount at MARR → buy price
+
+export function computePretaxEquityBond({ pretaxEPS, pretaxGrowthRate, corpBondYield, historicalPE, marr = 0.15, years = 10, currentPrice = null }) {
+  if (!pretaxEPS || pretaxEPS <= 0) return null;
+
+  // Pretax yield at current price (the "initial coupon rate")
+  const pretaxYield = (currentPrice && currentPrice > 0)
+    ? round4(pretaxEPS / currentPrice)
+    : null;
+
+  // Bond capitalization value: what you'd pay for this coupon at bond rates
+  const bondCapValue = (corpBondYield && corpBondYield > 0)
+    ? round2(pretaxEPS / corpBondYield)
+    : null;
+
+  // Projection method (requires growth rate and P/E)
+  let futurePretaxEPS = null;
+  let futurePrice = null;
+  let buyPrice = null;
+  let projectedReturnAtCurrentPrice = null;
+
+  if (pretaxGrowthRate && historicalPE) {
+    futurePretaxEPS = round2(pretaxEPS * Math.pow(1 + pretaxGrowthRate, years));
+    futurePrice = round2(futurePretaxEPS * historicalPE);
+    buyPrice = round2(futurePrice / Math.pow(1 + marr, years));
+
+    if (currentPrice && currentPrice > 0) {
+      projectedReturnAtCurrentPrice = round4(Math.pow(futurePrice / currentPrice, 1 / years) - 1);
+    }
+  }
+
+  return {
+    pretaxYield,
+    bondCapValue,
+    futurePretaxEPS,
+    futurePrice,
+    buyPrice,
+    projectedReturnAtCurrentPrice,
+    inputs: { pretaxEPS, pretaxGrowthRate, corpBondYield, historicalPE, marr, years },
   };
 }
 
@@ -227,6 +278,10 @@ export function sensitivityTable({ method, baseInputs, param1, param2 }) {
           break;
         case 'equityBond':
           result = computeEquityBond(inputs);
+          row.push(result?.buyPrice ?? null);
+          break;
+        case 'pretaxEquityBond':
+          result = computePretaxEquityBond(inputs);
           row.push(result?.buyPrice ?? null);
           break;
         default:
