@@ -219,6 +219,7 @@ export default function ValuationCalculators({
   heroEnabled,
   setHeroEnabled,
   onSave,
+  saveStatus,
   analystData,
   analystLoading,
   refetchAnalyst,
@@ -400,7 +401,7 @@ export default function ValuationCalculators({
         padding: '20px 28px',
         marginBottom: 16,
         display: 'flex',
-        alignItems: 'baseline',
+        alignItems: 'center',
         gap: 40,
         flexWrap: 'wrap',
       }}>
@@ -424,6 +425,39 @@ export default function ValuationCalculators({
             {currentPrice != null ? fmtDollar(currentPrice) : '--'}
           </div>
         </div>
+        {onSave && (
+          <div style={{ marginLeft: 'auto' }}>
+            <button
+              onClick={onSave}
+              style={{
+                padding: '8px 18px',
+                fontSize: 12,
+                fontWeight: 600,
+                color: '#fff',
+                background: saveStatus === 'saved' ? '#16a34a' : C.accent,
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                transition: 'background .3s',
+              }}
+            >
+              {saveStatus === 'saved'
+                ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+              }
+              {saveStatus === 'saved' ? 'Saved!' : 'Save Valuation'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Summary Row */}
@@ -733,33 +767,6 @@ export default function ValuationCalculators({
         </div>
       </div>
 
-      {/* Save Valuation button */}
-      {onSave && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-          <button
-            onClick={onSave}
-            style={{
-              padding: '7px 18px',
-              fontSize: 12,
-              fontWeight: 600,
-              color: '#fff',
-              background: C.accent,
-              border: 'none',
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-            Save Valuation
-          </button>
-        </div>
-      )}
     </div>
   );
 }

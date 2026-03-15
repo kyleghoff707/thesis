@@ -665,14 +665,13 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
           </button>
         ))}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1 }}>
-          {saveStatus && (
+          {saveStatus === 'loaded' && (
             <span style={{
               fontSize: 11,
-              color: saveStatus === 'saved' ? '#16a34a' : C.accent,
+              color: C.accent,
               fontWeight: 500,
-              transition: 'opacity .3s',
             }}>
-              {saveStatus === 'saved' ? 'Saved' : 'Loaded from save'}
+              Loaded from save
             </span>
           )}
         </div>
@@ -765,6 +764,7 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
           heroEnabled={heroEnabled}
           setHeroEnabled={setHeroEnabled}
           onSave={handleSave}
+          saveStatus={saveStatus}
           analystData={analystData}
           analystLoading={analystLoading}
           refetchAnalyst={refetchAnalyst}

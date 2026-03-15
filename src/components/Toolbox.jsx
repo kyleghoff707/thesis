@@ -22,6 +22,7 @@ import Valuation from './Valuation';
 import CollapsibleSection from './CollapsibleSection';
 import ExecutiveCompensation from './ExecutiveCompensation';
 import { classifyBySIC } from '../engines/sicClassification';
+import TickerDataAudit from './TickerDataAudit';
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
@@ -30,6 +31,7 @@ const TABS = [
   { key: 'valuation', label: 'Valuation' },
   { key: 'insiders', label: 'Insiders' },
   { key: 'filings', label: 'Filings' },
+  { key: 'audit', label: 'Audit' },
 ];
 
 export default function Toolbox({ getReport, updateReport, settings }) {
@@ -244,6 +246,11 @@ export default function Toolbox({ getReport, updateReport, settings }) {
         <Insiders ticker={ticker} />
       )}
 
+      {/* Audit tab — independent, runs its own data fetches */}
+      {activeTab === 'audit' && (
+        <TickerDataAudit ticker={ticker} guruActivities={guruActivities} />
+      )}
+
       {/* Overview tab — partially independent */}
       {activeTab === 'overview' && (
         <div>
@@ -381,7 +388,7 @@ export default function Toolbox({ getReport, updateReport, settings }) {
       )}
 
       {/* Tabs that need edgarStatements */}
-      {edgarStatements && activeTab !== 'filings' && activeTab !== 'insiders' && activeTab !== 'overview' && (
+      {edgarStatements && activeTab !== 'filings' && activeTab !== 'insiders' && activeTab !== 'overview' && activeTab !== 'audit' && (
         <div style={{ opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s', pointerEvents: loading ? 'none' : undefined }}>
 
           {/* Financials tab */}
