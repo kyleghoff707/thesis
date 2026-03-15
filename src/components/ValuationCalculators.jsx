@@ -222,6 +222,7 @@ export default function ValuationCalculators({
   analystData,
   analystLoading,
   refetchAnalyst,
+  analystGRSource,
 }) {
   // Determine buy prices
   const tenCapPrice = tenCapData?.tenCapPrice ?? null;
@@ -309,12 +310,19 @@ export default function ValuationCalculators({
       <div style={{ marginTop: 4 }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary, marginBottom: 4 }}>Future Growth Rate</div>
 
-        {/* Analyst GR — locked (data-driven) */}
+        {/* Analyst GR — locked (data-driven from best available source) */}
         <div style={radioStyle(fgrSource === 'analyst')} onClick={() => !readOnly && setFgrSource('analyst')}>
           <div style={dot(fgrSource === 'analyst')}>
             {fgrSource === 'analyst' && <div style={innerDot} />}
           </div>
-          <span style={{ fontSize: 13, color: C.text, flex: 1 }}>Analyst GR</span>
+          <span style={{ fontSize: 13, color: C.text, flex: 1 }}>
+            Analyst GR
+            {analystGRSource && (
+              <span style={{ fontSize: 10, color: C.textMuted, marginLeft: 4 }}>
+                ({analystGRSource === 'finviz' ? 'Finviz 5Y' : analystGRSource === 'gurufocus' ? 'GuruFocus' : 'Yahoo'})
+              </span>
+            )}
+          </span>
           <div style={valBox(analystGR, false)}>
             <LockIcon />
             <span style={{ color: analystGR ? C.text : C.textMuted }}>
@@ -578,209 +586,6 @@ export default function ValuationCalculators({
               icon={{ element: <EditIcon /> }}
             />
             {FGRRadioGroup({ readOnly: false })}
-            {analystLoading && !analystData && (
-              <div style={{ fontSize: 11, color: C.textMuted, fontStyle: 'italic', marginTop: 8, padding: '6px 10px' }}>
-                Loading analyst data...
-              </div>
-            )}
-            {analystData && (() => {
-              const { priceTargets: pt, epsEstimates: eps, revenueEstimates: rev, recommendation: rec, upgrades, numberOfAnalysts, growthRateCurrentYear, growthRateNextYear } = analystData;
-              const hasContent = pt || eps || rec || (upgrades && upgrades.length > 0);
-              if (!hasContent) return null;
-
-              const timeAgo = (fetchedAt) => {
-                if (!fetchedAt) return '';
-                const mins = Math.floor((Date.now() - fetchedAt) / 60000);
-                if (mins < 1) return 'just now';
-                if (mins < 60) return mins + 'm ago';
-                const hrs = Math.floor(mins / 60);
-                if (hrs < 24) return hrs + 'h ago';
-                return Math.floor(hrs / 24) + 'd ago';
-              };
-              const fetchedAt = analystData._fetchedAt;
-
-              const fmtD = (n) => n == null ? '--' : '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-              const fmtShortDate = (dateStr) => {
-                if (!dateStr) return '';
-                const d = new Date(dateStr + 'T00:00:00');
-                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-              };
-
-              const panelStyle = {
-                marginTop: 10,
-                padding: '10px 12px',
-                background: C.bgHover,
-                border: `1px solid ${C.border}`,
-                borderRadius: 8,
-                fontSize: 12,
-                lineHeight: 1.5,
-              };
-              const labelStyle = { fontSize: 11, fontWeight: 600, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' };
-              const mutedStyle = { color: C.textMuted, fontSize: 11 };
-
-              return (
-                <div style={panelStyle}>
-                  {/* Header */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <span style={labelStyle}>Wall Street Consensus</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={mutedStyle}>
-                        {numberOfAnalysts != null && `${numberOfAnalysts} analysts`}
-                        {fetchedAt && numberOfAnalysts != null && ' · '}
-                        {fetchedAt && timeAgo(fetchedAt)}
-                      </span>
-                      {refetchAnalyst && (
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ cursor: 'pointer', opacity: analystLoading ? 0.4 : 1 }} onClick={() => !analystLoading && refetchAnalyst()}>
-                          <polyline points="23 4 23 10 17 10" />
-                          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* EPS Growth Rates */}
-                  {(growthRateCurrentYear != null || growthRateNextYear != null) && (
-                    <div style={{ marginBottom: 8, display: 'flex', gap: 16, fontSize: 12 }}>
-                      <span style={mutedStyle}>EPS Growth</span>
-                      {growthRateCurrentYear != null && (
-                        <span>
-                          <span style={{ color: C.textSecondary }}>This FY: </span>
-                          <span style={{ color: growthRateCurrentYear >= 10 ? '#22c55e' : growthRateCurrentYear >= 0 ? C.text : '#ef4444', fontWeight: 600 }}>
-                            {growthRateCurrentYear.toFixed(1)}%
-                          </span>
-                        </span>
-                      )}
-                      {growthRateNextYear != null && (
-                        <span>
-                          <span style={{ color: C.textSecondary }}>Next FY: </span>
-                          <span style={{ color: growthRateNextYear >= 10 ? '#22c55e' : growthRateNextYear >= 0 ? C.text : '#ef4444', fontWeight: 600 }}>
-                            {growthRateNextYear.toFixed(1)}%
-                          </span>
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Price Targets */}
-                  {pt && (
-                    <div style={{ marginBottom: 8 }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                        <span style={mutedStyle}>Target Price</span>
-                        <span style={mutedStyle}>{fmtD(pt.low)}</span>
-                        <span style={{ color: C.textMuted, fontSize: 10 }}>—</span>
-                        <span style={{ fontWeight: 600, color: C.text, fontSize: 13 }}>{fmtD(pt.mean)}</span>
-                        <span style={{ color: C.textMuted, fontSize: 10 }}>—</span>
-                        <span style={mutedStyle}>{fmtD(pt.high)}</span>
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, marginLeft: 76 }}>
-                        <span style={{ ...mutedStyle, fontSize: 10 }}>low</span>
-                        <span style={{ ...mutedStyle, fontSize: 10, marginLeft: 12 }}>mean</span>
-                        <span style={{ ...mutedStyle, fontSize: 10, marginLeft: 8 }}>high</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* EPS Estimates */}
-                  {eps && (
-                    <div style={{ marginBottom: 8 }}>
-                      <span style={mutedStyle}>EPS Est.</span>
-                      <div style={{ marginTop: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        {eps.currentYear && (
-                          <div style={{ display: 'flex', gap: 6, fontSize: 12 }}>
-                            <span style={{ color: C.textSecondary, minWidth: 42 }}>FY{eps.currentYear.date?.slice(0, 4) || ''}:</span>
-                            <span style={mutedStyle}>{fmtD(eps.currentYear.low)}</span>
-                            <span style={{ color: C.text, fontWeight: 600 }}>{fmtD(eps.currentYear.avg)}</span>
-                            <span style={mutedStyle}>{fmtD(eps.currentYear.high)}</span>
-                          </div>
-                        )}
-                        {eps.nextYear && (
-                          <div style={{ display: 'flex', gap: 6, fontSize: 12 }}>
-                            <span style={{ color: C.textSecondary, minWidth: 42 }}>FY{eps.nextYear.date?.slice(0, 4) || ''}:</span>
-                            <span style={mutedStyle}>{fmtD(eps.nextYear.low)}</span>
-                            <span style={{ color: C.text, fontWeight: 600 }}>{fmtD(eps.nextYear.avg)}</span>
-                            <span style={mutedStyle}>{fmtD(eps.nextYear.high)}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Revenue Estimates */}
-                  {rev && (
-                    <div style={{ marginBottom: 8 }}>
-                      <span style={mutedStyle}>Rev. Est.</span>
-                      <div style={{ marginTop: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        {rev.currentYear && (
-                          <div style={{ display: 'flex', gap: 6, fontSize: 12, alignItems: 'baseline' }}>
-                            <span style={{ color: C.textSecondary, minWidth: 42 }}>FY{rev.currentYear.date?.slice(0, 4) || ''}:</span>
-                            <span style={{ color: C.text, fontWeight: 600 }}>{fmtLargeDollar(rev.currentYear.avg)}</span>
-                            {rev.currentYear.growth != null && (
-                              <span style={{ color: rev.currentYear.growth >= 0 ? '#22c55e' : '#ef4444', fontSize: 11 }}>
-                                ({(rev.currentYear.growth * 100).toFixed(1)}%)
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        {rev.nextYear && (
-                          <div style={{ display: 'flex', gap: 6, fontSize: 12, alignItems: 'baseline' }}>
-                            <span style={{ color: C.textSecondary, minWidth: 42 }}>FY{rev.nextYear.date?.slice(0, 4) || ''}:</span>
-                            <span style={{ color: C.text, fontWeight: 600 }}>{fmtLargeDollar(rev.nextYear.avg)}</span>
-                            {rev.nextYear.growth != null && (
-                              <span style={{ color: rev.nextYear.growth >= 0 ? '#22c55e' : '#ef4444', fontSize: 11 }}>
-                                ({(rev.nextYear.growth * 100).toFixed(1)}%)
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Recommendation Bar */}
-                  {rec && rec.total > 0 && (() => {
-                    const buyPct = ((rec.strongBuy + rec.buy) / rec.total) * 100;
-                    const holdPct = (rec.hold / rec.total) * 100;
-                    const sellPct = ((rec.sell + rec.strongSell) / rec.total) * 100;
-                    return (
-                      <div style={{ marginBottom: 8 }}>
-                        <div style={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden', marginBottom: 4 }}>
-                          {buyPct > 0 && <div style={{ width: buyPct + '%', background: '#22c55e' }} />}
-                          {holdPct > 0 && <div style={{ width: holdPct + '%', background: C.textMuted }} />}
-                          {sellPct > 0 && <div style={{ width: sellPct + '%', background: '#ef4444' }} />}
-                        </div>
-                        <div style={{ display: 'flex', gap: 12, fontSize: 11 }}>
-                          <span style={{ color: '#22c55e' }}>{rec.strongBuy + rec.buy} Buy</span>
-                          <span style={{ color: C.textMuted }}>{rec.hold} Hold</span>
-                          <span style={{ color: '#ef4444' }}>{rec.sell + rec.strongSell} Sell</span>
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Recent Upgrades/Downgrades */}
-                  {upgrades && upgrades.length > 0 && (
-                    <div>
-                      {upgrades.slice(0, 3).map((u, i) => {
-                        const isUp = u.action === 'upgrade' || u.action === 'up';
-                        const isDown = u.action === 'downgrade' || u.action === 'down';
-                        const arrow = isUp ? '↑' : isDown ? '↓' : '→';
-                        const arrowColor = isUp ? '#22c55e' : isDown ? '#ef4444' : C.textMuted;
-                        return (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, lineHeight: 1.6 }}>
-                            <span style={{ color: arrowColor, fontWeight: 700, width: 10, textAlign: 'center' }}>{arrow}</span>
-                            <span style={mutedStyle}>{fmtShortDate(u.date)}</span>
-                            <span style={{ color: C.text, fontWeight: 500, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.firm}</span>
-                            <span style={mutedStyle}>
-                              {u.fromGrade && u.toGrade ? `${u.fromGrade} → ${u.toGrade}` : u.toGrade || u.fromGrade || ''}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
           </div>
           <div>
             <FieldRow

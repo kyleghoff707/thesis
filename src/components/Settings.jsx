@@ -250,6 +250,22 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
             </svg>
             Run N-PORT Audit
           </button>
+          <button
+            onClick={() => { onClose(); navigate('/comp-audit'); }}
+            style={{
+              background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 6,
+              padding: '6px 12px', fontSize: 13, fontWeight: 500, color: C.textSecondary,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+              transition: 'all .15s', marginTop: 8,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSecondary; }}
+          >
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="18" rx="2" /><path d="M8 7h8M8 12h8M8 17h4" />
+            </svg>
+            Run Compensation Audit
+          </button>
         </div>
 
         <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>

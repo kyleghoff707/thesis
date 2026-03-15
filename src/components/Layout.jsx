@@ -98,12 +98,11 @@ export default function Layout({ children, onNewResearch, onSettingsOpen }) {
         >
           <img src="/logo.svg" alt="" style={{ width: 22, height: 22, borderRadius: 4 }} />
           <span style={{
-            fontSize: 16,
-            fontWeight: 700,
-            letterSpacing: '-0.01em',
-            color: C.text,
+            fontSize: 18,
+            letterSpacing: '-0.02em',
+            WebkitFontSmoothing: 'antialiased',
           }}>
-            Thes<span style={{ color: C.accent, fontStyle: 'italic' }}>1</span>s
+            <span style={{ fontWeight: 500, color: C.text }}>Thes</span><span style={{ fontWeight: 700, color: C.accent }}>1</span><span style={{ fontWeight: 500, color: C.text }}>s</span>
           </span>
         </div>
 

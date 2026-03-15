@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
+    "cheerio": "^1.2.0",
     "idb": "^8.0.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

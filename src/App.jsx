@@ -14,6 +14,7 @@ import Validation from './components/Validation';
 import GuruAudit from './components/GuruAudit';
 import TickerAudit from './components/TickerAudit';
 import NportAudit from './components/NportAudit';
+import CompAudit from './components/CompAudit';
 import Settings from './components/Settings';
 
 function StagePlaceholder({ label }) {
@@ -22,6 +23,15 @@ function StagePlaceholder({ label }) {
       {label} — coming in a later phase.
     </div>
   );
+}
+
+// Redirect /research to last-viewed report if one exists
+function ResearchRedirect({ reports }) {
+  const lastId = localStorage.getItem('sa-last-research');
+  if (lastId && reports.some(r => r.id === lastId)) {
+    return <Navigate to={`/research/${lastId}`} replace />;
+  }
+  return <ResearchEmpty />;
 }
 
 // Backward compat redirect for old /research/:id/toolbox URLs
@@ -41,7 +51,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/research" replace />} />
         <Route path="/watchlists" element={<Watchlists onNewResearch={createReport} />} />
-        <Route path="/research" element={<ResearchEmpty />} />
+        <Route path="/research" element={<ResearchRedirect reports={reports} />} />
         <Route path="/research/:id" element={<Toolbox getReport={getReport} updateReport={updateReport} settings={settings} />} />
         <Route path="/research/:id/toolbox" element={<ToolboxRedirect />} />
         <Route path="/research/:id/one-pager" element={<StagePlaceholder label="One Pager" />} />
@@ -54,6 +64,7 @@ export default function App() {
         <Route path="/guru-audit" element={<GuruAudit />} />
         <Route path="/ticker-audit" element={<TickerAudit />} />
         <Route path="/nport-audit" element={<NportAudit />} />
+        <Route path="/comp-audit" element={<CompAudit />} />
       </Routes>
       {showSettings && (
         <Settings

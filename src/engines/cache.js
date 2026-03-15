@@ -22,6 +22,7 @@ const IDB_PREFIXES = [
   'nport-filing:', 'nport-summary:', 'nport-subs:',
   'filing-md:',
   'insider-form4:',
+  'comp-proxy:', 'comp-summary:',
 ];
 
 function isIDBKey(key) {
@@ -35,6 +36,7 @@ function getStoreName(key) {
   if (key.startsWith('nport-')) return 'nport-data';
   if (key.startsWith('filing-md:')) return 'filing-markdown';
   if (key.startsWith('insider-')) return 'insider-data';
+  if (key.startsWith('comp-')) return 'comp-data';
   return null;
 }
 

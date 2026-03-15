@@ -108,7 +108,7 @@ function DataTable({ title, note, rows, columns, specialColumns, onColumnClick, 
               <th style={{ ...thStyle, textAlign: 'left', position: 'sticky', left: 0, background: C.bgCard, zIndex: 2 }}></th>
               {columns.map(col => {
                 const isExcluded = excludedYears?.has(col.key);
-                const isClickable = onColumnClick && col.key !== 'TTM' && col.key !== 'weightedAvg';
+                const isClickable = onColumnClick && col.key !== 'TTM' && col.key !== 'weightedAvg' && col.key !== '3yrAvg';
                 return (
                   <th
                     key={col.key}
@@ -163,6 +163,13 @@ export default function ValuationInputs({
   historicalAvgPE,
   excludedYears,
   toggleExcludedYear,
+  excludedYears10Cap,
+  toggleExcludedYear10Cap,
+  excludedYearsMOS,
+  toggleExcludedYearMOS,
+  excludedYearsEB,
+  toggleExcludedYearEB,
+  eb3yrAvg,
   fcfRatioData,
   settings,
   hasTTM,
@@ -330,6 +337,16 @@ export default function ValuationInputs({
     },
   ];
 
+  // ─── Equity Bond Inputs ──────────────────────────────────
+
+  const ebColumns = useMemo(() => {
+    const cols = [];
+    if (newestFirst) cols.push({ key: '3yrAvg', label: '3yr Avg', isSpecial: true });
+    orderedYears.forEach(y => cols.push({ key: y, label: String(y) }));
+    if (!newestFirst) cols.push({ key: '3yrAvg', label: '3yr Avg', isSpecial: true });
+    return cols;
+  }, [orderedYears, newestFirst]);
+
   // ─── Pretax Equity Bond Inputs ────────────────────────────
 
   const pretaxEPSByYear = useMemo(() => {
@@ -398,17 +415,12 @@ export default function ValuationInputs({
     return result;
   }, [returns]);
 
-  const bvpsRows = [
+  const ebRows = [
     {
       key: 'bvps',
       label: 'Book Value Per Share',
       getValue: y => {
-        if (y === 'TTM') {
-          const bal = edgarStatements.ttm?.balance;
-          const eq = bal?.equity_attributable_to_parent ?? bal?.equity;
-          const sh = bal?.shares_outstanding;
-          return (eq != null && sh && sh > 0) ? eq / sh : null;
-        }
+        if (y === '3yrAvg') return eb3yrAvg?.bvps ?? null;
         const eq = balance[y]?.equity_attributable_to_parent ?? balance[y]?.equity;
         const sh = balance[y]?.shares_outstanding;
         return (eq != null && sh && sh > 0) ? eq / sh : null;
@@ -419,25 +431,16 @@ export default function ValuationInputs({
       key: 'roe',
       label: 'Return on Equity',
       getValue: y => {
-        if (y === 'TTM') return null;
+        if (y === '3yrAvg') return eb3yrAvg?.roe ?? null;
         return roeByYear[y] ?? null;
       },
       format: v => fmtPctVal(v),
     },
     {
-      key: 'eps',
-      label: 'EPS (Diluted)',
-      getValue: y => {
-        if (y === 'TTM') return edgarStatements.ttm?.income?.diluted_earnings_per_share;
-        return income[y]?.diluted_earnings_per_share;
-      },
-      format: v => fmtVal(v, 2),
-    },
-    {
       key: 'dps',
       label: 'Dividends Per Share',
       getValue: y => {
-        if (y === 'TTM') return null;
+        if (y === '3yrAvg') return eb3yrAvg?.dps ?? null;
         return income[y]?.dividends_per_share ?? 0;
       },
       format: v => fmtVal(v, 2),
@@ -446,7 +449,7 @@ export default function ValuationInputs({
       key: 'retainedRatio',
       label: 'Retained Earnings Ratio',
       getValue: y => {
-        if (y === 'TTM') return null;
+        if (y === '3yrAvg') return eb3yrAvg?.retainedRatio ?? null;
         const eps = income[y]?.diluted_earnings_per_share;
         const dps = income[y]?.dividends_per_share;
         if (!eps || eps <= 0) return null;
@@ -456,19 +459,10 @@ export default function ValuationInputs({
       format: v => fmtPctVal(v),
     },
     {
-      key: 'highPE',
-      label: 'High P/E Ratio',
-      getValue: y => {
-        if (y === 'TTM') return null;
-        return historicalPE?.[y] ?? null;
-      },
-      format: v => fmtVal(v, 2),
-    },
-    {
       key: 'avgPE',
       label: 'Avg P/E Ratio',
       getValue: y => {
-        if (y === 'TTM') return null;
+        if (y === '3yrAvg') return eb3yrAvg?.avgPE ?? null;
         return historicalAvgPE?.[y] ?? null;
       },
       format: v => fmtVal(v, 2),
@@ -509,15 +503,20 @@ export default function ValuationInputs({
 
       <DataTable
         title="10 Cap Inputs"
-        note="Values in millions"
+        note="Values in millions · Click a year to exclude"
         rows={tenCapRows}
         columns={tenCapColumns}
+        onColumnClick={toggleExcludedYear10Cap}
+        excludedYears={excludedYears10Cap}
       />
 
       <DataTable
         title="Margin of Safety Inputs"
+        note="Click a year to exclude"
         rows={mosRows}
         columns={mosColumns}
+        onColumnClick={toggleExcludedYearMOS}
+        excludedYears={excludedYearsMOS}
       />
 
       <DataTable
@@ -530,9 +529,12 @@ export default function ValuationInputs({
       />
 
       <DataTable
-        title="BVPS Growth Inputs"
-        rows={bvpsRows}
-        columns={tenCapColumns}
+        title="Equity Bond Inputs"
+        note="Click a year to exclude · 3yr Avg feeds calculator defaults"
+        rows={ebRows}
+        columns={ebColumns}
+        onColumnClick={toggleExcludedYearEB}
+        excludedYears={excludedYearsEB}
       />
     </div>
   );

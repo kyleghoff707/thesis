@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { C } from '../theme';
 import { usePrices } from '../hooks/usePrices';
-import { useAnalystEstimates } from '../hooks/useAnalystEstimates';
+import { useAnalystData } from '../hooks/useAnalystData';
 import { computeMOS, computePBT, computeTenCap, computeEquityBond, computePretaxEquityBond, computeBondComparison, fcfPerShare as computeFcfPerShare, yearsToPayback, suggestFuturePE, estimateMaintenanceCapEx } from '../engines/valuation';
 import { computeFCFRatio } from '../engines/returnMetrics';
 import { buildGrowthAnalysisSeries, compute3YearSmoothedRates, computeWeightedAvgGrowthRate } from '../engines/growthRates';
@@ -106,8 +106,8 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
   // Fetch full price history for historical PE
   const { prices: allPrices } = usePrices(ticker, 'max');
 
-  // Fetch analyst consensus estimates from Yahoo Finance
-  const { data: analystData, loading: analystLoading, refetch: refetchAnalyst } = useAnalystEstimates(ticker);
+  // Fetch analyst consensus estimates from Yahoo Finance + Finviz + GuruFocus
+  const { data: analystData, loading: analystLoading, refetch: refetchAnalyst, analystGR: computedAnalystGR, analystGRSource } = useAnalystData(ticker);
 
   // ─── Valuation state ─────────────────────────────────────
 
@@ -132,6 +132,11 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
   const [pbtYears, setPbtYears] = useState(8);
   const [fcfRatioOverride, setFcfRatioOverride] = useState(null);
   const [excludedYears, setExcludedYears] = useState(new Set());
+  const [excludedYears10Cap, setExcludedYears10Cap] = useState(new Set());
+  const [excludedYearsMOS, setExcludedYearsMOS] = useState(new Set());
+  const [excludedYearsEB, setExcludedYearsEB] = useState(new Set());
+  // Per-cell exclusion for Growth Rate Analysis (Set of "metricKey:year" strings)
+  const [excludedGrowthPoints, setExcludedGrowthPoints] = useState(new Set());
 
   // 10 Cap field overrides (auto-fill from EDGAR, user can edit)
   const [tenCapCFOOverride, setTenCapCFOOverride] = useState(null);
@@ -187,6 +192,10 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
       setPbtYears(saved.pbtYears ?? 8);
       setFcfRatioOverride(saved.fcfRatioOverride ?? null);
       setExcludedYears(saved.excludedYears instanceof Set ? saved.excludedYears : new Set());
+      setExcludedYears10Cap(saved.excludedYears10Cap ? new Set(saved.excludedYears10Cap) : new Set());
+      setExcludedYearsMOS(saved.excludedYearsMOS ? new Set(saved.excludedYearsMOS) : new Set());
+      setExcludedYearsEB(saved.excludedYearsEB ? new Set(saved.excludedYearsEB) : new Set());
+      setExcludedGrowthPoints(saved.excludedGrowthPoints ? new Set(saved.excludedGrowthPoints) : new Set());
       setTenCapCFOOverride(saved.tenCapCFOOverride ?? null);
       setTenCapCapExOverride(saved.tenCapCapExOverride ?? null);
       setTenCapTaxOverride(saved.tenCapTaxOverride ?? null);
@@ -222,6 +231,10 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
       setPbtYears(8);
       setFcfRatioOverride(null);
       setExcludedYears(new Set());
+      setExcludedYears10Cap(new Set());
+      setExcludedYearsMOS(new Set());
+      setExcludedYearsEB(new Set());
+      setExcludedGrowthPoints(new Set());
       setTenCapCFOOverride(null);
       setTenCapCapExOverride(null);
       setTenCapTaxOverride(null);
@@ -243,12 +256,12 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
     }
   }, [ticker, defaultEPS]);
 
-  // Auto-populate analyst GR from Yahoo data (only if not already set from save)
+  // Auto-populate analyst GR from fresh data — always use latest from Finviz/GF/Yahoo
   useEffect(() => {
-    if (analystData?.growthRate != null && !analystGR) {
-      setAnalystGR(String(Math.round(analystData.growthRate * 100) / 100));
+    if (computedAnalystGR != null) {
+      setAnalystGR(String(Math.round(computedAnalystGR * 100) / 100));
     }
-  }, [analystData]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [computedAnalystGR]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save handler
   const handleSave = useCallback(() => {
@@ -256,6 +269,10 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
       epsTTM, fgrSource, analystGR, customGR, maintenancePct,
       futurePEOverride, mosDiscount, marr, pbtYears, fcfRatioOverride,
       excludedYears,
+      excludedYears10Cap: [...excludedYears10Cap],
+      excludedYearsMOS: [...excludedYearsMOS],
+      excludedYearsEB: [...excludedYearsEB],
+      excludedGrowthPoints: [...excludedGrowthPoints],
       tenCapCFOOverride, tenCapCapExOverride, tenCapTaxOverride,
       tenCapSharesOverride, tenCapMaintCapExOverride,
       pbtFCFPerShareOverride,
@@ -268,7 +285,8 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
     setTimeout(() => setSaveStatus(null), 2000);
   }, [ticker, epsTTM, fgrSource, analystGR, customGR, maintenancePct,
     futurePEOverride, mosDiscount, marr, pbtYears, fcfRatioOverride,
-    excludedYears, tenCapCFOOverride, tenCapCapExOverride, tenCapTaxOverride,
+    excludedYears, excludedYears10Cap, excludedYearsMOS, excludedYearsEB, excludedGrowthPoints,
+    tenCapCFOOverride, tenCapCapExOverride, tenCapTaxOverride,
     tenCapSharesOverride, tenCapMaintCapExOverride, pbtFCFPerShareOverride,
     ptebPretaxEPSOverride, ptebGrowthRateOverride, ptebPEOverride, ptebCorpBondYield,
     ebBvpsOverride, ebRoeOverride, ebRetainedRatioOverride, ebAvgPEOverride,
@@ -288,14 +306,18 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
     const result = {};
     // Compute weighted averages for ALL growth-type metrics so any can be toggled into composite
     for (const key of ALL_GROWTH_KEYS) {
-      const series = analysisSeries[key];
+      let series = analysisSeries[key];
       if (series && series.length > 0) {
+        // Filter out individually excluded data points
+        if (excludedGrowthPoints.size > 0) {
+          series = series.filter(d => !excludedGrowthPoints.has(`${key}:${d.year}`));
+        }
         const smoothed = compute3YearSmoothedRates(series);
         result[key] = computeWeightedAvgGrowthRate(smoothed);
       }
     }
     return result;
-  }, [analysisSeries]);
+  }, [analysisSeries, excludedGrowthPoints]);
 
   // Composite GR = simple average of selected metric weighted averages
   const compositeGR = useMemo(() => {
@@ -445,39 +467,59 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
     return { pretaxEPS, pretaxGrowthRate, avgPE: historicalAvgPE };
   }, [edgarStatements, ttmIncome, ttmBalance, latestYear, historicalAvgPE]);
 
-  // Method B (BVPS Growth) defaults
-  const ebDefaults = useMemo(() => {
-    if (!edgarStatements) return { bvps: null, avgROE: null, retainedRatio: null, avgPE: null };
+  // Equity Bond 3yr averages (most recent 3 non-excluded years)
+  const eb3yrAvg = useMemo(() => {
+    if (!edgarStatements) return { bvps: null, roe: null, dps: null, retainedRatio: null, avgPE: null };
 
     const { years, income, balance } = edgarStatements;
+    const activeYears = years.filter(y => y !== 'TTM' && !excludedYearsEB.has(y));
+    const recent3 = activeYears.slice(0, 3);
+    if (recent3.length === 0) return { bvps: null, roe: null, dps: null, retainedRatio: null, avgPE: null };
 
-    // BVPS from latest year (or TTM balance)
-    const latBal = ttmBalance || (latestYear ? balance[latestYear] : {});
-    const equity = latBal?.equity_attributable_to_parent ?? latBal?.equity;
-    const shares = latBal?.shares_outstanding;
-    const bvps = (equity && shares && shares > 0) ? Math.round((equity / shares) * 100) / 100 : null;
+    // BVPS
+    const bvpsVals = recent3.map(y => {
+      const eq = balance[y]?.equity_attributable_to_parent ?? balance[y]?.equity;
+      const sh = balance[y]?.shares_outstanding;
+      return (eq != null && sh && sh > 0) ? eq / sh : null;
+    }).filter(v => v != null);
+    const bvps = bvpsVals.length > 0 ? Math.round((bvpsVals.reduce((a, b) => a + b, 0) / bvpsVals.length) * 100) / 100 : null;
 
-    // Average ROE from returns.yearly
-    const roeValues = (returns?.yearly || []).map(d => d.roe).filter(v => v != null && isFinite(v));
-    const avgROE = roeValues.length > 0 ? Math.round((roeValues.reduce((a, b) => a + b, 0) / roeValues.length) * 10000) / 10000 : null;
+    // ROE
+    const roeMap = {};
+    for (const entry of (returns?.yearly || [])) roeMap[entry.year] = entry.roe;
+    const roeVals = recent3.map(y => roeMap[y]).filter(v => v != null && isFinite(v));
+    const roe = roeVals.length > 0 ? Math.round((roeVals.reduce((a, b) => a + b, 0) / roeVals.length) * 10000) / 10000 : null;
 
-    // Retained Earnings Ratio per year: 1 - abs(DPS / EPS), averaged
-    const retainedRatios = [];
-    for (const year of years) {
-      if (year === 'TTM') continue;
-      const eps = income[year]?.diluted_earnings_per_share;
-      const dps = income[year]?.dividends_per_share;
+    // DPS
+    const dpsVals = recent3.map(y => income[y]?.dividends_per_share ?? 0);
+    const dps = dpsVals.length > 0 ? Math.round((dpsVals.reduce((a, b) => a + b, 0) / dpsVals.length) * 100) / 100 : null;
+
+    // Retained Ratio
+    const rrVals = recent3.map(y => {
+      const eps = income[y]?.diluted_earnings_per_share;
+      const d = income[y]?.dividends_per_share;
       if (eps && eps > 0) {
-        const payout = dps ? Math.abs(dps) / eps : 0;
-        retainedRatios.push(Math.max(0, Math.min(1, 1 - payout)));
+        const payout = d ? Math.abs(d) / eps : 0;
+        return Math.max(0, Math.min(1, 1 - payout));
       }
-    }
-    const retainedRatio = retainedRatios.length > 0
-      ? Math.round((retainedRatios.reduce((a, b) => a + b, 0) / retainedRatios.length) * 10000) / 10000
-      : null;
+      return null;
+    }).filter(v => v != null);
+    const retainedRatio = rrVals.length > 0 ? Math.round((rrVals.reduce((a, b) => a + b, 0) / rrVals.length) * 10000) / 10000 : null;
 
-    return { bvps, avgROE, retainedRatio, avgPE: historicalAvgPE };
-  }, [edgarStatements, returns, ttmBalance, latestYear, historicalAvgPE]);
+    // Avg PE
+    const peVals = recent3.map(y => historicalAvgPEPerYear?.[y]).filter(v => v != null && v > 0 && isFinite(v));
+    const avgPE = peVals.length > 0 ? Math.round((peVals.reduce((a, b) => a + b, 0) / peVals.length) * 100) / 100 : null;
+
+    return { bvps, roe, dps, retainedRatio, avgPE };
+  }, [edgarStatements, excludedYearsEB, returns, historicalAvgPEPerYear]);
+
+  // Method B (BVPS Growth) defaults — uses 3yr avg from Equity Bond Inputs
+  const ebDefaults = useMemo(() => ({
+    bvps: eb3yrAvg.bvps,
+    avgROE: eb3yrAvg.roe,
+    retainedRatio: eb3yrAvg.retainedRatio,
+    avgPE: eb3yrAvg.avgPE,
+  }), [eb3yrAvg]);
 
   // Method A result
   const ptebResult = useMemo(() => {
@@ -562,6 +604,33 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
     setFcfRatioOverride(null);
   };
 
+  const toggleExcludedYear10Cap = (year) => {
+    setExcludedYears10Cap(prev => {
+      const next = new Set(prev);
+      if (next.has(year)) next.delete(year);
+      else next.add(year);
+      return next;
+    });
+  };
+
+  const toggleExcludedYearMOS = (year) => {
+    setExcludedYearsMOS(prev => {
+      const next = new Set(prev);
+      if (next.has(year)) next.delete(year);
+      else next.add(year);
+      return next;
+    });
+  };
+
+  const toggleExcludedYearEB = (year) => {
+    setExcludedYearsEB(prev => {
+      const next = new Set(prev);
+      if (next.has(year)) next.delete(year);
+      else next.add(year);
+      return next;
+    });
+  };
+
   // ─── Render ───────────────────────────────────────────────
 
   return (
@@ -618,6 +687,16 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
           weightedAvgs={weightedAvgs}
           compositeGR={compositeGR}
           compositeMetrics={compositeMetrics}
+          excludedDataPoints={excludedGrowthPoints}
+          onToggleDataPoint={(key) => {
+            setExcludedGrowthPoints(prev => {
+              const next = new Set(prev);
+              if (next.has(key)) next.delete(key);
+              else next.add(key);
+              return next;
+            });
+          }}
+          onClearExcludedDataPoints={() => setExcludedGrowthPoints(new Set())}
           onToggleCompositeMetric={(key) => {
             setCompositeMetrics(prev => {
               const next = new Set(prev);
@@ -689,6 +768,7 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
           analystData={analystData}
           analystLoading={analystLoading}
           refetchAnalyst={refetchAnalyst}
+          analystGRSource={analystGRSource}
         />
       )}
 
@@ -699,6 +779,13 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
           historicalAvgPE={historicalAvgPEPerYear}
           excludedYears={excludedYears}
           toggleExcludedYear={toggleExcludedYear}
+          excludedYears10Cap={excludedYears10Cap}
+          toggleExcludedYear10Cap={toggleExcludedYear10Cap}
+          excludedYearsMOS={excludedYearsMOS}
+          toggleExcludedYearMOS={toggleExcludedYearMOS}
+          excludedYearsEB={excludedYearsEB}
+          toggleExcludedYearEB={toggleExcludedYearEB}
+          eb3yrAvg={eb3yrAvg}
           fcfRatioData={fcfRatioData}
           settings={settings}
           hasTTM={hasTTM}

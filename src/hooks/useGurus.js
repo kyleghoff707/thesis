@@ -3,7 +3,7 @@ import {
   fetchGuruHoldings, fetchAllGuruHoldings, findGurusOwning,
   loadCachedPortfolios, loadCachedActivities,
   fetchGuruWithChanges, fetchAllWithChanges, aggregateTopBuys, aggregateTopHoldings,
-  fetchGuruHistory, buildHoldingHistory, resolveTickersForHoldings,
+  fetchGuruHistory, buildHoldingHistory,
   fetchPortfolioValueHistory,
   GURUS,
 } from '../engines/gurus';
@@ -102,9 +102,6 @@ export function useGurus() {
     try {
       const activity = await fetchGuruWithChanges(guru);
       if (activity) {
-        // Resolve tickers
-        activity.holdings = await resolveTickersForHoldings(activity.holdings);
-
         setActivities(prev => {
           const filtered = prev.filter(a => a.guru.cik !== guru.cik);
           return [...filtered, activity];
@@ -140,13 +137,6 @@ export function useGurus() {
       const results = await fetchAllWithChanges((current, total, name) => {
         setProgress({ current, total, name });
       });
-
-      // Resolve tickers for all activities
-      for (const activity of results) {
-        if (activity?.holdings) {
-          activity.holdings = await resolveTickersForHoldings(activity.holdings);
-        }
-      }
 
       setActivities(results);
       setLastFetchedAt(Date.now());

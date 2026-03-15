@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Thes1s — Dotted 1 Variations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #f8f9fb;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      padding: 40px;
+      color: #1e293b;
+    }
+    h1 { font-size: 13px; font-weight: 600; color: #64748b; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 8px; }
+    .subtitle { font-size: 12px; color: #94a3b8; margin-bottom: 32px; }
+    .section-label {
+      font-size: 11px; font-weight: 600; color: #94a3b8;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      margin: 40px 0 16px; padding-top: 24px;
+      border-top: 1px solid #e2e8f0;
+    }
+    .section-label:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
+    .row { display: flex; gap: 20px; margin-bottom: 20px; align-items: flex-start; flex-wrap: wrap; }
+    .card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 24px 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      min-width: 160px;
+    }
+    .card.dark { background: #1e293b; border-color: #334155; }
+    .card .label { font-size: 10px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; }
+    .card .desc { font-size: 11px; color: #94a3b8; text-align: center; max-width: 180px; line-height: 1.4; }
+    .dark .label, .dark .desc { color: #64748b; }
+
+    /* The "1" uses Inter's actual font glyph, with a dot rendered above via CSS */
+    .dotted-one {
+      position: relative;
+      display: inline-block;
+      font-family: 'Inter', sans-serif;
+      color: #0f766e;
+      line-height: 1;
+    }
+    .dark .dotted-one { color: #2dd4bf; }
+    .dotted-one::before {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Wordmark context */
+    .mark {
+      font-family: 'Inter', sans-serif;
+      letter-spacing: -0.02em;
+      -webkit-font-smoothing: antialiased;
+      display: inline-flex;
+      align-items: baseline;
+    }
+    .mark .base { font-weight: 500; color: #1e293b; }
+    .dark .mark .base { color: #f1f5f9; }
+
+    /* Nav simulations */
+    .nav {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 16px; height: 52px;
+      border: 1px solid #e2e8f0; border-radius: 8px;
+      background: #fff;
+    }
+    .nav.dark { background: #1e293b; border-color: #334155; }
+    .logo-box { width: 22px; height: 22px; background: #1e293b; border-radius: 4px; flex-shrink: 0; }
+    .nav.dark .logo-box { background: #f1f5f9; }
+    .nav-tabs { display: flex; gap: 20px; margin-left: 20px; font-size: 13px; font-weight: 500; color: #64748b; }
+    .nav.dark .nav-tabs { color: #94a3b8; }
+    .note { font-size: 11px; color: #94a3b8; font-style: italic; margin-left: auto; white-space: nowrap; }
+  </style>
+</head>
+<body>
+
+<h1>Dotted 1 — Style Variations</h1>
+<p class="subtitle">Inter's numeral "1" with a dot above it. Varying: dot size, dot gap, dot shape, font weight, overall size.</p>
+
+<!-- Reference -->
+<div class="section-label">Reference — Inter's native "1" (no dot)</div>
+<div class="row">
+  <div class="card">
+    <span class="label">Inter 1 (700)</span>
+    <span style="font-size: 72px; font-weight: 700; color: #0f766e; font-family: Inter; line-height: 1;">1</span>
+  </div>
+  <div class="card">
+    <span class="label">Inter 1 (500)</span>
+    <span style="font-size: 72px; font-weight: 500; color: #0f766e; font-family: Inter; line-height: 1;">1</span>
+  </div>
+  <div class="card">
+    <span class="label">Inter 1 (800)</span>
+    <span style="font-size: 72px; font-weight: 800; color: #0f766e; font-family: Inter; line-height: 1;">1</span>
+  </div>
+  <div class="card">
+    <span class="label">Current wordmark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span style="font-weight: 700; color: #0f766e;">1</span><span class="base">s</span>
+    </span>
+  </div>
+</div>
+
+<!-- A: Standard dot, bold weight, medium dot -->
+<div class="section-label">A — Bold (700), medium round dot, normal gap</div>
+<div class="row">
+  <div class="card">
+    <span class="label">72px</span>
+    <span class="dotted-one" style="font-size: 72px; font-weight: 700; padding-top: 16px;">
+      <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; background: currentColor; border-radius: 50%;"></span>
+      1
+    </span>
+  </div>
+  <div class="card">
+    <span class="label">48px</span>
+    <span class="dotted-one" style="font-size: 48px; font-weight: 700; padding-top: 11px;">
+      <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 7px; height: 7px; background: currentColor; border-radius: 50%;"></span>
+      1
+    </span>
+  </div>
+  <div class="card">
+    <span class="label">36px wordmark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 36px; font-weight: 700; padding-top: 8px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+  </div>
+  <div class="card dark">
+    <span class="label">36px dark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 36px; font-weight: 700; padding-top: 8px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+  </div>
+  <div class="card">
+    <span class="desc">Classic i-style dot. Proportional to the stroke weight.</span>
+  </div>
+</div>
+
+<!-- B: Small dot, bold, tight gap -->
+<div class="section-label">B — Bold (700), small dot, tight gap</div>
+<div class="row">
+  <div class="card">
+    <span class="label">72px</span>
+    <span class="dotted-one" style="font-size: 72px; font-weight: 700; padding-top: 12px;">
+      <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 7px; height: 7px; background: currentColor; border-radius: 50%;"></span>
+      1
+    </span>
+  </div>
+  <div class="card">
+    <span class="label">48px</span>
+    <span class="dotted-one" style="font-size: 48px; font-weight: 700; padding-top: 8px;">
+      <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: currentColor; border-radius: 50%;"></span>
+      1
+    </span>
+  </div>
+  <div class="card">
+    <span class="label">36px wordmark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 36px; font-weight: 700; padding-top: 6px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+  </div>
+  <div class="card dark">
+    <span class="label">36px dark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 36px; font-weight: 700; padding-top: 6px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+  </div>
+  <div class="card">
+    <span class="desc">Smaller, subtler dot. Closer to the top of the 1. More understated.</span>
+  </div>
+</div>
+
+<!-- C: Large dot, bold -->
+<div class="section-label">C — Bold (700), large dot, normal gap</div>
+<div class="row">
+  <div class="card">
+    <span class="label">72px</span>
+    <span class="dotted-one" style="font-size: 72px; font-weight: 700; padding-top: 20px;">
+      <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 14px; height: 14px; background: currentColor; border-radius: 50%;"></span>
+      1
+    </span>
+  </div>
+  <div class="card">
+    <span class="label">48px</span>
+    <span class="dotted-one" style="font-size: 48px; font-weight: 700; padding-top: 14px;">
+      <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; background: currentColor; border-radius: 50%;"></span>
+      1
+    </span>
+  </div>
+  <div class="card">
+    <span class="label">36px wordmark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 36px; font-weight: 700; padding-top: 10px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 7px; height: 7px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+  </div>
+  <div class="card dark">
+    <span class="label">36px dark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 36px; font-weight: 700; padding-top: 10px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 7px; height: 7px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+  </div>
+  <div class="card">
+    <span class="desc">Bigger, bolder dot. More visual weight. Reads more immediately as "i".</span>
+  </div>
+</div>
+
+<!-- D: Extra-bold (800), medium dot -->
+<div class="section-label">D — Extra-bold (800), medium dot</div>
+<div class="row">
+  <div class="card">
+    <span class="label">72px</span>
+    <span class="dotted-one" style="font-size: 72px; font-weight: 800; padding-top: 16px;">
+      <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 12px; height: 12px; background: currentColor; border-radius: 50%;"></span>
+      1
+    </span>
+  </div>
+  <div class="card">
+    <span class="label">48px</span>
+    <span class="dotted-one" style="font-size: 48px; font-weight: 800; padding-top: 11px;">
+      <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 8px; height: 8px; background: currentColor; border-radius: 50%;"></span>
+      1
+    </span>
+  </div>
+  <div class="card">
+    <span class="label">36px wordmark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 36px; font-weight: 800; padding-top: 8px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+  </div>
+  <div class="card dark">
+    <span class="label">36px dark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 36px; font-weight: 800; padding-top: 8px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+  </div>
+  <div class="card">
+    <span class="desc">Heavier stroke weight on the 1. More contrast against medium-weight "Thes".</span>
+  </div>
+</div>
+
+<!-- E: Medium weight (500), medium dot -->
+<div class="section-label">E — Medium (500), medium dot (same weight as surrounding text)</div>
+<div class="row">
+  <div class="card">
+    <span class="label">72px</span>
+    <span class="dotted-one" style="font-size: 72px; font-weight: 500; padding-top: 16px;">
+      <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 8px; height: 8px; background: currentColor; border-radius: 50%;"></span>
+      1
+    </span>
+  </div>
+  <div class="card">
+    <span class="label">48px</span>
+    <span class="dotted-one" style="font-size: 48px; font-weight: 500; padding-top: 11px;">
+      <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; background: currentColor; border-radius: 50%;"></span>
+      1
+    </span>
+  </div>
+  <div class="card">
+    <span class="label">36px wordmark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 36px; font-weight: 500; padding-top: 8px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 4.5px; height: 4.5px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+  </div>
+  <div class="card dark">
+    <span class="label">36px dark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 36px; font-weight: 500; padding-top: 8px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 4.5px; height: 4.5px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+  </div>
+  <div class="card">
+    <span class="desc">Same weight as "Thes" and "s". Color is the only differentiator. More uniform.</span>
+  </div>
+</div>
+
+<!-- F: SemiBold (600), medium dot -->
+<div class="section-label">F — SemiBold (600), medium dot (in between)</div>
+<div class="row">
+  <div class="card">
+    <span class="label">72px</span>
+    <span class="dotted-one" style="font-size: 72px; font-weight: 600; padding-top: 16px;">
+      <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 9px; height: 9px; background: currentColor; border-radius: 50%;"></span>
+      1
+    </span>
+  </div>
+  <div class="card">
+    <span class="label">48px</span>
+    <span class="dotted-one" style="font-size: 48px; font-weight: 600; padding-top: 11px;">
+      <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; background: currentColor; border-radius: 50%;"></span>
+      1
+    </span>
+  </div>
+  <div class="card">
+    <span class="label">36px wordmark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 36px; font-weight: 600; padding-top: 8px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+  </div>
+  <div class="card dark">
+    <span class="label">36px dark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 36px; font-weight: 600; padding-top: 8px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+  </div>
+  <div class="card">
+    <span class="desc">Subtle weight bump over the base text. Gentle emphasis without heavy contrast.</span>
+  </div>
+</div>
+
+<!-- G: Bold, wide gap -->
+<div class="section-label">G — Bold (700), medium dot, wide gap (more breathing room)</div>
+<div class="row">
+  <div class="card">
+    <span class="label">72px</span>
+    <span class="dotted-one" style="font-size: 72px; font-weight: 700; padding-top: 24px;">
+      <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; background: currentColor; border-radius: 50%;"></span>
+      1
+    </span>
+  </div>
+  <div class="card">
+    <span class="label">48px</span>
+    <span class="dotted-one" style="font-size: 48px; font-weight: 700; padding-top: 16px;">
+      <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 7px; height: 7px; background: currentColor; border-radius: 50%;"></span>
+      1
+    </span>
+  </div>
+  <div class="card">
+    <span class="label">36px wordmark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 36px; font-weight: 700; padding-top: 12px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+  </div>
+  <div class="card dark">
+    <span class="label">36px dark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 36px; font-weight: 700; padding-top: 12px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+  </div>
+  <div class="card">
+    <span class="desc">Same as A but dot floats higher. More separation between dot and numeral.</span>
+  </div>
+</div>
+
+<!-- H: Bold, square dot -->
+<div class="section-label">H — Bold (700), square dot (rounded corners)</div>
+<div class="row">
+  <div class="card">
+    <span class="label">72px</span>
+    <span class="dotted-one" style="font-size: 72px; font-weight: 700; padding-top: 16px;">
+      <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; background: currentColor; border-radius: 2px;"></span>
+      1
+    </span>
+  </div>
+  <div class="card">
+    <span class="label">48px</span>
+    <span class="dotted-one" style="font-size: 48px; font-weight: 700; padding-top: 11px;">
+      <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 7px; height: 7px; background: currentColor; border-radius: 1.5px;"></span>
+      1
+    </span>
+  </div>
+  <div class="card">
+    <span class="label">36px wordmark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 36px; font-weight: 700; padding-top: 8px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: currentColor; border-radius: 1px;"></span>
+        1</span><span class="base">s</span>
+    </span>
+  </div>
+  <div class="card dark">
+    <span class="label">36px dark</span>
+    <span class="mark" style="font-size: 36px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 36px; font-weight: 700; padding-top: 8px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: currentColor; border-radius: 1px;"></span>
+        1</span><span class="base">s</span>
+    </span>
+  </div>
+  <div class="card">
+    <span class="desc">Square dot with slight rounding. More geometric/structured feel.</span>
+  </div>
+</div>
+
+<!-- In-Context Nav Simulations at 18px -->
+<div class="section-label">In Context — Nav Bar (18px, actual app size)</div>
+<div style="display: flex; flex-direction: column; gap: 10px; max-width: 800px;">
+
+  <div class="nav">
+    <div class="logo-box"></div>
+    <span class="mark" style="font-size: 18px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 18px; font-weight: 700; padding-top: 4px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 2.5px; height: 2.5px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+    <span class="nav-tabs">Watchlists &nbsp; Research &nbsp; Gurus &nbsp; Reports</span>
+    <span class="note">A — bold, medium dot</span>
+  </div>
+
+  <div class="nav">
+    <div class="logo-box"></div>
+    <span class="mark" style="font-size: 18px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 18px; font-weight: 700; padding-top: 3px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 2px; height: 2px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+    <span class="nav-tabs">Watchlists &nbsp; Research &nbsp; Gurus &nbsp; Reports</span>
+    <span class="note">B — bold, small dot, tight</span>
+  </div>
+
+  <div class="nav">
+    <div class="logo-box"></div>
+    <span class="mark" style="font-size: 18px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 18px; font-weight: 700; padding-top: 5px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 3.5px; height: 3.5px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+    <span class="nav-tabs">Watchlists &nbsp; Research &nbsp; Gurus &nbsp; Reports</span>
+    <span class="note">C — bold, large dot</span>
+  </div>
+
+  <div class="nav">
+    <div class="logo-box"></div>
+    <span class="mark" style="font-size: 18px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 18px; font-weight: 800; padding-top: 4px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 3px; height: 3px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+    <span class="nav-tabs">Watchlists &nbsp; Research &nbsp; Gurus &nbsp; Reports</span>
+    <span class="note">D — extra-bold (800)</span>
+  </div>
+
+  <div class="nav">
+    <div class="logo-box"></div>
+    <span class="mark" style="font-size: 18px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 18px; font-weight: 500; padding-top: 4px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 2.5px; height: 2.5px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+    <span class="nav-tabs">Watchlists &nbsp; Research &nbsp; Gurus &nbsp; Reports</span>
+    <span class="note">E — medium (500), uniform weight</span>
+  </div>
+
+  <div class="nav">
+    <div class="logo-box"></div>
+    <span class="mark" style="font-size: 18px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 18px; font-weight: 600; padding-top: 4px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 2.5px; height: 2.5px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+    <span class="nav-tabs">Watchlists &nbsp; Research &nbsp; Gurus &nbsp; Reports</span>
+    <span class="note">F — semibold (600)</span>
+  </div>
+
+  <div class="nav">
+    <div class="logo-box"></div>
+    <span class="mark" style="font-size: 18px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 18px; font-weight: 700; padding-top: 6px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 2.5px; height: 2.5px; background: currentColor; border-radius: 50%;"></span>
+        1</span><span class="base">s</span>
+    </span>
+    <span class="nav-tabs">Watchlists &nbsp; Research &nbsp; Gurus &nbsp; Reports</span>
+    <span class="note">G — bold, wide gap</span>
+  </div>
+
+  <div class="nav">
+    <div class="logo-box"></div>
+    <span class="mark" style="font-size: 18px;">
+      <span class="base">Thes</span><span class="dotted-one" style="font-size: 18px; font-weight: 700; padding-top: 4px;">
+        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 2.5px; height: 2.5px; background: currentColor; border-radius: 1px;"></span>
+        1</span><span class="base">s</span>
+    </span>
+    <span class="nav-tabs">Watchlists &nbsp; Research &nbsp; Gurus &nbsp; Reports</span>
+    <span class="note">H — bold, square dot</span>
+  </div>
+
+  <div class="nav" style="border-color: #cbd5e1;">
+    <div class="logo-box"></div>
+    <span class="mark" style="font-size: 18px;">
+      <span class="base">Thes</span><span style="font-weight: 700; color: #0f766e;">1</span><span class="base">s</span>
+    </span>
+    <span class="nav-tabs">Watchlists &nbsp; Research &nbsp; Gurus &nbsp; Reports</span>
+    <span class="note">Current (no dot, for comparison)</span>
+  </div>
+
+</div>
+
+<!-- Summary -->
+<div class="section-label">What varies</div>
+<div style="font-size: 12px; color: #64748b; line-height: 1.8; max-width: 700px;">
+  <p><strong>A</strong> — Bold 700, medium round dot, normal gap. The baseline.</p>
+  <p><strong>B</strong> — Bold 700, small dot, tight gap. More subtle — dot is a hint, not a feature.</p>
+  <p><strong>C</strong> — Bold 700, large dot. Reads immediately as "i". Most prominent.</p>
+  <p><strong>D</strong> — Extra-bold 800, medium dot. Heavier "1" pops more against medium-weight text.</p>
+  <p><strong>E</strong> — Medium 500, medium dot. Same weight as surrounding text — only color differentiates.</p>
+  <p><strong>F</strong> — SemiBold 600, medium dot. Gentle weight bump — in between E and A.</p>
+  <p><strong>G</strong> — Bold 700, medium dot, wide gap. Dot floats higher — more air between dot and numeral.</p>
+  <p><strong>H</strong> — Bold 700, square dot (rounded corners). More geometric/structured.</p>
+</div>
+
+</body>
+</html>

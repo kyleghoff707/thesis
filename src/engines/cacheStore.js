@@ -6,8 +6,8 @@
 import { openDB } from 'idb';
 
 const DB_NAME = 'thes1s-cache';
-const DB_VERSION = 3;
-const STORES = ['edgar-facts', 'edgar-statements', 'guru-data', 'nport-data', 'filing-markdown', 'insider-data'];
+const DB_VERSION = 4;
+const STORES = ['edgar-facts', 'edgar-statements', 'guru-data', 'nport-data', 'filing-markdown', 'insider-data', 'comp-data'];
 
 let dbPromise = null;
 

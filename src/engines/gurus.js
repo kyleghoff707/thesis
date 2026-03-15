@@ -572,12 +572,22 @@ export function aggregateTopHoldings(allActivities) {
 export async function fetchGuruWithChanges(guru) {
   const actCacheKey = `guru-activity:${GURU_CACHE_V}:${guru.cik}`;
   const cached = await cacheGetAsync(actCacheKey);
-  if (cached) return cached;
+  if (cached) {
+    // Self-heal: resolve tickers if cached data lacks them
+    if (cached.holdings?.some(h => !h.ticker && h.cusip)) {
+      cached.holdings = await resolveTickersForHoldings(cached.holdings);
+      cacheSet(actCacheKey, cached, 'financials');
+    }
+    return cached;
+  }
 
   const filingData = await fetchGuruFilings(guru, 2);
   const activity = computeGuruActivity(filingData);
 
   if (activity) {
+    // Resolve tickers before caching
+    activity.holdings = await resolveTickersForHoldings(activity.holdings);
+
     cacheSet(actCacheKey, activity, 'financials');
     // Also write old-format cache so Stock Lookup / loadCachedPortfolios still works
     cacheSet(`guru:${guru.cik}`, {
@@ -599,6 +609,11 @@ export async function fetchAllWithChanges(onProgress) {
     // Check activity cache first
     const cached = await cacheGetAsync(`guru-activity:${GURU_CACHE_V}:${guru.cik}`);
     if (cached) {
+      // Self-heal: resolve tickers if cached data lacks them
+      if (cached.holdings?.some(h => !h.ticker && h.cusip)) {
+        cached.holdings = await resolveTickersForHoldings(cached.holdings);
+        cacheSet(`guru-activity:${GURU_CACHE_V}:${guru.cik}`, cached, 'financials');
+      }
       results.push(cached);
       if (onProgress) onProgress(i + 1, GURUS.length, guru.name);
       continue;
@@ -723,6 +738,7 @@ export function findGurusOwning(guruPortfolios, query) {
   return guruPortfolios
     .map(gp => {
       const matches = (gp.holdings || []).filter(h =>
+        h.ticker?.toUpperCase() === q ||
         h.issuer?.toUpperCase().includes(q) ||
         h.cusip === q
       );
@@ -750,14 +766,32 @@ export function findGurusOwning(guruPortfolios, query) {
 export async function loadCachedPortfolios() {
   const keys = GURUS.map(g => `guru:${g.cik}`);
   const results = await hydrateFromIDB('guru-data', keys);
-  return results.map(r => r.data);
+  const portfolios = results.map(r => r.data);
+
+  // Self-heal: resolve tickers for cached portfolios that lack them
+  for (const p of portfolios) {
+    if (p?.holdings?.some(h => !h.ticker && h.cusip)) {
+      p.holdings = await resolveTickersForHoldings(p.holdings);
+      if (p.guru) cacheSet(`guru:${p.guru.cik}`, p, 'financials');
+    }
+  }
+  return portfolios;
 }
 
 // Load activity cache (for Latest tab + GuruPortfolio detail view)
 export async function loadCachedActivities() {
   const keys = GURUS.map(g => `guru-activity:${GURU_CACHE_V}:${g.cik}`);
   const results = await hydrateFromIDB('guru-data', keys);
-  return results.map(r => r.data);
+  const activities = results.map(r => r.data);
+
+  // Self-heal: resolve tickers for cached activities that lack them
+  for (const a of activities) {
+    if (a?.holdings?.some(h => !h.ticker && h.cusip)) {
+      a.holdings = await resolveTickersForHoldings(a.holdings);
+      if (a.guru) cacheSet(`guru-activity:${GURU_CACHE_V}:${a.guru.cik}`, a, 'financials');
+    }
+  }
+  return activities;
 }
 
 // Fetch all guru portfolios — legacy (uses old single-filing path)

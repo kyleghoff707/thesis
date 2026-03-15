@@ -270,7 +270,7 @@ function WeightedAvgPanel({ weightedAvgs, compositeGR, analystGR, onSaveComposit
 
 // ─── Data table ─────────────────────────────────────────────
 
-function GrowthDataTable({ tableData, years, visibleLines, onToggle }) {
+function GrowthDataTable({ tableData, years, visibleLines, onToggle, excludedDataPoints, onToggleDataPoint, onClearExcludedDataPoints }) {
   const [newestFirst, setNewestFirst] = useState(false);
   const [hover, setHover] = useState({ row: null, col: null });
   const orderedYears = newestFirst ? years : [...years].reverse();
@@ -315,8 +315,28 @@ function GrowthDataTable({ tableData, years, visibleLines, onToggle }) {
         padding: '10px 14px',
         borderBottom: `1px solid ${C.border}`,
       }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: C.accent }}>
-          Growth Metrics
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: C.accent }}>
+            Growth Metrics
+          </div>
+          {excludedDataPoints?.size > 0 && (
+            <button
+              onClick={onClearExcludedDataPoints}
+              title="Clear all excluded data points"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                padding: '2px 7px', fontSize: 10, fontWeight: 500,
+                color: '#dc2626', background: 'rgba(220,38,38,0.08)',
+                border: `1px solid rgba(220,38,38,0.2)`, borderRadius: 4,
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+              {excludedDataPoints.size} excluded
+            </button>
+          )}
         </div>
         <button
           onClick={() => setNewestFirst(p => !p)}
@@ -401,13 +421,17 @@ function GrowthDataTable({ tableData, years, visibleLines, onToggle }) {
                   {orderedYears.map(y => {
                     const val = tableData[row.key]?.[y];
                     const colId = String(y);
+                    const pointKey = `${row.key}:${y}`;
+                    const isExcluded = excludedDataPoints?.has(pointKey);
                     const isRow = hover.row === rowId;
                     const isCol = hover.col === colId;
-                    const shadow = (isRow && isCol)
-                      ? `inset 0 0 0 1000px ${C.accent}18`
-                      : (isRow || isCol)
-                        ? `inset 0 0 0 1000px ${C.accent}0c`
-                        : undefined;
+                    const shadow = isExcluded
+                      ? `inset 0 0 0 1000px rgba(220,38,38,0.06)`
+                      : (isRow && isCol)
+                        ? `inset 0 0 0 1000px ${C.accent}18`
+                        : (isRow || isCol)
+                          ? `inset 0 0 0 1000px ${C.accent}0c`
+                          : undefined;
                     let formatted;
                     if (row.unit === 'millions') {
                       formatted = fmtMillions(val);
@@ -416,17 +440,28 @@ function GrowthDataTable({ tableData, years, visibleLines, onToggle }) {
                     } else {
                       formatted = val != null ? val.toLocaleString() : '';
                     }
+                    const hasValue = val != null;
 
                     return (
-                      <td key={y} data-row={rowId} data-col={colId} style={{
-                        padding: '6px 6px',
-                        fontSize: 11,
-                        fontVariantNumeric: 'tabular-nums',
-                        textAlign: 'right',
-                        color: C.text,
-                        fontWeight: 500,
-                        boxShadow: shadow,
-                      }}>
+                      <td
+                        key={y}
+                        data-row={rowId}
+                        data-col={colId}
+                        onClick={hasValue ? () => onToggleDataPoint(pointKey) : undefined}
+                        title={hasValue ? (isExcluded ? 'Click to include this data point' : 'Click to exclude this data point') : undefined}
+                        style={{
+                          padding: '6px 6px',
+                          fontSize: 11,
+                          fontVariantNumeric: 'tabular-nums',
+                          textAlign: 'right',
+                          color: isExcluded ? '#dc2626' : C.text,
+                          fontWeight: 500,
+                          boxShadow: shadow,
+                          cursor: hasValue ? 'pointer' : undefined,
+                          textDecoration: isExcluded ? 'line-through' : undefined,
+                          opacity: isExcluded ? 0.5 : undefined,
+                        }}
+                      >
                         {formatted}
                       </td>
                     );
@@ -444,6 +479,9 @@ function GrowthDataTable({ tableData, years, visibleLines, onToggle }) {
         <div style={{ fontSize: 10, color: C.textMuted }}>
           ** Year over year growth is not calculated on Return Rate metrics
         </div>
+        <div style={{ fontSize: 10, color: C.textMuted }}>
+          Click any data cell to exclude it from growth rate calculations
+        </div>
       </div>
     </div>
   );
@@ -459,6 +497,9 @@ export default function GrowthRateAnalysis({
   weightedAvgs,
   compositeGR,
   compositeMetrics,
+  excludedDataPoints,
+  onToggleDataPoint,
+  onClearExcludedDataPoints,
   onToggleCompositeMetric,
   onSaveComposite,
 }) {
@@ -526,14 +567,15 @@ export default function GrowthRateAnalysis({
     const result = {};
     for (const m of ALL_METRICS) {
       if (m.chartType !== 'growth') continue;
-      if (m.key === 'marketCap') {
-        result[m.key] = compute3YearSmoothedRates(marketCapSeries);
-      } else {
-        result[m.key] = compute3YearSmoothedRates(analysisSeries[m.key] || []);
+      let series = m.key === 'marketCap' ? [...marketCapSeries] : [...(analysisSeries[m.key] || [])];
+      // Filter out individually excluded data points
+      if (excludedDataPoints?.size > 0) {
+        series = series.filter(d => !excludedDataPoints.has(`${m.key}:${d.year}`));
       }
+      result[m.key] = compute3YearSmoothedRates(series);
     }
     return result;
-  }, [analysisSeries, marketCapSeries]);
+  }, [analysisSeries, marketCapSeries, excludedDataPoints]);
 
   // Build chart data: growth rates for dollar metrics, raw values for return metrics
   // Limited to 10 most recent years
@@ -572,13 +614,18 @@ export default function GrowthRateAnalysis({
           const rate = growthLookups[m.key]?.get(year);
           row[m.key] = rate != null ? rate * 100 : null;
         } else if (m.chartType === 'return') {
-          const val = returnLookup[year]?.[m.key];
-          row[m.key] = val != null ? val * 100 : null;
+          // Skip excluded return data points on the chart
+          if (excludedDataPoints?.has(`${m.key}:${year}`)) {
+            row[m.key] = null;
+          } else {
+            const val = returnLookup[year]?.[m.key];
+            row[m.key] = val != null ? val * 100 : null;
+          }
         }
       }
       return row;
     });
-  }, [smoothedRates, returns]);
+  }, [smoothedRates, returns, excludedDataPoints]);
 
   // Y-axis domain for tooltip proximity detection
   const yDomain = useMemo(() => {
@@ -730,6 +777,9 @@ export default function GrowthRateAnalysis({
         years={tableYears}
         visibleLines={visibleLines}
         onToggle={toggleLine}
+        excludedDataPoints={excludedDataPoints}
+        onToggleDataPoint={onToggleDataPoint}
+        onClearExcludedDataPoints={onClearExcludedDataPoints}
       />
     </div>
   );
