@@ -12,7 +12,7 @@ The user is NOT a programmer. Keep explanations in plain English.
 ### Branding
 - **Name**: Thes1s — "1" replaces the "i"
 - **Logo**: `public/logo.svg` — fused T1 letterform. Teal-500 + slate-800.
-- **In-app**: Logo mark (22px) + styled text ("Thes" medium, "1" bold teal, "s" medium). Inter font.
+- **In-app**: Logo mark (22px) + styled text ("Thes" medium, "1" custom SVG glyph in teal — hybrid 1/i with tight wedge flag + narrow base, "s" medium). Inter font.
 
 ---
 

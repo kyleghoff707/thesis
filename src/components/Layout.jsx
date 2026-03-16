@@ -58,30 +58,6 @@ export default function Layout({ children, onNewResearch, onSettingsOpen }) {
         gap: 4,
         boxShadow: '0 1px 3px 0 rgba(0,0,0,0.04)',
       }}>
-        {/* Settings gear */}
-        <button
-          onClick={onSettingsOpen}
-          title="Settings"
-          style={{
-            width: 32,
-            height: 32,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'transparent',
-            border: 'none',
-            borderRadius: 6,
-            cursor: 'pointer',
-            color: C.textMuted,
-            transition: 'all .15s',
-            flexShrink: 0,
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = C.bgHover; e.currentTarget.style.color = C.textSecondary; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.textMuted; }}
-        >
-          <GearIcon size={16} color="currentColor" />
-        </button>
-
         {/* Logo + brand */}
         <div
           style={{
@@ -102,7 +78,7 @@ export default function Layout({ children, onNewResearch, onSettingsOpen }) {
             letterSpacing: '-0.02em',
             WebkitFontSmoothing: 'antialiased',
           }}>
-            <span style={{ fontWeight: 500, color: C.text }}>Thes</span><span style={{ fontWeight: 700, color: C.accent }}>1</span><span style={{ fontWeight: 500, color: C.text }}>s</span>
+            <span style={{ fontWeight: 500, color: C.text }}>Thes</span><svg viewBox="0 0 10 20" width="8" height="16" fill={C.accent} style={{ verticalAlign: 0, margin: '0 -0.5px' }}><circle cx="5.5" cy="4" r="1.3"/><polygon points="4.3,7.7 2.3,8.8 2.3,9.4 4.3,9.4"/><rect x="4.3" y="7.7" width="2.4" height="11"/><rect x="2.7" y="18.7" width="5.6" height="1.3" rx="0.2"/></svg><span style={{ fontWeight: 500, color: C.text }}>s</span>
           </span>
         </div>
 
@@ -138,6 +114,31 @@ export default function Layout({ children, onNewResearch, onSettingsOpen }) {
         <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
           <TickerSearch onSubmit={handleNewResearch} />
         </div>
+
+        {/* Settings gear */}
+        <button
+          onClick={onSettingsOpen}
+          title="Settings"
+          style={{
+            width: 32,
+            height: 32,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'transparent',
+            border: 'none',
+            borderRadius: 6,
+            cursor: 'pointer',
+            color: C.textMuted,
+            transition: 'all .15s',
+            flexShrink: 0,
+            marginLeft: 8,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = C.bgHover; e.currentTarget.style.color = C.textSecondary; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.textMuted; }}
+        >
+          <GearIcon size={16} color="currentColor" />
+        </button>
       </nav>
 
       {/* Content */}

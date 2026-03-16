@@ -39,9 +39,10 @@ function RateCell({ rate, scored = true }) {
 function DebtCell({ value, isNetCash }) {
   if (value == null && !isNetCash) return <td style={{ ...cellBase, color: C.textMuted }}>-</td>;
   const years = isNetCash ? 0 : value;
-  const color = years <= 3 ? 'green' : 'red';
+  // 3-tier: net cash → green, 0-3 years → beige, >3 years → red
+  const bg = years <= 0 ? CELL_BG.green : years <= 3 ? CELL_BG.yellow : CELL_BG.red;
   return (
-    <td style={{ ...cellBase, background: getCellBg(color), color: '#fff' }}>
+    <td style={{ ...cellBase, background: bg, color: '#fff' }}>
       {years.toFixed(1)} Years
     </td>
   );

@@ -99,14 +99,15 @@ export function computeManagementScore(returnAverages, debtMetrics) {
     }
   }
 
-  // Debt metrics scoring — binary per Rule One methodology
-  // Can pay off debt in 3 years or less → green (100)
-  // Cannot → red (0)
+  // Debt metrics scoring — 3-tier per Rule One Toolbox
+  // Net cash (≤0 years) → green (100)
+  // 0-3 years → beige (50)
+  // >3 years → red (0)
   // Null → excluded from score (metric has no data)
   const debtScore = (years) => {
     if (years == null) return null;
-    if (years <= 0) return 100; // net cash
-    if (years <= 3) return 100; // green — payable within 3 years
+    if (years <= 0) return 100; // net cash — green
+    if (years <= 3) return 50;  // payable within 3 years — beige
     return 0; // red — too much debt
   };
 

@@ -31,7 +31,7 @@ const TABS = [
   { key: 'valuation', label: 'Valuation' },
   { key: 'insiders', label: 'Insiders' },
   { key: 'filings', label: 'Filings' },
-  { key: 'audit', label: 'Audit' },
+  { key: 'audit', label: 'Data Audit' },
 ];
 
 export default function Toolbox({ getReport, updateReport, settings }) {
