@@ -138,6 +138,22 @@ knowledge/
 └── pre-course-examples/           — User's own research (Old Template, EW, SFM, MU, ODFL)
 ```
 
+### Taxonomy Research (not gitignored — tracked in repo)
+
+**When working on classification, peer discovery, or the Competitors tab** — read `taxonomy-research/taxonomy-classification-learning.md` first.
+
+```
+taxonomy-research/
+├── taxonomy-classification-learning.md — Claude agent guide for classifying companies
+├── thes1s-taxonomy-tree.json           — 12 sectors, 52 industry groups, 176 industries
+├── thes1s-company-assignments.json     — 5,758 company classifications
+├── yahoo-to-thes1s-crosswalk.json      — 145 Yahoo → Thes1s mappings
+├── sic-to-thes1s-crosswalk.json        — SIC → Thes1s mapping
+├── stock-taxonomy-research.md          — Full research report (6 taxonomy systems)
+├── phase-2-session-summary.md          — Pipeline build notes
+└── pipeline/                           — Intermediate data (universe, yahoo-seed)
+```
+
 ---
 
 ## Report Generation Requirements (from User's Research Patterns)
@@ -251,12 +267,12 @@ validation/                      — 3-layer validation system (scripts/, data/,
 
 When fixing bugs, follow this approach — do NOT jump straight to a fix:
 
-1. **Understand first.** Read the relevant code paths end-to-end. Trace the data flow from source to UI. Check assumptions empirically when possible (e.g., test API endpoints with `curl`).
+1. **Diagnose with `/rca`.** Invoke the RCA skill to run a structured root cause analysis — traces data flow, applies 5 Whys, and proposes ranked solutions.
 2. **Write a failing test.** The test should prove the bug exists. Include a test for the expected post-fix behavior. Use vitest (`npm test`).
 3. **Fix with a subagent.** Give the subagent the failing test and the specific files to modify. It works until all tests pass.
 4. **Verify.** All tests pass, app compiles, dev server runs.
 
-This strategy caught a critical bug (EDGAR Frames API instant vs duration period specifiers) that a direct fix attempt missed entirely. Writing tests first forces you to define "correct" before writing code.
+Writing tests first forces you to define "correct" before writing code — this caught a critical EDGAR Frames API bug that a direct fix attempt missed entirely.
 
 ---
 

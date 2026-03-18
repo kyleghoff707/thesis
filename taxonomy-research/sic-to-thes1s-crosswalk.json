@@ -1,0 +1,2707 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "createdDate": "2026-03-17",
+    "description": "Maps 4-digit SIC codes to Thes1s 8-digit taxonomy codes. Covers all SIC codes in sicClassification.js SIC_MAP (4-digit) and SIC_MAJOR_GROUP_MAP (2-digit).",
+    "totalMappings": {
+      "fourDigit": 253,
+      "twoDigit": 60
+    },
+    "notes": "Four-digit covers all unique SIC codes from SIC_MAP. Two-digit covers all from SIC_MAJOR_GROUP_MAP. Duplicate SIC keys in source (6159, 4953) resolved to single entries."
+  },
+  "fourDigit": {
+    "3571": {
+      "thes1sCode": "10201010",
+      "sector": "Technology",
+      "industryGroup": "Hardware",
+      "industry": "Consumer Electronics",
+      "sicDescription": "Consumer Electronics"
+    },
+    "3572": {
+      "thes1sCode": "10201020",
+      "sector": "Technology",
+      "industryGroup": "Hardware",
+      "industry": "Computer Hardware & Storage",
+      "sicDescription": "Computer Storage Devices"
+    },
+    "3575": {
+      "thes1sCode": "10201020",
+      "sector": "Technology",
+      "industryGroup": "Hardware",
+      "industry": "Computer Hardware & Storage",
+      "sicDescription": "Computer Terminals",
+      "notes": "Terminals are enterprise hardware"
+    },
+    "3577": {
+      "thes1sCode": "10201020",
+      "sector": "Technology",
+      "industryGroup": "Hardware",
+      "industry": "Computer Hardware & Storage",
+      "sicDescription": "Computer Peripherals"
+    },
+    "3578": {
+      "thes1sCode": "10201020",
+      "sector": "Technology",
+      "industryGroup": "Hardware",
+      "industry": "Computer Hardware & Storage",
+      "sicDescription": "Calculating & Accounting Machines"
+    },
+    "3579": {
+      "thes1sCode": "10201020",
+      "sector": "Technology",
+      "industryGroup": "Hardware",
+      "industry": "Computer Hardware & Storage",
+      "sicDescription": "Office Machines"
+    },
+    "3674": {
+      "thes1sCode": "10301010",
+      "sector": "Technology",
+      "industryGroup": "Semiconductors",
+      "industry": "Semiconductors",
+      "sicDescription": "Semiconductors"
+    },
+    "3672": {
+      "thes1sCode": "10401020",
+      "sector": "Technology",
+      "industryGroup": "Electronic Components",
+      "industry": "Electronic Manufacturing Services",
+      "sicDescription": "Printed Circuit Boards",
+      "notes": "PCB manufacturing is EMS, not semiconductors"
+    },
+    "3559": {
+      "thes1sCode": "10301020",
+      "sector": "Technology",
+      "industryGroup": "Semiconductors",
+      "industry": "Semiconductor Equipment & Materials",
+      "sicDescription": "Semiconductor Equipment & Materials"
+    },
+    "7372": {
+      "thes1sCode": "10101010",
+      "sector": "Technology",
+      "industryGroup": "Software",
+      "industry": "Software - Application",
+      "sicDescription": "Software - Application"
+    },
+    "7371": {
+      "thes1sCode": "10501010",
+      "sector": "Technology",
+      "industryGroup": "IT Services",
+      "industry": "Information Technology Services",
+      "sicDescription": "Information Technology Services"
+    },
+    "7373": {
+      "thes1sCode": "10501010",
+      "sector": "Technology",
+      "industryGroup": "IT Services",
+      "industry": "Information Technology Services",
+      "sicDescription": "Computer Systems Design",
+      "notes": "Systems design/integration is IT consulting"
+    },
+    "7374": {
+      "thes1sCode": "10501020",
+      "sector": "Technology",
+      "industryGroup": "IT Services",
+      "industry": "Internet Services & Infrastructure",
+      "sicDescription": "Internet Services & Infrastructure"
+    },
+    "7376": {
+      "thes1sCode": "10501010",
+      "sector": "Technology",
+      "industryGroup": "IT Services",
+      "industry": "Information Technology Services",
+      "sicDescription": "Computer Facilities Management"
+    },
+    "7377": {
+      "thes1sCode": "40701010",
+      "sector": "Industrials",
+      "industryGroup": "Rental & Leasing",
+      "industry": "Rental & Leasing Services",
+      "sicDescription": "Computer Rental & Leasing",
+      "notes": "Rental/leasing is a services business, not hardware"
+    },
+    "7378": {
+      "thes1sCode": "10501010",
+      "sector": "Technology",
+      "industryGroup": "IT Services",
+      "industry": "Information Technology Services",
+      "sicDescription": "Computer Maintenance & Repair"
+    },
+    "7379": {
+      "thes1sCode": "10501010",
+      "sector": "Technology",
+      "industryGroup": "IT Services",
+      "industry": "Information Technology Services",
+      "sicDescription": "Computer Services"
+    },
+    "5112": {
+      "thes1sCode": "10101010",
+      "sector": "Technology",
+      "industryGroup": "Software",
+      "industry": "Software - Application",
+      "sicDescription": "Software - Application"
+    },
+    "3679": {
+      "thes1sCode": "10401010",
+      "sector": "Technology",
+      "industryGroup": "Electronic Components",
+      "industry": "Electronic Components",
+      "sicDescription": "Electronic Components"
+    },
+    "3678": {
+      "thes1sCode": "10401010",
+      "sector": "Technology",
+      "industryGroup": "Electronic Components",
+      "industry": "Electronic Components",
+      "sicDescription": "Electronic Connectors"
+    },
+    "3676": {
+      "thes1sCode": "10401010",
+      "sector": "Technology",
+      "industryGroup": "Electronic Components",
+      "industry": "Electronic Components",
+      "sicDescription": "Electronic Resistors"
+    },
+    "3677": {
+      "thes1sCode": "10401010",
+      "sector": "Technology",
+      "industryGroup": "Electronic Components",
+      "industry": "Electronic Components",
+      "sicDescription": "Electronic Coils & Transformers"
+    },
+    "3661": {
+      "thes1sCode": "10201030",
+      "sector": "Technology",
+      "industryGroup": "Hardware",
+      "industry": "Communication Equipment",
+      "sicDescription": "Communication Equipment"
+    },
+    "3663": {
+      "thes1sCode": "10201030",
+      "sector": "Technology",
+      "industryGroup": "Hardware",
+      "industry": "Communication Equipment",
+      "sicDescription": "Radio & TV Broadcasting Equipment"
+    },
+    "3669": {
+      "thes1sCode": "10201030",
+      "sector": "Technology",
+      "industryGroup": "Hardware",
+      "industry": "Communication Equipment",
+      "sicDescription": "Communication Equipment"
+    },
+    "3825": {
+      "thes1sCode": "10201040",
+      "sector": "Technology",
+      "industryGroup": "Hardware",
+      "industry": "Scientific & Technical Instruments",
+      "sicDescription": "Scientific & Technical Instruments"
+    },
+    "3827": {
+      "thes1sCode": "10201040",
+      "sector": "Technology",
+      "industryGroup": "Hardware",
+      "industry": "Scientific & Technical Instruments",
+      "sicDescription": "Optical Instruments & Lenses"
+    },
+    "3812": {
+      "thes1sCode": "40101010",
+      "sector": "Industrials",
+      "industryGroup": "Aerospace & Defense",
+      "industry": "Aerospace & Defense",
+      "sicDescription": "Aerospace & Defense Electronics",
+      "notes": "Defense electronics grouped with A&D"
+    },
+    "3699": {
+      "thes1sCode": "10401010",
+      "sector": "Technology",
+      "industryGroup": "Electronic Components",
+      "industry": "Electronic Components",
+      "sicDescription": "Electrical Equipment & Parts"
+    },
+    "5045": {
+      "thes1sCode": "10601010",
+      "sector": "Technology",
+      "industryGroup": "Technology Distributors",
+      "industry": "Technology Distributors",
+      "sicDescription": "Technology Distributors"
+    },
+    "5065": {
+      "thes1sCode": "10601010",
+      "sector": "Technology",
+      "industryGroup": "Technology Distributors",
+      "industry": "Technology Distributors",
+      "sicDescription": "Electronic Parts Distribution"
+    },
+    "5734": {
+      "thes1sCode": "20301020",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Specialty",
+      "sicDescription": "Computer & Software Stores",
+      "notes": "Retail stores mapped to Retail - Specialty"
+    },
+    "2080": {
+      "thes1sCode": "25101010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Beverages - Non-Alcoholic",
+      "sicDescription": "Beverages - Diversified",
+      "notes": "Diversified beverages defaulted to non-alcoholic; reclassify per company"
+    },
+    "2082": {
+      "thes1sCode": "25101020",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Beverages - Alcoholic",
+      "sicDescription": "Beverages - Brewers"
+    },
+    "2084": {
+      "thes1sCode": "25101020",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Beverages - Alcoholic",
+      "sicDescription": "Beverages - Wineries & Distilleries"
+    },
+    "2085": {
+      "thes1sCode": "25101020",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Beverages - Alcoholic",
+      "sicDescription": "Beverages - Wineries & Distilleries"
+    },
+    "2086": {
+      "thes1sCode": "25101010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Beverages - Non-Alcoholic",
+      "sicDescription": "Beverages - Non-Alcoholic"
+    },
+    "2000": {
+      "thes1sCode": "25101030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Packaged & Processed",
+      "sicDescription": "Packaged Foods"
+    },
+    "2010": {
+      "thes1sCode": "25101040",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Meat & Dairy",
+      "sicDescription": "Meat Products"
+    },
+    "2011": {
+      "thes1sCode": "25101040",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Meat & Dairy",
+      "sicDescription": "Meat Packing Plants"
+    },
+    "2013": {
+      "thes1sCode": "25101040",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Meat & Dairy",
+      "sicDescription": "Sausages & Prepared Meats"
+    },
+    "2015": {
+      "thes1sCode": "25101040",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Meat & Dairy",
+      "sicDescription": "Poultry Slaughtering & Processing"
+    },
+    "2020": {
+      "thes1sCode": "25101040",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Meat & Dairy",
+      "sicDescription": "Dairy Products"
+    },
+    "2024": {
+      "thes1sCode": "25101040",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Meat & Dairy",
+      "sicDescription": "Frozen Desserts",
+      "notes": "Frozen desserts are dairy-adjacent"
+    },
+    "2030": {
+      "thes1sCode": "25101030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Packaged & Processed",
+      "sicDescription": "Canned & Preserved Fruits & Vegetables"
+    },
+    "2033": {
+      "thes1sCode": "25101030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Packaged & Processed",
+      "sicDescription": "Canned Fruits & Vegetables"
+    },
+    "2040": {
+      "thes1sCode": "25101030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Packaged & Processed",
+      "sicDescription": "Grain Mill Products"
+    },
+    "2041": {
+      "thes1sCode": "25101030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Packaged & Processed",
+      "sicDescription": "Flour & Grain Mill Products"
+    },
+    "2043": {
+      "thes1sCode": "25101030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Packaged & Processed",
+      "sicDescription": "Cereal Breakfast Foods"
+    },
+    "2050": {
+      "thes1sCode": "25101030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Packaged & Processed",
+      "sicDescription": "Bakery Products"
+    },
+    "2052": {
+      "thes1sCode": "25101030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Packaged & Processed",
+      "sicDescription": "Cookies & Crackers"
+    },
+    "2060": {
+      "thes1sCode": "25101030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Packaged & Processed",
+      "sicDescription": "Sugar & Confectionery"
+    },
+    "2064": {
+      "thes1sCode": "25101030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Packaged & Processed",
+      "sicDescription": "Candy & Confectionery"
+    },
+    "2070": {
+      "thes1sCode": "25101030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Packaged & Processed",
+      "sicDescription": "Fats & Oils"
+    },
+    "2090": {
+      "thes1sCode": "25101030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Packaged & Processed",
+      "sicDescription": "Packaged Foods"
+    },
+    "2095": {
+      "thes1sCode": "25101010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Beverages - Non-Alcoholic",
+      "sicDescription": "Coffee",
+      "notes": "Coffee is a beverage product"
+    },
+    "2099": {
+      "thes1sCode": "25101030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Packaged & Processed",
+      "sicDescription": "Packaged Foods"
+    },
+    "2111": {
+      "thes1sCode": "25201030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Household & Personal Products",
+      "industry": "Tobacco",
+      "sicDescription": "Tobacco"
+    },
+    "2840": {
+      "thes1sCode": "25201010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Household & Personal Products",
+      "industry": "Household Products",
+      "sicDescription": "Household & Personal Products"
+    },
+    "2841": {
+      "thes1sCode": "25201010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Household & Personal Products",
+      "industry": "Household Products",
+      "sicDescription": "Soap & Cleaning Compounds"
+    },
+    "2842": {
+      "thes1sCode": "25201010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Household & Personal Products",
+      "industry": "Household Products",
+      "sicDescription": "Specialty Cleaning Products"
+    },
+    "2844": {
+      "thes1sCode": "25201020",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Household & Personal Products",
+      "industry": "Personal Products & Cosmetics",
+      "sicDescription": "Perfumes, Cosmetics & Toiletries"
+    },
+    "5411": {
+      "thes1sCode": "25301010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Retail - Defensive",
+      "industry": "Retail - Grocery & Supermarkets",
+      "sicDescription": "Grocery Stores"
+    },
+    "5331": {
+      "thes1sCode": "20301040",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Discount & Dollar Stores",
+      "sicDescription": "Discount Stores",
+      "notes": "Discount stores sell discretionary goods"
+    },
+    "5912": {
+      "thes1sCode": "25301030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Retail - Defensive",
+      "industry": "Retail - Pharmacy & Drug Stores",
+      "sicDescription": "Pharmaceutical Retailers"
+    },
+    "5399": {
+      "thes1sCode": "20301010",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Broadline & E-Commerce",
+      "sicDescription": "General Merchandise Stores"
+    },
+    "5310": {
+      "thes1sCode": "20301010",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Broadline & E-Commerce",
+      "sicDescription": "Department Stores"
+    },
+    "5141": {
+      "thes1sCode": "25301010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Retail - Defensive",
+      "industry": "Retail - Grocery & Supermarkets",
+      "sicDescription": "Food Distribution",
+      "notes": "Food wholesale mapped to grocery as closest defensive retail"
+    },
+    "5140": {
+      "thes1sCode": "25301010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Retail - Defensive",
+      "industry": "Retail - Grocery & Supermarkets",
+      "sicDescription": "Food Distribution"
+    },
+    "5149": {
+      "thes1sCode": "25301010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Retail - Defensive",
+      "industry": "Retail - Grocery & Supermarkets",
+      "sicDescription": "Grocery Distribution"
+    },
+    "3711": {
+      "thes1sCode": "20101010",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Auto & Vehicles",
+      "industry": "Auto Manufacturers",
+      "sicDescription": "Auto Manufacturers"
+    },
+    "3713": {
+      "thes1sCode": "20101010",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Auto & Vehicles",
+      "industry": "Auto Manufacturers",
+      "sicDescription": "Truck & Bus Bodies"
+    },
+    "3714": {
+      "thes1sCode": "20101030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Auto & Vehicles",
+      "industry": "Auto Parts & Equipment",
+      "sicDescription": "Auto Parts"
+    },
+    "3716": {
+      "thes1sCode": "20101050",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Auto & Vehicles",
+      "industry": "Recreational Vehicles",
+      "sicDescription": "Motor Homes"
+    },
+    "5010": {
+      "thes1sCode": "20101030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Auto & Vehicles",
+      "industry": "Auto Parts & Equipment",
+      "sicDescription": "Auto Parts & Supplies"
+    },
+    "5013": {
+      "thes1sCode": "20101030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Auto & Vehicles",
+      "industry": "Auto Parts & Equipment",
+      "sicDescription": "Auto Parts & Supplies"
+    },
+    "5511": {
+      "thes1sCode": "20101040",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Auto & Vehicles",
+      "industry": "Auto Dealerships",
+      "sicDescription": "Auto Dealerships"
+    },
+    "5521": {
+      "thes1sCode": "20101040",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Auto & Vehicles",
+      "industry": "Auto Dealerships",
+      "sicDescription": "Used Car Dealers"
+    },
+    "3592": {
+      "thes1sCode": "20101030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Auto & Vehicles",
+      "industry": "Auto Parts & Equipment",
+      "sicDescription": "Carburetors & Engine Parts"
+    },
+    "2300": {
+      "thes1sCode": "20201030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Apparel & Luxury",
+      "industry": "Apparel - Mass Market",
+      "sicDescription": "Apparel Manufacturing"
+    },
+    "2320": {
+      "thes1sCode": "20201030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Apparel & Luxury",
+      "industry": "Apparel - Mass Market",
+      "sicDescription": "Men's Furnishings"
+    },
+    "2330": {
+      "thes1sCode": "20201030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Apparel & Luxury",
+      "industry": "Apparel - Mass Market",
+      "sicDescription": "Women's Outerwear"
+    },
+    "3140": {
+      "thes1sCode": "20201040",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Apparel & Luxury",
+      "industry": "Footwear & Accessories",
+      "sicDescription": "Footwear"
+    },
+    "3021": {
+      "thes1sCode": "20201010",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Apparel & Luxury",
+      "industry": "Apparel - Athletic & Lifestyle",
+      "sicDescription": "Athletic Footwear",
+      "notes": "Athletic footwear maps to Athletic & Lifestyle (NKE, ONON)"
+    },
+    "5651": {
+      "thes1sCode": "20301050",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Apparel & Accessories",
+      "sicDescription": "Apparel Retail"
+    },
+    "5600": {
+      "thes1sCode": "20301050",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Apparel & Accessories",
+      "sicDescription": "Apparel Retail"
+    },
+    "5661": {
+      "thes1sCode": "20301050",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Apparel & Accessories",
+      "sicDescription": "Shoe Stores"
+    },
+    "5812": {
+      "thes1sCode": "20401020",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Travel & Leisure",
+      "industry": "Restaurants & Dining",
+      "sicDescription": "Restaurants"
+    },
+    "5211": {
+      "thes1sCode": "20301030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Home Improvement",
+      "sicDescription": "Home Improvement Retail"
+    },
+    "5231": {
+      "thes1sCode": "20301030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Home Improvement",
+      "sicDescription": "Paint & Wallpaper Stores"
+    },
+    "5944": {
+      "thes1sCode": "20301020",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Specialty",
+      "sicDescription": "Jewelry Stores"
+    },
+    "5940": {
+      "thes1sCode": "20301020",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Specialty",
+      "sicDescription": "Sporting Goods"
+    },
+    "5945": {
+      "thes1sCode": "20301020",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Specialty",
+      "sicDescription": "Hobby, Toy & Game Shops"
+    },
+    "5731": {
+      "thes1sCode": "20301020",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Specialty",
+      "sicDescription": "Consumer Electronics Stores"
+    },
+    "5700": {
+      "thes1sCode": "20501030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Housing & Construction",
+      "industry": "Furnishings & Home Decor",
+      "sicDescription": "Home Furnishings Retail"
+    },
+    "5712": {
+      "thes1sCode": "20501030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Housing & Construction",
+      "industry": "Furnishings & Home Decor",
+      "sicDescription": "Furniture Stores"
+    },
+    "5961": {
+      "thes1sCode": "20301010",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Broadline & E-Commerce",
+      "sicDescription": "Internet Retail"
+    },
+    "3944": {
+      "thes1sCode": "20401040",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Travel & Leisure",
+      "industry": "Leisure Products & Activities",
+      "sicDescription": "Toys & Games"
+    },
+    "3949": {
+      "thes1sCode": "20401040",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Travel & Leisure",
+      "industry": "Leisure Products & Activities",
+      "sicDescription": "Sporting & Athletic Goods"
+    },
+    "7011": {
+      "thes1sCode": "20401010",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Travel & Leisure",
+      "industry": "Lodging & Resorts",
+      "sicDescription": "Lodging"
+    },
+    "7990": {
+      "thes1sCode": "20401040",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Travel & Leisure",
+      "industry": "Leisure Products & Activities",
+      "sicDescription": "Amusement & Recreation"
+    },
+    "7941": {
+      "thes1sCode": "20401040",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Travel & Leisure",
+      "industry": "Leisure Products & Activities",
+      "sicDescription": "Professional Sports Clubs"
+    },
+    "2510": {
+      "thes1sCode": "20501030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Housing & Construction",
+      "industry": "Furnishings & Home Decor",
+      "sicDescription": "Household Furniture"
+    },
+    "2520": {
+      "thes1sCode": "20501030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Housing & Construction",
+      "industry": "Furnishings & Home Decor",
+      "sicDescription": "Office Furniture"
+    },
+    "3589": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "Appliances",
+      "notes": "SIC 3589 is Services Industry Machinery NEC, not consumer appliances"
+    },
+    "3631": {
+      "thes1sCode": "20501030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Housing & Construction",
+      "industry": "Furnishings & Home Decor",
+      "sicDescription": "Household Cooking Equipment"
+    },
+    "3634": {
+      "thes1sCode": "20501030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Housing & Construction",
+      "industry": "Furnishings & Home Decor",
+      "sicDescription": "Housewares & Accessories"
+    },
+    "3639": {
+      "thes1sCode": "20501030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Housing & Construction",
+      "industry": "Furnishings & Home Decor",
+      "sicDescription": "Household Appliances"
+    },
+    "2200": {
+      "thes1sCode": "20201050",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Apparel & Luxury",
+      "industry": "Textile Manufacturing",
+      "sicDescription": "Textile Manufacturing"
+    },
+    "2211": {
+      "thes1sCode": "20201050",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Apparel & Luxury",
+      "industry": "Textile Manufacturing",
+      "sicDescription": "Broadwoven Fabric Mills"
+    },
+    "2281": {
+      "thes1sCode": "20201050",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Apparel & Luxury",
+      "industry": "Textile Manufacturing",
+      "sicDescription": "Yarn Throwing & Winding"
+    },
+    "2833": {
+      "thes1sCode": "30101010",
+      "sector": "Healthcare",
+      "industryGroup": "Pharmaceuticals",
+      "industry": "Drug Manufacturers - Major",
+      "sicDescription": "Drug Manufacturers - General"
+    },
+    "2834": {
+      "thes1sCode": "30101010",
+      "sector": "Healthcare",
+      "industryGroup": "Pharmaceuticals",
+      "industry": "Drug Manufacturers - Major",
+      "sicDescription": "Drug Manufacturers - General"
+    },
+    "2835": {
+      "thes1sCode": "30501010",
+      "sector": "Healthcare",
+      "industryGroup": "Diagnostics & Research",
+      "industry": "Diagnostics & Research",
+      "sicDescription": "Diagnostics & Research"
+    },
+    "2836": {
+      "thes1sCode": "30101020",
+      "sector": "Healthcare",
+      "industryGroup": "Pharmaceuticals",
+      "industry": "Drug Manufacturers - Specialty & Generic",
+      "sicDescription": "Drug Manufacturers - Specialty & Generic"
+    },
+    "3841": {
+      "thes1sCode": "30301010",
+      "sector": "Healthcare",
+      "industryGroup": "Medical Devices & Equipment",
+      "industry": "Medical Devices",
+      "sicDescription": "Medical Devices"
+    },
+    "3842": {
+      "thes1sCode": "30301010",
+      "sector": "Healthcare",
+      "industryGroup": "Medical Devices & Equipment",
+      "industry": "Medical Devices",
+      "sicDescription": "Orthopedic & Prosthetic Appliances"
+    },
+    "3845": {
+      "thes1sCode": "30301010",
+      "sector": "Healthcare",
+      "industryGroup": "Medical Devices & Equipment",
+      "industry": "Medical Devices",
+      "sicDescription": "Electromedical Equipment"
+    },
+    "3844": {
+      "thes1sCode": "30301020",
+      "sector": "Healthcare",
+      "industryGroup": "Medical Devices & Equipment",
+      "industry": "Medical Instruments & Supplies",
+      "sicDescription": "X-Ray Apparatus"
+    },
+    "3851": {
+      "thes1sCode": "30301020",
+      "sector": "Healthcare",
+      "industryGroup": "Medical Devices & Equipment",
+      "industry": "Medical Instruments & Supplies",
+      "sicDescription": "Ophthalmic Goods"
+    },
+    "8000": {
+      "thes1sCode": "30401010",
+      "sector": "Healthcare",
+      "industryGroup": "Healthcare Services",
+      "industry": "Healthcare Providers & Facilities",
+      "sicDescription": "Healthcare Services"
+    },
+    "8011": {
+      "thes1sCode": "30401010",
+      "sector": "Healthcare",
+      "industryGroup": "Healthcare Services",
+      "industry": "Healthcare Providers & Facilities",
+      "sicDescription": "Medical Services"
+    },
+    "8049": {
+      "thes1sCode": "30401010",
+      "sector": "Healthcare",
+      "industryGroup": "Healthcare Services",
+      "industry": "Healthcare Providers & Facilities",
+      "sicDescription": "Health Services"
+    },
+    "8060": {
+      "thes1sCode": "30401010",
+      "sector": "Healthcare",
+      "industryGroup": "Healthcare Services",
+      "industry": "Healthcare Providers & Facilities",
+      "sicDescription": "Hospitals"
+    },
+    "8062": {
+      "thes1sCode": "30401010",
+      "sector": "Healthcare",
+      "industryGroup": "Healthcare Services",
+      "industry": "Healthcare Providers & Facilities",
+      "sicDescription": "Hospitals - General"
+    },
+    "8071": {
+      "thes1sCode": "30501010",
+      "sector": "Healthcare",
+      "industryGroup": "Diagnostics & Research",
+      "industry": "Diagnostics & Research",
+      "sicDescription": "Medical Laboratories"
+    },
+    "8082": {
+      "thes1sCode": "30401010",
+      "sector": "Healthcare",
+      "industryGroup": "Healthcare Services",
+      "industry": "Healthcare Providers & Facilities",
+      "sicDescription": "Home Health Care"
+    },
+    "8090": {
+      "thes1sCode": "30401010",
+      "sector": "Healthcare",
+      "industryGroup": "Healthcare Services",
+      "industry": "Healthcare Providers & Facilities",
+      "sicDescription": "Health Services"
+    },
+    "8093": {
+      "thes1sCode": "30401010",
+      "sector": "Healthcare",
+      "industryGroup": "Healthcare Services",
+      "industry": "Healthcare Providers & Facilities",
+      "sicDescription": "Specialty Outpatient Facilities"
+    },
+    "5122": {
+      "thes1sCode": "30401040",
+      "sector": "Healthcare",
+      "industryGroup": "Healthcare Services",
+      "industry": "Medical Distribution",
+      "sicDescription": "Medical Distribution"
+    },
+    "5047": {
+      "thes1sCode": "30401040",
+      "sector": "Healthcare",
+      "industryGroup": "Healthcare Services",
+      "industry": "Medical Distribution",
+      "sicDescription": "Medical Equipment & Supplies"
+    },
+    "6020": {
+      "thes1sCode": "35101010",
+      "sector": "Financial Services",
+      "industryGroup": "Banks",
+      "industry": "Banks - Diversified",
+      "sicDescription": "Banks - Diversified"
+    },
+    "6021": {
+      "thes1sCode": "35101010",
+      "sector": "Financial Services",
+      "industryGroup": "Banks",
+      "industry": "Banks - Diversified",
+      "sicDescription": "Banks - National Commercial"
+    },
+    "6022": {
+      "thes1sCode": "35101020",
+      "sector": "Financial Services",
+      "industryGroup": "Banks",
+      "industry": "Banks - Regional",
+      "sicDescription": "Banks - Regional"
+    },
+    "6035": {
+      "thes1sCode": "35101030",
+      "sector": "Financial Services",
+      "industryGroup": "Banks",
+      "industry": "Banks - Community & Thrift",
+      "sicDescription": "Savings Institutions"
+    },
+    "6036": {
+      "thes1sCode": "35101030",
+      "sector": "Financial Services",
+      "industryGroup": "Banks",
+      "industry": "Banks - Community & Thrift",
+      "sicDescription": "Savings Institutions"
+    },
+    "6141": {
+      "thes1sCode": "35401010",
+      "sector": "Financial Services",
+      "industryGroup": "Diversified Financials",
+      "industry": "Credit Services & Lending",
+      "sicDescription": "Credit Services"
+    },
+    "6153": {
+      "thes1sCode": "35401010",
+      "sector": "Financial Services",
+      "industryGroup": "Diversified Financials",
+      "industry": "Credit Services & Lending",
+      "sicDescription": "Short-Term Business Credit"
+    },
+    "6159": {
+      "thes1sCode": "35401010",
+      "sector": "Financial Services",
+      "industryGroup": "Diversified Financials",
+      "industry": "Credit Services & Lending",
+      "sicDescription": "Federal-Sponsored Credit Agencies"
+    },
+    "6200": {
+      "thes1sCode": "35301020",
+      "sector": "Financial Services",
+      "industryGroup": "Capital Markets",
+      "industry": "Investment Banking & Brokerage",
+      "sicDescription": "Capital Markets"
+    },
+    "6211": {
+      "thes1sCode": "35301020",
+      "sector": "Financial Services",
+      "industryGroup": "Capital Markets",
+      "industry": "Investment Banking & Brokerage",
+      "sicDescription": "Security Brokers & Dealers"
+    },
+    "6199": {
+      "thes1sCode": "35301030",
+      "sector": "Financial Services",
+      "industryGroup": "Capital Markets",
+      "industry": "Financial Exchanges & Data",
+      "sicDescription": "Financial Services",
+      "notes": "SIC 6199 often covers financial data/exchange companies"
+    },
+    "6282": {
+      "thes1sCode": "35301010",
+      "sector": "Financial Services",
+      "industryGroup": "Capital Markets",
+      "industry": "Asset Management",
+      "sicDescription": "Investment Advice"
+    },
+    "6311": {
+      "thes1sCode": "35201010",
+      "sector": "Financial Services",
+      "industryGroup": "Insurance",
+      "industry": "Insurance - Life",
+      "sicDescription": "Insurance - Life"
+    },
+    "6321": {
+      "thes1sCode": "30401030",
+      "sector": "Healthcare",
+      "industryGroup": "Healthcare Services",
+      "industry": "Healthcare Plans & Insurance",
+      "sicDescription": "Insurance - Health",
+      "notes": "Health insurance mapped to Healthcare per Thes1s taxonomy"
+    },
+    "6324": {
+      "thes1sCode": "30401030",
+      "sector": "Healthcare",
+      "industryGroup": "Healthcare Services",
+      "industry": "Healthcare Plans & Insurance",
+      "sicDescription": "Hospital & Medical Service Plans",
+      "notes": "Medical service plans are healthcare, not general insurance"
+    },
+    "6331": {
+      "thes1sCode": "35201020",
+      "sector": "Financial Services",
+      "industryGroup": "Insurance",
+      "industry": "Insurance - Property & Casualty",
+      "sicDescription": "Insurance - Property & Casualty"
+    },
+    "6399": {
+      "thes1sCode": "35201030",
+      "sector": "Financial Services",
+      "industryGroup": "Insurance",
+      "industry": "Insurance - Specialty",
+      "sicDescription": "Insurance - Diversified",
+      "notes": "SIC diversified insurance mapped to Specialty; reclassify per company"
+    },
+    "6411": {
+      "thes1sCode": "35201050",
+      "sector": "Financial Services",
+      "industryGroup": "Insurance",
+      "industry": "Insurance Brokers & Services",
+      "sicDescription": "Insurance Brokers"
+    },
+    "6726": {
+      "thes1sCode": "99101010",
+      "sector": "Special Classifications",
+      "industryGroup": "Conglomerates & Holding Companies",
+      "industry": "Conglomerates",
+      "sicDescription": "Conglomerates"
+    },
+    "6710": {
+      "thes1sCode": "99101010",
+      "sector": "Special Classifications",
+      "industryGroup": "Conglomerates & Holding Companies",
+      "industry": "Conglomerates",
+      "sicDescription": "Holding Offices"
+    },
+    "6770": {
+      "thes1sCode": "99101020",
+      "sector": "Special Classifications",
+      "industryGroup": "Conglomerates & Holding Companies",
+      "industry": "Blank Check / SPAC",
+      "sicDescription": "Blank Checks"
+    },
+    "6162": {
+      "thes1sCode": "35401010",
+      "sector": "Financial Services",
+      "industryGroup": "Diversified Financials",
+      "industry": "Credit Services & Lending",
+      "sicDescription": "Mortgage Finance",
+      "notes": "Mortgage finance is a lending activity"
+    },
+    "6163": {
+      "thes1sCode": "35401010",
+      "sector": "Financial Services",
+      "industryGroup": "Diversified Financials",
+      "industry": "Credit Services & Lending",
+      "sicDescription": "Loan Brokers"
+    },
+    "3721": {
+      "thes1sCode": "40101010",
+      "sector": "Industrials",
+      "industryGroup": "Aerospace & Defense",
+      "industry": "Aerospace & Defense",
+      "sicDescription": "Aerospace & Defense"
+    },
+    "3724": {
+      "thes1sCode": "40101010",
+      "sector": "Industrials",
+      "industryGroup": "Aerospace & Defense",
+      "industry": "Aerospace & Defense",
+      "sicDescription": "Aircraft Engines & Parts"
+    },
+    "3728": {
+      "thes1sCode": "40101010",
+      "sector": "Industrials",
+      "industryGroup": "Aerospace & Defense",
+      "industry": "Aerospace & Defense",
+      "sicDescription": "Aircraft Parts & Auxiliary Equipment"
+    },
+    "3760": {
+      "thes1sCode": "40101020",
+      "sector": "Industrials",
+      "industryGroup": "Aerospace & Defense",
+      "industry": "Space & Satellite",
+      "sicDescription": "Guided Missiles & Space Vehicles"
+    },
+    "3761": {
+      "thes1sCode": "40101020",
+      "sector": "Industrials",
+      "industryGroup": "Aerospace & Defense",
+      "industry": "Space & Satellite",
+      "sicDescription": "Guided Missiles & Space Vehicles"
+    },
+    "3769": {
+      "thes1sCode": "40101010",
+      "sector": "Industrials",
+      "industryGroup": "Aerospace & Defense",
+      "industry": "Aerospace & Defense",
+      "sicDescription": "Guided Missile Parts"
+    },
+    "3795": {
+      "thes1sCode": "40101010",
+      "sector": "Industrials",
+      "industryGroup": "Aerospace & Defense",
+      "industry": "Aerospace & Defense",
+      "sicDescription": "Tanks & Tank Components"
+    },
+    "3523": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "Farm & Heavy Construction Machinery"
+    },
+    "3524": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "Lawn & Garden Equipment"
+    },
+    "3531": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "Construction Machinery"
+    },
+    "3550": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "Special Industry Machinery"
+    },
+    "3556": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "Food Products Machinery"
+    },
+    "3560": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "General Industrial Machinery"
+    },
+    "3561": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "Pumps & Pumping Equipment"
+    },
+    "3562": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "Ball & Roller Bearings"
+    },
+    "3564": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "Industrial Machinery"
+    },
+    "3569": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "General Industrial Machinery"
+    },
+    "3580": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "Special Industry Machinery"
+    },
+    "3585": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "HVAC & Refrigeration Equipment"
+    },
+    "3590": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "Miscellaneous Industrial Machinery"
+    },
+    "3599": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "Industrial Machinery"
+    },
+    "4213": {
+      "thes1sCode": "40301030",
+      "sector": "Industrials",
+      "industryGroup": "Transportation",
+      "industry": "Trucking & Freight",
+      "sicDescription": "Trucking"
+    },
+    "4210": {
+      "thes1sCode": "40301030",
+      "sector": "Industrials",
+      "industryGroup": "Transportation",
+      "industry": "Trucking & Freight",
+      "sicDescription": "Trucking"
+    },
+    "4215": {
+      "thes1sCode": "40301050",
+      "sector": "Industrials",
+      "industryGroup": "Transportation",
+      "industry": "Logistics & Supply Chain",
+      "sicDescription": "Integrated Freight & Logistics"
+    },
+    "4231": {
+      "thes1sCode": "40301050",
+      "sector": "Industrials",
+      "industryGroup": "Transportation",
+      "industry": "Logistics & Supply Chain",
+      "sicDescription": "Freight & Terminal Services"
+    },
+    "4412": {
+      "thes1sCode": "40301040",
+      "sector": "Industrials",
+      "industryGroup": "Transportation",
+      "industry": "Marine Shipping",
+      "sicDescription": "Marine Shipping"
+    },
+    "4400": {
+      "thes1sCode": "40301040",
+      "sector": "Industrials",
+      "industryGroup": "Transportation",
+      "industry": "Marine Shipping",
+      "sicDescription": "Water Transportation"
+    },
+    "4512": {
+      "thes1sCode": "40301010",
+      "sector": "Industrials",
+      "industryGroup": "Transportation",
+      "industry": "Airlines",
+      "sicDescription": "Airlines"
+    },
+    "4522": {
+      "thes1sCode": "40301060",
+      "sector": "Industrials",
+      "industryGroup": "Transportation",
+      "industry": "Air Freight & Delivery",
+      "sicDescription": "Air Transportation - Nonscheduled",
+      "notes": "Non-scheduled air transport is typically charter/cargo"
+    },
+    "4011": {
+      "thes1sCode": "40301020",
+      "sector": "Industrials",
+      "industryGroup": "Transportation",
+      "industry": "Railroads",
+      "sicDescription": "Railroads"
+    },
+    "4953": {
+      "thes1sCode": "40601010",
+      "sector": "Industrials",
+      "industryGroup": "Environmental Services",
+      "industry": "Waste Management",
+      "sicDescription": "Waste Management"
+    },
+    "4955": {
+      "thes1sCode": "40601010",
+      "sector": "Industrials",
+      "industryGroup": "Environmental Services",
+      "industry": "Waste Management",
+      "sicDescription": "Hazardous Waste Management"
+    },
+    "7389": {
+      "thes1sCode": "40501020",
+      "sector": "Industrials",
+      "industryGroup": "Business Services",
+      "industry": "Staffing & Employment Services",
+      "sicDescription": "Business Services",
+      "notes": "SIC 7389 is broad Services NEC; mapped to Staffing as most common usage"
+    },
+    "7363": {
+      "thes1sCode": "40501020",
+      "sector": "Industrials",
+      "industryGroup": "Business Services",
+      "industry": "Staffing & Employment Services",
+      "sicDescription": "Staffing & Employment Services"
+    },
+    "3612": {
+      "thes1sCode": "40201030",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Electrical Equipment",
+      "sicDescription": "Power Transformers"
+    },
+    "3613": {
+      "thes1sCode": "40201030",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Electrical Equipment",
+      "sicDescription": "Switchgear & Switchboard"
+    },
+    "3621": {
+      "thes1sCode": "40201030",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Electrical Equipment",
+      "sicDescription": "Motors & Generators"
+    },
+    "3629": {
+      "thes1sCode": "40201030",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Electrical Equipment",
+      "sicDescription": "Electrical Industrial Apparatus"
+    },
+    "3990": {
+      "thes1sCode": "40201020",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Industrial Conglomerates",
+      "sicDescription": "Diversified Industrials"
+    },
+    "3499": {
+      "thes1sCode": "40201040",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Metal Fabrication",
+      "sicDescription": "Fabricated Metal Products"
+    },
+    "1500": {
+      "thes1sCode": "40401010",
+      "sector": "Industrials",
+      "industryGroup": "Construction & Engineering",
+      "industry": "Engineering & Construction Services",
+      "sicDescription": "General Building Contractors"
+    },
+    "1520": {
+      "thes1sCode": "20501010",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Housing & Construction",
+      "industry": "Homebuilders",
+      "sicDescription": "Residential Construction"
+    },
+    "1521": {
+      "thes1sCode": "20501010",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Housing & Construction",
+      "industry": "Homebuilders",
+      "sicDescription": "Residential Construction"
+    },
+    "1522": {
+      "thes1sCode": "20501010",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Housing & Construction",
+      "industry": "Homebuilders",
+      "sicDescription": "Residential Construction"
+    },
+    "1531": {
+      "thes1sCode": "20501010",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Housing & Construction",
+      "industry": "Homebuilders",
+      "sicDescription": "Operative Builders"
+    },
+    "1540": {
+      "thes1sCode": "40401020",
+      "sector": "Industrials",
+      "industryGroup": "Construction & Engineering",
+      "industry": "Infrastructure & Heavy Construction",
+      "sicDescription": "Industrial Buildings"
+    },
+    "1600": {
+      "thes1sCode": "40401020",
+      "sector": "Industrials",
+      "industryGroup": "Construction & Engineering",
+      "industry": "Infrastructure & Heavy Construction",
+      "sicDescription": "Heavy Construction"
+    },
+    "1623": {
+      "thes1sCode": "40401020",
+      "sector": "Industrials",
+      "industryGroup": "Construction & Engineering",
+      "industry": "Infrastructure & Heavy Construction",
+      "sicDescription": "Water, Sewer & Pipeline Construction"
+    },
+    "1700": {
+      "thes1sCode": "40401010",
+      "sector": "Industrials",
+      "industryGroup": "Construction & Engineering",
+      "industry": "Engineering & Construction Services",
+      "sicDescription": "Construction - Special Trade"
+    },
+    "1731": {
+      "thes1sCode": "40401010",
+      "sector": "Industrials",
+      "industryGroup": "Construction & Engineering",
+      "industry": "Engineering & Construction Services",
+      "sicDescription": "Electrical Work"
+    },
+    "3420": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "Cutlery, Hand Tools & Hardware",
+      "notes": "Hand tools are industrial products"
+    },
+    "3423": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "sicDescription": "Hand & Edge Tools"
+    },
+    "3460": {
+      "thes1sCode": "40201040",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Metal Fabrication",
+      "sicDescription": "Metal Forgings & Stampings"
+    },
+    "4813": {
+      "thes1sCode": "15101010",
+      "sector": "Communication Services",
+      "industryGroup": "Telecom",
+      "industry": "Telecom - Diversified",
+      "sicDescription": "Telecom Services"
+    },
+    "4812": {
+      "thes1sCode": "15101010",
+      "sector": "Communication Services",
+      "industryGroup": "Telecom",
+      "industry": "Telecom - Diversified",
+      "sicDescription": "Telephone Communications"
+    },
+    "4899": {
+      "thes1sCode": "15101010",
+      "sector": "Communication Services",
+      "industryGroup": "Telecom",
+      "industry": "Telecom - Diversified",
+      "sicDescription": "Communication Services"
+    },
+    "4841": {
+      "thes1sCode": "15201010",
+      "sector": "Communication Services",
+      "industryGroup": "Media & Entertainment",
+      "industry": "Entertainment - Diversified",
+      "sicDescription": "Cable & Satellite"
+    },
+    "7812": {
+      "thes1sCode": "15201010",
+      "sector": "Communication Services",
+      "industryGroup": "Media & Entertainment",
+      "industry": "Entertainment - Diversified",
+      "sicDescription": "Entertainment"
+    },
+    "7819": {
+      "thes1sCode": "15201010",
+      "sector": "Communication Services",
+      "industryGroup": "Media & Entertainment",
+      "industry": "Entertainment - Diversified",
+      "sicDescription": "Motion Picture Services"
+    },
+    "7822": {
+      "thes1sCode": "15201010",
+      "sector": "Communication Services",
+      "industryGroup": "Media & Entertainment",
+      "industry": "Entertainment - Diversified",
+      "sicDescription": "Motion Picture Distribution"
+    },
+    "4833": {
+      "thes1sCode": "15201040",
+      "sector": "Communication Services",
+      "industryGroup": "Media & Entertainment",
+      "industry": "Broadcasting - TV & Radio",
+      "sicDescription": "Television Broadcasting"
+    },
+    "4832": {
+      "thes1sCode": "15201040",
+      "sector": "Communication Services",
+      "industryGroup": "Media & Entertainment",
+      "industry": "Broadcasting - TV & Radio",
+      "sicDescription": "Radio Broadcasting"
+    },
+    "2711": {
+      "thes1sCode": "15201050",
+      "sector": "Communication Services",
+      "industryGroup": "Media & Entertainment",
+      "industry": "Publishing & Information Services",
+      "sicDescription": "Newspapers"
+    },
+    "2731": {
+      "thes1sCode": "15201050",
+      "sector": "Communication Services",
+      "industryGroup": "Media & Entertainment",
+      "industry": "Publishing & Information Services",
+      "sicDescription": "Book Publishing"
+    },
+    "2741": {
+      "thes1sCode": "15201050",
+      "sector": "Communication Services",
+      "industryGroup": "Media & Entertainment",
+      "industry": "Publishing & Information Services",
+      "sicDescription": "Periodicals"
+    },
+    "7311": {
+      "thes1sCode": "15201060",
+      "sector": "Communication Services",
+      "industryGroup": "Media & Entertainment",
+      "industry": "Advertising & Marketing Services",
+      "sicDescription": "Advertising Agencies"
+    },
+    "7312": {
+      "thes1sCode": "15201060",
+      "sector": "Communication Services",
+      "industryGroup": "Media & Entertainment",
+      "industry": "Advertising & Marketing Services",
+      "sicDescription": "Outdoor Advertising"
+    },
+    "1311": {
+      "thes1sCode": "45101020",
+      "sector": "Energy",
+      "industryGroup": "Oil & Gas",
+      "industry": "Oil & Gas - Exploration & Production",
+      "sicDescription": "Oil & Gas E&P"
+    },
+    "1381": {
+      "thes1sCode": "45101060",
+      "sector": "Energy",
+      "industryGroup": "Oil & Gas",
+      "industry": "Oil & Gas - Drilling",
+      "sicDescription": "Oil & Gas Drilling"
+    },
+    "1382": {
+      "thes1sCode": "45101050",
+      "sector": "Energy",
+      "industryGroup": "Oil & Gas",
+      "industry": "Oil & Gas - Equipment & Services",
+      "sicDescription": "Oil & Gas Equipment & Services"
+    },
+    "1389": {
+      "thes1sCode": "45101050",
+      "sector": "Energy",
+      "industryGroup": "Oil & Gas",
+      "industry": "Oil & Gas - Equipment & Services",
+      "sicDescription": "Oil & Gas Field Services"
+    },
+    "2911": {
+      "thes1sCode": "45101030",
+      "sector": "Energy",
+      "industryGroup": "Oil & Gas",
+      "industry": "Oil & Gas - Refining & Marketing",
+      "sicDescription": "Oil & Gas Refining & Marketing"
+    },
+    "5171": {
+      "thes1sCode": "45101030",
+      "sector": "Energy",
+      "industryGroup": "Oil & Gas",
+      "industry": "Oil & Gas - Refining & Marketing",
+      "sicDescription": "Petroleum Products Wholesalers"
+    },
+    "5172": {
+      "thes1sCode": "45101030",
+      "sector": "Energy",
+      "industryGroup": "Oil & Gas",
+      "industry": "Oil & Gas - Refining & Marketing",
+      "sicDescription": "Petroleum Products Wholesalers"
+    },
+    "4610": {
+      "thes1sCode": "45101040",
+      "sector": "Energy",
+      "industryGroup": "Oil & Gas",
+      "industry": "Oil & Gas - Midstream",
+      "sicDescription": "Oil & Gas Pipelines"
+    },
+    "4612": {
+      "thes1sCode": "45101040",
+      "sector": "Energy",
+      "industryGroup": "Oil & Gas",
+      "industry": "Oil & Gas - Midstream",
+      "sicDescription": "Crude Oil Pipelines"
+    },
+    "4613": {
+      "thes1sCode": "45101040",
+      "sector": "Energy",
+      "industryGroup": "Oil & Gas",
+      "industry": "Oil & Gas - Midstream",
+      "sicDescription": "Refined Petroleum Pipelines"
+    },
+    "4619": {
+      "thes1sCode": "45101040",
+      "sector": "Energy",
+      "industryGroup": "Oil & Gas",
+      "industry": "Oil & Gas - Midstream",
+      "sicDescription": "Pipelines"
+    },
+    "1220": {
+      "thes1sCode": "45301020",
+      "sector": "Energy",
+      "industryGroup": "Energy Storage & Distribution",
+      "industry": "Coal & Consumable Fuels",
+      "sicDescription": "Thermal Coal"
+    },
+    "1221": {
+      "thes1sCode": "45301020",
+      "sector": "Energy",
+      "industryGroup": "Energy Storage & Distribution",
+      "industry": "Coal & Consumable Fuels",
+      "sicDescription": "Thermal Coal"
+    },
+    "2810": {
+      "thes1sCode": "50101020",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Diversified",
+      "sicDescription": "Chemicals"
+    },
+    "2812": {
+      "thes1sCode": "50101020",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Diversified",
+      "sicDescription": "Alkalies & Chlorine"
+    },
+    "2813": {
+      "thes1sCode": "50101010",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Specialty",
+      "sicDescription": "Industrial Gases",
+      "notes": "Industrial gases (APD, LIN) are specialty chemicals"
+    },
+    "2816": {
+      "thes1sCode": "50101010",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Specialty",
+      "sicDescription": "Inorganic Pigments"
+    },
+    "2819": {
+      "thes1sCode": "50101020",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Diversified",
+      "sicDescription": "Industrial Inorganic Chemicals"
+    },
+    "2820": {
+      "thes1sCode": "50101020",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Diversified",
+      "sicDescription": "Plastics Materials & Synthetics"
+    },
+    "2821": {
+      "thes1sCode": "50101020",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Diversified",
+      "sicDescription": "Plastics Materials & Resins"
+    },
+    "2860": {
+      "thes1sCode": "50101020",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Diversified",
+      "sicDescription": "Industrial Chemicals"
+    },
+    "2869": {
+      "thes1sCode": "50101020",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Diversified",
+      "sicDescription": "Industrial Organic Chemicals"
+    },
+    "2890": {
+      "thes1sCode": "50101010",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Specialty",
+      "sicDescription": "Chemical Products"
+    },
+    "2891": {
+      "thes1sCode": "50101010",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Specialty",
+      "sicDescription": "Adhesives & Sealants"
+    },
+    "2899": {
+      "thes1sCode": "50101010",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Specialty",
+      "sicDescription": "Specialty Chemicals"
+    },
+    "2850": {
+      "thes1sCode": "50101010",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Specialty",
+      "sicDescription": "Paints & Allied Products"
+    },
+    "2851": {
+      "thes1sCode": "50101010",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Specialty",
+      "sicDescription": "Paints, Varnishes & Lacquers"
+    },
+    "2870": {
+      "thes1sCode": "50101030",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Agricultural",
+      "sicDescription": "Agricultural Chemicals"
+    },
+    "2879": {
+      "thes1sCode": "50101030",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Agricultural",
+      "sicDescription": "Pesticides & Agricultural Chemicals"
+    },
+    "3310": {
+      "thes1sCode": "50201040",
+      "sector": "Basic Materials",
+      "industryGroup": "Metals & Mining",
+      "industry": "Steel",
+      "sicDescription": "Steel"
+    },
+    "3312": {
+      "thes1sCode": "50201040",
+      "sector": "Basic Materials",
+      "industryGroup": "Metals & Mining",
+      "industry": "Steel",
+      "sicDescription": "Steel Works & Blast Furnaces"
+    },
+    "3316": {
+      "thes1sCode": "50201040",
+      "sector": "Basic Materials",
+      "industryGroup": "Metals & Mining",
+      "industry": "Steel",
+      "sicDescription": "Cold-Rolled Steel"
+    },
+    "3317": {
+      "thes1sCode": "50201040",
+      "sector": "Basic Materials",
+      "industryGroup": "Metals & Mining",
+      "industry": "Steel",
+      "sicDescription": "Steel Pipe & Tubes"
+    },
+    "3330": {
+      "thes1sCode": "50201060",
+      "sector": "Basic Materials",
+      "industryGroup": "Metals & Mining",
+      "industry": "Other Industrial Metals & Mining",
+      "sicDescription": "Primary Nonferrous Metals"
+    },
+    "3331": {
+      "thes1sCode": "50201030",
+      "sector": "Basic Materials",
+      "industryGroup": "Metals & Mining",
+      "industry": "Copper & Base Metals Mining",
+      "sicDescription": "Primary Copper"
+    },
+    "3334": {
+      "thes1sCode": "50201050",
+      "sector": "Basic Materials",
+      "industryGroup": "Metals & Mining",
+      "industry": "Aluminum",
+      "sicDescription": "Primary Aluminum"
+    },
+    "3350": {
+      "thes1sCode": "50201060",
+      "sector": "Basic Materials",
+      "industryGroup": "Metals & Mining",
+      "industry": "Other Industrial Metals & Mining",
+      "sicDescription": "Nonferrous Metals Rolling & Drawing"
+    },
+    "3356": {
+      "thes1sCode": "50201060",
+      "sector": "Basic Materials",
+      "industryGroup": "Metals & Mining",
+      "industry": "Other Industrial Metals & Mining",
+      "sicDescription": "Nonferrous Rolling & Drawing"
+    },
+    "1040": {
+      "thes1sCode": "50201010",
+      "sector": "Basic Materials",
+      "industryGroup": "Metals & Mining",
+      "industry": "Gold Mining",
+      "sicDescription": "Gold"
+    },
+    "1090": {
+      "thes1sCode": "50201060",
+      "sector": "Basic Materials",
+      "industryGroup": "Metals & Mining",
+      "industry": "Other Industrial Metals & Mining",
+      "sicDescription": "Metal Mining Services"
+    },
+    "1400": {
+      "thes1sCode": "50201060",
+      "sector": "Basic Materials",
+      "industryGroup": "Metals & Mining",
+      "industry": "Other Industrial Metals & Mining",
+      "sicDescription": "Mining & Quarrying"
+    },
+    "2411": {
+      "thes1sCode": "50301020",
+      "sector": "Basic Materials",
+      "industryGroup": "Building Materials",
+      "industry": "Lumber & Wood Products",
+      "sicDescription": "Logging"
+    },
+    "2421": {
+      "thes1sCode": "50301020",
+      "sector": "Basic Materials",
+      "industryGroup": "Building Materials",
+      "industry": "Lumber & Wood Products",
+      "sicDescription": "Sawmills"
+    },
+    "2430": {
+      "thes1sCode": "50301020",
+      "sector": "Basic Materials",
+      "industryGroup": "Building Materials",
+      "industry": "Lumber & Wood Products",
+      "sicDescription": "Lumber & Wood Products"
+    },
+    "2611": {
+      "thes1sCode": "50401010",
+      "sector": "Basic Materials",
+      "industryGroup": "Paper & Packaging",
+      "industry": "Paper & Forest Products",
+      "sicDescription": "Pulp Mills"
+    },
+    "2621": {
+      "thes1sCode": "50401010",
+      "sector": "Basic Materials",
+      "industryGroup": "Paper & Packaging",
+      "industry": "Paper & Forest Products",
+      "sicDescription": "Paper Mills"
+    },
+    "2650": {
+      "thes1sCode": "50401020",
+      "sector": "Basic Materials",
+      "industryGroup": "Paper & Packaging",
+      "industry": "Packaging & Containers",
+      "sicDescription": "Paperboard Containers"
+    },
+    "2670": {
+      "thes1sCode": "50401010",
+      "sector": "Basic Materials",
+      "industryGroup": "Paper & Packaging",
+      "industry": "Paper & Forest Products",
+      "sicDescription": "Converted Paper Products"
+    },
+    "3011": {
+      "thes1sCode": "20101030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Auto & Vehicles",
+      "industry": "Auto Parts & Equipment",
+      "sicDescription": "Tires & Rubber",
+      "notes": "Tires are auto parts despite SIC rubber classification"
+    },
+    "3080": {
+      "thes1sCode": "50101010",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Specialty",
+      "sicDescription": "Plastics Products",
+      "notes": "Plastics products manufacturing mapped to Specialty Chemicals"
+    },
+    "3089": {
+      "thes1sCode": "50101010",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Specialty",
+      "sicDescription": "Plastics Products"
+    },
+    "3211": {
+      "thes1sCode": "50301010",
+      "sector": "Basic Materials",
+      "industryGroup": "Building Materials",
+      "industry": "Building Materials",
+      "sicDescription": "Flat Glass"
+    },
+    "3220": {
+      "thes1sCode": "50301010",
+      "sector": "Basic Materials",
+      "industryGroup": "Building Materials",
+      "industry": "Building Materials",
+      "sicDescription": "Glass Products"
+    },
+    "3241": {
+      "thes1sCode": "50301010",
+      "sector": "Basic Materials",
+      "industryGroup": "Building Materials",
+      "industry": "Building Materials",
+      "sicDescription": "Cement"
+    },
+    "3250": {
+      "thes1sCode": "50301010",
+      "sector": "Basic Materials",
+      "industryGroup": "Building Materials",
+      "industry": "Building Materials",
+      "sicDescription": "Structural Clay Products"
+    },
+    "3270": {
+      "thes1sCode": "50301010",
+      "sector": "Basic Materials",
+      "industryGroup": "Building Materials",
+      "industry": "Building Materials",
+      "sicDescription": "Concrete Products"
+    },
+    "3290": {
+      "thes1sCode": "50301010",
+      "sector": "Basic Materials",
+      "industryGroup": "Building Materials",
+      "industry": "Building Materials",
+      "sicDescription": "Nonmetallic Mineral Products"
+    },
+    "3411": {
+      "thes1sCode": "50401020",
+      "sector": "Basic Materials",
+      "industryGroup": "Paper & Packaging",
+      "industry": "Packaging & Containers",
+      "sicDescription": "Metal Cans"
+    },
+    "3412": {
+      "thes1sCode": "50401020",
+      "sector": "Basic Materials",
+      "industryGroup": "Paper & Packaging",
+      "industry": "Packaging & Containers",
+      "sicDescription": "Metal Shipping Containers"
+    },
+    "6500": {
+      "thes1sCode": "60201010",
+      "sector": "Real Estate",
+      "industryGroup": "Real Estate Services",
+      "industry": "Real Estate Services & Brokerage",
+      "sicDescription": "Real Estate Services"
+    },
+    "6510": {
+      "thes1sCode": "60201010",
+      "sector": "Real Estate",
+      "industryGroup": "Real Estate Services",
+      "industry": "Real Estate Services & Brokerage",
+      "sicDescription": "Real Estate Operators"
+    },
+    "6512": {
+      "thes1sCode": "60101010",
+      "sector": "Real Estate",
+      "industryGroup": "REITs",
+      "industry": "REIT - Residential",
+      "sicDescription": "REIT - Residential"
+    },
+    "6531": {
+      "thes1sCode": "60201010",
+      "sector": "Real Estate",
+      "industryGroup": "Real Estate Services",
+      "industry": "Real Estate Services & Brokerage",
+      "sicDescription": "Real Estate Agents & Managers"
+    },
+    "6552": {
+      "thes1sCode": "60201020",
+      "sector": "Real Estate",
+      "industryGroup": "Real Estate Services",
+      "industry": "Real Estate Development",
+      "sicDescription": "Real Estate - Development"
+    },
+    "6798": {
+      "thes1sCode": "60101090",
+      "sector": "Real Estate",
+      "industryGroup": "REITs",
+      "industry": "REIT - Diversified",
+      "sicDescription": "Real Estate Investment Trusts"
+    },
+    "4911": {
+      "thes1sCode": "55101010",
+      "sector": "Utilities",
+      "industryGroup": "Electric Utilities",
+      "industry": "Electric Utilities - Regulated",
+      "sicDescription": "Utilities - Regulated Electric"
+    },
+    "4922": {
+      "thes1sCode": "55201010",
+      "sector": "Utilities",
+      "industryGroup": "Gas & Water Utilities",
+      "industry": "Gas Utilities",
+      "sicDescription": "Utilities - Regulated Gas"
+    },
+    "4923": {
+      "thes1sCode": "55201010",
+      "sector": "Utilities",
+      "industryGroup": "Gas & Water Utilities",
+      "industry": "Gas Utilities",
+      "sicDescription": "Natural Gas Distribution"
+    },
+    "4924": {
+      "thes1sCode": "55201010",
+      "sector": "Utilities",
+      "industryGroup": "Gas & Water Utilities",
+      "industry": "Gas Utilities",
+      "sicDescription": "Natural Gas Distribution"
+    },
+    "4931": {
+      "thes1sCode": "55301010",
+      "sector": "Utilities",
+      "industryGroup": "Multi-Utilities",
+      "industry": "Multi-Utilities",
+      "sicDescription": "Utilities - Diversified"
+    },
+    "4932": {
+      "thes1sCode": "55301010",
+      "sector": "Utilities",
+      "industryGroup": "Multi-Utilities",
+      "industry": "Multi-Utilities",
+      "sicDescription": "Utilities - Diversified"
+    },
+    "4941": {
+      "thes1sCode": "55201020",
+      "sector": "Utilities",
+      "industryGroup": "Gas & Water Utilities",
+      "industry": "Water Utilities",
+      "sicDescription": "Utilities - Regulated Water"
+    },
+    "4950": {
+      "thes1sCode": "55201020",
+      "sector": "Utilities",
+      "industryGroup": "Gas & Water Utilities",
+      "industry": "Water Utilities",
+      "sicDescription": "Sanitary Services"
+    },
+    "4991": {
+      "thes1sCode": "55101020",
+      "sector": "Utilities",
+      "industryGroup": "Electric Utilities",
+      "industry": "Electric Utilities - Independent Power",
+      "sicDescription": "Independent Power Producers"
+    },
+    "0100": {
+      "thes1sCode": "25401010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Agriculture",
+      "industry": "Agricultural Products & Processing",
+      "sicDescription": "Farm Products"
+    },
+    "0200": {
+      "thes1sCode": "25401010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Agriculture",
+      "industry": "Agricultural Products & Processing",
+      "sicDescription": "Livestock"
+    },
+    "0700": {
+      "thes1sCode": "25401010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Agriculture",
+      "industry": "Agricultural Products & Processing",
+      "sicDescription": "Agricultural Services"
+    }
+  },
+  "twoDigit": {
+    "01": {
+      "thes1sCode": "25401010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Agriculture",
+      "industry": "Agricultural Products & Processing",
+      "notes": "Crops and agricultural production"
+    },
+    "02": {
+      "thes1sCode": "25401010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Agriculture",
+      "industry": "Agricultural Products & Processing",
+      "notes": "Livestock production"
+    },
+    "07": {
+      "thes1sCode": "25401010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Agriculture",
+      "industry": "Agricultural Products & Processing",
+      "notes": "Agricultural services"
+    },
+    "08": {
+      "thes1sCode": "50301020",
+      "sector": "Basic Materials",
+      "industryGroup": "Building Materials",
+      "industry": "Lumber & Wood Products",
+      "notes": "Forestry"
+    },
+    "09": {
+      "thes1sCode": "25401010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Agriculture",
+      "industry": "Agricultural Products & Processing",
+      "notes": "Fishing, hunting, trapping"
+    },
+    "10": {
+      "thes1sCode": "50201060",
+      "sector": "Basic Materials",
+      "industryGroup": "Metals & Mining",
+      "industry": "Other Industrial Metals & Mining",
+      "notes": "Metal mining"
+    },
+    "12": {
+      "thes1sCode": "45301020",
+      "sector": "Energy",
+      "industryGroup": "Energy Storage & Distribution",
+      "industry": "Coal & Consumable Fuels",
+      "notes": "Coal mining"
+    },
+    "13": {
+      "thes1sCode": "45101020",
+      "sector": "Energy",
+      "industryGroup": "Oil & Gas",
+      "industry": "Oil & Gas - Exploration & Production",
+      "notes": "Oil & gas extraction"
+    },
+    "14": {
+      "thes1sCode": "50201060",
+      "sector": "Basic Materials",
+      "industryGroup": "Metals & Mining",
+      "industry": "Other Industrial Metals & Mining",
+      "notes": "Non-metallic minerals mining (except fuels)"
+    },
+    "15": {
+      "thes1sCode": "40401010",
+      "sector": "Industrials",
+      "industryGroup": "Construction & Engineering",
+      "industry": "Engineering & Construction Services",
+      "notes": "Building construction general contractors; may include homebuilders"
+    },
+    "16": {
+      "thes1sCode": "40401020",
+      "sector": "Industrials",
+      "industryGroup": "Construction & Engineering",
+      "industry": "Infrastructure & Heavy Construction",
+      "notes": "Heavy construction (non-building)"
+    },
+    "17": {
+      "thes1sCode": "40401010",
+      "sector": "Industrials",
+      "industryGroup": "Construction & Engineering",
+      "industry": "Engineering & Construction Services",
+      "notes": "Construction special trade contractors"
+    },
+    "20": {
+      "thes1sCode": "25101030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Food & Beverage",
+      "industry": "Food - Packaged & Processed",
+      "notes": "Food and kindred products manufacturing"
+    },
+    "21": {
+      "thes1sCode": "25201030",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Household & Personal Products",
+      "industry": "Tobacco",
+      "notes": "Tobacco products"
+    },
+    "22": {
+      "thes1sCode": "20201050",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Apparel & Luxury",
+      "industry": "Textile Manufacturing",
+      "notes": "Textile mill products"
+    },
+    "23": {
+      "thes1sCode": "20201030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Apparel & Luxury",
+      "industry": "Apparel - Mass Market",
+      "notes": "Apparel and other finished products"
+    },
+    "24": {
+      "thes1sCode": "50301020",
+      "sector": "Basic Materials",
+      "industryGroup": "Building Materials",
+      "industry": "Lumber & Wood Products",
+      "notes": "Lumber and wood products (except furniture)"
+    },
+    "25": {
+      "thes1sCode": "20501030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Housing & Construction",
+      "industry": "Furnishings & Home Decor",
+      "notes": "Furniture and fixtures"
+    },
+    "26": {
+      "thes1sCode": "50401010",
+      "sector": "Basic Materials",
+      "industryGroup": "Paper & Packaging",
+      "industry": "Paper & Forest Products",
+      "notes": "Paper and allied products"
+    },
+    "27": {
+      "thes1sCode": "15201050",
+      "sector": "Communication Services",
+      "industryGroup": "Media & Entertainment",
+      "industry": "Publishing & Information Services",
+      "notes": "Printing, publishing, and allied industries"
+    },
+    "28": {
+      "thes1sCode": "50101020",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Diversified",
+      "notes": "Chemicals and allied products; note SICs 2833-2836 are pharma"
+    },
+    "29": {
+      "thes1sCode": "45101030",
+      "sector": "Energy",
+      "industryGroup": "Oil & Gas",
+      "industry": "Oil & Gas - Refining & Marketing",
+      "notes": "Petroleum refining and related industries"
+    },
+    "30": {
+      "thes1sCode": "50101010",
+      "sector": "Basic Materials",
+      "industryGroup": "Chemicals",
+      "industry": "Chemicals - Specialty",
+      "notes": "Rubber and miscellaneous plastics products"
+    },
+    "31": {
+      "thes1sCode": "20201040",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Apparel & Luxury",
+      "industry": "Footwear & Accessories",
+      "notes": "Leather and leather products"
+    },
+    "32": {
+      "thes1sCode": "50301010",
+      "sector": "Basic Materials",
+      "industryGroup": "Building Materials",
+      "industry": "Building Materials",
+      "notes": "Stone, clay, glass, and concrete products"
+    },
+    "33": {
+      "thes1sCode": "50201040",
+      "sector": "Basic Materials",
+      "industryGroup": "Metals & Mining",
+      "industry": "Steel",
+      "notes": "Primary metal industries"
+    },
+    "34": {
+      "thes1sCode": "40201040",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Metal Fabrication",
+      "notes": "Fabricated metal products"
+    },
+    "35": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "notes": "Industrial and commercial machinery and computer equipment"
+    },
+    "36": {
+      "thes1sCode": "10401010",
+      "sector": "Technology",
+      "industryGroup": "Electronic Components",
+      "industry": "Electronic Components",
+      "notes": "Electronic and electrical equipment"
+    },
+    "37": {
+      "thes1sCode": "40101010",
+      "sector": "Industrials",
+      "industryGroup": "Aerospace & Defense",
+      "industry": "Aerospace & Defense",
+      "notes": "Transportation equipment; includes autos but A&D is more common fallback"
+    },
+    "38": {
+      "thes1sCode": "30301010",
+      "sector": "Healthcare",
+      "industryGroup": "Medical Devices & Equipment",
+      "industry": "Medical Devices",
+      "notes": "Measuring, analyzing, and controlling instruments"
+    },
+    "39": {
+      "thes1sCode": "40201020",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Industrial Conglomerates",
+      "notes": "Miscellaneous manufacturing industries"
+    },
+    "40": {
+      "thes1sCode": "40301020",
+      "sector": "Industrials",
+      "industryGroup": "Transportation",
+      "industry": "Railroads",
+      "notes": "Railroad transportation"
+    },
+    "41": {
+      "thes1sCode": "40301050",
+      "sector": "Industrials",
+      "industryGroup": "Transportation",
+      "industry": "Logistics & Supply Chain",
+      "notes": "Local/suburban transit and interurban passenger transportation"
+    },
+    "42": {
+      "thes1sCode": "40301030",
+      "sector": "Industrials",
+      "industryGroup": "Transportation",
+      "industry": "Trucking & Freight",
+      "notes": "Motor freight transportation and warehousing"
+    },
+    "43": {
+      "thes1sCode": "40301060",
+      "sector": "Industrials",
+      "industryGroup": "Transportation",
+      "industry": "Air Freight & Delivery",
+      "notes": "US Postal Service (rare for SEC filers)"
+    },
+    "44": {
+      "thes1sCode": "40301040",
+      "sector": "Industrials",
+      "industryGroup": "Transportation",
+      "industry": "Marine Shipping",
+      "notes": "Water transportation"
+    },
+    "45": {
+      "thes1sCode": "40301010",
+      "sector": "Industrials",
+      "industryGroup": "Transportation",
+      "industry": "Airlines",
+      "notes": "Transportation by air"
+    },
+    "46": {
+      "thes1sCode": "45101040",
+      "sector": "Energy",
+      "industryGroup": "Oil & Gas",
+      "industry": "Oil & Gas - Midstream",
+      "notes": "Pipelines (except natural gas)"
+    },
+    "47": {
+      "thes1sCode": "40301050",
+      "sector": "Industrials",
+      "industryGroup": "Transportation",
+      "industry": "Logistics & Supply Chain",
+      "notes": "Transportation services (freight brokers, agents)"
+    },
+    "48": {
+      "thes1sCode": "15101010",
+      "sector": "Communication Services",
+      "industryGroup": "Telecom",
+      "industry": "Telecom - Diversified",
+      "notes": "Communications (telephone, telegraph, radio, TV)"
+    },
+    "49": {
+      "thes1sCode": "55301010",
+      "sector": "Utilities",
+      "industryGroup": "Multi-Utilities",
+      "industry": "Multi-Utilities",
+      "notes": "Electric, gas, and sanitary services"
+    },
+    "50": {
+      "thes1sCode": "40501030",
+      "sector": "Industrials",
+      "industryGroup": "Business Services",
+      "industry": "Commercial Services & Supplies",
+      "notes": "Wholesale trade - durable goods"
+    },
+    "51": {
+      "thes1sCode": "25301010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Retail - Defensive",
+      "industry": "Retail - Grocery & Supermarkets",
+      "notes": "Wholesale trade - nondurable goods"
+    },
+    "52": {
+      "thes1sCode": "20301030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Home Improvement",
+      "notes": "Building materials, hardware, garden supply"
+    },
+    "53": {
+      "thes1sCode": "20301010",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Broadline & E-Commerce",
+      "notes": "General merchandise stores"
+    },
+    "54": {
+      "thes1sCode": "25301010",
+      "sector": "Consumer Defensive",
+      "industryGroup": "Retail - Defensive",
+      "industry": "Retail - Grocery & Supermarkets",
+      "notes": "Food stores"
+    },
+    "55": {
+      "thes1sCode": "20101040",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Auto & Vehicles",
+      "industry": "Auto Dealerships",
+      "notes": "Auto dealers and gas stations"
+    },
+    "56": {
+      "thes1sCode": "20301050",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Apparel & Accessories",
+      "notes": "Apparel and accessory stores"
+    },
+    "57": {
+      "thes1sCode": "20301020",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Specialty",
+      "notes": "Home furniture, furnishings, and equipment stores"
+    },
+    "58": {
+      "thes1sCode": "20401020",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Travel & Leisure",
+      "industry": "Restaurants & Dining",
+      "notes": "Eating and drinking places"
+    },
+    "59": {
+      "thes1sCode": "20301020",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Retail - Cyclical",
+      "industry": "Retail - Specialty",
+      "notes": "Retail stores NEC"
+    },
+    "60": {
+      "thes1sCode": "35101010",
+      "sector": "Financial Services",
+      "industryGroup": "Banks",
+      "industry": "Banks - Diversified",
+      "notes": "Depository institutions"
+    },
+    "61": {
+      "thes1sCode": "35401010",
+      "sector": "Financial Services",
+      "industryGroup": "Diversified Financials",
+      "industry": "Credit Services & Lending",
+      "notes": "Non-depository credit institutions"
+    },
+    "62": {
+      "thes1sCode": "35301020",
+      "sector": "Financial Services",
+      "industryGroup": "Capital Markets",
+      "industry": "Investment Banking & Brokerage",
+      "notes": "Security and commodity brokers, dealers, exchanges"
+    },
+    "63": {
+      "thes1sCode": "35201030",
+      "sector": "Financial Services",
+      "industryGroup": "Insurance",
+      "industry": "Insurance - Specialty",
+      "notes": "Insurance carriers; reclassify by type per company"
+    },
+    "64": {
+      "thes1sCode": "35201050",
+      "sector": "Financial Services",
+      "industryGroup": "Insurance",
+      "industry": "Insurance Brokers & Services",
+      "notes": "Insurance agents, brokers, and service"
+    },
+    "65": {
+      "thes1sCode": "60201010",
+      "sector": "Real Estate",
+      "industryGroup": "Real Estate Services",
+      "industry": "Real Estate Services & Brokerage",
+      "notes": "Real estate"
+    },
+    "66": {
+      "thes1sCode": "35401010",
+      "sector": "Financial Services",
+      "industryGroup": "Diversified Financials",
+      "industry": "Credit Services & Lending",
+      "notes": "Combined real estate, insurance, loans"
+    },
+    "67": {
+      "thes1sCode": "99101010",
+      "sector": "Special Classifications",
+      "industryGroup": "Conglomerates & Holding Companies",
+      "industry": "Conglomerates",
+      "notes": "Holding and other investment offices"
+    },
+    "70": {
+      "thes1sCode": "20401010",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Travel & Leisure",
+      "industry": "Lodging & Resorts",
+      "notes": "Hotels, rooming houses, camps"
+    },
+    "72": {
+      "thes1sCode": "20601010",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Consumer Services",
+      "industry": "Personal Services",
+      "notes": "Personal services (laundry, photography, beauty)"
+    },
+    "73": {
+      "thes1sCode": "10101010",
+      "sector": "Technology",
+      "industryGroup": "Software",
+      "industry": "Software - Application",
+      "notes": "Business services; includes software (7372) and IT services"
+    },
+    "75": {
+      "thes1sCode": "20101030",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Auto & Vehicles",
+      "industry": "Auto Parts & Equipment",
+      "notes": "Automotive repair, services, and parking"
+    },
+    "76": {
+      "thes1sCode": "40201010",
+      "sector": "Industrials",
+      "industryGroup": "Industrial Manufacturing",
+      "industry": "Specialty Industrial Machinery",
+      "notes": "Miscellaneous repair services"
+    },
+    "78": {
+      "thes1sCode": "15201010",
+      "sector": "Communication Services",
+      "industryGroup": "Media & Entertainment",
+      "industry": "Entertainment - Diversified",
+      "notes": "Motion pictures"
+    },
+    "79": {
+      "thes1sCode": "20401040",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Travel & Leisure",
+      "industry": "Leisure Products & Activities",
+      "notes": "Amusement and recreation services"
+    },
+    "80": {
+      "thes1sCode": "30401010",
+      "sector": "Healthcare",
+      "industryGroup": "Healthcare Services",
+      "industry": "Healthcare Providers & Facilities",
+      "notes": "Health services"
+    },
+    "81": {
+      "thes1sCode": "40501010",
+      "sector": "Industrials",
+      "industryGroup": "Business Services",
+      "industry": "Consulting & Professional Services",
+      "notes": "Legal services"
+    },
+    "82": {
+      "thes1sCode": "20601020",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Consumer Services",
+      "industry": "Education & Training Services",
+      "notes": "Educational services"
+    },
+    "83": {
+      "thes1sCode": "20601010",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Consumer Services",
+      "industry": "Personal Services",
+      "notes": "Social services"
+    },
+    "84": {
+      "thes1sCode": "40501010",
+      "sector": "Industrials",
+      "industryGroup": "Business Services",
+      "industry": "Consulting & Professional Services",
+      "notes": "Museums, art galleries, botanical/zoological gardens"
+    },
+    "86": {
+      "thes1sCode": "20601010",
+      "sector": "Consumer Cyclical",
+      "industryGroup": "Consumer Services",
+      "industry": "Personal Services",
+      "notes": "Membership organizations"
+    },
+    "87": {
+      "thes1sCode": "40501010",
+      "sector": "Industrials",
+      "industryGroup": "Business Services",
+      "industry": "Consulting & Professional Services",
+      "notes": "Engineering, accounting, research, management services"
+    },
+    "89": {
+      "thes1sCode": "40501010",
+      "sector": "Industrials",
+      "industryGroup": "Business Services",
+      "industry": "Consulting & Professional Services",
+      "notes": "Services NEC"
+    },
+    "91": {
+      "thes1sCode": "99101010",
+      "sector": "Special Classifications",
+      "industryGroup": "Conglomerates & Holding Companies",
+      "industry": "Conglomerates",
+      "notes": "Executive, legislative, general government (not typical for stocks)"
+    },
+    "92": {
+      "thes1sCode": "99101010",
+      "sector": "Special Classifications",
+      "industryGroup": "Conglomerates & Holding Companies",
+      "industry": "Conglomerates",
+      "notes": "Justice, public order, and safety"
+    },
+    "93": {
+      "thes1sCode": "99101010",
+      "sector": "Special Classifications",
+      "industryGroup": "Conglomerates & Holding Companies",
+      "industry": "Conglomerates",
+      "notes": "Public finance, taxation, monetary policy"
+    },
+    "94": {
+      "thes1sCode": "99101010",
+      "sector": "Special Classifications",
+      "industryGroup": "Conglomerates & Holding Companies",
+      "industry": "Conglomerates",
+      "notes": "Administration of human resource programs"
+    },
+    "95": {
+      "thes1sCode": "99101010",
+      "sector": "Special Classifications",
+      "industryGroup": "Conglomerates & Holding Companies",
+      "industry": "Conglomerates",
+      "notes": "Administration of environmental quality and housing"
+    },
+    "96": {
+      "thes1sCode": "99101010",
+      "sector": "Special Classifications",
+      "industryGroup": "Conglomerates & Holding Companies",
+      "industry": "Conglomerates",
+      "notes": "Administration of economic programs"
+    },
+    "97": {
+      "thes1sCode": "99101010",
+      "sector": "Special Classifications",
+      "industryGroup": "Conglomerates & Holding Companies",
+      "industry": "Conglomerates",
+      "notes": "National security and international affairs"
+    },
+    "99": {
+      "thes1sCode": "99101030",
+      "sector": "Special Classifications",
+      "industryGroup": "Conglomerates & Holding Companies",
+      "industry": "Shell Companies",
+      "notes": "Nonclassifiable establishments"
+    }
+  }
+}

@@ -11,6 +11,7 @@ const TTL = {
   prices: 60 * 60 * 1000,             // 1 hour
   filings: 315_360_000_000,           // 10 years (SEC filings are immutable)
   analyst: 6 * 60 * 60 * 1000,        // 6 hours
+  events: 6 * 60 * 60 * 1000,         // 6 hours
 };
 
 // --- Key routing: which keys go to IndexedDB vs localStorage ---

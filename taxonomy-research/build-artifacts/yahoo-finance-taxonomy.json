@@ -1,0 +1,213 @@
+{
+  "metadata": {
+    "source": "Yahoo Finance (finance.yahoo.com/sectors/)",
+    "underlying_taxonomy": "Morningstar",
+    "captured": "2026-03-17",
+    "method": "Manual screenshots by user, labels extracted by Claude",
+    "total_sectors": 11,
+    "total_industries": 145,
+    "notes": "Some industry names were truncated in the Yahoo UI sidebar. Full names inferred from Morningstar's published taxonomy. Labels marked with 'truncated: true' had their names cut off in the screenshot."
+  },
+  "sectors": [
+    {
+      "name": "Technology",
+      "industries": [
+        { "name": "Semiconductors", "market_weight_pct": 35.97 },
+        { "name": "Software - Infrastructure", "market_weight_pct": 21.76, "truncated": true },
+        { "name": "Consumer Electronics", "market_weight_pct": 17.28 },
+        { "name": "Software - Application", "market_weight_pct": 8.22 },
+        { "name": "Semiconductor Equipment & Materials", "market_weight_pct": 4.14, "truncated": true },
+        { "name": "Computer Hardware", "market_weight_pct": 2.93 },
+        { "name": "Communication Equipment", "market_weight_pct": 2.23 },
+        { "name": "Information Technology Services", "market_weight_pct": 2.90, "truncated": true },
+        { "name": "Electronic Components", "market_weight_pct": 2.29 },
+        { "name": "Scientific & Technical Instruments", "market_weight_pct": 1.19, "truncated": true },
+        { "name": "Solar", "market_weight_pct": 0.25 },
+        { "name": "Electronics & Computer Distributors", "market_weight_pct": 0.13, "truncated": true }
+      ]
+    },
+    {
+      "name": "Communication Services",
+      "industries": [
+        { "name": "Internet Content & Information", "market_weight_pct": 71.33, "truncated": true },
+        { "name": "Telecom Services", "market_weight_pct": 12.91 },
+        { "name": "Entertainment", "market_weight_pct": 10.94 },
+        { "name": "Advertising Agencies", "market_weight_pct": 2.76 },
+        { "name": "Electronic Gaming & Multimedia", "market_weight_pct": 1.66, "truncated": true },
+        { "name": "Publishing", "market_weight_pct": 0.21 },
+        { "name": "Broadcasting", "market_weight_pct": null }
+      ]
+    },
+    {
+      "name": "Energy",
+      "industries": [
+        { "name": "Oil & Gas Integrated", "market_weight_pct": 40.78 },
+        { "name": "Oil & Gas Midstream", "market_weight_pct": 24.10 },
+        { "name": "Oil & Gas E&P", "market_weight_pct": 18.26 },
+        { "name": "Oil & Gas Equipment & Services", "market_weight_pct": 7.32, "truncated": true },
+        { "name": "Oil & Gas Refining & Marketing", "market_weight_pct": 6.20, "truncated": true },
+        { "name": "Uranium", "market_weight_pct": 2.15 },
+        { "name": "Oil & Gas Drilling", "market_weight_pct": 0.81 },
+        { "name": "Thermal Coal", "market_weight_pct": 0.39 }
+      ]
+    },
+    {
+      "name": "Healthcare",
+      "industries": [
+        { "name": "Drug Manufacturers - General", "market_weight_pct": 42.02, "truncated": true },
+        { "name": "Biotechnology", "market_weight_pct": 12.87 },
+        { "name": "Medical Devices", "market_weight_pct": 11.37 },
+        { "name": "Diagnostics & Research", "market_weight_pct": 9.42 },
+        { "name": "Healthcare Plans", "market_weight_pct": 7.35 },
+        { "name": "Medical Instruments & Supplies", "market_weight_pct": 6.53, "truncated": true },
+        { "name": "Medical Distribution", "market_weight_pct": 3.28 },
+        { "name": "Medical Care Facilities", "market_weight_pct": 3.21 },
+        { "name": "Drug Manufacturers - Specialty & Generic", "market_weight_pct": 2.65, "truncated": true },
+        { "name": "Health Information Services", "market_weight_pct": 1.29, "truncated": true },
+        { "name": "Pharmaceutical Retailers", "market_weight_pct": 0.00, "truncated": true }
+      ]
+    },
+    {
+      "name": "Utilities",
+      "industries": [
+        { "name": "Utilities - Regulated Electric", "market_weight_pct": 67.33, "truncated": true },
+        { "name": "Utilities - Independent Power Producers", "market_weight_pct": 13.42, "truncated": true },
+        { "name": "Utilities - Regulated Gas", "market_weight_pct": 6.04 },
+        { "name": "Utilities - Diversified", "market_weight_pct": 5.44 },
+        { "name": "Utilities - Renewable", "market_weight_pct": 5.08 },
+        { "name": "Utilities - Regulated Water", "market_weight_pct": 2.69, "truncated": true }
+      ]
+    },
+    {
+      "name": "Basic Materials",
+      "industries": [
+        { "name": "Gold", "market_weight_pct": 30.64 },
+        { "name": "Specialty Chemicals", "market_weight_pct": 27.84 },
+        { "name": "Copper", "market_weight_pct": 11.23 },
+        { "name": "Building Materials", "market_weight_pct": 8.74 },
+        { "name": "Steel", "market_weight_pct": 5.79 },
+        { "name": "Agricultural Inputs", "market_weight_pct": 5.39 },
+        { "name": "Other Industrial Metals & Mining", "market_weight_pct": 3.54, "truncated": true },
+        { "name": "Chemicals", "market_weight_pct": 2.01 },
+        { "name": "Other Precious Metals & Mining", "market_weight_pct": 1.51, "truncated": true },
+        { "name": "Aluminum", "market_weight_pct": 1.12 },
+        { "name": "Silver", "market_weight_pct": 0.89 },
+        { "name": "Lumber & Wood Production", "market_weight_pct": 0.86, "truncated": true },
+        { "name": "Coking Coal", "market_weight_pct": 0.36 },
+        { "name": "Paper & Paper Products", "market_weight_pct": 0.36 }
+      ]
+    },
+    {
+      "name": "Industrials",
+      "industries": [
+        { "name": "Aerospace & Defense", "market_weight_pct": 24.86 },
+        { "name": "Specialty Industrial Machinery", "market_weight_pct": 16.82, "truncated": true },
+        { "name": "Farm & Heavy Construction Machinery", "market_weight_pct": 8.39, "truncated": true },
+        { "name": "Railroads", "market_weight_pct": 6.56 },
+        { "name": "Engineering & Construction", "market_weight_pct": 5.77, "truncated": true },
+        { "name": "Building Products & Equipment", "market_weight_pct": 4.93, "truncated": true },
+        { "name": "Specialty Business Services", "market_weight_pct": 3.76, "truncated": true },
+        { "name": "Electrical Equipment & Parts", "market_weight_pct": 3.59, "truncated": true },
+        { "name": "Conglomerates", "market_weight_pct": 3.56 },
+        { "name": "Industrial Distribution", "market_weight_pct": 3.43 },
+        { "name": "Integrated Freight & Logistics", "market_weight_pct": 3.42, "truncated": true },
+        { "name": "Waste Management", "market_weight_pct": 3.39 },
+        { "name": "Rental & Leasing Services", "market_weight_pct": 2.97, "truncated": true },
+        { "name": "Airlines", "market_weight_pct": 1.67 },
+        { "name": "Trucking", "market_weight_pct": 1.46 },
+        { "name": "Tools & Accessories", "market_weight_pct": 1.16 },
+        { "name": "Metal Fabrication", "market_weight_pct": 1.13 },
+        { "name": "Consulting Services", "market_weight_pct": 1.00 },
+        { "name": "Marine Shipping", "market_weight_pct": 0.59 },
+        { "name": "Security & Protection Services", "market_weight_pct": 0.58, "truncated": true },
+        { "name": "Pollution & Treatment Controls", "market_weight_pct": 0.57, "truncated": true },
+        { "name": "Airports & Air Services", "market_weight_pct": 0.20 },
+        { "name": "Staffing & Employment Services", "market_weight_pct": 0.18, "truncated": true },
+        { "name": "Business Equipment & Supplies", "market_weight_pct": 0.02, "truncated": true },
+        { "name": "Infrastructure Operations", "market_weight_pct": 0.00, "truncated": true }
+      ]
+    },
+    {
+      "name": "Consumer Cyclical",
+      "industries": [
+        { "name": "Internet Retail", "market_weight_pct": 32.90 },
+        { "name": "Auto Manufacturers", "market_weight_pct": 21.92 },
+        { "name": "Restaurants", "market_weight_pct": 7.38 },
+        { "name": "Home Improvement Retail", "market_weight_pct": 6.29, "truncated": true },
+        { "name": "Travel Services", "market_weight_pct": 5.35 },
+        { "name": "Apparel Retail", "market_weight_pct": 4.06 },
+        { "name": "Auto Parts", "market_weight_pct": 3.67 },
+        { "name": "Specialty Retail", "market_weight_pct": 2.42 },
+        { "name": "Lodging", "market_weight_pct": 2.30 },
+        { "name": "Residential Construction", "market_weight_pct": 2.11 },
+        { "name": "Packaging & Containers", "market_weight_pct": 2.00 },
+        { "name": "Auto & Truck Dealerships", "market_weight_pct": 1.73, "truncated": true },
+        { "name": "Footwear & Accessories", "market_weight_pct": 1.63 },
+        { "name": "Resorts & Casinos", "market_weight_pct": 1.14 },
+        { "name": "Leisure", "market_weight_pct": 0.95 },
+        { "name": "Apparel Manufacturing", "market_weight_pct": 0.87 },
+        { "name": "Furnishings, Fixtures & Appliances", "market_weight_pct": 0.76, "truncated": true },
+        { "name": "Gambling", "market_weight_pct": 0.74 },
+        { "name": "Personal Services", "market_weight_pct": 0.69 },
+        { "name": "Luxury Goods", "market_weight_pct": 0.49 },
+        { "name": "Recreational Vehicles", "market_weight_pct": 0.35 },
+        { "name": "Department Stores", "market_weight_pct": 0.24 },
+        { "name": "Textile Manufacturing", "market_weight_pct": 0.02 }
+      ]
+    },
+    {
+      "name": "Consumer Defensive",
+      "industries": [
+        { "name": "Packaged Foods", "market_weight_pct": null },
+        { "name": "Education & Training Services", "market_weight_pct": null, "truncated": true },
+        { "name": "Beverages - Wineries & Distilleries", "market_weight_pct": null, "truncated": true },
+        { "name": "Beverages - Brewers", "market_weight_pct": null },
+        { "name": "Discount Stores", "market_weight_pct": null },
+        { "name": "Food Distribution", "market_weight_pct": null },
+        { "name": "Grocery Stores", "market_weight_pct": null },
+        { "name": "Household & Personal Products", "market_weight_pct": null, "truncated": true },
+        { "name": "Beverages - Non-Alcoholic", "market_weight_pct": null, "truncated": true },
+        { "name": "Farm Products", "market_weight_pct": null },
+        { "name": "Confectioners", "market_weight_pct": null },
+        { "name": "Tobacco", "market_weight_pct": null }
+      ]
+    },
+    {
+      "name": "Financial Services",
+      "industries": [
+        { "name": "Banks - Diversified", "market_weight_pct": 22.80 },
+        { "name": "Credit Services", "market_weight_pct": 14.50 },
+        { "name": "Asset Management", "market_weight_pct": 12.58 },
+        { "name": "Insurance - Diversified", "market_weight_pct": 11.50 },
+        { "name": "Capital Markets", "market_weight_pct": 10.58 },
+        { "name": "Banks - Regional", "market_weight_pct": 9.92 },
+        { "name": "Financial Data & Stock Exchanges", "market_weight_pct": 5.79, "truncated": true },
+        { "name": "Insurance - Property & Casualty", "market_weight_pct": 5.42, "truncated": true },
+        { "name": "Insurance Brokers", "market_weight_pct": 2.62 },
+        { "name": "Insurance - Life", "market_weight_pct": 2.40 },
+        { "name": "Insurance - Specialty", "market_weight_pct": 0.64 },
+        { "name": "Mortgage Finance", "market_weight_pct": 0.56 },
+        { "name": "Insurance - Reinsurance", "market_weight_pct": 0.43 },
+        { "name": "Financial Conglomerates", "market_weight_pct": 0.16 },
+        { "name": "Shell Companies", "market_weight_pct": 0.11 }
+      ]
+    },
+    {
+      "name": "Real Estate",
+      "industries": [
+        { "name": "REIT - Specialty", "market_weight_pct": 23.18 },
+        { "name": "REIT - Industrial", "market_weight_pct": 16.82 },
+        { "name": "REIT - Healthcare Facilities", "market_weight_pct": 14.99, "truncated": true },
+        { "name": "REIT - Retail", "market_weight_pct": 14.53 },
+        { "name": "REIT - Residential", "market_weight_pct": 10.51 },
+        { "name": "Real Estate Services", "market_weight_pct": 6.81 },
+        { "name": "REIT - Mortgage", "market_weight_pct": 3.94 },
+        { "name": "REIT - Diversified", "market_weight_pct": 3.46 },
+        { "name": "REIT - Office", "market_weight_pct": 3.05 },
+        { "name": "REIT - Hotel & Motel", "market_weight_pct": 1.94 },
+        { "name": "Real Estate - Development", "market_weight_pct": 0.52, "truncated": true },
+        { "name": "Real Estate - Diversified", "market_weight_pct": 0.25 }
+      ]
+    }
+  ]
+}

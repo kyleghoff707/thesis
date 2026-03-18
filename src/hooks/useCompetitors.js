@@ -1,11 +1,11 @@
 // ─── useCompetitors Hook ───────────────────────────────────────────
 // Progressive data loading for the Competitors tab.
-// Phase 1: Peer discovery (SIC-based)
+// Phase 1: Peer discovery (Thes1s taxonomy — instant in-memory)
 // Phase 2: Single-year metrics (Frames API) + batch quotes (Yahoo)
 // Phase 3: Multi-year scores (on-demand)
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { classifyBySIC } from '../engines/sicClassification';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { classifyCompany, getTierCounts } from '../engines/thes1sClassification';
 import { fetchPeersByTier, enrichPeersWithTickers } from '../engines/peers';
 import { fetchPeerFrameData, computePeerMetrics, computePeerScores, mergeYahooData, computeCompleteness } from '../engines/peerMetrics';
 import { fetchBatchQuotes } from '../engines/batchQuotes';
@@ -28,15 +28,19 @@ export function useCompetitors(company) {
   const [quotes, setQuotes] = useState(new Map());
   const [loading, setLoading] = useState({ peers: false, metrics: false, scores: false });
   const [error, setError] = useState(null);
-  const [tierCounts, setTierCounts] = useState({ sector: null, industryGroup: null, industry: null });
   const [scoresRequested, setScoresRequested] = useState(false);
   const [peerCompleteness, setPeerCompleteness] = useState(new Map());
 
   const cancelledRef = useRef(false);
   const tierRef = useRef(tier);
 
-  // Classification from SIC
-  const classification = company?.sic ? classifyBySIC(company.sic, company.sicDescription) : null;
+  // Classification from Thes1s taxonomy (CIK → ticker → SIC fallback)
+  const classification = company?.cik || company?.ticker || company?.sic
+    ? classifyCompany(company.ticker, company.cik, company.sic, company.sicDescription)
+    : null;
+
+  // Tier counts — instant from Thes1s index (no HTTP needed)
+  const tierCounts = useMemo(() => getTierCounts(classification), [company?.cik]);
 
   // Persist tier preference
   useEffect(() => {
@@ -46,7 +50,7 @@ export function useCompetitors(company) {
 
   // ── Phase 1: Peer Discovery ──
   useEffect(() => {
-    if (!company?.sic || !classification) return;
+    if (!classification) return;
     cancelledRef.current = false;
     setPeers([]);
     setPeerMetrics(new Map());
@@ -58,7 +62,7 @@ export function useCompetitors(company) {
 
     (async () => {
       try {
-        const rawPeers = await fetchPeersByTier(tier, classification, company.sic);
+        const rawPeers = fetchPeersByTier(tier, classification);
         if (cancelledRef.current) return;
         const enriched = await enrichPeersWithTickers(rawPeers);
         if (cancelledRef.current) return;
@@ -76,29 +80,7 @@ export function useCompetitors(company) {
     })();
 
     return () => { cancelledRef.current = true; };
-  }, [company?.sic, company?.cik, tier]);
-
-  // Load tier counts in background
-  useEffect(() => {
-    if (!company?.sic || !classification) return;
-    let cancelled = false;
-
-    (async () => {
-      const counts = {};
-      for (const t of ['industry', 'industryGroup', 'sector']) {
-        try {
-          const rawPeers = await fetchPeersByTier(t, classification, company.sic);
-          if (cancelled) return;
-          counts[t] = rawPeers.length;
-          setTierCounts(prev => ({ ...prev, [t]: rawPeers.length }));
-        } catch {
-          counts[t] = null;
-        }
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [company?.sic]);
+  }, [company?.cik, company?.ticker, tier]);
 
   // ── Phase 2: Metrics (Frames + Quotes) ──
   const loadMetrics = useCallback(async (peerList) => {

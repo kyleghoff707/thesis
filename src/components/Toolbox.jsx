@@ -21,9 +21,11 @@ import Insiders from './Insiders';
 import Valuation from './Valuation';
 import CollapsibleSection from './CollapsibleSection';
 import ExecutiveCompensation from './ExecutiveCompensation';
-import { classifyBySIC } from '../engines/sicClassification';
+import { classifyCompany } from '../engines/thes1sClassification';
 import TickerDataAudit from './TickerDataAudit';
 import Competitors from './Competitors';
+import { useCompanyEvents } from '../hooks/useCompanyEvents';
+import CompanyEvents from './CompanyEvents';
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
@@ -59,6 +61,7 @@ export default function Toolbox({ getReport, updateReport, settings }) {
   const { summary: insiderSummary } = useInsiders(ticker);
   const { data: compData, loading: compLoading, error: compError } = useCompensation(ticker);
   const { activities: guruActivities } = useGurus();
+  const { events: companyEvents, loading: eventsLoading, error: eventsError, irEventsUrl } = useCompanyEvents(ticker, company?.website);
 
   // Find gurus holding this ticker
   const gurusHoldingTicker = useMemo(() => {
@@ -311,7 +314,7 @@ export default function Toolbox({ getReport, updateReport, settings }) {
                 </CollapsibleSection>
 
                 <CollapsibleSection title="Industry Information" defaultOpen={false}>
-                  <IndustryInformation company={company} />
+                  <IndustryInformation company={company} ticker={ticker} />
                 </CollapsibleSection>
               </div>
             </div>
@@ -395,6 +398,19 @@ export default function Toolbox({ getReport, updateReport, settings }) {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Events & News — independent of edgarStatements */}
+          <div style={{ marginTop: 28 }}>
+            <CollapsibleSection title="Upcoming Events & News" defaultOpen={false}>
+              <CompanyEvents
+                events={companyEvents}
+                loading={eventsLoading}
+                error={eventsError}
+                ticker={ticker}
+                irEventsUrl={irEventsUrl}
+              />
+            </CollapsibleSection>
           </div>
         </div>
       )}
@@ -526,10 +542,11 @@ function formatFYEnd(fyEnd) {
   return MONTH_NAMES[month - 1] || '--';
 }
 
-function IndustryInformation({ company }) {
-  if (!company?.sic) return null;
-
-  const classification = classifyBySIC(company.sic, company.sicDescription);
+function IndustryInformation({ company, ticker }) {
+  const classification = company?.cik || ticker || company?.sic
+    ? classifyCompany(ticker, company?.cik, company?.sic, company?.sicDescription)
+    : null;
+  if (!classification) return null;
   const cikDisplay = company.cik ? company.cik.replace(/^0+/, '') : '--';
 
   const InfoRow = ({ label, value, href }) => (
@@ -562,7 +579,7 @@ function IndustryInformation({ company }) {
           <InfoRow label="Industry" value={classification.industry} />
         </div>
         <div style={{ flex: 1 }}>
-          <InfoRow label="NAICS" value={classification.naics} />
+          <InfoRow label="Thes1s Code" value={classification.thes1sCode} />
           <InfoRow label="CIK Number" value={cikDisplay} />
         </div>
       </div>

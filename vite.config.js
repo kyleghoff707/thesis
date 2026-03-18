@@ -19,17 +19,23 @@ function yahooSummaryPlugin() {
             yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
           }
 
-          // Extract ticker from URL path: /api/yahoo-summary/AAPL -> AAPL
-          const ticker = (req.url || '').replace(/^\//, '').split('?')[0];
+          // Extract ticker and optional modules from URL: /api/yahoo-summary/AAPL?modules=calendarEvents
+          const [path, qs] = (req.url || '').replace(/^\//, '').split('?');
+          const ticker = path;
           if (!ticker) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Missing ticker' }));
             return;
           }
 
-          const data = await yf.quoteSummary(ticker, {
-            modules: ['earningsTrend', 'financialData', 'recommendationTrend', 'upgradeDowngradeHistory'],
-          });
+          // Allow callers to request specific modules; default to the analyst data set
+          const defaultModules = ['earningsTrend', 'financialData', 'recommendationTrend', 'upgradeDowngradeHistory'];
+          const params = new URLSearchParams(qs || '');
+          const modules = params.has('modules')
+            ? params.get('modules').split(',').map(m => m.trim()).filter(Boolean)
+            : defaultModules;
+
+          const data = await yf.quoteSummary(ticker, { modules });
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(data));
@@ -320,9 +326,96 @@ function yahooQuotesPlugin() {
   };
 }
 
+// IR Events page discovery middleware.
+// Given a company website domain, probes common investor relations URL patterns
+// server-side (no CORS) and returns the first one that resolves.
+// Serves JSON at /api/ir-events?website=https://www.sprouts.com
+function irEventsPlugin() {
+  return {
+    name: 'ir-events',
+    configureServer(server) {
+      server.middlewares.use('/api/ir-events', async (req, res) => {
+        try {
+          const params = new URLSearchParams((req.url || '').split('?')[1] || '');
+          const website = params.get('website');
+          if (!website) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Missing website param' }));
+            return;
+          }
+
+          // Extract base domain: "https://www.sprouts.com" -> "sprouts.com"
+          let hostname;
+          try {
+            hostname = new URL(website.startsWith('http') ? website : `https://${website}`).hostname;
+          } catch {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Invalid website URL' }));
+            return;
+          }
+          const baseDomain = hostname.replace(/^www\./, '');
+
+          // Common IR events page URL patterns (ordered by likelihood)
+          const candidates = [
+            `https://investors.${baseDomain}/events-and-presentations`,
+            `https://investors.${baseDomain}/events`,
+            `https://investors.${baseDomain}/news-events`,
+            `https://ir.${baseDomain}/events-and-presentations`,
+            `https://ir.${baseDomain}/events`,
+            `https://ir.${baseDomain}/news-events`,
+            `https://corporate.${baseDomain}/investors/news-and-events/events-and-presentations`,
+            `https://corporate.${baseDomain}/investors/events`,
+            `https://${hostname}/investors/events-and-presentations`,
+            `https://${hostname}/investors/events`,
+            `https://${hostname}/investor-relations/events`,
+            `https://${hostname}/investors`,
+            `https://${hostname}/investor-relations`,
+            `https://investors.${baseDomain}`,
+          ];
+
+          const headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml',
+          };
+
+          // Probe candidates in parallel (batches of 4 to avoid hammering)
+          let foundUrl = null;
+          for (let i = 0; i < candidates.length && !foundUrl; i += 4) {
+            const batch = candidates.slice(i, i + 4);
+            const results = await Promise.allSettled(
+              batch.map(async (url) => {
+                const resp = await fetch(url, { method: 'HEAD', headers, redirect: 'follow', signal: AbortSignal.timeout(5000) });
+                if (resp.ok || resp.status === 405) return url; // 405 = some servers reject HEAD but page exists
+                // Also accept if GET redirect lands on a valid page
+                if (resp.status === 405) {
+                  const getResp = await fetch(url, { method: 'GET', headers, redirect: 'follow', signal: AbortSignal.timeout(5000) });
+                  if (getResp.ok) return url;
+                }
+                throw new Error(`${resp.status}`);
+              })
+            );
+            for (const r of results) {
+              if (r.status === 'fulfilled') {
+                foundUrl = r.value;
+                break;
+              }
+            }
+          }
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ url: foundUrl }));
+        } catch (e) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: e.message }));
+        }
+      });
+    },
+  };
+}
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), yahooSummaryPlugin(), finvizPlugin(), gurufocusPlugin(), yahooQuotesPlugin()],
+  plugins: [react(), yahooSummaryPlugin(), finvizPlugin(), gurufocusPlugin(), yahooQuotesPlugin(), irEventsPlugin()],
   server: {
     proxy: {
       // Yahoo Finance doesn't send CORS headers, so browser blocks direct calls.

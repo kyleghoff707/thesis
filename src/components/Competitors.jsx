@@ -495,10 +495,10 @@ export default function Competitors({ company, guruActivities, report, updateRep
   const visibleCols = ALL_COLUMNS.filter(c => visibleColumns.includes(c.key));
   const companyCik = company?.cik?.padStart(10, '0');
 
-  if (!company?.sic) {
+  if (!classification) {
     return (
       <div style={{ padding: 40, textAlign: 'center', color: C.textMuted, fontSize: 14 }}>
-        No SIC classification available for this company.
+        No classification available for this company.
       </div>
     );
   }

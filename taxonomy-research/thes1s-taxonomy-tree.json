@@ -1,0 +1,588 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "createdDate": "2026-03-17",
+    "author": "Thes1s Research (Claude Code)",
+    "description": "Thes1s custom 3-tier stock market industry taxonomy optimized for Rule One investment research",
+    "structure": "Sector (2-digit) > Industry Group (4-digit) > Industry (8-digit)",
+    "counts": {
+      "sectors": 12,
+      "industryGroups": 52,
+      "industries": 176
+    }
+  },
+  "sectors": [
+    {
+      "code": "10",
+      "name": "Technology",
+      "superSector": "Sensitive",
+      "industryGroups": [
+        {
+          "code": "1010",
+          "name": "Software",
+          "industries": [
+            { "code": "10101010", "name": "Software - Application", "description": "Companies developing software for end-user business or consumer applications. Includes ERP, CRM, design, productivity tools." },
+            { "code": "10101020", "name": "Software - Infrastructure", "description": "Companies providing systems software, operating systems, database management, middleware, DevOps tools." },
+            { "code": "10101030", "name": "Software - SaaS & Cloud", "description": "Companies delivering software primarily via cloud subscription models. Revenue >50% from SaaS subscriptions." },
+            { "code": "10101040", "name": "Software - Cybersecurity", "description": "Companies focused on network security, endpoint protection, identity management, threat detection." },
+            { "code": "10101050", "name": "Software - AI & Machine Learning", "description": "Companies whose primary product is AI/ML platforms, tools, or services. Revenue >50% from AI-specific products." }
+          ]
+        },
+        {
+          "code": "1020",
+          "name": "Hardware",
+          "industries": [
+            { "code": "10201010", "name": "Consumer Electronics", "description": "Computers, smartphones, tablets, wearables, and consumer-facing hardware." },
+            { "code": "10201020", "name": "Computer Hardware & Storage", "description": "Servers, storage systems, networking hardware, enterprise computing equipment." },
+            { "code": "10201030", "name": "Communication Equipment", "description": "Telecom infrastructure equipment, routers, switches, wireless infrastructure." },
+            { "code": "10201040", "name": "Scientific & Technical Instruments", "description": "Test, measurement, analytical, and scientific instruments." }
+          ]
+        },
+        {
+          "code": "1030",
+          "name": "Semiconductors",
+          "industries": [
+            { "code": "10301010", "name": "Semiconductors", "description": "Companies designing and/or manufacturing integrated circuits, processors, memory chips, GPUs." },
+            { "code": "10301020", "name": "Semiconductor Equipment & Materials", "description": "Equipment, tools, and materials used in semiconductor fabrication." }
+          ]
+        },
+        {
+          "code": "1040",
+          "name": "Electronic Components",
+          "industries": [
+            { "code": "10401010", "name": "Electronic Components", "description": "Passive and active electronic components: resistors, capacitors, connectors, sensors." },
+            { "code": "10401020", "name": "Electronic Manufacturing Services", "description": "Contract electronics manufacturing (EMS), PCB assembly, ODM services." }
+          ]
+        },
+        {
+          "code": "1050",
+          "name": "IT Services",
+          "industries": [
+            { "code": "10501010", "name": "Information Technology Services", "description": "IT consulting, systems integration, managed services, outsourcing." },
+            { "code": "10501020", "name": "Internet Services & Infrastructure", "description": "Web hosting, domain services, CDN, internet backbone providers." },
+            { "code": "10501030", "name": "Data Processing & Outsourced Services", "description": "Data processing, payroll services, HR tech, business process outsourcing." },
+            { "code": "10501040", "name": "Cloud Computing Infrastructure", "description": "IaaS and PaaS providers. Companies whose primary business is cloud infrastructure (AWS, Azure, GCP competitors)." }
+          ]
+        },
+        {
+          "code": "1060",
+          "name": "Technology Distributors",
+          "industries": [
+            { "code": "10601010", "name": "Technology Distributors", "description": "Wholesale distribution of technology products and components." }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "15",
+      "name": "Communication Services",
+      "superSector": "Sensitive",
+      "industryGroups": [
+        {
+          "code": "1510",
+          "name": "Telecom",
+          "industries": [
+            { "code": "15101010", "name": "Telecom - Diversified", "description": "Large telecom companies offering wireline, wireless, and broadband services." },
+            { "code": "15101020", "name": "Telecom - Wireless", "description": "Pure-play wireless service providers and MVNOs." },
+            { "code": "15101030", "name": "Telecom - Regional & Rural", "description": "Regional telephone companies and rural broadband providers." }
+          ]
+        },
+        {
+          "code": "1520",
+          "name": "Media & Entertainment",
+          "industries": [
+            { "code": "15201010", "name": "Entertainment - Diversified", "description": "Diversified media conglomerates with film, TV, theme parks, and/or sports." },
+            { "code": "15201020", "name": "Entertainment - Streaming", "description": "Companies whose primary business is streaming video/audio content delivery." },
+            { "code": "15201030", "name": "Gaming & Interactive Entertainment", "description": "Video game publishers, developers, esports, interactive entertainment platforms." },
+            { "code": "15201040", "name": "Broadcasting - TV & Radio", "description": "Traditional broadcast television and radio station operators." },
+            { "code": "15201050", "name": "Publishing & Information Services", "description": "Book, newspaper, magazine publishers and information service providers." },
+            { "code": "15201060", "name": "Advertising & Marketing Services", "description": "Advertising agencies, marketing services, PR firms." }
+          ]
+        },
+        {
+          "code": "1530",
+          "name": "Internet & Digital Media",
+          "industries": [
+            { "code": "15301010", "name": "Internet Content & Information", "description": "Search engines, web portals, online information services." },
+            { "code": "15301020", "name": "Social Media Platforms", "description": "Companies operating social networking platforms as primary business." },
+            { "code": "15301030", "name": "Digital Advertising Platforms", "description": "Companies whose primary revenue is from digital advertising technology and platforms." },
+            { "code": "15301040", "name": "Online Marketplaces", "description": "Peer-to-peer and B2C marketplace platforms (not direct retail)." }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "20",
+      "name": "Consumer Cyclical",
+      "superSector": "Cyclical",
+      "industryGroups": [
+        {
+          "code": "2010",
+          "name": "Auto & Vehicles",
+          "industries": [
+            { "code": "20101010", "name": "Auto Manufacturers", "description": "Traditional internal combustion engine automobile manufacturers." },
+            { "code": "20101020", "name": "Auto Manufacturers - Electric Vehicles", "description": "Companies primarily manufacturing electric vehicles. Revenue >50% from EVs." },
+            { "code": "20101030", "name": "Auto Parts & Equipment", "description": "Automotive parts, components, and equipment manufacturers." },
+            { "code": "20101040", "name": "Auto Dealerships", "description": "New and used vehicle dealership groups." },
+            { "code": "20101050", "name": "Recreational Vehicles", "description": "Manufacturers of RVs, ATVs, motorcycles, boats, powersports." }
+          ]
+        },
+        {
+          "code": "2020",
+          "name": "Apparel & Luxury",
+          "industries": [
+            { "code": "20201010", "name": "Apparel - Athletic & Lifestyle", "description": "Athletic apparel, activewear, and lifestyle brands. Key competitors: NKE, LULU, UAA, ONON." },
+            { "code": "20201020", "name": "Apparel - Fashion & Luxury", "description": "High-end fashion houses, luxury goods, premium accessories." },
+            { "code": "20201030", "name": "Apparel - Mass Market", "description": "Casual, everyday apparel brands and manufacturers at mass-market price points." },
+            { "code": "20201040", "name": "Footwear & Accessories", "description": "Footwear companies, handbags, jewelry, watches, eyewear." },
+            { "code": "20201050", "name": "Textile Manufacturing", "description": "Textile mills, fabric manufacturers, yarn producers." }
+          ]
+        },
+        {
+          "code": "2030",
+          "name": "Retail - Cyclical",
+          "industries": [
+            { "code": "20301010", "name": "Retail - Broadline & E-Commerce", "description": "Large retailers selling across many categories, including e-commerce platforms. AMZN, WMT, TGT." },
+            { "code": "20301020", "name": "Retail - Specialty", "description": "Retailers focused on specific product categories (electronics, toys, pets, etc.)." },
+            { "code": "20301030", "name": "Retail - Home Improvement", "description": "Home improvement and building materials retailers. HD, LOW." },
+            { "code": "20301040", "name": "Retail - Discount & Dollar Stores", "description": "Off-price, discount, and dollar store chains. DLTR, DG, TJX, ROST." },
+            { "code": "20301050", "name": "Retail - Apparel & Accessories", "description": "Apparel-focused retail chains and stores." }
+          ]
+        },
+        {
+          "code": "2040",
+          "name": "Travel & Leisure",
+          "industries": [
+            { "code": "20401010", "name": "Lodging & Resorts", "description": "Hotels, resorts, timeshare, and lodging companies." },
+            { "code": "20401020", "name": "Restaurants & Dining", "description": "Restaurant chains, fast food, fast casual, and food service companies." },
+            { "code": "20401030", "name": "Travel & Booking Services", "description": "Online travel agencies, booking platforms, travel tech." },
+            { "code": "20401040", "name": "Leisure Products & Activities", "description": "Sporting goods, toys, hobby products, fitness equipment manufacturers." },
+            { "code": "20401050", "name": "Casinos & Gaming", "description": "Casino operators, sports betting, lottery, and gaming companies." }
+          ]
+        },
+        {
+          "code": "2050",
+          "name": "Housing & Construction",
+          "industries": [
+            { "code": "20501010", "name": "Homebuilders", "description": "Residential home construction companies." },
+            { "code": "20501020", "name": "Building Products", "description": "Building products manufacturers (windows, doors, roofing, plumbing fixtures)." },
+            { "code": "20501030", "name": "Furnishings & Home Décor", "description": "Furniture, home furnishing, and décor manufacturers and retailers." }
+          ]
+        },
+        {
+          "code": "2060",
+          "name": "Consumer Services",
+          "industries": [
+            { "code": "20601010", "name": "Personal Services", "description": "Personal care services, pet services, funeral services." },
+            { "code": "20601020", "name": "Education & Training Services", "description": "For-profit education, training, and certification companies." }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "25",
+      "name": "Consumer Defensive",
+      "superSector": "Defensive",
+      "industryGroups": [
+        {
+          "code": "2510",
+          "name": "Food & Beverage",
+          "industries": [
+            { "code": "25101010", "name": "Beverages - Non-Alcoholic", "description": "Soft drinks, water, juice, coffee, tea, energy drinks." },
+            { "code": "25101020", "name": "Beverages - Alcoholic", "description": "Beer, wine, spirits producers and distributors." },
+            { "code": "25101030", "name": "Food - Packaged & Processed", "description": "Packaged food, frozen food, canned goods, snacks, confections." },
+            { "code": "25101040", "name": "Food - Meat & Dairy", "description": "Meat processing, dairy producers, poultry companies." }
+          ]
+        },
+        {
+          "code": "2520",
+          "name": "Household & Personal Products",
+          "industries": [
+            { "code": "25201010", "name": "Household Products", "description": "Cleaning products, paper products, home care brands." },
+            { "code": "25201020", "name": "Personal Products & Cosmetics", "description": "Personal care, beauty, cosmetics, skincare." },
+            { "code": "25201030", "name": "Tobacco", "description": "Cigarettes, cigars, smokeless tobacco, and nicotine products." }
+          ]
+        },
+        {
+          "code": "2530",
+          "name": "Retail - Defensive",
+          "industries": [
+            { "code": "25301010", "name": "Retail - Grocery & Supermarkets", "description": "Grocery chains, supermarkets, natural/organic food retailers." },
+            { "code": "25301020", "name": "Retail - Warehouse & Club", "description": "Membership warehouse clubs and wholesale retailers. COST, BJ." },
+            { "code": "25301030", "name": "Retail - Pharmacy & Drug Stores", "description": "Pharmacy chains and drug stores. CVS, WBA." }
+          ]
+        },
+        {
+          "code": "2540",
+          "name": "Agriculture",
+          "industries": [
+            { "code": "25401010", "name": "Agricultural Products & Processing", "description": "Crop production, grain trading, agricultural commodity processing." },
+            { "code": "25401020", "name": "Agricultural Inputs", "description": "Fertilizers, seeds, crop protection, agricultural chemicals." }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "30",
+      "name": "Healthcare",
+      "superSector": "Defensive",
+      "industryGroups": [
+        {
+          "code": "3010",
+          "name": "Pharmaceuticals",
+          "industries": [
+            { "code": "30101010", "name": "Drug Manufacturers - Major", "description": "Large-cap pharmaceutical companies with diversified drug portfolios." },
+            { "code": "30101020", "name": "Drug Manufacturers - Specialty & Generic", "description": "Specialty pharma, generic drug makers, and niche therapeutics." }
+          ]
+        },
+        {
+          "code": "3020",
+          "name": "Biotechnology",
+          "industries": [
+            { "code": "30201010", "name": "Biotechnology", "description": "Companies using biological processes to develop drugs, therapies, and diagnostics." }
+          ]
+        },
+        {
+          "code": "3030",
+          "name": "Medical Devices & Equipment",
+          "industries": [
+            { "code": "30301010", "name": "Medical Devices", "description": "Manufacturers of medical devices, implants, surgical instruments." },
+            { "code": "30301020", "name": "Medical Instruments & Supplies", "description": "Medical supplies, disposables, diagnostic equipment, lab instruments." }
+          ]
+        },
+        {
+          "code": "3040",
+          "name": "Healthcare Services",
+          "industries": [
+            { "code": "30401010", "name": "Healthcare Providers & Facilities", "description": "Hospitals, clinics, outpatient care centers, nursing facilities." },
+            { "code": "30401020", "name": "Health Information Technology", "description": "Electronic health records, healthcare IT platforms, telemedicine." },
+            { "code": "30401030", "name": "Healthcare Plans & Insurance", "description": "Health insurance companies, managed care organizations, PBMs." },
+            { "code": "30401040", "name": "Medical Distribution", "description": "Wholesale distribution of pharmaceuticals and medical supplies." }
+          ]
+        },
+        {
+          "code": "3050",
+          "name": "Diagnostics & Research",
+          "industries": [
+            { "code": "30501010", "name": "Diagnostics & Research", "description": "Diagnostic testing companies, clinical laboratories, CROs." },
+            { "code": "30501020", "name": "Life Science Tools & Services", "description": "Lab equipment, reagents, genomics tools, analytical instruments for life sciences." }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "35",
+      "name": "Financial Services",
+      "superSector": "Cyclical",
+      "industryGroups": [
+        {
+          "code": "3510",
+          "name": "Banks",
+          "industries": [
+            { "code": "35101010", "name": "Banks - Diversified", "description": "Large national/global banks with diversified financial services." },
+            { "code": "35101020", "name": "Banks - Regional", "description": "Regional and super-regional banks operating in specific geographies." },
+            { "code": "35101030", "name": "Banks - Community & Thrift", "description": "Small community banks, savings institutions, credit unions (public)." }
+          ]
+        },
+        {
+          "code": "3520",
+          "name": "Insurance",
+          "industries": [
+            { "code": "35201010", "name": "Insurance - Life", "description": "Life insurance, annuities, retirement products." },
+            { "code": "35201020", "name": "Insurance - Property & Casualty", "description": "Property, casualty, auto, homeowners insurance." },
+            { "code": "35201030", "name": "Insurance - Specialty", "description": "Specialty lines: title, mortgage, surety, professional liability." },
+            { "code": "35201040", "name": "Insurance - Reinsurance", "description": "Reinsurance companies providing insurance to insurers." },
+            { "code": "35201050", "name": "Insurance Brokers & Services", "description": "Insurance brokerage, distribution, and related services." }
+          ]
+        },
+        {
+          "code": "3530",
+          "name": "Capital Markets",
+          "industries": [
+            { "code": "35301010", "name": "Asset Management", "description": "Investment management, mutual funds, ETF providers, wealth management." },
+            { "code": "35301020", "name": "Investment Banking & Brokerage", "description": "Investment banks, broker-dealers, securities firms." },
+            { "code": "35301030", "name": "Financial Exchanges & Data", "description": "Stock exchanges, derivatives exchanges, financial data and analytics providers." },
+            { "code": "35301040", "name": "Private Equity & Venture Capital", "description": "Publicly traded PE firms, VC firms, alternative asset managers." }
+          ]
+        },
+        {
+          "code": "3540",
+          "name": "Diversified Financials",
+          "industries": [
+            { "code": "35401010", "name": "Credit Services & Lending", "description": "Consumer lending, student loans, personal finance, credit cards." },
+            { "code": "35401020", "name": "Financial Data & Services", "description": "Financial technology infrastructure, ratings agencies, analytics." },
+            { "code": "35401030", "name": "Transaction & Payment Processing", "description": "Payment networks, card processors, merchant services. V, MA, PYPL." },
+            { "code": "35401040", "name": "Consumer Finance", "description": "Consumer finance companies, auto lending, lease financing." }
+          ]
+        },
+        {
+          "code": "3550",
+          "name": "Fintech",
+          "industries": [
+            { "code": "35501010", "name": "Fintech - Digital Payments", "description": "Digital payment platforms, mobile wallets, P2P payment apps." },
+            { "code": "35501020", "name": "Fintech - Digital Banking & Neobanks", "description": "Digital-first banks, challenger banks, banking-as-a-service platforms." },
+            { "code": "35501030", "name": "Fintech - Lending Platforms", "description": "Online lending platforms, BNPL providers, marketplace lending." },
+            { "code": "35501040", "name": "Fintech - Blockchain & Crypto", "description": "Cryptocurrency exchanges, blockchain infrastructure, digital asset companies." }
+          ]
+        },
+        {
+          "code": "3560",
+          "name": "Financial Conglomerates",
+          "industries": [
+            { "code": "35601010", "name": "Financial Conglomerates", "description": "Diversified financial holding companies with multiple business lines. BRK, GS (if diversified)." }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "40",
+      "name": "Industrials",
+      "superSector": "Sensitive",
+      "industryGroups": [
+        {
+          "code": "4010",
+          "name": "Aerospace & Defense",
+          "industries": [
+            { "code": "40101010", "name": "Aerospace & Defense", "description": "Aircraft manufacturers, defense contractors, defense electronics, missile systems." },
+            { "code": "40101020", "name": "Space & Satellite", "description": "Space launch, satellite manufacturing, space infrastructure companies." }
+          ]
+        },
+        {
+          "code": "4020",
+          "name": "Industrial Manufacturing",
+          "industries": [
+            { "code": "40201010", "name": "Specialty Industrial Machinery", "description": "Specialized industrial equipment, machine tools, industrial automation." },
+            { "code": "40201020", "name": "Industrial Conglomerates", "description": "Diversified industrial companies operating across multiple segments. GE, HON, MMM." },
+            { "code": "40201030", "name": "Electrical Equipment", "description": "Electrical systems, power equipment, wiring, lighting, motors." },
+            { "code": "40201040", "name": "Metal Fabrication", "description": "Metal stamping, forging, machining, fabricated metal products." },
+            { "code": "40201050", "name": "Farm & Heavy Construction Machinery", "description": "Manufacturers of agricultural equipment, farm machinery, heavy construction equipment (excavators, bulldozers, cranes)." },
+            { "code": "40201060", "name": "Tools & Accessories", "description": "Manufacturers of hand tools, power tools, and tool accessories for professional and consumer use." }
+          ]
+        },
+        {
+          "code": "4030",
+          "name": "Transportation",
+          "industries": [
+            { "code": "40301010", "name": "Airlines", "description": "Passenger and cargo airlines." },
+            { "code": "40301020", "name": "Railroads", "description": "Freight and passenger railroad operators." },
+            { "code": "40301030", "name": "Trucking & Freight", "description": "Trucking companies, LTL and TL carriers, freight brokers." },
+            { "code": "40301040", "name": "Marine Shipping", "description": "Ocean freight, container shipping, bulk carriers, tankers." },
+            { "code": "40301050", "name": "Logistics & Supply Chain", "description": "Third-party logistics (3PL), supply chain management, fulfillment services." },
+            { "code": "40301060", "name": "Air Freight & Delivery", "description": "Express delivery, package delivery, air freight services. FDX, UPS." },
+            { "code": "40301070", "name": "Airports & Air Services", "description": "Airport operators, air traffic management services, airport ground handling, FBO operators." }
+          ]
+        },
+        {
+          "code": "4040",
+          "name": "Construction & Engineering",
+          "industries": [
+            { "code": "40401010", "name": "Engineering & Construction Services", "description": "Engineering firms, construction management, project delivery." },
+            { "code": "40401020", "name": "Infrastructure & Heavy Construction", "description": "Heavy civil construction, infrastructure projects, road/bridge builders." },
+            { "code": "40401030", "name": "Infrastructure Operations", "description": "Operators and concessionaires of toll roads, bridges, ports, and other infrastructure assets." }
+          ]
+        },
+        {
+          "code": "4050",
+          "name": "Business Services",
+          "industries": [
+            { "code": "40501010", "name": "Consulting & Professional Services", "description": "Management consulting, professional services, advisory firms." },
+            { "code": "40501020", "name": "Staffing & Employment Services", "description": "Temporary staffing, recruitment, workforce solutions." },
+            { "code": "40501030", "name": "Commercial Services & Supplies", "description": "Printing, uniforms, janitorial supplies, commercial services." },
+            { "code": "40501040", "name": "Security & Protection Services", "description": "Physical security, alarm monitoring, armored transport." },
+            { "code": "40501050", "name": "Industrial Distribution", "description": "Wholesale distributors of industrial supplies, MRO products, and industrial equipment." }
+          ]
+        },
+        {
+          "code": "4060",
+          "name": "Environmental Services",
+          "industries": [
+            { "code": "40601010", "name": "Waste Management", "description": "Solid waste collection, disposal, recycling, landfill operators." },
+            { "code": "40601020", "name": "Environmental & Facilities Services", "description": "Environmental remediation, facility management, janitorial services." }
+          ]
+        },
+        {
+          "code": "4070",
+          "name": "Rental & Leasing",
+          "industries": [
+            { "code": "40701010", "name": "Rental & Leasing Services", "description": "Equipment rental, tool rental, fleet leasing (non-financial)." }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "45",
+      "name": "Energy",
+      "superSector": "Sensitive",
+      "industryGroups": [
+        {
+          "code": "4510",
+          "name": "Oil & Gas",
+          "industries": [
+            { "code": "45101010", "name": "Oil & Gas - Integrated", "description": "Large integrated oil companies spanning exploration, production, refining, and marketing." },
+            { "code": "45101020", "name": "Oil & Gas - Exploration & Production", "description": "Upstream E&P companies focused on finding and extracting oil and gas." },
+            { "code": "45101030", "name": "Oil & Gas - Refining & Marketing", "description": "Downstream refiners and fuel marketers." },
+            { "code": "45101040", "name": "Oil & Gas - Midstream", "description": "Pipelines, gathering systems, processing plants, storage. Often MLPs." },
+            { "code": "45101050", "name": "Oil & Gas - Equipment & Services", "description": "Oilfield services, equipment, drilling technology providers." },
+            { "code": "45101060", "name": "Oil & Gas - Drilling", "description": "Contract drilling companies, offshore drilling rigs." }
+          ]
+        },
+        {
+          "code": "4520",
+          "name": "Renewable Energy",
+          "industries": [
+            { "code": "45201010", "name": "Solar Energy", "description": "Solar panel manufacturers, solar project developers, residential solar installers." },
+            { "code": "45201020", "name": "Wind Energy", "description": "Wind turbine manufacturers, wind farm developers and operators." },
+            { "code": "45201030", "name": "Renewable Energy Equipment", "description": "Equipment and components for renewable energy systems." },
+            { "code": "45201040", "name": "Hydrogen & Fuel Cells", "description": "Hydrogen production, fuel cell technology, green hydrogen companies." }
+          ]
+        },
+        {
+          "code": "4530",
+          "name": "Energy Storage & Distribution",
+          "industries": [
+            { "code": "45301010", "name": "Batteries & Energy Storage", "description": "Battery manufacturers, grid-scale energy storage, battery technology." },
+            { "code": "45301020", "name": "Coal & Consumable Fuels", "description": "Coal mining, uranium, and other consumable energy fuels." }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "50",
+      "name": "Basic Materials",
+      "superSector": "Cyclical",
+      "industryGroups": [
+        {
+          "code": "5010",
+          "name": "Chemicals",
+          "industries": [
+            { "code": "50101010", "name": "Chemicals - Specialty", "description": "Specialty chemicals, performance materials, coatings, adhesives." },
+            { "code": "50101020", "name": "Chemicals - Diversified", "description": "Large diversified chemical companies producing commodity and specialty chemicals." },
+            { "code": "50101030", "name": "Chemicals - Agricultural", "description": "Agricultural chemicals, pesticides, herbicides, crop science." }
+          ]
+        },
+        {
+          "code": "5020",
+          "name": "Metals & Mining",
+          "industries": [
+            { "code": "50201010", "name": "Gold Mining", "description": "Gold exploration, mining, and production companies." },
+            { "code": "50201020", "name": "Silver & Precious Metals Mining", "description": "Silver, platinum, palladium, and other precious metals mining." },
+            { "code": "50201030", "name": "Copper & Base Metals Mining", "description": "Copper, zinc, lead, nickel, and other base metals mining." },
+            { "code": "50201040", "name": "Steel", "description": "Steel producers, mini-mills, steel processors." },
+            { "code": "50201050", "name": "Aluminum", "description": "Aluminum smelters, refiners, and fabricators." },
+            { "code": "50201060", "name": "Other Industrial Metals & Mining", "description": "Lithium, rare earth elements, industrial minerals, diversified mining." }
+          ]
+        },
+        {
+          "code": "5030",
+          "name": "Building Materials",
+          "industries": [
+            { "code": "50301010", "name": "Building Materials", "description": "Cement, aggregates, concrete, brick, glass, and building materials." },
+            { "code": "50301020", "name": "Lumber & Wood Products", "description": "Timber, lumber, plywood, engineered wood products." }
+          ]
+        },
+        {
+          "code": "5040",
+          "name": "Paper & Packaging",
+          "industries": [
+            { "code": "50401010", "name": "Paper & Forest Products", "description": "Paper mills, pulp production, forest products." },
+            { "code": "50401020", "name": "Packaging & Containers", "description": "Corrugated packaging, metal cans, glass containers, plastic packaging." }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "55",
+      "name": "Utilities",
+      "superSector": "Defensive",
+      "industryGroups": [
+        {
+          "code": "5510",
+          "name": "Electric Utilities",
+          "industries": [
+            { "code": "55101010", "name": "Electric Utilities - Regulated", "description": "Regulated electric utility companies with rate-regulated operations." },
+            { "code": "55101020", "name": "Electric Utilities - Independent Power", "description": "Independent power producers, merchant generators." }
+          ]
+        },
+        {
+          "code": "5520",
+          "name": "Gas & Water Utilities",
+          "industries": [
+            { "code": "55201010", "name": "Gas Utilities", "description": "Natural gas distribution utilities." },
+            { "code": "55201020", "name": "Water Utilities", "description": "Water and wastewater utility companies." }
+          ]
+        },
+        {
+          "code": "5530",
+          "name": "Multi-Utilities",
+          "industries": [
+            { "code": "55301010", "name": "Multi-Utilities", "description": "Utility companies providing electric, gas, and/or water services." }
+          ]
+        },
+        {
+          "code": "5540",
+          "name": "Renewable Utilities",
+          "industries": [
+            { "code": "55401010", "name": "Renewable Utilities", "description": "Utility-scale renewable energy operators (solar farms, wind farms)." }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "60",
+      "name": "Real Estate",
+      "superSector": "Cyclical",
+      "industryGroups": [
+        {
+          "code": "6010",
+          "name": "REITs",
+          "industries": [
+            { "code": "60101010", "name": "REIT - Residential", "description": "Apartment and residential property REITs." },
+            { "code": "60101020", "name": "REIT - Office", "description": "Office building REITs." },
+            { "code": "60101030", "name": "REIT - Industrial", "description": "Warehouse, logistics, and industrial property REITs." },
+            { "code": "60101040", "name": "REIT - Retail", "description": "Shopping center, mall, and retail property REITs." },
+            { "code": "60101050", "name": "REIT - Healthcare", "description": "Medical office, hospital, senior housing, and healthcare facility REITs." },
+            { "code": "60101060", "name": "REIT - Data Center", "description": "Data center and colocation facility REITs." },
+            { "code": "60101070", "name": "REIT - Hotel & Resort", "description": "Hotel and hospitality property REITs." },
+            { "code": "60101080", "name": "REIT - Specialty", "description": "Cell towers, billboard, casino, and other specialty REITs." },
+            { "code": "60101090", "name": "REIT - Diversified", "description": "REITs with diversified property portfolios across types." },
+            { "code": "60101100", "name": "REIT - Self-Storage", "description": "Self-storage facility REITs." },
+            { "code": "60101110", "name": "REIT - Mortgage", "description": "Mortgage REITs investing in real estate debt, not properties." },
+            { "code": "60101120", "name": "REIT - Infrastructure", "description": "Infrastructure-focused REITs (fiber, pipelines, renewables)." }
+          ]
+        },
+        {
+          "code": "6020",
+          "name": "Real Estate Services",
+          "industries": [
+            { "code": "60201010", "name": "Real Estate Services & Brokerage", "description": "Real estate brokerage, property management, valuation services." },
+            { "code": "60201020", "name": "Real Estate Development", "description": "Property developers and real estate operating companies." }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "99",
+      "name": "Special Classifications",
+      "superSector": "Other",
+      "industryGroups": [
+        {
+          "code": "9910",
+          "name": "Conglomerates & Holding Companies",
+          "industries": [
+            { "code": "99101010", "name": "Conglomerates", "description": "Non-financial diversified holding companies operating across unrelated industries." },
+            { "code": "99101020", "name": "Blank Check / SPAC", "description": "Special purpose acquisition companies pre-merger. Reclassify after de-SPAC." },
+            { "code": "99101030", "name": "Shell Companies", "description": "Shell companies, dormant entities, and unclassifiable filers." }
+          ]
+        },
+        {
+          "code": "9920",
+          "name": "Cannabis",
+          "industries": [
+            { "code": "99201010", "name": "Cannabis - Cultivation & Retail", "description": "Cannabis growers, dispensaries, and multi-state operators." },
+            { "code": "99201020", "name": "Cannabis - Pharmaceuticals", "description": "Cannabis-derived pharmaceutical products and therapeutics." }
+          ]
+        }
+      ]
+    }
+  ]
+}
