@@ -246,9 +246,83 @@ function gurufocusPlugin() {
   };
 }
 
+// Yahoo Finance batch quotes middleware.
+// Uses yahoo-finance2's quote() method to batch-fetch basic quote data
+// (market cap, price, PE, dividend yield) for multiple tickers at once.
+// Serves JSON at /api/yahoo-quotes/AAPL,MSFT,GOOGL
+function yahooQuotesPlugin() {
+  let yf = null;
+
+  return {
+    name: 'yahoo-quotes',
+    configureServer(server) {
+      server.middlewares.use('/api/yahoo-quotes', async (req, res) => {
+        try {
+          if (!yf) {
+            const mod = await import('yahoo-finance2');
+            const YahooFinance = mod.default;
+            yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
+          }
+
+          const tickersStr = (req.url || '').replace(/^\//, '').split('?')[0];
+          if (!tickersStr) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Missing tickers' }));
+            return;
+          }
+
+          const tickers = tickersStr.split(',').map(t => t.trim().toUpperCase()).filter(Boolean);
+          if (tickers.length === 0) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'No valid tickers' }));
+            return;
+          }
+
+          // Chunk into batches of 50 to avoid Yahoo limits
+          const results = [];
+          for (let i = 0; i < tickers.length; i += 50) {
+            const batch = tickers.slice(i, i + 50);
+            try {
+              const quotes = await yf.quote(batch);
+              const arr = Array.isArray(quotes) ? quotes : [quotes];
+              for (const q of arr) {
+                if (q && q.symbol) {
+                  results.push({
+                    ticker: q.symbol,
+                    marketCap: q.marketCap || null,
+                    price: q.regularMarketPrice || null,
+                    pe: q.trailingPE || null,
+                    forwardPE: q.forwardPE || null,
+                    dividendYield: q.dividendYield || null,
+                    fiftyTwoWeekHigh: q.fiftyTwoWeekHigh || null,
+                    fiftyTwoWeekLow: q.fiftyTwoWeekLow || null,
+                    epsTrailingTwelveMonths: q.epsTrailingTwelveMonths || null,
+                    epsForward: q.epsForward || null,
+                    bookValue: q.bookValue || null,
+                    priceToBook: q.priceToBook || null,
+                    sharesOutstanding: q.sharesOutstanding || null,
+                  });
+                }
+              }
+            } catch (batchErr) {
+              console.warn(`Yahoo batch quote error for ${batch.join(',')}:`, batchErr.message);
+            }
+          }
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(results));
+        } catch (e) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: e.message }));
+        }
+      });
+    },
+  };
+}
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), yahooSummaryPlugin(), finvizPlugin(), gurufocusPlugin()],
+  plugins: [react(), yahooSummaryPlugin(), finvizPlugin(), gurufocusPlugin(), yahooQuotesPlugin()],
   server: {
     proxy: {
       // Yahoo Finance doesn't send CORS headers, so browser blocks direct calls.

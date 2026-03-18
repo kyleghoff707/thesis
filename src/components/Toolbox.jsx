@@ -23,12 +23,14 @@ import CollapsibleSection from './CollapsibleSection';
 import ExecutiveCompensation from './ExecutiveCompensation';
 import { classifyBySIC } from '../engines/sicClassification';
 import TickerDataAudit from './TickerDataAudit';
+import Competitors from './Competitors';
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
   { key: 'financials', label: 'Financials' },
   { key: 'growth', label: 'Growth' },
   { key: 'valuation', label: 'Valuation' },
+  { key: 'competitors', label: 'Competitors' },
   { key: 'insiders', label: 'Insiders' },
   { key: 'filings', label: 'Filings' },
   { key: 'audit', label: 'Data Audit' },
@@ -239,6 +241,16 @@ export default function Toolbox({ getReport, updateReport, settings }) {
       {/* Filings tab — independent data, doesn't need edgarStatements */}
       {activeTab === 'filings' && (
         <Filings ticker={ticker} />
+      )}
+
+      {/* Competitors tab — independent data, fetches via Frames API + browse-edgar */}
+      {activeTab === 'competitors' && (
+        <Competitors
+          company={company ? { ...company, ticker } : { ticker }}
+          guruActivities={guruActivities}
+          report={report}
+          updateReport={updateReport}
+        />
       )}
 
       {/* Insiders tab — independent data, doesn't need edgarStatements */}

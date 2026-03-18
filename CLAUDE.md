@@ -33,13 +33,20 @@ For detailed API integration notes (CORS proxying, EDGAR XBRL details, parsing i
 ## Architecture Reference
 **When debugging or modifying any engine, API integration, scoring algorithm, CORS proxy, validation system, or parser** — read `knowledge/references/app-architecture.md` first. It contains detailed technical documentation for all implemented systems (moved from CLAUDE.md to save context window).
 
+### EDGAR Frames API — Period Distinction (Critical)
+The Frames endpoint (`/api/xbrl/frames/us-gaap/{tag}/{unit}/CY{year}.json`) uses **different period specifiers** for balance sheet vs income statement tags:
+- **Duration tags** (income statement, cash flows): `CY{year}.json` — e.g., `CY2024.json`
+- **Instant tags** (balance sheet, point-in-time): `CY{year}Q4I.json` — e.g., `CY2024Q4I.json`
+
+All tag definitions in `FRAMES_TAGS` and `PEER_FRAMES_TAGS` have a `period: 'instant' | 'duration'` property. **Always use this property** when constructing Frames API URLs. Using the wrong period returns 404.
+
 ---
 
 ## Current Status
 Phases 1-4 complete — app shell, data engines, calculation engines, and full Toolbox UI all functional. EDGAR engine validated across 89 companies (production-ready). **The remaining work is Phase 5-8: AI-driven report generation.**
 
 ### What's Built
-All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems (validation, guru, ticker, N-PORT, compensation). See source tree below.
+All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems (validation, guru, ticker, N-PORT, compensation), Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores + derived metric computation + Yahoo data backfill + per-ticker caching + sparse peer filtering + data completeness indicators + industry-aware column defaults. Tests via vitest. See source tree below.
 
 ### What's NOT Built
 - AI report generation (One Pager, Pitch Deck, Full Story) — Phases 5-7
@@ -81,7 +88,16 @@ Average the quantifiable inputs → FGR. FGR feeds ALL valuation calculators. Th
 
 ## Valuation Calculators
 
-Four methods, all computed in Stage 2 and confirmed in Stage 3:
+Four methods, all computed in Stage 2 and confirmed in Stage 3. **All calculators produce buy RANGES, not single prices** — key assumption inputs accept Low/High values, generating conservative and optimistic buy prices per method. The hero box shows the full range (min to max) across all enabled methods.
+
+### Range Inputs (Low/High)
+These 4 inputs are estimates/assumptions and accept ranges:
+- **FGR** (Future Growth Rate) — affects MOS + PBT. Range fields appear below the FGR radio source selector.
+- **Future P/E** — affects MOS only. Defaults auto-adjust from FGR range via `suggestFuturePE()`.
+- **Maintenance CapEx %** — affects Ten Cap only. Higher % = conservative (more capex deducted).
+- **Historical Avg P/E** — affects Equity Bond only.
+
+All other inputs (EPS, CFO, CapEx, Tax, Shares, BVPS, ROE, Retained Ratio, MARR, MOS %) are factual or methodology-fixed and remain single values.
 
 ### MOS (Margin of Safety)
 EPS (TTM or 3yr avg) → grow at FGR for 10 years → Future P/E (≤ 2x FGR, capped at historical high) → Future Price → discount at 15% MARR → Sticker Price → 50% MOS = Buy Price.
@@ -159,7 +175,7 @@ src/
 ├── components/
 │   ├── Layout.jsx, TickerSearch.jsx, Watchlists.jsx, Settings.jsx
 │   ├── ResearchEmpty.jsx, ResearchList.jsx
-│   ├── Toolbox.jsx              — Main research container (7 tabs: Overview/Financials/Growth/Valuation/Insiders/Filings/Audit)
+│   ├── Toolbox.jsx              — Main research container (8 tabs: Overview/Financials/Growth/Valuation/Competitors/Insiders/Filings/Audit)
 │   ├── CompanyHeader.jsx, StockAtGlance.jsx, ScoreTable.jsx
 │   ├── FinancialStatements.jsx  — Financials + Key Metrics, 4 dropdown controls
 │   ├── GrowthAnalysis.jsx, GrowthRateAnalysis.jsx
@@ -168,6 +184,7 @@ src/
 │   ├── Insiders.jsx, ExecutiveCompensation.jsx, Filings.jsx
 │   ├── Gurus.jsx, GuruPortfolio.jsx
 │   ├── GuruAudit.jsx, TickerAudit.jsx, NportAudit.jsx, CompAudit.jsx, TickerDataAudit.jsx
+│   ├── Competitors.jsx          — Competitor benchmarking (SIC peers, 22 metrics, private competitors, completeness dots, sparse peer filtering, industry-aware column defaults)
 │   ├── Validation.jsx, CollapsibleSection.jsx
 │   ├── SensitivityTable.jsx     — (planned) reusable valuation matrix
 │   ├── StatusBadge.jsx          — (planned) section-level status
@@ -186,10 +203,15 @@ src/
 │   ├── valuation.js, fgr.js, validation.js
 │   ├── tickerSearch.js, companyDetails.js, sicClassification.js, tickerAudit.js
 │   ├── analystEstimates.js, finviz.js, gurufocus.js, filingMarkdown.js
+│   ├── peers.js                 — SIC-based peer discovery (browse-edgar + Frames fallback)
+│   ├── peerMetrics.js           — Peer metrics via Frames API + derived metrics (GrossProfit, OpIncome from building blocks) + Yahoo backfill + completeness scoring + multi-year scores
+│   ├── batchQuotes.js           — Yahoo batch quotes with per-ticker caching (market cap, P/E, EPS, book value, shares, dividend yield)
+│   ├── __tests__/peerMetrics.test.js — Vitest: peer metrics bug reproduction tests
 │   └── aiResearch.js            — (planned) Claude API calls + prompt builders
 ├── hooks/
 │   ├── useResearch.js, useFinancials.js, usePrices.js, useEdgar.js
 │   ├── useGurus.js, useInsiders.js, useCompensation.js
+│   ├── useCompetitors.js        — Progressive 3-phase loading (peers → metrics+Yahoo backfill → scores) + completeness scoring
 │   ├── useAnalystData.js, useAnalystEstimates.js
 │   ├── useWatchlists.js, useSettings.js, useTheme.js
 ├── data/validationCompanies.js
@@ -217,10 +239,24 @@ validation/                      — 3-layer validation system (scripts/, data/,
   pitchDeck: { ... },
   fullStory: { ... },
   notes: "",
-  watchlist: false
+  watchlist: false,
+  competitors: { privateCompetitors: [] }
 }
 ```
 **localStorage key**: `stock-analyzer-reports`
+
+---
+
+## Bug-Fixing Strategy
+
+When fixing bugs, follow this approach — do NOT jump straight to a fix:
+
+1. **Understand first.** Read the relevant code paths end-to-end. Trace the data flow from source to UI. Check assumptions empirically when possible (e.g., test API endpoints with `curl`).
+2. **Write a failing test.** The test should prove the bug exists. Include a test for the expected post-fix behavior. Use vitest (`npm test`).
+3. **Fix with a subagent.** Give the subagent the failing test and the specific files to modify. It works until all tests pass.
+4. **Verify.** All tests pass, app compiles, dev server runs.
+
+This strategy caught a critical bug (EDGAR Frames API instant vs duration period specifiers) that a direct fix attempt missed entirely. Writing tests first forces you to define "correct" before writing code.
 
 ---
 
@@ -240,7 +276,7 @@ validation/                      — 3-layer validation system (scripts/, data/,
 - **Palette**: stickeR1 slate colors + teal accent (`#0f766e` light / `#2dd4bf` dark)
 - **Typography**: 13px base, Inter/system font stack
 - **Layout**: Top nav bar (52px) → 4 tabs (Watchlists | Research | Gurus | Reports) + search bar. Full-width content (max 1400px).
-- **Toolbox tabs**: Overview | Financials | Growth | Valuation | Insiders | Filings | Audit
+- **Toolbox tabs**: Overview | Financials | Growth | Valuation | Competitors | Insiders | Filings | Audit
 - **Styling**: Inline styles with mutable `C` palette object (dark/light). Cards with border + borderRadius 8.
 - **Reference**: `knowledge/stickeR1-reference-ui.md` + `knowledge/Rule One Toolbox UI examples/`
 
@@ -252,6 +288,8 @@ validation/                      — 3-layer validation system (scripts/, data/,
 |---------|-------------|
 | `npm run dev` | Vite dev server (localhost:5173) |
 | `npm run build` | Production build |
+| `npm test` | Run vitest tests |
+| `npm run test:watch` | Run vitest in watch mode |
 | `npm run tauri:dev` | Desktop app with hot-reload |
 | `npm run tauri:build` | Package native macOS `.app` |
 

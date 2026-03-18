@@ -21,13 +21,15 @@ function fmtPct(n) {
   return (n * 100).toFixed(2) + '%';
 }
 
-function fmtLargeDollar(n) {
-  if (n == null || isNaN(n)) return '--';
-  const prefix = n < 0 ? '-' : '';
-  const abs = Math.abs(n);
-  if (abs >= 1e6) return prefix + fmtNum(abs / 1e6, 1) + 'M';
-  if (abs >= 1e3) return prefix + fmtNum(abs / 1e3, 1) + 'K';
-  return prefix + fmtNum(abs, 1);
+// Format a range: if low === high, show single value; else "low — high"
+function fmtRange(low, high, formatter = fmtNum) {
+  if (low == null && high == null) return '--';
+  if (low == null) return formatter(high);
+  if (high == null) return formatter(low);
+  const fLow = formatter(Math.min(low, high));
+  const fHigh = formatter(Math.max(low, high));
+  if (fLow === fHigh) return fLow;
+  return `${fLow} — ${fHigh}`;
 }
 
 
@@ -81,14 +83,11 @@ function FieldRow({ label, value, editable, onChange, type = 'number', step, suf
             value={displayValue}
             onFocus={e => {
               setFocused(true);
-              // Show raw number (no commas) when user clicks into field
               setLocalVal(value != null && !isNaN(value) ? String(value) : '');
-              // Select all so typing replaces the old value
               requestAnimationFrame(() => e.target.select());
             }}
             onBlur={() => {
               setFocused(false);
-              // Commit the local value on blur
               if (type === 'number') {
                 const cleaned = localVal.replace(/,/g, '');
                 onChange(cleaned === '' ? NaN : parseFloat(cleaned));
@@ -122,6 +121,114 @@ function FieldRow({ label, value, editable, onChange, type = 'number', step, suf
           <span style={{ fontWeight: 600, color: C.text }}>{value}</span>
         )}
         {suffix && <span style={{ fontSize: 11, color: C.textMuted, marginLeft: 2 }}>{suffix}</span>}
+      </div>
+    </div>
+  );
+}
+
+// Range input — two editable fields side by side (Low — High)
+function RangeFieldRow({ label, valueLow, valueHigh, onChangeLow, onChangeHigh, suffix, decimals = 2 }) {
+  const [focusedLow, setFocusedLow] = useState(false);
+  const [focusedHigh, setFocusedHigh] = useState(false);
+  const [localLow, setLocalLow] = useState('');
+  const [localHigh, setLocalHigh] = useState('');
+
+  const inputBoxStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '4px 8px',
+    fontSize: 13,
+    fontVariantNumeric: 'tabular-nums',
+    background: C.bgInput,
+    border: `1px solid ${C.border}`,
+    borderRadius: 6,
+    minWidth: 72,
+    justifyContent: 'flex-end',
+  };
+
+  const inputStyle = {
+    background: 'transparent',
+    border: 'none',
+    outline: 'none',
+    fontSize: 13,
+    fontWeight: 600,
+    color: C.text,
+    textAlign: 'right',
+    width: 60,
+    fontFamily: 'inherit',
+    fontVariantNumeric: 'tabular-nums',
+  };
+
+  function makeDisplay(val, focused, local) {
+    if (focused) return local;
+    if (val == null || val === '' || isNaN(val)) return '';
+    return fmtNum(Number(val), decimals);
+  }
+
+  return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '7px 0',
+      borderBottom: `1px solid ${C.borderLight}`,
+    }}>
+      <span style={{ fontSize: 13, fontWeight: 500, color: C.text }}>{label}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={inputBoxStyle}>
+          <span style={{ fontSize: 9, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Low</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            value={makeDisplay(valueLow, focusedLow, localLow)}
+            onFocus={e => {
+              setFocusedLow(true);
+              setLocalLow(valueLow != null && !isNaN(valueLow) ? String(valueLow) : '');
+              requestAnimationFrame(() => e.target.select());
+            }}
+            onBlur={() => {
+              setFocusedLow(false);
+              const cleaned = localLow.replace(/,/g, '');
+              onChangeLow(cleaned === '' ? NaN : parseFloat(cleaned));
+            }}
+            onChange={e => {
+              const raw = e.target.value;
+              setLocalLow(raw);
+              const cleaned = raw.replace(/,/g, '');
+              onChangeLow(cleaned === '' ? NaN : parseFloat(cleaned));
+            }}
+            style={inputStyle}
+          />
+          {suffix && <span style={{ fontSize: 11, color: C.textMuted }}>{suffix}</span>}
+        </div>
+        <span style={{ color: C.textMuted, fontSize: 11 }}>—</span>
+        <div style={inputBoxStyle}>
+          <span style={{ fontSize: 9, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>High</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            value={makeDisplay(valueHigh, focusedHigh, localHigh)}
+            onFocus={e => {
+              setFocusedHigh(true);
+              setLocalHigh(valueHigh != null && !isNaN(valueHigh) ? String(valueHigh) : '');
+              requestAnimationFrame(() => e.target.select());
+            }}
+            onBlur={() => {
+              setFocusedHigh(false);
+              const cleaned = localHigh.replace(/,/g, '');
+              onChangeHigh(cleaned === '' ? NaN : parseFloat(cleaned));
+            }}
+            onChange={e => {
+              const raw = e.target.value;
+              setLocalHigh(raw);
+              const cleaned = raw.replace(/,/g, '');
+              onChangeHigh(cleaned === '' ? NaN : parseFloat(cleaned));
+            }}
+            style={inputStyle}
+          />
+          {suffix && <span style={{ fontSize: 11, color: C.textMuted }}>{suffix}</span>}
+        </div>
       </div>
     </div>
   );
@@ -169,10 +276,12 @@ const RefreshIcon = ({ onClick }) => (
 
 export default function ValuationCalculators({
   currentPrice,
-  tenCapData,
+  tenCapRange,
   tenCapDefaults,
-  mosResult,
-  pbtResult,
+  mosResultLow,
+  mosResultHigh,
+  pbtResultLow,
+  pbtResultHigh,
   pbtFCFPerShare,
   pbtFCFPerShareComputed,
   pbtAtCurrentPrice,
@@ -186,10 +295,21 @@ export default function ValuationCalculators({
   customGR,
   setCustomGR,
   activeFGR,
-  maintenancePct,
-  setMaintenancePct,
-  futurePE,
-  setFuturePE,
+  // FGR range
+  fgrLow,
+  fgrHigh,
+  setFgrLow,
+  setFgrHigh,
+  // Maintenance % range
+  maintenancePctLow,
+  maintenancePctHigh,
+  setMaintenancePctLow,
+  setMaintenancePctHigh,
+  // Future PE range
+  futurePELow,
+  futurePEHigh,
+  setFuturePELow,
+  setFuturePEHigh,
   mosDiscount,
   setMosDiscount,
   marr,
@@ -209,13 +329,17 @@ export default function ValuationCalculators({
   setTenCapMaintCapEx,
   // PBT FCF Per Share override
   setPbtFCFPerShare,
-  // Equity Bond
-  ebResult,
+  // Equity Bond range
+  ebResultLow,
+  ebResultHigh,
   ebDefaults,
   setEbBvps,
   setEbRoe,
   setEbRetainedRatio,
-  setEbAvgPE,
+  ebAvgPELow,
+  ebAvgPEHigh,
+  setEbAvgPELow,
+  setEbAvgPEHigh,
   heroEnabled,
   setHeroEnabled,
   onSave,
@@ -225,21 +349,31 @@ export default function ValuationCalculators({
   refetchAnalyst,
   analystGRSource,
 }) {
-  // Determine buy prices
-  const tenCapPrice = tenCapData?.tenCapPrice ?? null;
-  const tenCapSticker = tenCapPrice != null ? Math.round(tenCapPrice * 200) / 100 : null;
-  const mosPrice = mosResult?.mosPrice ?? null;
-  const mosSticker = mosResult?.stickerPrice ?? null;
-  const pbtPrice = pbtResult?.pbtPrice ?? null;
-  const pbtSticker = pbtPrice != null ? Math.round(pbtPrice * 200) / 100 : null;
+  // Use tenCapRange.high for display inputs (shared), .low/.high for results
+  const tenCapDisplay = tenCapRange?.high ?? tenCapRange?.low;
 
-  // Equity Bond — Method B only
-  const ebBuyPrice = ebResult?.buyPrice ?? null;
-  const ebHeroBuy = ebBuyPrice != null && ebBuyPrice > 0 ? ebBuyPrice : null;
-  const ebHeroFuturePrice = ebResult?.futurePrice ?? null;
-  const ebHeroReturn = ebResult?.projectedReturnAtCurrentPrice ?? null;
+  // Determine buy price ranges
+  const tenCapPriceLow = tenCapRange?.low?.tenCapPrice ?? null;
+  const tenCapPriceHigh = tenCapRange?.high?.tenCapPrice ?? null;
+  const tenCapStickerLow = tenCapPriceLow != null ? Math.round(tenCapPriceLow * 200) / 100 : null;
+  const tenCapStickerHigh = tenCapPriceHigh != null ? Math.round(tenCapPriceHigh * 200) / 100 : null;
 
-  // Hero = highest buy price among enabled methods
+  const mosPriceLow = mosResultLow?.mosPrice ?? null;
+  const mosPriceHigh = mosResultHigh?.mosPrice ?? null;
+  const mosStickerLow = mosResultLow?.stickerPrice ?? null;
+  const mosStickerHigh = mosResultHigh?.stickerPrice ?? null;
+
+  const pbtPriceLow = pbtResultLow?.pbtPrice ?? null;
+  const pbtPriceHigh = pbtResultHigh?.pbtPrice ?? null;
+  const pbtStickerLow = pbtPriceLow != null ? Math.round(pbtPriceLow * 200) / 100 : null;
+  const pbtStickerHigh = pbtPriceHigh != null ? Math.round(pbtPriceHigh * 200) / 100 : null;
+
+  const ebBuyLow = ebResultLow?.buyPrice > 0 ? ebResultLow.buyPrice : null;
+  const ebBuyHigh = ebResultHigh?.buyPrice > 0 ? ebResultHigh.buyPrice : null;
+  const ebReturnLow = ebResultLow?.projectedReturnAtCurrentPrice ?? null;
+  const ebReturnHigh = ebResultHigh?.projectedReturnAtCurrentPrice ?? null;
+
+  // Hero = full buy range across ALL enabled methods (lowest conservative → highest optimistic)
   const toggleHero = (key) => {
     setHeroEnabled(prev => {
       const next = new Set(prev);
@@ -249,22 +383,25 @@ export default function ValuationCalculators({
     });
   };
 
-  const methods = [
-    { key: '10 Cap', buy: tenCapPrice, sticker: tenCapSticker },
-    { key: 'MOS', buy: mosPrice, sticker: mosSticker },
-    { key: 'PBT', buy: pbtPrice, sticker: pbtSticker },
-    { key: 'Equity Bond', buy: ebHeroBuy, sticker: ebHeroFuturePrice },
-  ].filter(m => m.buy != null && m.buy > 0 && heroEnabled.has(m.key));
+  // Collect every buy price (low and high) from enabled methods
+  const allHeroPrices = [
+    heroEnabled.has('10 Cap') && tenCapPriceLow,
+    heroEnabled.has('10 Cap') && tenCapPriceHigh,
+    heroEnabled.has('MOS') && mosPriceLow,
+    heroEnabled.has('MOS') && mosPriceHigh,
+    heroEnabled.has('PBT') && pbtPriceLow,
+    heroEnabled.has('PBT') && pbtPriceHigh,
+    heroEnabled.has('Equity Bond') && ebBuyLow,
+    heroEnabled.has('Equity Bond') && ebBuyHigh,
+  ].filter(v => typeof v === 'number' && v > 0);
 
-  const hero = methods.length > 0
-    ? methods.reduce((a, b) => a.buy > b.buy ? a : b)
-    : null;
+  const heroBuyLow = allHeroPrices.length > 0 ? Math.min(...allHeroPrices) : null;
+  const heroBuyHigh = allHeroPrices.length > 0 ? Math.max(...allHeroPrices) : null;
 
-  // Effective values for Equity Bond fields (override ?? default, fallback from result inputs)
-  const effectiveEbBvps = ebResult?.inputs?.bvps ?? ebDefaults?.bvps;
-  const effectiveEbRoe = ebResult?.inputs?.roe ?? ebDefaults?.avgROE;
-  const effectiveEbRetainedRatio = ebResult?.inputs?.retainedRatio ?? ebDefaults?.retainedRatio;
-  const effectiveEbPE = ebResult?.inputs?.historicalPE ?? ebDefaults?.avgPE;
+  // Effective values for Equity Bond fields (from result inputs or defaults)
+  const effectiveEbBvps = ebResultLow?.inputs?.bvps ?? ebDefaults?.bvps;
+  const effectiveEbRoe = ebResultLow?.inputs?.roe ?? ebDefaults?.avgROE;
+  const effectiveEbRetainedRatio = ebResultLow?.inputs?.retainedRatio ?? ebDefaults?.retainedRatio;
 
   // ─── FGR radio group (shared by MOS + PBT) ───────────────
 
@@ -378,6 +515,18 @@ export default function ValuationCalculators({
             )}
           </div>
         </div>
+
+        {/* FGR Range — editable low/high below radio group */}
+        {!readOnly && (
+          <RangeFieldRow
+            label="FGR Range"
+            valueLow={fgrLow != null ? Math.round(fgrLow * 10000) / 100 : ''}
+            valueHigh={fgrHigh != null ? Math.round(fgrHigh * 10000) / 100 : ''}
+            onChangeLow={v => setFgrLow(isNaN(v) ? null : v / 100)}
+            onChangeHigh={v => setFgrHigh(isNaN(v) ? null : v / 100)}
+            suffix="%"
+          />
+        )}
       </div>
     );
   }
@@ -391,6 +540,16 @@ export default function ValuationCalculators({
     padding: 16,
     boxShadow: `0 1px 3px ${C.shadow}`,
   };
+
+  // Summary card value row helper
+  const summaryRow = (label, low, high, formatter = fmtNum) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+      <span style={{ fontSize: 12, color: C.textSecondary }}>{label}</span>
+      <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>
+        {fmtRange(low, high, formatter)}
+      </span>
+    </div>
+  );
 
   return (
     <div>
@@ -406,17 +565,9 @@ export default function ValuationCalculators({
         flexWrap: 'wrap',
       }}>
         <div>
-          <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 2 }}>
-            {hero ? `Buy Price (${hero.key})` : 'Buy Price'}
-          </div>
+          <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 2 }}>Buy Range</div>
           <div style={{ fontSize: 32, fontWeight: 700, color: C.accent }}>
-            {hero ? fmtDollar(hero.buy) : '--'}
-          </div>
-        </div>
-        <div>
-          <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 2 }}>{hero?.key === 'Equity Bond' ? 'Future Price (10yr)' : 'Sticker Price'}</div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: C.text }}>
-            {hero ? fmtDollar(hero.sticker) : '--'}
+            {heroBuyLow != null ? fmtRange(heroBuyLow, heroBuyHigh, fmtDollar) : '--'}
           </div>
         </div>
         <div>
@@ -468,14 +619,8 @@ export default function ValuationCalculators({
             <input type="checkbox" checked={heroEnabled.has('10 Cap')} onChange={() => toggleHero('10 Cap')} style={{ accentColor: C.accent, cursor: 'pointer', margin: 0 }} />
             <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.textMuted }}>10 Cap</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span style={{ fontSize: 12, color: C.textSecondary }}>10 CAP Price</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>{fmtNum(tenCapPrice)}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, color: C.textSecondary }}>10 CAP Sticker Price</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>{fmtNum(tenCapSticker)}</span>
-          </div>
+          {summaryRow('10 Cap Price', tenCapPriceLow, tenCapPriceHigh)}
+          {summaryRow('Sticker Price', tenCapStickerLow, tenCapStickerHigh)}
         </div>
 
         {/* MOS summary */}
@@ -484,14 +629,8 @@ export default function ValuationCalculators({
             <input type="checkbox" checked={heroEnabled.has('MOS')} onChange={() => toggleHero('MOS')} style={{ accentColor: C.accent, cursor: 'pointer', margin: 0 }} />
             <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.textMuted }}>MOS</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span style={{ fontSize: 12, color: C.textSecondary }}>MOS Price</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>{fmtNum(mosPrice)}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, color: C.textSecondary }}>MOS Sticker Price</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>{fmtNum(mosSticker)}</span>
-          </div>
+          {summaryRow('MOS Price', mosPriceLow, mosPriceHigh)}
+          {summaryRow('Sticker Price', mosStickerLow, mosStickerHigh)}
         </div>
 
         {/* PBT summary */}
@@ -500,14 +639,8 @@ export default function ValuationCalculators({
             <input type="checkbox" checked={heroEnabled.has('PBT')} onChange={() => toggleHero('PBT')} style={{ accentColor: C.accent, cursor: 'pointer', margin: 0 }} />
             <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.textMuted }}>PBT</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span style={{ fontSize: 12, color: C.textSecondary }}>PBT Price</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>{fmtNum(pbtPrice)}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span style={{ fontSize: 12, color: C.textSecondary }}>PBT Sticker Price</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>{fmtNum(pbtSticker)}</span>
-          </div>
+          {summaryRow('PBT Price', pbtPriceLow, pbtPriceHigh)}
+          {summaryRow('Sticker Price', pbtStickerLow, pbtStickerHigh)}
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 12, color: C.textSecondary }}>PBT at Current Price</span>
             <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>
@@ -522,14 +655,11 @@ export default function ValuationCalculators({
             <input type="checkbox" checked={heroEnabled.has('Equity Bond')} onChange={() => toggleHero('Equity Bond')} style={{ accentColor: C.accent, cursor: 'pointer', margin: 0 }} />
             <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.textMuted }}>Equity Bond</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span style={{ fontSize: 12, color: C.textSecondary }}>Buy Price</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>{fmtNum(ebHeroBuy)}</span>
-          </div>
+          {summaryRow('Buy Price', ebBuyLow, ebBuyHigh)}
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 12, color: C.textSecondary }}>Projected Return</span>
             <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>
-              {ebHeroReturn != null ? fmtPct(ebHeroReturn) : '--'}
+              {fmtRange(ebReturnLow, ebReturnHigh, fmtPct)}
             </span>
           </div>
         </div>
@@ -543,7 +673,7 @@ export default function ValuationCalculators({
           <div>
             <FieldRow
               label="Cash from Operations"
-              value={tenCapData?.operatingCashFlow != null ? tenCapData.operatingCashFlow / 1e6 : ''}
+              value={tenCapDisplay?.operatingCashFlow != null ? tenCapDisplay.operatingCashFlow / 1e6 : ''}
               editable
               decimals={1}
               onChange={v => setTenCapCFO(isNaN(v) ? null : v * 1e6)}
@@ -551,33 +681,35 @@ export default function ValuationCalculators({
             />
             <FieldRow
               label="Capital Expenditures"
-              value={tenCapData?.capitalExpenditures != null ? tenCapData.capitalExpenditures / 1e6 : ''}
+              value={tenCapDisplay?.capitalExpenditures != null ? tenCapDisplay.capitalExpenditures / 1e6 : ''}
               editable
               decimals={1}
               onChange={v => setTenCapCapEx(isNaN(v) ? null : v * 1e6)}
               suffix="M"
             />
-            <FieldRow
+            <RangeFieldRow
               label="% for Maintenance"
-              value={maintenancePct * 100}
-              editable
-              decimals={2}
-              onChange={v => setMaintenancePct((isNaN(v) ? 70 : v) / 100)}
+              valueLow={maintenancePctLow * 100}
+              valueHigh={maintenancePctHigh * 100}
+              onChangeLow={v => setMaintenancePctLow((isNaN(v) ? 70 : v) / 100)}
+              onChangeHigh={v => setMaintenancePctHigh((isNaN(v) ? 70 : v) / 100)}
               suffix="%"
             />
             <FieldRow
               label="Maintenance CapEx"
-              value={tenCapData?.maintenanceCapEx != null ? -tenCapData.maintenanceCapEx / 1e6 : ''}
-              editable
-              decimals={1}
-              onChange={v => setTenCapMaintCapEx(isNaN(v) ? null : -v * 1e6)}
+              value={fmtRange(
+                tenCapRange?.low?.maintenanceCapEx != null ? -tenCapRange.low.maintenanceCapEx / 1e6 : null,
+                tenCapRange?.high?.maintenanceCapEx != null ? -tenCapRange.high.maintenanceCapEx / 1e6 : null,
+                v => fmtNum(v, 1),
+              )}
               suffix="M"
+              icon={{ element: <LockIcon /> }}
             />
           </div>
           <div>
             <FieldRow
               label="Tax Provision"
-              value={tenCapData?.taxProvision != null ? tenCapData.taxProvision / 1e6 : ''}
+              value={tenCapDisplay?.taxProvision != null ? tenCapDisplay.taxProvision / 1e6 : ''}
               editable
               decimals={1}
               onChange={v => setTenCapTax(isNaN(v) ? null : v * 1e6)}
@@ -585,21 +717,28 @@ export default function ValuationCalculators({
             />
             <FieldRow
               label="Owner's Earnings"
-              value={fmtNum(tenCapData?.ownerEarnings != null ? tenCapData.ownerEarnings / 1e6 : null, 1)}
+              value={fmtRange(
+                tenCapRange?.low?.ownerEarnings != null ? tenCapRange.low.ownerEarnings / 1e6 : null,
+                tenCapRange?.high?.ownerEarnings != null ? tenCapRange.high.ownerEarnings / 1e6 : null,
+                v => fmtNum(v, 1),
+              )}
               suffix="M"
               icon={{ element: <LockIcon /> }}
             />
             <FieldRow
               label="Shares Outstanding"
-              value={tenCapData?.sharesOutstanding != null ? tenCapData.sharesOutstanding / 1e6 : ''}
+              value={tenCapDisplay?.sharesOutstanding != null ? tenCapDisplay.sharesOutstanding / 1e6 : ''}
               editable
               decimals={3}
               onChange={v => setTenCapShares(isNaN(v) ? null : v * 1e6)}
               suffix="M"
             />
             <FieldRow
-              label="Owner's Earnings Per Share"
-              value={fmtNum(tenCapData?.ownerEarningsPerShare)}
+              label="Owner's Earnings/Share"
+              value={fmtRange(
+                tenCapRange?.low?.ownerEarningsPerShare,
+                tenCapRange?.high?.ownerEarningsPerShare,
+              )}
               icon={{ element: <LockIcon /> }}
             />
           </div>
@@ -624,19 +763,19 @@ export default function ValuationCalculators({
           <div>
             <FieldRow
               label="Future EPS"
-              value={fmtNum(mosResult?.futureEPS)}
+              value={fmtRange(mosResultLow?.futureEPS, mosResultHigh?.futureEPS)}
               icon={{ element: <LockIcon /> }}
             />
-            <FieldRow
+            <RangeFieldRow
               label="Future P/E"
-              value={futurePE != null ? Math.round(futurePE * 100) / 100 : ''}
-              editable
-              onChange={v => setFuturePE(isNaN(v) ? null : v)}
-              step="0.01"
+              valueLow={futurePELow != null ? Math.round(futurePELow * 100) / 100 : ''}
+              valueHigh={futurePEHigh != null ? Math.round(futurePEHigh * 100) / 100 : ''}
+              onChangeLow={v => setFuturePELow(isNaN(v) ? null : v)}
+              onChangeHigh={v => setFuturePEHigh(isNaN(v) ? null : v)}
             />
             <FieldRow
               label="Future Value"
-              value={fmtNum(mosResult?.futurePrice)}
+              value={fmtRange(mosResultLow?.futurePrice, mosResultHigh?.futurePrice)}
               icon={{ element: <LockIcon /> }}
             />
             <FieldRow
@@ -712,7 +851,7 @@ export default function ValuationCalculators({
       <div style={{ ...cardStyle, marginBottom: 16 }}>
         <SectionHeader title="Equity Bond" />
         <div style={{ fontSize: 11, color: C.textMuted, marginTop: -4, marginBottom: 4, fontStyle: 'italic' }}>
-          The New Buffettology — grow book value via ROE × retention
+          The New Buffettology — grow book value via ROE x retention
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginTop: 8 }}>
           <div>
@@ -741,12 +880,12 @@ export default function ValuationCalculators({
               suffix="%"
               icon={{ element: <RefreshIcon onClick={() => setEbRetainedRatio(null)} />, onClick: () => setEbRetainedRatio(null) }}
             />
-            <FieldRow
+            <RangeFieldRow
               label="Historical Avg P/E"
-              value={effectiveEbPE ?? ''}
-              editable
-              onChange={v => setEbAvgPE(isNaN(v) ? null : v)}
-              icon={{ element: <RefreshIcon onClick={() => setEbAvgPE(null)} />, onClick: () => setEbAvgPE(null) }}
+              valueLow={ebAvgPELow ?? ''}
+              valueHigh={ebAvgPEHigh ?? ''}
+              onChangeLow={v => setEbAvgPELow(isNaN(v) ? null : v)}
+              onChangeHigh={v => setEbAvgPEHigh(isNaN(v) ? null : v)}
             />
             <FieldRow
               label="MARR"
@@ -757,12 +896,12 @@ export default function ValuationCalculators({
             />
           </div>
           <div>
-            <FieldRow label="Equity Growth Rate" value={fmtPct(ebResult?.equityGrowthRate)} icon={{ element: <LockIcon /> }} />
-            <FieldRow label="Future BVPS" value={fmtDollar(ebResult?.futureBVPS)} icon={{ element: <LockIcon /> }} />
-            <FieldRow label="Future EPS" value={fmtDollar(ebResult?.futureEPS)} icon={{ element: <LockIcon /> }} />
-            <FieldRow label="Future Stock Price" value={fmtDollar(ebResult?.futurePrice)} icon={{ element: <LockIcon /> }} />
-            <FieldRow label="Buy Price" value={fmtDollar(ebResult?.buyPrice)} icon={{ element: <LockIcon /> }} />
-            <FieldRow label="Projected Return" value={fmtPct(ebResult?.projectedReturnAtCurrentPrice)} icon={{ element: <LockIcon /> }} />
+            <FieldRow label="Equity Growth Rate" value={fmtPct(ebResultLow?.equityGrowthRate)} icon={{ element: <LockIcon /> }} />
+            <FieldRow label="Future BVPS" value={fmtRange(ebResultLow?.futureBVPS, ebResultHigh?.futureBVPS, fmtDollar)} icon={{ element: <LockIcon /> }} />
+            <FieldRow label="Future EPS" value={fmtRange(ebResultLow?.futureEPS, ebResultHigh?.futureEPS, fmtDollar)} icon={{ element: <LockIcon /> }} />
+            <FieldRow label="Future Stock Price" value={fmtRange(ebResultLow?.futurePrice, ebResultHigh?.futurePrice, fmtDollar)} icon={{ element: <LockIcon /> }} />
+            <FieldRow label="Buy Price" value={fmtRange(ebBuyLow, ebBuyHigh, fmtDollar)} icon={{ element: <LockIcon /> }} />
+            <FieldRow label="Projected Return" value={fmtRange(ebReturnLow, ebReturnHigh, fmtPct)} icon={{ element: <LockIcon /> }} />
           </div>
         </div>
       </div>

@@ -63,6 +63,7 @@ export function useResearch() {
       fullStory: null,
       notes: '',
       watchlist: false,
+      competitors: { privateCompetitors: [] },
     };
     setReports(prev => {
       const next = [newReport, ...prev];

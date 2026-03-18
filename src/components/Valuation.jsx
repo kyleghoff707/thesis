@@ -125,8 +125,13 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
   const [fgrSource, setFgrSource] = useState('analyst');
   const [analystGR, setAnalystGR] = useState('');
   const [customGR, setCustomGR] = useState('');
-  const [maintenancePct, setMaintenancePct] = useState(0.70);
-  const [futurePEOverride, setFuturePEOverride] = useState(null);
+  const [maintenancePctLow, setMaintenancePctLow] = useState(0.70);
+  const [maintenancePctHigh, setMaintenancePctHigh] = useState(0.70);
+  const [futurePELowOverride, setFuturePELowOverride] = useState(null);
+  const [futurePEHighOverride, setFuturePEHighOverride] = useState(null);
+  // FGR range overrides (null = use activeFGR for both)
+  const [fgrLowOverride, setFgrLowOverride] = useState(null);
+  const [fgrHighOverride, setFgrHighOverride] = useState(null);
   const [mosDiscount, setMosDiscount] = useState(0.50);
   const [marr, setMarr] = useState(0.15);
   const [pbtYears, setPbtYears] = useState(8);
@@ -158,7 +163,8 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
   const [ebBvpsOverride, setEbBvpsOverride] = useState(null);
   const [ebRoeOverride, setEbRoeOverride] = useState(null);
   const [ebRetainedRatioOverride, setEbRetainedRatioOverride] = useState(null);
-  const [ebAvgPEOverride, setEbAvgPEOverride] = useState(null);
+  const [ebAvgPELowOverride, setEbAvgPELowOverride] = useState(null);
+  const [ebAvgPEHighOverride, setEbAvgPEHighOverride] = useState(null);
 
   // Bond Comparison fields (manual entry)
   const [ebTBillYield, setEbTBillYield] = useState(null);
@@ -185,8 +191,13 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
       setFgrSource(saved.fgrSource ?? 'analyst');
       setAnalystGR(saved.analystGR ?? '');
       setCustomGR(saved.customGR ?? '');
-      setMaintenancePct(saved.maintenancePct ?? 0.70);
-      setFuturePEOverride(saved.futurePEOverride ?? null);
+      // Range inputs — backward compat: old single values become both low/high
+      setMaintenancePctLow(saved.maintenancePctLow ?? saved.maintenancePct ?? 0.70);
+      setMaintenancePctHigh(saved.maintenancePctHigh ?? saved.maintenancePct ?? 0.70);
+      setFuturePELowOverride(saved.futurePELowOverride ?? saved.futurePEOverride ?? null);
+      setFuturePEHighOverride(saved.futurePEHighOverride ?? saved.futurePEOverride ?? null);
+      setFgrLowOverride(saved.fgrLowOverride ?? null);
+      setFgrHighOverride(saved.fgrHighOverride ?? null);
       setMosDiscount(saved.mosDiscount ?? 0.50);
       setMarr(saved.marr ?? 0.15);
       setPbtYears(saved.pbtYears ?? 8);
@@ -212,7 +223,8 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
       setEbBvpsOverride(saved.ebBvpsOverride ?? null);
       setEbRoeOverride(saved.ebRoeOverride ?? null);
       setEbRetainedRatioOverride(saved.ebRetainedRatioOverride ?? null);
-      setEbAvgPEOverride(saved.ebAvgPEOverride ?? null);
+      setEbAvgPELowOverride(saved.ebAvgPELowOverride ?? saved.ebAvgPEOverride ?? null);
+      setEbAvgPEHighOverride(saved.ebAvgPEHighOverride ?? saved.ebAvgPEOverride ?? null);
       // Bond Comparison
       setEbTBillYield(saved.ebTBillYield ?? null);
       setEbCorpBondYield(savedCorpYield);
@@ -224,8 +236,12 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
       setFgrSource('analyst');
       setAnalystGR('');
       setCustomGR('');
-      setMaintenancePct(0.70);
-      setFuturePEOverride(null);
+      setMaintenancePctLow(0.70);
+      setMaintenancePctHigh(0.70);
+      setFuturePELowOverride(null);
+      setFuturePEHighOverride(null);
+      setFgrLowOverride(null);
+      setFgrHighOverride(null);
       setMosDiscount(0.50);
       setMarr(0.15);
       setPbtYears(8);
@@ -248,7 +264,8 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
       setEbBvpsOverride(null);
       setEbRoeOverride(null);
       setEbRetainedRatioOverride(null);
-      setEbAvgPEOverride(null);
+      setEbAvgPELowOverride(null);
+      setEbAvgPEHighOverride(null);
       setEbTBillYield(null);
       setEbCorpBondYield(null);
       setHeroEnabled(new Set(ALL_HERO_KEYS));
@@ -266,8 +283,11 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
   // Save handler
   const handleSave = useCallback(() => {
     saveValuationToStorage(ticker, {
-      epsTTM, fgrSource, analystGR, customGR, maintenancePct,
-      futurePEOverride, mosDiscount, marr, pbtYears, fcfRatioOverride,
+      epsTTM, fgrSource, analystGR, customGR,
+      maintenancePctLow, maintenancePctHigh,
+      futurePELowOverride, futurePEHighOverride,
+      fgrLowOverride, fgrHighOverride,
+      mosDiscount, marr, pbtYears, fcfRatioOverride,
       excludedYears,
       excludedYears10Cap: [...excludedYears10Cap],
       excludedYearsMOS: [...excludedYearsMOS],
@@ -277,19 +297,24 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
       tenCapSharesOverride, tenCapMaintCapExOverride,
       pbtFCFPerShareOverride,
       ptebPretaxEPSOverride, ptebGrowthRateOverride, ptebPEOverride, ptebCorpBondYield,
-      ebBvpsOverride, ebRoeOverride, ebRetainedRatioOverride, ebAvgPEOverride,
+      ebBvpsOverride, ebRoeOverride, ebRetainedRatioOverride,
+      ebAvgPELowOverride, ebAvgPEHighOverride,
       ebTBillYield, ebCorpBondYield,
       heroEnabled: [...heroEnabled],
     });
     setSaveStatus('saved');
     setTimeout(() => setSaveStatus(null), 2000);
-  }, [ticker, epsTTM, fgrSource, analystGR, customGR, maintenancePct,
-    futurePEOverride, mosDiscount, marr, pbtYears, fcfRatioOverride,
+  }, [ticker, epsTTM, fgrSource, analystGR, customGR,
+    maintenancePctLow, maintenancePctHigh,
+    futurePELowOverride, futurePEHighOverride,
+    fgrLowOverride, fgrHighOverride,
+    mosDiscount, marr, pbtYears, fcfRatioOverride,
     excludedYears, excludedYears10Cap, excludedYearsMOS, excludedYearsEB, excludedGrowthPoints,
     tenCapCFOOverride, tenCapCapExOverride, tenCapTaxOverride,
     tenCapSharesOverride, tenCapMaintCapExOverride, pbtFCFPerShareOverride,
     ptebPretaxEPSOverride, ptebGrowthRateOverride, ptebPEOverride, ptebCorpBondYield,
-    ebBvpsOverride, ebRoeOverride, ebRetainedRatioOverride, ebAvgPEOverride,
+    ebBvpsOverride, ebRoeOverride, ebRetainedRatioOverride,
+    ebAvgPELowOverride, ebAvgPEHighOverride,
     ebTBillYield, ebCorpBondYield, heroEnabled]);
 
   // ─── Computed values ──────────────────────────────────────
@@ -357,18 +382,35 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
     return computeHistoricalAvgPE(edgarStatements, allPrices);
   }, [edgarStatements, allPrices]);
 
-  // Default Future PE = 2×FGR capped at historical high
-  const defaultFuturePE = useMemo(() => {
-    if (activeFGR == null) return null;
-    return suggestFuturePE(activeFGR, historicalHighPE);
-  }, [activeFGR, historicalHighPE]);
+  // FGR range — effective values (override ?? base activeFGR)
+  const effectiveFGRLow = fgrLowOverride ?? activeFGR;
+  const effectiveFGRHigh = fgrHighOverride ?? activeFGR;
 
-  const effectiveFuturePE = futurePEOverride ?? defaultFuturePE;
+  // Default Future PE = 2×FGR capped at historical high (one per range end)
+  const defaultFuturePELow = useMemo(() => {
+    if (effectiveFGRLow == null) return null;
+    return suggestFuturePE(effectiveFGRLow, historicalHighPE);
+  }, [effectiveFGRLow, historicalHighPE]);
 
-  // Update futurePE default when FGR changes (reset override)
+  const defaultFuturePEHigh = useMemo(() => {
+    if (effectiveFGRHigh == null) return null;
+    return suggestFuturePE(effectiveFGRHigh, historicalHighPE);
+  }, [effectiveFGRHigh, historicalHighPE]);
+
+  const effectiveFuturePELow = futurePELowOverride ?? defaultFuturePELow;
+  const effectiveFuturePEHigh = futurePEHighOverride ?? defaultFuturePEHigh;
+
+  // Reset PE overrides when FGR base changes
   useEffect(() => {
-    setFuturePEOverride(null);
+    setFuturePELowOverride(null);
+    setFuturePEHighOverride(null);
   }, [activeFGR]);
+
+  // Reset FGR range overrides when source changes
+  useEffect(() => {
+    setFgrLowOverride(null);
+    setFgrHighOverride(null);
+  }, [fgrSource]);
 
   // FCF Ratio (computed from historical data, excludable years)
   const fcfRatioData = useMemo(() => {
@@ -389,34 +431,37 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
     return { opCF, capEx, tax, shares };
   }, [ttmCashFlow, ttmIncome, ttmBalance, latestYear, edgarStatements]);
 
-  // 10 Cap — effective values (override ?? default)
-  const tenCapData = useMemo(() => {
+  // 10 Cap — effective values (override ?? default), computed for low/high maint%
+  const tenCapRange = useMemo(() => {
     const opCF = tenCapCFOOverride ?? tenCapDefaults.opCF;
     const capEx = tenCapCapExOverride ?? tenCapDefaults.capEx;
     const tax = tenCapTaxOverride ?? tenCapDefaults.tax;
     const shares = tenCapSharesOverride ?? tenCapDefaults.shares;
-    if (opCF == null || shares == null) return null;
+    if (opCF == null || shares == null) return { low: null, high: null, shared: null };
 
-    const autoMaintCapEx = estimateMaintenanceCapEx(capEx, maintenancePct);
-    const maintCapEx = tenCapMaintCapExOverride ?? autoMaintCapEx;
-    const result = computeTenCap({
-      operatingCashFlow: opCF,
-      maintenanceCapEx: maintCapEx,
-      taxProvision: tax,
-      sharesOutstanding: shares,
+    // Conservative = high maint% (more deducted), Optimistic = low maint%
+    const autoMaintLow = estimateMaintenanceCapEx(capEx, maintenancePctHigh);
+    const autoMaintHigh = estimateMaintenanceCapEx(capEx, maintenancePctLow);
+    const maintLow = tenCapMaintCapExOverride ?? autoMaintLow;
+    const maintHigh = tenCapMaintCapExOverride ?? autoMaintHigh;
+
+    const resultLow = computeTenCap({
+      operatingCashFlow: opCF, maintenanceCapEx: maintLow, taxProvision: tax, sharesOutstanding: shares,
+    });
+    const resultHigh = computeTenCap({
+      operatingCashFlow: opCF, maintenanceCapEx: maintHigh, taxProvision: tax, sharesOutstanding: shares,
     });
 
-    return {
-      ...result,
-      operatingCashFlow: opCF,
-      capitalExpenditures: capEx,
-      maintenancePct,
-      maintenanceCapEx: maintCapEx,
-      autoMaintenanceCapEx: autoMaintCapEx,
-      taxProvision: tax,
-      sharesOutstanding: shares,
+    const shared = {
+      operatingCashFlow: opCF, capitalExpenditures: capEx, taxProvision: tax, sharesOutstanding: shares,
     };
-  }, [tenCapDefaults, tenCapCFOOverride, tenCapCapExOverride, tenCapTaxOverride, tenCapSharesOverride, tenCapMaintCapExOverride, maintenancePct]);
+
+    return {
+      low: resultLow ? { ...resultLow, ...shared, maintenancePct: maintenancePctHigh, maintenanceCapEx: maintLow, autoMaintenanceCapEx: autoMaintLow } : null,
+      high: resultHigh ? { ...resultHigh, ...shared, maintenancePct: maintenancePctLow, maintenanceCapEx: maintHigh, autoMaintenanceCapEx: autoMaintHigh } : null,
+      shared,
+    };
+  }, [tenCapDefaults, tenCapCFOOverride, tenCapCapExOverride, tenCapTaxOverride, tenCapSharesOverride, tenCapMaintCapExOverride, maintenancePctLow, maintenancePctHigh]);
 
   // Current price (needed by Equity Bond + PBT at current price)
   const currentPrice = latest?.price ?? latest?.close ?? null;
@@ -538,17 +583,24 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
     });
   }, [ptebPretaxEPSOverride, ptebGrowthRateOverride, ptebPEOverride, ptebDefaults, ptebCorpBondYield, marr, currentPrice]);
 
-  // Method B result
-  const ebResult = useMemo(() => {
+  // Method B result — range (low/high PE)
+  const ebResultLow = useMemo(() => {
     const bvps = ebBvpsOverride ?? ebDefaults.bvps;
     const roe = ebRoeOverride ?? ebDefaults.avgROE;
     const retainedRatio = ebRetainedRatioOverride ?? ebDefaults.retainedRatio;
-    const avgPE = ebAvgPEOverride ?? ebDefaults.avgPE;
+    const avgPE = ebAvgPELowOverride ?? ebDefaults.avgPE;
     if (bvps == null || roe == null || retainedRatio == null || avgPE == null) return null;
-    return computeEquityBond({
-      bvps, roe, retainedRatio, historicalPE: avgPE, marr, years: 10, currentPrice,
-    });
-  }, [ebBvpsOverride, ebRoeOverride, ebRetainedRatioOverride, ebAvgPEOverride, ebDefaults, marr, currentPrice]);
+    return computeEquityBond({ bvps, roe, retainedRatio, historicalPE: avgPE, marr, years: 10, currentPrice });
+  }, [ebBvpsOverride, ebRoeOverride, ebRetainedRatioOverride, ebAvgPELowOverride, ebDefaults, marr, currentPrice]);
+
+  const ebResultHigh = useMemo(() => {
+    const bvps = ebBvpsOverride ?? ebDefaults.bvps;
+    const roe = ebRoeOverride ?? ebDefaults.avgROE;
+    const retainedRatio = ebRetainedRatioOverride ?? ebDefaults.retainedRatio;
+    const avgPE = ebAvgPEHighOverride ?? ebDefaults.avgPE;
+    if (bvps == null || roe == null || retainedRatio == null || avgPE == null) return null;
+    return computeEquityBond({ bvps, roe, retainedRatio, historicalPE: avgPE, marr, years: 10, currentPrice });
+  }, [ebBvpsOverride, ebRoeOverride, ebRetainedRatioOverride, ebAvgPEHighOverride, ebDefaults, marr, currentPrice]);
 
   // Bond Comparison result
   const bondComparisonResult = useMemo(() => {
@@ -561,19 +613,18 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
     });
   }, [epsTTM, currentPrice, ebTBillYield, ebCorpBondYield]);
 
-  // MOS
-  const mosResult = useMemo(() => {
-    if (epsTTM == null || activeFGR == null || effectiveFuturePE == null) return null;
-    return computeMOS({
-      eps: epsTTM,
-      fgr: activeFGR,
-      futurePE: effectiveFuturePE,
-      marr,
-      years: 10,
-    });
-  }, [epsTTM, activeFGR, effectiveFuturePE, marr]);
+  // MOS — range (low FGR+PE → conservative, high FGR+PE → optimistic)
+  const mosResultLow = useMemo(() => {
+    if (epsTTM == null || effectiveFGRLow == null || effectiveFuturePELow == null) return null;
+    return computeMOS({ eps: epsTTM, fgr: effectiveFGRLow, futurePE: effectiveFuturePELow, marr, years: 10 });
+  }, [epsTTM, effectiveFGRLow, effectiveFuturePELow, marr]);
 
-  // PBT
+  const mosResultHigh = useMemo(() => {
+    if (epsTTM == null || effectiveFGRHigh == null || effectiveFuturePEHigh == null) return null;
+    return computeMOS({ eps: epsTTM, fgr: effectiveFGRHigh, futurePE: effectiveFuturePEHigh, marr, years: 10 });
+  }, [epsTTM, effectiveFGRHigh, effectiveFuturePEHigh, marr]);
+
+  // PBT — range (low/high FGR)
   const pbtFCFPerShareComputed = useMemo(() => {
     if (epsTTM == null || effectiveFCFRatio == null) return null;
     return computeFcfPerShare({ fcfRatio: effectiveFCFRatio, eps: epsTTM });
@@ -581,16 +632,23 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
 
   const pbtFCFPerShare = pbtFCFPerShareOverride ?? pbtFCFPerShareComputed;
 
-  const pbtResult = useMemo(() => {
-    if (pbtFCFPerShare == null || activeFGR == null) return null;
-    return computePBT({ fcfPerShare: pbtFCFPerShare, fgr: activeFGR, targetYears: pbtYears });
-  }, [pbtFCFPerShare, activeFGR, pbtYears]);
+  const pbtResultLow = useMemo(() => {
+    if (pbtFCFPerShare == null || effectiveFGRLow == null) return null;
+    return computePBT({ fcfPerShare: pbtFCFPerShare, fgr: effectiveFGRLow, targetYears: pbtYears });
+  }, [pbtFCFPerShare, effectiveFGRLow, pbtYears]);
 
-  // PBT at current price
+  const pbtResultHigh = useMemo(() => {
+    if (pbtFCFPerShare == null || effectiveFGRHigh == null) return null;
+    return computePBT({ fcfPerShare: pbtFCFPerShare, fgr: effectiveFGRHigh, targetYears: pbtYears });
+  }, [pbtFCFPerShare, effectiveFGRHigh, pbtYears]);
+
+  // PBT at current price (use midpoint FGR)
   const pbtAtCurrentPrice = useMemo(() => {
-    if (pbtFCFPerShare == null || activeFGR == null || currentPrice == null) return null;
-    return yearsToPayback({ fcfPerShare: pbtFCFPerShare, fgr: activeFGR, price: currentPrice });
-  }, [pbtFCFPerShare, activeFGR, currentPrice]);
+    const midFGR = (effectiveFGRLow != null && effectiveFGRHigh != null)
+      ? (effectiveFGRLow + effectiveFGRHigh) / 2 : effectiveFGRLow ?? effectiveFGRHigh;
+    if (pbtFCFPerShare == null || midFGR == null || currentPrice == null) return null;
+    return yearsToPayback({ fcfPerShare: pbtFCFPerShare, fgr: midFGR, price: currentPrice });
+  }, [pbtFCFPerShare, effectiveFGRLow, effectiveFGRHigh, currentPrice]);
 
   // Toggle year exclusion
   const toggleExcludedYear = (year) => {
@@ -714,10 +772,12 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
       {subTab === 'calculators' && (
         <ValuationCalculators
           currentPrice={currentPrice}
-          tenCapData={tenCapData}
+          tenCapRange={tenCapRange}
           tenCapDefaults={tenCapDefaults}
-          mosResult={mosResult}
-          pbtResult={pbtResult}
+          mosResultLow={mosResultLow}
+          mosResultHigh={mosResultHigh}
+          pbtResultLow={pbtResultLow}
+          pbtResultHigh={pbtResultHigh}
           pbtFCFPerShare={pbtFCFPerShare}
           pbtFCFPerShareComputed={pbtFCFPerShareComputed}
           pbtAtCurrentPrice={pbtAtCurrentPrice}
@@ -731,10 +791,21 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
           customGR={customGR}
           setCustomGR={setCustomGR}
           activeFGR={activeFGR}
-          maintenancePct={maintenancePct}
-          setMaintenancePct={setMaintenancePct}
-          futurePE={effectiveFuturePE}
-          setFuturePE={setFuturePEOverride}
+          // FGR range
+          fgrLow={effectiveFGRLow}
+          fgrHigh={effectiveFGRHigh}
+          setFgrLow={setFgrLowOverride}
+          setFgrHigh={setFgrHighOverride}
+          // Maintenance % range
+          maintenancePctLow={maintenancePctLow}
+          maintenancePctHigh={maintenancePctHigh}
+          setMaintenancePctLow={setMaintenancePctLow}
+          setMaintenancePctHigh={setMaintenancePctHigh}
+          // Future PE range
+          futurePELow={effectiveFuturePELow}
+          futurePEHigh={effectiveFuturePEHigh}
+          setFuturePELow={setFuturePELowOverride}
+          setFuturePEHigh={setFuturePEHighOverride}
           mosDiscount={mosDiscount}
           setMosDiscount={setMosDiscount}
           marr={marr}
@@ -754,13 +825,17 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
           setTenCapMaintCapEx={setTenCapMaintCapExOverride}
           // PBT FCF Per Share override
           setPbtFCFPerShare={setPbtFCFPerShareOverride}
-          // Equity Bond
-          ebResult={ebResult}
+          // Equity Bond range
+          ebResultLow={ebResultLow}
+          ebResultHigh={ebResultHigh}
           ebDefaults={ebDefaults}
           setEbBvps={setEbBvpsOverride}
           setEbRoe={setEbRoeOverride}
           setEbRetainedRatio={setEbRetainedRatioOverride}
-          setEbAvgPE={setEbAvgPEOverride}
+          ebAvgPELow={ebAvgPELowOverride ?? ebDefaults.avgPE}
+          ebAvgPEHigh={ebAvgPEHighOverride ?? ebDefaults.avgPE}
+          setEbAvgPELow={setEbAvgPELowOverride}
+          setEbAvgPEHigh={setEbAvgPEHighOverride}
           heroEnabled={heroEnabled}
           setHeroEnabled={setHeroEnabled}
           onSave={handleSave}
@@ -802,7 +877,7 @@ export default function Valuation({ edgarStatements, ticker, latest, settings, r
           historicalAvgPE={historicalAvgPEPerYear}
           analysisSeries={analysisSeries}
           compositeMetrics={compositeMetrics}
-          maintenancePct={maintenancePct}
+          maintenancePct={(maintenancePctLow + maintenancePctHigh) / 2}
           marr={marr}
           pbtYears={pbtYears}
         />

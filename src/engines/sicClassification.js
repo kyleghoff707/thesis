@@ -3,7 +3,7 @@
 // with NAICS crosswalk. Covers ~250 most common SIC codes for publicly
 // traded US companies. Falls back to 2-digit major group for unmapped codes.
 
-const SIC_MAP = {
+export const SIC_MAP = {
   // ═══ TECHNOLOGY ═══════════════════════════════════════════════════
 
   // Hardware
@@ -536,6 +536,20 @@ const SIC_MAJOR_GROUP_MAP = {
 
 
 // ─── Public API ──────────────────────────────────────────────────────
+
+/**
+ * Get all SIC codes matching a given tier value.
+ * tier: 'sector' | 'industryGroup' | 'industry'
+ * value: e.g. 'Consumer Cyclical' or 'Apparel Retail'
+ * Returns Set of SIC code strings.
+ */
+export function getSICCodesForTier(tier, value) {
+  const codes = new Set();
+  for (const [sic, entry] of Object.entries(SIC_MAP)) {
+    if (entry[tier] === value) codes.add(sic);
+  }
+  return codes;
+}
 
 /**
  * Classify a company by its SIC code.

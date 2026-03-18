@@ -16,19 +16,34 @@ function framesUrl(tag, unit, cyYear) {
 // Each entry: { tag, fallbacks, unit, ourField }
 // fallbacks: alternative XBRL tags to try if primary returns no data for this CIK
 export const FRAMES_TAGS = [
-  { tag: 'Revenues', fallbacks: ['RevenueFromContractWithCustomerExcludingAssessedTax', 'RevenueFromContractWithCustomerIncludingAssessedTax'], unit: 'USD', ourField: 'revenues' },
-  { tag: 'NetIncomeLoss', fallbacks: [], unit: 'USD', ourField: 'net_income_loss' },
-  { tag: 'Assets', fallbacks: [], unit: 'USD', ourField: 'assets' },
-  { tag: 'StockholdersEquity', fallbacks: ['StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest'], unit: 'USD', ourField: 'equity' },
-  { tag: 'Liabilities', fallbacks: [], unit: 'USD', ourField: 'liabilities' },
-  { tag: 'NetCashProvidedByUsedInOperatingActivities', fallbacks: ['NetCashProvidedByUsedInOperatingActivitiesContinuingOperations'], unit: 'USD', ourField: 'net_cash_flow_from_operating_activities' },
-  { tag: 'PaymentsToAcquirePropertyPlantAndEquipment', fallbacks: ['PaymentsToAcquireProductiveAssets'], unit: 'USD', ourField: 'capital_expenditures' },
-  { tag: 'LongTermDebtNoncurrent', fallbacks: ['LongTermDebt'], unit: 'USD', ourField: 'long_term_debt' },
-  { tag: 'EarningsPerShareDiluted', fallbacks: [], unit: 'USD/shares', ourField: 'diluted_earnings_per_share' },
+  { tag: 'Revenues', fallbacks: ['RevenueFromContractWithCustomerExcludingAssessedTax', 'RevenueFromContractWithCustomerIncludingAssessedTax'], unit: 'USD', ourField: 'revenues', period: 'duration' },
+  { tag: 'NetIncomeLoss', fallbacks: [], unit: 'USD', ourField: 'net_income_loss', period: 'duration' },
+  { tag: 'Assets', fallbacks: [], unit: 'USD', ourField: 'assets', period: 'instant' },
+  { tag: 'StockholdersEquity', fallbacks: ['StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest'], unit: 'USD', ourField: 'equity', period: 'instant' },
+  { tag: 'Liabilities', fallbacks: [], unit: 'USD', ourField: 'liabilities', period: 'instant' },
+  { tag: 'NetCashProvidedByUsedInOperatingActivities', fallbacks: ['NetCashProvidedByUsedInOperatingActivitiesContinuingOperations'], unit: 'USD', ourField: 'net_cash_flow_from_operating_activities', period: 'duration' },
+  { tag: 'PaymentsToAcquirePropertyPlantAndEquipment', fallbacks: ['PaymentsToAcquireProductiveAssets'], unit: 'USD', ourField: 'capital_expenditures', period: 'duration' },
+  { tag: 'LongTermDebtNoncurrent', fallbacks: ['LongTermDebt'], unit: 'USD', ourField: 'long_term_debt', period: 'instant' },
+  { tag: 'EarningsPerShareDiluted', fallbacks: ['EarningsPerShareBasic'], unit: 'USD/shares', ourField: 'diluted_earnings_per_share', period: 'duration' },
+];
+
+// Extended tags for peer/competitor metrics computation.
+export const PEER_FRAMES_TAGS = [
+  ...FRAMES_TAGS,
+  { tag: 'GrossProfit', fallbacks: [], unit: 'USD', ourField: 'gross_profit', period: 'duration' },
+  { tag: 'OperatingIncomeLoss', fallbacks: [], unit: 'USD', ourField: 'operating_income', period: 'duration' },
+  { tag: 'AssetsCurrent', fallbacks: ['CurrentAssets'], unit: 'USD', ourField: 'current_assets', period: 'instant' },
+  { tag: 'LiabilitiesCurrent', fallbacks: ['CurrentLiabilities'], unit: 'USD', ourField: 'current_liabilities', period: 'instant' },
+  { tag: 'InventoryNet', fallbacks: ['Inventory'], unit: 'USD', ourField: 'inventory', period: 'instant' },
+  { tag: 'CashAndCashEquivalentsAtCarryingValue', fallbacks: ['Cash', 'CashCashEquivalentsAndShortTermInvestments'], unit: 'USD', ourField: 'cash', period: 'instant' },
+  { tag: 'CommonStockSharesOutstanding', fallbacks: ['EntityCommonStockSharesOutstanding'], unit: 'shares', ourField: 'shares_outstanding', period: 'instant' },
+  { tag: 'IncomeTaxExpenseBenefit', fallbacks: ['CurrentIncomeTaxExpenseBenefit'], unit: 'USD', ourField: 'income_tax', period: 'duration' },
+  { tag: 'CostOfRevenue', fallbacks: ['CostOfGoodsAndServicesSold', 'CostOfGoodsSold'], unit: 'USD', ourField: 'cost_of_revenue', period: 'duration' },
+  { tag: 'CostsAndExpenses', fallbacks: ['OperatingExpenses'], unit: 'USD', ourField: 'total_costs_and_expenses', period: 'duration' },
 ];
 
 // Fetch a Frames response for a specific tag/unit/year. Cached.
-async function fetchFrame(tag, unit, cyYear) {
+export async function fetchFrame(tag, unit, cyYear) {
   const cacheKey = `edgar-frames:${tag}:${unit}:CY${cyYear}`;
   const cached = await cacheGetAsync(cacheKey);
   if (cached) return cached;
@@ -59,11 +74,13 @@ function findByCIK(framesData, cik) {
 // Returns { tag, year, ours, frames, diff, pctDiff, status }
 // cyYear = calendar year integer for the Frames API
 export async function crossCheckField(tagDef, cik, cyYear, ourValue) {
+  // Use correct period format for balance sheet (instant) vs income statement (duration) tags
+  const effectiveYear = tagDef.period === 'instant' ? `${cyYear}Q4I` : cyYear;
   // Try primary tag, then fallbacks
   const tagsToTry = [tagDef.tag, ...tagDef.fallbacks];
 
   for (const tag of tagsToTry) {
-    const framesData = await fetchFrame(tag, tagDef.unit, cyYear);
+    const framesData = await fetchFrame(tag, tagDef.unit, effectiveYear);
     if (!framesData) continue;
 
     const entry = findByCIK(framesData, cik);
@@ -107,6 +124,31 @@ export async function crossCheckField(tagDef, cik, cyYear, ourValue) {
     pctDiff: null,
     status: ourValue != null ? 'missing_frames' : 'both_missing',
   };
+}
+
+// Fetch multiple Frames in parallel with throttling (100ms spacing for SEC 10 req/s).
+// Returns Map<tag+unit+year, framesData>.
+export async function fetchFramesBulk(tagDefs, cyYear) {
+  const results = new Map();
+  const queue = [];
+  for (const def of tagDefs) {
+    const effectiveYear = def.period === 'instant' ? `${cyYear}Q4I` : cyYear;
+    queue.push({ tag: def.tag, unit: def.unit, def, effectiveYear });
+    for (const fb of def.fallbacks) {
+      queue.push({ tag: fb, unit: def.unit, def, effectiveYear });
+    }
+  }
+  // Process in batches of 8 with 100ms gaps
+  for (let i = 0; i < queue.length; i += 8) {
+    const batch = queue.slice(i, i + 8);
+    const promises = batch.map(({ tag, unit, effectiveYear }) => fetchFrame(tag, unit, effectiveYear));
+    const batchResults = await Promise.all(promises);
+    batch.forEach(({ tag, unit, effectiveYear }, j) => {
+      if (batchResults[j]) results.set(`${tag}:${unit}:CY${effectiveYear}`, batchResults[j]);
+    });
+    if (i + 8 < queue.length) await new Promise(r => setTimeout(r, 100));
+  }
+  return results;
 }
 
 // Map fiscal year to calendar year for the Frames API.
