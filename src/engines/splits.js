@@ -1,4 +1,4 @@
-// Stock split detection via EDGAR XBRL data
+// Stock split detection via Yahoo Finance + EDGAR XBRL fallback
 // Used to normalize historical per-share values and share counts from EDGAR.
 //
 // EDGAR stores values as-reported in each 10-K filing. When a company splits,
@@ -6,14 +6,65 @@
 // but older years keep their original (pre-split) values. This creates
 // inconsistent per-share data across the full history.
 //
-// We detect splits from EDGAR companyfacts data (zero additional API calls)
-// and apply cumulative adjustment factors so all per-share values and share
-// counts are on the same basis as current shares.
+// Primary source: Yahoo Finance chart endpoint (events.splits field).
+// Fallback: EDGAR XBRL tags (explicit ratio tag, share count jump detection).
+// Yahoo is preferred because EDGAR's post-split restatements make XBRL-based
+// detection unreliable for companies like TSCO.
 
 import { lookupCIK, fetchCompanyFacts } from './edgar';
 import { cacheGet, cacheSet } from './cache';
 
-// ─── Primary: Explicit XBRL split ratio tag ─────────────────────────
+const isDev = import.meta.env.DEV;
+const YAHOO_BASE = isDev
+  ? '/api/yahoo/v8/finance/chart'
+  : 'https://query1.finance.yahoo.com/v8/finance/chart';
+
+// ─── Month abbreviation → last day of month ─────────────────────────
+const MONTH_LAST_DAY = {
+  Jan: '01-31', Feb: '02-28', Mar: '03-31', Apr: '04-30',
+  May: '05-31', Jun: '06-30', Jul: '07-31', Aug: '08-31',
+  Sep: '09-30', Oct: '10-31', Nov: '11-30', Dec: '12-31',
+};
+
+// ─── Yahoo Finance split detection ──────────────────────────────────
+// The chart endpoint returns events.splits as an object keyed by Unix timestamp.
+// Each value: { date: <unix_ts>, numerator: N, denominator: M }
+
+export function parseYahooSplits(splitEvents) {
+  if (!splitEvents || typeof splitEvents !== 'object') return [];
+
+  return Object.values(splitEvents)
+    .filter(e => e.date && e.numerator && e.denominator)
+    .map(e => ({
+      date: new Date(e.date * 1000).toISOString().slice(0, 10),
+      ratio: e.numerator / e.denominator,
+    }));
+}
+
+async function fetchSplitsFromYahoo(ticker) {
+  try {
+    const fetchOptions = isDev ? {} : {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+      }
+    };
+
+    // Fetch full history to get all splits
+    const url = `${YAHOO_BASE}/${ticker}?period1=0&period2=${Math.floor(Date.now() / 1000)}&interval=1mo`;
+    const res = await fetch(url, fetchOptions);
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    const result = data?.chart?.result?.[0];
+    if (!result?.events?.splits) return [];
+
+    return parseYahooSplits(result.events.splits);
+  } catch {
+    return [];
+  }
+}
+
+// ─── EDGAR: Explicit XBRL split ratio tag (fallback) ────────────────
 // StockholdersEquityNoteStockSplitConversionRatio1 (units: pure)
 // Gives the exact split ratio (e.g., 4.0 for 4:1, 0.05 for 1:20 reverse).
 
@@ -39,7 +90,7 @@ function extractExplicitSplits(facts) {
   }));
 }
 
-// ─── Fallback: Share count jump detection ────────────────────────────
+// ─── EDGAR: Share count jump detection (fallback) ───────────────────
 // EntityCommonStockSharesOutstanding from dei namespace.
 // Walk sequential pairs and detect jumps >= 1.8x (forward) or <= 0.55x (reverse).
 
@@ -111,18 +162,21 @@ export async function fetchSplits(ticker) {
   if (cached) return cached;
 
   try {
-    const cik = await lookupCIK(ticker);
-    if (!cik) return [];
+    // Primary: Yahoo Finance (reliable — not affected by XBRL restatements)
+    let splits = await fetchSplitsFromYahoo(t);
 
-    const facts = await fetchCompanyFacts(cik);
-    if (!facts) return [];
-
-    // Try explicit XBRL split ratio tag first (most reliable)
-    let splits = extractExplicitSplits(facts);
-
-    // Fall back to share count jump detection
+    // Fallback: EDGAR XBRL
     if (splits.length === 0) {
-      splits = detectSplitsFromShareCounts(facts);
+      const cik = await lookupCIK(ticker);
+      if (cik) {
+        const facts = await fetchCompanyFacts(cik);
+        if (facts) {
+          splits = extractExplicitSplits(facts);
+          if (splits.length === 0) {
+            splits = detectSplitsFromShareCounts(facts);
+          }
+        }
+      }
     }
 
     // Sort descending by date (newest first)
@@ -137,14 +191,21 @@ export async function fetchSplits(ticker) {
 }
 
 // Cumulative split factor for a given fiscal year.
-// = product of all split ratios where the split occurred AFTER this fiscal year.
+// = product of all split ratios where the split occurred AFTER this fiscal year ended.
 // Per-share values: divide by this factor.
 // Share counts: multiply by this factor.
-export function cumulativeSplitFactor(splits, fiscalYear) {
+//
+// fiscalMonth: optional month abbreviation for FY end (e.g. 'Sep' for AAPL).
+// Defaults to 'Dec' (calendar year). Needed because a split in Nov 2020 is
+// AFTER a Sep 2020 FY end but BEFORE a Dec 2020 FY end.
+export function cumulativeSplitFactor(splits, fiscalYear, fiscalMonth) {
+  const monthDay = MONTH_LAST_DAY[fiscalMonth] || MONTH_LAST_DAY.Dec;
+  const fyEndDate = `${fiscalYear}-${monthDay}`;
+
   let factor = 1;
   for (const split of splits) {
-    const splitYear = parseInt(split.date.split('-')[0]);
-    if (splitYear > fiscalYear) {
+    // ISO date string comparison works correctly for chronological ordering
+    if (split.date > fyEndDate) {
       factor *= split.ratio;
     }
   }

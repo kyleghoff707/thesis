@@ -21,7 +21,7 @@ The user is NOT a programmer. Keep explanations in plain English.
 - **Frontend**: Vite + React (functional components, hooks, inline styles with dark/light palette)
 - **Storage**: localStorage (reports, settings, watchlists), IndexedDB (EDGAR, guru, price, insider, compensation caches) via `cacheStore.js`
 - **AI**: Claude API direct from app (`VITE_CLAUDE_KEY` in `.env.local`)
-- **Financial Data**: SEC EDGAR XBRL (all financials, 13F guru holdings, N-PORT, insiders, compensation, splits — free), Yahoo Finance (prices — free), Finviz (analyst estimates — free), GuruFocus (optional $25/mo API)
+- **Financial Data**: SEC EDGAR XBRL (all financials, 13F guru holdings, N-PORT, insiders, compensation — free), Yahoo Finance (prices, stock splits — free), Finviz (analyst estimates — free), GuruFocus (optional $25/mo API)
 - **Charts**: Recharts
 - **Deps**: recharts, @anthropic-ai/sdk, uuid, react-router-dom, turndown, turndown-plugin-gfm, yahoo-finance2, cheerio, idb
 - **No server, no auth** — runs entirely locally. API calls go direct to external services.
@@ -40,10 +40,15 @@ The Frames endpoint (`/api/xbrl/frames/us-gaap/{tag}/{unit}/CY{year}.json`) uses
 
 All tag definitions in `FRAMES_TAGS` and `PEER_FRAMES_TAGS` have a `period: 'instant' | 'duration'` property. **Always use this property** when constructing Frames API URLs. Using the wrong period returns 404.
 
+### XBRL Taxonomy Conventions
+- **`negate` flag**: Some cash flow taxonomy fields have `negate: true` (e.g., `change_in_receivables`, `change_in_inventory`, `other_noncash_items`). This flips XBRL's balance-sheet-change convention to cash-impact convention at extraction time. Do NOT add `negate` to payables — payable increases are already positive in both conventions.
+- **Debt sanity check**: `computeDerivedFields` has a ratio-based fallback — if `total_debt / liabilities < 5%`, derives debt from `liabilities - known-non-debt-items`. This catches industry-specific debt tag gaps (REITs, banks, insurance, energy).
+- **SGA derivation**: `sga` taxonomy field uses only the combined `SellingGeneralAndAdministrativeExpense` tag. Separate `selling_expense` and `general_and_admin_expense` fields exist; `computeDerivedFields` sums them into `sga` when the combined tag is null (fixes MSFT, others that report separately).
+
 ---
 
 ## Current Status
-Phases 1-4 complete — app shell, data engines, calculation engines, and full Toolbox UI all functional. EDGAR engine validated across 89 companies (production-ready). **The remaining work is Phase 5-8: AI-driven report generation.**
+Phases 1-4 complete — app shell, data engines, calculation engines, and full Toolbox UI all functional. EDGAR engine validated across 89 companies, then refined via 12-ticker comparison against R1 Toolbox (Morningstar) data — see `knowledge/financial-data-comparison-rca.md` for full RCA. **The remaining work is Phase 5-8: AI-driven report generation.**
 
 ### What's Built
 All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems (validation, guru, ticker, N-PORT, compensation), Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores + derived metric computation + Yahoo data backfill + per-ticker caching + sparse peer filtering + data completeness indicators + industry-aware column defaults, Upcoming Events & News section on Overview (SEC 8-K events + Yahoo calendar + IR page discovery). Tests via vitest. See source tree below.
@@ -215,16 +220,23 @@ src/
 ├── engines/
 │   ├── config.js, edgar.js, edgarFinancials.js, edgarFrames.js
 │   ├── keyMetrics.js, prices.js, priceStore.js, cache.js, cacheStore.js
-│   ├── gurus.js, nport.js, insiders.js, compensation.js, splits.js
+│   ├── gurus.js, nport.js, insiders.js, compensation.js
+│   ├── splits.js                — Stock split detection (Yahoo primary, EDGAR XBRL fallback) + cumulative split factor with fiscal-month-aware date comparison
 │   ├── growthRates.js, freeCashFlow.js, returnMetrics.js, ruleOneScore.js
 │   ├── valuation.js, fgr.js, validation.js
 │   ├── tickerSearch.js, companyDetails.js, sicClassification.js, tickerAudit.js
+│   ├── industryClassifier.js    — SIC → industry type (bank/reit/insurance/standard) for overlay selection
+│   ├── industryOverlays.js      — Additive XBRL taxonomy overlays: bank (NII, deposits, efficiency ratio), REIT (FFO, NAV, NOI), insurance (premiums, claims, combined ratio)
 │   ├── analystEstimates.js, finviz.js, gurufocus.js, filingMarkdown.js
 │   ├── peers.js                 — SIC-based peer discovery (browse-edgar + Frames fallback)
 │   ├── peerMetrics.js           — Peer metrics via Frames API + derived metrics (GrossProfit, OpIncome from building blocks) + Yahoo backfill + completeness scoring + multi-year scores
 │   ├── batchQuotes.js           — Yahoo batch quotes with per-ticker caching (market cap, P/E, EPS, book value, shares, dividend yield)
 │   ├── companyEvents.js         — Upcoming events engine (SEC 8-K parsing, Yahoo calendarEvents+assetProfile, IR page discovery with parallel probing, Google search fallback)
 │   ├── __tests__/peerMetrics.test.js — Vitest: peer metrics bug reproduction tests
+│   ├── __tests__/splits.test.js — Vitest: split detection + cumulativeSplitFactor tests
+│   ├── __tests__/edgarFinancials.test.js — Vitest: taxonomy coverage + derived field tests
+│   ├── __tests__/taxonomyResolver.test.js — Vitest: Layer 2 taxonomy augmentation + provenance tests
+│   ├── __tests__/industryOverlays.test.js — Vitest: industry classifier + bank/REIT/insurance overlay tests
 │   └── aiResearch.js            — (planned) Claude API calls + prompt builders
 ├── hooks/
 │   ├── useResearch.js, useFinancials.js, usePrices.js, useEdgar.js
@@ -348,5 +360,38 @@ Writing tests first forces you to define "correct" before writing code — this 
 
 ### Known Risks
 - **Claude API cost**: Generate sections individually to control tokens. Use claude-sonnet-4-20250514 for efficiency.
-- **XBRL tag variation**: Taxonomy handles ~95% of large/mid-cap. Edge cases may need new tags.
+- **XBRL tag variation**: Taxonomy covers standard companies well; industry-specific debt tags added for REITs/banks/insurance/energy with ratio-based sanity check fallback. Edge cases may still surface for unusual industries.
 - **Key Metrics Price category**: Historical P/E per year not yet implemented (would need historical price × FY mapping).
+
+### Completed Data Quality Fixes (March 2026)
+Full RCA: `knowledge/financial-data-comparison-rca.md` (12-ticker comparison vs R1 Toolbox/Morningstar)
+- **P5 — Split detection**: Yahoo Finance primary (EDGAR XBRL fallback). Fixed `cumulativeSplitFactor` date comparison for non-calendar FY companies.
+- **P1b — Cash tag**: Added post-ASC 842 restricted cash tag. Fixes LULU $0 cash + net_debt → Management Score cascade.
+- **P1a — Debt tags**: Added REIT/bank/insurance/energy debt tags + ratio-based sanity check when `total_debt/liabilities < 5%`.
+- **P2 — Sign convention**: `negate` flag on WC components (receivables, inventory, other) flips XBRL balance-sheet-change to cash-impact convention at extraction time.
+- **P1e — SGA**: Separated `selling_expense` and `general_and_admin_expense` fields; derived `sga = selling + g_and_a` when combined tag is null.
+- **P3b — Net debt consistency**: `net_debt` now uses `total_debt_with_leases` (matching UI display) instead of `total_debt`.
+
+---
+
+## gstack
+
+Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.
+
+### Available Skills
+- `/office-hours` — Office hours session
+- `/plan-ceo-review` — CEO review planning
+- `/plan-eng-review` — Engineering review planning
+- `/plan-design-review` — Design review planning
+- `/design-consultation` — Design consultation
+- `/review` — Code review
+- `/ship` — Ship code
+- `/browse` — Web browsing (use this for ALL web browsing)
+- `/qa` — QA testing
+- `/qa-only` — QA testing only
+- `/design-review` — Design review
+- `/setup-browser-cookies` — Set up browser cookies
+- `/retro` — Retrospective
+- `/debug` — Debug session
+- `/document-release` — Document a release
+- `/gstack-upgrade` — Update gstack to the latest version
