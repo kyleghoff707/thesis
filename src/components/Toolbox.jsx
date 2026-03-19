@@ -441,6 +441,7 @@ export default function Toolbox({ getReport, updateReport, settings }) {
               edgarQuarterly={edgarQuarterly}
               latestPrice={latest?.close}
               ticker={ticker}
+              companyName={company?.name}
               version={statementsVersion}
               onVersionChange={setStatementsVersion}
               dataView={dataView}

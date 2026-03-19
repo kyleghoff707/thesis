@@ -9,29 +9,80 @@ function escapeCsv(val) {
   return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-function buildFinancialsCsv(displayYears, rows, getValue, fiscalMonths) {
+function buildAllFinancialsCsv({ ticker, companyName, layout, version, latestPrice, displayYears, fiscalMonths, stmtMap, ttmStmtMap, isQuarterly, quarterlyLabelMap, edgarQuarterly }) {
+  const now = new Date();
+  const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}`;
+  const lines = [];
+
+  // Header metadata
+  lines.push(`${escapeCsv(ticker)},${escapeCsv(companyName || '')}`);
+  lines.push(`Version,${version === 'restated' ? 'Restated' : 'As-Reported'}`);
+  lines.push(`Layout,${layout === 'expanded' ? 'Expanded' : 'Consolidated'}`);
+  lines.push(`Report,${isQuarterly ? 'Quarterly' : 'Annual'}`);
+  if (latestPrice != null) lines.push(`Price,$${latestPrice.toFixed(2)}`);
+  lines.push('');
+
+  // Column headers
   const headerRow = ['', ...displayYears.map(y => fiscalMonths?.[y] ? `${y} (${fiscalMonths[y]})` : String(y))];
-  const lines = [headerRow.map(escapeCsv).join(',')];
+  lines.push(headerRow.map(escapeCsv).join(','));
 
-  for (const row of rows) {
-    if (row.type === 'header') {
-      lines.push('');
-      lines.push(escapeCsv(row.label));
-      continue;
+  // getValue for a specific statement tab
+  function getValue(row, col, tab) {
+    // Quarterly mode — col is "Q1_2025" etc.
+    const qCol = quarterlyLabelMap?.[col];
+    if (qCol) {
+      const qData = edgarQuarterly?.quarterly?.[qCol.fy]?.[qCol.qtr];
+      if (!qData) return null;
+      const source = row.source || tab;
+      const val = qData[source]?.[row.key];
+      if (val == null) return null;
+      if (row.negate) return -Math.abs(val);
+      if (row.hideNegative && val <= 0) return null;
+      return val;
     }
-    if (row.type === 'spacer') continue;
-
-    const hasData = displayYears.some(y => getValue(row, y) != null);
-    if (!hasData) continue;
-
-    const cells = [escapeCsv(row.label)];
-    for (const y of displayYears) {
-      const val = getValue(row, y);
-      cells.push(val != null ? String(val) : '');
+    // TTM column
+    if (col === 'TTM') {
+      const ttmSource = row.source ? ttmStmtMap[row.source] : ttmStmtMap[tab];
+      const val = ttmSource?.[row.key];
+      if (val == null) return null;
+      if (row.negate) return -Math.abs(val);
+      if (row.hideNegative && val <= 0) return null;
+      return val;
     }
-    lines.push(cells.join(','));
+    // Annual mode
+    const source = row.source ? stmtMap[row.source] : stmtMap[tab];
+    const val = source?.[col]?.[row.key];
+    if (val == null) return null;
+    if (row.negate) return -Math.abs(val);
+    if (row.hideNegative && val <= 0) return null;
+    return val;
   }
-  return lines.join('\n');
+
+  // Emit all three statements
+  for (const tabKey of ['income', 'balance', 'cashFlow']) {
+    const allRows = ROWS[tabKey] || [];
+    const rows = allRows.filter(row => layout === 'expanded' || !row.expanded);
+
+    for (const row of rows) {
+      if (row.type === 'header') {
+        lines.push(escapeCsv(`----------${row.label}----------`));
+        continue;
+      }
+      if (row.type === 'spacer') continue;
+
+      const hasData = displayYears.some(y => getValue(row, y, tabKey) != null);
+      if (!hasData) continue;
+
+      const cells = [escapeCsv(row.label)];
+      for (const y of displayYears) {
+        const val = getValue(row, y, tabKey);
+        cells.push(val != null ? String(val) : '');
+      }
+      lines.push(cells.join(','));
+    }
+  }
+
+  return { csv: lines.join('\n'), timestamp: ts };
 }
 
 function buildKeyMetricsCsv(metricYears, metricCategories, keyMetrics, fiscalMonths) {
@@ -332,7 +383,7 @@ function TrendBars({ values }) {
 
 // ─── Component ───────────────────────────────────────────────
 
-export default function FinancialStatements({ edgarStatements, edgarQuarterly, latestPrice, ticker, version, onVersionChange, dataView, onDataViewChange, settings }) {
+export default function FinancialStatements({ edgarStatements, edgarQuarterly, latestPrice, ticker, companyName, version, onVersionChange, dataView, onDataViewChange, settings }) {
   const [view, setView] = useState('financials');
   const [tab, setTab] = useState('income');
   const [layout, setLayout] = useState(settings?.defaultLayout || 'expanded');
@@ -451,8 +502,6 @@ export default function FinancialStatements({ edgarStatements, edgarQuarterly, l
       return val;
     }
 
-    const tabLabel = TABS.find(t => t.key === tab)?.label || tab;
-
     // Column header labels and fiscal months for quarterly
     const columnHeadersRaw = isQuarterly
       ? displayQuarterColumns.map(c => ({ key: c.key, label: c.label, fiscalMonth: null }))
@@ -472,8 +521,13 @@ export default function FinancialStatements({ edgarStatements, edgarQuarterly, l
           <ViewToggle view={view} setView={setView} />
           <TableToolbar
             onExport={() => {
-              const csv = buildFinancialsCsv(orderedColumns, rows, getValue, fiscalMonths);
-              downloadCsv(csv, `${ticker || 'financials'}_${tabLabel.replace(/\s+/g, '_')}_${layout}_${version}${isQuarterly ? '_quarterly' : ''}.csv`);
+              const { csv, timestamp } = buildAllFinancialsCsv({
+                ticker, companyName, layout, version, latestPrice,
+                displayYears: orderedColumns, fiscalMonths,
+                stmtMap, ttmStmtMap, isQuarterly,
+                quarterlyLabelMap, edgarQuarterly,
+              });
+              downloadCsv(csv, `${ticker || 'financials'}_${layout === 'expanded' ? 'Expanded' : 'Consolidated'}_Financials_${timestamp}.csv`);
             }}
             columnOrder={columnOrder}
             onToggleOrder={() => setColumnOrder(o => o === 'newestFirst' ? 'oldestFirst' : 'newestFirst')}
