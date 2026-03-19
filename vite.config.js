@@ -329,6 +329,7 @@ function yahooQuotesPlugin() {
 // IR Events page discovery middleware.
 // Given a company website domain, probes common investor relations URL patterns
 // server-side (no CORS) and returns the first one that resolves.
+// Fires ALL candidates at once and returns the highest-priority match.
 // Serves JSON at /api/ir-events?website=https://www.sprouts.com
 function irEventsPlugin() {
   return {
@@ -344,7 +345,7 @@ function irEventsPlugin() {
             return;
           }
 
-          // Extract base domain: "https://www.sprouts.com" -> "sprouts.com"
+          // Extract registrable domain: "https://shop.lululemon.com" -> "lululemon.com"
           let hostname;
           try {
             hostname = new URL(website.startsWith('http') ? website : `https://${website}`).hostname;
@@ -353,24 +354,43 @@ function irEventsPlugin() {
             res.end(JSON.stringify({ error: 'Invalid website URL' }));
             return;
           }
-          const baseDomain = hostname.replace(/^www\./, '');
+          const parts = hostname.split('.');
+          let baseDomain;
+          if (parts.length > 2 && parts[parts.length - 2].length <= 3 && parts[parts.length - 1].length <= 2) {
+            baseDomain = parts.slice(-3).join('.'); // e.g., company.co.uk
+          } else {
+            baseDomain = parts.slice(-2).join('.'); // e.g., lululemon.com
+          }
 
-          // Common IR events page URL patterns (ordered by likelihood)
+          // Candidates ordered by priority (index = priority, lower = better)
+          // Covers varied naming: events-and-presentations, events, news-events,
+          // news-and-events, upcoming-events, webcasts, etc.
           const candidates = [
+            // investors.domain patterns (most common for large/mid-cap)
             `https://investors.${baseDomain}/events-and-presentations`,
+            `https://investors.${baseDomain}/events-and-presentations/default.aspx`,
             `https://investors.${baseDomain}/events`,
+            `https://investors.${baseDomain}/events/default.aspx`,
             `https://investors.${baseDomain}/news-events`,
+            `https://investors.${baseDomain}/news-and-events`,
+            `https://investors.${baseDomain}/upcoming-events`,
+            // ir.domain patterns
             `https://ir.${baseDomain}/events-and-presentations`,
             `https://ir.${baseDomain}/events`,
             `https://ir.${baseDomain}/news-events`,
+            // corporate.domain/investors patterns (e.g. LULU)
             `https://corporate.${baseDomain}/investors/news-and-events/events-and-presentations`,
             `https://corporate.${baseDomain}/investors/events`,
-            `https://${hostname}/investors/events-and-presentations`,
-            `https://${hostname}/investors/events`,
-            `https://${hostname}/investor-relations/events`,
-            `https://${hostname}/investors`,
-            `https://${hostname}/investor-relations`,
+            `https://corporate.${baseDomain}/investors/news-and-events`,
+            // domain/investors patterns
+            `https://${baseDomain}/investors/events-and-presentations`,
+            `https://${baseDomain}/investors/events`,
+            `https://${baseDomain}/investor-relations/events`,
+            // Broader IR root pages (less specific but still useful)
+            `https://${baseDomain}/investors`,
+            `https://${baseDomain}/investor-relations`,
             `https://investors.${baseDomain}`,
+            `https://ir.${baseDomain}`,
           ];
 
           const headers = {
@@ -378,32 +398,32 @@ function irEventsPlugin() {
             'Accept': 'text/html,application/xhtml+xml',
           };
 
-          // Probe candidates in parallel (batches of 4 to avoid hammering)
-          let foundUrl = null;
-          for (let i = 0; i < candidates.length && !foundUrl; i += 4) {
-            const batch = candidates.slice(i, i + 4);
-            const results = await Promise.allSettled(
-              batch.map(async (url) => {
-                const resp = await fetch(url, { method: 'HEAD', headers, redirect: 'follow', signal: AbortSignal.timeout(5000) });
-                if (resp.ok || resp.status === 405) return url; // 405 = some servers reject HEAD but page exists
-                // Also accept if GET redirect lands on a valid page
-                if (resp.status === 405) {
-                  const getResp = await fetch(url, { method: 'GET', headers, redirect: 'follow', signal: AbortSignal.timeout(5000) });
-                  if (getResp.ok) return url;
-                }
-                throw new Error(`${resp.status}`);
-              })
-            );
-            for (const r of results) {
-              if (r.status === 'fulfilled') {
-                foundUrl = r.value;
-                break;
+          // Fire ALL candidates at once — race for fastest, pick highest priority among successes
+          const results = await Promise.allSettled(
+            candidates.map(async (url, priority) => {
+              const resp = await fetch(url, { method: 'HEAD', headers, redirect: 'follow', signal: AbortSignal.timeout(4000) });
+              if (resp.ok) return { url, priority };
+              // Some servers reject HEAD — retry with GET
+              if (resp.status === 405 || resp.status === 403) {
+                const getResp = await fetch(url, { method: 'GET', headers, redirect: 'follow', signal: AbortSignal.timeout(4000) });
+                if (getResp.ok) return { url, priority };
+              }
+              throw new Error(`${resp.status}`);
+            })
+          );
+
+          // Pick the highest-priority (lowest index) successful result
+          let best = null;
+          for (const r of results) {
+            if (r.status === 'fulfilled') {
+              if (!best || r.value.priority < best.priority) {
+                best = r.value;
               }
             }
           }
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ url: foundUrl }));
+          res.end(JSON.stringify({ url: best?.url || null }));
         } catch (e) {
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: e.message }));

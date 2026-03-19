@@ -192,21 +192,43 @@ function deriveEventsFromFilings(filings) {
 
 // ─── IR Events Page Discovery (separate cache) ──────────────
 
+// Extract registrable domain, stripping subdomains like www, shop, store, etc.
+function extractBaseDomain(urlStr) {
+  try {
+    const hostname = new URL(urlStr.startsWith('http') ? urlStr : `https://${urlStr}`).hostname;
+    // Strip common non-IR subdomains; keep the registrable domain
+    const parts = hostname.split('.');
+    // Handle TLDs like .co.uk, .com.au (2-part TLD)
+    if (parts.length > 2 && parts[parts.length - 2].length <= 3 && parts[parts.length - 1].length <= 2) {
+      return parts.slice(-3).join('.'); // e.g., company.co.uk
+    }
+    return parts.slice(-2).join('.'); // e.g., lululemon.com from shop.lululemon.com
+  } catch {
+    return null;
+  }
+}
+
+// Build a Google search URL as instant fallback
+export function buildIRSearchUrl(label) {
+  const q = `${label} investor relations events presentations`;
+  return `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+}
+
 export async function discoverIREventsUrl(website) {
   if (!website) return null;
 
-  const cacheKey = `ir-events:v1:${website}`;
+  const cacheKey = `ir-events:v2:${website}`;
   const cached = cacheGet(cacheKey);
-  if (cached) return cached;
+  // cached === null means not in cache; cached === false means "we looked, found nothing"
+  if (cached !== null) return cached || null;
 
   const IS_DEV = import.meta.env.DEV;
   let url = null;
 
   if (!IS_DEV) {
     // In Tauri production, no CORS restrictions — try common pattern directly
-    const hostname = new URL(website.startsWith('http') ? website : `https://${website}`).hostname;
-    const baseDomain = hostname.replace(/^www\./, '');
-    url = `https://investors.${baseDomain}`;
+    const baseDomain = extractBaseDomain(website);
+    if (baseDomain) url = `https://investors.${baseDomain}`;
   } else {
     try {
       const res = await fetch(`/api/ir-events?website=${encodeURIComponent(website)}`);
@@ -219,8 +241,8 @@ export async function discoverIREventsUrl(website) {
     }
   }
 
-  // Cache even null results so we don't re-probe constantly
-  cacheSet(cacheKey, url || '__none__', 'events');
+  // Cache result: real URL or `false` for "not found" (falsy but not null, so cache hit works)
+  cacheSet(cacheKey, url || false, 'events');
   return url;
 }
 

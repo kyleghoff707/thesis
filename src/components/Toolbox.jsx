@@ -61,7 +61,7 @@ export default function Toolbox({ getReport, updateReport, settings }) {
   const { summary: insiderSummary } = useInsiders(ticker);
   const { data: compData, loading: compLoading, error: compError } = useCompensation(ticker);
   const { activities: guruActivities } = useGurus();
-  const { events: companyEvents, loading: eventsLoading, error: eventsError, irEventsUrl } = useCompanyEvents(ticker, company?.website);
+  const { events: companyEvents, loading: eventsLoading, error: eventsError, irLink, irLinkIsDirect } = useCompanyEvents(ticker, company?.website, company?.name);
 
   // Find gurus holding this ticker
   const gurusHoldingTicker = useMemo(() => {
@@ -402,15 +402,30 @@ export default function Toolbox({ getReport, updateReport, settings }) {
 
           {/* Events & News — independent of edgarStatements */}
           <div style={{ marginTop: 28 }}>
-            <CollapsibleSection title="Upcoming Events & News" defaultOpen={false}>
-              <CompanyEvents
-                events={companyEvents}
-                loading={eventsLoading}
-                error={eventsError}
-                ticker={ticker}
-                irEventsUrl={irEventsUrl}
-              />
-            </CollapsibleSection>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              <span style={{ fontSize: 15, fontWeight: 700, color: C.text }}>Upcoming Events & News</span>
+              {irLink && (
+                <a
+                  href={irLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={irLinkIsDirect ? 'Company IR events page' : 'Search for IR events page'}
+                  style={{ fontSize: 12, color: C.accent, textDecoration: 'none', fontWeight: 500, marginLeft: 'auto' }}
+                >{irLinkIsDirect ? 'Investor Relations' : 'Find IR Page'} &#x2197;</a>
+              )}
+            </div>
+            <CompanyEvents
+              events={companyEvents}
+              loading={eventsLoading}
+              error={eventsError}
+              ticker={ticker}
+            />
           </div>
         </div>
       )}

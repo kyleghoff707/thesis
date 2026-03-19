@@ -46,7 +46,7 @@ All tag definitions in `FRAMES_TAGS` and `PEER_FRAMES_TAGS` have a `period: 'ins
 Phases 1-4 complete — app shell, data engines, calculation engines, and full Toolbox UI all functional. EDGAR engine validated across 89 companies (production-ready). **The remaining work is Phase 5-8: AI-driven report generation.**
 
 ### What's Built
-All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems (validation, guru, ticker, N-PORT, compensation), Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores + derived metric computation + Yahoo data backfill + per-ticker caching + sparse peer filtering + data completeness indicators + industry-aware column defaults. Tests via vitest. See source tree below.
+All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems (validation, guru, ticker, N-PORT, compensation), Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores + derived metric computation + Yahoo data backfill + per-ticker caching + sparse peer filtering + data completeness indicators + industry-aware column defaults, Upcoming Events & News section on Overview (SEC 8-K events + Yahoo calendar + IR page discovery). Tests via vitest. See source tree below.
 
 ### What's NOT Built
 - AI report generation (One Pager, Pitch Deck, Full Story) — Phases 5-7
@@ -200,6 +200,7 @@ src/
 │   ├── Insiders.jsx, ExecutiveCompensation.jsx, Filings.jsx
 │   ├── Gurus.jsx, GuruPortfolio.jsx
 │   ├── GuruAudit.jsx, TickerAudit.jsx, NportAudit.jsx, CompAudit.jsx, TickerDataAudit.jsx
+│   ├── CompanyEvents.jsx        — Upcoming Events & News (SEC 8-K, Yahoo calendar, date badges, event rows)
 │   ├── Competitors.jsx          — Competitor benchmarking (SIC peers, 22 metrics, private competitors, completeness dots, sparse peer filtering, industry-aware column defaults)
 │   ├── Validation.jsx, CollapsibleSection.jsx
 │   ├── SensitivityTable.jsx     — (planned) reusable valuation matrix
@@ -222,12 +223,14 @@ src/
 │   ├── peers.js                 — SIC-based peer discovery (browse-edgar + Frames fallback)
 │   ├── peerMetrics.js           — Peer metrics via Frames API + derived metrics (GrossProfit, OpIncome from building blocks) + Yahoo backfill + completeness scoring + multi-year scores
 │   ├── batchQuotes.js           — Yahoo batch quotes with per-ticker caching (market cap, P/E, EPS, book value, shares, dividend yield)
+│   ├── companyEvents.js         — Upcoming events engine (SEC 8-K parsing, Yahoo calendarEvents+assetProfile, IR page discovery with parallel probing, Google search fallback)
 │   ├── __tests__/peerMetrics.test.js — Vitest: peer metrics bug reproduction tests
 │   └── aiResearch.js            — (planned) Claude API calls + prompt builders
 ├── hooks/
 │   ├── useResearch.js, useFinancials.js, usePrices.js, useEdgar.js
 │   ├── useGurus.js, useInsiders.js, useCompensation.js
 │   ├── useCompetitors.js        — Progressive 3-phase loading (peers → metrics+Yahoo backfill → scores) + completeness scoring
+│   ├── useCompanyEvents.js      — Hook for company events + two-phase IR link (direct probe → Google search fallback)
 │   ├── useAnalystData.js, useAnalystEstimates.js
 │   ├── useWatchlists.js, useSettings.js, useTheme.js
 ├── data/validationCompanies.js

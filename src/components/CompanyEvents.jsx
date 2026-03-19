@@ -146,7 +146,7 @@ function SectionHeader({ label, linkText, linkUrl }) {
 
 // ─── Main component ──────────────────────────────────────────
 
-export default function CompanyEvents({ events, loading, error, ticker, irEventsUrl }) {
+export default function CompanyEvents({ events, loading, error, ticker }) {
   if (loading) {
     return (
       <div style={{ color: C.textMuted, fontSize: 12, fontStyle: 'italic', padding: '8px 0' }}>
@@ -185,7 +185,7 @@ export default function CompanyEvents({ events, loading, error, ticker, irEvents
       {/* Upcoming section */}
       {hasUpcoming && (
         <div>
-          <SectionHeader label="Upcoming" linkText={irEventsUrl ? 'Investor Relations' : null} linkUrl={irEventsUrl} />
+          <SectionHeader label="Upcoming" />
           <div style={{
             background: C.bgCard,
             border: `1px solid ${C.border}`,
