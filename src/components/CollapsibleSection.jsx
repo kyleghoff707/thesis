@@ -1,8 +1,38 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { C } from '../theme';
 
 export default function CollapsibleSection({ title, defaultOpen = true, badge, children }) {
   const [open, setOpen] = useState(defaultOpen);
+  const contentRef = useRef(null);
+  const [height, setHeight] = useState(defaultOpen ? 'auto' : 0);
+  const [overflow, setOverflow] = useState(defaultOpen ? 'visible' : 'hidden');
+
+  useEffect(() => {
+    if (!contentRef.current) return;
+
+    if (open) {
+      // Measure the full height, animate to it, then switch to auto
+      const contentHeight = contentRef.current.scrollHeight;
+      setOverflow('hidden');
+      setHeight(contentHeight);
+      const timer = setTimeout(() => {
+        setHeight('auto');
+        setOverflow('visible');
+      }, 280);
+      return () => clearTimeout(timer);
+    } else {
+      // Collapse: set explicit height first so transition works, then go to 0
+      const contentHeight = contentRef.current.scrollHeight;
+      setHeight(contentHeight);
+      setOverflow('hidden');
+      // Force reflow before setting to 0
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setHeight(0);
+        });
+      });
+    }
+  }, [open]);
 
   return (
     <div style={{
@@ -19,12 +49,12 @@ export default function CollapsibleSection({ title, defaultOpen = true, badge, c
           display: 'flex',
           alignItems: 'center',
           gap: 10,
-          padding: '12px 16px',
+          padding: '14px 16px',
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
           color: C.text,
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: 700,
           textAlign: 'left',
           fontFamily: 'inherit',
@@ -33,9 +63,9 @@ export default function CollapsibleSection({ title, defaultOpen = true, badge, c
       >
         <span style={{
           display: 'inline-block',
-          transition: 'transform 0.15s',
+          transition: 'transform 0.25s ease',
           transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
-          fontSize: 10,
+          fontSize: 11,
           color: C.textMuted,
         }}>
           ▶
@@ -43,11 +73,18 @@ export default function CollapsibleSection({ title, defaultOpen = true, badge, c
         {title}
         {badge && <span style={{ marginLeft: 'auto' }}>{badge}</span>}
       </button>
-      {open && (
+      <div
+        ref={contentRef}
+        style={{
+          height: height,
+          overflow: overflow,
+          transition: 'height 0.25s ease',
+        }}
+      >
         <div style={{ padding: '0 16px 16px' }}>
           {children}
         </div>
-      )}
+      </div>
     </div>
   );
 }
