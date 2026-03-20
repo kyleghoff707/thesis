@@ -6,7 +6,7 @@
 // Data: thes1s-company-assignments.json (5,758 classifications)
 // Lookup priority: CIK → ticker → SIC fallback
 
-import companyAssignments from '../../taxonomy-research/thes1s-company-assignments.json';
+import companyAssignments from '../../industry-classification/thes1s-company-assignments.json';
 import { classifyBySIC as classifyBySIC_legacy } from './sicClassification';
 
 // ─── Lazy Indexes ──────────────────────────────────────────

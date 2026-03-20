@@ -8,7 +8,7 @@
  *   Step 2: Classify via Yahoo Finance (sector/industry via yahoo-finance2)
  *   Step 3: Build final assignments (Yahoo-classified + unclassified pending retry)
  *
- * Output: taxonomy-research/thes1s-company-assignments.json
+ * Output: industry-classification/thes1s-company-assignments.json
  *
  * Usage:
  *   node scripts/classify-universe.js                # Run full pipeline
@@ -28,7 +28,7 @@ const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..');
-const TAXONOMY_DIR = path.join(ROOT, 'knowledge', 'taxonomy-research');
+const TAXONOMY_DIR = path.join(ROOT, 'industry-classification');
 const PIPELINE_DIR = path.join(TAXONOMY_DIR, 'pipeline');
 
 // Ensure pipeline dir exists

@@ -8,10 +8,11 @@
 import { lookupCIK, fetchCompanyFacts, fetchCompanyInfo, extractAnnualFact, extractAnnualFactOriginal, extractFiscalYearEnds, findLatestQuarter } from './edgar';
 import { cacheGetAsync, cacheSet } from './cache';
 import { fetchSplits, cumulativeSplitFactor } from './splits';
-import { augmentTaxonomy } from './taxonomyResolver';
+// Layer 2/3 disconnected — kept dormant, not deleted
+// import { augmentTaxonomy } from './taxonomyResolver';
 import { classifyIndustryType } from './industryClassifier';
 import { getOverlay } from './industryOverlays';
-import { collectKnownTags, getLayer3Suggestions } from './companyAdapter';
+// import { collectKnownTags, getLayer3Suggestions } from './companyAdapter';
 
 // ─── XBRL Taxonomy Map ──────────────────────────────────────
 // Each field: { tags: [...fallback order], unit: 'USD' | 'USD/shares' | 'shares' }
@@ -143,6 +144,12 @@ const BALANCE_TAXONOMY = [
     'CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents',
     'Cash',
   ]},
+  // Broader cash definition: includes restricted cash (for CF ending/beginning cash reconciliation)
+  { field: 'cash_and_restricted_cash', unit: 'USD', tags: [
+    'CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents',
+    'CashAndCashEquivalentsAtCarryingValue',
+    'Cash',
+  ]},
   // Expanded sub-breakdowns of cash
   { field: 'cash_only', unit: 'USD', tags: [
     'Cash',
@@ -239,7 +246,11 @@ const BALANCE_TAXONOMY = [
   ]},
   { field: 'intangible_assets', unit: 'USD', tags: [
     'IntangibleAssetsNetExcludingGoodwill',
+  ]},
+  { field: 'finite_lived_intangibles', unit: 'USD', tags: [
     'FiniteLivedIntangibleAssetsNet',
+  ]},
+  { field: 'indefinite_lived_intangibles', unit: 'USD', tags: [
     'IndefiniteLivedIntangibleAssetsExcludingGoodwill',
   ]},
   { field: 'long_term_investments', unit: 'USD', tags: [
@@ -269,6 +280,10 @@ const BALANCE_TAXONOMY = [
   // ── Current Liabilities ──
   { field: 'accounts_payable', unit: 'USD', tags: [
     'AccountsPayableCurrent',
+  ]},
+  // Combined payables + accrued (MS DataID 23166 — "Payables and Accrued Expenses")
+  // Previously used as AP fallback, but caused 2-3x overstatement for combined-only filers
+  { field: 'payables_and_accrued', unit: 'USD', tags: [
     'AccountsPayableAndAccruedLiabilitiesCurrent',
   ]},
   { field: 'accrued_liabilities', unit: 'USD', tags: [
@@ -376,6 +391,11 @@ const BALANCE_TAXONOMY = [
     'StockholdersEquity',
     'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest',
   ]},
+  // Total equity (parent + NCI) — for Morningstar "Total Equity" comparison
+  { field: 'total_equity', unit: 'USD', tags: [
+    'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest',
+    'StockholdersEquity',
+  ]},
   { field: 'equity_attributable_to_parent', unit: 'USD', tags: [
     'StockholdersEquity',
   ]},
@@ -410,12 +430,22 @@ const CASHFLOW_TAXONOMY = [
     'DepreciationAmortizationAndAccretionNet',
     'OtherDepreciationAndAmortization',
   ]},
+  // Alternate D&A tags extracted separately — computeDerivedFields picks the broadest
+  // (largest value) across all D&A-related fields. Needed because extractSection uses
+  // first-tag-wins, but for some companies (CRM, WFC) a lower-priority tag is broader.
+  { field: '_da_alt_da', unit: 'USD', tags: ['DepreciationAndAmortization'] },
+  { field: '_da_alt_accretion', unit: 'USD', tags: ['DepreciationAmortizationAndAccretionNet'] },
   // Narrow depreciation-only tag (PP&E) — used as fallback when combined D&A tag is missing
   { field: 'depreciation_only', unit: 'USD', tags: [
     'Depreciation',
   ]},
   { field: 'amortization_of_intangibles', unit: 'USD', tags: [
     'AmortizationOfIntangibleAssets',
+  ]},
+  // Broader amortization tag (CF reconciliation) — covers acquisition-related + other amort
+  // INTU, MSFT file this instead of reporting amort within DDA
+  { field: '_amort_adjustment', unit: 'USD', tags: [
+    'AdjustmentForAmortization',
   ]},
   { field: 'stock_based_compensation', unit: 'USD', tags: [
     'ShareBasedCompensation',
@@ -459,18 +489,40 @@ const CASHFLOW_TAXONOMY = [
   { field: 'sale_of_ppe', unit: 'USD', tags: [
     'ProceedsFromSaleOfPropertyPlantAndEquipment',
   ]},
+  // Investment purchases: aggregate tag (first-match) then component fields for summation
   { field: 'purchase_of_investments', unit: 'USD', tags: [
     'PaymentsToAcquireInvestments',
-    'PaymentsToAcquireShortTermInvestments',
-    'PaymentsToAcquireAvailableForSaleSecuritiesDebt',
     'PaymentsToAcquireMarketableSecurities',
   ]},
+  // Component fields for companies that report AFS/HTM/STI separately (JPM, WFC, MET, AAPL)
+  { field: 'purchase_of_investments_afs', unit: 'USD', tags: [
+    'PaymentsToAcquireAvailableForSaleSecuritiesDebt',
+    'PaymentsToAcquireAvailableForSaleSecurities',
+  ]},
+  { field: 'purchase_of_investments_htm', unit: 'USD', tags: [
+    'PaymentsToAcquireHeldToMaturitySecurities',
+    'PaymentsToAcquireHeldToMaturityInvestments',
+  ]},
+  { field: 'purchase_of_investments_sti', unit: 'USD', tags: [
+    'PaymentsToAcquireShortTermInvestments',
+  ]},
+  // Investment sales: aggregate tag (first-match) then component fields for summation
   { field: 'sale_of_investments', unit: 'USD', tags: [
     'ProceedsFromSaleOfInvestments',
-    'ProceedsFromSaleOfShortTermInvestments',
     'ProceedsFromSaleAndMaturityOfMarketableSecurities',
-    'ProceedsFromMaturitiesPrepaymentsAndCallsOfAvailableForSaleSecurities',
+  ]},
+  // Component fields for companies that report sale + maturity separately
+  { field: 'sale_of_investments_afs', unit: 'USD', tags: [
     'ProceedsFromSaleOfAvailableForSaleSecuritiesDebt',
+    'ProceedsFromSaleOfAvailableForSaleSecurities',
+  ]},
+  { field: 'sale_of_investments_maturity', unit: 'USD', tags: [
+    'ProceedsFromMaturitiesPrepaymentsAndCallsOfAvailableForSaleSecurities',
+    'ProceedsFromMaturitiesPrepaymentsAndCallsOfHeldToMaturitySecurities',
+  ]},
+  { field: 'sale_of_investments_sti', unit: 'USD', tags: [
+    'ProceedsFromSaleOfShortTermInvestments',
+    'ProceedsFromSaleAndMaturityOfShortTermInvestments',
   ]},
   { field: 'purchase_of_business', unit: 'USD', tags: [
     'PaymentsToAcquireBusinessesNetOfCashAcquired',
@@ -550,10 +602,10 @@ const CASHFLOW_TAXONOMY = [
   ]},
 ];
 
-// Layer 2 augmented taxonomies — computed once at module load
-const AUG_INCOME = augmentTaxonomy(INCOME_TAXONOMY);
-const AUG_BALANCE = augmentTaxonomy(BALANCE_TAXONOMY);
-const AUG_CASHFLOW = augmentTaxonomy(CASHFLOW_TAXONOMY);
+// Layer 2/3 disconnected — use raw Layer 1 taxonomies only
+const AUG_INCOME = INCOME_TAXONOMY;
+const AUG_BALANCE = BALANCE_TAXONOMY;
+const AUG_CASHFLOW = CASHFLOW_TAXONOMY;
 
 // ─── Extraction ──────────────────────────────────────────────
 
@@ -702,7 +754,7 @@ function getDerivedFormula(field, inc, bal, cf) {
     case 'ebit':
       if (inc.operating_income_loss != null) return 'operating_income_loss';
       return 'income_before_tax + interest_expense';
-    case 'ebitda': return 'ebit + depreciation_amortization';
+    case 'ebitda': return 'ebit + depreciation_amortization (CF D&A preferred)';
     case 'total_expenses': return 'cost_of_revenue + operating_expenses';
     case 'effective_tax_rate': return '(income_tax / income_before_tax) × 100';
 
@@ -716,12 +768,12 @@ function getDerivedFormula(field, inc, bal, cf) {
         return 'current_liabilities + noncurrent_liabilities';
       return 'liabilities_and_equity - equity - minority_interest';
     case 'total_debt':
-      if (bal.liabilities != null && bal.liabilities > 0 && (bal.short_term_debt ?? 0) + (bal.current_portion_lt_debt ?? 0) + (bal.long_term_debt ?? 0) > 0
-        && ((bal.short_term_debt ?? 0) + (bal.current_portion_lt_debt ?? 0) + (bal.long_term_debt ?? 0)) / bal.liabilities < 0.05)
+      if (bal.liabilities != null && bal.liabilities > 0 && (bal.short_term_debt ?? 0) + (bal.current_portion_lt_debt ?? 0) + (bal.long_term_debt ?? 0) + (bal.finance_lease_liability_current ?? 0) + (bal.finance_lease_liability_noncurrent ?? 0) > 0
+        && ((bal.short_term_debt ?? 0) + (bal.current_portion_lt_debt ?? 0) + (bal.long_term_debt ?? 0) + (bal.finance_lease_liability_current ?? 0) + (bal.finance_lease_liability_noncurrent ?? 0)) / bal.liabilities < 0.05)
         return 'liabilities - known_non_debt_items (sanity check fallback)';
-      return 'short_term_debt + current_portion_lt_debt + long_term_debt';
-    case 'total_debt_with_leases': return 'total_debt + operating_lease_liabilities + finance_lease_liabilities';
-    case 'net_debt': return 'total_debt_with_leases - cash';
+      return 'short_term_debt + current_portion_lt_debt + long_term_debt + finance_lease_liabilities';
+    case 'total_debt_with_leases': return 'total_debt + operating_lease_liabilities';
+    case 'net_debt': return 'total_debt - cash';
     case 'payables_and_accrued': return 'accounts_payable + accrued_liabilities';
     case 'short_term_debt_and_leases': return 'short_term_debt + current_portion_lt_debt + finance_lease_liability_current';
     case 'lt_debt_and_leases_noncurrent': return 'long_term_debt + finance_lease_liability_noncurrent';
@@ -744,8 +796,8 @@ function getDerivedFormula(field, inc, bal, cf) {
     case 'purchase_sale_of_business_net': return 'sale_of_business - |purchase_of_business|';
     case 'net_lt_debt_issuance': return 'proceeds_from_lt_debt - |repayments_of_lt_debt|';
     case 'net_st_debt_issuance': return 'proceeds_from_st_debt - |repayments_of_st_debt|';
-    case 'ending_cash_position': return 'cash (balance sheet)';
-    case 'beginning_cash_position': return 'prior year cash (balance sheet)';
+    case 'ending_cash_position': return 'cash_and_restricted_cash (balance sheet, broader definition)';
+    case 'beginning_cash_position': return 'prior year cash_and_restricted_cash (balance sheet, broader definition)';
 
     // Industry overlay derived fields
     case 'efficiency_ratio': return '(noninterest_expense / (NII + noninterest_income)) × 100';
@@ -822,8 +874,8 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       inc.ebit = inc.income_before_tax + inc.interest_expense;
     }
 
-    // EBITDA = EBIT + D&A
-    const da = inc.depreciation_amortization_is || cf.depreciation_amortization;
+    // EBITDA = EBIT + D&A (prefer CF D&A — comprehensive; IS D&A often $0 when embedded in COGS/SGA)
+    const da = cf.depreciation_amortization || inc.depreciation_amortization_is;
     if (inc.ebit != null && da != null) {
       inc.ebitda = inc.ebit + da;
     }
@@ -859,6 +911,26 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       }
     }
 
+    // PP&E: Morningstar includes operating lease ROU assets in "Net PPE"
+    // Add ROU asset to PP&E net when reported separately (most companies post-ASC 842)
+    if (bal.property_plant_equipment != null && bal.operating_lease_rou_asset != null) {
+      bal.property_plant_equipment += bal.operating_lease_rou_asset;
+    }
+
+    // PP&E Gross: same ROU inclusion for consistency
+    if (bal.property_plant_equipment_gross != null && bal.operating_lease_rou_asset != null) {
+      bal.property_plant_equipment_gross += bal.operating_lease_rou_asset;
+    }
+
+    // Intangible Assets: if combined tag is null, sum finite + indefinite
+    if (bal.intangible_assets == null) {
+      const finite = bal.finite_lived_intangibles ?? 0;
+      const indefinite = bal.indefinite_lived_intangibles ?? 0;
+      if (finite || indefinite) {
+        bal.intangible_assets = finite + indefinite;
+      }
+    }
+
     // Non-Current Assets = Total Assets - Current Assets
     if (bal.noncurrent_assets == null && bal.assets != null && bal.current_assets != null) {
       bal.noncurrent_assets = bal.assets - bal.current_assets;
@@ -880,12 +952,14 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       bal.liabilities = bal.liabilities_and_equity - bal.equity - (bal.minority_interest ?? 0);
     }
 
-    // Traditional Debt = Short-Term Debt + Current Portion LT Debt + Long-Term Debt
-    // (excludes lease obligations — used for Net Debt and scoring)
+    // Total Debt = Traditional Debt + Finance/Capital Lease Obligations (matches Morningstar)
+    // Includes finance leases, excludes operating leases.
     const std = bal.short_term_debt ?? 0;
     const cpltd = bal.current_portion_lt_debt ?? 0;
     const ltd = bal.long_term_debt ?? 0;
-    bal.total_debt = std + cpltd + ltd;
+    const flCurrent = bal.finance_lease_liability_current ?? 0;
+    const flNoncurrent = bal.finance_lease_liability_noncurrent ?? 0;
+    bal.total_debt = std + cpltd + ltd + flCurrent + flNoncurrent;
 
     // Debt sanity check: if total_debt / liabilities < 5% but liabilities are significant,
     // the specific debt tags likely have gaps (common for REITs, banks, insurance, energy).
@@ -908,17 +982,14 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       }
     }
 
-    // Total Debt with Leases = Traditional Debt + All Lease Obligations
+    // Total Debt with Leases = Total Debt + Operating Lease Obligations
     // (matches Rule One Toolbox "Total Debt (Short & Long-Term)" display)
     const olCurrent = bal.operating_lease_liability_current ?? 0;
     const olNoncurrent = bal.operating_lease_liability_noncurrent ?? 0;
-    const flCurrent = bal.finance_lease_liability_current ?? 0;
-    const flNoncurrent = bal.finance_lease_liability_noncurrent ?? 0;
-    bal.total_debt_with_leases = bal.total_debt + olCurrent + olNoncurrent + flCurrent + flNoncurrent;
+    bal.total_debt_with_leases = bal.total_debt + olCurrent + olNoncurrent;
 
-    // Net Debt = Total Debt (with leases) - Cash & Cash Equivalents
-    // Uses the same debt figure shown in the UI for consistency (Fix 6 / P3b)
-    bal.net_debt = bal.total_debt_with_leases - (bal.cash ?? 0);
+    // Net Debt = Total Debt - Cash (excludes operating leases, matches Morningstar)
+    bal.net_debt = bal.total_debt - (bal.cash ?? 0);
 
     // ── Expanded Balance Sheet Derived ──
 
@@ -941,6 +1012,19 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       if (total) bal.lt_debt_and_leases_noncurrent = total;
     }
 
+    // Total Lease Liability = Operating + Finance (matches Morningstar "Capital Lease Obligations")
+    // Post-ASC 842, MS includes both operating and finance leases in this line item
+    if (bal.total_lease_liability_current == null) {
+      const ol = bal.operating_lease_liability_current ?? 0;
+      const fl = bal.finance_lease_liability_current ?? 0;
+      if (ol || fl) bal.total_lease_liability_current = ol + fl;
+    }
+    if (bal.total_lease_liability_noncurrent == null) {
+      const ol = bal.operating_lease_liability_noncurrent ?? 0;
+      const fl = bal.finance_lease_liability_noncurrent ?? 0;
+      if (ol || fl) bal.total_lease_liability_noncurrent = ol + fl;
+    }
+
     // Working Capital = Current Assets - Current Liabilities
     if (bal.working_capital == null && bal.current_assets != null && bal.current_liabilities != null) {
       bal.working_capital = bal.current_assets - bal.current_liabilities;
@@ -957,6 +1041,10 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       bal.net_tangible_assets = (bal.equity ?? 0) - (bal.goodwill ?? 0) - (bal.intangible_assets ?? 0);
     }
 
+    // NOTE: Residual "Other" BS derivations (OtherCL, OtherNCL, OtherNCA) were attempted
+    // but reverted — named items aren't accurate enough. Residual computation amplifies
+    // tag-level errors (e.g., OtherCL went 28→64 DIFF). Blocked until named items reach ~100%.
+
     // Total Capitalization = Equity + Total Debt (traditional)
     if (bal.total_capitalization == null && bal.equity != null) {
       bal.total_capitalization = (bal.equity ?? 0) + bal.total_debt;
@@ -964,10 +1052,59 @@ function computeDerivedFields(years, income, balance, cashFlow) {
 
     // ── Cash Flow Derived ──
 
-    // D&A enhancement: if combined D&A tag was missing for this year but we have
-    // the narrow Depreciation tag, sum it with AmortizationOfIntangibleAssets
-    if (cf.depreciation_amortization == null && cf.depreciation_only != null) {
-      cf.depreciation_amortization = cf.depreciation_only + (cf.amortization_of_intangibles ?? 0);
+    // D&A enhancement: MS always uses the BROADEST available D&A figure.
+    // extractSection uses first-tag-wins, but for some companies (CRM, WFC),
+    // a lower-priority tag is broader. Pick the largest across all D&A sources.
+    {
+      const candidates = [
+        cf.depreciation_amortization,       // Primary: DDA or D&A (first-tag-wins)
+        cf._da_alt_da,                      // DepreciationAndAmortization (may be broader than DDA)
+        cf._da_alt_accretion,               // DepreciationAmortizationAndAccretionNet (banks)
+      ].filter(v => v != null);
+      // Also consider component sum: Depreciation + broadest amortization
+      // AdjustmentForAmortization is broader than AmortizationOfIntangibleAssets
+      // (includes acquisition-related amort — INTU, MSFT)
+      if (cf.depreciation_only != null) {
+        const amort = Math.max(cf._amort_adjustment ?? 0, cf.amortization_of_intangibles ?? 0);
+        candidates.push(cf.depreciation_only + amort);
+      }
+      if (candidates.length > 0) {
+        cf.depreciation_amortization = Math.max(...candidates);
+      }
+      // Clean up internal-only fields
+      delete cf._da_alt_da;
+      delete cf._da_alt_accretion;
+      delete cf._amort_adjustment;
+    }
+
+
+    // Investment sales: sum components when aggregate tag is missing or too narrow.
+    // Companies like JPM, WFC, MET, AAPL report AFS sales + maturity proceeds as separate line items.
+    // MS sums all investment sale proceeds.
+    {
+      const afs = cf.sale_of_investments_afs;
+      const maturity = cf.sale_of_investments_maturity;
+      const sti = cf.sale_of_investments_sti;
+      const componentSum = (afs ?? 0) + (maturity ?? 0) + (sti ?? 0);
+      // Use component sum if: (a) aggregate is null, or (b) components sum to more (aggregate is partial)
+      if (componentSum > 0 && (cf.sale_of_investments == null || componentSum > cf.sale_of_investments * 1.05)) {
+        cf.sale_of_investments = componentSum;
+      }
+    }
+
+    // Investment purchases: sum components when aggregate tag is missing or too narrow.
+    {
+      const afs = cf.purchase_of_investments_afs;
+      const htm = cf.purchase_of_investments_htm;
+      const sti = cf.purchase_of_investments_sti;
+      const componentSum = (afs != null ? Math.abs(afs) : 0) + (htm != null ? Math.abs(htm) : 0) + (sti != null ? Math.abs(sti) : 0);
+      const currentAbs = cf.purchase_of_investments != null ? Math.abs(cf.purchase_of_investments) : 0;
+      // Use component sum if: (a) aggregate is null, or (b) components sum to more
+      if (componentSum > 0 && (cf.purchase_of_investments == null || componentSum > currentAbs * 1.05)) {
+        // Preserve sign convention (purchases are typically negative in XBRL)
+        cf.purchase_of_investments = cf.purchase_of_investments != null && cf.purchase_of_investments < 0
+          ? -componentSum : componentSum;
+      }
     }
 
     // Free Cash Flow = Operating CF - CapEx
@@ -1060,9 +1197,14 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       }
     }
 
-    // Ending cash position = current year balance sheet cash
-    if (cf.ending_cash_position == null && bal.cash != null) {
-      cf.ending_cash_position = bal.cash;
+    // B7/B8: Residual "Other" categories — still blocked.
+    // Attempted twice (B7 and B8) — both caused accuracy regressions because
+    // errors in named items (especially sale/purchase of investments, D&A) get
+    // amplified into the residual. Will only work when named items are ~100% accurate.
+
+    // Ending cash position = current year balance sheet cash (prefer broader definition including restricted cash)
+    if (cf.ending_cash_position == null) {
+      cf.ending_cash_position = bal.cash_and_restricted_cash ?? bal.cash ?? null;
     }
   }
 
@@ -1073,8 +1215,8 @@ function computeDerivedFields(years, income, balance, cashFlow) {
     const priorYear = sortedYears[i + 1];
     if (cf.beginning_cash_position == null && priorYear != null) {
       const priorBal = balance[priorYear];
-      if (priorBal?.cash != null) {
-        cf.beginning_cash_position = priorBal.cash;
+      if (priorBal) {
+        cf.beginning_cash_position = priorBal.cash_and_restricted_cash ?? priorBal.cash ?? null;
       }
     }
   }
@@ -1433,8 +1575,8 @@ export async function fetchEdgarStatements(ticker, options = {}) {
   const industryType = classifyIndustryType(sicCode);
   const overlay = getOverlay(industryType);
 
-  // Include split count + version + industry type in cache key. v6: Layer 3 AI adapter added.
-  const cacheKey = `edgar-statements:v6:${ticker.toUpperCase()}:s${splits.length}:${version}:${industryType}`;
+  // Include split count + version + industry type in cache key. v7: Layer 2/3 disconnected, Layer 1 only.
+  const cacheKey = `edgar-statements:v7:${ticker.toUpperCase()}:s${splits.length}:${version}:${industryType}`;
   const cached = await cacheGetAsync(cacheKey);
   if (cached) return cached;
 
@@ -1448,77 +1590,19 @@ export async function fetchEdgarStatements(ticker, options = {}) {
   let overlayCfSection = { fieldData: {}, years: new Set(), provenanceData: {} };
   if (overlay) {
     if (overlay.incomeFields?.length > 0) {
-      overlayIncSection = extractSection(facts, augmentTaxonomy(overlay.incomeFields), version);
+      overlayIncSection = extractSection(facts, overlay.incomeFields, version);
     }
     if (overlay.balanceFields?.length > 0) {
-      overlayBalSection = extractSection(facts, augmentTaxonomy(overlay.balanceFields), version);
+      overlayBalSection = extractSection(facts, overlay.balanceFields, version);
     }
     if (overlay.cashFlowFields?.length > 0) {
-      overlayCfSection = extractSection(facts, augmentTaxonomy(overlay.cashFlowFields), version);
+      overlayCfSection = extractSection(facts, overlay.cashFlowFields, version);
     }
   }
 
-  // ── Layer 3: AI-assisted gap-fill ──────────────────────────
-  // After L1+L2 extraction, check pre-built S&P 500 tag classifications
-  // for orphan XBRL tags that could fill unresolved fields.
-  const augOverlayInc = overlay?.incomeFields ? augmentTaxonomy(overlay.incomeFields) : [];
-  const augOverlayBal = overlay?.balanceFields ? augmentTaxonomy(overlay.balanceFields) : [];
-  const augOverlayCf = overlay?.cashFlowFields ? augmentTaxonomy(overlay.cashFlowFields) : [];
-  const knownTags = collectKnownTags(AUG_INCOME, AUG_BALANCE, AUG_CASHFLOW, augOverlayInc, augOverlayBal, augOverlayCf);
-
-  // Build missing fields list from all three sections
-  const allResolvedIncome = new Set([...Object.keys(incSection.fieldData), ...Object.keys(overlayIncSection.fieldData)]);
-  const allResolvedBalance = new Set([...Object.keys(balSection.fieldData), ...Object.keys(overlayBalSection.fieldData)]);
-  const allResolvedCashFlow = new Set([...Object.keys(cfSection.fieldData), ...Object.keys(overlayCfSection.fieldData)]);
-
-  const missingFields = [];
-  for (const def of INCOME_TAXONOMY) {
-    if (!allResolvedIncome.has(def.field)) {
-      missingFields.push({ field: def.field, section: 'income', unit: def.unit, splitSensitive: def.splitSensitive || false });
-    }
-  }
-  for (const def of BALANCE_TAXONOMY) {
-    if (!allResolvedBalance.has(def.field)) {
-      missingFields.push({ field: def.field, section: 'balance', unit: def.unit, splitSensitive: def.splitSensitive || false });
-    }
-  }
-  for (const def of CASHFLOW_TAXONOMY) {
-    if (!allResolvedCashFlow.has(def.field)) {
-      missingFields.push({ field: def.field, section: 'cashFlow', unit: def.unit, splitSensitive: def.splitSensitive || false });
-    }
-  }
-
-  // Get Layer 3 suggestions from pre-built cache (synchronous, no API calls)
-  let layer3Count = 0;
-  const l3Suggestions = getLayer3Suggestions(facts, missingFields, knownTags);
-  for (const suggestion of l3Suggestions) {
-    const { field, tag, unit, section, confidence, negate, splitSensitive } = suggestion;
-    const extractFn = (version === 'original' || splitSensitive) ? extractAnnualFactOriginal : extractAnnualFact;
-    const data = extractFn(facts, tag, unit);
-    if (!data) continue;
-
-    // Determine target section
-    const target = section === 'income' ? incSection
-                 : section === 'balance' ? balSection
-                 : cfSection;
-
-    // Only fill gaps — don't overwrite L1/L2 values
-    let filled = false;
-    for (const [year, val] of Object.entries(data)) {
-      if (target.fieldData[field]?.[year] == null) {
-        if (!target.fieldData[field]) target.fieldData[field] = {};
-        target.fieldData[field][year] = negate ? -val : val;
-
-        if (!target.provenanceData[field]) target.provenanceData[field] = {};
-        target.provenanceData[field][year] = {
-          tag, layer: 3, derived: false, confidence, formula: null,
-        };
-        target.years.add(Number(year));
-        filled = true;
-      }
-    }
-    if (filled) layer3Count++;
-  }
+  // ── Layer 3: AI-assisted gap-fill — DISCONNECTED ──────────
+  // Kept dormant for future re-enablement. See B1 in eng plan.
+  const layer3Count = 0;
 
   const allYears = new Set([
     ...incSection.years, ...balSection.years, ...cfSection.years,

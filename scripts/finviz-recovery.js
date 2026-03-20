@@ -18,7 +18,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..');
-const TAXONOMY_DIR = path.join(ROOT, 'knowledge', 'taxonomy-research');
+const TAXONOMY_DIR = path.join(ROOT, 'industry-classification');
 const PIPELINE_DIR = path.join(TAXONOMY_DIR, 'pipeline');
 
 const BATCH_DELAY_MS = 300; // Finviz is less aggressive on rate limiting

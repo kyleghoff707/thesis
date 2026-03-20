@@ -30,3 +30,7 @@ knowledge/
 validation/data/
 validation/reports/
 validation/scripts/bundled-engines.mjs
+.gstack/
+
+# EDGAR API response cache for accuracy tests (regenerated on demand)
+src/engines/__tests__/fixtures/edgar-cache/

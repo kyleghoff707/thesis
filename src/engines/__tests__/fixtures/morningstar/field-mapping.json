@@ -1,0 +1,645 @@
+{
+  "_meta": {
+    "description": "Maps Morningstar CSV field names to Thes1s XBRL engine field names",
+    "signConvention": "sign = multiplier to convert MS value to Thes1s sign convention. thesisValue ≈ sign × msValue",
+    "toleranceTiers": {
+      "exact": "< 1% or < $1M difference — scoring-critical fields",
+      "close": "< 5% — important display fields",
+      "approximate": "< 10% — derived or definition-variable fields",
+      "relaxed": "< 20% — financial-sector or structurally ambiguous fields",
+      "informational": "no fail — known-divergent or unmapped"
+    },
+    "totalMapped": 87,
+    "totalUnmapped": "~588 (industry-specific, sub-breakdowns, maturity schedules, supplementals)"
+  },
+  "income": {
+    "Total Revenue": {
+      "thesisField": "revenues",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": null
+    },
+    "Cost of Revenue": {
+      "thesisField": "cost_of_revenue",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative, XBRL positive"
+    },
+    "Gross Profit": {
+      "thesisField": "gross_profit",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Selling, General and Administrative Expenses": {
+      "thesisField": "sga",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative, XBRL positive. Some companies report SGA combined, others split selling + G&A"
+    },
+    "Selling and Marketing Expenses": {
+      "thesisField": "selling_expense",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative, XBRL positive. Sub-component of SGA"
+    },
+    "General and Administrative Expenses": {
+      "thesisField": "general_and_admin_expense",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative, XBRL positive. Sub-component of SGA"
+    },
+    "Research and Development Expenses": {
+      "thesisField": "research_and_development",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative, XBRL positive. Not all companies have R&D"
+    },
+    "Depreciation, Amortization and Depletion": {
+      "thesisField": "depreciation_amortization_is",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative, XBRL positive. IS D&A — often $0 for companies embedding D&A in COGS/SGA (AAPL, MSFT)"
+    },
+    "Total Operating Profit/Loss": {
+      "thesisField": "operating_income_loss",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": null
+    },
+    "Interest Income": {
+      "thesisField": "interest_income",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Not all companies break out interest income"
+    },
+    "Interest Expense Net of Capitalized Interest": {
+      "thesisField": "interest_expense",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative, XBRL positive"
+    },
+    "Net Interest Income/Expense": {
+      "thesisField": "net_interest_income",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Can be positive or negative"
+    },
+    "Other Income/Expense, Non-Operating": {
+      "thesisField": "other_income_expense",
+      "sign": 1,
+      "tolerance": "informational",
+      "notes": "Structural mismatch: MS normalizes (strips investment gains, FX). XBRL reports as-filed catch-all. 93 failures with 100-35000% deviation — unfixable without MS normalization logic."
+    },
+    "Pretax Income": {
+      "thesisField": "income_before_tax",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": null
+    },
+    "Provision for Income Tax": {
+      "thesisField": "income_tax",
+      "sign": -1,
+      "tolerance": "exact",
+      "notes": "MS negative (expense), XBRL positive. Tax benefit = positive in MS, negative in XBRL"
+    },
+    "Net Income before Extraordinary Items and Discontinued Operations": {
+      "thesisField": "income_from_continuing_operations",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": null
+    },
+    "Net Income after Extraordinary Items and Discontinued Operations": {
+      "thesisField": "net_income_including_nci",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": "Includes non-controlling interests. Same as net_income_loss for companies without NCI"
+    },
+    "Net Income after Non-Controlling/Minority Interests": {
+      "thesisField": "net_income_loss",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": "Primary net income field — attributable to parent"
+    },
+    "Basic EPS": {
+      "thesisField": "basic_earnings_per_share",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": "First occurrence only (deduped from supplemental section)"
+    },
+    "Diluted EPS": {
+      "thesisField": "diluted_earnings_per_share",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": "First occurrence only (deduped from supplemental section)"
+    },
+    "Basic Weighted Average Shares Outstanding": {
+      "thesisField": "basic_average_shares",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": null
+    },
+    "Diluted Weighted Average Shares Outstanding": {
+      "thesisField": "diluted_average_shares",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": null
+    },
+    "Total Dividend Per Share": {
+      "thesisField": "dividends_per_share",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": "Not all companies pay dividends"
+    },
+    "Non-Controlling/Minority Interests": {
+      "thesisField": null,
+      "sign": 1,
+      "tolerance": "informational",
+      "notes": "IS NCI adjustment — tracked separately from BS minority_interest"
+    },
+    "Total Net Finance Income/Expense": {
+      "thesisField": null,
+      "sign": 1,
+      "tolerance": "informational",
+      "notes": "Combined interest income/expense. MS-specific aggregation."
+    },
+    "Reported Effective Tax Rate": {
+      "thesisField": "effective_tax_rate",
+      "sign": 1,
+      "tolerance": "approximate",
+      "notes": "Derived in Thes1s as income_tax / income_before_tax. MS stores as decimal (0.24 = 24%)"
+    }
+  },
+  "balance_sheet": {
+    "Total Assets": {
+      "thesisField": "assets",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": null
+    },
+    "Total Current Assets": {
+      "thesisField": "current_assets",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": null
+    },
+    "Cash and Cash Equivalents": {
+      "thesisField": "cash",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": null
+    },
+    "Cash, Cash Equivalents and Short Term Investments": {
+      "thesisField": "cash_and_short_term_investments",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": null
+    },
+    "Short Term Investments": {
+      "thesisField": "short_term_investments",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Inventories": {
+      "thesisField": "inventory",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Not all companies have inventory"
+    },
+    "Trade/Accounts Receivable, Current": {
+      "thesisField": "accounts_receivable",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Gross Trade/Accounts Receivable, Current": {
+      "thesisField": "accounts_receivable_gross",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Gross before allowance. Not always broken out"
+    },
+    "Allowance/Adjustments for Trade/Accounts Receivable, Current": {
+      "thesisField": "allowance_doubtful_accounts",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative (contra-asset), XBRL positive"
+    },
+    "Other Current Assets": {
+      "thesisField": "other_current_assets",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Total Non-Current Assets": {
+      "thesisField": "noncurrent_assets",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Derived in Thes1s: assets - current_assets"
+    },
+    "Net Property, Plant and Equipment": {
+      "thesisField": "property_plant_equipment",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Gross Property, Plant and Equipment": {
+      "thesisField": "property_plant_equipment_gross",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Accumulated Depreciation and Impairment": {
+      "thesisField": "accumulated_depreciation",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative (contra-asset), XBRL positive"
+    },
+    "Land and Improvements": {
+      "thesisField": "ppe_land",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Buildings and Improvements": {
+      "thesisField": "ppe_buildings",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Machinery, Furniture and Equipment": {
+      "thesisField": "ppe_machinery",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Leasehold and Improvements": {
+      "thesisField": "ppe_leasehold",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Construction in Progress and Advance Payments": {
+      "thesisField": "ppe_construction",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Goodwill": {
+      "thesisField": "goodwill",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Some companies have no goodwill (zero or missing)"
+    },
+    "Intangibles other than Goodwill": {
+      "thesisField": "intangible_assets",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Total Long Term Investments": {
+      "thesisField": "long_term_investments",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Deferred Tax Assets, Non-Current": {
+      "thesisField": "deferred_tax_assets",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Other Non-Current Assets": {
+      "thesisField": "other_noncurrent_assets",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Catch-all — may include ROU assets if not separately tagged in XBRL"
+    },
+    "Trade/Accounts Payable, Current": {
+      "thesisField": "accounts_payable",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Accrued Expenses, Current": {
+      "thesisField": "accrued_liabilities",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Current Debt": {
+      "thesisField": "short_term_debt",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Short-term borrowings (commercial paper, revolver draws)"
+    },
+    "Current Portion of Long Term Debt": {
+      "thesisField": "current_portion_lt_debt",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "LT debt maturing within 1 year. Excludes capital lease current portion"
+    },
+    "Capital Lease Obligations, Current": {
+      "thesisField": "total_lease_liability_current",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "MS 'Capital Lease' = ALL lease liabilities (operating + finance). Derived field."
+    },
+    "Deferred Income/Customer Advances/Billings in Excess of Cost, Current": {
+      "thesisField": "deferred_revenue_current",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Other Current Liabilities": {
+      "thesisField": "other_current_liabilities",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Total Current Liabilities": {
+      "thesisField": "current_liabilities",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": null
+    },
+    "Long Term Debt": {
+      "thesisField": "long_term_debt",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Excludes capital lease obligations"
+    },
+    "Capital Lease Obligations, Non-Current": {
+      "thesisField": "total_lease_liability_noncurrent",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "MS 'Capital Lease' = ALL lease liabilities (operating + finance). Derived field."
+    },
+    "Deferred Tax Liabilities, Non-Current": {
+      "thesisField": "deferred_tax_liabilities",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Other Non-Current Liabilities": {
+      "thesisField": "other_noncurrent_liabilities",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Total Non-Current Liabilities": {
+      "thesisField": "noncurrent_liabilities",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": "Derived in Thes1s if not directly tagged"
+    },
+    "Total Liabilities": {
+      "thesisField": "liabilities",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": null
+    },
+    "Total Equity": {
+      "thesisField": "total_equity",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": "Includes NCI. Can be negative (BA, SBUX)"
+    },
+    "Equity Attributable to Parent Stockholders": {
+      "thesisField": "equity_attributable_to_parent",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": "Excludes NCI"
+    },
+    "Common Stock": {
+      "thesisField": "common_stock",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Par value of common stock"
+    },
+    "Additional Paid in Capital/Share Premium": {
+      "thesisField": "additional_paid_in_capital",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "APIC. Not always broken out from Capital Stock in MS"
+    },
+    "Retained Earnings/Accumulated Deficit": {
+      "thesisField": "retained_earnings",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Can be negative (accumulated deficit)"
+    },
+    "Reserves/Accumulated Comprehensive Income/Losses": {
+      "thesisField": "aoci",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "AOCI — can be negative"
+    },
+    "Treasury Stock": {
+      "thesisField": "treasury_stock",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative (reduces equity), XBRL positive"
+    },
+    "Non-Controlling/Minority Interests in Equity": {
+      "thesisField": "minority_interest",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Balance sheet NCI"
+    },
+    "Preferred Stock": {
+      "thesisField": "preferred_stock",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    }
+  },
+  "cash_flow": {
+    "Cash Flow from Operating Activities, Indirect": {
+      "thesisField": "net_cash_flow_from_operating_activities",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": "Total CFO. Positive = cash inflow"
+    },
+    "Depreciation, Amortization and Depletion, Non-Cash Adjustment": {
+      "thesisField": "depreciation_amortization",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "CF D&A — the comprehensive number (Morningstar's 'Depreciation, Reconciled')"
+    },
+    "Depreciation and Amortization, Non-Cash Adjustment": {
+      "thesisField": "depreciation_amortization",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Alternate name for CF D&A when no depletion"
+    },
+    "Stock-Based Compensation, Non-Cash Adjustment": {
+      "thesisField": "stock_based_compensation",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Deferred Taxes, Non-Cash Adjustment": {
+      "thesisField": "deferred_income_tax",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Other Non-Cash Items": {
+      "thesisField": "other_noncash_items",
+      "sign": 1,
+      "tolerance": "informational",
+      "notes": "Blocked residual: MS computes as OpCF - named items. XBRL tag diverges structurally. Attempted 3x (B7, B8, post-research), all regressed."
+    },
+    "Change in Inventories": {
+      "thesisField": "change_in_inventory",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Both use cash-impact convention: inventory increase = negative"
+    },
+    "Change in Trade/Accounts Receivable": {
+      "thesisField": "change_in_receivables",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Both use cash-impact convention: AR increase = negative"
+    },
+    "Change in Trade/Accounts Payable": {
+      "thesisField": "change_in_payables",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Both use cash-impact convention: AP increase = positive"
+    },
+    "Change in Other Current Assets": {
+      "thesisField": "change_in_other_working_capital",
+      "sign": 1,
+      "tolerance": "approximate",
+      "notes": "MS may split differently than XBRL"
+    },
+    "Cash Flow from Investing Activities": {
+      "thesisField": "net_cash_flow_from_investing_activities",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": "Total investing CF. Typically negative"
+    },
+    "Purchase of Property, Plant and Equipment": {
+      "thesisField": "capital_expenditures",
+      "sign": -1,
+      "tolerance": "exact",
+      "notes": "MS negative (cash outflow), XBRL positive (payment amount)"
+    },
+    "Purchase/Sale and Disposal of Property, Plant and Equipment, Net": {
+      "thesisField": "capital_expenditures_net",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Net CapEx (purchases - disposals). Derived in Thes1s"
+    },
+    "Purchase of Investments": {
+      "thesisField": "purchase_of_investments",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative, XBRL positive"
+    },
+    "Sale of Investments": {
+      "thesisField": "sale_of_investments",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Purchase/Acquisition of Business": {
+      "thesisField": "purchase_of_business",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative, XBRL positive"
+    },
+    "Disposal of Businesses": {
+      "thesisField": "sale_of_business",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Other Investing Cash Flow": {
+      "thesisField": "other_investing",
+      "sign": 1,
+      "tolerance": "informational",
+      "notes": "Blocked residual: MS computes as InvCF - named items. XBRL tag diverges structurally. Attempted 3x, all regressed."
+    },
+    "Cash Flow from Financing Activities": {
+      "thesisField": "net_cash_flow_from_financing_activities",
+      "sign": 1,
+      "tolerance": "exact",
+      "notes": "Total financing CF. Typically negative for mature companies"
+    },
+    "Proceeds from Issuance of Long Term Debt": {
+      "thesisField": "proceeds_from_lt_debt",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Repayments for Long Term Debt": {
+      "thesisField": "repayments_of_lt_debt",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative, XBRL positive"
+    },
+    "Issuance of/Repayments for Short Term Debt, Net": {
+      "thesisField": null,
+      "sign": 1,
+      "tolerance": "informational",
+      "notes": "MS nets short-term debt; Thes1s has separate proceeds/repayments fields"
+    },
+    "Payments for Common Stock": {
+      "thesisField": "share_repurchases",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative (cash outflow), XBRL positive"
+    },
+    "Proceeds from Issuance of Common Stock": {
+      "thesisField": "proceeds_from_stock_issuance",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": null
+    },
+    "Common Stock Dividends Paid": {
+      "thesisField": "dividends_paid",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative, XBRL positive"
+    },
+    "Cash Dividends Paid": {
+      "thesisField": "dividends_paid",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "Parent row of Common Stock Dividends — use if Common not available"
+    },
+    "Other Financing Cash Flow": {
+      "thesisField": "other_financing",
+      "sign": 1,
+      "tolerance": "informational",
+      "notes": "Blocked residual: MS computes as FinCF - named items. XBRL tag diverges structurally. Attempted 3x, all regressed."
+    },
+    "Income Tax Paid, Supplemental": {
+      "thesisField": "income_taxes_paid",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative (cash paid), XBRL positive"
+    },
+    "Interest Paid, Supplemental": {
+      "thesisField": "interest_paid",
+      "sign": -1,
+      "tolerance": "close",
+      "notes": "MS negative (cash paid), XBRL positive"
+    },
+    "Cash and Cash Equivalents, End of Period": {
+      "thesisField": "ending_cash_position",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Derived in Thes1s"
+    },
+    "Change in Cash": {
+      "thesisField": "net_change_in_cash",
+      "sign": 1,
+      "tolerance": "close",
+      "notes": "Derived in Thes1s"
+    }
+  }
+}

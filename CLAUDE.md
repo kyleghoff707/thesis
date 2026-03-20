@@ -33,6 +33,26 @@ For detailed API integration notes (CORS proxying, EDGAR XBRL details, parsing i
 ## Architecture Reference
 **When debugging or modifying any engine, API integration, scoring algorithm, CORS proxy, validation system, or parser** — read `knowledge/references/app-architecture.md` first. It contains detailed technical documentation for all implemented systems (moved from CLAUDE.md to save context window).
 
+**When debugging or modifying the XBRL extraction engine, taxonomy, provenance, industry overlays, or coverage systems** — read `previous-prompt-and-plans/xbrl-engine-strategy.md` first. It contains the full three-layer architecture, design decisions, coverage audit results, and implementation history.
+
+### Three-Layer XBRL Engine (`edgarFinancials.js`)
+
+The engine uses a three-layer resolution strategy to map SEC XBRL tags to ~85 standardized financial fields. Each layer is a fallback — Layer 1 handles ~96% of cases, Layer 2 catches most of the rest, Layer 3 handles the long tail. Validated across all 503 S&P 500 companies with 0 failures.
+
+**Coverage (S&P 500):** Tier 1 (scoring-critical): **96.1%** | Tier 2 (display): **90.8%** | Tier 3 (expanded): **83.9%**
+
+| Layer | What | How | Performance |
+|-------|------|-----|-------------|
+| **Layer 1** | Static tag map (~200 tags) in `edgarFinancials.js` | Priority-ordered fallback tags per field | O(1), handles ~96% |
+| **Layer 2** | Pre-built taxonomy JSON (1,937 descendant tags) | `taxonomy-hierarchy.json` built from FASB calc linkbase (3 versions) | O(1) lookup, <100KB |
+| **Layer 3** | AI tag classification (1,989 pre-classified tags) | `sp500-tag-classifications.json` built via Claude Sonnet | O(1) lookup for S&P 500, runtime AI for others |
+
+**Industry overlays** — Additive taxonomies for bank (16 income + 10 balance + derived NIM/efficiency), REIT (4 income + 8 balance + 4 CF + derived FFO/NOI/NAV), and insurance (12 income + 7 balance + 3 CF + derived loss/combined ratio/float). Detected via SIC code → `industryClassifier.js`.
+
+**Data provenance** — Every extracted value carries parallel metadata: which XBRL tag resolved it, which layer (1/2/3), whether derived, confidence score (Layer 3), and human-readable formula (derived fields). Annual AND TTM provenance tracked. Zero breaking changes — components read bare numbers, provenance is opt-in.
+
+**Coverage monitor** — Baseline storage + change detection (fields gained/lost/tags changed) per ticker in localStorage. Auto-saves baseline on first load.
+
 ### EDGAR Frames API — Period Distinction (Critical)
 The Frames endpoint (`/api/xbrl/frames/us-gaap/{tag}/{unit}/CY{year}.json`) uses **different period specifiers** for balance sheet vs income statement tags:
 - **Duration tags** (income statement, cash flows): `CY{year}.json` — e.g., `CY2024.json`
@@ -44,14 +64,19 @@ All tag definitions in `FRAMES_TAGS` and `PEER_FRAMES_TAGS` have a `period: 'ins
 - **`negate` flag**: Some cash flow taxonomy fields have `negate: true` (e.g., `change_in_receivables`, `change_in_inventory`, `other_noncash_items`). This flips XBRL's balance-sheet-change convention to cash-impact convention at extraction time. Do NOT add `negate` to payables — payable increases are already positive in both conventions.
 - **Debt sanity check**: `computeDerivedFields` has a ratio-based fallback — if `total_debt / liabilities < 5%`, derives debt from `liabilities - known-non-debt-items`. This catches industry-specific debt tag gaps (REITs, banks, insurance, energy).
 - **SGA derivation**: `sga` taxonomy field uses only the combined `SellingGeneralAndAdministrativeExpense` tag. Separate `selling_expense` and `general_and_admin_expense` fields exist; `computeDerivedFields` sums them into `sga` when the combined tag is null (fixes MSFT, others that report separately).
+- **Derived field formulas**: `getDerivedFormula()` returns human-readable formula strings for all ~40 derived fields. Stored in `provenance[year][field].formula` for Audit tab display.
+- **TTM provenance**: TTM extraction tracks which tag resolved each field, with Layer 1/2 detection and derived field formulas. AI report generation can trace any TTM value back to its XBRL source.
+- **REIT FFO caveat**: FFO is derived (not tagged in XBRL). `gain_loss_on_real_estate_sales` was discontinued by many REITs after FY2018 — FFO is approximate for recent years. AI reports should cross-reference NAREIT-published FFO.
+- **Insurance float caveat**: Approximation from XBRL balance sheet items. BRK's reported float cannot be reconstructed from standard us-gaap tags. Pure-play insurers (MET, ALL) have better coverage.
+- **AFFO maintenance capex**: Hardcoded at 15% of total capex in overlay (varies by REIT subtype: EQIX ~30-40%, PLD ~10-15%). AI reports should use user's maintenance capex % from Valuation Calculators instead.
 
 ---
 
 ## Current Status
-Phases 1-4 complete — app shell, data engines, calculation engines, and full Toolbox UI all functional. EDGAR engine validated across 89 companies, then refined via 12-ticker comparison against R1 Toolbox (Morningstar) data — see `knowledge/financial-data-comparison-rca.md` for full RCA. **The remaining work is Phase 5-8: AI-driven report generation.**
+Phases 1-4 complete — app shell, data engines, calculation engines, and full Toolbox UI all functional. **XBRL engine complete** — three-layer tag resolution (static + taxonomy + AI), industry overlays (bank/REIT/insurance), full provenance tracking (annual + TTM), coverage monitor, and Audit tab dashboard. Validated across all 503 S&P 500 companies with 0 failures. See `previous-prompt-and-plans/xbrl-engine-strategy.md` for full architecture and `validation/reports/financial-data-comparison-rca.md` for the original 12-ticker RCA. **The remaining work is Phase 5-8: AI-driven report generation.**
 
 ### What's Built
-All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems (validation, guru, ticker, N-PORT, compensation), Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores + derived metric computation + Yahoo data backfill + per-ticker caching + sparse peer filtering + data completeness indicators + industry-aware column defaults, Upcoming Events & News section on Overview (SEC 8-K events + Yahoo calendar + IR page discovery). Tests via vitest. See source tree below.
+All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems (validation, guru, ticker, N-PORT, compensation), Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores + derived metric computation + Yahoo data backfill + per-ticker caching + sparse peer filtering + data completeness indicators + industry-aware column defaults, Upcoming Events & News section on Overview (SEC 8-K events + Yahoo calendar + IR page discovery), three-layer XBRL engine with provenance tracking and coverage monitoring (173 tests via vitest). See source tree below.
 
 ### What's NOT Built
 - AI report generation (One Pager, Pitch Deck, Full Story) — Phases 5-7
@@ -125,17 +150,25 @@ Vary FGR, EPS, CapEx %, ROE assumptions across methods → range of buy prices.
 
 ```
 knowledge/
-├── workflow.md                    — Master Research Workflow (stage progression)
+├── agent workflows/
+│   └── Rule 1 workflow.md         — Master Research Workflow (stage progression)
+├── Morningstar Financial Statements/ — 50-company MS CSV truth set (IS/BS/CF per ticker)
+├── Morningstar Quarterly Financial Statements/
+├── R1 Toolbox Financial Statements/
+├── Thes1s Financial Statements (post xbrl strategy)/
+├── Thes1s Financial Statements (pre xbrl strategy)/
 ├── references/
 │   ├── advanced-financial-analysis.md
 │   ├── app-architecture.md        — Detailed API/engine/scoring/validation docs (moved from CLAUDE.md)
+│   ├── buffett_letters_claude_training_set/
 │   ├── capex-cash-flow-explained.md
 │   ├── consolidated_vs_expanded_financial_statements.md
-│   ├── edgar-taxonomy-research-report.md
+│   ├── edgar-industry-classification-report.md
 │   ├── edgar-xbrl-taxonomy.md
-│   ├── financial-statements.md    — FGR methodology, Big 4 growth rates
+│   ├── financial-statements-future-growth-rate.md — FGR methodology, Big 4 growth rates
 │   ├── guru-list.md               — 43 named Gurus for 13F lookup
 │   ├── morningstar_original_vs_restated_financials.md
+│   ├── run-commands.md
 │   └── tools-for-analysis.md      — 3 Ms framework (Moat, Management, MOS)
 ├── stage-1-one-pager/             — template.md, curriculum, LULU example
 ├── stage-2-pitch-deck/            — template.md, 4 curriculum files, LULU example + resources
@@ -145,16 +178,16 @@ knowledge/
 
 ### Taxonomy Research (not gitignored — tracked in repo)
 
-**When working on classification, peer discovery, or the Competitors tab** — read `taxonomy-research/taxonomy-classification-learning.md` first.
+**When working on classification, peer discovery, or the Competitors tab** — read `industry-classification/taxonomy-classification-learning.md` first.
 
 ```
-taxonomy-research/
+industry-classification/
 ├── taxonomy-classification-learning.md — Claude agent guide for classifying companies
 ├── thes1s-taxonomy-tree.json           — 12 sectors, 52 industry groups, 176 industries
 ├── thes1s-company-assignments.json     — 5,758 company classifications
 ├── yahoo-to-thes1s-crosswalk.json      — 145 Yahoo → Thes1s mappings
 ├── sic-to-thes1s-crosswalk.json        — SIC → Thes1s mapping
-├── stock-taxonomy-research.md          — Full research report (6 taxonomy systems)
+├── stock-industry-classification.md          — Full research report (6 taxonomy systems)
 ├── phase-2-session-summary.md          — Pipeline build notes
 └── pipeline/                           — Intermediate data (universe, yahoo-seed)
 ```
@@ -225,6 +258,8 @@ src/
 │   ├── growthRates.js, freeCashFlow.js, returnMetrics.js, ruleOneScore.js
 │   ├── valuation.js, fgr.js, validation.js
 │   ├── tickerSearch.js, companyDetails.js, sicClassification.js, tickerAudit.js
+│   ├── taxonomyResolver.js      — Layer 2: augments taxonomy with FASB calc linkbase descendants
+│   ├── companyAdapter.js        — Layer 3: AI tag classification (pre-built S&P 500 + runtime Claude API)
 │   ├── industryClassifier.js    — SIC → industry type (bank/reit/insurance/standard) for overlay selection
 │   ├── industryOverlays.js      — Additive XBRL taxonomy overlays: bank (NII, deposits, efficiency ratio), REIT (FFO, NAV, NOI), insurance (premiums, claims, combined ratio)
 │   ├── analystEstimates.js, finviz.js, gurufocus.js, filingMarkdown.js
@@ -234,10 +269,16 @@ src/
 │   ├── companyEvents.js         — Upcoming events engine (SEC 8-K parsing, Yahoo calendarEvents+assetProfile, IR page discovery with parallel probing, Google search fallback)
 │   ├── __tests__/peerMetrics.test.js — Vitest: peer metrics bug reproduction tests
 │   ├── __tests__/splits.test.js — Vitest: split detection + cumulativeSplitFactor tests
-│   ├── __tests__/edgarFinancials.test.js — Vitest: taxonomy coverage + derived field tests
+│   ├── __tests__/edgarFinancials.test.js — Vitest: taxonomy coverage + derived field + provenance tests
 │   ├── __tests__/taxonomyResolver.test.js — Vitest: Layer 2 taxonomy augmentation + provenance tests
 │   ├── __tests__/industryOverlays.test.js — Vitest: industry classifier + bank/REIT/insurance overlay tests
+│   ├── __tests__/companyAdapter.test.js — Vitest: Layer 3 AI classification + orphan tag discovery tests
+│   ├── __tests__/coverageMonitor.test.js — Vitest: baseline storage + coverage comparison tests
 │   └── aiResearch.js            — (planned) Claude API calls + prompt builders
+├── data/
+│   ├── validationCompanies.js
+│   ├── taxonomy-hierarchy.json  — Layer 2: 1,937 FASB descendant tags (84KB, built from 3 taxonomy versions)
+│   └── sp500-tag-classifications.json — Layer 3: 1,989 AI-classified tags for S&P 500 (387KB)
 ├── hooks/
 │   ├── useResearch.js, useFinancials.js, usePrices.js, useEdgar.js
 │   ├── useGurus.js, useInsiders.js, useCompensation.js
@@ -245,7 +286,6 @@ src/
 │   ├── useCompanyEvents.js      — Hook for company events + two-phase IR link (direct probe → Google search fallback)
 │   ├── useAnalystData.js, useAnalystEstimates.js
 │   ├── useWatchlists.js, useSettings.js, useTheme.js
-├── data/validationCompanies.js
 validation/                      — 3-layer validation system (scripts/, data/, reports/)
 ```
 
@@ -360,17 +400,8 @@ Writing tests first forces you to define "correct" before writing code — this 
 
 ### Known Risks
 - **Claude API cost**: Generate sections individually to control tokens. Use claude-sonnet-4-20250514 for efficiency.
-- **XBRL tag variation**: Taxonomy covers standard companies well; industry-specific debt tags added for REITs/banks/insurance/energy with ratio-based sanity check fallback. Edge cases may still surface for unusual industries.
+- **XBRL tag variation**: Three-layer engine covers 96.1% of scoring-critical fields across S&P 500. Remaining gaps are structural (non-dividend-payers, financials without CapEx). Companies outside S&P 500 may trigger runtime Layer 3 AI classification (~$0.01/company).
 - **Key Metrics Price category**: Historical P/E per year not yet implemented (would need historical price × FY mapping).
-
-### Completed Data Quality Fixes (March 2026)
-Full RCA: `knowledge/financial-data-comparison-rca.md` (12-ticker comparison vs R1 Toolbox/Morningstar)
-- **P5 — Split detection**: Yahoo Finance primary (EDGAR XBRL fallback). Fixed `cumulativeSplitFactor` date comparison for non-calendar FY companies.
-- **P1b — Cash tag**: Added post-ASC 842 restricted cash tag. Fixes LULU $0 cash + net_debt → Management Score cascade.
-- **P1a — Debt tags**: Added REIT/bank/insurance/energy debt tags + ratio-based sanity check when `total_debt/liabilities < 5%`.
-- **P2 — Sign convention**: `negate` flag on WC components (receivables, inventory, other) flips XBRL balance-sheet-change to cash-impact convention at extraction time.
-- **P1e — SGA**: Separated `selling_expense` and `general_and_admin_expense` fields; derived `sga = selling + g_and_a` when combined tag is null.
-- **P3b — Net debt consistency**: `net_debt` now uses `total_debt_with_leases` (matching UI display) instead of `total_debt`.
 
 ---
 
@@ -385,6 +416,7 @@ Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude
 - `/plan-design-review` — Design review planning
 - `/design-consultation` — Design consultation
 - `/review` — Code review
+- `/codex` — Multi-AI second opinion (review, challenge, consult)
 - `/ship` — Ship code
 - `/browse` — Web browsing (use this for ALL web browsing)
 - `/qa` — QA testing
@@ -392,6 +424,10 @@ Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude
 - `/design-review` — Design review
 - `/setup-browser-cookies` — Set up browser cookies
 - `/retro` — Retrospective
-- `/debug` — Debug session
+- `/investigate` — Systematic debugging (was /debug)
+- `/careful` — Destructive command warnings
+- `/freeze` — Lock edits to one directory
+- `/guard` — Full safety mode (careful + freeze)
+- `/unfreeze` — Remove edit restrictions
 - `/document-release` — Document a release
 - `/gstack-upgrade` — Update gstack to the latest version
