@@ -182,6 +182,22 @@ export async function fetchSplits(ticker) {
     // Sort descending by date (newest first)
     splits.sort((a, b) => b.date.localeCompare(a.date));
 
+    // Deduplicate: EDGAR can report the same split event with multiple end dates
+    // (e.g., NVDA 10:1 appears as both 2024-06-30 and 2024-05-31).
+    // Merge entries with the same ratio within 90 days, keeping the later date.
+    const deduped = [];
+    for (const s of splits) {
+      const isDup = deduped.some(existing => {
+        if (existing.ratio !== s.ratio) return false;
+        const d1 = new Date(existing.date);
+        const d2 = new Date(s.date);
+        const daysDiff = Math.abs(d1 - d2) / (1000 * 60 * 60 * 24);
+        return daysDiff <= 90;
+      });
+      if (!isDup) deduped.push(s);
+    }
+    splits = deduped;
+
     cacheSet(cacheKey, splits, 'financials');
     return splits;
   } catch (err) {

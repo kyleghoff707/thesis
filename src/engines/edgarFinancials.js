@@ -355,6 +355,7 @@ const BALANCE_TAXONOMY = [
     'PensionAndOtherPostretirementDefinedBenefitPlansLiabilitiesNoncurrent',
   ]},
   { field: 'other_noncurrent_liabilities', unit: 'USD', tags: [
+    'OtherAccruedLiabilitiesNoncurrent',
     'OtherLiabilitiesNoncurrent',
   ]},
   { field: 'noncurrent_liabilities', unit: 'USD', tags: [
@@ -401,6 +402,7 @@ const BALANCE_TAXONOMY = [
   ]},
   { field: 'minority_interest', unit: 'USD', tags: [
     'MinorityInterest',
+    'NoncontrollingInterestInEquity',
     'RedeemableNoncontrollingInterestEquityCarryingAmount',
   ]},
   { field: 'preferred_stock', unit: 'USD', tags: [
@@ -1241,18 +1243,49 @@ function getAnnualTotal(entries, fy) {
 function getQuarterlyYTD(entries, fy, fp) {
   const matches = entries.filter(e => e.form === '10-Q' && e.fy === fy && e.fp === fp);
   if (matches.length === 0) return null;
-  // For flow items, pick the longest duration (YTD cumulative)
-  const withStart = matches.filter(e => e.start != null);
-  if (withStart.length > 0) {
-    let best = withStart[0];
-    for (const e of withStart) {
-      const durBest = new Date(best.end) - new Date(best.start);
-      const durE = new Date(e.end) - new Date(e.start);
-      if (durE > durBest || (durE === durBest && e.filed > best.filed)) best = e;
+  // Pick the entry with the latest end date (current period, not comparative).
+  // Among entries with the same end date, prefer the entry whose duration is
+  // closest to the expected YTD duration for that quarter. This prevents picking
+  // anomalous trailing 12-month entries that share an end date with Q1 entries.
+  // (Q1 YTD ≈ 90d, Q2 YTD ≈ 180d, Q3 YTD ≈ 270d.)
+  // Filed date as final tiebreaker.
+  const EXPECTED_DAYS = { Q1: 90, Q2: 180, Q3: 270 };
+  const targetDays = EXPECTED_DAYS[fp] || 90;
+  let best = matches[0];
+  for (const e of matches) {
+    if (e.end > best.end) {
+      best = e;
+    } else if (e.end === best.end) {
+      // Same end date: prefer entry closest to expected YTD duration
+      const durBestDays = best.start ? (new Date(best.end) - new Date(best.start)) / 86400000 : 0;
+      const durEDays = e.start ? (new Date(e.end) - new Date(e.start)) / 86400000 : 0;
+      const diffBest = Math.abs(durBestDays - targetDays);
+      const diffE = Math.abs(durEDays - targetDays);
+      if (diffE < diffBest || (diffE === diffBest && e.filed > best.filed)) best = e;
     }
-    return best.val;
   }
-  return matches[0].val;
+  return best.val;
+}
+
+function getQuarterlySinglePeriod(entries, fy, fp) {
+  // For share counts: get the single-quarter value (shortest duration with latest end).
+  // Share counts are weighted averages, NOT cumulative totals, so YTD de-cumulation
+  // produces nonsense. EDGAR files both single-quarter (~90d) and YTD (~180d/270d)
+  // entries with the same fy/fp. We want the single-quarter entry.
+  const matches = entries.filter(e => e.form === '10-Q' && e.fy === fy && e.fp === fp && e.start != null);
+  if (matches.length === 0) return null;
+  // Among entries with the latest end date (current period, not comparative),
+  // prefer the shortest duration (single quarter over YTD).
+  const latestEnd = matches.reduce((max, e) => e.end > max ? e.end : max, matches[0].end);
+  const currentPeriod = matches.filter(e => e.end === latestEnd);
+  if (currentPeriod.length === 0) return null;
+  let best = currentPeriod[0];
+  for (const e of currentPeriod) {
+    const durBest = new Date(best.end) - new Date(best.start);
+    const durE = new Date(e.end) - new Date(e.start);
+    if (durE < durBest || (durE === durBest && e.filed > best.filed)) best = e;
+  }
+  return best.val;
 }
 
 function getQuarterlyInstant(entries, fy, fp) {
@@ -1420,8 +1453,31 @@ function extractQuarterlySection(companyFacts, taxonomy, sectionType, fy) {
           if (val != null) { quarters.Q4[field] = val * sign; anyFound = true; }
         }
         if (anyFound) found = true;
+      } else if (unit === 'shares') {
+        // Share counts: weighted averages, NOT cumulative totals.
+        // Extract single-quarter entries directly (shortest duration per quarter).
+        // Q4: derive from FY weighted average: Q4 = 4*FY_avg - Q1 - Q2 - Q3
+        let anyFound = false;
+        for (const fp of ['Q1', 'Q2', 'Q3']) {
+          if (quarters[fp][field] != null) continue;
+          const val = getQuarterlySinglePeriod(entries, fy, fp);
+          if (val != null) { quarters[fp][field] = val * sign; anyFound = true; }
+        }
+        // Q4 shares: derive from full-year weighted average
+        if (quarters.Q4[field] == null) {
+          const fyAvg = getAnnualTotal(entries, fy);
+          if (fyAvg != null && quarters.Q1[field] != null && quarters.Q2[field] != null && quarters.Q3[field] != null) {
+            quarters.Q4[field] = (4 * fyAvg - quarters.Q1[field] / sign - quarters.Q2[field] / sign - quarters.Q3[field] / sign) * sign;
+            anyFound = true;
+          } else if (fyAvg != null) {
+            // Fallback: use FY average as Q4 estimate
+            quarters.Q4[field] = fyAvg * sign;
+            anyFound = true;
+          }
+        }
+        if (anyFound) found = true;
       } else {
-        // Flow items + share counts: extract YTD, then de-cumulate
+        // Flow items: extract YTD, then de-cumulate to individual quarters
         const q1ytd = getQuarterlyYTD(entries, fy, 'Q1');
         const q2ytd = getQuarterlyYTD(entries, fy, 'Q2');
         const q3ytd = getQuarterlyYTD(entries, fy, 'Q3');

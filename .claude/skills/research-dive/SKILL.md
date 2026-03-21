@@ -125,6 +125,8 @@ Present a complete plan covering:
 
 Once approved, perform the research and generate both output files.
 
+If you cannot access any key websites or sources during your research (because they block ai bots) let the user know at the end of your research. Present the user with hyperlinks that they can find themselves and give to you. Don't do this with every blocked hyperlinks, only key ones. Use your judgement to determine this. Think of this research as a collaboration between user and claude. Some things only claude can do, some things only humans can do 
+
 #### Output A: Markdown Report (`<topic-slug>.md`)
 
 - Save to the user's specified output directory
@@ -149,10 +151,9 @@ See `references/pdf-formatting.md` for the full reusable builder template.
 
 Present `.md` first, `.pdf` second. One sentence each. Do not over-explain.
 
----
+### Reference files 
 
-## Reference Files
-
-- `references/report-structures.md` — Default section templates for technical/engineering reports
-- `references/pdf-formatting.md` — Full reportlab PDF builder boilerplate
-- `references/prompt-template.md` — Canonical Claude Code prompt `.txt` template
+- report-structures.md
+- prompt-template.md
+- pdf-formatting.md
+- pdf_qa_checker.py

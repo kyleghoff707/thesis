@@ -1,14 +1,18 @@
 /**
- * morningstarAccuracy.test.js — Phase A3: Morningstar Parity Test Suite
+ * morningstarQuarterlyAccuracy.test.js — Quarterly Morningstar Parity Test Suite
  *
- * Compares Thes1s XBRL engine output against 50 Morningstar golden fixtures.
- * Calls the live engine pipeline (with disk-cached EDGAR responses for speed).
+ * Compares Thes1s XBRL quarterly engine output against 50 Morningstar quarterly fixtures.
+ * Calls the live quarterly engine pipeline (with disk-cached EDGAR responses for speed).
  *
  * First run:  ~2-3 min (downloads EDGAR data, caches to disk)
  * Subsequent: ~30-60s  (reads from disk cache, processes through live engine)
  *
- * Cache location: src/engines/__tests__/fixtures/edgar-cache/ (gitignored)
+ * Cache location: src/engines/__tests__/fixtures/edgar-cache/ (gitignored, shared with annual)
  * Clear cache:    rm -rf src/engines/__tests__/fixtures/edgar-cache/
+ *
+ * Fixture source: knowledge/Morningstar Quarterly Financial Statements/ (50 tickers)
+ * Fixture output: src/engines/__tests__/fixtures/morningstar-quarterly/{TICKER}.json
+ * Field mapping:  src/engines/__tests__/fixtures/morningstar/field-mapping.json (shared with annual)
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
@@ -17,8 +21,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const FIXTURES_DIR = path.join(__dirname, 'fixtures', 'morningstar');
-const EDGAR_CACHE_DIR = path.join(FIXTURES_DIR, 'edgar-cache');
+const FIXTURES_DIR = path.join(__dirname, 'fixtures', 'morningstar-quarterly');
+const ANNUAL_FIXTURES_DIR = path.join(__dirname, 'fixtures', 'morningstar');
+const EDGAR_CACHE_DIR = path.join(ANNUAL_FIXTURES_DIR, 'edgar-cache');
 
 // ─── Fetch Interceptor ──────────────────────────────────────
 // The XBRL engine uses Vite dev proxy URLs in dev mode (/api/edgar/...).
@@ -51,7 +56,7 @@ globalThis.fetch = async function interceptedFetch(url, opts = {}) {
     return originalFetch(url, opts);
   }
 
-  // Check disk cache
+  // Check disk cache (shared with annual test)
   const cacheKey = resolved.replace(/[^a-zA-Z0-9.-]/g, '_').slice(0, 200);
   const cachePath = path.join(EDGAR_CACHE_DIR, cacheKey + '.json');
 
@@ -95,12 +100,12 @@ globalThis.fetch = async function interceptedFetch(url, opts = {}) {
 // ─── Load Fixtures & Mapping ─────────────────────────────────
 
 const fieldMapping = JSON.parse(
-  fs.readFileSync(path.join(FIXTURES_DIR, 'field-mapping.json'), 'utf-8')
+  fs.readFileSync(path.join(ANNUAL_FIXTURES_DIR, 'field-mapping.json'), 'utf-8')
 );
 
 const msFixtures = {};
 for (const file of fs.readdirSync(FIXTURES_DIR)) {
-  if (!file.endsWith('.json') || file === 'field-mapping.json') continue;
+  if (!file.endsWith('.json')) continue;
   const ticker = file.replace('.json', '');
   msFixtures[ticker] = JSON.parse(
     fs.readFileSync(path.join(FIXTURES_DIR, file), 'utf-8')
@@ -118,43 +123,62 @@ const SPIN_OFF = { EW: 2023, JNJ: 2023, T: 2022 };
 const RESTATEMENT_FLAGGED = new Set(['EQIX', 'LEN', 'NEM', 'PG', 'SFM', 'XPEL']);
 
 // Companies that report in non-USD currency — skip from comparison
-// (EDGAR XBRL uses reporting currency; fixture values are in reporting currency)
 const EUR_COMPANIES = new Set(['RACE']);
 
+// ─── Quarter Label Parser ────────────────────────────────────
+// MS labels: "Q2 2022" → { quarter: 2, year: 2022 }
+
+function parseQuarterLabel(label) {
+  const match = label.trim().match(/^Q(\d)\s+(\d{4})$/);
+  if (!match) return null;
+  return { quarter: parseInt(match[1]), year: parseInt(match[2]) };
+}
+
 // ─── Fiscal Year Offset Detection ────────────────────────────
-// Morningstar labels by calendar year the FY ends.
-// EDGAR labels by the company's stated FY designation.
-// For some non-Dec-FY companies, MS year != EDGAR year.
-// We auto-detect offset by comparing revenue for each possible shift.
-// Bias toward offset=0 (the common case) — only use -1 if it's clearly better.
+// Same logic as annual: MS may label FY differently than EDGAR.
+// Compare revenue across Q4 of each FY at offset 0 and -1.
 
-function detectYearOffset(msStmt, engineIncome, engineYears) {
-  if (!msStmt || !engineIncome) return 0;
+function detectQuarterlyYearOffset(msIncomeStmt, engineQuarterly, engineFYs) {
+  if (!msIncomeStmt || !engineQuarterly || engineFYs.length === 0) return 0;
 
-  const msYears = Object.keys(msStmt).filter(y => y !== 'TTM').map(Number);
-  if (msYears.length === 0 || engineYears.length === 0) return 0;
+  // Collect MS quarters grouped by FY year
+  const msByFY = {};
+  for (const label of Object.keys(msIncomeStmt)) {
+    if (label === 'TTM') continue;
+    const parsed = parseQuarterLabel(label);
+    if (!parsed) continue;
+    if (!msByFY[parsed.year]) msByFY[parsed.year] = {};
+    msByFY[parsed.year][`Q${parsed.quarter}`] = msIncomeStmt[label];
+  }
 
   // Try offsets 0 and -1
   const scores = {};
   for (const offset of [0, -1]) {
     let matches = 0;
     let compared = 0;
-    for (const msYear of msYears) {
+
+    for (const [msYearStr, msQuarters] of Object.entries(msByFY)) {
+      const msYear = parseInt(msYearStr);
       const edgarYear = msYear + offset;
-      const msRev = msStmt[String(msYear)]?.['Total Revenue'];
-      const engRev = engineIncome[edgarYear]?.revenues;
-      if (msRev != null && engRev != null) {
-        compared++;
-        const pct = Math.abs((engRev - msRev) / msRev);
-        if (pct < 0.02) matches++; // Within 2% = match
+
+      for (const [qtr, msFields] of Object.entries(msQuarters)) {
+        const msRev = msFields['Total Revenue'];
+        const engRev = engineQuarterly[edgarYear]?.[qtr]?.income?.revenues;
+
+        if (msRev != null && engRev != null) {
+          compared++;
+          const pct = Math.abs((engRev - msRev) / msRev);
+          if (pct < 0.02) matches++;
+        }
       }
     }
+
     scores[offset] = { matches, compared };
   }
 
-  // Bias toward 0: only use -1 if it has strictly more matches AND at least 3
-  // (3 prevents false positives from coincidental near-matches in data discrepancies)
-  if (scores[-1].matches > scores[0].matches && scores[-1].matches >= 3) {
+  // Bias toward 0: only use -1 if strictly more matches AND at least 5
+  // (higher threshold than annual since we have more data points)
+  if (scores[-1].matches > scores[0].matches && scores[-1].matches >= 5) {
     return -1;
   }
   return 0;
@@ -210,12 +234,12 @@ function compareField(msValue, thesisValue, sign, tolerance) {
   return { status, pct, expected, actual };
 }
 
-function compareCompany(ticker, fixture, engineData) {
+function compareCompanyQuarterly(ticker, fixture, engineData) {
   const results = [];
-  const offset = detectYearOffset(
+  const offset = detectQuarterlyYearOffset(
     fixture.statements.income,
-    engineData?.income,
-    engineData?.years || []
+    engineData?.quarterly,
+    engineData?.fiscalYears || []
   );
 
   for (const [msStmtKey, mappings] of Object.entries(fieldMapping)) {
@@ -226,53 +250,58 @@ function compareCompany(ticker, fixture, engineData) {
       if (!mapInfo.thesisField) continue; // Skip unmapped fields
 
       const msStmt = fixture.statements[msStmtKey] || {};
-      const msYears = Object.keys(msStmt).filter(y => y !== 'TTM');
+      const msPeriods = Object.keys(msStmt).filter(p => p !== 'TTM');
 
-      for (const msYear of msYears) {
-        const edgarYear = parseInt(msYear) + offset;
-        let msValue = msStmt[msYear]?.[msField];
+      for (const msPeriod of msPeriods) {
+        const parsed = parseQuarterLabel(msPeriod);
+        if (!parsed) continue;
+
+        const edgarYear = parsed.year + offset;
+        const edgarQtr = `Q${parsed.quarter}`;
+
+        let msValue = msStmt[msPeriod]?.[msField];
 
         // ─── P1a: Intangible Assets — compare against implied NET ───
-        // MS "Intangibles other than Goodwill" is GROSS carrying amount.
-        // Our engine extracts NET (after accumulated amortization).
-        // Compute implied NET = GROSS + AccumAmort (AccumAmort is negative).
         if (msField === 'Intangibles other than Goodwill' && msValue != null) {
           const accumAmort =
-            msStmt[msYear]?.['Accumulated Amortization of Intangibles other than Goodwill'] ??
-            msStmt[msYear]?.['Accumulated Amortization of Intangible Assets'] ??
-            msStmt[msYear]?.['Accumulated Amortization and Impairment'];
+            msStmt[msPeriod]?.['Accumulated Amortization of Intangibles other than Goodwill'] ??
+            msStmt[msPeriod]?.['Accumulated Amortization of Intangible Assets'] ??
+            msStmt[msPeriod]?.['Accumulated Amortization and Impairment'];
           if (accumAmort != null) {
-            msValue = msValue + accumAmort; // GROSS + (-AccumAmort) = NET
+            msValue = msValue + accumAmort;
           }
         }
 
         // ─── P1b: Operating Income — prefer "Reported" over "Normalized" ───
-        // MS "Total Operating Profit/Loss" is NORMALIZED (excludes restructuring,
-        // impairment). Our engine extracts as-reported XBRL OperatingIncomeLoss.
-        // Use "Reported Total Operating Profit/Loss" when available.
         if (msField === 'Total Operating Profit/Loss') {
-          const reportedValue = msStmt[msYear]?.['Reported Total Operating Profit/Loss'];
+          const reportedValue = msStmt[msPeriod]?.['Reported Total Operating Profit/Loss'];
           if (reportedValue != null) {
             msValue = reportedValue;
           }
         }
 
+        // ─── P1d: Net Change in Cash — prefer "as Reported" (includes FX effect) ───
+        // MS "Change in Cash" = OpCF + InvCF + FinCF (excludes FX)
+        // MS "Change in Cash as Reported, Supplemental" = includes FX effect
+        // XBRL engine correctly includes FX, so compare against the reported field.
+        if (msField === 'Change in Cash') {
+          const reported = msStmt[msPeriod]?.['Change in Cash as Reported, Supplemental'];
+          if (reported != null) {
+            msValue = reported;
+          }
+        }
+
         // ─── P1c: Accrued Liabilities — skip combined-only companies ───
-        // When MS only has combined "Payables and Accrued Expenses" (no separate
-        // "Accrued Expenses, Current"), the data doesn't exist at required granularity.
         if (msField === 'Accrued Expenses, Current' && msValue != null) {
-          // Check if this company has separate accrued in ANY year — if not, it's
-          // a combined-only company and we should skip
-          const hasAnySeparateAccrued = msYears.some(
-            yr => msStmt[yr]?.['Accrued Expenses, Current'] != null
+          const hasAnySeparateAccrued = msPeriods.some(
+            p => msStmt[p]?.['Accrued Expenses, Current'] != null
           );
           if (!hasAnySeparateAccrued) {
-            // Combined-only company — skip this comparison entirely
             continue;
           }
         }
 
-        // Skip if MS doesn't have this field for this year
+        // Skip if MS doesn't have this field for this period
         if (msValue == null) continue;
 
         // Skip spin-off pre-spin years for affected companies
@@ -281,23 +310,41 @@ function compareCompany(ticker, fixture, engineData) {
             msField,
             thesisField: mapInfo.thesisField,
             statement: msStmtKey,
-            msYear,
+            msPeriod,
             edgarYear,
+            edgarQtr,
             status: 'SKIP_SPINOFF',
             tolerance: mapInfo.tolerance,
           });
           continue;
         }
 
-        const engineStmt = engineData?.[engineStmtKey]?.[edgarYear];
+        // Get engine data for this quarter
+        const engineQtr = engineData?.quarterly?.[edgarYear]?.[edgarQtr];
+        if (!engineQtr) {
+          results.push({
+            msField,
+            thesisField: mapInfo.thesisField,
+            statement: msStmtKey,
+            msPeriod,
+            edgarYear,
+            edgarQtr,
+            status: 'MISSING_QUARTER',
+            tolerance: mapInfo.tolerance,
+          });
+          continue;
+        }
+
+        const engineStmt = engineQtr[engineStmtKey];
         if (!engineStmt) {
           results.push({
             msField,
             thesisField: mapInfo.thesisField,
             statement: msStmtKey,
-            msYear,
+            msPeriod,
             edgarYear,
-            status: 'MISSING_YEAR',
+            edgarQtr,
+            status: 'MISSING_STATEMENT',
             tolerance: mapInfo.tolerance,
           });
           continue;
@@ -309,8 +356,9 @@ function compareCompany(ticker, fixture, engineData) {
             msField,
             thesisField: mapInfo.thesisField,
             statement: msStmtKey,
-            msYear,
+            msPeriod,
             edgarYear,
+            edgarQtr,
             status: 'MISSING_FIELD',
             tolerance: mapInfo.tolerance,
           });
@@ -345,8 +393,9 @@ function compareCompany(ticker, fixture, engineData) {
           msField,
           thesisField: mapInfo.thesisField,
           statement: msStmtKey,
-          msYear,
+          msPeriod,
           edgarYear,
+          edgarQtr,
           status: comparison.status,
           pct: comparison.pct,
           expected: comparison.expected,
@@ -365,7 +414,7 @@ function compareCompany(ticker, fixture, engineData) {
 function generateReport(allResults) {
   const lines = [];
   lines.push('');
-  lines.push('MORNINGSTAR ACCURACY REPORT');
+  lines.push('MORNINGSTAR QUARTERLY ACCURACY REPORT');
   lines.push('═'.repeat(70));
 
   let totalMatch = 0;
@@ -381,14 +430,14 @@ function generateReport(allResults) {
     const close = results.filter(r => r.status === 'CLOSE').length;
     const diff = results.filter(r => r.status === 'DIFF').length;
     const missing = results.filter(
-      r => r.status === 'MISSING_FIELD' || r.status === 'MISSING_YEAR'
+      r => r.status === 'MISSING_FIELD' || r.status === 'MISSING_QUARTER' || r.status === 'MISSING_STATEMENT'
     ).length;
     const skipped = results.filter(r => r.status === 'SKIP_SPINOFF').length;
     const compared = match + close + diff;
     const pct = compared > 0 ? ((match / compared) * 100).toFixed(1) : '0.0';
 
     const parts = [`${ticker.padEnd(8)}`];
-    parts.push(`${String(match).padStart(4)}/${String(compared).padStart(4)} match (${pct}%)`);
+    parts.push(`${String(match).padStart(5)}/${String(compared).padStart(5)} match (${pct}%)`);
     if (close > 0) parts.push(`${close} close`);
     if (missing > 0) parts.push(`${missing} missing`);
     if (diff > 0) parts.push(`${diff} DIFF`);
@@ -410,7 +459,7 @@ function generateReport(allResults) {
       if (!failurePatterns[key]) failurePatterns[key] = [];
       failurePatterns[key].push({
         ticker,
-        year: r.msYear,
+        period: r.msPeriod,
         expected: r.expected,
         actual: r.actual,
         pct: r.pct,
@@ -430,7 +479,7 @@ function generateReport(allResults) {
   // Top failure patterns
   const sortedPatterns = Object.entries(failurePatterns)
     .sort((a, b) => b[1].length - a[1].length)
-    .slice(0, 15);
+    .slice(0, 20);
 
   if (sortedPatterns.length > 0) {
     lines.push('');
@@ -453,16 +502,15 @@ function generateReport(allResults) {
 
 // ─── Test Suite ──────────────────────────────────────────────
 
-// Dynamic import of engine module (after fetch interceptor is in place)
-let fetchEdgarStatements;
+let fetchEdgarQuarterly;
 
 const allResults = [];
 
-describe('Morningstar Accuracy', () => {
+describe('Morningstar Quarterly Accuracy', () => {
   beforeAll(async () => {
     // Import engine after fetch override is active
     const mod = await import('../edgarFinancials.js');
-    fetchEdgarStatements = mod.fetchEdgarStatements;
+    fetchEdgarQuarterly = mod.fetchEdgarQuarterly;
   }, 10000);
 
   afterAll(() => {
@@ -479,7 +527,7 @@ describe('Morningstar Accuracy', () => {
       const fixture = msFixtures[ticker];
       expect(fixture, `No fixture for ${ticker}`).toBeDefined();
 
-      // Skip EUR-reporting companies (EDGAR uses EUR values, comparison needs currency handling)
+      // Skip EUR-reporting companies
       if (EUR_COMPANIES.has(ticker)) {
         allResults.push({
           ticker,
@@ -489,8 +537,8 @@ describe('Morningstar Accuracy', () => {
         return;
       }
 
-      // Fetch from live engine (uses disk-cached EDGAR responses)
-      const engineData = await fetchEdgarStatements(ticker);
+      // Fetch from live quarterly engine (uses disk-cached EDGAR responses)
+      const engineData = await fetchEdgarQuarterly(ticker);
 
       if (!engineData) {
         allResults.push({
@@ -498,17 +546,14 @@ describe('Morningstar Accuracy', () => {
           offset: 0,
           results: [{ status: 'ENGINE_ERROR', msField: 'N/A', thesisField: 'N/A', tolerance: 'informational' }],
         });
-        // Don't fail — some tickers might not resolve. Track and report.
         return;
       }
 
-      const companyResult = compareCompany(ticker, fixture, engineData);
+      const companyResult = compareCompanyQuarterly(ticker, fixture, engineData);
       allResults.push(companyResult);
 
-      // For the BASELINE run, we don't fail on diffs — we establish baseline.
-      // Change this to assert on materialDiffs after Phase B fixes.
-      //
-      // For now, just ensure the engine returned data and we got comparisons.
+      // Baseline run: don't fail on diffs — establish baseline.
+      // Just ensure the engine returned data and we got comparisons.
       const compared = companyResult.results.filter(
         r => r.status === 'MATCH' || r.status === 'CLOSE' || r.status === 'DIFF'
       );
