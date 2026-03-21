@@ -145,7 +145,7 @@ Spawns `claude -p` as a subprocess with `--output-format stream-json --verbose`,
 
 ```bash
 # Must run from a plain terminal — can't nest inside Claude Code or Conductor
-EVALS=1 bun test test/skill-e2e.test.ts
+EVALS=1 bun test test/skill-e2e-*.test.ts
 ```
 
 - Gated by `EVALS=1` env var (prevents accidental expensive runs)
@@ -153,7 +153,7 @@ EVALS=1 bun test test/skill-e2e.test.ts
 - API connectivity pre-check — fails fast on ConnectionRefused before burning budget
 - Real-time progress to stderr: `[Ns] turn T tool #C: Name(...)`
 - Saves full NDJSON transcripts and failure JSON for debugging
-- Tests live in `test/skill-e2e.test.ts`, runner logic in `test/helpers/session-runner.ts`
+- Tests live in `test/skill-e2e-*.test.ts` (split by category), runner logic in `test/helpers/session-runner.ts`
 
 ### E2E observability
 

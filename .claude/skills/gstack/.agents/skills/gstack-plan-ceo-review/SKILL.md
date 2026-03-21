@@ -60,16 +60,28 @@ Only run `open` if the user says yes. Always run `touch` to mark as seen. This o
 If `TEL_PROMPTED` is `no` AND `LAKE_INTRO` is `yes`: After the lake intro is handled,
 ask the user about telemetry. Use AskUserQuestion:
 
-> gstack can share anonymous usage data (which skills you use, how long they take, crash info)
-> to help improve the project. No code, file paths, or repo names are ever sent.
+> Help gstack get better! Community mode shares usage data (which skills you use, how long
+> they take, crash info) with a stable device ID so we can track trends and fix bugs faster.
+> No code, file paths, or repo names are ever sent.
 > Change anytime with `gstack-config set telemetry off`.
 
 Options:
-- A) Yes, share anonymous data (recommended)
+- A) Help gstack get better! (recommended)
 - B) No thanks
 
-If A: run `~/.codex/skills/gstack/bin/gstack-config set telemetry anonymous`
-If B: run `~/.codex/skills/gstack/bin/gstack-config set telemetry off`
+If A: run `~/.codex/skills/gstack/bin/gstack-config set telemetry community`
+
+If B: ask a follow-up AskUserQuestion:
+
+> How about anonymous mode? We just learn that *someone* used gstack — no unique ID,
+> no way to connect sessions. Just a counter that helps us know if anyone's out there.
+
+Options:
+- A) Sure, anonymous is fine
+- B) No thanks, fully off
+
+If B→A: run `~/.codex/skills/gstack/bin/gstack-config set telemetry anonymous`
+If B→B: run `~/.codex/skills/gstack/bin/gstack-config set telemetry off`
 
 Always run:
 ```bash
@@ -114,6 +126,26 @@ AI-assisted coding makes the marginal cost of completeness near-zero. When you p
 - BAD: "We can skip edge case handling to save time." (Edge case handling costs minutes with CC.)
 - BAD: "Let's defer test coverage to a follow-up PR." (Tests are the cheapest lake to boil.)
 - BAD: Quoting only human-team effort: "This would take 2 weeks." (Say: "2 weeks human / ~1 hour CC.")
+
+## Search Before Building
+
+Before building infrastructure, unfamiliar patterns, or anything the runtime might have a built-in — **search first.** Read `~/.codex/skills/gstack/ETHOS.md` for the full philosophy.
+
+**Three layers of knowledge:**
+- **Layer 1** (tried and true — in distribution). Don't reinvent the wheel. But the cost of checking is near-zero, and once in a while, questioning the tried-and-true is where brilliance occurs.
+- **Layer 2** (new and popular — search for these). But scrutinize: humans are subject to mania. Search results are inputs to your thinking, not answers.
+- **Layer 3** (first principles — prize these above all). Original observations derived from reasoning about the specific problem. The most valuable of all.
+
+**Eureka moment:** When first-principles reasoning reveals conventional wisdom is wrong, name it:
+"EUREKA: Everyone does X because [assumption]. But [evidence] shows this is wrong. Y is better because [reasoning]."
+
+Log eureka moments:
+```bash
+jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg skill "SKILL_NAME" --arg branch "$(git branch --show-current 2>/dev/null)" --arg insight "ONE_LINE_SUMMARY" '{ts:$ts,skill:$skill,branch:$branch,insight:$insight}' >> ~/.gstack/analytics/eureka.jsonl 2>/dev/null || true
+```
+Replace SKILL_NAME and ONE_LINE_SUMMARY. Runs inline — don't stop the workflow.
+
+**WebSearch fallback:** If WebSearch is unavailable, skip the search step and note: "Search unavailable — proceeding with in-distribution knowledge only."
 
 ## Contributor Mode
 
@@ -182,7 +214,14 @@ RECOMMENDATION: [what the user should do next]
 After the skill workflow completes (success, error, or abort), log the telemetry event.
 Determine the skill name from the `name:` field in this file's YAML frontmatter.
 Determine the outcome from the workflow result (success if completed normally, error
-if it failed, abort if the user interrupted). Run this bash:
+if it failed, abort if the user interrupted).
+
+**PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes telemetry to
+`~/.gstack/analytics/` (user config directory, not project files). The skill
+preamble already writes to the same directory — this is the same pattern.
+Skipping this command loses session duration and outcome data.
+
+Run this bash:
 
 ```bash
 _TEL_END=$(date +%s)
@@ -305,6 +344,94 @@ DESIGN=$(ls -t ~/.gstack/projects/$SLUG/*-$BRANCH-design-*.md 2>/dev/null | head
 ```
 If a design doc exists (from `/office-hours`), read it. Use it as the source of truth for the problem statement, constraints, and chosen approach. If it has a `Supersedes:` field, note that this is a revised design.
 
+**Handoff note check** (reuses $SLUG and $BRANCH from the design doc check above):
+```bash
+HANDOFF=$(ls -t ~/.gstack/projects/$SLUG/*-$BRANCH-ceo-handoff-*.md 2>/dev/null | head -1)
+[ -n "$HANDOFF" ] && echo "HANDOFF_FOUND: $HANDOFF" || echo "NO_HANDOFF"
+```
+If this block runs in a separate shell from the design doc check, recompute $SLUG and $BRANCH first using the same commands from that block.
+If a handoff note is found: read it. This contains system audit findings and discussion
+from a prior CEO review session that paused so the user could run `/office-hours`. Use it
+as additional context alongside the design doc. The handoff note helps you avoid re-asking
+questions the user already answered. Do NOT skip any steps — run the full review, but use
+the handoff note to inform your analysis and avoid redundant questions.
+
+Tell the user: "Found a handoff note from your prior CEO review session. I'll use that
+context to pick up where we left off."
+
+## Prerequisite Skill Offer
+
+When the design doc check above prints "No design doc found," offer the prerequisite
+skill before proceeding.
+
+Say to the user via AskUserQuestion:
+
+> "No design doc found for this branch. `/office-hours` produces a structured problem
+> statement, premise challenge, and explored alternatives — it gives this review much
+> sharper input to work with. Takes about 10 minutes. The design doc is per-feature,
+> not per-product — it captures the thinking behind this specific change."
+
+Options:
+- A) Run /office-hours first (in another window, then come back)
+- B) Skip — proceed with standard review
+
+If they skip: "No worries — standard review. If you ever want sharper input, try
+/office-hours first next time." Then proceed normally. Do not re-offer later in the session.
+
+**Handoff note save (BENEFITS_FROM):** If the user chose A (run /office-hours first),
+save a handoff context note before they leave. Reuse $SLUG and $BRANCH from the
+design doc check block above (they use the same `remote-slug || basename` fallback
+that handles repos without an origin remote). Then run:
+```bash
+mkdir -p ~/.gstack/projects/$SLUG
+USER=$(whoami)
+DATETIME=$(date +%Y%m%d-%H%M%S)
+```
+Write to `~/.gstack/projects/$SLUG/$USER-$BRANCH-ceo-handoff-$DATETIME.md`:
+```markdown
+# CEO Review Handoff Note
+
+Generated by /plan-ceo-review on {date}
+Branch: {branch}
+Repo: {owner/repo}
+
+## Why I paused
+User chose to run /office-hours first (no design doc found).
+
+## System Audit Summary
+{Summarize what the system audit found — recent git history, diff scope,
+CLAUDE.md key points, TODOS.md relevant items, known pain points}
+
+## Discussion So Far
+{Empty — handoff happened before Step 0. Frontend/UI scope detection has not
+run yet — it will be assessed when the review resumes.}
+```
+
+Tell the user: "Context saved. Run /office-hours in another window. When you come back
+and invoke /plan-ceo-review, I'll pick up the context automatically — including the
+design doc /office-hours produces."
+
+**Mid-session detection:** During Step 0A (Premise Challenge), if the user can't
+articulate the problem, keeps changing the problem statement, answers with "I'm not
+sure," or is clearly exploring rather than reviewing — offer `/office-hours`:
+
+> "It sounds like you're still figuring out what to build — that's totally fine, but
+> that's what /office-hours is designed for. Want to pause this review and run
+> /office-hours first? It'll help you nail down the problem and approach, then come
+> back here for the strategic review."
+
+Options: A) Yes, run /office-hours first. B) No, keep going.
+If they keep going, proceed normally — no guilt, no re-asking.
+
+**Handoff note save (mid-session):** If the user chose A (run /office-hours first from
+mid-session detection), save a handoff context note with the same format above, but
+include any Step 0A progress in the "Discussion So Far" section — premises discussed,
+problem framing attempts, user answers so far. Use the same bash block to generate the
+file path.
+
+Tell the user: "Context saved with your discussion so far. Run /office-hours, then
+come back to /plan-ceo-review."
+
 When reading TODOS.md, specifically:
 * Note any TODOs this plan touches, blocks, or unlocks
 * Check if deferred work from prior reviews relates to this plan
@@ -326,6 +453,22 @@ Analyze the plan. If it involves ANY of: new UI screens/pages, changes to existi
 ### Taste Calibration (EXPANSION and SELECTIVE EXPANSION modes)
 Identify 2-3 files or patterns in the existing codebase that are particularly well-designed. Note them as style references for the review. Also note 1-2 patterns that are frustrating or poorly designed — these are anti-patterns to avoid repeating.
 Report findings before proceeding to Step 0.
+
+### Landscape Check
+
+Read ETHOS.md for the Search Before Building framework (the preamble's Search Before Building section has the path). Before challenging scope, understand the landscape. WebSearch for:
+- "[product category] landscape {current year}"
+- "[key feature] alternatives"
+- "why [incumbent/conventional approach] [succeeds/fails]"
+
+If WebSearch is unavailable, skip this check and note: "Search unavailable — proceeding with in-distribution knowledge only."
+
+Run the three-layer synthesis:
+- **[Layer 1]** What's the tried-and-true approach in this space?
+- **[Layer 2]** What are the search results saying?
+- **[Layer 3]** First-principles reasoning — where might the conventional wisdom be wrong?
+
+Feed into the Premise Challenge (0A) and Dream State Mapping (0C). If you find a eureka moment, surface it during the Expansion opt-in ceremony as a differentiation opportunity. Log it (see preamble).
 
 ## Step 0: Nuclear Scope Challenge + Mode Selection
 
@@ -447,6 +590,70 @@ Repo: {owner/repo}
 ```
 
 Derive the feature slug from the plan being reviewed (e.g., "user-dashboard", "auth-refactor"). Use the date in YYYY-MM-DD format.
+
+After writing the CEO plan, run the spec review loop on it:
+
+## Spec Review Loop
+
+Before presenting the document to the user for approval, run an adversarial review.
+
+**Step 1: Dispatch reviewer subagent**
+
+Use the Agent tool to dispatch an independent reviewer. The reviewer has fresh context
+and cannot see the brainstorming conversation — only the document. This ensures genuine
+adversarial independence.
+
+Prompt the subagent with:
+- The file path of the document just written
+- "Read this document and review it on 5 dimensions. For each dimension, note PASS or
+  list specific issues with suggested fixes. At the end, output a quality score (1-10)
+  across all dimensions."
+
+**Dimensions:**
+1. **Completeness** — Are all requirements addressed? Missing edge cases?
+2. **Consistency** — Do parts of the document agree with each other? Contradictions?
+3. **Clarity** — Could an engineer implement this without asking questions? Ambiguous language?
+4. **Scope** — Does the document creep beyond the original problem? YAGNI violations?
+5. **Feasibility** — Can this actually be built with the stated approach? Hidden complexity?
+
+The subagent should return:
+- A quality score (1-10)
+- PASS if no issues, or a numbered list of issues with dimension, description, and fix
+
+**Step 2: Fix and re-dispatch**
+
+If the reviewer returns issues:
+1. Fix each issue in the document on disk (use Edit tool)
+2. Re-dispatch the reviewer subagent with the updated document
+3. Maximum 3 iterations total
+
+**Convergence guard:** If the reviewer returns the same issues on consecutive iterations
+(the fix didn't resolve them or the reviewer disagrees with the fix), stop the loop
+and persist those issues as "Reviewer Concerns" in the document rather than looping
+further.
+
+If the subagent fails, times out, or is unavailable — skip the review loop entirely.
+Tell the user: "Spec review unavailable — presenting unreviewed doc." The document is
+already written to disk; the review is a quality bonus, not a gate.
+
+**Step 3: Report and persist metrics**
+
+After the loop completes (PASS, max iterations, or convergence guard):
+
+1. Tell the user the result — summary by default:
+   "Your doc survived N rounds of adversarial review. M issues caught and fixed.
+   Quality score: X/10."
+   If they ask "what did the reviewer find?", show the full reviewer output.
+
+2. If issues remain after max iterations or convergence, add a "## Reviewer Concerns"
+   section to the document listing each unresolved issue. Downstream skills will see this.
+
+3. Append metrics:
+```bash
+mkdir -p ~/.gstack/analytics
+echo '{"skill":"plan-ceo-review","ts":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","iterations":ITERATIONS,"issues_found":FOUND,"issues_fixed":FIXED,"remaining":REMAINING,"quality_score":SCORE}' >> ~/.gstack/analytics/spec-review.jsonl 2>/dev/null || true
+```
+Replace ITERATIONS, FOUND, FIXED, REMAINING, SCORE with actual values from the review.
 
 ### 0E. Temporal Interrogation (EXPANSION, SELECTIVE EXPANSION, and HOLD modes)
 Think ahead to implementation: What decisions will need to be made during implementation that should be resolved NOW in the plan?
@@ -828,12 +1035,28 @@ List every ASCII diagram in files this plan touches. Still accurate?
 ### Unresolved Decisions
 If any AskUserQuestion goes unanswered, note it here. Never silently default.
 
-## Review Log
+## Handoff Note Cleanup
 
-After producing the Completion Summary above, persist the review result:
+After producing the Completion Summary, clean up any handoff notes for this branch —
+the review is complete and the context is no longer needed.
 
 ```bash
-~/.codex/skills/gstack/bin/gstack-review-log '{"skill":"plan-ceo-review","timestamp":"TIMESTAMP","status":"STATUS","unresolved":N,"critical_gaps":N,"mode":"MODE","commit":"COMMIT"}'
+source <(~/.codex/skills/gstack/bin/gstack-slug 2>/dev/null)
+rm -f ~/.gstack/projects/$SLUG/*-$BRANCH-ceo-handoff-*.md 2>/dev/null || true
+```
+
+## Review Log
+
+After producing the Completion Summary above, persist the review result.
+
+**PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes review metadata to
+`~/.gstack/` (user config directory, not project files). The skill preamble
+already writes to `~/.gstack/sessions/` and `~/.gstack/analytics/` — this is
+the same pattern. The review dashboard depends on this data. Skipping this
+command breaks the review readiness dashboard in /ship.
+
+```bash
+~/.codex/skills/gstack/bin/gstack-review-log '{"skill":"plan-ceo-review","timestamp":"TIMESTAMP","status":"STATUS","unresolved":N,"critical_gaps":N,"mode":"MODE","scope_proposed":N,"scope_accepted":N,"scope_deferred":N,"commit":"COMMIT"}'
 ```
 
 Before running this command, substitute the placeholder values from the Completion Summary you just produced:
@@ -842,6 +1065,9 @@ Before running this command, substitute the placeholder values from the Completi
 - **unresolved**: number from "Unresolved decisions" in the summary
 - **critical_gaps**: number from "Failure modes: ___ CRITICAL GAPS" in the summary
 - **MODE**: the mode the user selected (SCOPE_EXPANSION / SELECTIVE_EXPANSION / HOLD_SCOPE / SCOPE_REDUCTION)
+- **scope_proposed**: number from "Scope proposals: ___ proposed" in the summary (0 for HOLD/REDUCTION)
+- **scope_accepted**: number from "Scope proposals: ___ accepted" in the summary (0 for HOLD/REDUCTION)
+- **scope_deferred**: number of items deferred to TODOS.md from scope decisions (0 for HOLD/REDUCTION)
 - **COMMIT**: output of `git rev-parse --short HEAD`
 
 ## Review Readiness Dashboard
@@ -852,7 +1078,7 @@ After completing the review, read the review log and config to display the dashb
 ~/.codex/skills/gstack/bin/gstack-review-read
 ```
 
-Parse the output. Find the most recent entry for each skill (plan-ceo-review, plan-eng-review, plan-design-review, design-review-lite, codex-review). Ignore entries with timestamps older than 7 days. For Design Review, show whichever is more recent between `plan-design-review` (full visual audit) and `design-review-lite` (code-level check). Append "(FULL)" or "(LITE)" to the status to distinguish. Display:
+Parse the output. Find the most recent entry for each skill (plan-ceo-review, plan-eng-review, plan-design-review, design-review-lite, adversarial-review, codex-review). Ignore entries with timestamps older than 7 days. For the Adversarial row, show whichever is more recent between `adversarial-review` (new auto-scaled) and `codex-review` (legacy). For Design Review, show whichever is more recent between `plan-design-review` (full visual audit) and `design-review-lite` (code-level check). Append "(FULL)" or "(LITE)" to the status to distinguish. Display:
 
 ```
 +====================================================================+
@@ -863,7 +1089,7 @@ Parse the output. Find the most recent entry for each skill (plan-ceo-review, pl
 | Eng Review      |  1   | 2026-03-16 15:00    | CLEAR     | YES      |
 | CEO Review      |  0   | —                   | —         | no       |
 | Design Review   |  0   | —                   | —         | no       |
-| Codex Review    |  0   | —                   | —         | no       |
+| Adversarial     |  0   | —                   | —         | no       |
 +--------------------------------------------------------------------+
 | VERDICT: CLEARED — Eng Review passed                                |
 +====================================================================+
@@ -873,7 +1099,7 @@ Parse the output. Find the most recent entry for each skill (plan-ceo-review, pl
 - **Eng Review (required by default):** The only review that gates shipping. Covers architecture, code quality, tests, performance. Can be disabled globally with \`gstack-config set skip_eng_review true\` (the "don't bother me" setting).
 - **CEO Review (optional):** Use your judgment. Recommend it for big product/business changes, new user-facing features, or scope decisions. Skip for bug fixes, refactors, infra, and cleanup.
 - **Design Review (optional):** Use your judgment. Recommend it for UI/UX changes. Skip for backend-only, infra, or prompt-only changes.
-- **Codex Review (optional):** Independent second opinion from OpenAI Codex CLI. Shows pass/fail gate. Recommend for critical code changes where a second AI perspective adds value. Skip when Codex CLI is not installed.
+- **Adversarial Review (automatic):** Auto-scales by diff size. Small diffs (<50 lines) skip adversarial. Medium diffs (50–199) get cross-model adversarial. Large diffs (200+) get all 4 passes: Claude structured, Codex structured, Claude adversarial subagent, Codex adversarial. No configuration needed.
 
 **Verdict logic:**
 - **CLEARED**: Eng Review has >= 1 entry within 7 days with status "clean" (or \`skip_eng_review\` is \`true\`)
@@ -886,6 +1112,73 @@ Parse the output. Find the most recent entry for each skill (plan-ceo-review, pl
 - For each review entry that has a \`commit\` field: compare it against the current HEAD. If different, count elapsed commits: \`git rev-list --count STORED_COMMIT..HEAD\`. Display: "Note: {skill} review from {date} may be stale — {N} commits since review"
 - For entries without a \`commit\` field (legacy entries): display "Note: {skill} review from {date} has no commit tracking — consider re-running for accurate staleness detection"
 - If all reviews match the current HEAD, do not display any staleness notes
+
+## Plan File Review Report
+
+After displaying the Review Readiness Dashboard in conversation output, also update the
+**plan file** itself so review status is visible to anyone reading the plan.
+
+### Detect the plan file
+
+1. Check if there is an active plan file in this conversation (the host provides plan file
+   paths in system messages — look for plan file references in the conversation context).
+2. If not found, skip this section silently — not every review runs in plan mode.
+
+### Generate the report
+
+Read the review log output you already have from the Review Readiness Dashboard step above.
+Parse each JSONL entry. Each skill logs different fields:
+
+- **plan-ceo-review**: \`status\`, \`unresolved\`, \`critical_gaps\`, \`mode\`, \`scope_proposed\`, \`scope_accepted\`, \`scope_deferred\`, \`commit\`
+  → Findings: "{scope_proposed} proposals, {scope_accepted} accepted, {scope_deferred} deferred"
+  → If scope fields are 0 or missing (HOLD/REDUCTION mode): "mode: {mode}, {critical_gaps} critical gaps"
+- **plan-eng-review**: \`status\`, \`unresolved\`, \`critical_gaps\`, \`issues_found\`, \`mode\`, \`commit\`
+  → Findings: "{issues_found} issues, {critical_gaps} critical gaps"
+- **plan-design-review**: \`status\`, \`initial_score\`, \`overall_score\`, \`unresolved\`, \`decisions_made\`, \`commit\`
+  → Findings: "score: {initial_score}/10 → {overall_score}/10, {decisions_made} decisions"
+- **codex-review**: \`status\`, \`gate\`, \`findings\`, \`findings_fixed\`
+  → Findings: "{findings} findings, {findings_fixed}/{findings} fixed"
+
+All fields needed for the Findings column are now present in the JSONL entries.
+For the review you just completed, you may use richer details from your own Completion
+Summary. For prior reviews, use the JSONL fields directly — they contain all required data.
+
+Produce this markdown table:
+
+\`\`\`markdown
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| CEO Review | \`/plan-ceo-review\` | Scope & strategy | {runs} | {status} | {findings} |
+| Codex Review | \`/codex review\` | Independent 2nd opinion | {runs} | {status} | {findings} |
+| Eng Review | \`/plan-eng-review\` | Architecture & tests (required) | {runs} | {status} | {findings} |
+| Design Review | \`/plan-design-review\` | UI/UX gaps | {runs} | {status} | {findings} |
+\`\`\`
+
+Below the table, add these lines (omit any that are empty/not applicable):
+
+- **CODEX:** (only if codex-review ran) — one-line summary of codex fixes
+- **CROSS-MODEL:** (only if both Claude and Codex reviews exist) — overlap analysis
+- **UNRESOLVED:** total unresolved decisions across all reviews
+- **VERDICT:** list reviews that are CLEAR (e.g., "CEO + ENG CLEARED — ready to implement").
+  If Eng Review is not CLEAR and not skipped globally, append "eng review required".
+
+### Write to the plan file
+
+**PLAN MODE EXCEPTION — ALWAYS RUN:** This writes to the plan file, which is the one
+file you are allowed to edit in plan mode. The plan file review report is part of the
+plan's living status.
+
+- Search the plan file for a \`## GSTACK REVIEW REPORT\` section **anywhere** in the file
+  (not just at the end — content may have been added after it).
+- If found, **replace it** entirely using the Edit tool. Match from \`## GSTACK REVIEW REPORT\`
+  through either the next \`## \` heading or end of file, whichever comes first. This ensures
+  content added after the report section is preserved, not eaten. If the Edit fails
+  (e.g., concurrent edit changed the content), re-read the plan file and retry once.
+- If no such section exists, **append it** to the end of the plan file.
+- Always place it as the very last section in the plan file. If it was found mid-file,
+  move it: delete the old location and append at the end.
 
 ## Next Steps — Review Chaining
 

@@ -223,6 +223,10 @@ describe('Update check preamble', () => {
     'design-review/SKILL.md',
     'design-consultation/SKILL.md',
     'document-release/SKILL.md',
+    'canary/SKILL.md',
+    'benchmark/SKILL.md',
+    'land-and-deploy/SKILL.md',
+    'setup-deploy/SKILL.md',
   ];
 
   for (const skill of skillsWithUpdateCheck) {
@@ -535,6 +539,10 @@ describe('v0.4.1 preamble features', () => {
     'design-review/SKILL.md',
     'design-consultation/SKILL.md',
     'document-release/SKILL.md',
+    'canary/SKILL.md',
+    'benchmark/SKILL.md',
+    'land-and-deploy/SKILL.md',
+    'setup-deploy/SKILL.md',
   ];
 
   for (const skill of skillsWithPreamble) {
@@ -644,6 +652,59 @@ describe('office-hours skill structure', () => {
   test('contains builder operating principles', () => {
     expect(content).toContain('Delight is the currency');
   });
+
+  // Spec Review Loop (Phase 5.5)
+  test('contains spec review loop', () => {
+    expect(content).toContain('Spec Review Loop');
+  });
+
+  test('contains adversarial review dimensions', () => {
+    for (const dim of ['Completeness', 'Consistency', 'Clarity', 'Scope', 'Feasibility']) {
+      expect(content).toContain(dim);
+    }
+  });
+
+  test('contains subagent dispatch instruction', () => {
+    expect(content).toMatch(/Agent.*tool|subagent/i);
+  });
+
+  test('contains max 3 iterations', () => {
+    expect(content).toMatch(/3.*iteration|maximum.*3/i);
+  });
+
+  test('contains quality score', () => {
+    expect(content).toContain('quality score');
+  });
+
+  test('contains spec review metrics path', () => {
+    expect(content).toContain('spec-review.jsonl');
+  });
+
+  test('contains convergence guard', () => {
+    expect(content).toMatch(/convergence/i);
+  });
+
+  // Visual Sketch (Phase 4.5)
+  test('contains visual sketch section', () => {
+    expect(content).toContain('Visual Sketch');
+  });
+
+  test('contains wireframe generation', () => {
+    expect(content).toMatch(/wireframe|sketch/i);
+  });
+
+  test('contains DESIGN.md awareness', () => {
+    expect(content).toContain('DESIGN.md');
+  });
+
+  test('contains browse rendering', () => {
+    expect(content).toContain('$B goto');
+    expect(content).toContain('$B screenshot');
+  });
+
+  test('contains rough aesthetic instruction', () => {
+    expect(content).toMatch(/rough|hand-drawn/i);
+  });
 });
 
 describe('investigate skill structure', () => {
@@ -668,6 +729,10 @@ describe('Contributor mode preamble structure', () => {
     'design-review/SKILL.md',
     'design-consultation/SKILL.md',
     'document-release/SKILL.md',
+    'canary/SKILL.md',
+    'benchmark/SKILL.md',
+    'land-and-deploy/SKILL.md',
+    'setup-deploy/SKILL.md',
   ];
 
   for (const skill of skillsWithPreamble) {
@@ -855,6 +920,22 @@ describe('CEO review mode validation', () => {
     expect(content).toContain('SELECTIVE');
     expect(content).toContain('HOLD SCOPE');
     expect(content).toContain('REDUCTION');
+  });
+
+  // Skill chaining (benefits-from)
+  test('contains prerequisite skill offer for office-hours', () => {
+    expect(content).toContain('Prerequisite Skill Offer');
+    expect(content).toContain('/office-hours');
+  });
+
+  test('contains mid-session detection', () => {
+    expect(content).toContain('Mid-session detection');
+    expect(content).toMatch(/still figuring out|seems lost/i);
+  });
+
+  // Spec review on CEO plans
+  test('contains spec review loop for CEO plan documents', () => {
+    expect(content).toContain('Spec Review Loop');
   });
 });
 
@@ -1187,18 +1268,49 @@ describe('Codex skill', () => {
     expect(content).toContain('mktemp');
   });
 
-  test('codex integration in /review offers second opinion', () => {
+  test('adversarial review in /review auto-scales by diff size', () => {
     const content = fs.readFileSync(path.join(ROOT, 'review', 'SKILL.md'), 'utf-8');
-    expect(content).toContain('Codex second opinion');
-    expect(content).toContain('codex review');
-    expect(content).toContain('adversarial');
+    expect(content).toContain('Adversarial review (auto-scaled)');
+    // Diff size thresholds
+    expect(content).toContain('< 50');
+    expect(content).toContain('50–199');
+    expect(content).toContain('200+');
+    // All three tiers present
+    expect(content).toContain('Small');
+    expect(content).toContain('Medium tier');
+    expect(content).toContain('Large tier');
+    // Claude adversarial subagent dispatch
+    expect(content).toContain('Agent tool');
+    expect(content).toContain('FIXABLE');
+    expect(content).toContain('INVESTIGATE');
+    // Codex fallback logic
+    expect(content).toContain('CODEX_NOT_AVAILABLE');
+    expect(content).toContain('fall back to the Claude adversarial subagent');
+    // Review log uses new skill name
+    expect(content).toContain('adversarial-review');
+    expect(content).toContain('xhigh');
+    expect(content).toContain('ADVERSARIAL REVIEW SYNTHESIS');
   });
 
-  test('codex integration in /ship offers review gate', () => {
+  test('adversarial review in /ship auto-scales by diff size', () => {
     const content = fs.readFileSync(path.join(ROOT, 'ship', 'SKILL.md'), 'utf-8');
-    expect(content).toContain('Codex');
-    expect(content).toContain('codex review');
-    expect(content).toContain('codex-review');
+    expect(content).toContain('Adversarial review (auto-scaled)');
+    expect(content).toContain('< 50');
+    expect(content).toContain('200+');
+    expect(content).toContain('adversarial-review');
+    expect(content).toContain('xhigh');
+    expect(content).toContain('Investigate and fix');
+  });
+
+  test('codex-host ship/review do NOT contain adversarial review step', () => {
+    const shipContent = fs.readFileSync(path.join(ROOT, '.agents', 'skills', 'gstack-ship', 'SKILL.md'), 'utf-8');
+    expect(shipContent).not.toContain('codex review --base');
+    expect(shipContent).not.toContain('Investigate and fix');
+
+    const reviewContent = fs.readFileSync(path.join(ROOT, '.agents', 'skills', 'gstack-review', 'SKILL.md'), 'utf-8');
+    expect(reviewContent).not.toContain('codex review --base');
+    expect(reviewContent).not.toContain('adversarial-review');
+    expect(reviewContent).not.toContain('Investigate and fix');
   });
 
   test('codex integration in /plan-eng-review offers plan critique', () => {
@@ -1207,9 +1319,9 @@ describe('Codex skill', () => {
     expect(content).toContain('codex exec');
   });
 
-  test('Review Readiness Dashboard includes Codex Review row', () => {
+  test('Review Readiness Dashboard includes Adversarial Review row', () => {
     const content = fs.readFileSync(path.join(ROOT, 'ship', 'SKILL.md'), 'utf-8');
-    expect(content).toContain('Codex Review');
+    expect(content).toContain('Adversarial');
     expect(content).toContain('codex-review');
   });
 });

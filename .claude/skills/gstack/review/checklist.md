@@ -108,6 +108,23 @@ To do this: use Grep to find all references to the sibling values (e.g., grep fo
 - O(n*m) lookups in views (`Array#find` in a loop instead of `index_by` hash)
 - Ruby-side `.select{}` filtering on DB results that could be a `WHERE` clause (unless intentionally avoiding leading-wildcard `LIKE`)
 
+#### Performance & Bundle Impact
+- New `dependencies` entries in package.json that are known-heavy: moment.js (→ date-fns, 330KB→22KB), lodash full (→ lodash-es or per-function imports), jquery, core-js full polyfill
+- Significant lockfile growth (many new transitive dependencies from a single addition)
+- Images added without `loading="lazy"` or explicit width/height attributes (causes layout shift / CLS)
+- Large static assets committed to repo (>500KB per file)
+- Synchronous `<script>` tags without async/defer
+- CSS `@import` in stylesheets (blocks parallel loading — use bundler imports instead)
+- `useEffect` with fetch that depends on another fetch result (request waterfall — combine or parallelize)
+- Named → default import switches on tree-shakeable libraries (breaks tree-shaking)
+- New `require()` calls in ESM codebases
+
+**DO NOT flag:**
+- devDependencies additions (don't affect production bundle)
+- Dynamic `import()` calls (code splitting — these are good)
+- Small utility additions (<5KB gzipped)
+- Server-side-only dependencies
+
 ---
 
 ## Severity Classification
@@ -123,7 +140,8 @@ CRITICAL (highest severity):      INFORMATIONAL (lower severity):
                                    ├─ Crypto & Entropy
                                    ├─ Time Window Safety
                                    ├─ Type Coercion at Boundaries
-                                   └─ View/Frontend
+                                   ├─ View/Frontend
+                                   └─ Performance & Bundle Impact
 
 All findings are actioned via Fix-First Review. Severity determines
 presentation order and classification of AUTO-FIX vs ASK — critical

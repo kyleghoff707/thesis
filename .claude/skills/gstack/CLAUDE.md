@@ -63,7 +63,7 @@ gstack/
 │   ├── skill-validation.test.ts  # Tier 1: static validation (free, <1s)
 │   ├── gen-skill-docs.test.ts    # Tier 1: generator quality (free, <1s)
 │   ├── skill-llm-eval.test.ts   # Tier 3: LLM-as-judge (~$0.15/run)
-│   └── skill-e2e.test.ts         # Tier 2: E2E via claude -p (~$3.85/run)
+│   └── skill-e2e-*.test.ts       # Tier 2: E2E via claude -p (~$3.85/run, split by category)
 ├── qa-only/         # /qa-only skill (report-only QA, no fixes)
 ├── plan-design-review/  # /plan-design-review skill (report-only design audit)
 ├── design-review/    # /design-review skill (design audit + fix loop)
@@ -78,6 +78,7 @@ gstack/
 ├── setup            # One-time setup: build binary + symlink skills
 ├── SKILL.md         # Generated from SKILL.md.tmpl (don't edit directly)
 ├── SKILL.md.tmpl    # Template: edit this, run gen:skill-docs
+├── ETHOS.md         # Builder philosophy (Boil the Lake, Search Before Building)
 └── package.json     # Build scripts for browse
 ```
 
@@ -91,6 +92,12 @@ SKILL.md files are **generated** from `.tmpl` templates. To update docs:
 
 To add a new browse command: add it to `browse/src/commands.ts` and rebuild.
 To add a snapshot flag: add it to `SNAPSHOT_FLAGS` in `browse/src/snapshot.ts` and rebuild.
+
+**Merge conflicts on SKILL.md files:** NEVER resolve conflicts on generated SKILL.md
+files by accepting either side. Instead: (1) resolve conflicts on the `.tmpl` templates
+and `scripts/gen-skill-docs.ts` (the sources of truth), (2) run `bun run gen:skill-docs`
+to regenerate all SKILL.md files, (3) stage the regenerated files. Accepting one side's
+generated output silently drops the other side's template changes.
 
 ## Platform-agnostic design
 
@@ -192,6 +199,19 @@ Completeness is cheap. Don't recommend shortcuts when the complete implementatio
 is a "lake" (achievable) not an "ocean" (multi-quarter migration). See the
 Completeness Principle in the skill preamble for the full philosophy.
 
+## Search before building
+
+Before designing any solution that involves concurrency, unfamiliar patterns,
+infrastructure, or anything where the runtime/framework might have a built-in:
+
+1. Search for "{runtime} {thing} built-in"
+2. Search for "{thing} best practice {current year}"
+3. Check official runtime/framework docs
+
+Three layers of knowledge: tried-and-true (Layer 1), new-and-popular (Layer 2),
+first-principles (Layer 3). Prize Layer 3 above all. See ETHOS.md for the full
+builder philosophy.
+
 ## Local plans
 
 Contributors can store long-range vision docs and design documents in `~/.gstack-dev/plans/`.
@@ -212,6 +232,19 @@ regenerated SKILL.md shifts prompt context.
    as a risk in the PR body
 
 "Pre-existing" without receipts is a lazy claim. Prove it or don't say it.
+
+## Long-running tasks: don't give up
+
+When running evals, E2E tests, or any long-running background task, **poll until
+completion**. Use `sleep 180 && echo "ready"` + `TaskOutput` in a loop every 3
+minutes. Never switch to blocking mode and give up when the poll times out. Never
+say "I'll be notified when it completes" and stop checking — keep the loop going
+until the task finishes or the user tells you to stop.
+
+The full E2E suite can take 30-45 minutes. That's 10-15 polling cycles. Do all of
+them. Report progress at each check (which tests passed, which are running, any
+failures so far). The user wants to see the run complete, not a promise that
+you'll check later.
 
 ## Deploying to the active skill
 
