@@ -352,22 +352,34 @@ export function findLatestQuarter(companyFacts) {
   const candidates = ['Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax',
     'Assets', 'NetIncomeLoss', 'SalesRevenueNet'];
 
-  let latestEnd = '';
-  let latestInfo = null;
+  let latestQEnd = '';
+  let latestQInfo = null;
+  let latestKEnd = '';
+  let latestKInfo = null;
 
   for (const tag of candidates) {
     const facts = companyFacts?.facts?.['us-gaap']?.[tag];
     if (!facts) continue;
     for (const entries of Object.values(facts.units || {})) {
       for (const e of entries) {
-        if (e.form === '10-Q' && ['Q1', 'Q2', 'Q3'].includes(e.fp) && e.end > latestEnd) {
-          latestEnd = e.end;
-          latestInfo = { fy: e.fy, fp: e.fp, end: e.end };
+        if (e.form === '10-Q' && ['Q1', 'Q2', 'Q3'].includes(e.fp) && e.end > latestQEnd) {
+          latestQEnd = e.end;
+          latestQInfo = { fy: e.fy, fp: e.fp, end: e.end };
+        }
+        if (e.form === '10-K' && e.fp === 'FY' && e.end > latestKEnd) {
+          latestKEnd = e.end;
+          latestKInfo = { fy: e.fy, fp: 'FY', end: e.end };
         }
       }
     }
   }
-  return latestInfo;
+
+  // If the latest 10-K covers a later period than the latest 10-Q, use it.
+  // This handles Q4: after the annual 10-K is filed but before Q1 of the next FY.
+  if (latestKInfo && (!latestQInfo || latestKInfo.end > latestQInfo.end)) {
+    return latestKInfo;
+  }
+  return latestQInfo;
 }
 
 // Try multiple XBRL tags in priority order (companies use different tags)

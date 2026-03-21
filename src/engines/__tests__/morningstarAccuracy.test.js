@@ -123,10 +123,10 @@ const EUR_COMPANIES = new Set(['RACE']);
 
 // ─── Fiscal Year Offset Detection ────────────────────────────
 // Morningstar labels by calendar year the FY ends.
-// EDGAR labels by the company's stated FY designation.
-// For some non-Dec-FY companies, MS year != EDGAR year.
+// The fixture parser shifted MS years to EDGAR convention.
+// The engine now uses calendar-year convention for Jan/Feb FY companies (v8+).
 // We auto-detect offset by comparing revenue for each possible shift.
-// Bias toward offset=0 (the common case) — only use -1 if it's clearly better.
+// Bias toward offset=0 (the common case) — only use non-zero if clearly better.
 
 function detectYearOffset(msStmt, engineIncome, engineYears) {
   if (!msStmt || !engineIncome) return 0;
@@ -134,15 +134,17 @@ function detectYearOffset(msStmt, engineIncome, engineYears) {
   const msYears = Object.keys(msStmt).filter(y => y !== 'TTM').map(Number);
   if (msYears.length === 0 || engineYears.length === 0) return 0;
 
-  // Try offsets 0 and -1
+  // Try offsets 0, -1, and +1
+  // +1 needed because fixture parser shifted Jan/Feb FY companies to EDGAR convention,
+  // but the engine now outputs calendar-year labels (fixture year + 1 = engine year)
   const scores = {};
-  for (const offset of [0, -1]) {
+  for (const offset of [0, -1, 1]) {
     let matches = 0;
     let compared = 0;
     for (const msYear of msYears) {
-      const edgarYear = msYear + offset;
+      const engineYear = msYear + offset;
       const msRev = msStmt[String(msYear)]?.['Total Revenue'];
-      const engRev = engineIncome[edgarYear]?.revenues;
+      const engRev = engineIncome[engineYear]?.revenues;
       if (msRev != null && engRev != null) {
         compared++;
         const pct = Math.abs((engRev - msRev) / msRev);
@@ -152,10 +154,11 @@ function detectYearOffset(msStmt, engineIncome, engineYears) {
     scores[offset] = { matches, compared };
   }
 
-  // Bias toward 0: only use -1 if it has strictly more matches AND at least 3
+  // Bias toward 0: only use non-zero if it has strictly more matches AND at least 3
   // (3 prevents false positives from coincidental near-matches in data discrepancies)
-  if (scores[-1].matches > scores[0].matches && scores[-1].matches >= 3) {
-    return -1;
+  const best = [0, -1, 1].reduce((a, b) => scores[a].matches >= scores[b].matches ? a : b);
+  if (best !== 0 && scores[best].matches > scores[0].matches && scores[best].matches >= 3) {
+    return best;
   }
   return 0;
 }

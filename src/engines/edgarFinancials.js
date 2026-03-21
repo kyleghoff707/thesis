@@ -61,6 +61,24 @@ const INCOME_TAXONOMY = [
     'GoodwillImpairmentLoss',
     'AssetImpairmentCharges',
   ]},
+  // Irregular items — extracted separately for normalized operating income
+  { field: 'restructuring_charges', unit: 'USD', tags: [
+    'RestructuringCharges',
+  ]},
+  // Combined restructuring+impairment tags — kept separate to prevent double-counting
+  // in normalized_operating_income when asset_impairment also resolves from a separate tag
+  { field: 'restructuring_and_impairment', unit: 'USD', tags: [
+    'RestructuringSettlementAndImpairmentProvisions',
+    'RestructuringCostsAndAssetImpairmentCharges',
+  ]},
+  { field: 'goodwill_impairment', unit: 'USD', tags: [
+    'GoodwillImpairmentLoss',
+  ]},
+  { field: 'asset_impairment', unit: 'USD', tags: [
+    'AssetImpairmentCharges',
+    'ImpairmentOfLongLivedAssetsHeldForUse',
+    'ImpairmentOfIntangibleAssetsExcludingGoodwill',
+  ]},
   { field: 'operating_expenses', unit: 'USD', tags: [
     'OperatingExpenses',
     'CostsAndExpenses',
@@ -311,6 +329,11 @@ const BALANCE_TAXONOMY = [
   { field: 'deferred_revenue_current', unit: 'USD', tags: [
     'DeferredRevenueCurrent',
     'ContractWithCustomerLiabilityCurrent',
+  ]},
+  { field: 'taxes_payable', unit: 'USD', tags: [
+    'TaxesPayableCurrent',
+    'AccruedIncomeTaxesCurrent',
+    'IncomeTaxesPayable',
   ]},
   { field: 'other_current_liabilities', unit: 'USD', tags: [
     'OtherLiabilitiesCurrent',
@@ -753,6 +776,11 @@ function getDerivedFormula(field, inc, bal, cf) {
       if (inc.gross_profit != null && inc.sga != null)
         return 'gross_profit - sga - R&D - D&A(IS) - other_operating_expenses';
       return null;
+    case 'normalized_operating_income':
+      // Combined tag already includes restructuring + impairment — don't double-count asset_impairment
+      if (inc.restructuring_and_impairment != null)
+        return 'operating_income_loss + |restructuring_and_impairment| + |goodwill_impairment|';
+      return 'operating_income_loss + |restructuring_charges| + |goodwill_impairment| + |asset_impairment|';
     case 'ebit':
       if (inc.operating_income_loss != null) return 'operating_income_loss';
       return 'income_before_tax + interest_expense';
@@ -770,8 +798,9 @@ function getDerivedFormula(field, inc, bal, cf) {
         return 'current_liabilities + noncurrent_liabilities';
       return 'liabilities_and_equity - equity - minority_interest';
     case 'total_debt':
-      if (bal.liabilities != null && bal.liabilities > 0 && (bal.short_term_debt ?? 0) + (bal.current_portion_lt_debt ?? 0) + (bal.long_term_debt ?? 0) + (bal.finance_lease_liability_current ?? 0) + (bal.finance_lease_liability_noncurrent ?? 0) > 0
-        && ((bal.short_term_debt ?? 0) + (bal.current_portion_lt_debt ?? 0) + (bal.long_term_debt ?? 0) + (bal.finance_lease_liability_current ?? 0) + (bal.finance_lease_liability_noncurrent ?? 0)) / bal.liabilities < 0.05)
+      if (bal.liabilities != null && bal.liabilities > 0
+        && ((bal.short_term_debt ?? 0) + (bal.current_portion_lt_debt ?? 0) + (bal.long_term_debt ?? 0) + (bal.finance_lease_liability_current ?? 0) + (bal.finance_lease_liability_noncurrent ?? 0)) / bal.liabilities < 0.05
+        && inc.interest_expense != null && inc.interest_expense > 0)
         return 'liabilities - known_non_debt_items (sanity check fallback)';
       return 'short_term_debt + current_portion_lt_debt + long_term_debt + finance_lease_liabilities';
     case 'total_debt_with_leases': return 'total_debt + operating_lease_liabilities';
@@ -866,6 +895,27 @@ function computeDerivedFields(years, income, balance, cashFlow) {
           - (inc.research_and_development ?? 0)
           - (inc.depreciation_amortization_is ?? 0)
           - (inc.other_operating_expenses ?? 0);
+      }
+    }
+
+    // Normalized Operating Income = as-reported + irregular charges (absolute values)
+    // Strips out restructuring, goodwill write-offs, and asset impairments to show
+    // ongoing business profitability. Used for Rule One restated view.
+    // Guard: if company reports a combined restructuring+impairment tag, use it instead
+    // of summing separate components (prevents double-counting asset impairment).
+    if (inc.operating_income_loss != null) {
+      let irregulars;
+      if (inc.restructuring_and_impairment != null) {
+        // Combined tag already includes both restructuring and impairment
+        irregulars = Math.abs(inc.restructuring_and_impairment)
+          + Math.abs(inc.goodwill_impairment ?? 0);
+      } else {
+        irregulars = Math.abs(inc.restructuring_charges ?? 0)
+          + Math.abs(inc.goodwill_impairment ?? 0)
+          + Math.abs(inc.asset_impairment ?? 0);
+      }
+      if (irregulars > 0) {
+        inc.normalized_operating_income = inc.operating_income_loss + irregulars;
       }
     }
 
@@ -966,10 +1016,15 @@ function computeDerivedFields(years, income, balance, cashFlow) {
     // Debt sanity check: if total_debt / liabilities < 5% but liabilities are significant,
     // the specific debt tags likely have gaps (common for REITs, banks, insurance, energy).
     // Fall back to: Liabilities - known non-debt liabilities.
-    if (bal.liabilities != null && bal.liabilities > 0 && bal.total_debt / bal.liabilities < 0.05) {
+    // Gate: only fire if interest_expense > 0 — companies with $0 debt have ~$0 interest.
+    // This prevents false positives on zero-debt companies like LULU where all liabilities
+    // are operating leases and accruals.
+    if (bal.liabilities != null && bal.liabilities > 0 && bal.total_debt / bal.liabilities < 0.05
+        && inc.interest_expense != null && inc.interest_expense > 0) {
       const knownNonDebt =
         (bal.accounts_payable ?? 0) +
         (bal.accrued_liabilities ?? 0) +
+        (bal.taxes_payable ?? 0) +
         (bal.deferred_revenue_current ?? 0) +
         (bal.deferred_revenue_noncurrent ?? 0) +
         (bal.operating_lease_liability_current ?? 0) +
@@ -1322,7 +1377,12 @@ function extractTTMSection(companyFacts, taxonomy, sectionType, latestQtr) {
       if (!facts) continue;
       const entries = facts.units?.[unit] || [];
 
-      if (sectionType === 'balance') {
+      if (fp === 'FY') {
+        // Q4 case: latest filing is a 10-K, TTM = full fiscal year annual value.
+        // getAnnualTotal works for flow items (income, CF) and instant items (balance sheet)
+        // — it returns the 10-K value regardless of whether it's duration or instant.
+        val = getAnnualTotal(entries, fy);
+      } else if (sectionType === 'balance') {
         val = getQuarterlyInstant(entries, fy, fp);
       } else if (unit === 'shares') {
         val = getQuarterlyYTD(entries, fy, fp);
@@ -1508,7 +1568,8 @@ export async function fetchEdgarQuarterly(ticker, options = {}) {
   ]);
   if (!facts) return null;
 
-  const cacheKey = `edgar-quarterly:${ticker.toUpperCase()}:s${splits.length}:${version}`;
+  // v2: FY label offset for Jan/Feb companies
+  const cacheKey = `edgar-quarterly:v2:${ticker.toUpperCase()}:s${splits.length}:${version}`;
   const cached = await cacheGetAsync(cacheKey);
   if (cached) return cached;
 
@@ -1566,6 +1627,22 @@ export async function fetchEdgarQuarterly(ticker, options = {}) {
       }
     }
   }
+  // ── Fiscal Year Label Offset (quarterly) ──
+  // Same Jan/Feb offset as annual — relabel FY keys to end-date calendar year.
+  const qFyEndMonth = Object.values(fiscalMonths)[0];
+  const qNeedsOffset = qFyEndMonth === 'Jan' || qFyEndMonth === 'Feb';
+  if (qNeedsOffset) {
+    for (const fy of [...availableFYs]) {
+      const newFy = fy + 1;
+      quarterly[newFy] = quarterly[fy]; delete quarterly[fy];
+    }
+    for (let i = 0; i < availableFYs.length; i++) availableFYs[i] = availableFYs[i] + 1;
+    const newFM = {};
+    for (const [k, v] of Object.entries(fiscalMonths)) newFM[Number(k) + 1] = v;
+    Object.keys(fiscalMonths).forEach(k => delete fiscalMonths[k]);
+    Object.assign(fiscalMonths, newFM);
+  }
+
   const result = { quarterly, fiscalYears: availableFYs, fiscalMonths };
 
   const qtrCount = Object.values(quarterly).reduce((sum, fy) => sum + Object.keys(fy).length, 0);
@@ -1631,8 +1708,9 @@ export async function fetchEdgarStatements(ticker, options = {}) {
   const industryType = classifyIndustryType(sicCode);
   const overlay = getOverlay(industryType);
 
-  // Include split count + version + industry type in cache key. v7: Layer 2/3 disconnected, Layer 1 only.
-  const cacheKey = `edgar-statements:v7:${ticker.toUpperCase()}:s${splits.length}:${version}:${industryType}`;
+  // Include split count + version + industry type in cache key.
+  // v8: FY label offset for Jan/Feb companies, interest expense gate on debt sanity check, normalized opex
+  const cacheKey = `edgar-statements:v9:${ticker.toUpperCase()}:s${splits.length}:${version}:${industryType}`;
   const cached = await cacheGetAsync(cacheKey);
   if (cached) return cached;
 
@@ -1734,6 +1812,39 @@ export async function fetchEdgarStatements(ticker, options = {}) {
   const latestQtr = findLatestQuarter(facts);
   const ttm = computeTTM(facts, latestQtr);
 
+  // ── Fiscal Year Label Offset ──────────────────────────────
+  // Companies with Jan/Feb FY ends: XBRL `fy` is 1 less than the calendar year of
+  // the period end date. R1/MS use end-date calendar year. Re-label to match.
+  // Example: LULU FY ending Feb 2, 2025 → XBRL fy=2024 → relabel to 2025.
+  // Only applies to Jan/Feb — all other non-Dec months have fy = calendar year.
+  // The Frames API (edgarFrames.js) is NOT affected — it uses its own XBRL-convention logic.
+  const fyEndMonth = Object.values(fiscalMonths)[0]; // consistent across years
+  const needsYearOffset = fyEndMonth === 'Jan' || fyEndMonth === 'Feb';
+  if (needsYearOffset) {
+    const remapKeys = (obj) => {
+      const remapped = {};
+      for (const [key, val] of Object.entries(obj)) {
+        remapped[Number(key) + 1] = val;
+      }
+      return remapped;
+    };
+    // Remap year keys in all statement and provenance objects
+    for (const yr of years) {
+      const newYr = yr + 1;
+      income[newYr] = income[yr]; delete income[yr];
+      balance[newYr] = balance[yr]; delete balance[yr];
+      cashFlow[newYr] = cashFlow[yr]; delete cashFlow[yr];
+      provIncome[newYr] = provIncome[yr]; delete provIncome[yr];
+      provBalance[newYr] = provBalance[yr]; delete provBalance[yr];
+      provCashFlow[newYr] = provCashFlow[yr]; delete provCashFlow[yr];
+    }
+    // Remap years array and fiscalMonths
+    for (let i = 0; i < years.length; i++) years[i] = years[i] + 1;
+    const newFiscalMonths = remapKeys(fiscalMonths);
+    Object.keys(fiscalMonths).forEach(k => delete fiscalMonths[k]);
+    Object.assign(fiscalMonths, newFiscalMonths);
+  }
+
   const provenance = { income: provIncome, balance: provBalance, cashFlow: provCashFlow };
   const result = { years, income, balance, cashFlow, fiscalMonths, ttm, provenance, industryType };
 
@@ -1770,4 +1881,4 @@ export async function fetchEdgarStatements(ticker, options = {}) {
   return result;
 }
 
-export { INCOME_TAXONOMY, BALANCE_TAXONOMY, CASHFLOW_TAXONOMY, computeDerivedFields, getDerivedFormula, findQuarterlyFiscalYears, extractSection, buildProvenance };
+export { INCOME_TAXONOMY, BALANCE_TAXONOMY, CASHFLOW_TAXONOMY, computeDerivedFields, computeTTM, getDerivedFormula, findQuarterlyFiscalYears, extractSection, buildProvenance };

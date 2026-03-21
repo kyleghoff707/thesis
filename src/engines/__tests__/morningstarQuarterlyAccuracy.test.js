@@ -151,19 +151,21 @@ function detectQuarterlyYearOffset(msIncomeStmt, engineQuarterly, engineFYs) {
     msByFY[parsed.year][`Q${parsed.quarter}`] = msIncomeStmt[label];
   }
 
-  // Try offsets 0 and -1
+  // Try offsets 0, -1, and +1
+  // +1 needed: fixture parser shifted Jan/Feb FY companies to EDGAR convention,
+  // but engine now outputs calendar-year labels (fixture year + 1 = engine year)
   const scores = {};
-  for (const offset of [0, -1]) {
+  for (const offset of [0, -1, 1]) {
     let matches = 0;
     let compared = 0;
 
     for (const [msYearStr, msQuarters] of Object.entries(msByFY)) {
       const msYear = parseInt(msYearStr);
-      const edgarYear = msYear + offset;
+      const engineYear = msYear + offset;
 
       for (const [qtr, msFields] of Object.entries(msQuarters)) {
         const msRev = msFields['Total Revenue'];
-        const engRev = engineQuarterly[edgarYear]?.[qtr]?.income?.revenues;
+        const engRev = engineQuarterly[engineYear]?.[qtr]?.income?.revenues;
 
         if (msRev != null && engRev != null) {
           compared++;
@@ -176,10 +178,11 @@ function detectQuarterlyYearOffset(msIncomeStmt, engineQuarterly, engineFYs) {
     scores[offset] = { matches, compared };
   }
 
-  // Bias toward 0: only use -1 if strictly more matches AND at least 5
+  // Bias toward 0: only use non-zero if strictly more matches AND at least 5
   // (higher threshold than annual since we have more data points)
-  if (scores[-1].matches > scores[0].matches && scores[-1].matches >= 5) {
-    return -1;
+  const best = [0, -1, 1].reduce((a, b) => scores[a].matches >= scores[b].matches ? a : b);
+  if (best !== 0 && scores[best].matches > scores[0].matches && scores[best].matches >= 5) {
+    return best;
   }
   return 0;
 }

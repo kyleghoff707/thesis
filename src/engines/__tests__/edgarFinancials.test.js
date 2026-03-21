@@ -27,7 +27,7 @@ vi.mock('../splits', () => ({
 }));
 
 // Import the taxonomies, computeDerivedFields, and provenance helpers for testing
-const { INCOME_TAXONOMY, BALANCE_TAXONOMY, CASHFLOW_TAXONOMY, computeDerivedFields, extractSection, buildProvenance } = await import('../edgarFinancials');
+const { INCOME_TAXONOMY, BALANCE_TAXONOMY, CASHFLOW_TAXONOMY, computeDerivedFields, computeTTM, extractSection, buildProvenance } = await import('../edgarFinancials');
 const { extractAnnualFact } = await import('../edgar');
 
 describe('Fix 2 (P1b): Cash tag — restricted cash included', () => {
@@ -153,7 +153,8 @@ describe('computeDerivedFields behavior', () => {
 
   it('Fix 3: debt sanity check — ratio-based fallback when tags miss debt', () => {
     const years = [2024];
-    const income = { 2024: {} };
+    // Sanity check requires interest_expense > 0 (companies with real debt have interest)
+    const income = { 2024: { interest_expense: 1500000000 } }; // $1.5B interest expense
     const balance = { 2024: {
       liabilities: 50000000000,      // $50B total liabilities
       short_term_debt: 100000000,    // $100M
@@ -177,6 +178,48 @@ describe('computeDerivedFields behavior', () => {
     // Known non-debt = 2+3+1+0.5+0.8+4+2+1+0.5+1 = 15.8B
     // Derived debt = 50B - 15.8B = 34.2B — much more than $500M
     expect(balance[2024].total_debt).toBe(34200000000);
+  });
+
+  it('Fix 3b: debt sanity check — skips fallback when interest_expense is zero (LULU-type)', () => {
+    const years = [2024];
+    // Zero-debt company: no interest expense → sanity check must NOT fire
+    const income = { 2024: { interest_expense: 0 } };
+    const balance = { 2024: {
+      liabilities: 5000000000,       // $5B total liabilities (all leases + accruals)
+      short_term_debt: 0,
+      current_portion_lt_debt: 0,
+      long_term_debt: 0,             // $0 total_debt → 0% of liabilities
+      accounts_payable: 500000000,
+      accrued_liabilities: 800000000,
+      operating_lease_liability_current: 400000000,
+      operating_lease_liability_noncurrent: 2000000000,
+      deferred_revenue_current: 300000000,
+      other_current_liabilities: 200000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Without the interest expense gate, the sanity check would fire and derive
+    // a false debt value from unclassified liabilities. With the gate, total_debt stays $0.
+    expect(balance[2024].total_debt).toBe(0);
+  });
+
+  it('Fix 3c: debt sanity check — skips fallback when interest_expense is null', () => {
+    const years = [2024];
+    // Company with no interest_expense tag at all → sanity check must NOT fire
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      liabilities: 5000000000,
+      short_term_debt: 0,
+      long_term_debt: 0,
+      accounts_payable: 500000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].total_debt).toBe(0);
   });
 });
 
@@ -588,5 +631,120 @@ describe('Phase 2: derived field detection via pre/post diff', () => {
     expect(cashFlow[2024].free_cash_flow).toBe(8000000000);
     expect(provCashFlow[2024].free_cash_flow.derived).toBe(true);
     expect(provCashFlow[2024].free_cash_flow.tag).toBeNull();
+  });
+});
+
+// ─── TTM Q4 Bug: When latest filing is 10-K, TTM should equal annual ────────
+// Bug: findLatestQuarter only looks at 10-Q filings (Q1/Q2/Q3), so when the
+// latest data is a 10-K (Q4/FY), TTM uses stale Q3 data instead of annual values.
+describe('TTM Q4 bug: TTM should equal annual when 10-K is latest filing', () => {
+  // Simulate a company (like CMG, Dec FY) where:
+  //   - FY2024 10-K filed (annual data for full year)
+  //   - FY2025 10-K filed (annual data for full year) ← latest filing
+  //   - Q1/Q2/Q3 of FY2025 10-Qs also exist
+  //   - No Q1 of FY2026 yet
+  // TTM should = FY2025 annual, not a stale Q3-based computation.
+  function buildMockFacts() {
+    return {
+      facts: {
+        'us-gaap': {
+          // ── Income: Revenue ──
+          Revenues: {
+            units: {
+              USD: [
+                // FY2024 10-K annual
+                { val: 10000000000, form: '10-K', fp: 'FY', fy: 2024, end: '2024-12-31', filed: '2025-02-20' },
+                // FY2025 quarterly 10-Qs (YTD cumulative)
+                { val: 2800000000, form: '10-Q', fp: 'Q1', fy: 2025, end: '2025-03-31', start: '2025-01-01', filed: '2025-05-01' },
+                { val: 5700000000, form: '10-Q', fp: 'Q2', fy: 2025, end: '2025-06-30', start: '2025-01-01', filed: '2025-08-01' },
+                { val: 8800000000, form: '10-Q', fp: 'Q3', fy: 2025, end: '2025-09-30', start: '2025-01-01', filed: '2025-11-01' },
+                // FY2024 comparative YTDs in Q filings
+                { val: 2500000000, form: '10-Q', fp: 'Q1', fy: 2024, end: '2024-03-31', start: '2024-01-01', filed: '2024-05-01' },
+                { val: 5100000000, form: '10-Q', fp: 'Q2', fy: 2024, end: '2024-06-30', start: '2024-01-01', filed: '2024-08-01' },
+                { val: 7600000000, form: '10-Q', fp: 'Q3', fy: 2024, end: '2024-09-30', start: '2024-01-01', filed: '2024-11-01' },
+                // FY2025 10-K annual ← THE KEY: this is the latest filing
+                { val: 12000000000, form: '10-K', fp: 'FY', fy: 2025, end: '2025-12-31', filed: '2026-02-20' },
+              ]
+            }
+          },
+          // ── Income: Net Income ──
+          NetIncomeLoss: {
+            units: {
+              USD: [
+                { val: 1500000000, form: '10-K', fp: 'FY', fy: 2024, end: '2024-12-31', filed: '2025-02-20' },
+                { val: 400000000, form: '10-Q', fp: 'Q1', fy: 2025, end: '2025-03-31', start: '2025-01-01', filed: '2025-05-01' },
+                { val: 850000000, form: '10-Q', fp: 'Q2', fy: 2025, end: '2025-06-30', start: '2025-01-01', filed: '2025-08-01' },
+                { val: 1300000000, form: '10-Q', fp: 'Q3', fy: 2025, end: '2025-09-30', start: '2025-01-01', filed: '2025-11-01' },
+                { val: 350000000, form: '10-Q', fp: 'Q1', fy: 2024, end: '2024-03-31', start: '2024-01-01', filed: '2024-05-01' },
+                { val: 750000000, form: '10-Q', fp: 'Q2', fy: 2024, end: '2024-06-30', start: '2024-01-01', filed: '2024-08-01' },
+                { val: 1100000000, form: '10-Q', fp: 'Q3', fy: 2024, end: '2024-09-30', start: '2024-01-01', filed: '2024-11-01' },
+                { val: 1800000000, form: '10-K', fp: 'FY', fy: 2025, end: '2025-12-31', filed: '2026-02-20' },
+              ]
+            }
+          },
+          // ── Balance Sheet: Total Assets (instant) ──
+          Assets: {
+            units: {
+              USD: [
+                { val: 8000000000, form: '10-K', fp: 'FY', fy: 2024, end: '2024-12-31', filed: '2025-02-20' },
+                { val: 8200000000, form: '10-Q', fp: 'Q1', fy: 2025, end: '2025-03-31', filed: '2025-05-01' },
+                { val: 8500000000, form: '10-Q', fp: 'Q2', fy: 2025, end: '2025-06-30', filed: '2025-08-01' },
+                { val: 8800000000, form: '10-Q', fp: 'Q3', fy: 2025, end: '2025-09-30', filed: '2025-11-01' },
+                // FY2025 10-K: total assets at year-end
+                { val: 9000000000, form: '10-K', fp: 'FY', fy: 2025, end: '2025-12-31', filed: '2026-02-20' },
+              ]
+            }
+          },
+          // ── Cash Flow: Operating CF ──
+          NetCashProvidedByUsedInOperatingActivities: {
+            units: {
+              USD: [
+                { val: 2000000000, form: '10-K', fp: 'FY', fy: 2024, end: '2024-12-31', filed: '2025-02-20' },
+                { val: 600000000, form: '10-Q', fp: 'Q1', fy: 2025, end: '2025-03-31', start: '2025-01-01', filed: '2025-05-01' },
+                { val: 1200000000, form: '10-Q', fp: 'Q2', fy: 2025, end: '2025-06-30', start: '2025-01-01', filed: '2025-08-01' },
+                { val: 1800000000, form: '10-Q', fp: 'Q3', fy: 2025, end: '2025-09-30', start: '2025-01-01', filed: '2025-11-01' },
+                { val: 500000000, form: '10-Q', fp: 'Q1', fy: 2024, end: '2024-03-31', start: '2024-01-01', filed: '2024-05-01' },
+                { val: 1000000000, form: '10-Q', fp: 'Q2', fy: 2024, end: '2024-06-30', start: '2024-01-01', filed: '2024-08-01' },
+                { val: 1500000000, form: '10-Q', fp: 'Q3', fy: 2024, end: '2024-09-30', start: '2024-01-01', filed: '2024-11-01' },
+                { val: 2500000000, form: '10-K', fp: 'FY', fy: 2025, end: '2025-12-31', filed: '2026-02-20' },
+              ]
+            }
+          },
+        }
+      }
+    };
+  }
+
+  it('TTM revenue should equal FY2025 annual when 10-K is latest filing', () => {
+    const facts = buildMockFacts();
+    // Q4 case: latest 10-K (end 2025-12-31) is newer than latest 10-Q Q3 (end 2025-09-30)
+    const ttm = computeTTM(facts, { fy: 2025, fp: 'FY', end: '2025-12-31' });
+    expect(ttm).not.toBeNull();
+    expect(ttm.income.revenues).toBe(12000000000);
+  });
+
+  it('TTM net income should equal FY2025 annual when 10-K is latest filing', () => {
+    const facts = buildMockFacts();
+    const ttm = computeTTM(facts, { fy: 2025, fp: 'FY', end: '2025-12-31' });
+    expect(ttm.income.net_income_loss).toBe(1800000000);
+  });
+
+  it('TTM total assets (balance sheet) should equal FY2025 10-K instant value', () => {
+    const facts = buildMockFacts();
+    const ttm = computeTTM(facts, { fy: 2025, fp: 'FY', end: '2025-12-31' });
+    expect(ttm.balance.assets).toBe(9000000000);
+  });
+
+  it('TTM operating cash flow should equal FY2025 annual when 10-K is latest filing', () => {
+    const facts = buildMockFacts();
+    const ttm = computeTTM(facts, { fy: 2025, fp: 'FY', end: '2025-12-31' });
+    expect(ttm.cashFlow.net_cash_flow_from_operating_activities).toBe(2500000000);
+  });
+
+  it('TTM quarter label should indicate FY (not Q3)', () => {
+    const facts = buildMockFacts();
+    const ttm = computeTTM(facts, { fy: 2025, fp: 'FY', end: '2025-12-31' });
+    expect(ttm.quarter).toContain('FY');
+    expect(ttm.quarter).toContain('2025');
   });
 });
