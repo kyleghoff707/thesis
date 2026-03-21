@@ -1,7 +1,7 @@
 /**
  * morningstar-to-fixtures.cjs
  *
- * Reads Morningstar CSVs from knowledge/Morningstar Financial Statements/{TICKER}/
+ * Reads Morningstar CSVs from knowledge/morningstar-financial-statements/{TICKER}/
  * Outputs JSON fixture files to src/engines/__tests__/fixtures/morningstar/{TICKER}.json
  *
  * CSV format (confirmed across all 50 companies):
@@ -24,7 +24,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const MS_DIR = path.join(__dirname, '..', 'knowledge', 'Morningstar Financial Statements');
+const MS_DIR = path.join(__dirname, '..', 'knowledge', 'morningstar-financial-statements');
 const OUT_DIR = path.join(__dirname, '..', 'src', 'engines', '__tests__', 'fixtures', 'morningstar');
 
 const STATEMENT_TYPES = {

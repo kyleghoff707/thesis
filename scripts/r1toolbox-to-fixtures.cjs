@@ -1,7 +1,7 @@
 /**
  * r1toolbox-to-fixtures.cjs
  *
- * Reads R1 Toolbox CSVs from knowledge/R1 Toolbox Financial Statements/Annual Examples/
+ * Reads R1 Toolbox CSVs from knowledge/r1-toolbox-financial-statements/Annual Examples/
  * Outputs JSON fixture files to src/engines/__tests__/fixtures/r1toolbox/{TICKER}.json
  *
  * R1 CSV format:
@@ -22,7 +22,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const R1_DIR = path.join(__dirname, '..', 'knowledge', 'R1 Toolbox Financial Statements', 'Annual Examples');
+const R1_DIR = path.join(__dirname, '..', 'knowledge', 'r1-toolbox-financial-statements', 'Annual Examples');
 const OUT_DIR = path.join(__dirname, '..', 'src', 'engines', '__tests__', 'fixtures', 'r1toolbox');
 
 // Fields that are NOT in millions (per share, ratio, percentage)

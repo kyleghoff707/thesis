@@ -33,7 +33,7 @@ For detailed API integration notes (CORS proxying, EDGAR XBRL details, parsing i
 ## Architecture Reference
 **When debugging or modifying any engine, API integration, scoring algorithm, CORS proxy, validation system, or parser** — read `knowledge/references/app-architecture.md` first. It contains detailed technical documentation for all implemented systems (moved from CLAUDE.md to save context window).
 
-**When debugging or modifying the XBRL extraction engine, taxonomy, provenance, industry overlays, or coverage systems** — read `previous-prompt-and-plans/xbrl-engine-strategy.md` first. It contains the full three-layer architecture, design decisions, coverage audit results, and implementation history.
+**When debugging or modifying the XBRL extraction engine, taxonomy, provenance, industry overlays, or coverage systems** — read `previous-prompt-and-plans/gstack-xbrl-engine-strategy-eng-plan-20260318.md` first. It contains the full three-layer architecture, design decisions, coverage audit results, and implementation history.
 
 ### Three-Layer XBRL Engine (`edgarFinancials.js`)
 
@@ -74,7 +74,7 @@ All tag definitions in `FRAMES_TAGS` and `PEER_FRAMES_TAGS` have a `period: 'ins
 ---
 
 ## Current Status
-Phases 1-4 complete — app shell, data engines, calculation engines, and full Toolbox UI all functional. **XBRL engine complete** — three-layer tag resolution (static + taxonomy + AI), industry overlays (bank/REIT/insurance), full provenance tracking (annual + TTM), coverage monitor, and Audit tab dashboard. Validated across all 503 S&P 500 companies with 0 failures. See `previous-prompt-and-plans/xbrl-engine-strategy.md` for full architecture and `validation/reports/financial-data-comparison-rca.md` for the original 12-ticker RCA. **The remaining work is Phase 5-8: AI-driven report generation.**
+Phases 1-4 complete — app shell, data engines, calculation engines, and full Toolbox UI all functional. **XBRL engine complete** — three-layer tag resolution (static + taxonomy + AI), industry overlays (bank/REIT/insurance), full provenance tracking (annual + TTM), coverage monitor, and Audit tab dashboard. Validated across all 503 S&P 500 companies with 0 failures. See `previous-prompt-and-plans/gstack-xbrl-engine-strategy-eng-plan-20260318.md` for full architecture and `validation/reports/financial-data-comparison-rca.md` for the original 12-ticker RCA. **The remaining work is Phase 5-8: AI-driven report generation.**
 
 ### What's Built
 All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems (validation, guru, ticker, N-PORT, compensation), Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores + derived metric computation + Yahoo data backfill + per-ticker caching + sparse peer filtering + data completeness indicators + industry-aware column defaults, Upcoming Events & News section on Overview (SEC 8-K events + Yahoo calendar + IR page discovery), three-layer XBRL engine with provenance tracking and coverage monitoring (173 tests via vitest). See source tree below.
@@ -153,23 +153,25 @@ Vary FGR, EPS, CapEx %, ROE assumptions across methods → range of buy prices.
 knowledge/
 ├── agent workflows/
 │   └── Rule 1 workflow.md         — Master Research Workflow (stage progression)
-├── Morningstar Financial Statements/ — 50-company MS CSV truth set (IS/BS/CF per ticker)
-├── Morningstar Quarterly Financial Statements/
-├── R1 Toolbox Financial Statements/
-├── Thes1s Financial Statements (post xbrl strategy)/
-├── Thes1s Financial Statements (pre xbrl strategy)/
+├── morningstar-financial-statements/ — 50-company MS CSV truth set (IS/BS/CF per ticker)
+├── morningstar-quarterly-financial-statements/
+├── r1-toolbox-financial-statements/
+├── intel-reports/                 — Dated research investigations and findings
+│   ├── ms-xbrl-normalization-research.md
+│   ├── edgar-taxonomy-research-report.md
+│   ├── executive-compensation-extraction-research.md
+│   ├── consolidated_vs_expanded_financial_statements.md
+│   ├── morningstar_original_vs_restated_financials.md
+│   └── morningstar-complete-data-definitions.md
 ├── references/
 │   ├── advanced-financial-analysis.md
 │   ├── app-architecture.md        — Detailed API/engine/scoring/validation docs (moved from CLAUDE.md)
 │   ├── buffett_letters_claude_training_set/
 │   ├── capex-cash-flow-explained.md
-│   ├── consolidated_vs_expanded_financial_statements.md
 │   ├── edgar-industry-classification-report.md
 │   ├── edgar-xbrl-taxonomy.md
 │   ├── financial-statements-future-growth-rate.md — FGR methodology, Big 4 growth rates
 │   ├── guru-list.md               — 43 named Gurus for 13F lookup
-│   ├── morningstar_original_vs_restated_financials.md
-│   ├── run-commands.md
 │   └── tools-for-analysis.md      — 3 Ms framework (Moat, Management, MOS)
 ├── stage-1-one-pager/             — template.md, curriculum, LULU example
 ├── stage-2-pitch-deck/            — template.md, 4 curriculum files, LULU example + resources
@@ -432,3 +434,40 @@ Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude
 - `/unfreeze` — Remove edit restrictions
 - `/document-release` — Document a release
 - `/gstack-upgrade` — Update gstack to the latest version
+
+### Skill Output Overrides (persist across gstack updates)
+
+gstack skills produce plan/review/design artifacts. Override the defaults for this project:
+
+**Output location** — Save all gstack skill artifacts to `previous-prompt-and-plans/` in the project root instead of `~/.gstack/projects/$SLUG/`. After writing, create a symlink in `~/.gstack/projects/$SLUG/` pointing to the project file so inter-skill cross-references (Design Doc Check, QA test plan lookup, design lineage) still work via their default bash lookups.
+
+```bash
+# Example: after writing previous-prompt-and-plans/{descriptive-name}.md
+ln -sf "$(git rev-parse --show-toplevel)/previous-prompt-and-plans/{descriptive-name}.md" \
+  ~/.gstack/projects/$SLUG/{gstack-standard-name}.md
+```
+
+**File naming** — Use descriptive topic-based names prefixed with `gstack-` instead of `{user}-{branch}-{type}-{datetime}`. This distinguishes gstack-generated artifacts from manual prompts/plans already in the folder.
+
+Format: `gstack-{topic}-{type}-{YYYYMMDD}.md`
+- `gstack-` = prefix to identify gstack-generated artifacts
+- `{topic}` = descriptive slug of what's being planned/reviewed (e.g., `xbrl-normalization`, `ai-report-generation`, `valuation-calculators`)
+- `{type}` = skill output type: `eng-plan`, `ceo-plan`, `design-review`, `design-consultation`, `test-plan`, `test-outcome`
+- `{YYYYMMDD}` = date from system clock (`date +%Y%m%d`)
+
+Examples:
+| Instead of | Use |
+|---|---|
+| `kylehoff-main-eng-plan-20260319-184500.md` | `gstack-xbrl-normalization-eng-plan-20260319.md` |
+| `kylehoff-main-design-20260319-152545.md` | `gstack-xbrl-normalization-design-review-20260319.md` |
+| `kylehoff-main-test-plan-20260319-184214.md` | `gstack-xbrl-normalization-test-plan-20260319.md` |
+| `kylehoff-main-test-outcome-20260320-091500.md` | `gstack-xbrl-normalization-test-outcome-20260320.md` |
+| `ceo-plans/2026-03-18-xbrl-morningstar-engine.md` | `gstack-xbrl-morningstar-engine-ceo-plan-20260318.md` |
+
+If a file with the same name already exists (same topic+type+date), append a version: `gstack-{topic}-{type}-{YYYYMMDD}-v2.md`.
+
+**What stays in `~/.gstack/projects/$SLUG/`:**
+- `main-reviews.jsonl` and `{branch}-reviews.jsonl` (consumed by `gstack-review-log` / `gstack-review-read` binaries)
+- Symlinks to project files (for inter-skill bash lookups)
+
+**Cross-references** — When gstack skills look up prior artifacts (Design Doc Check, test plan discovery, design lineage), also search `previous-prompt-and-plans/` in addition to `~/.gstack/projects/$SLUG/`.

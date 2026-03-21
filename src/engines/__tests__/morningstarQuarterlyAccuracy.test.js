@@ -10,7 +10,7 @@
  * Cache location: src/engines/__tests__/fixtures/edgar-cache/ (gitignored, shared with annual)
  * Clear cache:    rm -rf src/engines/__tests__/fixtures/edgar-cache/
  *
- * Fixture source: knowledge/Morningstar Quarterly Financial Statements/ (50 tickers)
+ * Fixture source: knowledge/morningstar-quarterly-financial-statements/ (50 tickers)
  * Fixture output: src/engines/__tests__/fixtures/morningstar-quarterly/{TICKER}.json
  * Field mapping:  src/engines/__tests__/fixtures/morningstar/field-mapping.json (shared with annual)
  */
