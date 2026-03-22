@@ -612,7 +612,10 @@ export default function Insiders({ ticker }) {
                           borderBottom: `1px solid ${C.border}`,
                           borderLeft: txn.isCluster ? `3px solid ${C.accent}` : '3px solid transparent',
                           background: i % 2 === 0 ? 'transparent' : `${C.bgHover}40`,
+                          transition: 'background .1s',
                         }}
+                        onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
+                        onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : `${C.bgHover}40`}
                       >
                         <td style={{ padding: '7px 10px', whiteSpace: 'nowrap', color: C.text }}>
                           {fmtDate(txn.transactionDate)}

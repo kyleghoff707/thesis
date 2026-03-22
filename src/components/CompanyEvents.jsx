@@ -49,7 +49,11 @@ function EventRow({ event }) {
       display: 'flex',
       alignItems: 'stretch',
       borderBottom: `1px solid ${C.border}`,
-    }}>
+      transition: 'background .1s',
+    }}
+      onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
+      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+    >
       {/* Left accent bar */}
       <div style={{
         width: 3,

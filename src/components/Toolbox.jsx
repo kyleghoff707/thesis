@@ -379,7 +379,11 @@ export default function Toolbox({ getReport, updateReport, settings }) {
                           <tr key={g.guruName} style={{
                             borderBottom: `1px solid ${C.border}`,
                             background: i % 2 === 0 ? 'transparent' : `${C.bgHover}40`,
-                          }}>
+                            transition: 'background .1s',
+                          }}
+                            onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
+                            onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : `${C.bgHover}40`}
+                          >
                             <td style={{ padding: '7px 12px', fontWeight: 500, color: C.text }}>{g.guruName}</td>
                             <td style={{ padding: '7px 12px', color: C.textSecondary, fontSize: 11 }}>{g.fundName}</td>
                             <td style={{ padding: '7px 12px', textAlign: 'right', fontFamily: 'monospace', color: C.text }}>

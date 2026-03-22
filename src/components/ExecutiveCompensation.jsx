@@ -236,7 +236,10 @@ function KeyExecutivesTab({ executives, years, summary, ceoPayRatio, source, pvp
                       cursor: 'pointer',
                       borderBottom: isExpanded ? 'none' : `1px solid ${C.borderLight}`,
                       background: isExpanded ? `${C.accent}08` : 'transparent',
+                      transition: 'background .1s',
                     }}
+                    onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = C.bgHover; }}
+                    onMouseLeave={e => { if (!isExpanded) e.currentTarget.style.background = 'transparent'; }}
                   >
                     <td style={{ padding: '10px 10px', verticalAlign: 'top' }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
@@ -445,7 +448,10 @@ function BoardTab({ directors }) {
             const yearKey = years[0];
             const comp = dir.compensation[yearKey] || {};
             return (
-              <tr key={idx} style={{ borderBottom: `1px solid ${C.borderLight}` }}>
+              <tr key={idx} style={{ borderBottom: `1px solid ${C.borderLight}`, transition: 'background .1s' }}
+                onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
                 <td style={{ padding: '8px 10px', fontWeight: 500, color: C.text }}>{dir.name}</td>
                 {directorFields.map(f => (
                   <td key={f.key} style={{

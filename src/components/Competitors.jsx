@@ -607,11 +607,26 @@ export default function Competitors({ company, guruActivities, report, updateRep
                 <tr key={peer.cik} style={{
                   background: isTarget ? C.accentLight : idx % 2 === 0 ? 'transparent' : C.borderLight,
                   borderLeft: isTarget ? `3px solid ${C.accent}` : '3px solid transparent',
-                }}>
+                  transition: 'background .1s',
+                }}
+                  onMouseEnter={e => {
+                    if (isTarget) return;
+                    e.currentTarget.style.background = C.bgHover;
+                    const sticky = e.currentTarget.querySelector('td');
+                    if (sticky) sticky.style.background = C.bgHover;
+                  }}
+                  onMouseLeave={e => {
+                    if (isTarget) return;
+                    e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : C.borderLight;
+                    const sticky = e.currentTarget.querySelector('td');
+                    if (sticky) sticky.style.background = idx % 2 === 0 ? C.bgCard : C.borderLight;
+                  }}
+                >
                   <td style={{
                     padding: '8px 14px', borderBottom: `1px solid ${C.borderLight}`,
                     position: 'sticky', left: 0, zIndex: 1,
                     background: isTarget ? C.accentLight : idx % 2 === 0 ? C.bgCard : C.borderLight,
+                    transition: 'background .1s',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       {(() => {
@@ -681,10 +696,22 @@ export default function Competitors({ company, guruActivities, report, updateRep
                   </td>
                 </tr>
                 {privateCompetitors.map(pc => (
-                  <tr key={pc.id} style={{ background: C.borderLight, opacity: 0.8 }}>
+                  <tr key={pc.id} style={{ background: C.borderLight, opacity: 0.8, transition: 'background .1s' }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = C.bgHover;
+                      const sticky = e.currentTarget.querySelector('td');
+                      if (sticky) sticky.style.background = C.bgHover;
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = C.borderLight;
+                      const sticky = e.currentTarget.querySelector('td');
+                      if (sticky) sticky.style.background = C.borderLight;
+                    }}
+                  >
                     <td style={{
                       padding: '8px 14px', borderBottom: `1px solid ${C.borderLight}`,
                       position: 'sticky', left: 0, zIndex: 1, background: C.borderLight,
+                      transition: 'background .1s',
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ fontWeight: 400, color: C.text, fontSize: 13 }}>{pc.name}</span>
