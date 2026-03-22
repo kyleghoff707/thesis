@@ -325,10 +325,11 @@ validation/                      — 3-layer validation system (scripts/, data/,
 
 When fixing bugs, follow this approach — do NOT jump straight to a fix:
 
-1. **Diagnose with `/rca`.** Invoke the RCA skill to run a structured root cause analysis — traces data flow, applies 5 Whys, and proposes ranked solutions.
-2. **Write a failing test.** The test should prove the bug exists. Include a test for the expected post-fix behavior. Use vitest (`npm test`).
-3. **Fix with a subagent.** Give the subagent the failing test and the specific files to modify. It works until all tests pass.
-4. **Verify.** All tests pass, app compiles, dev server runs.
+1. **Diagnose with `/investigate`** (gstack). Four-phase root cause analysis — investigate, analyze, hypothesize, implement. Most bugs resolve here.
+2. **Escalate with `/gsd:debug`** if the bug is complex, spans many files, or might need multiple sessions. Spawns a fresh 200k-context subagent with persistent state in `.planning/debug/`.
+3. **Write a failing test.** The test should prove the bug exists. Include a test for the expected post-fix behavior. Use vitest (`npm test`).
+4. **Fix with a subagent.** Give the subagent the failing test and the specific files to modify. It works until all tests pass.
+5. **Verify.** All tests pass, app compiles, dev server runs.
 
 Writing tests first forces you to define "correct" before writing code — this caught a critical EDGAR Frames API bug that a direct fix attempt missed entirely.
 

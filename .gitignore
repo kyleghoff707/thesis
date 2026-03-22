@@ -30,6 +30,9 @@ knowledge/
 validation/data/
 validation/reports/
 validation/scripts/bundled-engines.mjs
+# GSD planning artifacts (created by /gsd:* commands — local only)
+.planning/
+
 # Hidden gstack runtime folder (recreated by skills)
 .gstack/
 

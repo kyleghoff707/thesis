@@ -333,6 +333,7 @@ def build_pdf():
         'GSD Deep Dive',
         'Current Setup Inventory',
         'Applied to Thes1s: Phase 5 Example',
+        'Workflow Router — Validated Test Results',
     ])
 
     # ══════════════════════════════════════════════════════════════════════
@@ -900,6 +901,57 @@ def build_pdf():
         'GSD owns the middle (task breakdown + parallel execution + verification). Neither '
         'steps on the other.'
     )
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 8: WORKFLOW ROUTER TEST RESULTS
+    # ══════════════════════════════════════════════════════════════════════
+
+    pdf.add_section_header('Workflow Router — Validated Test Results', level=1)
+
+    pdf.add_body_text(
+        'The workflow-router custom skill routes every task to the right workflow intensity '
+        'using a 2-dimensional assessment: size (how much code?) x risk (what breaks if we '
+        'get it wrong?). Five test scenarios were run against the router with zero explicit '
+        'prompting — Claude read the skill and routed each task conversationally.'
+    )
+
+    pdf.add_section_header('Router Decision Matrix', level=2)
+
+    pdf.add_code_block(
+        '                        Low Risk          Medium Risk         High Risk\n'
+        '                   +------------------+------------------+------------------+\n'
+        '    Trivial        | L0: Just do it   | L0: Just do it   | L0: Just do it   |\n'
+        '                   |                  |                  |   (but careful)  |\n'
+        '                   +------------------+------------------+------------------+\n'
+        '    Small          | L0: Just do it   | L1: Investigate  | L2: Plan first   |\n'
+        '                   |                  |   if bug         |                  |\n'
+        '                   +------------------+------------------+------------------+\n'
+        '    Medium         | L2: Plan first   | L3: Full gstack  | L3: Full gstack  |\n'
+        '                   |   (lite)         |   planning       |   planning       |\n'
+        '                   +------------------+------------------+------------------+\n'
+        '    Large          | L4: gstack +     | L5: gstack +     | L5: gstack +     |\n'
+        '                   |   GSD (lite)     |   GSD (full)     |   GSD (full)     |\n'
+        '                   +------------------+------------------+------------------+'
+    )
+
+    pdf.add_section_header('Test Results (5/5 correct routing)', level=2)
+
+    pdf.add_table(
+        ['#', 'Task', 'Size', 'Risk', 'Level', 'Skills/Commands Chosen'],
+        [
+            ['1', 'Fix hover color on tab header', 'Trivial', 'Low', 'L0', 'None — just do it'],
+            ['2', 'REIT FFO returning NaN', 'Small', 'Med', 'L1', '/investigate > test > fix > npm test'],
+            ['3', 'Add Dividend History sub-tab', 'Medium', 'Med', 'L3', '/plan-eng-review > build > /qa > /review'],
+            ['4', 'Build OnePager component', 'Large', 'High', 'L5', '/plan-ceo > /plan-eng > /plan-design > /gsd:plan > /gsd:execute > /qa > /review'],
+            ['5', 'Build entire Phase 5', 'Large', 'High', 'L5', '/plan-ceo > /plan-eng > /plan-design > /gsd:map > /gsd:discuss > /gsd:plan > /gsd:execute > /qa > /review'],
+        ]
+    )
+
+    pdf.add_section_header('Key Observations', level=3)
+    pdf.add_bullet('Tests 4 and 5 appropriately differentiated — Test 5 added /gsd:map-codebase and /gsd:discuss-phase for a full phase vs. single component')
+    pdf.add_bullet('Test 2 correctly identified as a bug and routed to /investigate, not plan mode')
+    pdf.add_bullet('Test 1 chose "no skills needed" — no over-engineering a trivial fix')
+    pdf.add_bullet('No test over-planned or under-planned')
 
     # ── Final note ──
     pdf.ln(10)
