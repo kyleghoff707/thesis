@@ -97,6 +97,12 @@ describe('stripFootnoteArtifacts (Bug 7)', () => {
   it('handles combined: "Pinto7" -> "Pinto"', () => {
     expect(stripFootnoteArtifacts('Pinto7')).toBe('Pinto');
   });
+
+  it('strips trailing digits after accented characters: "Grisé4" -> "Grisé"', () => {
+    expect(stripFootnoteArtifacts('Grisé4')).toBe('Grisé');
+    expect(stripFootnoteArtifacts('Müller3')).toBe('Müller');
+    expect(stripFootnoteArtifacts('Señoría12')).toBe('Señoría');
+  });
 });
 
 // ─── 3. extractNameTitle (Bugs 2, 6, 7) ───────────────────────────
@@ -141,6 +147,27 @@ describe('extractNameTitle (Bugs 2, 6, 7)', () => {
     const { name, title } = extractNameTitle(cell);
     expect(name).toBe('John Smith');
     expect(title).toBe('CFO');
+  });
+
+  it('joins multi-part titles with space, not comma', () => {
+    const cell = makeCell('<td>Satya Nadella<br>Chairman and Chief<br>Executive Officer</td>');
+    const { name, title } = extractNameTitle(cell);
+    expect(name).toBe('Satya Nadella');
+    expect(title).toBe('Chairman and Chief Executive Officer');
+  });
+
+  it('strips trailing comma from name when title follows', () => {
+    const cell = makeCell('<td>Calvin McDonald,<br>Chief Executive Officer</td>');
+    const { name, title } = extractNameTitle(cell);
+    expect(name).toBe('Calvin McDonald');
+    expect(title).toBe('Chief Executive Officer');
+  });
+
+  it('collapses double commas in multi-line titles', () => {
+    const cell = makeCell('<td>Christopher Young<br>Executive Vice President,<br>Business Development,<br>Strategy</td>');
+    const { name, title } = extractNameTitle(cell);
+    expect(name).toBe('Christopher Young');
+    expect(title).toBe('Executive Vice President, Business Development, Strategy');
   });
 });
 

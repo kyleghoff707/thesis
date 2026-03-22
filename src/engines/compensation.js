@@ -334,7 +334,7 @@ function looksLikeName(text) {
 function stripFootnoteArtifacts(text) {
   return text
     .replace(/\(\d+\)/g, '')              // parenthesized: (1), (6)
-    .replace(/(\w)\d{1,2}$/g, '$1')       // trailing bare digits: "Hoffman4", "Pinto7"
+    .replace(/([\w\u00C0-\u024F])\d{1,2}$/g, '$1') // trailing bare digits: "Hoffman4", "Grisé4"
     .replace(/[*\u2020\u2021\u00a7\u00b6]+$/g, '') // trailing symbols: *, †, ‡, §, ¶
     .replace(/\s*\([a-z]\)\s*$/gi, '')     // lettered refs: (a), (c)
     .trim();
@@ -393,12 +393,17 @@ function extractNameTitle(cell) {
     }
   }
 
-  // Apply footnote stripping to name part
+  // Apply footnote stripping and clean up trailing commas from name/title parts
   if (parts.length >= 2) {
-    return { name: stripFootnoteArtifacts(parts[0]), title: stripFootnoteArtifacts(parts.slice(1).join(', ')) };
+    const name = stripFootnoteArtifacts(parts[0]).replace(/,+\s*$/, '');
+    const title = stripFootnoteArtifacts(parts.slice(1).join(' '))
+      .replace(/,{2,}/g, ',')   // collapse double commas
+      .replace(/,+\s*$/, '')    // strip trailing comma
+      .trim();
+    return { name, title };
   }
   const text = cellText(cell);
-  return { name: stripFootnoteArtifacts(text), title: '' };
+  return { name: stripFootnoteArtifacts(text).replace(/,+\s*$/, ''), title: '' };
 }
 
 // Normalize executive name for deduplication — handles middle initials, suffixes, footnotes
