@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { C } from '../theme';
 import { useGurus } from '../hooks/useGurus';
 import { useSettings } from '../hooks/useSettings';
+import { formatCompanyName } from '../engines/formatCompanyName';
 
 // ─── Format helpers ─────────────────────────────────────────
 
@@ -419,7 +420,7 @@ export default function Gurus() {
                           {pIdx === 0 ? result.guru.fund : ''}
                         </td>
                         <td style={{ padding: '8px 14px', fontSize: 13, color: C.text }}>
-                          {pos.issuer}
+                          {formatCompanyName(pos.issuer)}
                           {pos.titleOfClass && pos.titleOfClass !== 'COM' && (
                             <span style={{ fontSize: 11, color: C.textMuted, marginLeft: 6 }}>{pos.titleOfClass}</span>
                           )}
@@ -723,7 +724,7 @@ function LatestTab({ latestTabData, activities, loading, allLoaded, guruCount, o
                       {idx + 1}
                     </td>
                     <td style={{ padding: '7px 10px' }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{buy.issuer}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{formatCompanyName(buy.issuer)}</div>
                       {buy.ticker && <div style={{ fontSize: 12, color: C.accent }}>{buy.ticker}</div>}
                     </td>
                     <td style={{ padding: '7px 10px', fontSize: 13, textAlign: 'right', color: '#16a34a', fontWeight: 500, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
@@ -798,7 +799,7 @@ function LatestTab({ latestTabData, activities, loading, allLoaded, guruCount, o
                       {idx + 1}
                     </td>
                     <td style={{ padding: '7px 10px' }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{hold.issuer}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{formatCompanyName(hold.issuer)}</div>
                       {hold.ticker && <div style={{ fontSize: 12, color: C.accent }}>{hold.ticker}</div>}
                     </td>
                     <td style={{ padding: '7px 10px', fontSize: 13, textAlign: 'right', color: C.text, fontWeight: 500, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>

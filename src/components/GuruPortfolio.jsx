@@ -4,6 +4,7 @@ import { ResponsiveContainer, Tooltip, ComposedChart, Bar, Line, XAxis, YAxis, C
 import { C } from '../theme';
 import { useGurus } from '../hooks/useGurus';
 import { useSettings } from '../hooks/useSettings';
+import { formatCompanyName } from '../engines/formatCompanyName';
 
 // ─── Format helpers ─────────────────────────────────────────
 
@@ -229,7 +230,7 @@ function PortfolioTreemap({ holdings, filter }) {
               padding: '8px 12px', fontSize: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
               whiteSpace: 'nowrap',
             }}>
-              <div style={{ fontWeight: 600, color: C.text }}>{r.data.issuer}</div>
+              <div style={{ fontWeight: 600, color: C.text }}>{formatCompanyName(r.data.issuer)}</div>
               <div style={{ color: C.accent, fontSize: 11 }}>{r.data.ticker}</div>
               <div style={{ color: C.textSecondary, marginTop: 2 }}>
                 {fmtValue(r.data.value)} &middot; {fmtPct(r.data.pct)}
@@ -867,7 +868,7 @@ function NportHoldingsSection({ nport }) {
             {allItems.map((item, idx) => (
               <tr key={idx} style={{ borderBottom: `1px solid ${C.borderLight}` }}>
                 <td style={{ padding: '7px 12px', fontSize: 13, color: C.text }}>
-                  {item.name || item.title}
+                  {formatCompanyName(item.name) || item.title}
                 </td>
                 <td style={{ padding: '7px 12px' }}>
                   <span style={{
@@ -934,7 +935,7 @@ function HoldingRow({ holding: h, isExpanded, history, isLoadingHistory, onExpan
         </td>
         {/* Company Name */}
         <td style={{ padding: '7px 10px', fontSize: 13, color: C.text }}>
-          {h.issuer}
+          {formatCompanyName(h.issuer)}
         </td>
         {/* % of Portfolio */}
         <td style={{ padding: '7px 10px', fontSize: 13, textAlign: 'right', fontWeight: 500, fontVariantNumeric: 'tabular-nums', color: C.text }}>
@@ -1020,7 +1021,7 @@ function HistorySection({ holding, history }) {
       {/* History table */}
       <div style={{ flex: '1 1 45%', minWidth: 300 }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary, marginBottom: 8 }}>
-          Historical Activity for {holding.ticker || holding.issuer}
+          Historical Activity for {holding.ticker || formatCompanyName(holding.issuer)}
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>

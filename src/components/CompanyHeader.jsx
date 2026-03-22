@@ -1,5 +1,6 @@
 import { C } from '../theme';
 import { badgeColor } from '../engines/ruleOneScore';
+import { formatCompanyName } from '../engines/formatCompanyName';
 
 function ScoreBadge({ label, score, large = false }) {
   const color = badgeColor(score);
@@ -84,7 +85,7 @@ export default function CompanyHeader({ company, latest, moatScore, managementSc
 
         {/* Company name */}
         <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginTop: 2 }}>
-          {company?.name || 'Loading...'}
+          {formatCompanyName(company?.name) || 'Loading...'}
         </div>
 
         {/* Price + change */}

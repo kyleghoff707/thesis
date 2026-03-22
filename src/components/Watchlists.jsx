@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { C } from '../theme';
 import { useWatchlists } from '../hooks/useWatchlists';
 import { searchTickers } from '../engines/tickerSearch';
+import { formatCompanyName } from '../engines/formatCompanyName';
 
 // Inline ticker search for adding stocks to a watchlist
 function AddTickerSearch({ onAdd }) {
@@ -317,7 +318,7 @@ function WatchlistCard({ watchlist, onAddTicker, onRemoveTicker, onDelete, onRen
                       {item.ticker}
                     </td>
                     <td style={{ ...tdStyle, color: C.textSecondary }}>
-                      {item.companyName || '—'}
+                      {formatCompanyName(item.companyName) || '—'}
                     </td>
                     <td style={{ ...tdStyle, textAlign: 'right', color: C.textMuted, fontSize: 12 }}>
                       {item.addedAt}

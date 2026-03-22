@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { C } from '../theme';
 import { useCompetitors } from '../hooks/useCompetitors';
+import { formatCompanyName } from '../engines/formatCompanyName';
 
 // ─── Format helpers ─────────────────────────────────────────
 
@@ -625,7 +626,7 @@ export default function Competitors({ company, guruActivities, report, updateRep
                       })()}
                       <div>
                         <div style={{ fontWeight: isTarget ? 600 : 400, color: C.text, fontSize: 13 }}>
-                          {peer.name || peer.ticker || 'Unknown'}
+                          {formatCompanyName(peer.name) || peer.ticker || 'Unknown'}
                         </div>
                         <div style={{ fontSize: 11, color: C.textMuted }}>
                           {peer.ticker || `CIK: ${parseInt(peer.cik, 10)}`}

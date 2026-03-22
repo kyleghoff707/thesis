@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { C } from '../theme';
+import { formatCompanyName } from '../engines/formatCompanyName';
 import { useFinancials } from '../hooks/useFinancials';
 import { usePrices } from '../hooks/usePrices';
 import { useEdgar } from '../hooks/useEdgar';
@@ -89,7 +90,7 @@ export default function Toolbox({ getReport, updateReport, settings }) {
 
   // Update report with company name once we have it
   if (company?.name && report && !report.companyName) {
-    updateReport(report.id, { companyName: company.name });
+    updateReport(report.id, { companyName: formatCompanyName(company.name) });
   }
 
   // ─── All scoring now uses EDGAR as single source of truth ───
@@ -441,7 +442,7 @@ export default function Toolbox({ getReport, updateReport, settings }) {
               edgarQuarterly={edgarQuarterly}
               latestPrice={latest?.close}
               ticker={ticker}
-              companyName={company?.name}
+              companyName={formatCompanyName(company?.name)}
               version={statementsVersion}
               onVersionChange={setStatementsVersion}
               dataView={dataView}

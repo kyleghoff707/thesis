@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { C } from '../theme';
+import { formatCompanyName } from '../engines/formatCompanyName';
 
 const STAGE_LABELS = {
   1: 'One Pager',
@@ -121,7 +122,7 @@ export default function ResearchList({ reports, onDelete }) {
                   {report.ticker}
                 </td>
                 <td style={{ padding: '10px 14px', color: C.textSecondary, fontSize: 13 }}>
-                  {report.companyName || '--'}
+                  {formatCompanyName(report.companyName) || '--'}
                 </td>
                 <td style={{ padding: '10px 14px' }}>
                   <StageBadge stage={report.currentStage} />
