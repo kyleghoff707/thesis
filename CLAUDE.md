@@ -33,7 +33,7 @@ For detailed API integration notes (CORS proxying, EDGAR XBRL details, parsing i
 ## Architecture Reference
 **When debugging or modifying any engine, API integration, scoring algorithm, CORS proxy, validation system, or parser** — read `knowledge/references/app-architecture.md` first. It contains detailed technical documentation for all implemented systems (moved from CLAUDE.md to save context window).
 
-**When debugging or modifying the XBRL extraction engine, taxonomy, provenance, industry overlays, or coverage systems** — read `previous-prompt-and-plans/gstack-xbrl-engine-strategy-eng-plan-20260318.md` first. It contains the full three-layer architecture, design decisions, coverage audit results, and implementation history.
+**When debugging or modifying the XBRL extraction engine, taxonomy, provenance, industry overlays, or coverage systems** — read `gstack/plans/gstack-xbrl-engine-strategy-eng-plan-20260318.md` first. It contains the full three-layer architecture, design decisions, coverage audit results, and implementation history.
 
 ### Three-Layer XBRL Engine (`edgarFinancials.js`)
 
@@ -74,7 +74,7 @@ All tag definitions in `FRAMES_TAGS` and `PEER_FRAMES_TAGS` have a `period: 'ins
 ---
 
 ## Current Status
-Phases 1-4 complete — app shell, data engines, calculation engines, and full Toolbox UI all functional. **XBRL engine complete** — three-layer tag resolution (static + taxonomy + AI), industry overlays (bank/REIT/insurance), full provenance tracking (annual + TTM), coverage monitor, and Audit tab dashboard. Validated across all 503 S&P 500 companies with 0 failures. See `previous-prompt-and-plans/gstack-xbrl-engine-strategy-eng-plan-20260318.md` for full architecture and `validation/reports/financial-data-comparison-rca.md` for the original 12-ticker RCA. **The remaining work is Phase 5-8: AI-driven report generation.**
+Phases 1-4 complete — app shell, data engines, calculation engines, and full Toolbox UI all functional. **XBRL engine complete** — three-layer tag resolution (static + taxonomy + AI), industry overlays (bank/REIT/insurance), full provenance tracking (annual + TTM), coverage monitor, and Audit tab dashboard. Validated across all 503 S&P 500 companies with 0 failures. See `gstack/plans/gstack-xbrl-engine-strategy-eng-plan-20260318.md` for full architecture and `validation/reports/financial-data-comparison-rca.md` for the original 12-ticker RCA. **The remaining work is Phase 5-8: AI-driven report generation.**
 
 ### What's Built
 All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems (validation, guru, ticker, N-PORT, compensation), Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores + derived metric computation + Yahoo data backfill + per-ticker caching + sparse peer filtering + data completeness indicators + industry-aware column defaults, Upcoming Events & News section on Overview (SEC 8-K events + Yahoo calendar + IR page discovery), three-layer XBRL engine with provenance tracking and coverage monitoring (173 tests via vitest). See source tree below.
@@ -437,37 +437,98 @@ Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude
 
 ### Skill Output Overrides (persist across gstack updates)
 
-gstack skills produce plan/review/design artifacts. Override the defaults for this project:
+gstack skills produce plan/review/design/test artifacts. All artifacts are saved to the `gstack/` folder in the project root (visible, git-tracked) instead of hidden directories. This gives full visibility into the gstack workflow while preserving inter-skill cross-references via symlinks.
 
-**Output location** — Save all gstack skill artifacts to `previous-prompt-and-plans/` in the project root instead of `~/.gstack/projects/$SLUG/`. After writing, create a symlink in `~/.gstack/projects/$SLUG/` pointing to the project file so inter-skill cross-references (Design Doc Check, QA test plan lookup, design lineage) still work via their default bash lookups.
+#### Output Locations by Skill Type
+
+| Skill Output | Save To | Subfolder |
+|---|---|---|
+| `/office-hours` design docs | `gstack/design/` | design |
+| `/plan-ceo-review` plans | `gstack/plans/` | plans |
+| `/plan-eng-review` eng plans | `gstack/plans/` | plans |
+| `/plan-eng-review` test plans | `gstack/test-plans/` | test-plans |
+| `/plan-design-review` reports | `gstack/design/` | design |
+| `/design-consultation` outputs | `gstack/design/` | design |
+| `/design-review` audits | `gstack/design/` | design |
+| `/qa` + `/qa-only` reports | `gstack/qa-reports/` | qa-reports |
+| `/qa` test outcomes | `gstack/test-outcomes/` | test-outcomes |
+| `/review` + `/ship` review logs | `gstack/reviews/` (copy) | reviews |
+| `/canary` reports | `gstack/canary-reports/` | canary-reports |
+| `/benchmark` reports | `gstack/benchmark-reports/` | benchmark-reports |
+| `/land-and-deploy` reports | `gstack/deploy-reports/` | deploy-reports |
+| `/retro` snapshots | `gstack/retros/` | retros |
+| `/investigate` RCA reports | `gstack/investigations/` | investigations |
+| `/browse` logs | `gstack/browse-logs/` | browse-logs |
+
+#### File Naming
+
+Format: `gstack-{topic}-{type}-{YYYYMMDD}.md`
+- `{topic}` = descriptive slug (e.g., `xbrl-normalization`, `ai-report-generation`)
+- `{type}` = `eng-plan`, `ceo-plan`, `design-review`, `design-consultation`, `test-plan`, `test-outcome`
+- `{YYYYMMDD}` = date from system clock (`date +%Y%m%d`)
+- Duplicates: append `-v2.md`, `-v3.md`
+
+#### Symlink Protocol (preserves inter-skill workflow)
+
+After writing any artifact to `gstack/`, create a symlink in `~/.gstack/projects/$SLUG/` so gstack binaries and skill lookups still find it:
 
 ```bash
-# Example: after writing previous-prompt-and-plans/{descriptive-name}.md
-ln -sf "$(git rev-parse --show-toplevel)/previous-prompt-and-plans/{descriptive-name}.md" \
+# After writing to gstack/{subfolder}/{filename}.md
+ln -sf "$(git rev-parse --show-toplevel)/gstack/{subfolder}/{filename}.md" \
   ~/.gstack/projects/$SLUG/{gstack-standard-name}.md
 ```
 
-**File naming** — Use descriptive topic-based names prefixed with `gstack-` instead of `{user}-{branch}-{type}-{datetime}`. This distinguishes gstack-generated artifacts from manual prompts/plans already in the folder.
+#### Review Log Sync
 
-Format: `gstack-{topic}-{type}-{YYYYMMDD}.md`
-- `gstack-` = prefix to identify gstack-generated artifacts
-- `{topic}` = descriptive slug of what's being planned/reviewed (e.g., `xbrl-normalization`, `ai-report-generation`, `valuation-calculators`)
-- `{type}` = skill output type: `eng-plan`, `ceo-plan`, `design-review`, `design-consultation`, `test-plan`, `test-outcome`
-- `{YYYYMMDD}` = date from system clock (`date +%Y%m%d`)
+The `gstack-review-log` binary writes directly to `~/.gstack/projects/$SLUG/main-reviews.jsonl` (hardcoded, cannot be redirected). After any skill that writes review entries (`/plan-eng-review`, `/plan-ceo-review`, `/plan-design-review`, `/review`, `/ship`), sync the log:
 
-Examples:
-| Instead of | Use |
-|---|---|
-| `kylehoff-main-eng-plan-20260319-184500.md` | `gstack-xbrl-normalization-eng-plan-20260319.md` |
-| `kylehoff-main-design-20260319-152545.md` | `gstack-xbrl-normalization-design-review-20260319.md` |
-| `kylehoff-main-test-plan-20260319-184214.md` | `gstack-xbrl-normalization-test-plan-20260319.md` |
-| `kylehoff-main-test-outcome-20260320-091500.md` | `gstack-xbrl-normalization-test-outcome-20260320.md` |
-| `ceo-plans/2026-03-18-xbrl-morningstar-engine.md` | `gstack-xbrl-morningstar-engine-ceo-plan-20260318.md` |
+```bash
+cp ~/.gstack/projects/$SLUG/main-reviews.jsonl "$(git rev-parse --show-toplevel)/gstack/reviews/main-reviews.jsonl"
+```
 
-If a file with the same name already exists (same topic+type+date), append a version: `gstack-{topic}-{type}-{YYYYMMDD}-v2.md`.
+#### What Stays in `~/.gstack/projects/$SLUG/` (cannot be moved)
+- `main-reviews.jsonl` and `{branch}-reviews.jsonl` — consumed by `gstack-review-log` / `gstack-review-read` binaries (hardcoded paths)
+- Symlinks to `gstack/` files — for inter-skill bash glob lookups (`ls -t ~/.gstack/projects/$SLUG/*-test-plan-*.md`)
 
-**What stays in `~/.gstack/projects/$SLUG/`:**
-- `main-reviews.jsonl` and `{branch}-reviews.jsonl` (consumed by `gstack-review-log` / `gstack-review-read` binaries)
-- Symlinks to project files (for inter-skill bash lookups)
+#### What's gitignored in `gstack/`
+Screenshots, browse logs, and binary baselines are large and regenerated on demand — they're gitignored. Plans, reports, review logs, and test outcomes are tracked.
 
-**Cross-references** — When gstack skills look up prior artifacts (Design Doc Check, test plan discovery, design lineage), also search `previous-prompt-and-plans/` in addition to `~/.gstack/projects/$SLUG/`.
+#### Cross-references
+When gstack skills look up prior artifacts (Design Doc Check, test plan discovery, design lineage), also search `gstack/` subfolders in addition to `~/.gstack/projects/$SLUG/`. Also check `previous-prompt-and-plans/` for legacy non-gstack prompt files.
+
+#### Post-Upgrade Health Check (run automatically after `/gstack-upgrade`)
+
+After any gstack upgrade, run this check automatically — do not wait for the user to ask:
+
+```bash
+# 1. Verify .gstack/ symlinks are intact (skills may have replaced symlinks with real dirs)
+echo "=== .gstack/ symlink health ===" && \
+for name in qa-reports design-reports canary-reports benchmark-reports deploy-reports browse-logs; do
+  if [ -L ".gstack/$name" ]; then
+    echo "OK (symlink): $name"
+  elif [ -d ".gstack/$name" ]; then
+    echo "BROKEN (real dir replaced symlink): $name — needs re-linking"
+  else
+    echo "MISSING: $name"
+  fi
+done
+
+# 2. Check for NEW .gstack/ subdirectories that we haven't symlinked yet
+echo "=== New unlinked .gstack/ directories ===" && \
+for dir in .gstack/*/; do
+  name=$(basename "$dir")
+  if [ ! -L ".gstack/$name" ] && [ -d ".gstack/$name" ]; then
+    echo "NEW: .gstack/$name — not symlinked to gstack/"
+  fi
+done
+```
+
+**If symlinks are broken** (skill replaced symlink with real dir): move any new files from `.gstack/{name}/` into `gstack/{name}/`, remove the real dir, and re-create the symlink:
+```bash
+# For each broken symlink:
+cp -R .gstack/{name}/* gstack/{name}/ 2>/dev/null; rm -rf .gstack/{name}; ln -sf "$(pwd)/gstack/{name}" .gstack/{name}
+```
+
+**If new directories appear**: A new gstack skill is writing to a location we haven't redirected. Create the subfolder in `gstack/`, symlink it, add it to `.gitignore` if it contains screenshots/binaries, and update the Output Locations table above. Tell the user: "gstack upgrade added a new output directory `.gstack/{name}/` — I've linked it to `gstack/{name}/` so it's visible in the project."
+
+**If skill SKILL.md files changed write paths**: Read the changelog or diff the updated skill files in `~/.claude/skills/gstack/`. If any skill changed its output path (e.g., `.gstack/qa-reports/` → `.gstack/qa/`), update the symlink accordingly and tell the user what changed and how it affects our redirect setup.

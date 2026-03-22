@@ -1,0 +1,5 @@
+{"skill":"plan-ceo-review","timestamp":"2026-03-18T22:00:00","status":"clean","unresolved":0,"critical_gaps":0,"mode":"SCOPE_EXPANSION"}
+{"skill":"plan-eng-review","timestamp":"2026-03-18T23:00:00","status":"clean","unresolved":0,"critical_gaps":0,"mode":"FULL_REVIEW"}
+{"skill":"plan-eng-review","timestamp":"2026-03-19T18:45:00Z","status":"clean","unresolved":0,"critical_gaps":0,"mode":"FULL_REVIEW"}
+{"skill":"plan-eng-review","timestamp":"2026-03-22T03:23:26Z","status":"clean","unresolved":0,"critical_gaps":0,"issues_found":4,"mode":"FULL_REVIEW","commit":"4dbf785"}
+--help
