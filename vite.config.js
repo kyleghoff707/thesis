@@ -456,8 +456,23 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/sec/, ''),
         headers: {
-          'User-Agent': 'StockAnalyzer/1.0 kylehoff@example.com',
           'Accept-Encoding': 'identity',
+        },
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            // Strip browser-fingerprint headers that CDNs use to block headless browsers
+            proxyReq.removeHeader('user-agent');
+            proxyReq.removeHeader('referer');
+            proxyReq.removeHeader('origin');
+            proxyReq.removeHeader('sec-ch-ua');
+            proxyReq.removeHeader('sec-ch-ua-mobile');
+            proxyReq.removeHeader('sec-ch-ua-platform');
+            proxyReq.removeHeader('sec-fetch-site');
+            proxyReq.removeHeader('sec-fetch-mode');
+            proxyReq.removeHeader('sec-fetch-dest');
+            proxyReq.setHeader('User-Agent', 'StockAnalyzer/1.0 kylehoff@example.com');
+            proxyReq.setHeader('Accept', 'application/json');
+          });
         },
       },
       // SEC data.sec.gov — XBRL company facts API.
@@ -468,8 +483,23 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/edgar/, ''),
         headers: {
-          'User-Agent': 'StockAnalyzer/1.0 kylehoff@example.com',
           'Accept-Encoding': 'identity',
+        },
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            // Strip browser-fingerprint headers that CDNs use to block headless browsers
+            proxyReq.removeHeader('user-agent');
+            proxyReq.removeHeader('referer');
+            proxyReq.removeHeader('origin');
+            proxyReq.removeHeader('sec-ch-ua');
+            proxyReq.removeHeader('sec-ch-ua-mobile');
+            proxyReq.removeHeader('sec-ch-ua-platform');
+            proxyReq.removeHeader('sec-fetch-site');
+            proxyReq.removeHeader('sec-fetch-mode');
+            proxyReq.removeHeader('sec-fetch-dest');
+            proxyReq.setHeader('User-Agent', 'StockAnalyzer/1.0 kylehoff@example.com');
+            proxyReq.setHeader('Accept', 'application/json');
+          });
         },
       },
     },

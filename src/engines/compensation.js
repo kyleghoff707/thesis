@@ -21,7 +21,7 @@ function sleep(ms) {
 
 // ─── Constants ──────────────────────────────────────────────
 
-const COMP_CACHE_V = 'v2';
+const COMP_CACHE_V = 'v3';
 const FETCH_DELAY_MS = 120;
 
 // SEC-mandated Summary Compensation Table column headers (Item 402)
@@ -150,6 +150,8 @@ function normalizeText(text) {
 
 function cellText(el) {
   return (el.textContent || '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/g, '&')
     .replace(/\u00a0/g, ' ')
     .replace(/[\u200b\u200c\u200d\uFEFF]/g, '')  // strip zero-width chars
     .replace(/\s+/g, ' ')
@@ -178,6 +180,33 @@ function getDirectRows(table) {
 // Get direct child cells of a row (not from nested tables within cells)
 function getDirectCells(row) {
   return Array.from(row.children).filter(c => c.tagName === 'TD' || c.tagName === 'TH');
+}
+
+// Get physical column positions for each cell in a row (accounts for colspan)
+// Optional startOffset shifts all positions (used for continuation rows missing rowspanned cells)
+function getPhysicalColumns(row, startOffset = 0) {
+  const cells = getDirectCells(row);
+  const result = [];
+  let colPos = startOffset;
+  for (const cell of cells) {
+    const colspan = parseInt(cell.getAttribute('colspan')) || 1;
+    result.push({ cell, startCol: colPos, endCol: colPos + colspan - 1 });
+    colPos += colspan;
+  }
+  return result;
+}
+
+// Build a physical-position-to-cell lookup map from a row
+function buildPhysicalCellMap(row, startOffset = 0) {
+  const physCols = getPhysicalColumns(row, startOffset);
+  const map = new Map();
+  for (const pc of physCols) {
+    // Map each covered position to its cell (first cell wins for overlapping spans)
+    for (let p = pc.startCol; p <= pc.endCol; p++) {
+      if (!map.has(p)) map.set(p, pc.cell);
+    }
+  }
+  return map;
 }
 
 // ─── Table Finding Heuristics ──────────────────────────────
@@ -223,11 +252,13 @@ function findPrecedingHeading(table) {
 }
 
 // Match content-only cells against SEC compensation column patterns
+// Returns mapping of key → physical column position (not content-cell index)
 function matchColumns(headerRow, patterns) {
-  const contentCells = getContentCells(headerRow);
-  if (contentCells.length < 4) return null;
+  const physCols = getPhysicalColumns(headerRow);
+  const contentPhysCols = physCols.filter(pc => !isSpacerCell(pc.cell));
+  if (contentPhysCols.length < 4) return null;
 
-  const headerTexts = contentCells.map(c => normalizeText(c.textContent));
+  const headerTexts = contentPhysCols.map(pc => normalizeText(pc.cell.textContent));
 
   const mapping = {};
   let matchCount = 0;
@@ -236,7 +267,7 @@ function matchColumns(headerRow, patterns) {
     for (let i = 0; i < headerTexts.length; i++) {
       const h = headerTexts[i];
       if (pats.some(p => h.includes(p))) {
-        mapping[key] = i;
+        mapping[key] = contentPhysCols[i].startCol; // physical position
         matchCount++;
         break;
       }
@@ -263,7 +294,7 @@ function looksLikeName(text) {
   if (!text || text.length < 2) return false;
 
   // Strip footnote markers before checking
-  const cleaned = text.replace(/\(\d+\)/g, '').trim();
+  const cleaned = stripFootnoteArtifacts(text.replace(/\(\d+\)/g, '').trim());
   if (cleaned.length < 2) return false;
 
   // Not a name if it's a year
@@ -272,60 +303,102 @@ function looksLikeName(text) {
   // Not a name if it starts with $ or is all digits/commas
   if (/^\$/.test(cleaned) || /^[\d,.$]+$/.test(cleaned)) return false;
 
-  // Not a name if it contains title keywords
+  // Not a name if it contains title keywords (word-boundary match to avoid false positives like "Cook" matching "coo")
   const lower = cleaned.toLowerCase();
-  if (TITLE_KEYWORDS.some(kw => lower.includes(kw))) return false;
+  if (TITLE_KEYWORDS.some(kw => {
+    const re = new RegExp(`\\b${kw}\\b`);
+    return re.test(lower);
+  })) return false;
 
   // Not a name if very long (titles tend to be long descriptions)
   if (cleaned.length > 60) return false;
 
+  // Require at least 2 word-parts (first + last name)
+  const wordParts = cleaned.split(/\s+/).filter(w => w.length > 0);
+  if (wordParts.length < 2) return false;
+
+  // Reject standalone title fragments
+  const TITLE_FRAGMENTS = [
+    'of the', 'and', 'security', 'technology', 'operations', 'global',
+    'group', 'corporate', 'business', 'former', 'interim', 'division',
+    'products', 'services',
+  ];
+  if (TITLE_FRAGMENTS.some(frag => lower === frag || lower.startsWith(frag + ' '))) return false;
+
+  // Reject all-uppercase abbreviations ≤5 chars (e.g., "EVP", "SVP", "CEO")
+  if (cleaned.length <= 5 && /^[A-Z]+$/.test(cleaned)) return false;
+
   return true;
+}
+
+function stripFootnoteArtifacts(text) {
+  return text
+    .replace(/\(\d+\)/g, '')              // parenthesized: (1), (6)
+    .replace(/(\w)\d{1,2}$/g, '$1')       // trailing bare digits: "Hoffman4", "Pinto7"
+    .replace(/[*\u2020\u2021\u00a7\u00b6]+$/g, '') // trailing symbols: *, †, ‡, §, ¶
+    .replace(/\s*\([a-z]\)\s*$/gi, '')     // lettered refs: (a), (c)
+    .trim();
 }
 
 function extractNameTitle(cell) {
   const html = cell.innerHTML || '';
-  // Split on <br> or newlines to separate name from title
-  const parts = html.split(/<br\s*\/?>/i).map(p =>
-    p.replace(/<[^>]*>/g, '')
-     .replace(/\u00a0/g, ' ')
-     .replace(/[\u200b\u200c\u200d\uFEFF]/g, '')
-     .replace(/&#\d+;/g, ' ')
-     .replace(/\(\d+\)/g, '')  // strip footnote markers from names
-     .replace(/\s+/g, ' ')
-     .trim()
-  ).filter(p => p.length > 0);
 
-  if (parts.length >= 2) {
-    return { name: parts[0], title: parts.slice(1).join(', ') };
-  }
-  const text = cellText(cell).replace(/\(\d+\)/g, '').trim();
-  return { name: text, title: '' };
-}
-
-// More aggressive name extraction — splits on block-level tags (<p>, <div>) in addition to <br>.
-// Used ONLY in the looksLikeName fallback path to avoid regressions in existing code paths.
-function extractNameFromBlockTags(cell) {
-  const html = cell.innerHTML || '';
   const cleanPart = p => p
     .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/g, '&')
     .replace(/\u00a0/g, ' ')
     .replace(/[\u200b\u200c\u200d\uFEFF]/g, '')
     .replace(/&#\d+;/g, ' ')
-    .replace(/\(\d+\)/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 
-  // Try block-level transitions first (safer), then standalone tags
-  for (const pattern of [
-    /<br\s*\/?>|<\/p>\s*<p[^>]*>|<\/div>\s*<div[^>]*>/gi,
-    /<br\s*\/?>|<p[^>]*>|<\/p>|<div[^>]*>|<\/div>/gi,
-  ]) {
-    const parts = html.split(pattern).map(cleanPart).filter(p => p.length > 0);
-    if (parts.length >= 2) {
-      return { name: parts[0], title: parts.slice(1).join(', ') };
+  // Stage A: Split on <br> tags
+  let parts = html.split(/<br\s*\/?>/i).map(cleanPart).filter(p => p.length > 0);
+
+  // Stage B: If only 1 part, try block-level tag transitions (<p>, <div>)
+  if (parts.length < 2) {
+    for (const pattern of [
+      /<\/p>\s*<p[^>]*>|<\/div>\s*<div[^>]*>/gi,
+      /<p[^>]*>|<\/p>|<div[^>]*>|<\/div>/gi,
+    ]) {
+      const blockParts = html.split(pattern).map(cleanPart).filter(p => p.length > 0);
+      if (blockParts.length >= 2) {
+        parts = blockParts;
+        break;
+      }
     }
   }
-  return null;
+
+  // Stage C: If still 1 part, try keyword-boundary splitting
+  // Handles concatenated name+title like "James DimonChairman and CEO"
+  // Only use keywords ≥5 chars to avoid false splits from short abbreviations in names
+  if (parts.length < 2) {
+    const text = parts[0] || cleanPart(html);
+    if (text.length > 3) {
+      const lower = text.toLowerCase();
+      const longKeywords = TITLE_KEYWORDS.filter(kw => kw.length >= 5);
+      for (const kw of longKeywords) {
+        const idx = lower.indexOf(kw);
+        // Require at least 3 chars before keyword (minimum name length)
+        if (idx >= 3) {
+          const namePart = text.slice(0, idx).trim();
+          const titlePart = text.slice(idx).trim();
+          if (namePart.length >= 2 && titlePart.length >= 2) {
+            parts = [namePart, titlePart];
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  // Apply footnote stripping to name part
+  if (parts.length >= 2) {
+    return { name: stripFootnoteArtifacts(parts[0]), title: stripFootnoteArtifacts(parts.slice(1).join(', ')) };
+  }
+  const text = cellText(cell);
+  return { name: stripFootnoteArtifacts(text), title: '' };
 }
 
 // Normalize executive name for deduplication — handles middle initials, suffixes, footnotes
@@ -341,14 +414,15 @@ function normalizeExecName(name) {
     .join(' ');
 }
 
-// Find matching executive in map — primary normalized match, secondary fuzzy (last name + first name prefix)
+// Find matching executive in map — primary normalized match, secondary fuzzy (last name + first name prefix),
+// tertiary (last name match + first 4 leading chars)
 function findExecMatch(execMap, name) {
   const key = normalizeExecName(name);
   if (execMap.has(key)) return key;
 
-  // Secondary: last-name + first 3 chars of first name
   const parts = key.split(' ');
   if (parts.length >= 2) {
+    // Secondary: last-name + first 3 chars of first name
     const fuzzyKey = parts[parts.length - 1] + ':' + parts[0].slice(0, 3);
     for (const [existingKey] of execMap) {
       const existingParts = existingKey.split(' ');
@@ -357,20 +431,26 @@ function findExecMatch(execMap, name) {
         if (fuzzyKey === existingFuzzy) return existingKey;
       }
     }
+
+    // Tertiary: last names match AND first names share 4+ leading chars
+    const lastName = parts[parts.length - 1];
+    const firstName = parts[0];
+    if (firstName.length >= 4) {
+      for (const [existingKey] of execMap) {
+        const existingParts = existingKey.split(' ');
+        if (existingParts.length >= 2) {
+          const existingLast = existingParts[existingParts.length - 1];
+          const existingFirst = existingParts[0];
+          if (lastName === existingLast && existingFirst.length >= 4 &&
+              firstName.slice(0, 4) === existingFirst.slice(0, 4)) {
+            return existingKey;
+          }
+        }
+      }
+    }
   }
 
   return key; // new entry
-}
-
-// ─── Column Mapping ─────────────────────────────────────────
-
-// Build ordered list of compensation column keys from the header mapping
-// Sorted by their position (content-cell index) left to right
-function buildColumnSequence(mapping) {
-  return Object.entries(mapping)
-    .filter(([key]) => key !== 'name' && key !== 'year')
-    .sort((a, b) => a[1] - b[1])
-    .map(([key]) => key);
 }
 
 // ─── Sanity Checks ──────────────────────────────────────────
@@ -439,11 +519,34 @@ function parseSummaryCompensationTable(doc) {
   if (!found) return [];
 
   const { rows, mapping, headerEndIdx } = found;
-  const colSequence = buildColumnSequence(mapping);
   const executives = [];
   let currentName = null;
   let currentTitle = null;
   let remainingRowspan = 0;
+  let rowspanColspan = 0; // physical columns consumed by the rowspanned name cell
+
+  // Helper: extract comp values from a row using physical column positions
+  function extractCompByPhysicalPos(row, offset) {
+    const cellMap = buildPhysicalCellMap(row, offset);
+    const comp = {};
+    for (const { key } of EXEC_COLUMN_PATTERNS) {
+      if (key === 'name' || key === 'year') continue;
+      const physPos = mapping[key];
+      if (physPos !== undefined) {
+        const cell = cellMap.get(physPos);
+        if (cell) {
+          comp[key] = parseCompValue(cellText(cell));
+        }
+      }
+    }
+    // Extract year by physical position
+    let year = null;
+    if (mapping.year !== undefined) {
+      const yearCell = cellMap.get(mapping.year);
+      if (yearCell) year = parseYear(cellText(yearCell));
+    }
+    return { comp, year };
+  }
 
   for (let i = headerEndIdx; i < rows.length; i++) {
     const row = rows[i];
@@ -453,8 +556,7 @@ function parseSummaryCompensationTable(doc) {
       // the name spans all columns as a separator between executives)
       if (allCells.length >= 1 && remainingRowspan === 0) {
         const { name, title } = extractNameTitle(allCells[0]);
-        // Require 2+ words to avoid false-matching single words, footnotes, or company names
-        if (name && looksLikeName(name) && name.trim().split(/\s+/).length >= 2) {
+        if (name && looksLikeName(name)) {
           currentName = name;
           currentTitle = title || '';
         }
@@ -464,10 +566,9 @@ function parseSummaryCompensationTable(doc) {
 
     // Determine if this row introduces a new executive or continues previous
     let nameCell = null;
-    let dataCells;
+    let physOffset = 0; // offset for physical column computation
 
     // Check for rowspan — skip leading spacer cells to find the actual name cell.
-    // Many SEC proxies use spacer <td> with rowspan for layout (e.g., QCOM, LRCX).
     let rowspanCell = null;
     let rowspanCellIdx = -1;
     let rowspanValue = 0;
@@ -486,20 +587,22 @@ function parseSummaryCompensationTable(doc) {
       // Explicit rowspan on a non-spacer cell — new executive
       nameCell = rowspanCell;
       remainingRowspan = rowspanValue - 1;
-      // Data cells: everything after the name cell, minus spacers
-      dataCells = allCells.slice(rowspanCellIdx + 1).filter(c => !isSpacerCell(c));
+      // Calculate how many physical columns the name cell and preceding cells consume
+      const namePhysCols = getPhysicalColumns(row);
+      const nameEntry = namePhysCols[rowspanCellIdx];
+      rowspanColspan = nameEntry ? nameEntry.endCol + 1 : 1;
+      physOffset = 0; // full row — no offset needed
     } else if (remainingRowspan > 0) {
-      // Continuation row — name is from previous rowspan
+      // Continuation row — name is from previous rowspan, cells start after the rowspanned area
       remainingRowspan--;
-      dataCells = getContentCells(row);
+      physOffset = rowspanColspan; // offset by the missing name cell's physical width
     } else {
       // No active rowspan — check if first content cell looks like a name
       const content = getContentCells(row);
       if (content.length < 2) {
-        // Could be a name-only row (after spacer filtering) — set name for subsequent rows
         if (content.length === 1) {
           const { name, title } = extractNameTitle(content[0]);
-          if (name && looksLikeName(name) && name.trim().split(/\s+/).length >= 2) {
+          if (name && looksLikeName(name)) {
             currentName = name;
             currentTitle = title || '';
           }
@@ -508,8 +611,6 @@ function parseSummaryCompensationTable(doc) {
       }
 
       const firstText = cellText(content[0]);
-      // Try full cell text first; if it fails (e.g. "Tim Cook Chief Executive Officer"),
-      // try extracting just the name part before <br>, then try block-level tags (<p>, <div>)
       let isName = looksLikeName(firstText);
       if (!isName) {
         const { name } = extractNameTitle(content[0]);
@@ -517,22 +618,20 @@ function parseSummaryCompensationTable(doc) {
           isName = true;
         }
       }
-      if (!isName) {
-        const result = extractNameFromBlockTags(content[0]);
-        if (result && result.name && looksLikeName(result.name)) {
-          isName = true;
-        }
-      }
 
       if (isName) {
         nameCell = content[0];
-        dataCells = content.slice(1);
-        // This name cell might also have rowspan
         const rs = parseInt(content[0].getAttribute('rowspan')) || 0;
-        if (rs > 1) remainingRowspan = rs - 1;
+        if (rs > 1) {
+          remainingRowspan = rs - 1;
+          // Calculate physical width of name cell for continuation rows
+          const namePhysCols = getPhysicalColumns(row);
+          const nameCellPhys = namePhysCols.find(pc => pc.cell === content[0]);
+          rowspanColspan = nameCellPhys ? nameCellPhys.endCol + 1 : 1;
+        }
+        physOffset = 0; // full row
       } else {
-        // Treat as continuation of current executive
-        dataCells = content;
+        physOffset = 0; // treat as continuation without rowspan — full row
       }
     }
 
@@ -547,34 +646,29 @@ function parseSummaryCompensationTable(doc) {
 
     if (!currentName) continue;
 
-    // Extract year from first data cell; if not found there, try the name cell
-    // (handles combined name+year columns like "Edward Decker, CEO, 2024")
-    let yearText = dataCells.length > 0 ? cellText(dataCells[0]) : '';
-    let year = parseYear(yearText);
-    let yearInNameCell = false;
-    if (!year && nameCell) {
-      year = parseYear(cellText(nameCell));
-      yearInNameCell = !!year;
-    }
-    if (!year) continue; // Need a year to record data
+    // Extract year and comp values using physical column positions
+    const { comp, year } = extractCompByPhysicalPos(row, physOffset);
 
-    // Map remaining data cells to compensation fields sequentially
-    // When year is in the name cell, dataCells[0] is the first comp value (no skip needed)
-    // When year is in dataCells[0], skip it: dataCells[1..N] = compensation values
-    const comp = {};
-    const dataStart = yearInNameCell ? 0 : 1;
-    for (let ci = 0; ci < colSequence.length; ci++) {
-      const cellIdx = ci + dataStart;
-      if (cellIdx < dataCells.length) {
-        comp[colSequence[ci]] = parseCompValue(cellText(dataCells[cellIdx]));
-      }
+    // If year not found via physical position, try name cell or first content cell
+    let resolvedYear = year;
+    if (!resolvedYear && nameCell) {
+      resolvedYear = parseYear(cellText(nameCell));
     }
+    if (!resolvedYear) {
+      // Try first content cell as fallback
+      const content = getContentCells(row);
+      if (content.length > 0) resolvedYear = parseYear(cellText(content[0]));
+    }
+    if (!resolvedYear) continue; // Need a year to record data
 
     // Sanity check — reject rows with absurd values (e.g., from nested table pollution)
     if (!isReasonableCompensation(comp)) {
-      console.warn(`Compensation: unreasonable values for ${currentName} ${year}, skipping`);
+      console.warn(`Compensation: unreasonable values for ${currentName} ${resolvedYear}, skipping`);
       continue;
     }
+
+    // Post-parse filter: reject executives whose names still fail validation
+    if (!looksLikeName(currentName)) continue;
 
     // Find or create executive entry (within a single filing — use normalized name)
     const execKey = normalizeExecName(currentName);
@@ -584,7 +678,7 @@ function parseSummaryCompensationTable(doc) {
       executives.push(exec);
     }
     if (currentTitle && !exec.title) exec.title = currentTitle;
-    exec.compensation[year] = comp;
+    exec.compensation[resolvedYear] = comp;
   }
 
   return executives;
@@ -599,10 +693,16 @@ function findDirectorCompensationTable(doc) {
     const heading = findPrecedingHeading(table);
     const isDirectorTable = heading.includes('director compensation') ||
       heading.includes('non-employee director') ||
+      heading.includes('non-management director') ||
+      heading.includes('compensation paid to non-employee') ||
+      heading.includes('director summary compensation') ||
+      heading.includes('outside director') ||
       heading.includes('compensation of directors');
 
     const tableText = normalizeText(table.textContent).slice(0, 500);
-    const hasInTable = tableText.includes('director compensation');
+    const hasInTable = tableText.includes('director compensation') ||
+      tableText.includes('non-employee director') ||
+      tableText.includes('compensation paid to directors');
 
     if (!isDirectorTable && !hasInTable) continue;
 
@@ -624,21 +724,27 @@ function parseDirectorCompensationTable(doc) {
   const directors = [];
 
   for (let i = headerEndIdx; i < rows.length; i++) {
-    const content = getContentCells(rows[i]);
+    const row = rows[i];
+    const content = getContentCells(row);
     if (content.length < 3) continue;
 
-    const rawName = cellText(content[0]).replace(/\(\d+\)/g, '').trim();
+    const rawName = stripFootnoteArtifacts(cellText(content[0]).replace(/\(\d+\)/g, '').trim());
     if (!rawName || rawName.length < 2) continue;
 
     const nameLower = rawName.toLowerCase();
     if (nameLower.includes('total')) continue;
 
+    // Use physical column positions for data extraction
+    const cellMap = buildPhysicalCellMap(row);
     const comp = {};
     for (const { key } of DIRECTOR_COLUMN_PATTERNS) {
       if (key === 'name') continue;
-      const idx = mapping[key];
-      if (idx !== undefined && idx < content.length) {
-        comp[key] = parseCompValue(cellText(content[idx]));
+      const physPos = mapping[key];
+      if (physPos !== undefined) {
+        const cell = cellMap.get(physPos);
+        if (cell) {
+          comp[key] = parseCompValue(cellText(cell));
+        }
       }
     }
 
@@ -668,14 +774,15 @@ function parseCeoPayRatio(doc) {
     /pay\s*ratio[^.]*?(\d{1,5})\s*(?:to|:)\s*1/i,
     /ratio[^.]*?(\d{1,5})\s*(?:to|:)\s*1/i,
     /(\d{1,5})\s*times\s*(?:that\s*of\s*)?(?:the\s*)?(?:our\s*)?median/i,
-    /ratio\s*(?:of|was)\s*(?:approximately\s*)?(\d{1,5})/i,
+    /ratio\s*(?:of|was)\s*(?:approximately\s*)?(?!20\d{2}\b)(\d{1,5})/i,
   ];
 
   for (const pattern of patterns) {
     const match = text.match(pattern);
     if (match) {
       const ratio = parseInt(match[1]);
-      if (ratio > 0 && ratio < 100000) {
+      // Reject year-like values (2020-2035) and out-of-range
+      if (ratio > 0 && ratio < 100000 && !(ratio >= 2020 && ratio <= 2035)) {
         return { ratio };
       }
     }
@@ -954,6 +1061,22 @@ async function fetchAndParseProxy(filing) {
   const directors = parseDirectorCompensationTable(doc);
   const ceoPayRatio = parseCeoPayRatio(doc);
 
+  // Low-value safety net: if all executive totals have median below $50K,
+  // the data is likely garbled from column misalignment — clear and fall through to XBRL
+  if (executives.length > 0) {
+    const totals = executives
+      .flatMap(e => Object.values(e.compensation).map(c => c.total))
+      .filter(t => t != null && t > 0)
+      .sort((a, b) => a - b);
+    if (totals.length > 0) {
+      const median = totals[Math.floor(totals.length / 2)];
+      if (median < 50000) {
+        console.warn(`Compensation: median total $${median} < $50K — likely garbled data, clearing for XBRL fallback`);
+        executives = [];
+      }
+    }
+  }
+
   // ECD XBRL fallback — when HTML table parsing fails, try structured XBRL data
   let source = 'html';
   let pvpData = null;
@@ -1049,7 +1172,24 @@ function mergeCompensationData(filingResults) {
     }
   }
 
-  const executives = Array.from(execMap.values());
+  // Post-merge dedup pass — catch remaining duplicates by last-name matching
+  const dedupedExecMap = new Map();
+  for (const [key, exec] of execMap) {
+    const normKey = normalizeExecName(exec.name);
+    const existingKey = findExecMatch(dedupedExecMap, exec.name);
+    if (dedupedExecMap.has(existingKey) && existingKey !== normKey) {
+      // Merge into existing
+      const existing = dedupedExecMap.get(existingKey);
+      if (exec.title && !existing.title) existing.title = exec.title;
+      for (const [year, comp] of Object.entries(exec.compensation)) {
+        if (!existing.compensation[year]) existing.compensation[year] = comp;
+      }
+    } else {
+      dedupedExecMap.set(existingKey !== normKey ? existingKey : key, exec);
+    }
+  }
+
+  const executives = Array.from(dedupedExecMap.values());
   const directors = Array.from(directorMap.values());
 
   // Compute summary
@@ -1340,3 +1480,37 @@ export async function fetchCompensation(ticker) {
   cacheSet(cacheKey, merged, 'financials'); // 24hr TTL
   return merged;
 }
+
+// ─── Test Exports ─────────────────────────────────────────────
+// Expose internal functions for unit testing
+export const _testExports = {
+  cellText,
+  normalizeText,
+  parseCompValue,
+  parseYear,
+  isSpacerCell,
+  getContentCells,
+  getDirectCells,
+  getDirectRows,
+  getPhysicalColumns,
+  buildPhysicalCellMap,
+  matchColumns,
+  findHeaderMapping,
+  looksLikeName,
+  extractNameTitle,
+  stripFootnoteArtifacts,
+  normalizeExecName,
+  findExecMatch,
+  findPrecedingHeading,
+  findSummaryCompensationTable,
+  parseSummaryCompensationTable,
+  findDirectorCompensationTable,
+  parseDirectorCompensationTable,
+  parseCeoPayRatio,
+  mergeCompensationData,
+  isReasonableCompensation,
+  cleanIxbrlFromDoc,
+  EXEC_COLUMN_PATTERNS,
+  DIRECTOR_COLUMN_PATTERNS,
+  TITLE_KEYWORDS,
+};
