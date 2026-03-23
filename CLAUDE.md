@@ -170,7 +170,7 @@ knowledge/
 │   ├── capex-cash-flow-explained.md
 │   ├── edgar-industry-classification-report.md
 │   ├── edgar-xbrl-taxonomy.md
-│   ├── financial-statements-future-growth-rate.md — FGR methodology, Big 4 growth rates
+│   ├── financial-statements-fgr.md — FGR methodology, Big 4 growth rates
 │   ├── guru-list.md               — 43 named Gurus for 13F lookup
 │   └── tools-for-analysis.md      — 3 Ms framework (Moat, Management, MOS)
 ├── stage-1-one-pager/             — template.md, curriculum, LULU example
