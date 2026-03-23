@@ -26,12 +26,12 @@ The user is NOT a programmer. Keep explanations in plain English.
 - **Deps**: recharts, @anthropic-ai/sdk, uuid, react-router-dom, turndown, turndown-plugin-gfm, yahoo-finance2, cheerio, idb
 - **No server, no auth** — runs entirely locally. API calls go direct to external services.
 
-For detailed API integration notes (CORS proxying, EDGAR XBRL details, parsing internals), see `knowledge/references/app-architecture.md`.
+For detailed API integration notes (CORS proxying, EDGAR XBRL details, parsing internals), see `knowledge/engineering/app-architecture.md`.
 
 ---
 
 ## Architecture Reference
-**When debugging or modifying any engine, API integration, scoring algorithm, CORS proxy, validation system, or parser** — read `knowledge/references/app-architecture.md` first. It contains detailed technical documentation for all implemented systems (moved from CLAUDE.md to save context window).
+**When debugging or modifying any engine, API integration, scoring algorithm, CORS proxy, validation system, or parser** — read `knowledge/engineering/app-architecture.md` first. It contains detailed technical documentation for all implemented systems (moved from CLAUDE.md to save context window).
 
 **When debugging or modifying the XBRL extraction engine, taxonomy, provenance, industry overlays, or coverage systems** — read `gstack/plans/gstack-xbrl-engine-strategy-eng-plan-20260318.md` first. It contains the full three-layer architecture, design decisions, coverage audit results, and implementation history.
 
@@ -91,7 +91,7 @@ All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competit
 The core workflow follows `knowledge/workflow.md`. Each stage is a gate — user must approve before the next unlocks.
 
 ### Stage 1 — One Pager (Filter)
-**Template**: `knowledge/stage-1-one-pager/template.md` | **Curriculum**: `the-search-begins.md` | **Example**: LULU One Pager.PDF
+**Template**: `knowledge/stage-1-one-pager/template.md` | **Curriculum**: `one-pager.md` | **Reference**: `research-references/rule-one-fundamentals.md` | **Example**: LULU One Pager.PDF
 Quick screen: Company Info, Minimum Standards, Meaning/Management KPIs, Growth Metrics, Summary. Pass/Fail gate.
 
 ### Stage 2 — Pitch Deck (Research)
@@ -99,7 +99,7 @@ Quick screen: Company Info, Minimum Standards, Meaning/Management KPIs, Growth M
 10-part business case: Radar, Simple & Predictable, Market Position, Barriers & Moats, FCF, Management, ROE/ROIC/ROA & Debt, Balance Sheet, PEST Risks, Valuation (MOS + PBT + Ten Cap + Equity Bond).
 
 ### Stage 3 — Full Story (Conviction)
-**Template**: `knowledge/stage-3-full-story/template.md` | **Curriculum**: `story-form-I.md`, `II.md`, `resources.md` | **Example**: LULU/
+**Template**: `knowledge/stage-3-full-story/template.md` | **Curriculum**: `story-form-I.md`, `II.md` | **Example**: LULU/
 Final gate: Event Analysis, Meaning (15pt checklist), Moat (15pt), Management (13pt), Valuation Confirmation (sensitivity tables, growth funding), Inversion & Rebuttal, Trading Strategy, PACE Plan.
 
 ---
@@ -144,7 +144,7 @@ FCF Ratio (FCF/Earnings, exclude outliers) → FCF per share → compound at FGR
 Cash from Ops - Maintenance CapEx (often 70% assumed) + Tax Provision = Owner Earnings. Ten Cap Price = 10 × (OE / Shares Outstanding).
 
 ### Equity Bond (from *Buffettology*, 1997)
-BVPS → grow book value 10yr at (ROE × retained ratio) → future BVPS → future EPS (× ROE) → future price (× historical avg P/E) → discount at MARR → Sticker Price → MOS% discount → Buy Price. Also computes CAGR at current price (the original Buffettology output). Uses P/E multiplier per the original Buffettology method. Equity Bond has its own independent MARR (default 20%) and MOS% (default 50%), both separate from the MOS calculator. See `knowledge/references/equity-bond-research.md` for full methodology research.
+BVPS → grow book value 10yr at (ROE × retained ratio) → future BVPS → future EPS (× ROE) → future price (× historical avg P/E) → discount at MARR → Sticker Price → MOS% discount → Buy Price. Also computes CAGR at current price (the original Buffettology output). Uses P/E multiplier per the original Buffettology method. Equity Bond has its own independent MARR (default 20%) and MOS% (default 50%), both separate from the MOS calculator. See `knowledge/research-references/equity-bond-research.md` for full methodology research.
 
 ### Sensitivity Tables
 Vary FGR, EPS, CapEx %, ROE assumptions across methods → range of buy prices.
@@ -155,8 +155,11 @@ Vary FGR, EPS, CapEx %, ROE assumptions across methods → range of buy prices.
 
 ```
 knowledge/
-├── agent workflows/
-│   └── Rule 1 workflow.md         — Master Research Workflow (stage progression)
+├── engineering/
+│   ├── agent-workflows/           — Agent architecture, hybrid agent model
+│   ├── agentic-workflows/         — Agentic workflow patterns
+│   ├── app-architecture.md        — Detailed API/engine/scoring/validation docs
+│   └── edgar-xbrl-taxonomy.md
 ├── morningstar-financial-statements/ — 50-company MS CSV truth set (IS/BS/CF per ticker)
 ├── morningstar-quarterly-financial-statements/
 ├── r1-toolbox-financial-statements/
@@ -167,20 +170,19 @@ knowledge/
 │   ├── consolidated_vs_expanded_financial_statements.md
 │   ├── morningstar_original_vs_restated_financials.md
 │   └── morningstar-complete-data-definitions.md
-├── references/
+├── research-references/
 │   ├── advanced-financial-analysis.md
-│   ├── app-architecture.md        — Detailed API/engine/scoring/validation docs (moved from CLAUDE.md)
 │   ├── buffett_letters_claude_training_set/
 │   ├── capex-cash-flow-explained.md
 │   ├── edgar-industry-classification-report.md
-│   ├── edgar-xbrl-taxonomy.md
 │   ├── equity-bond-research.md    — Definitive research: 3 variants, source books, worked examples, P/E vs P/B analysis
-│   ├── financial-statements-fgr.md — FGR methodology, Big 4 growth rates
+│   ├── fgr.md                     — FGR methodology, Big 4 growth rates, 5 perspectives
 │   ├── guru-list.md               — 43 named Gurus for 13F lookup
-│   └── tools-for-analysis.md      — 3 Ms framework (Moat, Management, MOS)
-├── stage-1-one-pager/             — template.md, curriculum, LULU example
-├── stage-2-pitch-deck/            — template.md, 4 curriculum files, LULU example + resources
-├── stage-3-full-story/            — template.md, 2 curriculum files, resources.md, LULU example
+│   ├── rule-one-fundamentals.md   — R1 philosophy, terms, events, investment requirements, search methods
+│   └── tools-for-analysis.md      — 3 Ms framework, practical tools, data sources for research
+├── stage-1-one-pager/             — template.md, one-pager.md, LULU example
+├── stage-2-pitch-deck/            — template.md, 4 curriculum files, LULU example
+├── stage-3-full-story/            — template.md, 2 curriculum files, LULU example
 └── pre-course-examples/           — User's own research (Old Template, EW, SFM, MU, ODFL)
 ```
 
