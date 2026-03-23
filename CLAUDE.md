@@ -115,6 +115,9 @@ FGR is NOT a formula — it's an informed assessment using 5 inputs:
 
 Average the quantifiable inputs → FGR. FGR feeds ALL valuation calculators. The app must help users derive and document each input.
 
+### Growth Rate Analysis — Composite GR
+The Composite GR in the Weighted Average panel averages all selected metrics. Default Big 4: BVPS+Div, Earnings, OpCash, Revenue. Any metric can be toggled in/out — including Market Cap, FCF, and return metrics (ROE, ROIC, ROA). Growth metrics use weighted avg YoY growth rates; return metrics use simple averages of annual values (they're already rates, not dollar series).
+
 ---
 
 ## Valuation Calculators
