@@ -125,19 +125,21 @@ export function estimateMaintenanceCapEx(totalCapEx, maintenancePct = 0.70) {
 }
 
 // ============================================================
-// 4. Equity Bond (from The New Buffettology)
+// 4. Equity Bond (from Buffettology, 1997)
 // ============================================================
 // Treats stock as a bond whose coupon grows with retained earnings
 // 1. Current BVPS
 // 2. Historically reasonable ROE
 // 3. Retained earnings ratio (what % kept vs paid out)
-// 4. Equity growth rate = retained ratio × average ROE
+// 4. Equity growth rate = retained ratio × ROE
 // 5. Grow book value 10 years at equity growth rate
 // 6. Future earnings = future book value × ROE
 // 7. Future price = future earnings × historically reasonable P/E
-// 8. Back-track to present value at MARR
+// 8. Back-track to present value at MARR → sticker price
+// 9. Apply margin of safety discount → buy price
+// 10. Projected CAGR at current price (the original Buffettology output)
 
-export function computeEquityBond({ bvps, roe, retainedRatio, historicalPE, marr = 0.15, years = 10, currentPrice = null }) {
+export function computeEquityBond({ bvps, roe, retainedRatio, historicalPE, marr = 0.20, mosPercent = 0.50, years = 10, currentPrice = null }) {
   if (!bvps || !roe || !retainedRatio || !historicalPE) return null;
 
   // Equity growth rate
@@ -152,11 +154,14 @@ export function computeEquityBond({ bvps, roe, retainedRatio, historicalPE, marr
   // Future price
   const futurePrice = futureEPS * historicalPE;
 
-  // Present value (buy price)
-  const buyPrice = futurePrice / Math.pow(1 + marr, years);
+  // Sticker price = future price discounted at MARR
+  const stickerPrice = futurePrice / Math.pow(1 + marr, years);
+
+  // Buy price = sticker price × MOS%
+  const buyPrice = stickerPrice * mosPercent;
 
   // Projected annual return at current market price
-  const projectedReturnAtCurrentPrice = (currentPrice && currentPrice > 0)
+  const projectedReturn = (currentPrice && currentPrice > 0)
     ? round4(Math.pow(futurePrice / currentPrice, 1 / years) - 1)
     : null;
 
@@ -165,9 +170,10 @@ export function computeEquityBond({ bvps, roe, retainedRatio, historicalPE, marr
     futureBVPS: round2(futureBVPS),
     futureEPS: round2(futureEPS),
     futurePrice: round2(futurePrice),
+    stickerPrice: round2(stickerPrice),
     buyPrice: round2(buyPrice),
-    projectedReturnAtCurrentPrice,
-    inputs: { bvps, roe, retainedRatio, historicalPE, marr, years },
+    projectedReturn,
+    inputs: { bvps, roe, retainedRatio, historicalPE, marr, mosPercent, years },
   };
 }
 

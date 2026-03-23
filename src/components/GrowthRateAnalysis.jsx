@@ -26,10 +26,6 @@ const ALL_METRICS = [
   { key: 'roa', label: 'Return on Assets', color: '#14b8a6', unit: 'percent', chartType: 'return', isReturn: true },
 ];
 
-// All growth-type metrics eligible for composite GR selection
-const GROWTH_METRICS = ALL_METRICS.filter(m => m.chartType === 'growth');
-
-
 const MONTH_INDEX = {
   Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
   Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
@@ -151,6 +147,8 @@ function ChartLegend({ visibleLines, onToggle }) {
 // ─── Weighted Average panel ─────────────────────────────────
 
 function WeightedAvgPanel({ weightedAvgs, compositeGR, analystGR, onSaveComposite, compositeMetrics, onToggleCompositeMetric }) {
+  const hasReturns = ALL_METRICS.some(m => m.isReturn && compositeMetrics.has(m.key));
+  const hasGrowth = ALL_METRICS.some(m => !m.isReturn && compositeMetrics.has(m.key));
   return (
     <div style={{
       background: C.bgCard,
@@ -158,6 +156,7 @@ function WeightedAvgPanel({ weightedAvgs, compositeGR, analystGR, onSaveComposit
       borderRadius: 8,
       padding: '14px 16px',
       minWidth: 220,
+      maxWidth: 220,
       boxShadow: `0 1px 3px ${C.shadow}`,
     }}>
       <div style={{
@@ -167,7 +166,7 @@ function WeightedAvgPanel({ weightedAvgs, compositeGR, analystGR, onSaveComposit
         Weighted Average Growth Rates
       </div>
 
-      {GROWTH_METRICS.filter(m => compositeMetrics.has(m.key)).map(m => (
+      {ALL_METRICS.filter(m => compositeMetrics.has(m.key)).map(m => (
         <div key={m.key} style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           padding: '5px 0',
@@ -218,6 +217,15 @@ function WeightedAvgPanel({ weightedAvgs, compositeGR, analystGR, onSaveComposit
           {fmtGrowthRate(compositeGR)}
         </span>
       </div>
+
+      {/* Method note — shows when return metrics are selected */}
+      {hasReturns && (
+        <div style={{ padding: '4px 0 2px', fontSize: 10, fontStyle: 'italic', color: C.textMuted, lineHeight: 1.4 }}>
+          {hasGrowth
+            ? 'Growth metrics use weighted avg YoY growth rates. Return metrics (ROE, ROIC, ROA) use simple averages of annual values.'
+            : 'Return metrics show simple averages of annual values, not YoY growth rates.'}
+        </div>
+      )}
 
       {/* Analyst GR */}
       <div style={{
@@ -503,32 +511,13 @@ export default function GrowthRateAnalysis({
   onToggleCompositeMetric,
   onSaveComposite,
 }) {
-  // Line visibility toggles — growth metrics sync with compositeMetrics,
-  // return metrics (ROE/ROIC/ROA) are chart-only
-  const [returnLines, setReturnLines] = useState(() => new Set());
   const mouseYRef = useRef(null);
 
-  // Visible lines = compositeMetrics (growth) + returnLines (return-only)
-  const visibleLines = useMemo(() => {
-    const s = new Set(compositeMetrics);
-    for (const k of returnLines) s.add(k);
-    return s;
-  }, [compositeMetrics, returnLines]);
+  // All metrics (growth + return) use compositeMetrics for visibility and composite membership
+  const visibleLines = compositeMetrics;
 
   const toggleLine = (key) => {
-    const metric = ALL_METRICS.find(m => m.key === key);
-    if (metric?.isReturn) {
-      // Return metrics are chart-only, don't affect composite
-      setReturnLines(prev => {
-        const next = new Set(prev);
-        if (next.has(key)) next.delete(key);
-        else next.add(key);
-        return next;
-      });
-    } else {
-      // Growth metrics toggle both chart line and composite membership
-      onToggleCompositeMetric(key);
-    }
+    onToggleCompositeMetric(key);
   };
 
   // Build all series from EDGAR data

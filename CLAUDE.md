@@ -122,13 +122,14 @@ Average the quantifiable inputs → FGR. FGR feeds ALL valuation calculators. Th
 Four methods, all computed in Stage 2 and confirmed in Stage 3. **All calculators produce buy RANGES, not single prices** — key assumption inputs accept Low/High values, generating conservative and optimistic buy prices per method. The hero box shows the full range (min to max) across all enabled methods.
 
 ### Range Inputs (Low/High)
-These 4 inputs are estimates/assumptions and accept ranges:
+These 3 inputs are estimates/assumptions and accept ranges:
 - **FGR** (Future Growth Rate) — affects MOS + PBT. Range fields appear below the FGR radio source selector.
-- **Future P/E** — affects MOS only. Defaults auto-adjust from FGR range via `suggestFuturePE()`.
 - **Maintenance CapEx %** — affects Ten Cap only. Higher % = conservative (more capex deducted).
 - **Historical Avg P/E** — affects Equity Bond only.
 
-All other inputs (EPS, CFO, CapEx, Tax, Shares, BVPS, ROE, Retained Ratio, MARR, MOS %) are factual or methodology-fixed and remain single values.
+**Future P/E** is a single value (not a range) — default is `2 × max(FGR Low, FGR High)`, capped at historical high P/E. The FGR range already provides conservatism; a PE range on top was redundant.
+
+All other inputs (EPS, CFO, CapEx, Tax, Shares, BVPS, ROE, Retained Ratio) are factual or methodology-fixed and remain single values. MARR is shared between MOS and PBT (default 15%); Equity Bond has its own independent MARR (default 20%) and MOS% (default 50%).
 
 ### MOS (Margin of Safety)
 EPS (TTM or 3yr avg) → grow at FGR for 10 years → Future P/E (≤ 2x FGR, capped at historical high) → Future Price → discount at 15% MARR → Sticker Price → 50% MOS = Buy Price.
@@ -139,8 +140,8 @@ FCF Ratio (FCF/Earnings, exclude outliers) → FCF per share → compound at FGR
 ### Ten Cap (Owner Earnings)
 Cash from Ops - Maintenance CapEx (often 70% assumed) + Tax Provision = Owner Earnings. Ten Cap Price = 10 × (OE / Shares Outstanding).
 
-### Equity Bond (from *The New Buffettology*)
-BVPS → historically reasonable ROE → retained earnings ratio → equity growth rate → grow book value 10yr → future earnings → future price via reasonable P/E → discount at MARR → Buy Price.
+### Equity Bond (from *Buffettology*, 1997)
+BVPS → grow book value 10yr at (ROE × retained ratio) → future BVPS → future EPS (× ROE) → future price (× historical avg P/E) → discount at MARR → Sticker Price → MOS% discount → Buy Price. Also computes CAGR at current price (the original Buffettology output). Uses P/E multiplier per the original Buffettology method. Equity Bond has its own independent MARR (default 20%) and MOS% (default 50%), both separate from the MOS calculator. See `knowledge/references/equity-bond-research.md` for full methodology research.
 
 ### Sensitivity Tables
 Vary FGR, EPS, CapEx %, ROE assumptions across methods → range of buy prices.
@@ -170,6 +171,7 @@ knowledge/
 │   ├── capex-cash-flow-explained.md
 │   ├── edgar-industry-classification-report.md
 │   ├── edgar-xbrl-taxonomy.md
+│   ├── equity-bond-research.md    — Definitive research: 3 variants, source books, worked examples, P/E vs P/B analysis
 │   ├── financial-statements-fgr.md — FGR methodology, Big 4 growth rates
 │   ├── guru-list.md               — 43 named Gurus for 13F lookup
 │   └── tools-for-analysis.md      — 3 Ms framework (Moat, Management, MOS)

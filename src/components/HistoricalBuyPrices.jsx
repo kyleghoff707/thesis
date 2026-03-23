@@ -129,6 +129,8 @@ export default function HistoricalBuyPrices({
   compositeMetrics,
   maintenancePct = 0.70,
   marr = 0.15,
+  ebMarr = 0.20,
+  ebMosDiscount = 0.50,
   pbtYears = 8,
 }) {
   const [mode, setMode] = useState('trailing3');
@@ -222,7 +224,7 @@ export default function HistoricalBuyPrices({
         : getRetainedRatio(income, year);
 
       const eb = (bvps > 0 && roe > 0 && retainedRatio != null && retainedRatio > 0 && avgPE > 0)
-        ? computeEquityBond({ bvps, roe, retainedRatio, historicalPE: avgPE, marr })
+        ? computeEquityBond({ bvps, roe, retainedRatio, historicalPE: avgPE, marr: ebMarr, mosPercent: ebMosDiscount })
         : null;
 
       results.push({
@@ -240,7 +242,7 @@ export default function HistoricalBuyPrices({
     }
 
     return results;
-  }, [edgarStatements, allPrices, returns, historicalPE, analysisSeries, compositeMetrics, maintenancePct, marr, pbtYears, mode]);
+  }, [edgarStatements, allPrices, returns, historicalPE, analysisSeries, compositeMetrics, maintenancePct, marr, ebMarr, ebMosDiscount, pbtYears, mode]);
 
   // ─── Build chart data (merge daily prices + stepped buy prices) ─────
 

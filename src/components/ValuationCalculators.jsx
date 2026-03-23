@@ -305,11 +305,9 @@ export default function ValuationCalculators({
   maintenancePctHigh,
   setMaintenancePctLow,
   setMaintenancePctHigh,
-  // Future PE range
-  futurePELow,
-  futurePEHigh,
-  setFuturePELow,
-  setFuturePEHigh,
+  // Future PE (single value)
+  futurePE,
+  setFuturePE,
   mosDiscount,
   setMosDiscount,
   marr,
@@ -340,6 +338,10 @@ export default function ValuationCalculators({
   ebAvgPEHigh,
   setEbAvgPELow,
   setEbAvgPEHigh,
+  ebMarr,
+  setEbMarr,
+  ebMosDiscount,
+  setEbMosDiscount,
   heroEnabled,
   setHeroEnabled,
   onSave,
@@ -368,10 +370,12 @@ export default function ValuationCalculators({
   const pbtStickerLow = pbtPriceLow != null ? Math.round(pbtPriceLow * 200) / 100 : null;
   const pbtStickerHigh = pbtPriceHigh != null ? Math.round(pbtPriceHigh * 200) / 100 : null;
 
+  const ebStickerLow = ebResultLow?.stickerPrice > 0 ? ebResultLow.stickerPrice : null;
+  const ebStickerHigh = ebResultHigh?.stickerPrice > 0 ? ebResultHigh.stickerPrice : null;
   const ebBuyLow = ebResultLow?.buyPrice > 0 ? ebResultLow.buyPrice : null;
   const ebBuyHigh = ebResultHigh?.buyPrice > 0 ? ebResultHigh.buyPrice : null;
-  const ebReturnLow = ebResultLow?.projectedReturnAtCurrentPrice ?? null;
-  const ebReturnHigh = ebResultHigh?.projectedReturnAtCurrentPrice ?? null;
+  const ebReturnLow = ebResultLow?.projectedReturn ?? null;
+  const ebReturnHigh = ebResultHigh?.projectedReturn ?? null;
 
   // Hero = full buy range across ALL enabled methods (lowest conservative → highest optimistic)
   const toggleHero = (key) => {
@@ -656,8 +660,9 @@ export default function ValuationCalculators({
             <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.textMuted }}>Equity Bond</span>
           </div>
           {summaryRow('Buy Price', ebBuyLow, ebBuyHigh)}
+          {summaryRow('Sticker Price', ebStickerLow, ebStickerHigh)}
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, color: C.textSecondary }}>Projected Return</span>
+            <span style={{ fontSize: 12, color: C.textSecondary }}>CAGR at Current Price</span>
             <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>
               {fmtRange(ebReturnLow, ebReturnHigh, fmtPct)}
             </span>
@@ -766,12 +771,12 @@ export default function ValuationCalculators({
               value={fmtRange(mosResultLow?.futureEPS, mosResultHigh?.futureEPS)}
               icon={{ element: <LockIcon /> }}
             />
-            <RangeFieldRow
+            <FieldRow
               label="Future P/E"
-              valueLow={futurePELow != null ? Math.round(futurePELow * 100) / 100 : ''}
-              valueHigh={futurePEHigh != null ? Math.round(futurePEHigh * 100) / 100 : ''}
-              onChangeLow={v => setFuturePELow(isNaN(v) ? null : v)}
-              onChangeHigh={v => setFuturePEHigh(isNaN(v) ? null : v)}
+              value={futurePE != null ? Math.round(futurePE * 100) / 100 : ''}
+              editable
+              onChange={v => setFuturePE(isNaN(v) ? null : v)}
+              decimals={1}
             />
             <FieldRow
               label="Future Value"
@@ -888,20 +893,27 @@ export default function ValuationCalculators({
               onChangeHigh={v => setEbAvgPEHigh(isNaN(v) ? null : v)}
             />
             <FieldRow
-              label="MARR"
-              value={marr * 100}
+              label="MOS %"
+              value={ebMosDiscount * 100}
               editable
-              onChange={v => setMarr((isNaN(v) ? 15 : v) / 100)}
+              onChange={v => setEbMosDiscount((isNaN(v) ? 50 : v) / 100)}
+              step="1"
+              suffix="%"
+            />
+            <FieldRow
+              label="MARR"
+              value={ebMarr * 100}
+              editable
+              onChange={v => setEbMarr((isNaN(v) ? 20 : v) / 100)}
               suffix="%"
             />
           </div>
           <div>
             <FieldRow label="Equity Growth Rate" value={fmtPct(ebResultLow?.equityGrowthRate)} icon={{ element: <LockIcon /> }} />
-            <FieldRow label="Future BVPS" value={fmtRange(ebResultLow?.futureBVPS, ebResultHigh?.futureBVPS, fmtDollar)} icon={{ element: <LockIcon /> }} />
+            <FieldRow label="Future BVPS" value={fmtDollar(ebResultLow?.futureBVPS ?? ebResultHigh?.futureBVPS)} icon={{ element: <LockIcon /> }} />
             <FieldRow label="Future EPS" value={fmtRange(ebResultLow?.futureEPS, ebResultHigh?.futureEPS, fmtDollar)} icon={{ element: <LockIcon /> }} />
             <FieldRow label="Future Stock Price" value={fmtRange(ebResultLow?.futurePrice, ebResultHigh?.futurePrice, fmtDollar)} icon={{ element: <LockIcon /> }} />
-            <FieldRow label="Buy Price" value={fmtRange(ebBuyLow, ebBuyHigh, fmtDollar)} icon={{ element: <LockIcon /> }} />
-            <FieldRow label="Projected Return" value={fmtRange(ebReturnLow, ebReturnHigh, fmtPct)} icon={{ element: <LockIcon /> }} />
+            <FieldRow label="CAGR at Current Price" value={fmtRange(ebReturnLow, ebReturnHigh, fmtPct)} icon={{ element: <LockIcon /> }} />
           </div>
         </div>
       </div>
