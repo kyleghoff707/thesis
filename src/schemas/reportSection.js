@@ -50,6 +50,12 @@ export const ReportSectionSchema = z.object({
   charts: z.array(ChartSchema).optional().default([]),
   redFlags: z.array(z.string()).min(1),                     // At least one, even for PASS verdicts
   primarySourceInsights: z.array(z.string()).optional().default([]),
+  crossCuttingFindings: z.array(z.object({
+    finding: z.string(),                                     // What was discovered
+    relevantAgents: z.array(z.string()),                     // Which other agents should see this
+    severity: z.enum(['high', 'medium', 'low']),             // How important for overall thesis
+    source: z.string(),                                      // Where this came from
+  })).optional().default([]),
   generatedAt: z.string(),                                  // ISO timestamp
   modelUsed: z.string(),                                    // e.g., "claude-sonnet-4-6"
   tokenCost: z.object({ input: z.number(), output: z.number() }),
