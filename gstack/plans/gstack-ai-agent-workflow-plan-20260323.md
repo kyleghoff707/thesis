@@ -348,11 +348,13 @@ Start with web search + engine data. Architecture supports pluggable data source
 | Stage | Calls | Model Mix | Est. Cost |
 |-------|-------|-----------|-----------|
 | One Pager | 3-4 | All Sonnet | $0.05-0.15 |
-| Pitch Deck | ~15 | 12 Sonnet + 3 Opus | $1.00-3.00 |
-| Full Story | ~18 | 12 Sonnet + 6 Opus | $2.00-5.00 |
-| **Full Pipeline** | **~36** | **Mixed** | **$3.05-8.15** |
+| Pitch Deck | ~15 | 12 Sonnet + 3 Opus | $2.00-4.00 |
+| Full Story | ~18 | 12 Sonnet + 6 Opus | $4.00-8.00 |
+| **Full Pipeline** | **~36** | **Mixed** | **$6.05-12.15** |
 
 Opus for: FGR derivation, valuation synthesis, debate, final narrative, primary source reading.
+
+**Note (from Eng Review):** Original estimates ($3-8) were low. Primary Source Reader processing full 10-K text is ~200K+ input tokens alone. Real-world cost likely $8-12 per full pipeline. Matters for commercial margin calculations.
 
 ---
 
@@ -363,16 +365,17 @@ Opus for: FGR derivation, valuation synthesis, debate, final narrative, primary 
 - Create `src/engines/dataExport.js` (DataPacket assembly)
 - Define report JSON schema (backward-compatible with existing report model)
 
+### Phase 5C: CC Skill + First Analysis (2-3 days) ← MOVED BEFORE 5B (Eng Review)
+- CC skill for `/generate:one-pager`
+- First real analysis: generate One Pager for LULU, compare to example
+- Success benchmark: 80%+ section depth match vs LULU examples
+- **Rationale**: Validate AI output quality before investing in display components. See real output in ~5 days instead of ~14.
+
 ### Phase 5B: Display Components (1 week)
 - `OnePager.jsx` — 6-section renderer
 - `StatusBadge.jsx` — PASS/FAIL/REVIEW badges
 - `SectionRenderer.jsx` — reusable section display with citations
 - Progress dashboard during generation
-
-### Phase 5C: CC Skill + First Analysis (2-3 days)
-- CC skill for `/generate:one-pager`
-- First real analysis: generate One Pager for LULU, compare to example
-- Success benchmark: 80%+ section depth match vs LULU examples
 
 ### Phase 5D: Quality System (3-4 days)
 - `critic.js` — citation validation, completeness scoring, confidence checks
@@ -381,13 +384,15 @@ Opus for: FGR derivation, valuation synthesis, debate, final narrative, primary 
 ### Phase 6: Pitch Deck (2 weeks)
 - `PitchDeck.jsx` + 10 section sub-components
 - `SensitivityTable.jsx`
-- Assumption tracker sidebar
+- Assumption tracker sidebar with confidence levels (Delight #4)
 - CC skill for `/generate:pitch-deck` with checkpoints
-- Industry context cards
+- Industry context cards — pop-up glossary for industry-specific terms (Delight #7)
+- "Tell me more" deep-dive on any section point (Delight #1)
 
 ### Phase 7: Full Story + Debate (2 weeks)
 - `FullStory.jsx` + scored checklists (43 items)
 - `debate.js` — structured Bull/Bear/Judge debate orchestration
+- Quick Bull/Bear narrative toggle — switch between thesis perspectives (Delight #3)
 - Management Promise Tracker (in Primary Source Reader)
 - CC skills for `/generate:full-story` and `/debate`
 
@@ -402,7 +407,8 @@ Opus for: FGR derivation, valuation synthesis, debate, final narrative, primary 
 - Living Thesis Intelligence (re-analysis triggers on new data)
 - Cross-Company Intelligence (knowledge graph across analyses)
 - Conviction Scoring (Bayesian updates)
-- Historical comparison across reports
+- Historical comparison across reports (Delight #8)
+- stickeR1 evaluation loop integration
 - Multi-user backend, auth, billing
 
 ---
@@ -454,6 +460,48 @@ Tested single-agent generation (one Claude instance, DataPacket + curriculum, no
 17. **Academic-style citations** — Numbered references `[1]`, `[2]` with inline links throughout narrative. Every claim traceable to a source URL or DataPacket field. Citation list at the end of each section and the full report.
 18. **Node.js adapter for data bridge** — ~500-800 LOC swapping browser APIs for Node equivalents. Foundation for CC skills AND future commercial backend.
 19. **Retry-then-escalate failure handling** — Agent fails → retry once with error context → fail again → escalate to user. PM/analyst model.
+20. **JSON schema enforcement** — Agent structured output (report sections, DataPacket queries) needs JSON mode or schema validation. Without it, parsing agent output is fragile. Use Claude's JSON mode or post-process with schema validation.
+21. **Build order: 5A → 5C → 5B** — Validate AI output quality before investing in display components. See real output in ~5 days instead of ~14. Don't build the frame before you know what goes in it.
+22. **Eval strategy: manual first, automated later** — User IS the eval system for the first 5-10 reports, reviewing like a portfolio manager reviews analyst work. What the user learns becomes the spec for automated eval. Don't build eval infrastructure before understanding what "good" looks like.
+
+---
+
+## Delight Opportunities (from CEO Review — ALL ACCEPTED)
+
+Build during relevant phases. These are the details that make hedge funds say "shut up and take my money."
+
+| # | Feature | Phase | Effort | Status |
+|---|---------|-------|--------|--------|
+| 1 | "Tell me more" deep-dive on any section point | 6 | S | Planned |
+| 2 | Source preview — hover citation to see actual 10-K paragraph | 8 | M | Planned |
+| 3 | Quick Bull/Bear narrative toggle | 7 | S | Planned |
+| 4 | Assumption tracker sidebar with confidence levels | 6 | S | Planned |
+| 5 | Real-time progress dashboard during generation | 5B | M | Planned |
+| 6 | Version history / diff view between iterations | 8 | M | Planned |
+| 7 | Industry context cards (pop-up glossary) | 6 | S | Planned |
+| 8 | Historical comparison across reports | 9+ | M | Deferred |
+
+---
+
+## Eng Review Findings (10 Outside Voice items)
+
+| # | Finding | Assessment | Resolution |
+|---|---------|-----------|------------|
+| 1 | Data bridge is ~500-800 LOC, not ~200 | Valid | Updated estimate (KDD #18) |
+| 2 | Toolbox tools have no execution path | Valid | Orchestrator handles tool execution |
+| 3 | 9 agents is overengineered for v1 | Tested and disproven | Prototype validated multi-agent necessity |
+| 4 | Transcript/filing coverage limits | Valid | 25 Alpha Vantage calls/day, 10-K is 200K+ tokens |
+| 5 | Cost estimates are low | Valid | Updated to $8-12 range |
+| 6 | Dual deployment = two products | Partially valid | Prompts/schemas shared, orchestration differs |
+| 7 | No prototype validation | Addressed | Ran prototype, single-agent fails on pitch decks |
+| 8 | Checkpoint model is complex | Valid | Orchestrator is a stateful conversation manager |
+| 9 | Structured JSON output reliability | Valid | Need JSON mode or schema enforcement (KDD #20) |
+| 10 | FGR blocks pipeline | Manageable | FGR confirmation IS a checkpoint by design |
+
+**Test Strategy (from Eng Review):**
+- **Unit tests (Phase 5A-5D):** `dataExport.test.js` (DataPacket assembly), `critic.test.js` (citation validation), Toolbox tool wrappers (known inputs → expected outputs)
+- **Eval system:** Manual LULU benchmark first. User IS the eval system for first 5-10 reports. Automated eval built after understanding what "good" looks like from real reports.
+- **Token economics:** No budgets now. Let agents use Toolbox freely in CC mode. Measure actual usage, set budgets for API mode based on real data.
 
 ---
 
