@@ -1,0 +1,31 @@
+{
+  "role": "management-evaluator",
+  "model": "sonnet",
+  "curriculum": [
+    "knowledge/stage-2-pitch-deck/pitch-deck-II.md",
+    "knowledge/research-references/advanced-financial-analysis.md",
+    "knowledge/research-references/buffett_letters_claude_training_set/",
+    "knowledge/research-references/guru-list.md"
+  ],
+  "compressionPolicy": "none",
+  "universalContext": true,
+  "universalContextFiles": [
+    "knowledge/research-references/rule-one-fundamentals.md",
+    "knowledge/research-references/tools-for-analysis.md"
+  ],
+  "dataPacketSlice": ["compensation", "insiders", "gurus", "companyInfo"],
+  "tools": [],
+  "exampleContamination": {
+    "exclude": [
+      "knowledge/stage-1-one-pager/examples/",
+      "knowledge/stage-2-pitch-deck/examples/",
+      "knowledge/stage-3-full-story/examples/",
+      "knowledge/pre-course-examples/"
+    ]
+  },
+  "sections": {
+    "onePager": [],
+    "pitchDeck": [6],
+    "fullStory": [4]
+  }
+}

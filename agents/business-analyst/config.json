@@ -1,0 +1,31 @@
+{
+  "role": "business-analyst",
+  "model": "sonnet",
+  "curriculum": [
+    "knowledge/stage-2-pitch-deck/pitch-deck-I.md",
+    "knowledge/stage-1-one-pager/one-pager.md",
+    "knowledge/stage-3-full-story/story-form-I.md",
+    "knowledge/research-references/advanced-financial-analysis.md"
+  ],
+  "compressionPolicy": "none",
+  "universalContext": true,
+  "universalContextFiles": [
+    "knowledge/research-references/rule-one-fundamentals.md",
+    "knowledge/research-references/tools-for-analysis.md"
+  ],
+  "dataPacketSlice": ["companyInfo", "classification", "ruleOneScore", "peers"],
+  "tools": [],
+  "exampleContamination": {
+    "exclude": [
+      "knowledge/stage-1-one-pager/examples/",
+      "knowledge/stage-2-pitch-deck/examples/",
+      "knowledge/stage-3-full-story/examples/",
+      "knowledge/pre-course-examples/"
+    ]
+  },
+  "sections": {
+    "onePager": [1, 2],
+    "pitchDeck": [1, 2],
+    "fullStory": [2, 3]
+  }
+}

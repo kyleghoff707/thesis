@@ -1,0 +1,12 @@
+{
+  "role": "data-assembler",
+  "model": null,
+  "curriculum": [],
+  "universalContext": false,
+  "dataPacketSlice": ["*"],
+  "tools": [],
+  "exampleContamination": {
+    "exclude": []
+  },
+  "sections": {}
+}

@@ -1,0 +1,28 @@
+{
+  "role": "synthesis-writer",
+  "model": "opus",
+  "curriculum": [
+    "knowledge/research-references/buffett_letters_claude_training_set/"
+  ],
+  "compressionPolicy": "none",
+  "universalContext": true,
+  "universalContextFiles": [
+    "knowledge/research-references/rule-one-fundamentals.md",
+    "knowledge/research-references/tools-for-analysis.md"
+  ],
+  "dataPacketSlice": [],
+  "tools": [],
+  "exampleContamination": {
+    "exclude": [
+      "knowledge/stage-1-one-pager/examples/",
+      "knowledge/stage-2-pitch-deck/examples/",
+      "knowledge/stage-3-full-story/examples/",
+      "knowledge/pre-course-examples/"
+    ]
+  },
+  "sections": {
+    "onePager": [6],
+    "pitchDeck": [],
+    "fullStory": [8]
+  }
+}

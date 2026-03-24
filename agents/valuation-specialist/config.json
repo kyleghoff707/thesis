@@ -1,0 +1,32 @@
+{
+  "role": "valuation-specialist",
+  "model": "opus",
+  "curriculum": [
+    "knowledge/stage-2-pitch-deck/pitch-deck-IV.md",
+    "knowledge/research-references/fgr.md",
+    "knowledge/research-references/equity-bond-research.md",
+    "knowledge/research-references/advanced-financial-analysis.md",
+    "knowledge/research-references/capex-cash-flow-explained.md"
+  ],
+  "compressionPolicy": "none",
+  "universalContext": true,
+  "universalContextFiles": [
+    "knowledge/research-references/rule-one-fundamentals.md",
+    "knowledge/research-references/tools-for-analysis.md"
+  ],
+  "dataPacketSlice": ["growthRates", "returnMetrics", "fcf", "analystEstimates", "ttm", "currentPrice", "keyMetrics"],
+  "tools": ["computeMOS", "computePBT", "computeTenCap", "computeEquityBond", "sensitivityTable"],
+  "exampleContamination": {
+    "exclude": [
+      "knowledge/stage-1-one-pager/examples/",
+      "knowledge/stage-2-pitch-deck/examples/",
+      "knowledge/stage-3-full-story/examples/",
+      "knowledge/pre-course-examples/"
+    ]
+  },
+  "sections": {
+    "onePager": [5],
+    "pitchDeck": [10],
+    "fullStory": [5, 7]
+  }
+}
