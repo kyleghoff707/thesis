@@ -3,7 +3,7 @@ import { C } from '../theme';
 import { fetchFilings } from '../engines/edgar';
 import { cacheGetAsync, cacheClear } from '../engines/cache';
 import { fetchFilingMarkdown } from '../engines/filingMarkdown';
-import { fetchTranscriptList, matchTranscriptsToFilings, fetchTranscript, checkTranscriptCache, isEarningsFiling, clearTranscriptCache } from '../engines/transcripts';
+import { fetchTranscriptList, matchTranscriptsToFilings, fetchTranscript, fetchTranscriptForFiling, checkTranscriptCache, isEarningsFiling, clearTranscriptCache } from '../engines/transcripts';
 
 // ─── Constants ──────────────────────────────────────────────
 
@@ -215,21 +215,27 @@ export default function Filings({ ticker }) {
     return () => { cancelled = true; };
   }, [visible.length, showCount, filter, year, filings]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch transcript list and match to earnings filings
+  // Fetch transcript list (Finnhub) and match to earnings filings, plus check cache
   useEffect(() => {
     if (!ticker || !filings.length) return;
     let cancelled = false;
+
+    // Try Finnhub list for matching (premium) — also check cache for all earnings filings
     fetchTranscriptList(ticker)
       .then(list => {
-        if (cancelled || !list.length) return;
-        const matches = matchTranscriptsToFilings(list, filings);
-        setTranscriptMap(matches);
-        // Check cache for matched filings
-        checkTranscriptCache(ticker, matches)
-          .then(cached => { if (!cancelled) setTranscriptCached(cached); })
-          .catch(() => {});
+        if (cancelled) return;
+        if (list.length) {
+          const matches = matchTranscriptsToFilings(list, filings);
+          setTranscriptMap(matches);
+        }
       })
       .catch(() => {});
+
+    // Check cache for all earnings filings (works with both Finnhub and AV-cached transcripts)
+    checkTranscriptCache(ticker, filings)
+      .then(cached => { if (!cancelled) setTranscriptCached(cached); })
+      .catch(() => {});
+
     return () => { cancelled = true; };
   }, [ticker, filings]);
 
@@ -301,8 +307,6 @@ export default function Filings({ ticker }) {
   // Fetch or view a transcript
   async function handleTranscript(filing) {
     const entry = transcriptMap.get(filing.accessionNumber);
-    if (!entry) return;
-
     const isCached = transcriptCached.has(filing.accessionNumber);
     const accn = filing.accessionNumber;
 
@@ -312,7 +316,10 @@ export default function Filings({ ticker }) {
     setTranscriptError(null);
 
     try {
-      const result = await fetchTranscript(ticker, entry);
+      // Use matched entry if available (Finnhub premium), otherwise auto-derive quarter
+      const result = entry
+        ? await fetchTranscript(ticker, entry)
+        : await fetchTranscriptForFiling(ticker, filing);
       if (result.found) {
         if (!isCached) {
           setTranscriptCached(prev => {
@@ -350,8 +357,14 @@ export default function Filings({ ticker }) {
   // Clear cache and re-fetch a transcript
   async function handleRefetchTranscript(filing) {
     const entry = transcriptMap.get(filing.accessionNumber);
-    if (!entry) return;
-    clearTranscriptCache(ticker, entry.year, entry.quarter);
+    if (entry) {
+      clearTranscriptCache(ticker, entry.year, entry.quarter);
+    } else if (filing.reportDate) {
+      // Derive quarter for AV-cached transcripts
+      const [y, m] = filing.reportDate.split('-').map(Number);
+      const isAnnual = filing.form?.startsWith('10-K') || filing.form?.startsWith('20-F') || filing.form === '10-KSB';
+      clearTranscriptCache(ticker, y, isAnnual ? 4 : Math.ceil(m / 3));
+    }
     setTranscriptCached(prev => {
       const next = new Map(prev);
       next.delete(filing.accessionNumber);
@@ -686,7 +699,7 @@ export default function Filings({ ticker }) {
                         )}
                       </td>
                       <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                        {isEarningsFiling(f.form) && transcriptMap.has(f.accessionNumber) ? (
+                        {isEarningsFiling(f.form) ? (
                           transcriptFetching.has(f.accessionNumber) ? (
                             <span style={{ color: C.textMuted, fontSize: 11 }}>...</span>
                           ) : transcriptCached.has(f.accessionNumber) ? (

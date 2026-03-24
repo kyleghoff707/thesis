@@ -155,7 +155,7 @@ export async function fetchTranscript(ticker, transcriptEntry) {
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        if (!data['Error Message'] && !data['Note'] && data.transcript) {
+        if (!data['Error Message'] && !data['Note'] && !data['Information'] && data.transcript?.length) {
           text = formatAlphaVantageTranscript(data);
           meta = { source: 'alpha_vantage', quarter: avQuarter, year, quarterNum: quarter };
         }
@@ -194,10 +194,13 @@ export async function fetchTranscriptForFiling(ticker, filing) {
     return await fetchTranscript(ticker, match);
   }
 
-  // No match from Finnhub list — try Alpha Vantage with calendar quarter
+  // No match from Finnhub list — try Alpha Vantage directly
   if (ALPHA_VANTAGE_KEY && filing.reportDate) {
     const [y, m] = filing.reportDate.split('-').map(Number);
-    const q = Math.ceil(m / 3);
+    const isAnnual = filing.form?.startsWith('10-K') || filing.form?.startsWith('20-F') || filing.form === '10-KSB';
+    // Annual reports = Q4 of the fiscal year. AV uses fiscal quarter labels.
+    // Quarterly: derive from calendar month (correct for 80%+ of companies).
+    const q = isAnnual ? 4 : Math.ceil(m / 3);
     return await fetchTranscript(ticker, { year: y, quarter: q, id: null });
   }
 
@@ -208,13 +211,25 @@ export async function fetchTranscriptForFiling(ticker, filing) {
 
 /**
  * Check cache for multiple filings' transcripts.
+ * Accepts either a matchMap (Map<accession, entry>) or an array of filings.
  * Returns Map<accessionNumber, { charCount }>.
  */
-export async function checkTranscriptCache(ticker, matchMap) {
+export async function checkTranscriptCache(ticker, filingsOrMap) {
   const results = new Map();
 
-  for (const [accession, entry] of matchMap) {
-    const cacheKey = `transcript:v1:${ticker}:${entry.year}:Q${entry.quarter}`;
+  // Handle both Map (matched entries) and Array (filings) inputs
+  const entries = filingsOrMap instanceof Map
+    ? [...filingsOrMap.entries()].map(([acc, entry]) => ({ accession: acc, year: entry.year, quarter: entry.quarter }))
+    : filingsOrMap.filter(f => isEarningsFiling(f.form)).map(f => {
+        const [y, m] = (f.reportDate || '').split('-').map(Number);
+        if (!y) return null;
+        const isAnnual = f.form?.startsWith('10-K') || f.form?.startsWith('20-F') || f.form === '10-KSB';
+        const q = isAnnual ? 4 : Math.ceil(m / 3);
+        return { accession: f.accessionNumber, year: y, quarter: q };
+      }).filter(Boolean);
+
+  for (const { accession, year, quarter } of entries) {
+    const cacheKey = `transcript:v1:${ticker}:${year}:Q${quarter}`;
     const cached = await cacheGetAsync(cacheKey);
     if (cached) {
       results.set(accession, { charCount: cached.text?.length || 0 });
@@ -291,18 +306,38 @@ function formatAlphaVantageTranscript(data) {
     return `# Earnings Call Transcript\n\n${data.transcript}`;
   }
 
-  if (Array.isArray(data.transcript)) {
+  if (Array.isArray(data.transcript) && data.transcript.length > 0) {
     const lines = [];
-    lines.push('# Earnings Call Transcript');
+    lines.push(`# Earnings Call Transcript`);
     if (data.symbol) lines.push(`**${data.symbol}** — ${data.quarter || ''}`);
     lines.push('');
 
+    // Extract unique participants with titles
+    const participants = new Map();
     for (const seg of data.transcript) {
-      const speaker = seg.speaker || seg.name || 'Unknown';
-      const text = seg.text || seg.speech || '';
-      lines.push(`**${speaker}:**`);
+      if (seg.speaker && seg.title && !participants.has(seg.speaker)) {
+        participants.set(seg.speaker, seg.title);
+      }
+    }
+    if (participants.size > 0) {
+      lines.push('## Participants');
       lines.push('');
-      lines.push(text);
+      for (const [name, title] of participants) {
+        lines.push(`- **${name}** — ${title}`);
+      }
+      lines.push('');
+      lines.push('---');
+      lines.push('');
+    }
+
+    // AV fields: speaker, title, content, sentiment
+    for (const seg of data.transcript) {
+      const speaker = seg.speaker || 'Unknown';
+      const title = seg.title || '';
+      const content = seg.content || seg.text || seg.speech || '';
+      lines.push(`**${speaker}** *(${title})*:`);
+      lines.push('');
+      lines.push(content);
       lines.push('');
     }
 
