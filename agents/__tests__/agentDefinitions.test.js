@@ -132,7 +132,8 @@ describe('Agent Definitions — Config Schema', () => {
   it('Test 5: Each config.json has all required fields', () => {
     for (const agent of EXPECTED_AGENTS) {
       const config = loadConfig(agent);
-      const requiredFields = agent === 'data-assembler' ? REQUIRED_DA_FIELDS : REQUIRED_AI_FIELDS;
+      const isNonAI = agent === 'data-assembler' || agent === 'orchestrator';
+      const requiredFields = isNonAI ? REQUIRED_DA_FIELDS : REQUIRED_AI_FIELDS;
       for (const field of requiredFields) {
         expect(
           field in config,
