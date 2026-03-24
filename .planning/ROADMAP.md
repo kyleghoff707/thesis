@@ -73,7 +73,13 @@ Plans:
   2. During generation, a progress dashboard shows which agent is working, which sections are complete, and estimated time remaining
   3. User can approve or reject the One Pager at the gate, and the decision persists in the report data model
   4. Section renderer handles all report schema fields: narrative, tables, charts, red flags, citations, confidence levels
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 05B-01-PLAN.md — Vite middleware data bridge + useOnePager hook + VerdictBadge + ConfidenceBadge
+- [ ] 05B-02-PLAN.md — SectionRenderer + CitationTooltip + RedFlagCallout sub-components
+- [ ] 05B-03-PLAN.md — OnePager page component + route wiring + visual verification
+
 **UI hint**: yes
 
 ### Phase 5D: Quality System
@@ -136,7 +142,7 @@ Phases execute: 5A -> 5C -> 5B -> 5D -> 6 -> 7 -> 8
 |-------|-----------|----------------|--------|-----------|
 | 5A. Agent Definitions & Foundation | M1 | 0/5 | Planning complete | - |
 | 5C. CC Skill + First Analysis | M2 | 0/4 | Planning complete | - |
-| 5B. One Pager Display Components | M2 | 0/? | Not started | - |
+| 5B. One Pager Display Components | M2 | 0/3 | Planning complete | - |
 | 5D. Quality System | M2 | 0/? | Not started | - |
 | 6. Pitch Deck | M3 | 0/? | Not started | - |
 | 7. Full Story & Debate | M4 | 0/? | Not started | - |
