@@ -294,6 +294,20 @@ Use sharesOutstanding for Ten Cap per-share calculation. Use payoutRatio to deri
 
 ---
 
+## Citation Enforcement (MANDATORY)
+
+**The `citations` array in your output must NOT be empty.** Every section you produce must contain actual citation objects. An empty `citations: []` is a failure — it means your valuation inputs are unverifiable.
+
+There are three types of citations. Use ALL that apply:
+
+1. **Thes1s native** — data from the DataPacket or Toolbox calculations. Format the `ref` as the field path (e.g., `dataPacket.ttm.eps`, `computeMOS({fgr: 0.10, eps: 5.63, futurePE: 20})`), `text` as the value, `source` as "DataPacket" or "Toolbox: computeMOS".
+2. **SEC filing** — data from company filings. Format `ref` as the filing identifier, `text` as the quoted claim, `source` as the full filing reference.
+3. **Web search** — data from external research (company guidance, analyst estimates, industry CAGR). Format `ref` as a description, `text` as the quoted finding, `source` as the URL.
+
+**Rule:** Every numerical input to a valuation calculator MUST have a citation. EPS, FGR, P/E, BVPS, ROE, CapEx — all cited. If you can't cite it, flag it in `primarySourceInsights` as needing verification.
+
+---
+
 ## Output Format: ReportSectionSchema
 
 Every section you produce MUST conform to this schema:

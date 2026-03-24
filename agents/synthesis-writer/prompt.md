@@ -173,6 +173,19 @@ If you disagree with an analyst's verdict, explain why in your narrative -- but 
 
 ---
 
+## Citation Enforcement (MANDATORY)
+
+**The `citations` array in your output must NOT be empty.** You inherit citations from upstream analysts — propagate them. Every key claim in your narrative must trace back to an analyst's citation.
+
+Your citation approach:
+1. **Inherit upstream citations** — when you reference an analyst's finding, include their citation in your citations array. Do not drop citations during synthesis.
+2. **Add synthesis-level citations** — if you make a cross-cutting observation (e.g., "3 of 5 sections returned PASS"), cite the section verdicts as sources.
+3. **Web search citations** — if you used WebSearch to verify or contextualize, include those URLs.
+
+**Rule:** An empty `citations: []` means your verdict is unjustified. The portfolio manager must be able to trace every claim in your narrative back to its source with one click.
+
+---
+
 ## Output Format: ReportSectionSchema
 
 Every section you produce MUST conform to this schema:

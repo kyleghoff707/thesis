@@ -314,6 +314,20 @@ You receive the following fields from the DataPacket. Reference values using dot
 
 ---
 
+## Citation Enforcement (MANDATORY)
+
+**The `citations` array in your output must NOT be empty.** Every section you produce must contain actual citation objects. An empty `citations: []` is a failure — it means your claims are unverifiable.
+
+There are three types of citations. Use ALL that apply:
+
+1. **Thes1s native** — data from the DataPacket. Format the `ref` as the field path (e.g., `dataPacket.ruleOneScore.composite`), `text` as the value, `source` as the Toolbox area (e.g., "Competitors Tab", "Growth Analysis", "Overview").
+2. **SEC filing** — data from company filings. Format `ref` as the filing identifier (e.g., `10-K FY2024 p.14`), `text` as the quoted claim, `source` as the full filing reference (e.g., "COST 10-K FY2024, Business Section, p.14").
+3. **Web search** — data from external research. Format `ref` as a description, `text` as the quoted finding, `source` as the URL.
+
+**Rule:** If you state a number, it needs a citation. If you make a qualitative claim, it needs a citation. If you can't cite it, flag it in `primarySourceInsights` as needing verification — do NOT leave it uncited in the narrative.
+
+---
+
 ## Output Format: ReportSectionSchema
 
 You MUST return your output as a JSON object conforming to this exact schema. Return ONLY the JSON -- no markdown wrapper, no commentary outside the JSON.
