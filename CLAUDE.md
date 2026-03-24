@@ -443,6 +443,12 @@ Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude
 - `/unfreeze` — Remove edit restrictions
 - `/document-release` — Document a release
 - `/gstack-upgrade` — Update gstack to the latest version
+- `/cso` — Security audit (OWASP, STRIDE, secrets, supply chain)
+- `/autoplan` — Auto-review pipeline (CEO + design + eng in one command)
+- `/land-and-deploy` — Merge PR, deploy, verify production
+- `/canary` — Post-deploy monitoring
+- `/benchmark` — Performance regression detection
+- `/setup-deploy` — Configure deploy settings
 
 ### Skill Output Overrides (persist across gstack updates)
 
@@ -467,6 +473,7 @@ gstack skills produce plan/review/design/test artifacts. All artifacts are saved
 | `/land-and-deploy` reports | `gstack/deploy-reports/` | deploy-reports |
 | `/retro` snapshots | `gstack/retros/` | retros |
 | `/investigate` RCA reports | `gstack/investigations/` | investigations |
+| `/cso` security audits | `gstack/security-reports/` | security-reports |
 | `/browse` logs | `gstack/browse-logs/` | browse-logs |
 
 #### File Naming
@@ -512,7 +519,7 @@ After any gstack upgrade, run this check automatically — do not wait for the u
 ```bash
 # 1. Verify .gstack/ symlinks are intact (skills may have replaced symlinks with real dirs)
 echo "=== .gstack/ symlink health ===" && \
-for name in qa-reports design-reports canary-reports benchmark-reports deploy-reports browse-logs; do
+for name in qa-reports design-reports canary-reports benchmark-reports deploy-reports security-reports browse-logs; do
   if [ -L ".gstack/$name" ]; then
     echo "OK (symlink): $name"
   elif [ -d ".gstack/$name" ]; then

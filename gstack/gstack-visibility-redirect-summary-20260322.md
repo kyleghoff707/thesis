@@ -1,6 +1,6 @@
 # gstack Visibility Redirect — Implementation Summary
 
-**Date:** 2026-03-22
+**Date:** 2026-03-22 (updated 2026-03-23 for gstack v0.11.10.0 upgrade)
 **Scope:** Audit all gstack file-saving pathways, redirect outputs to visible project directory without corrupting inter-skill workflows
 
 ---
@@ -40,6 +40,7 @@ gstack/
 ├── benchmark-reports/  — Performance baselines (from /benchmark)
 ├── deploy-reports/     — Deploy verification (from /land-and-deploy)
 ├── retros/             — Weekly retrospective snapshots (from /retro)
+├── security-reports/   — Security audit findings JSON (from /cso)
 └── browse-logs/        — Browser console + network logs (from /browse)
 ```
 
@@ -134,3 +135,24 @@ This same audit-and-redirect approach works for any agentic workflow package:
 7. **Add upgrade resilience** — Post-upgrade health check to detect broken symlinks or new output directories.
 
 The goal is always the same: **see everything the workflow produces, without breaking the workflow that produces it.**
+
+---
+
+## Upgrade Log
+
+### v0.9.8.0 → v0.11.10.0 (2026-03-23)
+
+**New output directory:** `.gstack/security-reports` from `/cso` (Chief Security Officer) skill. Writes structured JSON findings for trend tracking across audit runs.
+
+**Action taken:**
+- Created `gstack/security-reports/` in visible project directory
+- Created symlink `.gstack/security-reports` → `gstack/security-reports/`
+- Added `/cso` to CLAUDE.md Output Locations table
+- Added `security-reports` to post-upgrade health check list
+- No gitignore entry needed (small JSON files, valuable to track)
+
+**New skills added (no new output directories):** `/autoplan`, `/land-and-deploy`, `/canary`, `/benchmark`, `/setup-deploy` — these all write to directories already covered by the original redirect (`deploy-reports/`, `canary-reports/`, `benchmark-reports/`).
+
+**Existing symlinks:** All 6 original `.gstack/` symlinks survived the upgrade intact (qa-reports, design-reports, canary-reports, benchmark-reports, deploy-reports, browse-logs).
+
+**Retro note:** Local retros write to `.context/retros/` (not `.gstack/retros`). Global retros write to `~/.gstack/retros/`. Neither uses the project-local `.gstack/` directory, so no symlink is needed. The `gstack/retros/` visible folder exists for CLAUDE.md-redirected Write tool outputs only.
