@@ -548,3 +548,273 @@ cp -R .gstack/{name}/* gstack/{name}/ 2>/dev/null; rm -rf .gstack/{name}; ln -sf
 **If new directories appear**: A new gstack skill is writing to a location we haven't redirected. Create the subfolder in `gstack/`, symlink it, add it to `.gitignore` if it contains screenshots/binaries, and update the Output Locations table above. Tell the user: "gstack upgrade added a new output directory `.gstack/{name}/` — I've linked it to `gstack/{name}/` so it's visible in the project."
 
 **If skill SKILL.md files changed write paths**: Read the changelog or diff the updated skill files in `~/.claude/skills/gstack/`. If any skill changed its output path (e.g., `.gstack/qa-reports/` → `.gstack/qa/`), update the symlink accordingly and tell the user what changed and how it affects our redirect setup.
+
+<!-- GSD:project-start source:PROJECT.md -->
+## Project
+
+**Thes1s — AI Agent Workflow**
+
+Thes1s is a professional AI-powered investment analyst team for Rule One stock research. The user is the portfolio manager; the AI agents are the analyst team. Each agent has a specialized role (financial analyst, business analyst, risk analyst, etc.), follows Rule One methodology exactly, and produces hedge-fund-quality investment theses through a 3-stage gated workflow: One Pager (filter) → Pitch Deck (research) → Full Story (conviction). The agents don't just generate reports — they investigate like their careers depend on it. Every unknown gets explored. Every claim gets cited. Every section gets checked.
+
+This is not a black box. The portfolio manager reads every output, challenges assumptions, provides data sources agents couldn't access, and makes final decisions. It's a collaborative research operation — the same operating model as a real hedge fund analyst team, except the analysts are AI agents working 1000x faster.
+
+**Core Value:** **Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours — delivered in minutes, with zero shortcuts on rigor.**
+
+The power of Rule One research is the depth. A human analyst doing 70 hours of manual research inevitably hits "good enough" moments. AI agents don't. They explore every unknown, follow every thread, cross-reference every claim. The goal is not parity with manual research — it's *deeper* than manual research.
+
+### Constraints
+
+- **Desktop only**: Tauri app, no server. API calls go direct to external services.
+- **Cost ceiling**: Full pipeline (One Pager + Pitch Deck + Full Story) should target ~$8-12 per company. Primary Source Reader is the biggest cost driver (~200K+ input tokens for a full 10-K).
+- **LULU contamination**: Agents must never access LULU examples during generation. Evaluation only.
+- **Rule One methodology**: Agents follow the curriculum exactly. Creative freedom is limited to investigation depth and narrative style — never methodology.
+- **User verification**: The user personally verifies agent output quality at each milestone. No milestone is "done" until the user says so.
+<!-- GSD:project-end -->
+
+<!-- GSD:stack-start source:codebase/STACK.md -->
+## Technology Stack
+
+## Languages
+- JavaScript (ES2020+) - All frontend logic, engine layer, React components, Vite plugins
+- JSX - React component templates (`src/components/*.jsx`)
+- Rust (edition 2021, min 1.77.2) - Tauri native shell (`src-tauri/src/`)
+- JSON - Static data files: taxonomy hierarchy (`src/data/taxonomy-hierarchy.json`), S&P 500 tag classifications (`src/data/sp500-tag-classifications.json`), industry company assignments (`industry-classification/thes1s-company-assignments.json`)
+## Runtime
+- Node.js v24.13.1 (confirmed on dev machine)
+- npm (lockfile version 3)
+- Lockfile: present (`package-lock.json`)
+## Frameworks
+- React 19.2.0 - UI layer, functional components with hooks only (`src/components/`)
+- React Router DOM 7.13.1 - Client-side routing (`src/App.jsx`)
+- Tauri 2.10.3 - Native macOS `.app` packaging; Rust crate `tauri = "2.10.3"`, CLI `@tauri-apps/cli ^2.10.1`
+- tauri-plugin-log 2 - Structured logging from the Rust shell
+- Vite 7.3.1 - Dev server + production bundler (`vite.config.js`)
+- @vitejs/plugin-react 5.1.1 - React JSX transform + HMR
+- Vitest 4.1.0 - Unit test runner (`npm test` / `npm run test:watch`)
+- jsdom 29.0.1 - DOM environment for engine tests
+## Key Dependencies
+- `@anthropic-ai/sdk ^0.78.0` - Claude API client; used in `src/engines/companyAdapter.js` (Layer 3 XBRL classification) and planned `src/engines/aiResearch.js`
+- `yahoo-finance2 ^3.13.2` - Yahoo Finance data client; runs in Vite dev middleware (`vite.config.js`) for analyst estimates, batch quotes, calendar events
+- `recharts ^3.8.0` - Chart rendering (price charts, growth charts) throughout Toolbox tabs
+- `idb ^8.0.3` - IndexedDB wrapper; powers the `thes1s-cache` database in `src/engines/cacheStore.js`
+- `react-router-dom ^7.13.1` - App-level routing (`src/App.jsx`)
+- `uuid ^13.0.0` - Report ID generation (`src/hooks/useResearch.js`)
+- `cheerio ^1.2.0` - HTML parsing in Vite middleware (Finviz scraper in `vite.config.js`); also used in `src/engines/filingMarkdown.js`
+- `turndown ^7.2.2` + `turndown-plugin-gfm ^1.0.2` - HTML-to-Markdown conversion for SEC filing display (`src/engines/filingMarkdown.js`)
+- `xlsx ^0.18.5` - Excel/spreadsheet export (present in deps, used in validation scripts)
+- `@xmldom/xmldom ^0.8.11` - XML parsing for EDGAR XBRL files (dev dependency, validation scripts)
+- `serde + serde_json 1.0` - Rust serialization (Tauri IPC data exchange)
+## Configuration
+- Config file: `.env.local` (present, gitignored)
+- Variables read via `src/engines/config.js` using `import.meta.env`:
+- `vite.config.js` - Vite config with 5 custom middleware plugins + 3 CORS proxy routes
+- `src-tauri/tauri.conf.json` - Tauri app config (window size 1400×900, CSP disabled, bundle targets all)
+- `eslint.config.js` - ESLint flat config (eslint 9.39.1, react-hooks plugin, react-refresh plugin)
+## Platform Requirements
+- Node.js 24+ (confirmed)
+- Rust 1.77.2+ (required by Tauri build)
+- `npm run dev` → Vite dev server at localhost:5173
+- `npm run tauri:dev` → Tauri dev with hot-reload
+- macOS desktop app (`.app` bundle via `npm run tauri:build`)
+- Tauri 2 native webview — no CORS enforcement, can set arbitrary headers
+- No server, no auth, no network infrastructure — all API calls go direct to external services
+<!-- GSD:stack-end -->
+
+<!-- GSD:conventions-start source:CONVENTIONS.md -->
+## Conventions
+
+## Naming Patterns
+- React components: PascalCase `.jsx` — `CompanyHeader.jsx`, `ValuationCalculators.jsx`
+- Hooks: camelCase prefixed with `use` — `useFinancials.js`, `useCompanyEvents.js`
+- Engines (pure logic): camelCase `.js` — `growthRates.js`, `edgarFinancials.js`, `returnMetrics.js`
+- Data files: kebab-case `.json` / `.js` — `taxonomy-hierarchy.json`, `validationCompanies.js`
+- Test files: mirror source with `.test.js` suffix — `edgarFinancials.test.js`
+- Exported engine functions: camelCase, prefixed with action verb — `computeGrowthRates`, `fetchCompanyFacts`, `extractAnnualFact`
+- React components: PascalCase — `function CompanyHeader(...)`, `export default function Toolbox(...)`
+- Local helpers within a file: camelCase, no export — `findClosest`, `makeFrameData`, `isIDBKey`
+- Formatter functions: `fmt` prefix — `fmtNum`, `fmtDollar`, `fmtPct`, `fmtRange`
+- All camelCase — `companyFacts`, `edgarStatements`, `guruActivities`
+- Boolean state: descriptive names — `loading`, `isDark`, `irLinkIsDirect`
+- Constants (module-level, never reassigned): UPPER_SNAKE_CASE — `INCOME_TAXONOMY`, `PERIODS`, `IDB_PREFIXES`, `THRESHOLDS`
+- Destructured loading/error pairs from hooks: suffix pattern — `finLoading`, `priceLoading`, `edgarError`
+- XBRL taxonomy entries: `{ field: 'snake_case', unit: 'USD', tags: [...], negate?: boolean }`
+- Financial data fields: `snake_case` — `net_income_loss`, `cost_of_revenue`, `change_in_receivables`
+- Report data: `camelCase` keys in JSON — `currentStage`, `stageApprovals`, `onePager`
+- Theme palette: single-letter export `C` — always imported as `import { C } from '../theme'`
+## Code Style
+- No Prettier config detected — formatting is manual/editor-default
+- Indentation: 2 spaces throughout
+- Single quotes for strings; template literals for interpolation
+- Semicolons present throughout
+- Trailing commas in multi-line arrays/objects
+- ESLint 9 flat config at `eslint.config.js`
+- Extends `js.configs.recommended` + `reactHooks` + `reactRefresh`
+- Key rule: `no-unused-vars` errors, but vars matching `^[A-Z_]` are ignored (allows unused constants)
+- ECMAScript 2020 target, `sourceType: module`
+## Import Organization
+## Error Handling
+- Use `try/catch` and return `null` on failure — callers check for null
+- Failed fetches return `null`, not throw — `if (!res.ok) return null`
+- Guard clauses at function entry: `if (!fgr || !eps || !futurePE) return null`
+- Standard `{ data, loading, error }` pattern
+- Cancellation via `let cancelled = false` flag in `useEffect` cleanup
+- Always wrapped in try/catch — `QuotaExceededError` triggers cache eviction and retry
+- Silent failure with `console.warn` if still full after eviction
+- Null coalescing used throughout: `company?.website`, `settings?.defaultPriceRange || '5y'`
+- Display fallback: `score != null ? score : '--'` for missing metric values
+- Formatter guard: `if (n == null || isNaN(n)) return '--'`
+## Logging
+- `console.warn(...)` for non-fatal errors, degraded functionality, API failures — `console.warn('EDGAR submissions failed: ...')`
+- `console.log(...)` sparingly for diagnostic milestones — `console.log('EDGAR statements AAPL [restated]: 12 years ...')`
+- Never `console.error(...)` — errors are captured in state and displayed in UI or silently degraded
+- Third-party 403s (e.g., Finnhub free tier) are suppressed to avoid console noise
+## Comments
+- Explain non-obvious data conventions: `// payables increase = cash source (already positive)`
+- Reference bug numbers in fixes: `// Fix 3 (P1a): Debt tags + sanity check`
+- Document XBRL-specific gotchas: `// ASC 606 (2018+)`, `// Q4I for balance sheet instant values`
+- Short function-level docstrings for public functions: `// CAGR = (endValue / startValue)^(1/years) - 1`
+## Function Design
+- Engines: positional for 1-2 params; destructured objects for 3+ — `computeMOS({ fgr, eps, futurePE, marr = 0.15, years = 10 })`
+- Components: props destructured in signature — `function CompanyHeader({ company, latest, moatScore, managementScore, ruleOneScore })`
+- Pure computation: return result object or `null` on invalid input
+- Async fetches: return data object or `null` on failure (never throw to caller)
+- Hooks: always return named object `{ data, loading, error }` or domain-specific equivalent
+## Module Design
+- Engines: named exports for all public functions — `export function computeGrowthRates(...)`
+- Components: single `export default function ComponentName(...)` per file
+- Hooks: single named export per file — `export function useFinancials(...)`
+- Constants: named exports for shared data — `export const PERIODS = [10, 7, 5, 3, 1]`
+- Test-only exports: collected under `export const _testExports = { ... }` at file bottom
+## Theme Usage
+<!-- GSD:conventions-end -->
+
+<!-- GSD:architecture-start source:ARCHITECTURE.md -->
+## Architecture
+
+## Pattern Overview
+- Hook-mediated data flow: engines are pure async functions; hooks bind them to React state; components render the state
+- Three-layer XBRL tag resolution for financial data extraction from SEC EDGAR
+- Three-tier caching (in-memory → IndexedDB → localStorage) for API responses
+- All styling is inline via a mutable `C` palette object — no CSS files or CSS-in-JS library
+- Report data (the research workflow) is persisted in localStorage; financial caches live in IndexedDB
+## Layers
+- Purpose: Bootstrap React, provide router, inject global CSS reset
+- Location: `src/main.jsx`
+- Contains: `BrowserRouter` wrapper, root render, 8-line global style injection
+- Depends on: `src/App.jsx`
+- Used by: Tauri WebView (production) or Vite dev server
+- Purpose: Top-level route declarations, cross-cutting state (theme, research list, settings)
+- Location: `src/App.jsx`
+- Contains: All route definitions for `/research`, `/watchlists`, `/gurus`, `/reports`, `/validation`, audit routes
+- Depends on: `useTheme`, `useResearch`, `useSettings`, all top-level page components
+- Used by: `src/main.jsx`
+- Purpose: 52px top nav bar with logo, 4 nav tabs, ticker search, settings gear, and main content slot
+- Location: `src/components/Layout.jsx`
+- Contains: Inline-styled nav, `NavLink` tabs, `TickerSearch` component, max-width 1400px content wrapper
+- Depends on: `src/theme.js` (C palette), `TickerSearch.jsx`
+- Used by: `src/App.jsx` — wraps all routes
+- Purpose: Primary research surface — 8-tab container that orchestrates all data hooks and passes computed results to tab components
+- Location: `src/components/Toolbox.jsx`
+- Contains: Tab switcher (Overview / Financials / Growth / Valuation / Competitors / Insiders / Filings / Data Audit), all hook invocations, all `useMemo` scoring computations
+- Depends on: `useFinancials`, `useEdgar`, `usePrices`, `useGurus`, `useInsiders`, `useCompensation`, `useCompanyEvents`, all scoring engines (`growthRates`, `returnMetrics`, `freeCashFlow`, `ruleOneScore`)
+- Used by: `/research/:id` route in `App.jsx`
+- Purpose: Render specific views/tabs — receive computed data as props, no direct engine calls
+- Location: `src/components/*.jsx`
+- Contains: `FinancialStatements`, `GrowthAnalysis`, `Valuation`, `Competitors`, `Insiders`, `Filings`, `Gurus`, `GuruPortfolio`, `TickerDataAudit`, `CompanyEvents`, etc.
+- Depends on: `src/theme.js`, data props from Toolbox or their own hooks (Competitors uses `useCompetitors`)
+- Used by: `Toolbox.jsx` or directly by App routes (Gurus, Watchlists, audit views)
+- Purpose: Bridge between async engine functions and React component state — handle loading, error, and cancellation patterns
+- Location: `src/hooks/*.js`
+- Contains: `useEdgar`, `useFinancials`, `usePrices`, `useGurus`, `useInsiders`, `useCompensation`, `useCompetitors`, `useCompanyEvents`, `useResearch`, `useSettings`, `useTheme`, `useWatchlists`, `useAnalystData`
+- Depends on: `src/engines/*.js`
+- Used by: `Toolbox.jsx` and individual components
+- Purpose: All external API calls, data extraction, and computation — pure async functions with no React dependency
+- Location: `src/engines/*.js`
+- Contains: EDGAR fetchers (`edgar.js`, `edgarFinancials.js`, `edgarFrames.js`), scoring (`ruleOneScore.js`, `growthRates.js`, `returnMetrics.js`, `freeCashFlow.js`, `valuation.js`), other data sources (`gurus.js`, `insiders.js`, `prices.js`, `compensation.js`, `transcripts.js`, `analystEstimates.js`), and support engines (`cache.js`, `cacheStore.js`, `splits.js`, `peers.js`, `peerMetrics.js`, `batchQuotes.js`)
+- Depends on: `src/engines/config.js` (env keys), `src/engines/cache.js`, external APIs
+- Used by: `src/hooks/*.js`
+- Purpose: Pre-built lookup tables loaded at import time — zero runtime API cost
+- Location: `src/data/`
+- Contains:
+- Used by: `taxonomyResolver.js` (Layer 2), `companyAdapter.js` (Layer 3)
+## The Three-Layer XBRL Engine
+- Defined inline in `edgarFinancials.js` as `INCOME_TAXONOMY`, `BALANCE_TAXONOMY`, `CASHFLOW_TAXONOMY` arrays
+- Each field entry: `{ field: 'revenues', unit: 'USD', tags: ['RevenueFromContract...', 'Revenues', 'SalesRevenueNet', ...] }`
+- Tags ordered by prevalence — first tag's value wins per year
+- O(1) lookup per tag per year
+- `src/engines/taxonomyResolver.js` augments any taxonomy array with FASB calculation linkbase descendants
+- Pre-built data: `src/data/taxonomy-hierarchy.json` (1,937 descendant tags from 3 FASB taxonomy versions)
+- Used only when Layer 1 misses a field for a company
+- Currently dormant (commented out in `edgarFinancials.js`) — code retained for future re-enablement
+- `src/engines/companyAdapter.js` — two sub-layers:
+- Confidence gating: classifications below 0.8 confidence are marked "inferred" in provenance
+- Currently dormant (commented out in `edgarFinancials.js`) — code retained
+- `src/engines/industryClassifier.js` maps SIC codes → `'bank' | 'reit' | 'insurance' | 'standard'`
+- `src/engines/industryOverlays.js` provides additive XBRL taxonomy for bank/REIT/insurance
+- Applied after base extraction: bank gets NII/deposits/efficiency ratio; REIT gets FFO/NAV/NOI; insurance gets premiums/claims/combined ratio
+- `computeDerivedFields()` in `edgarFinancials.js` computes ~40 fields not in XBRL (e.g., gross profit from revenue - COGS, total debt from components, working capital, EBITDA)
+- Every derived value carries a human-readable formula via `getDerivedFormula()`
+- Every extracted value carries parallel metadata: XBRL tag that resolved it, layer (1/2/3), whether derived, confidence score (Layer 3), human-readable formula
+- Annual AND TTM provenance tracked
+- Components read bare numbers; provenance is opt-in via `edgarStatements.provenance`
+## Three-Tier Cache Architecture
+| Tier | What | TTL | Used For |
+|------|------|-----|----------|
+| In-memory (`Map`) | Hot data, avoids redundant reads | Session | All lookups |
+| IndexedDB (`cacheStore.js`) | Large blobs (EDGAR facts, guru filings, statements) | 24hr–10yr | `edgar:facts:*`, `edgar-statements:*`, `guru-*`, `nport-*`, `transcript-*`, `filing-md:*`, `insider-*`, `comp-*` |
+| localStorage | Small metadata (ticker map, events, analyst data) | 1hr–24hr | Everything else |
+## Data Flow
+- React `useState` / `useMemo` / `useCallback` — no global state library
+- Reports/settings: localStorage (`stock-analyzer-reports`, `sa-settings`)
+- Financial caches: IndexedDB via `cacheStore.js`
+- Last-viewed research: localStorage (`sa-last-research`)
+- Competitors tier preference: localStorage (`sa-competitors-tier`)
+## Key Abstractions
+- Purpose: A research workflow record — ticker + stage approvals + stage content (onePager/pitchDeck/fullStory)
+- Managed by: `useResearch.js`
+- Structure: `{ id, ticker, companyName, currentStage, stageApprovals, onePager, pitchDeck, fullStory, watchlist, competitors }`
+- Purpose: Normalized financial statements — the single source of truth for all scoring and display
+- Produced by: `fetchEdgarStatements()` in `edgarFinancials.js`
+- Structure: `{ years, income: {year: {field: value}}, balance: {year: {field: value}}, cashFlow: {year: {field: value}}, provenance: {year: {field: {tag, layer, formula}}} }`
+- Purpose: Mutable theme object — all components read from this; dark/light themes applied via `Object.assign(C, source)`
+- Location: `src/theme.js`
+- Pattern: `import { C } from '../theme'` → `style={{ color: C.text, background: C.bgCard }}`
+- Purpose: Determines whether a cache key goes to IndexedDB or localStorage by prefix inspection
+- Location: `src/engines/cache.js` — `IDB_PREFIXES` array + `isIDBKey()` + `getStoreName()`
+## Entry Points
+- Location: `src/main.jsx`
+- Triggers: Vite dev server serves `index.html` → loads `main.jsx`
+- Responsibilities: Mount React root, inject global styles, provide BrowserRouter
+- Location: `src-tauri/src/` (Rust shell), `src-tauri/tauri.conf.json`
+- Triggers: macOS `.app` launch
+- Responsibilities: Create native window (1400×900), load `dist/` as frontend, no CORS enforcement on network requests
+- Location: `vite.config.js` — custom middleware plugins
+- Triggers: Any `/api/*` request in dev mode
+- Responsibilities: Proxy EDGAR/SEC requests (adds User-Agent header), serve Yahoo Finance via `yahoo-finance2` package, serve Finviz/GuruFocus/IR events via server-side fetch
+## Error Handling
+- All hooks follow: `setLoading(true)` → `try { ... } catch (err) { setError(err.message) } finally { setLoading(false) }`
+- Cancellation: `let cancelled = false` + cleanup `return () => { cancelled = true }` in `useEffect`
+- Cache misses are silent — engines fall back to network without surfacing errors
+- EDGAR 404s (missing filings) return `null` gracefully; components show "no data" states
+## Cross-Cutting Concerns
+<!-- GSD:architecture-end -->
+
+<!-- GSD:workflow-start source:GSD defaults -->
+## GSD Workflow Enforcement
+
+Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
+
+Use these entry points:
+- `/gsd:quick` for small fixes, doc updates, and ad-hoc tasks
+- `/gsd:debug` for investigation and bug fixing
+- `/gsd:execute-phase` for planned phase work
+
+Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
+<!-- GSD:workflow-end -->
+
+<!-- GSD:profile-start -->
+## Developer Profile
+
+> Profile not yet configured. Run `/gsd:profile-user` to generate your developer profile.
+> This section is managed by `generate-claude-profile` -- do not edit manually.
+<!-- GSD:profile-end -->

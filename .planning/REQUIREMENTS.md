@@ -129,15 +129,68 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AGNT-01 through AGNT-05 | Phase 5A | Pending |
-| DATA-01 through DATA-04 | Phase 5A | Pending |
-| SCHM-01 through SCHM-04 | Phase 5A | Pending |
-| ONEP-01 through ONEP-06 | Phase 5B-5D | Pending |
-| PTCH-01 through PTCH-16 | Phase 6 | Pending |
-| FLST-01 through FLST-10 | Phase 7 | Pending |
-| QUAL-01 through QUAL-08 | Phase 5D + ongoing | Pending |
-| CMD-01 through CMD-03 | Phase 6-7 | Pending |
-| EXPT-01 through EXPT-06 | Phase 8 | Pending |
+| AGNT-01 | Phase 5A | Pending |
+| AGNT-02 | Phase 5A | Pending |
+| AGNT-03 | Phase 5A | Pending |
+| AGNT-04 | Phase 5A | Pending |
+| AGNT-05 | Phase 5A | Pending |
+| DATA-01 | Phase 5A | Pending |
+| DATA-02 | Phase 5A | Pending |
+| DATA-03 | Phase 5A | Pending |
+| DATA-04 | Phase 5A | Pending |
+| SCHM-01 | Phase 5A | Pending |
+| SCHM-02 | Phase 5A | Pending |
+| SCHM-03 | Phase 5A | Pending |
+| SCHM-04 | Phase 5A | Pending |
+| ONEP-01 | Phase 5C | Pending |
+| ONEP-02 | Phase 5B | Pending |
+| ONEP-03 | Phase 5B | Pending |
+| ONEP-04 | Phase 5B | Pending |
+| ONEP-05 | Phase 5B | Pending |
+| ONEP-06 | Phase 5C | Pending |
+| PTCH-01 | Phase 6 | Pending |
+| PTCH-02 | Phase 6 | Pending |
+| PTCH-03 | Phase 6 | Pending |
+| PTCH-04 | Phase 6 | Pending |
+| PTCH-05 | Phase 6 | Pending |
+| PTCH-06 | Phase 6 | Pending |
+| PTCH-07 | Phase 6 | Pending |
+| PTCH-08 | Phase 6 | Pending |
+| PTCH-09 | Phase 6 | Pending |
+| PTCH-10 | Phase 6 | Pending |
+| PTCH-11 | Phase 6 | Pending |
+| PTCH-12 | Phase 6 | Pending |
+| PTCH-13 | Phase 6 | Pending |
+| PTCH-14 | Phase 6 | Pending |
+| PTCH-15 | Phase 6 | Pending |
+| PTCH-16 | Phase 6 | Pending |
+| FLST-01 | Phase 7 | Pending |
+| FLST-02 | Phase 7 | Pending |
+| FLST-03 | Phase 7 | Pending |
+| FLST-04 | Phase 7 | Pending |
+| FLST-05 | Phase 7 | Pending |
+| FLST-06 | Phase 7 | Pending |
+| FLST-07 | Phase 7 | Pending |
+| FLST-08 | Phase 7 | Pending |
+| FLST-09 | Phase 7 | Pending |
+| FLST-10 | Phase 7 | Pending |
+| QUAL-01 | Phase 5D | Pending |
+| QUAL-02 | Phase 5D | Pending |
+| QUAL-03 | Phase 5D | Pending |
+| QUAL-04 | Phase 5D | Pending |
+| QUAL-05 | Phase 5D | Pending |
+| QUAL-06 | Phase 5D | Pending |
+| QUAL-07 | Phase 5D | Pending |
+| QUAL-08 | Phase 5D | Pending |
+| CMD-01 | Phase 6 | Pending |
+| CMD-02 | Phase 7 | Pending |
+| CMD-03 | Phase 6 | Pending |
+| EXPT-01 | Phase 8 | Pending |
+| EXPT-02 | Phase 8 | Pending |
+| EXPT-03 | Phase 8 | Pending |
+| EXPT-04 | Phase 8 | Pending |
+| EXPT-05 | Phase 8 | Pending |
+| EXPT-06 | Phase 8 | Pending |
 
 **Coverage:**
 - v1 requirements: 62 total
@@ -146,4 +199,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after initial definition*
+*Last updated: 2026-03-24 — traceability updated with per-requirement phase mappings*
