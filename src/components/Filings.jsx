@@ -3,6 +3,7 @@ import { C } from '../theme';
 import { fetchFilings } from '../engines/edgar';
 import { cacheGetAsync, cacheClear } from '../engines/cache';
 import { fetchFilingMarkdown } from '../engines/filingMarkdown';
+import { fetchTranscriptList, matchTranscriptsToFilings, fetchTranscript, checkTranscriptCache, isEarningsFiling, clearTranscriptCache } from '../engines/transcripts';
 
 // ─── Constants ──────────────────────────────────────────────
 
@@ -132,6 +133,10 @@ export default function Filings({ ticker }) {
   const [converting, setConverting] = useState(new Set()); // accession numbers currently converting
   const [convertError, setConvertError] = useState(null); // { accession, message }
   const [preview, setPreview] = useState(null); // { form, date, markdown, charCount }
+  const [transcriptMap, setTranscriptMap] = useState(new Map()); // accession → transcript entry
+  const [transcriptCached, setTranscriptCached] = useState(new Map()); // accession → { charCount }
+  const [transcriptFetching, setTranscriptFetching] = useState(new Set());
+  const [transcriptError, setTranscriptError] = useState(null);
 
   useEffect(() => {
     if (!ticker) return;
@@ -210,6 +215,24 @@ export default function Filings({ ticker }) {
     return () => { cancelled = true; };
   }, [visible.length, showCount, filter, year, filings]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Fetch transcript list and match to earnings filings
+  useEffect(() => {
+    if (!ticker || !filings.length) return;
+    let cancelled = false;
+    fetchTranscriptList(ticker)
+      .then(list => {
+        if (cancelled || !list.length) return;
+        const matches = matchTranscriptsToFilings(list, filings);
+        setTranscriptMap(matches);
+        // Check cache for matched filings
+        checkTranscriptCache(ticker, matches)
+          .then(cached => { if (!cancelled) setTranscriptCached(cached); })
+          .catch(() => {});
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [ticker, filings]);
+
   // Convert a single filing to markdown
   async function handleConvert(filing) {
     const accn = filing.accessionNumber;
@@ -275,6 +298,69 @@ export default function Filings({ ticker }) {
     await handleConvert(filing);
   }
 
+  // Fetch or view a transcript
+  async function handleTranscript(filing) {
+    const entry = transcriptMap.get(filing.accessionNumber);
+    if (!entry) return;
+
+    const isCached = transcriptCached.has(filing.accessionNumber);
+    const accn = filing.accessionNumber;
+
+    if (!isCached) {
+      setTranscriptFetching(prev => new Set(prev).add(accn));
+    }
+    setTranscriptError(null);
+
+    try {
+      const result = await fetchTranscript(ticker, entry);
+      if (result.found) {
+        if (!isCached) {
+          setTranscriptCached(prev => {
+            const next = new Map(prev);
+            next.set(accn, { charCount: result.charCount });
+            return next;
+          });
+        }
+        setPreview({
+          filing,
+          form: filing.form,
+          date: filing.filingDate,
+          markdown: result.text,
+          charCount: result.charCount,
+          fromCache: result.fromCache,
+          isTranscript: true,
+          transcriptMeta: result.meta,
+        });
+      } else {
+        setTranscriptError({ accession: accn, message: result.reason });
+      }
+    } catch (err) {
+      setTranscriptError({ accession: accn, message: err.message });
+    } finally {
+      if (!isCached) {
+        setTranscriptFetching(prev => {
+          const next = new Set(prev);
+          next.delete(accn);
+          return next;
+        });
+      }
+    }
+  }
+
+  // Clear cache and re-fetch a transcript
+  async function handleRefetchTranscript(filing) {
+    const entry = transcriptMap.get(filing.accessionNumber);
+    if (!entry) return;
+    clearTranscriptCache(ticker, entry.year, entry.quarter);
+    setTranscriptCached(prev => {
+      const next = new Map(prev);
+      next.delete(filing.accessionNumber);
+      return next;
+    });
+    setPreview(null);
+    await handleTranscript(filing);
+  }
+
   if (loading) {
     return <div style={{ color: C.textSecondary, fontSize: 13, padding: '20px 0' }}>Loading filings...</div>;
   }
@@ -320,7 +406,10 @@ export default function Filings({ ticker }) {
             }}>
               <div>
                 <span style={{ fontWeight: 600, color: C.text, fontSize: 14 }}>
-                  {preview.form} — {formatDate(preview.date)}
+                  {preview.isTranscript
+                    ? `${preview.transcriptMeta?.title || 'Earnings Call Transcript'} — ${formatDate(preview.date)}`
+                    : `${preview.form} — ${formatDate(preview.date)}`
+                  }
                 </span>
                 <span style={{ color: C.textMuted, fontSize: 12, marginLeft: 12 }}>
                   {formatCharCount(preview.charCount)}
@@ -330,7 +419,10 @@ export default function Filings({ ticker }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {preview.filing && (
                   <button
-                    onClick={() => handleReconvert(preview.filing)}
+                    onClick={() => preview.isTranscript
+                      ? handleRefetchTranscript(preview.filing)
+                      : handleReconvert(preview.filing)
+                    }
                     style={{
                       background: 'none', border: `1px solid ${C.border}`,
                       borderRadius: 4, color: C.textSecondary, fontSize: 11,
@@ -340,7 +432,7 @@ export default function Filings({ ticker }) {
                     onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSecondary; }}
                   >
-                    Reconvert
+                    {preview.isTranscript ? 'Re-fetch' : 'Reconvert'}
                   </button>
                 )}
                 <button
@@ -383,6 +475,27 @@ export default function Filings({ ticker }) {
           <span>Conversion failed: {convertError.message}</span>
           <button
             onClick={() => setConvertError(null)}
+            style={{
+              background: 'none', border: 'none', color: C.red,
+              cursor: 'pointer', fontSize: 14, padding: '0 4px',
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Transcript error toast */}
+      {transcriptError && (
+        <div style={{
+          padding: '8px 14px', marginBottom: 12,
+          background: C.redBg, color: C.red,
+          borderRadius: 6, fontSize: 12, border: `1px solid ${C.red}20`,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <span>Transcript fetch failed: {transcriptError.message}</span>
+          <button
+            onClick={() => setTranscriptError(null)}
             style={{
               background: 'none', border: 'none', color: C.red,
               cursor: 'pointer', fontSize: 14, padding: '0 4px',
@@ -486,6 +599,10 @@ export default function Filings({ ticker }) {
                   }}>MD</th>
                   <th style={{
                     textAlign: 'center', padding: '8px 12px', fontWeight: 600,
+                    color: C.textSecondary, fontSize: 11, width: 90,
+                  }}></th>
+                  <th style={{
+                    textAlign: 'center', padding: '8px 12px', fontWeight: 600,
                     color: C.textSecondary, fontSize: 11, width: 36,
                   }}></th>
                 </tr>
@@ -567,6 +684,47 @@ export default function Filings({ ticker }) {
                             MD
                           </button>
                         )}
+                      </td>
+                      <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                        {isEarningsFiling(f.form) && transcriptMap.has(f.accessionNumber) ? (
+                          transcriptFetching.has(f.accessionNumber) ? (
+                            <span style={{ color: C.textMuted, fontSize: 11 }}>...</span>
+                          ) : transcriptCached.has(f.accessionNumber) ? (
+                            <button
+                              onClick={() => handleTranscript(f)}
+                              title={`View transcript (${formatCharCount(transcriptCached.get(f.accessionNumber).charCount)})`}
+                              style={{
+                                background: 'none', border: 'none', cursor: 'pointer',
+                                padding: '2px 6px', borderRadius: 4,
+                                display: 'inline-flex', alignItems: 'center', gap: 4,
+                              }}
+                            >
+                              <span style={{
+                                display: 'inline-block', width: 7, height: 7,
+                                borderRadius: '50%', background: C.green,
+                              }} />
+                              <span style={{ color: C.textMuted, fontSize: 10 }}>
+                                {formatCharCount(transcriptCached.get(f.accessionNumber).charCount)}
+                              </span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleTranscript(f)}
+                              title="Fetch earnings call transcript"
+                              style={{
+                                background: 'none', border: `1px solid ${C.border}`,
+                                borderRadius: 4, cursor: 'pointer', padding: '2px 8px',
+                                color: C.textSecondary, fontSize: 10,
+                                fontFamily: 'inherit',
+                                transition: 'all .15s',
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
+                              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSecondary; }}
+                            >
+                              Transcript
+                            </button>
+                          )
+                        ) : null}
                       </td>
                       <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                         <a

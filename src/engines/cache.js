@@ -10,6 +10,7 @@ const TTL = {
   companyDetails: 24 * 60 * 60 * 1000, // 24 hours
   prices: 60 * 60 * 1000,             // 1 hour
   filings: 315_360_000_000,           // 10 years (SEC filings are immutable)
+  transcript: 315_360_000_000,        // 10 years (transcripts are immutable once published)
   analyst: 6 * 60 * 60 * 1000,        // 6 hours
   events: 6 * 60 * 60 * 1000,         // 6 hours
 };
@@ -24,6 +25,7 @@ const IDB_PREFIXES = [
   'filing-md:',
   'insider-form4:',
   'comp-proxy:', 'comp-summary:',
+  'transcript:', 'transcript-list:',
 ];
 
 function isIDBKey(key) {
@@ -38,6 +40,7 @@ function getStoreName(key) {
   if (key.startsWith('filing-md:')) return 'filing-markdown';
   if (key.startsWith('insider-')) return 'insider-data';
   if (key.startsWith('comp-')) return 'comp-data';
+  if (key.startsWith('transcript')) return 'transcript-data';
   return null;
 }
 
