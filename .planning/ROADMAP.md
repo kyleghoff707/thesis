@@ -44,8 +44,8 @@ Plans:
 - [x] 05A-01-PLAN.md — Zod schemas (report section, DataPacket, progress) + dependency install
 - [x] 05A-02-PLAN.md — Node.js data bridge (nodeAdapter.js with browser API shims)
 - [x] 05A-03-PLAN.md — DataPacket assembly (dataExport.js) + Toolbox tool wrappers (toolbox.js)
-- [ ] 05A-04-PLAN.md — Agent config.json files (9 roles) + writing briefs for /writing-skills
-- [ ] 05A-05-PLAN.md — Orchestrator definition (dispatch table) + generation state persistence
+- [x] 05A-04-PLAN.md — Agent config.json files (9 roles) + writing briefs for /writing-skills
+- [x] 05A-05-PLAN.md — Orchestrator definition (dispatch table) + generation state persistence
 
 ### Phase 5C: CC Skill + First Analysis
 **Goal**: A real One Pager is generated for a test ticker via CC skill, and the output quality is validated against the LULU benchmark -- proving the agent architecture works before any UI is built
