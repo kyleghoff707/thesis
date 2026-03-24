@@ -29,18 +29,23 @@ export async function fetchTranscriptList(ticker) {
   const cached = await cacheGetAsync(cacheKey);
   if (cached) return cached;
 
-  const url = `${FINNHUB_BASE}/stock/transcripts/list?symbol=${encodeURIComponent(ticker)}&token=${FINNHUB_KEY}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    console.warn(`Finnhub transcript list ${res.status} for ${ticker}`);
+  try {
+    const url = `${FINNHUB_BASE}/stock/transcripts/list?symbol=${encodeURIComponent(ticker)}&token=${FINNHUB_KEY}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      // 403 = premium-only endpoint on free tier — cache empty to avoid retrying
+      if (res.status === 403) cacheSet(cacheKey, [], 'events');
+      return [];
+    }
+
+    const data = await res.json();
+    const list = Array.isArray(data) ? data : (data.transcripts || []);
+
+    cacheSet(cacheKey, list, 'events'); // 6-hour TTL
+    return list;
+  } catch {
     return [];
   }
-
-  const data = await res.json();
-  const list = Array.isArray(data) ? data : (data.transcripts || []);
-
-  cacheSet(cacheKey, list, 'events'); // 6-hour TTL
-  return list;
 }
 
 // ─── Matching ───────────────────────────────────────────────
