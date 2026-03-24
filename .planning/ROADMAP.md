@@ -61,7 +61,7 @@ Plans:
 Plans:
 - [x] 05C-01-PLAN.md — Author business-analyst + financial-analyst prompts via /writing-skills
 - [x] 05C-02-PLAN.md — Author valuation-specialist + synthesis-writer prompts via /writing-skills
-- [ ] 05C-03-PLAN.md — CLI DataPacket assembly script + CC skill orchestrator
+- [x] 05C-03-PLAN.md — CLI DataPacket assembly script + CC skill orchestrator
 - [ ] 05C-04-PLAN.md — First generation run + LULU benchmark comparison
 
 ### Phase 5B: One Pager Display Components
