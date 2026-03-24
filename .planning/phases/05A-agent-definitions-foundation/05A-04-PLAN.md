@@ -386,8 +386,18 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     1. Pick an agent from the list below
     2. Read its writing brief (linked below)
     3. Run `/writing-skills` with the brief as input
-    4. The skill walks you through a TDD-style authoring process
-    5. Output goes to `agents/{role}/prompt.md` (replacing the DRAFT stub)
+    4. **CRITICAL:** Tell Claude to read ALL writing-skills reference files before starting:
+       - `.claude/skills/writing-skills/anthropic-best-practices.md` — Anthropic's official skill authoring guidance
+       - `.claude/skills/writing-skills/testing-skills-with-subagents.md` — Complete testing methodology
+       - `.claude/skills/writing-skills/persuasion-principles.md` — Bulletproofing against rationalization
+       - `.claude/skills/writing-skills/graphviz-conventions.dot` — Flowchart style (if needed)
+       - `.claude/skills/writing-skills/examples/` — Example skills for reference
+    5. The skill walks you through a TDD-style authoring process
+    6. Output goes to `agents/{role}/prompt.md` (replacing the DRAFT stub)
+
+    **Why read ALL reference files?** These agent skills are the core product of Thes1s.
+    Cutting corners on skill authoring = cutting corners on research quality.
+    Every reference file exists because it prevents a specific class of failure.
 
     ## Agent Briefs
 
