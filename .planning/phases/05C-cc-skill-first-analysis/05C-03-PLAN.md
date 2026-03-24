@@ -7,6 +7,7 @@ depends_on: [05C-01, 05C-02]
 files_modified:
   - scripts/assemble-data.js
   - .claude/skills/generate-one-pager/SKILL.md
+  - agents/__tests__/ccSkill.test.js
 autonomous: true
 requirements: [ONEP-01]
 must_haves:
@@ -15,6 +16,7 @@ must_haves:
     - "The CC skill at .claude/skills/generate-one-pager/SKILL.md orchestrates the full One Pager pipeline: data assembly, parallel analyst dispatch, synthesis, report output"
     - "The CC skill reads dispatch-table.json and agent config.json files at runtime (DRY, not hardcoded)"
     - "The CC skill dispatches 3 analysts in parallel (business-analyst, financial-analyst, valuation-specialist) then synthesis-writer sequentially"
+    - "CC skill structural integrity validated by agents/__tests__/ccSkill.test.js"
   artifacts:
     - path: "scripts/assemble-data.js"
       provides: "CLI wrapper for assembleDataPacket()"
@@ -22,6 +24,9 @@ must_haves:
     - path: ".claude/skills/generate-one-pager/SKILL.md"
       provides: "CC skill orchestrator for One Pager pipeline"
       min_lines: 80
+    - path: "agents/__tests__/ccSkill.test.js"
+      provides: "Structural validation tests for CC skill SKILL.md"
+      min_lines: 30
   key_links:
     - from: ".claude/skills/generate-one-pager/SKILL.md"
       to: "agents/orchestrator/dispatch-table.json"
@@ -38,11 +43,11 @@ must_haves:
 ---
 
 <objective>
-Create the CLI DataPacket assembly script and the CC skill that orchestrates the full One Pager generation pipeline. The CC skill is the `/generate:one-pager {TICKER}` entry point that assembles data, dispatches 4 agents as subagents, validates outputs against ReportSectionSchema, and produces the final report.
+Create the CLI DataPacket assembly script, the CC skill that orchestrates the full One Pager generation pipeline, and structural validation tests for the skill. The CC skill is the `/generate:one-pager {TICKER}` entry point that assembles data, dispatches 4 agents as subagents, validates outputs against ReportSectionSchema, and produces the final report.
 
-Purpose: This is the runtime infrastructure that turns the 4 agent prompts (from Plans 01-02) into a working pipeline. Without this, the prompts exist but cannot be executed.
+Purpose: This is the runtime infrastructure that turns the 4 agent prompts (from Plans 01-02) into a working pipeline. Without this, the prompts exist but cannot be executed. Tests ensure the skill stays structurally sound across future edits.
 
-Output: A working CLI script and a CC skill ready for first generation run.
+Output: A working CLI script, a CC skill ready for first generation run, and a test file validating skill structure.
 </objective>
 
 <execution_context>
@@ -251,7 +256,70 @@ From agents/orchestrator/dispatch-table.json:
 </task>
 
 <task type="auto">
-  <name>Task 2: Smoke test DataPacket CLI assembly</name>
+  <name>Task 2: Create CC skill structural validation tests</name>
+  <files>agents/__tests__/ccSkill.test.js</files>
+  <read_first>
+    .claude/skills/generate-one-pager/SKILL.md
+    agents/__tests__/agentDefinitions.test.js
+    agents/orchestrator/dispatch-table.json
+  </read_first>
+  <action>
+    Create agents/__tests__/ccSkill.test.js — a vitest test file that validates the structural integrity of the CC skill SKILL.md. This is a fast, offline test (no network calls) that ensures the skill stays correct across future edits.
+
+    Tests to include:
+
+    1. **SKILL.md exists and has correct frontmatter:**
+       - File at .claude/skills/generate-one-pager/SKILL.md exists
+       - Frontmatter contains name: generate-one-pager
+       - Frontmatter contains disable-model-invocation: true
+       - Frontmatter contains context: fork
+       - Frontmatter contains model: opus
+       - Frontmatter contains allowed-tools including Agent, Bash, Read, Write
+
+    2. **SKILL.md references required pipeline components:**
+       - Contains "dispatch-table" (reads config at runtime, not hardcoded)
+       - Contains "prompt.md" (reads agent prompts)
+       - Contains "ReportSectionSchema" (validates outputs)
+       - Contains "assemble-data" or "assembleDataPacket" (data assembly step)
+
+    3. **SKILL.md enforces quality constraints:**
+       - Contains "contamination" or "NEVER read" (contamination boundary)
+       - Does NOT contain "LULU" or "lululemon" (contamination-free)
+       - Contains "parallel" (parallel analyst dispatch)
+       - Contains "synthesis-writer" (sequential synthesis step)
+
+    4. **SKILL.md produces expected outputs:**
+       - Contains "one-pager.json" (JSON output)
+       - Contains "one-pager.md" (markdown output)
+       - Contains "sections/" or "section_key" (per-section output)
+
+    5. **scripts/assemble-data.js exists and has correct structure:**
+       - File exists
+       - Contains "nodeAdapter" (imports Node adapter)
+       - Contains "assembleDataPacket" or "dataExport" (imports DataPacket function)
+       - Contains "process.argv" (reads CLI arguments)
+       - Contains ".thes1s/reports" (writes to correct output directory)
+
+    6. **Cross-reference with dispatch-table.json:**
+       - Read dispatch-table.json and verify SKILL.md mentions all 4 agent names: business-analyst, financial-analyst, valuation-specialist, synthesis-writer
+
+    Use the same pattern as agents/__tests__/agentDefinitions.test.js: read files with fs, parse frontmatter, run string assertions. Use vitest describe/it/expect.
+  </action>
+  <verify>
+    <automated>npx vitest run agents/__tests__/ccSkill.test.js 2>&1 | tail -5</automated>
+  </verify>
+  <acceptance_criteria>
+    - agents/__tests__/ccSkill.test.js exists and is >= 30 lines
+    - All tests pass: `npx vitest run agents/__tests__/ccSkill.test.js` exits 0
+    - Tests validate SKILL.md frontmatter, pipeline references, quality constraints, output paths, and assemble-data.js structure
+    - Tests run in < 2 seconds (no network calls)
+    - Tests cross-reference dispatch-table.json agent names
+  </acceptance_criteria>
+  <done>CC skill structural tests exist and pass, validating SKILL.md frontmatter, pipeline components, contamination boundary, output formats, and cross-reference with dispatch-table.json.</done>
+</task>
+
+<task type="auto">
+  <name>Task 3: Smoke test DataPacket CLI assembly</name>
   <files>scripts/assemble-data.js</files>
   <read_first>
     scripts/assemble-data.js
@@ -296,6 +364,7 @@ From agents/orchestrator/dispatch-table.json:
 <verification>
 - scripts/assemble-data.js exists and runs successfully: `node scripts/assemble-data.js AAPL` exits 0
 - .claude/skills/generate-one-pager/SKILL.md exists with correct frontmatter
+- agents/__tests__/ccSkill.test.js exists and all tests pass: `npx vitest run agents/__tests__/ccSkill.test.js`
 - CC skill references dispatch-table.json (not hardcoded agent assignments)
 - CC skill dispatches 3 parallel analysts + 1 sequential synthesis-writer
 - CC skill includes contamination boundary
@@ -310,6 +379,7 @@ From agents/orchestrator/dispatch-table.json:
 4. CC skill dispatches analysts in parallel, synthesis-writer after all analysts complete
 5. CC skill validates outputs against ReportSectionSchema
 6. CC skill writes both one-pager.json and one-pager.md to .thes1s/reports/{TICKER}/
+7. agents/__tests__/ccSkill.test.js validates skill structural integrity and passes
 </success_criteria>
 
 <output>

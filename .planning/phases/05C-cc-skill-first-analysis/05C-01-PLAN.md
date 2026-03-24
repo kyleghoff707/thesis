@@ -227,7 +227,7 @@ Output: Two production prompt.md files reviewed and approved by the user.
     User confirms whether a Sonnet model receiving these prompts + DataPacket would produce high-quality One Pager sections.
   </action>
   <verify>
-    <automated>wc -l agents/business-analyst/prompt.md agents/financial-analyst/prompt.md | tail -1 | awk '{if ( >= 200) print "PASS"; else print "FAIL"}'</automated>
+    <automated>wc -l agents/business-analyst/prompt.md agents/financial-analyst/prompt.md | tail -1 | awk '{if ($1 >= 200) print "PASS"; else print "FAIL"}'</automated>
   </verify>
   <done>User has reviewed and approved both prompt.md files as production-quality agent prompts.</done>
 </task>

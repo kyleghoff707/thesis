@@ -38,17 +38,26 @@ created: 2026-03-24
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| TBD | TBD | TBD | ONEP-01 | integration | `npx vitest run` | TBD | pending |
-| TBD | TBD | TBD | ONEP-06 | manual | user benchmark comparison | N/A | pending |
-
-*Status: pending — will be filled after plans are created*
+| 01-T1 | 01 | 1 | ONEP-01 | structural | `grep -c "DRAFT" agents/business-analyst/prompt.md \| grep "^0$" && wc -l agents/business-analyst/prompt.md \| awk '{if ($1 >= 100) print "PASS"}'` | agents/business-analyst/prompt.md | pending |
+| 01-T2 | 01 | 1 | ONEP-01 | structural | `grep -c "DRAFT" agents/financial-analyst/prompt.md \| grep "^0$" && wc -l agents/financial-analyst/prompt.md \| awk '{if ($1 >= 100) print "PASS"}'` | agents/financial-analyst/prompt.md | pending |
+| 01-T3 | 01 | 1 | ONEP-01 | checkpoint | `wc -l agents/business-analyst/prompt.md agents/financial-analyst/prompt.md \| tail -1 \| awk '{if ($1 >= 200) print "PASS"}'` | N/A (human-verify) | pending |
+| 02-T1 | 02 | 1 | ONEP-01 | structural | `grep -c "DRAFT" agents/valuation-specialist/prompt.md \| grep "^0$" && wc -l agents/valuation-specialist/prompt.md \| awk '{if ($1 >= 100) print "PASS"}'` | agents/valuation-specialist/prompt.md | pending |
+| 02-T2 | 02 | 1 | ONEP-01 | structural | `grep -c "DRAFT" agents/synthesis-writer/prompt.md \| grep "^0$" && wc -l agents/synthesis-writer/prompt.md \| awk '{if ($1 >= 100) print "PASS"}'` | agents/synthesis-writer/prompt.md | pending |
+| 02-T3 | 02 | 1 | ONEP-01 | checkpoint | `wc -l agents/valuation-specialist/prompt.md agents/synthesis-writer/prompt.md \| tail -1 \| awk '{if ($1 >= 200) print "PASS"}'` | N/A (human-verify) | pending |
+| 03-T1 | 03 | 2 | ONEP-01 | structural | `test -f scripts/assemble-data.js && test -f .claude/skills/generate-one-pager/SKILL.md && echo "PASS"` | scripts/assemble-data.js, .claude/skills/generate-one-pager/SKILL.md | pending |
+| 03-T2 | 03 | 2 | ONEP-01 | unit | `npx vitest run agents/__tests__/ccSkill.test.js` | agents/__tests__/ccSkill.test.js | pending |
+| 03-T3 | 03 | 2 | ONEP-01 | integration | `node scripts/assemble-data.js AAPL 2>&1 \| tail -1` | scripts/assemble-data.js | pending |
+| 04-T1 | 04 | 3 | ONEP-01 | checkpoint | `echo "User decision required"` | N/A (decision) | pending |
+| 04-T2 | 04 | 3 | ONEP-01 | integration | `test -f .thes1s/reports/*/one-pager.json && test -f .thes1s/reports/*/one-pager.md && echo "PASS"` | .thes1s/reports/{TICKER}/*.json | pending |
+| 04-T3 | 04 | 3 | ONEP-06 | manual | user benchmark comparison | .thes1s/reports/{TICKER}/one-pager.md | pending |
 
 ---
 
 ## Wave 0 Requirements
 
 - Existing test infrastructure covers schema validation (13 tests), agent definitions (14 tests)
-- New tests needed for CC skill orchestration logic (if any testable components)
+- Plan 03 Task 2 creates `agents/__tests__/ccSkill.test.js` for CC skill structural validation (new)
+- Plan 03 Task 3 is an integration smoke test (live EDGAR API, ~30-60s) — separated from the fast structural tests in Task 2
 
 ---
 

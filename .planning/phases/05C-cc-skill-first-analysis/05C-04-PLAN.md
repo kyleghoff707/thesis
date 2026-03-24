@@ -4,7 +4,16 @@ plan: 04
 type: execute
 wave: 3
 depends_on: [05C-03]
-files_modified: []
+files_modified:
+  - .thes1s/reports/{TICKER}/one-pager.json
+  - .thes1s/reports/{TICKER}/one-pager.md
+  - .thes1s/reports/{TICKER}/data-packet.json
+  - .thes1s/reports/{TICKER}/sections/company_info.json
+  - .thes1s/reports/{TICKER}/sections/minimum_standards.json
+  - .thes1s/reports/{TICKER}/sections/meaning.json
+  - .thes1s/reports/{TICKER}/sections/growth_metrics.json
+  - .thes1s/reports/{TICKER}/sections/valuation_summary.json
+  - .thes1s/reports/{TICKER}/sections/overall_verdict.json
 autonomous: false
 requirements: [ONEP-01, ONEP-06]
 must_haves:
@@ -71,7 +80,17 @@ Output: A generated One Pager (JSON + markdown) for a user-chosen test ticker, v
 
 <task type="auto">
   <name>Task 2: Run first One Pager generation via /generate:one-pager</name>
-  <files></files>
+  <files>
+    .thes1s/reports/{TICKER}/one-pager.json
+    .thes1s/reports/{TICKER}/one-pager.md
+    .thes1s/reports/{TICKER}/data-packet.json
+    .thes1s/reports/{TICKER}/sections/company_info.json
+    .thes1s/reports/{TICKER}/sections/minimum_standards.json
+    .thes1s/reports/{TICKER}/sections/meaning.json
+    .thes1s/reports/{TICKER}/sections/growth_metrics.json
+    .thes1s/reports/{TICKER}/sections/valuation_summary.json
+    .thes1s/reports/{TICKER}/sections/overall_verdict.json
+  </files>
   <read_first>
     .claude/skills/generate-one-pager/SKILL.md
     agents/orchestrator/dispatch-table.json
