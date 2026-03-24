@@ -22,8 +22,10 @@ The ticker symbol is `$0`. Uppercase it and store as `TICKER`.
 Run the data assembly script to gather all financial data:
 
 ```bash
-node scripts/assemble-data.js {TICKER}
+node --loader ./scripts/node-esm-loader.js scripts/assemble-data.js {TICKER}
 ```
+
+Note: The `--loader` flag is required because engine files use Vite-style extension-less imports and bare JSON imports that Node.js native ESM does not support without a custom resolver.
 
 Then read the output file: `.thes1s/reports/{TICKER}/data-packet.json`
 

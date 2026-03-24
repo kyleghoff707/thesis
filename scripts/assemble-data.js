@@ -1,10 +1,12 @@
 #!/usr/bin/env node
-// CLI wrapper: node scripts/assemble-data.js TICKER
+// CLI wrapper: node --import scripts/node-esm-loader.js scripts/assemble-data.js TICKER
 // Assembles a full DataPacket and writes to .thes1s/reports/{TICKER}/data-packet.json
 //
 // Prerequisites:
 //   - .env.local with API keys (VITE_CLAUDE_KEY, etc.)
 //   - Node.js 18+ (native fetch required)
+//   - Must use custom ESM loader for Vite-style extension-less imports:
+//     node --import scripts/node-esm-loader.js scripts/assemble-data.js AAPL
 //
 // This script imports nodeAdapter.js first (side-effect: loads .env.local,
 // patches globals for Node.js execution) then calls assembleDataPacket()
