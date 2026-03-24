@@ -56,7 +56,13 @@ Plans:
   2. Generated One Pager achieves 80%+ section depth match vs the LULU One Pager benchmark (user-verified comparison)
   3. Every quantitative claim in the output traces to a DataPacket field path or external source -- no fabricated numbers
   4. LULU examples are confirmed absent from agent context during generation (contamination boundary holds)
-**Plans**: TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 05C-01-PLAN.md — Author business-analyst + financial-analyst prompts via /writing-skills
+- [ ] 05C-02-PLAN.md — Author valuation-specialist + synthesis-writer prompts via /writing-skills
+- [ ] 05C-03-PLAN.md — CLI DataPacket assembly script + CC skill orchestrator
+- [ ] 05C-04-PLAN.md — First generation run + LULU benchmark comparison
 
 ### Phase 5B: One Pager Display Components
 **Goal**: Users can view, navigate, and approve generated One Pagers inside the Thes1s desktop app with real-time generation progress
@@ -129,7 +135,7 @@ Phases execute: 5A -> 5C -> 5B -> 5D -> 6 -> 7 -> 8
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 5A. Agent Definitions & Foundation | M1 | 0/5 | Planning complete | - |
-| 5C. CC Skill + First Analysis | M2 | 0/? | Not started | - |
+| 5C. CC Skill + First Analysis | M2 | 0/4 | Planning complete | - |
 | 5B. One Pager Display Components | M2 | 0/? | Not started | - |
 | 5D. Quality System | M2 | 0/? | Not started | - |
 | 6. Pitch Deck | M3 | 0/? | Not started | - |
