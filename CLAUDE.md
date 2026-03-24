@@ -562,6 +562,8 @@ This is not a black box. The portfolio manager reads every output, challenges as
 
 The power of Rule One research is the depth. A human analyst doing 70 hours of manual research inevitably hits "good enough" moments. AI agents don't. They explore every unknown, follow every thread, cross-reference every claim. The goal is not parity with manual research — it's *deeper* than manual research.
 
+**Design Litmus Test:** "How would a real hedge fund do this?" — Every agent design decision must pass this test. Would a hedge fund prevent analysts from web searching? No. Would they prevent analysts from talking to each other? No. Would they expect quality? Yes. Would a PM tolerate half-assed work? No. Would a good analyst make unwarranted assumptions? No. Would a hedge fund give their team every possible tool? Yes. If a real hedge fund wouldn't do it that way, don't build it that way.
+
 ### Constraints
 
 - **Desktop only**: Tauri app, no server. API calls go direct to external services.
