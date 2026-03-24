@@ -1,0 +1,121 @@
+{
+  "onePager": {
+    "preProcessing": [
+      { "step": "data-assembly", "agent": "data-assembler", "parallel": false }
+    ],
+    "phases": [
+      {
+        "phase": 1,
+        "description": "Core analysis",
+        "agents": [
+          { "agent": "financial-analyst", "sections": [3, 4], "parallel": true },
+          { "agent": "business-analyst", "sections": [1, 2], "parallel": true },
+          { "agent": "valuation-specialist", "sections": [5], "parallel": true }
+        ]
+      }
+    ],
+    "postProcessing": [
+      { "step": "synthesis", "agent": "synthesis-writer", "sections": [6], "dependsOn": "all-phases" }
+    ],
+    "checkpoints": [],
+    "sectionKeys": ["company_info", "minimum_standards", "meaning", "growth_metrics", "valuation_summary", "overall_verdict"]
+  },
+  "pitchDeck": {
+    "preProcessing": [
+      { "step": "data-assembly", "agent": "data-assembler", "parallel": false },
+      { "step": "primary-source-reading", "agent": "primary-source-reader", "parallel": false, "dependsOn": "data-assembly" }
+    ],
+    "phases": [
+      {
+        "phase": 1,
+        "description": "Business fundamentals",
+        "agents": [
+          { "agent": "business-analyst", "sections": [1, 2], "parallel": true },
+          { "agent": "competitor-evaluator", "sections": [3], "parallel": true }
+        ],
+        "checkpoint": {
+          "after": true,
+          "presents": ["findings", "dataGaps", "questions", "confidence"]
+        }
+      },
+      {
+        "phase": 2,
+        "description": "Financial deep-dive",
+        "agents": [
+          { "agent": "competitor-evaluator", "sections": [4], "parallel": false, "note": "Moat validation needs Phase 1 context" },
+          { "agent": "financial-analyst", "sections": [5], "parallel": true },
+          { "agent": "management-evaluator", "sections": [6], "parallel": true },
+          { "agent": "financial-analyst", "sections": [7, 8], "parallel": true }
+        ],
+        "checkpoint": {
+          "after": true,
+          "presents": ["findings", "dataGaps", "questions", "confidence"]
+        }
+      },
+      {
+        "phase": 3,
+        "description": "Risk and valuation (needs full context)",
+        "agents": [
+          { "agent": "risk-analyst", "sections": [9], "parallel": true },
+          { "agent": "valuation-specialist", "sections": [10], "parallel": true, "subWorkflow": "fgr-derivation" }
+        ],
+        "checkpoint": {
+          "after": true,
+          "presents": ["findings", "fgrConfirmation", "valuationReview"]
+        }
+      }
+    ],
+    "postProcessing": [
+      { "step": "synthesis", "agent": "synthesis-writer", "sections": [], "dependsOn": "all-phases", "note": "Final polish pass across all sections" }
+    ],
+    "sectionKeys": ["radar", "simple_predictable", "market_position", "barriers_moats", "fcf", "management", "roe_roic_debt", "balance_sheet", "pest", "valuation"]
+  },
+  "fullStory": {
+    "preProcessing": [
+      { "step": "inherit-pitch-deck", "description": "Load all Pitch Deck findings + updated DataPacket" }
+    ],
+    "phases": [
+      {
+        "phase": 1,
+        "description": "Deep analysis with scored checklists",
+        "agents": [
+          { "agent": "risk-analyst", "sections": [1], "parallel": false, "note": "Event Analysis — sequential" },
+          { "agent": "business-analyst", "sections": [2], "parallel": false, "note": "Meaning — 15pt checklist" },
+          { "agent": "business-analyst", "sections": [3], "parallel": false, "note": "Moat — 15pt checklist, can be parallel with 2" },
+          { "agent": "management-evaluator", "sections": [4], "parallel": false, "note": "Management — 13pt checklist" },
+          { "agent": "valuation-specialist", "sections": [5], "parallel": false, "note": "Valuation Confirmation" }
+        ],
+        "checkpoint": {
+          "after": true,
+          "presents": ["findings", "checklistScores", "confidence"]
+        }
+      },
+      {
+        "phase": 2,
+        "description": "THE DEBATE — adversarial analysis",
+        "agents": [
+          { "agent": "synthesis-writer", "role": "bull", "sections": [6], "note": "Summarizes thesis from Sections 1-5" },
+          { "agent": "risk-analyst", "role": "bear", "sections": [6], "note": "Attacks every bull point with evidence" },
+          { "agent": "financial-analyst", "role": "judge", "sections": [6], "note": "Scores each rebuttal, flags gaps" }
+        ],
+        "isDebate": true,
+        "checkpoint": {
+          "after": true,
+          "presents": ["debateTranscript", "scoredRebuttals"]
+        }
+      },
+      {
+        "phase": 3,
+        "description": "Strategy and conclusion",
+        "agents": [
+          { "agent": "valuation-specialist", "sections": [7], "parallel": true, "note": "Trading Strategy" },
+          { "agent": "synthesis-writer", "sections": [8], "parallel": true, "note": "PACE Plan" }
+        ]
+      }
+    ],
+    "postProcessing": [
+      { "step": "final-assembly", "description": "Overall thesis verdict from all sections" }
+    ],
+    "sectionKeys": ["event_analysis", "meaning_checklist", "moat_checklist", "management_checklist", "valuation_confirmation", "inversion_rebuttal", "trading_strategy", "pace_plan"]
+  }
+}

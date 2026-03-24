@@ -1,3 +1,17 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: Phase complete — ready for verification
+stopped_at: Completed 05A-04-PLAN.md
+last_updated: "2026-03-24T20:14:57.500Z"
+progress:
+  total_phases: 7
+  completed_phases: 0
+  total_plans: 5
+  completed_plans: 3
+---
+
 # Project State
 
 ## Project Reference
@@ -5,20 +19,17 @@
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours -- delivered in minutes, with zero shortcuts on rigor.
-**Current focus:** Phase 5A: Agent Definitions & Foundation
+**Current focus:** Phase 05A — agent-definitions-foundation
 
 ## Current Position
 
-Phase: 5A of 7 phases (Agent Definitions & Foundation)
-Plan: 0 of ? in current phase (plans not yet created)
-Status: Ready to plan
-Last activity: 2026-03-24 -- Roadmap created (7 phases across 5 milestones, 62 requirements mapped)
-
-Progress: [░░░░░░░░░░] 0%
+Phase: 05A (agent-definitions-foundation) — EXECUTING
+Plan: 5 of 5
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 0
 - Average duration: -
 - Total execution time: 0 hours
@@ -30,10 +41,16 @@ Progress: [░░░░░░░░░░] 0%
 | - | - | - | - |
 
 **Recent Trend:**
+
 - Last 5 plans: -
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 05A P02 | 3min | 2 tasks | 5 files |
+| Phase 05A P01 | 6min | 2 tasks | 7 files |
+| Phase 05A P03 | 10min | 2 tasks | 5 files |
+| Phase 05A P05 | 5min | 2 tasks | 7 files |
+| Phase 05A P04 | 11min | 3 tasks | 36 files |
 
 ## Accumulated Context
 
@@ -45,6 +62,16 @@ Recent decisions affecting current work:
 - Build order 5A -> 5C -> 5B -> 5D validated by eng review: see AI output before building display
 - 9 agent roles confirmed necessary by prototype (single-agent degrades on Pitch Deck)
 - Node.js data bridge is permanent infrastructure, not a shortcut
+- [Phase 05A]: Node adapter is Node-only module — browser code continues using config.js
+- [Phase 05A]: Used dotenv.config with explicit .env.local path, not bare dotenv/config
+- [Phase 05A]: Used z.looseObject({}) instead of z.record(z.unknown()) for flexible fields — Zod v4 API change
+- [Phase 05A]: DataPacket assembly uses Promise.allSettled + safeCall for per-engine error resilience — partial data is better than no data
+- [Phase 05A]: Toolbox uses two-mode executor: executeTool() for standalone valuation, createToolExecutor(dataPacket) for context-dependent tools
+- [Phase 05A]: readFilingSection and getTranscriptExcerpt are sync stubs — async versions wired in Phase 5C/5D agent runtime
+- [Phase 05A]: Orchestrator is code-driven (not AI) — dispatch table drives all execution deterministically
+- [Phase 05A]: State machine uses linear transitions with validated jumps — prevents invalid state progression
+- [Phase 05A]: buffett_writing_principles.md missing -- synthesis-writer uses buffett_letters_claude_training_set/ directory
+- [Phase 05A]: Worktree-aware curriculum path resolution via .git pointer for tests
 
 ### Pending Todos
 
@@ -58,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24
-Stopped at: Roadmap created, ready for Phase 5A planning
+Last session: 2026-03-24T20:14:57.498Z
+Stopped at: Completed 05A-04-PLAN.md
 Resume file: None

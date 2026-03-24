@@ -1,0 +1,50 @@
+{
+  "role": "orchestrator",
+  "model": null,
+  "isCodeDriven": true,
+  "description": "Dispatch coordinator — NOT an AI agent. Manages phase sequencing, agent dispatch, checkpoint presentation, and state persistence. Implemented as code in CC skill (Phase 5C) and aiResearch.js (Phase 8).",
+  "curriculum": ["knowledge/research-references/rule-1-workflow.md"],
+  "universalContext": false,
+  "dataPacketSlice": ["*"],
+  "tools": [],
+  "sectionMapping": {
+    "onePager": {
+      "1": "business-analyst",
+      "2": "business-analyst",
+      "3": "financial-analyst",
+      "4": "financial-analyst",
+      "5": "valuation-specialist",
+      "6": "synthesis-writer"
+    },
+    "pitchDeck": {
+      "1": "business-analyst",
+      "2": "business-analyst",
+      "3": "competitor-evaluator",
+      "4": "competitor-evaluator",
+      "5": "financial-analyst",
+      "6": "management-evaluator",
+      "7": "financial-analyst",
+      "8": "financial-analyst",
+      "9": "risk-analyst",
+      "10": "valuation-specialist"
+    },
+    "fullStory": {
+      "1": "risk-analyst",
+      "2": "business-analyst",
+      "3": "competitor-evaluator",
+      "4": "management-evaluator",
+      "5": "valuation-specialist",
+      "6": "risk-analyst",
+      "7": "valuation-specialist",
+      "8": "synthesis-writer"
+    }
+  },
+  "checkpointRules": {
+    "presentFindings": true,
+    "presentDataGaps": true,
+    "presentQuestions": true,
+    "presentConfidence": true,
+    "userCanApproveRejectRedirect": true,
+    "fgrRequiresConfirmation": true
+  }
+}

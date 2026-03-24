@@ -45,8 +45,9 @@ const EXPECTED_AGENTS = [
   'risk-analyst',
   'valuation-specialist',
   'synthesis-writer',
+  'orchestrator',
 ];
-const AI_AGENTS = EXPECTED_AGENTS.filter(a => a !== 'data-assembler');
+const AI_AGENTS = EXPECTED_AGENTS.filter(a => a !== 'data-assembler' && a !== 'orchestrator');
 
 // Known tool names from src/engines/toolbox.js TOOL_DEFINITIONS
 const KNOWN_TOOLS = [

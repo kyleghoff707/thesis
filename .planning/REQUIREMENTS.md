@@ -7,25 +7,25 @@
 
 ### Agent Infrastructure
 
-- [ ] **AGNT-01**: 9 agent role definitions in `agents/` directory — each with prompt.md (system prompt), config.json (curriculum refs, DataPacket slice, Toolbox tools, model), README.md
-- [ ] **AGNT-02**: Universal agent context loaded into every AI agent — `rule-one-fundamentals.md`, `tools-for-analysis.md`, 7 Operating Rules
-- [ ] **AGNT-03**: Agent curriculum injection at full depth — no compression, no summarization. The depth IS the competitive edge.
-- [ ] **AGNT-04**: Example contamination boundary — LULU examples never enter agent context during generation
-- [ ] **AGNT-05**: Orchestrator definition — dispatch table, phase definitions, checkpoint rules, section-to-agent mapping
+- [x] **AGNT-01**: 9 agent role definitions in `agents/` directory — each with prompt.md (system prompt), config.json (curriculum refs, DataPacket slice, Toolbox tools, model), README.md
+- [x] **AGNT-02**: Universal agent context loaded into every AI agent — `rule-one-fundamentals.md`, `tools-for-analysis.md`, 7 Operating Rules
+- [x] **AGNT-03**: Agent curriculum injection at full depth — no compression, no summarization. The depth IS the competitive edge.
+- [x] **AGNT-04**: Example contamination boundary — LULU examples never enter agent context during generation
+- [x] **AGNT-05**: Orchestrator definition — dispatch table, phase definitions, checkpoint rules, section-to-agent mapping
 
 ### Data Layer
 
-- [ ] **DATA-01**: DataPacket assembly (`dataExport.js`) — all 20+ engine outputs into canonical JSON
-- [ ] **DATA-02**: Node.js data bridge (~500-800 LOC) — `import.meta.env` → dotenv, DOMParser → linkedom, Vite proxy → direct fetch, localStorage/IndexedDB → file-based JSON cache
-- [ ] **DATA-03**: 12+ Toolbox tools callable by agents — computeMOS, computePBT, computeTenCap, computeEquityBond, sensitivityTable, getMetric, getFinancialLine, computeGrowthRates, comparePeers, readFilingSection, getTranscriptExcerpt
-- [ ] **DATA-04**: DataPacket slicing — each agent gets only its relevant data slice, not the full DataPacket. Less context = better output.
+- [x] **DATA-01**: DataPacket assembly (`dataExport.js`) — all 20+ engine outputs into canonical JSON
+- [x] **DATA-02**: Node.js data bridge (~500-800 LOC) — `import.meta.env` → dotenv, DOMParser → linkedom, Vite proxy → direct fetch, localStorage/IndexedDB → file-based JSON cache
+- [x] **DATA-03**: 12+ Toolbox tools callable by agents — computeMOS, computePBT, computeTenCap, computeEquityBond, sensitivityTable, getMetric, getFinancialLine, computeGrowthRates, comparePeers, readFilingSection, getTranscriptExcerpt
+- [x] **DATA-04**: DataPacket slicing — each agent gets only its relevant data slice, not the full DataPacket. Less context = better output.
 
 ### Report Schema
 
-- [ ] **SCHM-01**: Report JSON schema per section — key, title, status, confidence, verdict, verdictRationale, summary, data, narrative, citations, tables, charts, redFlags, primarySourceInsights, generatedAt, modelUsed, tokenCost
-- [ ] **SCHM-02**: JSON schema enforcement via Claude structured outputs (constrained decoding, not just prompting)
-- [ ] **SCHM-03**: Backward-compatible with existing report data model in localStorage
-- [ ] **SCHM-04**: Generation state persistence — `.thes1s/reports/{TICKER}/progress.json` — resume after crash/interruption
+- [x] **SCHM-01**: Report JSON schema per section — key, title, status, confidence, verdict, verdictRationale, summary, data, narrative, citations, tables, charts, redFlags, primarySourceInsights, generatedAt, modelUsed, tokenCost
+- [x] **SCHM-02**: JSON schema enforcement via Claude structured outputs (constrained decoding, not just prompting)
+- [x] **SCHM-03**: Backward-compatible with existing report data model in localStorage
+- [x] **SCHM-04**: Generation state persistence — `.thes1s/reports/{TICKER}/progress.json` — resume after crash/interruption
 
 ### One Pager (Stage 1)
 
@@ -129,19 +129,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AGNT-01 | Phase 5A | Pending |
-| AGNT-02 | Phase 5A | Pending |
-| AGNT-03 | Phase 5A | Pending |
-| AGNT-04 | Phase 5A | Pending |
-| AGNT-05 | Phase 5A | Pending |
-| DATA-01 | Phase 5A | Pending |
-| DATA-02 | Phase 5A | Pending |
-| DATA-03 | Phase 5A | Pending |
-| DATA-04 | Phase 5A | Pending |
-| SCHM-01 | Phase 5A | Pending |
-| SCHM-02 | Phase 5A | Pending |
-| SCHM-03 | Phase 5A | Pending |
-| SCHM-04 | Phase 5A | Pending |
+| AGNT-01 | Phase 5A | Complete |
+| AGNT-02 | Phase 5A | Complete |
+| AGNT-03 | Phase 5A | Complete |
+| AGNT-04 | Phase 5A | Complete |
+| AGNT-05 | Phase 5A | Complete |
+| DATA-01 | Phase 5A | Complete |
+| DATA-02 | Phase 5A | Complete |
+| DATA-03 | Phase 5A | Complete |
+| DATA-04 | Phase 5A | Complete |
+| SCHM-01 | Phase 5A | Complete |
+| SCHM-02 | Phase 5A | Complete |
+| SCHM-03 | Phase 5A | Complete |
+| SCHM-04 | Phase 5A | Complete |
 | ONEP-01 | Phase 5C | Pending |
 | ONEP-02 | Phase 5B | Pending |
 | ONEP-03 | Phase 5B | Pending |
