@@ -98,12 +98,14 @@ agents/
 | Data Assembler | Pre-processing | — | Engine APIs |
 | Primary Source Reader | Pre-processing | — | Filing markdown, transcripts |
 | Financial Analyst | Growth, FCF, Returns, Balance Sheet, Valuation inputs | advanced-financial-analysis.md, fgr.md, capex-cash-flow-explained.md | DataPacket + Toolbox |
-| Business Analyst | Radar, Simple & Predictable, Dominance | pitch-deck-I.md (sections 1-3) | DataPacket + Toolbox + web search |
-| Competitor Evaluator | Market Position, Barriers, Moat validation, TAM, business cycle | pitch-deck-I.md (dominance), pitch-deck-II.md (barriers), story-form-I.md (moat field research) | DataPacket + Toolbox + web search |
-| Management Evaluator | Management | pitch-deck-II.md (mgmt section) | DataPacket + Toolbox + web search |
-| Risk Analyst | PEST, Inversion & Rebuttal, Event Analysis | pitch-deck-III.md, story-form-II.md | DataPacket + Toolbox + web search |
-| Valuation Specialist | Valuation, FGR derivation, Growth ceiling | pitch-deck-IV.md, fgr.md, equity-bond-research.md | DataPacket + Toolbox + web search |
-| Synthesis Writer | All narratives, verdicts, overall thesis | buffett_writing_principles.md + Buffett letter | All section outputs |
+| Business Analyst | Radar, Simple & Predictable, Dominance | pitch-deck-I.md, one-pager.md, story-form-I.md, **advanced-financial-analysis.md** | DataPacket + Toolbox + web search |
+| Competitor Evaluator | Market Position, Barriers, Moat validation, TAM, business cycle | pitch-deck-I.md, pitch-deck-II.md, story-form-I.md, **advanced-financial-analysis.md** | DataPacket + Toolbox + web search |
+| Management Evaluator | Management | pitch-deck-II.md, **advanced-financial-analysis.md**, **buffett_letters_claude_training_set/**, **guru-list.md** | DataPacket + Toolbox + web search |
+| Risk Analyst | PEST, Inversion & Rebuttal, Event Analysis | pitch-deck-III.md, story-form-II.md, **advanced-financial-analysis.md**, **fgr.md** | DataPacket + Toolbox + web search |
+| Valuation Specialist | Valuation, FGR derivation, Growth ceiling | pitch-deck-IV.md, fgr.md, equity-bond-research.md, **advanced-financial-analysis.md**, **capex-cash-flow-explained.md** | DataPacket + Toolbox + web search |
+| Synthesis Writer | All narratives, verdicts, overall thesis | buffett_writing_principles.md + Buffett letters | All section outputs |
+
+**Curriculum expansion rule:** Every research-reference file hyperlinked inside an agent's primary curriculum files is autoloaded into that agent's curriculum. Agents must have full context for every cross-reference — no hallucination of referenced content. Depth, no shortcuts.
 
 ### Agent Role Details
 

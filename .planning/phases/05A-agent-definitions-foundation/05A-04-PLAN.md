@@ -113,17 +113,19 @@ Output: 9 agent directories (each with config.json + README.md + stub prompt.md)
 
 From gstack/plans/gstack-ai-agent-workflow-plan-20260323.md (Agent Team table):
 
-| Role | Model | Curriculum | DataPacket Slice | Tools | Sections |
+| Role | Model | Curriculum (+ universal: rule-one-fundamentals.md, tools-for-analysis.md) | DataPacket Slice | Tools | Sections |
 |------|-------|------------|-----------------|-------|----------|
 | Data Assembler | N/A | None | Produces full | Engine APIs | Pre-processing |
 | Primary Source Reader | Opus | None (reads raw filings) | companyInfo, filings | readFilingSection, getTranscriptExcerpt | Pre-processing |
 | Financial Analyst | Sonnet | advanced-financial-analysis.md, fgr.md, capex-cash-flow-explained.md | financials, ttm, growthRates, returnMetrics, debtMetrics, fcf, keyMetrics | getMetric, getFinancialLine, computeGrowthRates, computeMOS, computePBT, computeTenCap, computeEquityBond, sensitivityTable, comparePeers | OP:3-4, PD:5,7,8, FS:5 |
-| Business Analyst | Sonnet | pitch-deck-I.md (sec 1-3), one-pager.md, story-form-I.md | companyInfo, classification, ruleOneScore, peers | WebSearch | OP:1-2, PD:1-2, FS:2-3 |
-| Competitor Evaluator | Sonnet | pitch-deck-I.md (dominance), pitch-deck-II.md (barriers), story-form-I.md (moat) | peers, peerMetrics, classification | comparePeers, WebSearch | PD:3-4, FS:3 |
-| Management Evaluator | Sonnet | pitch-deck-II.md (mgmt section) | compensation, insiders, gurus | WebSearch | PD:6, FS:4 |
-| Risk Analyst | Opus | pitch-deck-III.md, story-form-II.md | companyInfo, events, analystEstimates, classification | WebSearch | PD:9, FS:1,6 |
-| Valuation Specialist | Opus | pitch-deck-IV.md, fgr.md, equity-bond-research.md | growthRates, returnMetrics, fcf, analystEstimates, ttm, currentPrice | computeMOS, computePBT, computeTenCap, computeEquityBond, sensitivityTable, WebSearch | PD:10, FS:5,7 |
-| Synthesis Writer | Opus | buffett_writing_principles.md + Buffett letter | All section summaries | None | Final polish |
+| Business Analyst | Sonnet | pitch-deck-I.md, one-pager.md, story-form-I.md, **advanced-financial-analysis.md** | companyInfo, classification, ruleOneScore, peers | WebSearch | OP:1-2, PD:1-2, FS:2-3 |
+| Competitor Evaluator | Sonnet | pitch-deck-I.md, pitch-deck-II.md, story-form-I.md, **advanced-financial-analysis.md** | peers, peerMetrics, classification | comparePeers, WebSearch | PD:3-4, FS:3 |
+| Management Evaluator | Sonnet | pitch-deck-II.md, **advanced-financial-analysis.md**, **buffett_letters_claude_training_set/**, **guru-list.md** | compensation, insiders, gurus | WebSearch | PD:6, FS:4 |
+| Risk Analyst | Opus | pitch-deck-III.md, story-form-II.md, **advanced-financial-analysis.md**, **fgr.md** | companyInfo, events, analystEstimates, classification | WebSearch | PD:9, FS:1,6 |
+| Valuation Specialist | Opus | pitch-deck-IV.md, fgr.md, equity-bond-research.md, **advanced-financial-analysis.md**, **capex-cash-flow-explained.md** | growthRates, returnMetrics, fcf, analystEstimates, ttm, currentPrice | computeMOS, computePBT, computeTenCap, computeEquityBond, sensitivityTable, WebSearch | PD:10, FS:5,7 |
+| Synthesis Writer | Opus | buffett_writing_principles.md + Buffett letters | All section summaries | None | Final polish |
+
+**Curriculum expansion note:** Every research-reference file that is hyperlinked inside the main curriculum files (one-pager.md, pitch-deck-I through IV, story-form-I/II) is autoloaded into the curriculum for the agents reading those curriculum files. This ensures agents have full context for every cross-reference — no hallucination of referenced content. Depth, no shortcuts.
 
 Universal context (ALL AI agents): rule-one-fundamentals.md, tools-for-analysis.md, 7 Operating Rules
 
@@ -232,7 +234,8 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
 
     **4. business-analyst/config.json:**
     - model: "sonnet"
-    - curriculum: ["knowledge/stage-2-pitch-deck/pitch-deck-I.md", "knowledge/stage-1-one-pager/one-pager.md", "knowledge/stage-3-full-story/story-form-I.md"]
+    - curriculum: ["knowledge/stage-2-pitch-deck/pitch-deck-I.md", "knowledge/stage-1-one-pager/one-pager.md", "knowledge/stage-3-full-story/story-form-I.md", "knowledge/research-references/advanced-financial-analysis.md"]
+    - NOTE: advanced-financial-analysis.md is cross-referenced by pitch-deck-I.md — autoloaded for full context
     - compressionPolicy: "none"
     - universalContext: true
     - dataPacketSlice: ["companyInfo", "classification", "ruleOneScore", "peers"]
@@ -241,7 +244,8 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
 
     **5. competitor-evaluator/config.json:**
     - model: "sonnet"
-    - curriculum: ["knowledge/stage-2-pitch-deck/pitch-deck-I.md", "knowledge/stage-2-pitch-deck/pitch-deck-II.md", "knowledge/stage-3-full-story/story-form-I.md"]
+    - curriculum: ["knowledge/stage-2-pitch-deck/pitch-deck-I.md", "knowledge/stage-2-pitch-deck/pitch-deck-II.md", "knowledge/stage-3-full-story/story-form-I.md", "knowledge/research-references/advanced-financial-analysis.md"]
+    - NOTE: advanced-financial-analysis.md is cross-referenced by pitch-deck-I.md, pitch-deck-II.md, and story-form-I.md — autoloaded for full context
     - compressionPolicy: "none"
     - universalContext: true
     - dataPacketSlice: ["peers", "peerMetrics", "classification", "companyInfo"]
@@ -250,7 +254,8 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
 
     **6. management-evaluator/config.json:**
     - model: "sonnet"
-    - curriculum: ["knowledge/stage-2-pitch-deck/pitch-deck-II.md"]
+    - curriculum: ["knowledge/stage-2-pitch-deck/pitch-deck-II.md", "knowledge/research-references/advanced-financial-analysis.md", "knowledge/research-references/buffett_letters_claude_training_set/", "knowledge/research-references/guru-list.md"]
+    - NOTE: advanced-financial-analysis.md cross-referenced by pitch-deck-II.md. buffett_letters_claude_training_set/ cross-referenced by pitch-deck-II.md for management integrity assessment (gold standard for CEO letters). guru-list.md provides the 43 named gurus for insider/ownership context.
     - compressionPolicy: "none"
     - universalContext: true
     - dataPacketSlice: ["compensation", "insiders", "gurus", "companyInfo"]
@@ -259,7 +264,8 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
 
     **7. risk-analyst/config.json:**
     - model: "opus" (adversarial thinking needs strongest reasoning)
-    - curriculum: ["knowledge/stage-2-pitch-deck/pitch-deck-III.md", "knowledge/stage-3-full-story/story-form-II.md"]
+    - curriculum: ["knowledge/stage-2-pitch-deck/pitch-deck-III.md", "knowledge/stage-3-full-story/story-form-II.md", "knowledge/research-references/advanced-financial-analysis.md", "knowledge/research-references/fgr.md"]
+    - NOTE: advanced-financial-analysis.md cross-referenced by pitch-deck-III.md and story-form-II.md. fgr.md cross-referenced by story-form-II.md (valuation confirmation section). Risk analyst needs to understand growth assumptions to attack them.
     - compressionPolicy: "none"
     - universalContext: true
     - dataPacketSlice: ["companyInfo", "events", "analystEstimates", "classification"]
@@ -268,7 +274,8 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
 
     **8. valuation-specialist/config.json:**
     - model: "opus" (complex multi-variable FGR derivation + sensitivity)
-    - curriculum: ["knowledge/stage-2-pitch-deck/pitch-deck-IV.md", "knowledge/research-references/fgr.md", "knowledge/research-references/equity-bond-research.md"]
+    - curriculum: ["knowledge/stage-2-pitch-deck/pitch-deck-IV.md", "knowledge/research-references/fgr.md", "knowledge/research-references/equity-bond-research.md", "knowledge/research-references/advanced-financial-analysis.md", "knowledge/research-references/capex-cash-flow-explained.md"]
+    - NOTE: advanced-financial-analysis.md and capex-cash-flow-explained.md both cross-referenced by pitch-deck-IV.md. capex is essential for Ten Cap Owner Earnings calculation and maintenance capex investigation.
     - compressionPolicy: "none"
     - universalContext: true
     - dataPacketSlice: ["growthRates", "returnMetrics", "fcf", "analystEstimates", "ttm", "currentPrice", "keyMetrics"]
