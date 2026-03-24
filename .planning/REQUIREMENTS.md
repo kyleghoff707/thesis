@@ -29,7 +29,7 @@
 
 ### One Pager (Stage 1)
 
-- [ ] **ONEP-01**: CC skill `/generate:one-pager` orchestrating data-assembler + financial-analyst + business-analyst + synthesis-writer
+- [x] **ONEP-01**: CC skill `/generate:one-pager` orchestrating data-assembler + financial-analyst + business-analyst + synthesis-writer
 - [ ] **ONEP-02**: `OnePager.jsx` — 6-section renderer with verdict badges
 - [ ] **ONEP-03**: `StatusBadge.jsx` — PASS/FAIL/REVIEW/WATCHLIST badges
 - [ ] **ONEP-04**: `SectionRenderer.jsx` — reusable section display with inline citations `[1]`, `[2]`
@@ -142,7 +142,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCHM-02 | Phase 5A | Complete |
 | SCHM-03 | Phase 5A | Complete |
 | SCHM-04 | Phase 5A | Complete |
-| ONEP-01 | Phase 5C | Pending |
+| ONEP-01 | Phase 5C | Complete |
 | ONEP-02 | Phase 5B | Pending |
 | ONEP-03 | Phase 5B | Pending |
 | ONEP-04 | Phase 5B | Pending |
