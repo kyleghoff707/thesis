@@ -124,7 +124,7 @@ Stage 3 (Full Story): inherit pitch deck -> PHASE 1(sequential) -> CHECKPOINT ->
       "model": null,
       "isCodeDriven": true,
       "description": "Dispatch coordinator — NOT an AI agent. Manages phase sequencing, agent dispatch, checkpoint presentation, and state persistence. Implemented as code in CC skill (Phase 5C) and aiResearch.js (Phase 8).",
-      "curriculum": ["knowledge/workflow.md"],
+      "curriculum": ["knowledge/research-references/rule-1-workflow.md"],
       "universalContext": false,
       "dataPacketSlice": ["*"],
       "tools": [],
@@ -170,6 +170,8 @@ Stage 3 (Full Story): inherit pitch deck -> PHASE 1(sequential) -> CHECKPOINT ->
       }
     }
     ```
+
+    **IMPORTANT:** The curriculum path MUST be `knowledge/research-references/rule-1-workflow.md` (the actual file on disk). NOT `knowledge/workflow.md` (does not exist).
 
     **2. Create agents/orchestrator/dispatch-table.json:**
 
@@ -309,18 +311,26 @@ Stage 3 (Full Story): inherit pitch deck -> PHASE 1(sequential) -> CHECKPOINT ->
 
     **4. Create agents/writing-briefs/orchestrator-brief.md:**
     - This brief is different from the others — it's for a code module, not an AI prompt
-    - Describes the orchestrator's exclusive curriculum: knowledge/workflow.md
+    - Describes the orchestrator's exclusive curriculum: knowledge/research-references/rule-1-workflow.md
     - Details the dispatch table structure and how to read it
     - Explains state machine transitions
     - Explains checkpoint format (what to present, how user responds)
     - Explains retry-then-escalate flow
     - This brief will be used when building the CC skill in Phase 5C
+
+    **5. Update EXPECTED_AGENTS in agentDefinitions test:**
+    After creating the orchestrator directory, the Plan 04 agentDefinitions test expects 9 agents. Now there are 10 (orchestrator added). Update `agents/__tests__/agentDefinitions.test.js`:
+    - Add `'orchestrator'` to the `EXPECTED_AGENTS` array
+    - Keep `AI_AGENTS` filter as `EXPECTED_AGENTS.filter(a => a !== 'data-assembler' && a !== 'orchestrator')` since orchestrator is also not an AI agent
+    - Re-run the test to confirm it passes with 10 agents
   </action>
   <verify>
-    <automated>cd /Users/kylehoff/Desktop/stock-analyzer && cat agents/orchestrator/dispatch-table.json | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); console.log('Stages:', Object.keys(d).join(', ')); console.log('PD phases:', d.pitchDeck.phases.length); console.log('PD sections:', d.pitchDeck.sectionKeys.length)"</automated>
+    <automated>cd /Users/kylehoff/Desktop/stock-analyzer && cat agents/orchestrator/dispatch-table.json | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); console.log('Stages:', Object.keys(d).join(', ')); console.log('PD phases:', d.pitchDeck.phases.length); console.log('PD sections:', d.pitchDeck.sectionKeys.length)" && echo "---" && cat agents/orchestrator/config.json | node -e "const c=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); console.log('Curriculum:', c.curriculum[0]); console.log('Exists:', require('fs').existsSync(c.curriculum[0]))"</automated>
   </verify>
   <acceptance_criteria>
     - agents/orchestrator/config.json exists with sectionMapping covering all 3 stages
+    - agents/orchestrator/config.json curriculum references "knowledge/research-references/rule-1-workflow.md" (NOT "knowledge/workflow.md")
+    - The curriculum path in config.json points to a file that actually exists on disk
     - agents/orchestrator/dispatch-table.json is valid JSON with keys: onePager, pitchDeck, fullStory
     - dispatch-table.json pitchDeck has exactly 3 phases with checkpoint after each
     - dispatch-table.json pitchDeck.sectionKeys has 10 entries (matching 10 Pitch Deck sections)
@@ -332,8 +342,10 @@ Stage 3 (Full Story): inherit pitch deck -> PHASE 1(sequential) -> CHECKPOINT ->
     - config.json sectionMapping.pitchDeck["10"] === "valuation-specialist"
     - config.json sectionMapping.fullStory["6"] === "risk-analyst"
     - config.json checkpointRules.fgrRequiresConfirmation === true
+    - agents/__tests__/agentDefinitions.test.js EXPECTED_AGENTS includes 'orchestrator' (10 agents total)
+    - `npx vitest run agents/__tests__/agentDefinitions.test.js` still passes with 10 agents
   </acceptance_criteria>
-  <done>Orchestrator fully defined with dispatch table for all 3 stages, checkpoint rules, and section-to-agent mapping</done>
+  <done>Orchestrator fully defined with dispatch table for all 3 stages, checkpoint rules, section-to-agent mapping, correct curriculum path, and updated agent count in tests</done>
 </task>
 
 <task type="auto" tdd="true">
@@ -495,19 +507,22 @@ Stage 3 (Full Story): inherit pitch deck -> PHASE 1(sequential) -> CHECKPOINT ->
 </tasks>
 
 <verification>
-1. `npx vitest run src/engines/__tests__/progressState.test.js agents/__tests__/agentDefinitions.test.js --reporter=verbose` — all tests pass (note: agentDefinitions from Plan 04 should still pass — orchestrator directory now exists too, update expected count to 10 if the test was written for 9)
+1. `npx vitest run src/engines/__tests__/progressState.test.js agents/__tests__/agentDefinitions.test.js --reporter=verbose` — all tests pass (agentDefinitions test updated to expect 10 agents including orchestrator)
 2. `cat agents/orchestrator/dispatch-table.json | python3 -m json.tool` — valid JSON
-3. `npm test -- --run` — existing tests still pass
-4. `grep '.thes1s/' .gitignore` — entry exists
+3. `cat agents/orchestrator/config.json | grep "rule-1-workflow"` — correct curriculum path
+4. `npm test -- --run` — existing tests still pass
+5. `grep '.thes1s/' .gitignore` — entry exists
 </verification>
 
 <success_criteria>
 - Orchestrator config.json has section-to-agent mapping for all 3 stages
+- Orchestrator curriculum path is knowledge/research-references/rule-1-workflow.md (verified to exist)
 - Dispatch table specifies exact phase groupings, parallelism, and checkpoint positions
 - progressState.js provides full CRUD for generation state with validation
 - State machine transitions are enforced — invalid transitions throw
 - Section outputs persist independently for crash recovery
 - .thes1s/ is gitignored
+- agentDefinitions test updated to expect 10 agents (including orchestrator)
 - All tests pass
 </success_criteria>
 

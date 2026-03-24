@@ -9,20 +9,28 @@ files_modified:
   - agents/data-assembler/README.md
   - agents/primary-source-reader/config.json
   - agents/primary-source-reader/README.md
+  - agents/primary-source-reader/prompt.md
   - agents/financial-analyst/config.json
   - agents/financial-analyst/README.md
+  - agents/financial-analyst/prompt.md
   - agents/business-analyst/config.json
   - agents/business-analyst/README.md
+  - agents/business-analyst/prompt.md
   - agents/competitor-evaluator/config.json
   - agents/competitor-evaluator/README.md
+  - agents/competitor-evaluator/prompt.md
   - agents/management-evaluator/config.json
   - agents/management-evaluator/README.md
+  - agents/management-evaluator/prompt.md
   - agents/risk-analyst/config.json
   - agents/risk-analyst/README.md
+  - agents/risk-analyst/prompt.md
   - agents/valuation-specialist/config.json
   - agents/valuation-specialist/README.md
+  - agents/valuation-specialist/prompt.md
   - agents/synthesis-writer/config.json
   - agents/synthesis-writer/README.md
+  - agents/synthesis-writer/prompt.md
   - agents/writing-briefs/financial-analyst-brief.md
   - agents/writing-briefs/business-analyst-brief.md
   - agents/writing-briefs/competitor-evaluator-brief.md
@@ -31,25 +39,34 @@ files_modified:
   - agents/writing-briefs/valuation-specialist-brief.md
   - agents/writing-briefs/synthesis-writer-brief.md
   - agents/writing-briefs/primary-source-reader-brief.md
+  - agents/writing-briefs/README.md
   - agents/__tests__/agentDefinitions.test.js
 autonomous: true
 requirements: [AGNT-01, AGNT-02, AGNT-03, AGNT-04]
 
 must_haves:
   truths:
-    - "Each of the 9 agent directories exists with config.json and README.md"
-    - "Every config.json specifies model, curriculum paths, dataPacketSlice, tools, universalContext, exampleContamination exclusions, and section assignments"
+    - "Each of the 9 agent directories exists with config.json, README.md, and prompt.md (except data-assembler which has no prompt.md)"
+    - "Every config.json specifies model, curriculum paths, dataPacketSlice, tools, universalContext, exampleContamination exclusions, compressionPolicy, and section assignments"
     - "No config.json references any LULU example path (contamination boundary)"
     - "All config.json files reference valid curriculum file paths that exist in the knowledge/ directory"
     - "Universal context flag is true for all AI agents (financial-analyst through synthesis-writer) and false for data-assembler"
     - "Writing briefs exist for all 8 AI agents, providing curriculum mapping and DataPacket context for /writing-skills authoring"
+    - "Every AI agent config.json has compressionPolicy set to none — enforcing full-depth curriculum (per AGNT-03)"
+    - "Writing briefs README.md indexes all briefs and references /writing-skills command"
   artifacts:
     - path: "agents/financial-analyst/config.json"
       provides: "Machine-readable config for financial analyst agent"
       contains: "dataPacketSlice"
+    - path: "agents/financial-analyst/prompt.md"
+      provides: "Stub prompt.md for /writing-skills authoring"
+      contains: "DRAFT"
     - path: "agents/writing-briefs/financial-analyst-brief.md"
       provides: "Input brief for /writing-skills prompt.md authoring"
       contains: "Curriculum Mapping"
+    - path: "agents/writing-briefs/README.md"
+      provides: "Index of all writing briefs with /writing-skills instructions"
+      contains: "/writing-skills"
     - path: "agents/__tests__/agentDefinitions.test.js"
       provides: "Structural validation tests for all agent definitions"
   key_links:
@@ -68,11 +85,11 @@ must_haves:
 ---
 
 <objective>
-Create the agents/ directory structure with all 9 agent role definitions (config.json + README.md) and writing briefs that prepare the user for authoring prompt.md files via /writing-skills. The config.json files are the machine-readable contracts that the orchestrator and executor will consume. The writing briefs provide the curriculum mapping, DataPacket slice context, Toolbox tool list, and section assignments that the user needs to author high-quality agent prompts.
+Create the agents/ directory structure with all 9 agent role definitions (config.json + README.md + stub prompt.md) and writing briefs that prepare the user for authoring prompt.md files via /writing-skills. The config.json files are the machine-readable contracts that the orchestrator and executor will consume. The writing briefs provide the curriculum mapping, DataPacket slice context, Toolbox tool list, and section assignments that the user needs to author high-quality agent prompts. Stub prompt.md files ensure the directory structure is complete per AGNT-01; the user replaces stubs with real prompts via /writing-skills.
 
 Purpose: Agent definitions are the bridge between the architecture plan and real AI execution. Each config.json encodes WHAT an agent can access (data, tools, curriculum). Each writing brief gives the user everything they need to write the prompt.md (the HOW — Rule One methodology applied to this specific role). The user authors prompt.md files personally via /writing-skills, not an executor agent.
 
-Output: 9 agent directories (each with config.json + README.md), 8 writing briefs (one per AI agent — data-assembler has no prompt.md since it's pure code), and structural validation tests.
+Output: 9 agent directories (each with config.json + README.md + stub prompt.md), 8 writing briefs (one per AI agent — data-assembler has no prompt.md since it's pure code), a writing-briefs README.md index, and structural validation tests.
 </objective>
 
 <execution_context>
@@ -122,8 +139,8 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
 <tasks>
 
 <task type="auto">
-  <name>Task 1: Create all 9 agent config.json and README.md files</name>
-  <files>agents/data-assembler/config.json, agents/data-assembler/README.md, agents/primary-source-reader/config.json, agents/primary-source-reader/README.md, agents/financial-analyst/config.json, agents/financial-analyst/README.md, agents/business-analyst/config.json, agents/business-analyst/README.md, agents/competitor-evaluator/config.json, agents/competitor-evaluator/README.md, agents/management-evaluator/config.json, agents/management-evaluator/README.md, agents/risk-analyst/config.json, agents/risk-analyst/README.md, agents/valuation-specialist/config.json, agents/valuation-specialist/README.md, agents/synthesis-writer/config.json, agents/synthesis-writer/README.md</files>
+  <name>Task 1: Create all 9 agent config.json, README.md, and stub prompt.md files</name>
+  <files>agents/data-assembler/config.json, agents/data-assembler/README.md, agents/primary-source-reader/config.json, agents/primary-source-reader/README.md, agents/primary-source-reader/prompt.md, agents/financial-analyst/config.json, agents/financial-analyst/README.md, agents/financial-analyst/prompt.md, agents/business-analyst/config.json, agents/business-analyst/README.md, agents/business-analyst/prompt.md, agents/competitor-evaluator/config.json, agents/competitor-evaluator/README.md, agents/competitor-evaluator/prompt.md, agents/management-evaluator/config.json, agents/management-evaluator/README.md, agents/management-evaluator/prompt.md, agents/risk-analyst/config.json, agents/risk-analyst/README.md, agents/risk-analyst/prompt.md, agents/valuation-specialist/config.json, agents/valuation-specialist/README.md, agents/valuation-specialist/prompt.md, agents/synthesis-writer/config.json, agents/synthesis-writer/README.md, agents/synthesis-writer/prompt.md</files>
   <read_first>
     - gstack/plans/gstack-ai-agent-workflow-plan-20260323.md (lines 70-106 for agent team table with exact curriculum, DataPacket slices, tools, and sections per role)
     - .planning/phases/05A-agent-definitions-foundation/05A-RESEARCH.md (lines 140-217 for agent definition format and config.json structure)
@@ -143,7 +160,10 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     - knowledge/stage-3-full-story/story-form-II.md (first 5 lines — verify file exists)
   </read_first>
   <action>
-    Create the `agents/` directory with 9 subdirectories:
+    **IMPORTANT: Before writing ANY config.json file, verify ALL curriculum paths exist first.**
+    Run `ls` on every curriculum file path referenced across all agents. If any path does not exist, find the correct path before proceeding. Do NOT write config.json files with broken curriculum paths.
+
+    Create the `agents/` directory with 9 subdirectories.
 
     **For EACH agent role**, create `config.json` with this exact structure:
 
@@ -154,6 +174,7 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
       "curriculum": [
         "<relative path from project root to each curriculum file>"
       ],
+      "compressionPolicy": "none",
       "universalContext": true|false,
       "universalContextFiles": [
         "knowledge/research-references/rule-one-fundamentals.md",
@@ -177,19 +198,24 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     }
     ```
 
+    **CRITICAL per AGNT-03:** Every AI agent config.json MUST include `"compressionPolicy": "none"`. This enforces full-depth curriculum embedding — no summarization, no excerpts. Curriculum paths MUST point to the REAL full curriculum files (not summaries). The `compressionPolicy` field is machine-readable enforcement that the test suite validates.
+
     **Exact values per agent (from architecture plan lines 70-106 and research lines 620-634):**
 
     **1. data-assembler/config.json:**
     - model: null (no AI — pure code, runs dataExport.js)
     - curriculum: []
+    - compressionPolicy: omit (not an AI agent)
     - universalContext: false
     - dataPacketSlice: ["*"] (produces the full DataPacket)
     - tools: [] (uses engine APIs directly, not Toolbox)
     - sections: {} (pre-processing, no report sections)
+    - NO prompt.md (pure code agent)
 
     **2. primary-source-reader/config.json:**
     - model: "opus" (200K+ token 10-K input needs strongest reasoning)
     - curriculum: [] (reads raw filings, no curriculum — its job is extraction, not analysis)
+    - compressionPolicy: "none"
     - universalContext: true
     - dataPacketSlice: ["companyInfo", "classification", "financials", "ttm", "transcriptAvailability"]
     - tools: ["readFilingSection", "getTranscriptExcerpt"]
@@ -198,6 +224,7 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     **3. financial-analyst/config.json:**
     - model: "sonnet"
     - curriculum: ["knowledge/research-references/advanced-financial-analysis.md", "knowledge/research-references/fgr.md", "knowledge/research-references/capex-cash-flow-explained.md"]
+    - compressionPolicy: "none"
     - universalContext: true
     - dataPacketSlice: ["financials", "ttm", "growthRates", "returnMetrics", "debtMetrics", "fcf", "keyMetrics"]
     - tools: ["getMetric", "getFinancialLine", "computeGrowthRates", "computeMOS", "computePBT", "computeTenCap", "computeEquityBond", "sensitivityTable", "comparePeers"]
@@ -206,6 +233,7 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     **4. business-analyst/config.json:**
     - model: "sonnet"
     - curriculum: ["knowledge/stage-2-pitch-deck/pitch-deck-I.md", "knowledge/stage-1-one-pager/one-pager.md", "knowledge/stage-3-full-story/story-form-I.md"]
+    - compressionPolicy: "none"
     - universalContext: true
     - dataPacketSlice: ["companyInfo", "classification", "ruleOneScore", "peers"]
     - tools: [] (uses WebSearch via CC Agent tool, not Toolbox)
@@ -214,6 +242,7 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     **5. competitor-evaluator/config.json:**
     - model: "sonnet"
     - curriculum: ["knowledge/stage-2-pitch-deck/pitch-deck-I.md", "knowledge/stage-2-pitch-deck/pitch-deck-II.md", "knowledge/stage-3-full-story/story-form-I.md"]
+    - compressionPolicy: "none"
     - universalContext: true
     - dataPacketSlice: ["peers", "peerMetrics", "classification", "companyInfo"]
     - tools: ["comparePeers"]
@@ -222,6 +251,7 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     **6. management-evaluator/config.json:**
     - model: "sonnet"
     - curriculum: ["knowledge/stage-2-pitch-deck/pitch-deck-II.md"]
+    - compressionPolicy: "none"
     - universalContext: true
     - dataPacketSlice: ["compensation", "insiders", "gurus", "companyInfo"]
     - tools: [] (uses WebSearch)
@@ -230,6 +260,7 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     **7. risk-analyst/config.json:**
     - model: "opus" (adversarial thinking needs strongest reasoning)
     - curriculum: ["knowledge/stage-2-pitch-deck/pitch-deck-III.md", "knowledge/stage-3-full-story/story-form-II.md"]
+    - compressionPolicy: "none"
     - universalContext: true
     - dataPacketSlice: ["companyInfo", "events", "analystEstimates", "classification"]
     - tools: [] (uses WebSearch)
@@ -238,6 +269,7 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     **8. valuation-specialist/config.json:**
     - model: "opus" (complex multi-variable FGR derivation + sensitivity)
     - curriculum: ["knowledge/stage-2-pitch-deck/pitch-deck-IV.md", "knowledge/research-references/fgr.md", "knowledge/research-references/equity-bond-research.md"]
+    - compressionPolicy: "none"
     - universalContext: true
     - dataPacketSlice: ["growthRates", "returnMetrics", "fcf", "analystEstimates", "ttm", "currentPrice", "keyMetrics"]
     - tools: ["computeMOS", "computePBT", "computeTenCap", "computeEquityBond", "sensitivityTable"]
@@ -246,6 +278,7 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     **9. synthesis-writer/config.json:**
     - model: "opus" (best writing quality for Buffett-style narrative)
     - curriculum: ["knowledge/research-references/buffett_writing_principles.md"]
+    - compressionPolicy: "none"
     - universalContext: true
     - dataPacketSlice: [] (receives section summaries, not raw DataPacket)
     - tools: []
@@ -261,17 +294,50 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     - Which stages (One Pager, Pitch Deck, Full Story) it participates in
     - Note: "prompt.md will be authored via /writing-skills by the user"
 
+    **Stub prompt.md for each AI agent (8 files — NOT data-assembler):**
+    Per AGNT-01, each agent directory must have prompt.md. Create stub files with this content:
+
+    ```markdown
+    # {Agent Role Name} — System Prompt
+
+    > DRAFT — Complete via `/writing-skills` using the writing brief at
+    > `agents/writing-briefs/{role}-brief.md`
+
+    ## Status: STUB
+
+    This file is a placeholder. The user will author this prompt personally using
+    the `/writing-skills` skill, which follows a TDD-style process:
+    1. Read the writing brief for this agent
+    2. Author the system prompt with full-depth curriculum embedding
+    3. Test against evaluation criteria
+    4. Iterate until quality bar is met
+
+    ## Writing Brief Contents (starting point)
+
+    See `agents/writing-briefs/{role}-brief.md` for:
+    - Curriculum files to embed at full depth (per AGNT-03 — no compression)
+    - DataPacket slice this agent receives
+    - Toolbox tools available
+    - Sections this agent generates
+    - Critical rules and contamination boundary
+    ```
+
+    Replace `{Agent Role Name}` and `{role}` with the actual agent name in each file.
+
     **CRITICAL: Example contamination boundary (per AGNT-04):**
     Every config.json with `universalContext: true` MUST have the `exampleContamination.exclude` array listing all example directories. Verify no curriculum path in ANY config.json points to an examples/ directory or contains "LULU" in the path.
   </action>
   <verify>
-    <automated>cd /Users/kylehoff/Desktop/stock-analyzer && ls agents/*/config.json | wc -l && grep -r "LULU" agents/*/config.json; echo "Exit: $?"</automated>
+    <automated>cd /Users/kylehoff/Desktop/stock-analyzer && echo "config.json count:" && ls agents/*/config.json | wc -l && echo "prompt.md count:" && ls agents/*/prompt.md 2>/dev/null | wc -l && echo "LULU check:" && grep -r "LULU" agents/*/config.json; echo "Exit: $?" && echo "compressionPolicy check:" && grep -l "compressionPolicy" agents/*/config.json | wc -l</automated>
   </verify>
   <acceptance_criteria>
     - 9 directories exist under agents/: data-assembler, primary-source-reader, financial-analyst, business-analyst, competitor-evaluator, management-evaluator, risk-analyst, valuation-specialist, synthesis-writer
     - Each directory contains config.json and README.md (18 files total)
+    - 8 AI agent directories contain prompt.md (data-assembler excluded = 8 prompt.md files)
+    - Each prompt.md contains "DRAFT" and references the corresponding writing brief
     - `grep -r "LULU" agents/*/config.json` returns no matches (contamination boundary)
     - `grep -r "examples/" agents/*/config.json` only appears in exampleContamination.exclude arrays, never in curriculum arrays
+    - Every AI agent config.json contains `"compressionPolicy": "none"` (per AGNT-03)
     - financial-analyst/config.json contains "advanced-financial-analysis.md" in curriculum array
     - valuation-specialist/config.json contains "equity-bond-research.md" in curriculum array
     - primary-source-reader/config.json has model "opus"
@@ -280,12 +346,12 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     - Every config.json with universalContext true references rule-one-fundamentals.md and tools-for-analysis.md in universalContextFiles
     - All curriculum file paths in config.json point to files that actually exist (can be verified with ls)
   </acceptance_criteria>
-  <done>All 9 agent directories created with correct config.json (model, curriculum, DataPacket slice, tools, contamination boundary, section assignments) and README.md</done>
+  <done>All 9 agent directories created with correct config.json (model, curriculum, compressionPolicy, DataPacket slice, tools, contamination boundary, section assignments), README.md, and stub prompt.md files</done>
 </task>
 
 <task type="auto">
-  <name>Task 2: Create writing briefs for /writing-skills authoring</name>
-  <files>agents/writing-briefs/financial-analyst-brief.md, agents/writing-briefs/business-analyst-brief.md, agents/writing-briefs/competitor-evaluator-brief.md, agents/writing-briefs/management-evaluator-brief.md, agents/writing-briefs/risk-analyst-brief.md, agents/writing-briefs/valuation-specialist-brief.md, agents/writing-briefs/synthesis-writer-brief.md, agents/writing-briefs/primary-source-reader-brief.md</files>
+  <name>Task 2: Create writing briefs and briefs index for /writing-skills authoring</name>
+  <files>agents/writing-briefs/financial-analyst-brief.md, agents/writing-briefs/business-analyst-brief.md, agents/writing-briefs/competitor-evaluator-brief.md, agents/writing-briefs/management-evaluator-brief.md, agents/writing-briefs/risk-analyst-brief.md, agents/writing-briefs/valuation-specialist-brief.md, agents/writing-briefs/synthesis-writer-brief.md, agents/writing-briefs/primary-source-reader-brief.md, agents/writing-briefs/README.md</files>
   <read_first>
     - gstack/plans/gstack-ai-agent-workflow-plan-20260323.md (lines 70-127 for detailed role descriptions, especially Primary Source Reader and Competitor Evaluator)
     - gstack/plans/gstack-ai-agent-workflow-plan-20260323.md (lines 283-318 for quality assurance and report schema)
@@ -298,7 +364,43 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     - agents/financial-analyst/config.json (just created — verify curriculum and tools to include in brief)
   </read_first>
   <action>
-    Create `agents/writing-briefs/` directory with one brief per AI agent (8 briefs — data-assembler excluded since it has no prompt.md).
+    Create `agents/writing-briefs/` directory with one brief per AI agent (8 briefs — data-assembler excluded since it has no prompt.md) PLUS a README.md index.
+
+    **First, create `agents/writing-briefs/README.md`** — the index that directs the user:
+
+    ```markdown
+    # Writing Briefs — Agent Prompt Authoring
+
+    These briefs provide everything needed to author each agent's `prompt.md` file
+    using the `/writing-skills` skill.
+
+    ## How to Use
+
+    1. Pick an agent from the list below
+    2. Read its writing brief (linked below)
+    3. Run `/writing-skills` with the brief as input
+    4. The skill walks you through a TDD-style authoring process
+    5. Output goes to `agents/{role}/prompt.md` (replacing the DRAFT stub)
+
+    ## Agent Briefs
+
+    | Agent | Brief | Model | Sections |
+    |-------|-------|-------|----------|
+    | Primary Source Reader | [primary-source-reader-brief.md](primary-source-reader-brief.md) | Opus | Pre-processing |
+    | Financial Analyst | [financial-analyst-brief.md](financial-analyst-brief.md) | Sonnet | OP 3-4, PD 5/7/8, FS 5 |
+    | Business Analyst | [business-analyst-brief.md](business-analyst-brief.md) | Sonnet | OP 1-2, PD 1-2, FS 2-3 |
+    | Competitor Evaluator | [competitor-evaluator-brief.md](competitor-evaluator-brief.md) | Sonnet | PD 3-4, FS 3 |
+    | Management Evaluator | [management-evaluator-brief.md](management-evaluator-brief.md) | Sonnet | PD 6, FS 4 |
+    | Risk Analyst | [risk-analyst-brief.md](risk-analyst-brief.md) | Opus | PD 9, FS 1/6 |
+    | Valuation Specialist | [valuation-specialist-brief.md](valuation-specialist-brief.md) | Opus | OP 5, PD 10, FS 5/7 |
+    | Synthesis Writer | [synthesis-writer-brief.md](synthesis-writer-brief.md) | Opus | OP 6, FS 8 |
+
+    ## Notes
+
+    - Data Assembler has no prompt.md (pure code agent — no AI)
+    - Orchestrator brief exists at `agents/writing-briefs/orchestrator-brief.md` but is for code, not an AI prompt
+    - Each brief specifies curriculum files that MUST be embedded at full depth (no compression — per AGNT-03)
+    ```
 
     **Each writing brief follows this template:**
 
@@ -435,10 +537,11 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     - Sections: OP 6, PD final polish, FS 8
   </action>
   <verify>
-    <automated>cd /Users/kylehoff/Desktop/stock-analyzer && ls agents/writing-briefs/*.md | wc -l && grep -l "Curriculum to Embed" agents/writing-briefs/*.md | wc -l</automated>
+    <automated>cd /Users/kylehoff/Desktop/stock-analyzer && echo "Brief count:" && ls agents/writing-briefs/*.md | wc -l && echo "Has README:" && test -f agents/writing-briefs/README.md && echo "YES" || echo "NO" && echo "Curriculum section count:" && grep -l "Curriculum to Embed" agents/writing-briefs/*-brief.md | wc -l</automated>
   </verify>
   <acceptance_criteria>
-    - agents/writing-briefs/ directory contains exactly 8 .md files (one per AI agent)
+    - agents/writing-briefs/ directory contains exactly 9 .md files (8 briefs + 1 README.md)
+    - agents/writing-briefs/README.md exists with table of all 8 briefs, links, and /writing-skills instructions
     - Each brief contains sections: Role Summary, Model, Curriculum to Embed, Universal Context, DataPacket Slice, Toolbox Tools Available, Sections This Agent Generates, Output Format, Critical Rules, Contamination Boundary
     - financial-analyst-brief.md lists 9 tools in Toolbox Tools section
     - valuation-specialist-brief.md mentions FGR derivation with 5 inputs
@@ -448,7 +551,7 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     - Each brief contains "Perform independent research. Do NOT reference or copy patterns from example analyses."
     - No brief references LULU in curriculum or instructions
   </acceptance_criteria>
-  <done>8 writing briefs prepared with complete context for /writing-skills authoring of each agent's prompt.md</done>
+  <done>8 writing briefs plus README.md index prepared with complete context for /writing-skills authoring of each agent's prompt.md</done>
 </task>
 
 <task type="auto" tdd="true">
@@ -464,14 +567,17 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     - Test 1: All 9 agent directories exist under agents/
     - Test 2: Each agent directory has config.json
     - Test 3: Each agent directory has README.md
-    - Test 4: Each config.json has required fields: role, model, curriculum, universalContext, dataPacketSlice, tools, exampleContamination, sections
-    - Test 5: No config.json curriculum array contains paths with "LULU" or "examples/"
-    - Test 6: All curriculum file paths in all config.json files reference files that exist on disk
-    - Test 7: All AI agents (not data-assembler) have universalContext: true
-    - Test 8: data-assembler has universalContext: false and model: null
-    - Test 9: All tool names in config.json tools arrays are valid (exist in TOOL_DEFINITIONS or are empty)
-    - Test 10: exampleContamination.exclude includes at least 3 exclusion paths for all AI agents
-    - Test 11: No two agents have the exact same sections assignment (each has a unique role)
+    - Test 4: Each AI agent directory (not data-assembler) has prompt.md
+    - Test 5: Each config.json has required fields: role, model, curriculum, universalContext, dataPacketSlice, tools, exampleContamination, sections
+    - Test 6: No config.json curriculum array contains paths with "LULU" or "examples/"
+    - Test 7: All curriculum file paths in all config.json files reference files that exist on disk
+    - Test 8: All AI agents (not data-assembler) have universalContext: true
+    - Test 9: data-assembler has universalContext: false and model: null
+    - Test 10: All tool names in config.json tools arrays are valid (exist in TOOL_DEFINITIONS or are empty)
+    - Test 11: exampleContamination.exclude includes at least 3 exclusion paths for all AI agents
+    - Test 12: No two agents have the exact same sections assignment (each has a unique role)
+    - Test 13: All AI agent config.json files have compressionPolicy set to "none" (AGNT-03 enforcement)
+    - Test 14: All curriculum paths point to REAL curriculum files (not summaries/excerpts) — verify file size > 1000 bytes
   </behavior>
   <action>
     Create `agents/__tests__/agentDefinitions.test.js` with vitest tests:
@@ -480,7 +586,7 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
 
     ```javascript
     import { describe, it, expect } from 'vitest';
-    import { readdirSync, readFileSync, existsSync } from 'fs';
+    import { readdirSync, readFileSync, existsSync, statSync } from 'fs';
     import { join } from 'path';
 
     const AGENTS_DIR = join(process.cwd(), 'agents');
@@ -498,6 +604,15 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     - Verify no LULU contamination
     - Verify tools are from the known tool list (import TOOL_DEFINITIONS from toolbox.js and check)
 
+    **NEW per AGNT-03 enforcement (Test 13):**
+    For each AI agent config.json, verify `config.compressionPolicy === "none"`. This is the machine-readable enforcement that curriculum must be embedded at full depth.
+
+    **NEW curriculum depth check (Test 14):**
+    For each curriculum path in every config.json, verify `statSync(fullPath).size > 1000` — a file under 1KB is likely a summary/excerpt, not the real curriculum file. This catches accidental references to stub or summary files.
+
+    **NEW prompt.md existence check (Test 4):**
+    For each AI agent directory, verify `existsSync(join(AGENTS_DIR, agent, 'prompt.md'))` is true.
+
     For the curriculum file existence check, use `existsSync(join(process.cwd(), path))` for each curriculum entry.
 
     For the tool validation, import TOOL_DEFINITIONS from `../../src/engines/toolbox.js` and verify every tool name in an agent's config.json `tools` array exists in TOOL_DEFINITIONS.map(t => t.name).
@@ -506,12 +621,15 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
     <automated>cd /Users/kylehoff/Desktop/stock-analyzer && npx vitest run agents/__tests__/agentDefinitions.test.js --reporter=verbose</automated>
   </verify>
   <acceptance_criteria>
-    - agents/__tests__/agentDefinitions.test.js exists with at least 10 test cases
+    - agents/__tests__/agentDefinitions.test.js exists with at least 13 test cases
     - `npx vitest run agents/__tests__/agentDefinitions.test.js --reporter=verbose` exits with code 0
     - Tests verify all 9 directories exist, all configs have required fields, no LULU contamination, all curriculum files exist
-    - Test output includes descriptions mentioning "contamination", "curriculum", "universalContext"
+    - Tests verify compressionPolicy === "none" for all AI agents (AGNT-03 enforcement)
+    - Tests verify curriculum files are > 1KB (not summaries)
+    - Tests verify prompt.md exists for all AI agents
+    - Test output includes descriptions mentioning "contamination", "curriculum", "universalContext", "compressionPolicy"
   </acceptance_criteria>
-  <done>Structural validation tests confirm all 9 agent definitions are correctly formed, contamination-free, and reference valid files</done>
+  <done>Structural validation tests confirm all 9 agent definitions are correctly formed, contamination-free, compression-policy enforced, and reference valid full-depth curriculum files</done>
 </task>
 
 </tasks>
@@ -520,17 +638,21 @@ export const TOOL_DEFINITIONS; // Array of {name, description, input_schema}
 1. `npx vitest run agents/__tests__/agentDefinitions.test.js --reporter=verbose` — all structural tests pass
 2. `grep -r "LULU" agents/*/config.json` — zero matches (contamination boundary)
 3. `ls agents/*/config.json | wc -l` — outputs 9
-4. `ls agents/writing-briefs/*.md | wc -l` — outputs 8
-5. `npm test -- --run` — existing tests still pass
+4. `ls agents/*/prompt.md 2>/dev/null | wc -l` — outputs 8
+5. `ls agents/writing-briefs/*.md | wc -l` — outputs 9 (8 briefs + 1 README)
+6. `grep -c "compressionPolicy" agents/*/config.json | grep -v ":0"` — all AI agents have it
+7. `npm test -- --run` — existing tests still pass
 </verification>
 
 <success_criteria>
-- 9 agent directories with config.json + README.md
+- 9 agent directories with config.json + README.md + stub prompt.md (8 AI agents)
 - 8 writing briefs with complete curriculum mapping and role context
-- All config.json files have correct model, curriculum, DataPacket slice, tools, contamination boundary
-- Structural validation tests pass
+- 1 writing-briefs README.md indexing all briefs with /writing-skills instructions
+- All config.json files have correct model, curriculum, compressionPolicy, DataPacket slice, tools, contamination boundary
+- compressionPolicy: "none" enforced in all AI agent configs (AGNT-03)
+- Structural validation tests pass including compression policy and curriculum depth checks
 - No LULU contamination in any agent file
-- All curriculum paths point to existing files
+- All curriculum paths point to existing full-depth files
 </success_criteria>
 
 <output>

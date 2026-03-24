@@ -118,6 +118,7 @@ element.textContent;
     - Test 9: createDOMParser() returns object with parseFromString method
     - Test 10: createDOMParser().parseFromString('<div><p>test</p></div>', 'text/html') returns a document where querySelectorAll('p') has length 1
     - Test 11: createNodeFetch wraps fetch with User-Agent header 'Thes1s/1.0 (contact@thes1s.com)'
+    - Test 12: getEnv reads keys from .env.local (not just .env)
   </behavior>
   <action>
     Create `src/engines/nodeAdapter.js` with these exact exports:
@@ -131,23 +132,16 @@ element.textContent;
     `export const IS_NODE = typeof window === 'undefined';`
 
     **getEnv(key) function:**
-    - In Node: load dotenv/config (once, at module level via side-effect import), return `process.env[key]?.trim() || ''`
-    - In browser: return `import.meta.env[key]?.trim() || ''`
-    - Note: Must handle conditional import — use dynamic import or IS_NODE guard. Since this module may be imported by Vite in browser context, wrap the dotenv import in an IS_NODE check using a top-level side effect:
-      ```javascript
-      if (IS_NODE) {
-        // Dynamic import not needed — dotenv/config auto-loads .env
-        // But we need to handle this at build time. Use try/catch for safety.
-        try { await import('dotenv/config'); } catch {}
-      }
-      ```
-      Actually, since Vite tree-shakes dead code, use a simpler pattern: make nodeAdapter.js a Node-only module. Browser code continues using config.js directly. The adapter is imported ONLY by dataExport.js which runs in Node.
+    - In Node: load dotenv with explicit .env.local path, return `process.env[key]?.trim() || ''`
+    - Note: This module is Node-only. It will only be imported by dataExport.js and toolbox.js which run in Node for CC Skills. Browser code continues using config.js and native APIs.
 
-    **Revised approach:** This module is Node-only. It will only be imported by dataExport.js and toolbox.js which run in Node for CC Skills. Browser code continues using config.js and native APIs. This simplifies everything — no dual-mode conditionals needed.
-
-    At the top of the file:
+    At the top of the file — **CRITICAL: Use explicit .env.local path, NOT bare `import 'dotenv/config'`**:
     ```javascript
-    import 'dotenv/config';  // loads .env.local into process.env
+    import dotenv from 'dotenv';
+    import { resolve } from 'path';
+    dotenv.config({ path: resolve(process.cwd(), '.env.local') });
+    // ^ This loads .env.local specifically. The default `import 'dotenv/config'`
+    // only loads .env which does NOT exist in this project. API keys are in .env.local.
     import { parseHTML } from 'linkedom';
     ```
 
@@ -259,6 +253,7 @@ element.textContent;
   <acceptance_criteria>
     - src/engines/nodeAdapter.js exists and is <250 LOC
     - File exports: getEnv, isDev, resolveURL, createDOMParser, createNodeFetch, IS_NODE, PROXY_MAP, SEC_HEADERS, cacheGet, cacheSet, ensureCacheDir
+    - File uses `dotenv.config({ path: resolve(process.cwd(), '.env.local') })` — NOT bare `import 'dotenv/config'`
     - resolveURL('/api/sec/foo') returns string starting with 'https://www.sec.gov/foo'
     - resolveURL('/api/edgar/foo') returns string starting with 'https://data.sec.gov/foo'
     - resolveURL('/api/efts/foo') returns string starting with 'https://efts.sec.gov/foo'
@@ -266,7 +261,6 @@ element.textContent;
     - resolveURL('https://example.com') returns 'https://example.com' unchanged
     - createDOMParser().parseFromString('<div>test</div>', 'text/html') does not throw
     - isDev() returns false
-    - File begins with `import 'dotenv/config'` or equivalent
   </acceptance_criteria>
   <done>nodeAdapter.js provides all browser API shims needed for engines to run in Node.js, with tests proving each shim works correctly</done>
 </task>
@@ -297,6 +291,7 @@ element.textContent;
     - isDev() returns false
     - getEnv returns empty string for undefined env vars
     - IS_NODE is true (running in vitest = Node)
+    - getEnv reads from .env.local: verify by checking that `getEnv('VITE_CLAUDE_KEY')` is either a non-empty string (if key exists in .env.local) or empty string (if .env.local has no such key). The critical point is it does NOT throw. Also verify the dotenv import uses `.env.local` path by reading the source file and checking for `'.env.local'` string.
 
     **DOM parsing tests:**
     - createDOMParser() returns object with parseFromString method
@@ -315,6 +310,9 @@ element.textContent;
     - createNodeFetch() returns a function
     - The returned function type is 'function'
     - (Do NOT test actual HTTP calls — just verify the wrapper exists and resolves URLs)
+
+    **dotenv .env.local verification test:**
+    - Read src/engines/nodeAdapter.js source and verify it contains the string `.env.local` (ensuring it loads .env.local, not .env)
   </action>
   <verify>
     <automated>cd /Users/kylehoff/Desktop/stock-analyzer && npx vitest run src/engines/__tests__/nodeAdapter.test.js --reporter=verbose</automated>
@@ -325,8 +323,9 @@ element.textContent;
     - Test output contains "resolveURL" and "createDOMParser" test names
     - All 7 proxy URL mappings tested (sec, edgar, efts, yahoo, finviz, finnhub, alpha)
     - DOM parsing test verifies querySelectorAll and textContent work (linkedom compatibility)
+    - Test verifies nodeAdapter.js source contains '.env.local' string (dotenv path check)
   </acceptance_criteria>
-  <done>All node adapter tests pass, confirming URL resolution, DOM parsing, env access, and caching shims work in Node.js</done>
+  <done>All node adapter tests pass, confirming URL resolution, DOM parsing, env access from .env.local, and caching shims work in Node.js</done>
 </task>
 
 </tasks>
@@ -335,10 +334,12 @@ element.textContent;
 1. `npx vitest run src/engines/__tests__/nodeAdapter.test.js --reporter=verbose` — all tests pass
 2. `npm test -- --run` — existing 630+ tests still pass (no regressions)
 3. `node -e "import('./src/engines/nodeAdapter.js').then(m => console.log(m.resolveURL('/api/sec/test')))"` outputs `https://www.sec.gov/test`
+4. `grep '.env.local' src/engines/nodeAdapter.js` — confirms correct dotenv path
 </verification>
 
 <success_criteria>
 - nodeAdapter.js exists at ~150-200 LOC with all browser API shims
+- nodeAdapter.js loads .env.local explicitly (NOT .env) via dotenv.config({ path })
 - All proxy URL mappings correct (7 routes)
 - linkedom DOMParser provides querySelectorAll, textContent, getAttribute
 - File-based caching works for key/value with TTL
