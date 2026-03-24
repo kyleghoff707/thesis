@@ -3,3 +3,7 @@
 {"skill":"plan-eng-review","timestamp":"2026-03-19T18:45:00Z","status":"clean","unresolved":0,"critical_gaps":0,"mode":"FULL_REVIEW"}
 {"skill":"plan-eng-review","timestamp":"2026-03-22T03:23:26Z","status":"clean","unresolved":0,"critical_gaps":0,"issues_found":4,"mode":"FULL_REVIEW","commit":"4dbf785"}
 --help
+{"skill":"plan-ceo-review","timestamp":"2026-03-24T02:27:02Z","status":"clean","unresolved":0,"critical_gaps":0,"mode":"SELECTIVE_EXPANSION","via":"autoplan","commit":"c06cb4e"}
+{"skill":"plan-eng-review","timestamp":"2026-03-24T02:27:02Z","status":"clean","unresolved":0,"critical_gaps":0,"issues_found":5,"mode":"FULL_REVIEW","via":"autoplan","commit":"c06cb4e"}
+{"skill":"plan-ceo-review","timestamp":"2026-03-24T02:59:06Z","status":"clean","unresolved":0,"critical_gaps":0,"mode":"SCOPE_EXPANSION","scope_proposed":10,"scope_accepted":10,"scope_deferred":3,"commit":"c06cb4e"}
+{"skill":"plan-eng-review","timestamp":"2026-03-24T05:46:47Z","status":"clean","unresolved":0,"critical_gaps":0,"issues_found":6,"mode":"FULL_REVIEW","commit":"c06cb4e"}
