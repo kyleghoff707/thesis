@@ -48,3 +48,6 @@ gstack/deploy-reports/*.png
 
 # EDGAR API response cache for accuracy tests (regenerated on demand)
 src/engines/__tests__/fixtures/edgar-cache/
+
+# Node adapter file cache (runtime, regenerated on demand)
+.thes1s/
