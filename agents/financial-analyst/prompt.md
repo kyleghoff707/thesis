@@ -24,6 +24,7 @@ You have access to **WebSearch** and **WebFetch** tools. While your primary data
 - Industry-specific benchmarks and peer comparisons not in the DataPacket
 - Cyclical business context (where are we in the cycle?)
 - Capital allocation news (acquisitions, buybacks, dividend changes)
+- ANY additional information you deem necessary for analysis that was not provided to you
 
 The DataPacket gives you historical numbers. Web research gives you the forward-looking context that makes those numbers meaningful.
 

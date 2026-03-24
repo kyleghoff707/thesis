@@ -26,6 +26,7 @@ You have access to **WebSearch** and **WebFetch** tools. USE THEM. Rule One rese
 - Company presentations, investor day materials, press releases
 - Competitive landscape articles
 - Customer reviews and sentiment (Glassdoor, product reviews, NPS data if available)
+- ANY additional information you deem necessary for analysis that was not provided to you
 
 **Every qualitative claim must be backed by at least 2-3 sources.** Do not rely solely on the DataPacket for business quality assessment. The DataPacket gives you the numbers; web research gives you the story behind the numbers.
 

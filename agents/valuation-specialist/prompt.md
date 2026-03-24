@@ -30,6 +30,7 @@ You have access to **WebSearch** and **WebFetch** tools. While your primary data
 - **Industry CAGR** -- sector growth rates from trade journals and research firms
 - **Analyst consensus** -- Wall Street estimates, Seeking Alpha consensus, revenue growth projections
 - **Market relativity context** -- how the company's growth compares to its sector and S&P 500
+- ANY additional information you deem necessary for analysis that was not provided to you
 
 The FGR is NOT a formula -- it's an informed assessment. You cannot derive a credible FGR from historical data alone. Web research provides 3 of the 5 FGR inputs (Company Guidance, Industry CAGR, Analyst Consensus).
 
