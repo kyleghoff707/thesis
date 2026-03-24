@@ -38,7 +38,14 @@ Transform Thes1s from a financial data toolbox into a hedge-fund-quality AI rese
   3. Report JSON schema validates a sample section object and rejects malformed output (Zod enforcement works)
   4. Node.js data bridge runs the same engines that work in-browser, producing identical DataPacket output from the command line
   5. Generation state can be saved to and resumed from `.thes1s/reports/{TICKER}/progress.json`
-**Plans**: TBD
+**Plans:** 5 plans
+
+Plans:
+- [ ] 05A-01-PLAN.md — Zod schemas (report section, DataPacket, progress) + dependency install
+- [ ] 05A-02-PLAN.md — Node.js data bridge (nodeAdapter.js with browser API shims)
+- [ ] 05A-03-PLAN.md — DataPacket assembly (dataExport.js) + Toolbox tool wrappers (toolbox.js)
+- [ ] 05A-04-PLAN.md — Agent config.json files (9 roles) + writing briefs for /writing-skills
+- [ ] 05A-05-PLAN.md — Orchestrator definition (dispatch table) + generation state persistence
 
 ### Phase 5C: CC Skill + First Analysis
 **Goal**: A real One Pager is generated for a test ticker via CC skill, and the output quality is validated against the LULU benchmark -- proving the agent architecture works before any UI is built
@@ -121,7 +128,7 @@ Phases execute: 5A -> 5C -> 5B -> 5D -> 6 -> 7 -> 8
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 5A. Agent Definitions & Foundation | M1 | 0/? | Not started | - |
+| 5A. Agent Definitions & Foundation | M1 | 0/5 | Planning complete | - |
 | 5C. CC Skill + First Analysis | M2 | 0/? | Not started | - |
 | 5B. One Pager Display Components | M2 | 0/? | Not started | - |
 | 5D. Quality System | M2 | 0/? | Not started | - |
