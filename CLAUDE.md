@@ -21,7 +21,7 @@ The user is NOT a programmer. Keep explanations in plain English.
 - **Frontend**: Vite + React (functional components, hooks, inline styles with dark/light palette)
 - **Storage**: localStorage (reports, settings, watchlists), IndexedDB (EDGAR, guru, price, insider, compensation caches) via `cacheStore.js`
 - **AI**: Claude API direct from app (`VITE_CLAUDE_KEY` in `.env.local`)
-- **Financial Data**: SEC EDGAR XBRL (all financials, 13F guru holdings, N-PORT, insiders, compensation — free), Yahoo Finance (prices, stock splits — free), Finviz (analyst estimates — free), GuruFocus (optional $25/mo API)
+- **Financial Data**: SEC EDGAR XBRL (all financials, 13F guru holdings, N-PORT, insiders, compensation — free), Yahoo Finance (prices, stock splits — free), Finviz (analyst estimates — free), GuruFocus (optional $25/mo API), Finnhub (earnings transcripts — premium only, `VITE_FINNHUB_KEY`), Alpha Vantage (earnings transcripts — free 25 calls/day, `VITE_ALPHA_VANTAGE_KEY`)
 - **Charts**: Recharts
 - **Deps**: recharts, @anthropic-ai/sdk, uuid, react-router-dom, turndown, turndown-plugin-gfm, yahoo-finance2, cheerio, idb
 - **No server, no auth** — runs entirely locally. API calls go direct to external services.
@@ -77,7 +77,7 @@ All tag definitions in `FRAMES_TAGS` and `PEER_FRAMES_TAGS` have a `period: 'ins
 Phases 1-4 complete — app shell, data engines, calculation engines, and full Toolbox UI all functional. **XBRL engine complete** — three-layer tag resolution (static + taxonomy + AI), industry overlays (bank/REIT/insurance), full provenance tracking (annual + TTM), coverage monitor, and Audit tab dashboard. Validated across all 503 S&P 500 companies with 0 failures. See `gstack/plans/gstack-xbrl-engine-strategy-eng-plan-20260318.md` for full architecture and `validation/reports/financial-data-comparison-rca.md` for the original 12-ticker RCA. **The remaining work is Phase 5-8: AI-driven report generation.**
 
 ### What's Built
-All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems (validation, guru, ticker, N-PORT, compensation), Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores + derived metric computation + Yahoo data backfill + per-ticker caching + sparse peer filtering + data completeness indicators + industry-aware column defaults, Upcoming Events & News section on Overview (SEC 8-K events + Yahoo calendar + IR page discovery), three-layer XBRL engine with provenance tracking and coverage monitoring (173 tests via vitest). See source tree below.
+All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems (validation, guru, ticker, N-PORT, compensation), Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores + derived metric computation + Yahoo data backfill + per-ticker caching + sparse peer filtering + data completeness indicators + industry-aware column defaults, Upcoming Events & News section on Overview (SEC 8-K events + Yahoo calendar + IR page discovery), three-layer XBRL engine with provenance tracking and coverage monitoring (173 tests via vitest), earnings call transcript engine (Finnhub premium + Alpha Vantage free, cached in IndexedDB, Transcript buttons on Filings tab for 10-K/10-Q). See source tree below.
 
 ### What's NOT Built
 - AI report generation (One Pager, Pitch Deck, Full Story) — Phases 5-7
@@ -277,6 +277,7 @@ src/
 │   ├── peerMetrics.js           — Peer metrics via Frames API + derived metrics (GrossProfit, OpIncome from building blocks) + Yahoo backfill + completeness scoring + multi-year scores
 │   ├── batchQuotes.js           — Yahoo batch quotes with per-ticker caching (market cap, P/E, EPS, book value, shares, dividend yield)
 │   ├── companyEvents.js         — Upcoming events engine (SEC 8-K parsing, Yahoo calendarEvents+assetProfile, IR page discovery with parallel probing, Google search fallback)
+│   ├── transcripts.js           — Earnings call transcript engine (Finnhub premium + Alpha Vantage free, IndexedDB cache, date-proximity matching, dual-source fallback)
 │   ├── __tests__/peerMetrics.test.js — Vitest: peer metrics bug reproduction tests
 │   ├── __tests__/splits.test.js — Vitest: split detection + cumulativeSplitFactor tests
 │   ├── __tests__/edgarFinancials.test.js — Vitest: taxonomy coverage + derived field + provenance tests

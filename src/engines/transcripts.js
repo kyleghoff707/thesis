@@ -9,7 +9,7 @@ const FINNHUB_BASE = 'https://finnhub.io/api/v1';
 const AV_BASE = 'https://www.alphavantage.co/query';
 
 // Forms that have associated quarterly earnings calls
-const EARNINGS_FORMS = new Set(['10-K', '10-Q', '20-F', '10-KSB']);
+const EARNINGS_FORMS = new Set(['10-K', '10-K/A', '10-Q', '10-Q/A', '20-F', '20-F/A', '10-KSB']);
 
 export function isEarningsFiling(form) {
   return EARNINGS_FORMS.has(form);
