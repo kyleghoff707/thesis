@@ -58,7 +58,7 @@ export default function App() {
         <Route path="/research/:id/one-pager" element={<OnePager getReport={getReport} updateReport={updateReport} />} />
         <Route path="/research/:id/pitch-deck" element={<StagePlaceholder label="Pitch Deck" />} />
         <Route path="/research/:id/full-story" element={<StagePlaceholder label="Full Story" />} />
-        <Route path="/reports" element={<ReportsList reports={reports} getReport={getReport} />} />
+        <Route path="/reports" element={<ReportsList reports={reports} getReport={getReport} createReport={createReport} />} />
         <Route path="/gurus" element={<Gurus />} />
         <Route path="/gurus/:cik" element={<GuruPortfolio />} />
         <Route path="/validation" element={<Validation />} />

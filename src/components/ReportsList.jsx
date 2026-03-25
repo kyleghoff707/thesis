@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { C } from '../theme';
 
-export default function ReportsList({ reports, getReport }) {
+export default function ReportsList({ reports, getReport, createReport }) {
   const navigate = useNavigate();
   const [tickers, setTickers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -93,34 +93,45 @@ export default function ReportsList({ reports, getReport }) {
         const approval = getApprovalLabel(matchedReport);
 
         if (!matchedReport) {
-          // No matching research entry
+          // Auto-create research entry for generated report with no matching entry
+          const handleAutoCreate = () => {
+            if (createReport) {
+              const newReport = createReport(ticker);
+              navigate(`/research/${newReport.id}/one-pager`);
+            }
+          };
+
           return (
             <div
               key={ticker}
+              onClick={handleAutoCreate}
               style={{
                 border: '1px solid ' + C.border,
                 borderRadius: 8,
                 padding: '16px 20px',
                 marginBottom: 12,
                 background: C.bgCard,
+                cursor: createReport ? 'pointer' : 'default',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                opacity: 0.7,
+                transition: 'background 0.15s',
               }}
+              onMouseEnter={e => { e.currentTarget.style.background = C.bgHover; }}
+              onMouseLeave={e => { e.currentTarget.style.background = C.bgCard; }}
             >
               <div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: C.accent }}>{ticker}</div>
                 <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>
-                  Create a research entry to view
+                  Click to view One Pager
                 </div>
               </div>
               <span style={{
                 fontSize: 11,
                 fontWeight: 600,
-                color: C.textMuted,
+                color: C.accent,
                 padding: '3px 10px',
-                border: '1px solid ' + C.border,
+                background: C.accent + '14',
                 borderRadius: 9999,
               }}>
                 One Pager
