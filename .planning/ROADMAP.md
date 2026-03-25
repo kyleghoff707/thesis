@@ -76,9 +76,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 05B-01-PLAN.md — Vite middleware data bridge + useOnePager hook + VerdictBadge + ConfidenceBadge
-- [ ] 05B-02-PLAN.md — SectionRenderer + CitationTooltip + RedFlagCallout sub-components
-- [ ] 05B-03-PLAN.md — OnePager page component + route wiring + visual verification
+- [x] 05B-01-PLAN.md — Vite middleware data bridge + useOnePager hook + VerdictBadge + ConfidenceBadge
+- [x] 05B-02-PLAN.md — SectionRenderer + CitationTooltip + RedFlagCallout sub-components
+- [x] 05B-03-PLAN.md — OnePager page component + route wiring + visual verification
 
 **UI hint**: yes
 
