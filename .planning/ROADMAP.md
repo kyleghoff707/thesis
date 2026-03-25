@@ -29,7 +29,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Running the harness against the 50-company Morningstar truth set produces a single accuracy number that matches the known 86.4% baseline from Attempt #2 — confirming the new all-JS harness measures the same thing as the previous harness
   3. A sign convention test for AAPL 2024 passes for every mapped field — each source adapter produces the same sign for expenses, capex, and other sign-convention-sensitive fields
   4. The harness runs end-to-end from a single script call and outputs a JSON report plus console summary without requiring Python, R, or any tool outside Node.js
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Core comparison library modules (fiscal aligner, field mapper, comparator) with unit tests
+- [ ] 01-02-PLAN.md — Reporter + orchestrator script + baseline accuracy verification
 
 ### Phase 2: Multi-Source Triangulation
 **Goal**: A 4-way comparison engine that classifies every deviation as CONSENSUS_DIFF (our bug), METHODOLOGY_DIFF (sources disagree), or COVERAGE_GAP (all null)
@@ -81,7 +85,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4. Phase 5 can begin after Ph
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Comparison Harness | 0/TBD | Not started | - |
+| 1. Comparison Harness | 0/2 | Planning complete | - |
 | 2. Multi-Source Triangulation | 0/TBD | Not started | - |
 | 3. Engine Fixes | 0/TBD | Not started | - |
 | 4. Scale Validation | 0/TBD | Not started | - |
