@@ -7,6 +7,9 @@ import SensitivityTable from './SensitivityTable';
 import VerdictBadge from './VerdictBadge';
 import ConfidenceBadge from './ConfidenceBadge';
 import CollapsibleSection from './CollapsibleSection';
+import DeepDivePanel from './pitchDeck/DeepDivePanel';
+import IndustryCard from './pitchDeck/IndustryCard';
+import AssumptionTracker from './pitchDeck/AssumptionTracker';
 
 // --- Section definitions for the Pitch Deck (10 sections, 3 phases) ---
 const SECTION_DEFS = [
@@ -173,6 +176,11 @@ export default function PitchDeck({ getReport, updateReport }) {
   const { report: pitchDeckData, progress, loading, error } = usePitchDeck(report?.ticker);
   const [activeSection, setActiveSection] = useState(null);
   const observerRef = useRef(null);
+
+  // Delight feature state
+  const [deepDive, setDeepDive] = useState({ isOpen: false, title: '', content: null, loading: false });
+  const [industryCard, setIndustryCard] = useState({ isOpen: false, term: '', category: '', definition: '', benchmarks: [], position: { top: 0, left: 0 } });
+  const [assumptionOpen, setAssumptionOpen] = useState(false);
 
   // Inject keyframes once
   useEffect(() => {
@@ -409,17 +417,22 @@ export default function PitchDeck({ getReport, updateReport }) {
             </span>
           )}
           {pitchDeckData?.assumptions && pitchDeckData.assumptions.length > 0 && (
-            <span style={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: C.textSecondary,
-              background: C.badge,
-              borderRadius: 6,
-              padding: '4px 12px',
-              textTransform: 'uppercase',
-            }}>
+            <button
+              onClick={() => setAssumptionOpen(true)}
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: assumptionOpen ? C.accent : C.textSecondary,
+                background: assumptionOpen ? C.accentLight : C.badge,
+                borderRadius: 6,
+                padding: '4px 12px',
+                textTransform: 'uppercase',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
               Assumptions ({pitchDeckData.assumptions.length})
-            </span>
+            </button>
           )}
           {approvalStatus === 'approved' && (
             <span style={{ fontSize: 11, fontWeight: 600, color: C.green }}>Approved</span>
@@ -962,6 +975,29 @@ export default function PitchDeck({ getReport, updateReport }) {
           )}
         </div>
       </div>
+
+      {/* Delight features — slide-out panels + popover */}
+      <DeepDivePanel
+        isOpen={deepDive.isOpen}
+        onClose={() => setDeepDive(d => ({ ...d, isOpen: false }))}
+        title={deepDive.title}
+        content={deepDive.content}
+        loading={deepDive.loading}
+      />
+      <IndustryCard
+        isOpen={industryCard.isOpen}
+        onClose={() => setIndustryCard(c => ({ ...c, isOpen: false }))}
+        term={industryCard.term}
+        category={industryCard.category}
+        definition={industryCard.definition}
+        benchmarks={industryCard.benchmarks}
+        position={industryCard.position}
+      />
+      <AssumptionTracker
+        isOpen={assumptionOpen}
+        onClose={() => setAssumptionOpen(false)}
+        assumptions={pitchDeckData?.assumptions || []}
+      />
     </div>
   );
 }
