@@ -150,5 +150,47 @@ export function readSectionOutput(ticker, sectionKey) {
   }
 }
 
+// Returns the path to the quality directory for a ticker
+function getQualityDir(ticker) {
+  return join(REPORTS_DIR, ticker.toUpperCase(), 'quality');
+}
+
+// Returns the path to the reports directory for a ticker
+function getTickerDir(ticker) {
+  return join(REPORTS_DIR, ticker.toUpperCase());
+}
+
+// Save a quality report to .thes1s/reports/{TICKER}/quality/one-pager.quality.json
+export function saveQualityReport(ticker, qualityData) {
+  const qualityDir = getQualityDir(ticker);
+  mkdirSync(qualityDir, { recursive: true });
+  const filePath = join(qualityDir, 'one-pager.quality.json');
+  writeFileSync(filePath, JSON.stringify(qualityData, null, 2));
+}
+
+// Save a budget report to .thes1s/reports/{TICKER}/budget.json
+export function saveBudgetReport(ticker, budgetData) {
+  const tickerDir = getTickerDir(ticker);
+  mkdirSync(tickerDir, { recursive: true });
+  const filePath = join(tickerDir, 'budget.json');
+  writeFileSync(filePath, JSON.stringify(budgetData, null, 2));
+}
+
+// Read a quality report from disk, return null if not found
+export function readQualityReport(ticker) {
+  const qualityDir = getQualityDir(ticker);
+  const filePath = join(qualityDir, 'one-pager.quality.json');
+  if (!existsSync(filePath)) {
+    return null;
+  }
+  try {
+    const raw = readFileSync(filePath, 'utf-8');
+    return JSON.parse(raw);
+  } catch (err) {
+    console.warn(`Failed to read quality report for ${ticker}:`, err.message);
+    return null;
+  }
+}
+
 // Export constants for testing
-export const _testExports = { SECTION_KEYS, VALID_TRANSITIONS, getProgressPath, getSectionsDir };
+export const _testExports = { SECTION_KEYS, VALID_TRANSITIONS, getProgressPath, getSectionsDir, getQualityDir, getTickerDir };
