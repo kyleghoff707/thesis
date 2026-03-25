@@ -16,6 +16,7 @@ import NportAudit from './components/NportAudit';
 import CompAudit from './components/CompAudit';
 import Settings from './components/Settings';
 import OnePager from './components/OnePager';
+import PitchDeck from './components/PitchDeck';
 import ReportsList from './components/ReportsList';
 
 function StagePlaceholder({ label }) {
@@ -56,7 +57,7 @@ export default function App() {
         <Route path="/research/:id" element={<Toolbox getReport={getReport} updateReport={updateReport} settings={settings} />} />
         <Route path="/research/:id/toolbox" element={<ToolboxRedirect />} />
         <Route path="/research/:id/one-pager" element={<OnePager getReport={getReport} updateReport={updateReport} />} />
-        <Route path="/research/:id/pitch-deck" element={<StagePlaceholder label="Pitch Deck" />} />
+        <Route path="/research/:id/pitch-deck" element={<PitchDeck getReport={getReport} updateReport={updateReport} />} />
         <Route path="/research/:id/full-story" element={<StagePlaceholder label="Full Story" />} />
         <Route path="/reports" element={<ReportsList reports={reports} getReport={getReport} createReport={createReport} />} />
         <Route path="/gurus" element={<Gurus />} />
