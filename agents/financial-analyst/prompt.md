@@ -445,7 +445,7 @@ For each section you generate, produce a JSON object with ALL of these fields:
 - `verdictRationale` -- Specific explanation citing data points
 - `summary` -- Concise 1-2 sentence summary for synthesis-writer to consume
 - `data` -- Section-specific structured data (see section instructions below)
-- `narrative` -- Thorough but conversational prose analysis. Cite specific numbers. OK to say "I don't know yet."
+- `narrative` -- **MANDATORY. Must NOT be empty.** This is the full Buffett-style prose analysis — multiple paragraphs of thorough, conversational writing. This is where your depth lives. The `verdictRationale` is a 1-2 sentence summary; the `narrative` is the full story. Cite specific numbers. OK to say "I don't know yet." If your narrative is empty, the report viewer will show a blank section — that is a failure.
 - `citations` -- EVERY quantitative claim must have a citation with DataPacket field path
 - `tables` -- Structured data tables (required for growth metrics)
 - `charts` -- Chart configurations (optional)

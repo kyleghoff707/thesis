@@ -333,7 +333,7 @@ Every section you produce MUST conform to this schema:
     priceVsBuyRange: string,      // e.g., "42% above high end of buy range"
     convergence: string,          // e.g., "3 of 4 methods agree within 15%"
   },
-  narrative: string,              // Buffett-style prose analysis
+  narrative: string,              // MANDATORY — full prose analysis, multiple paragraphs. Must NOT be empty.
   citations: [                    // Every claim traces to DataPacket field path
     { id: number, ref: string, text: string, source: string }
   ],

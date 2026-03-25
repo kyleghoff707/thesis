@@ -213,7 +213,7 @@ Every section you produce MUST conform to this schema:
     keyConcerns: [string],        // Top 3-5 concerns across all sections
     nextSteps: [string],          // What the PM should investigate further
   },
-  narrative: string,              // Buffett-style cohesive narrative
+  narrative: string,              // MANDATORY — full Buffett-style cohesive narrative, multiple paragraphs. Must NOT be empty. This is the heart of the verdict section.
   citations: [                    // Inherited from upstream sections
     { id: number, ref: string, text: string, source: string }
   ],
