@@ -92,7 +92,12 @@ Plans:
   3. Confidence levels (HIGH/MEDIUM/LOW) are justified by data completeness and source agreement -- not arbitrary
   4. Agent failure triggers retry-then-escalate: one retry with error context, then escalation to user if still failing
   5. `contextBudget.js` measures actual token usage per agent call and reports totals per generation run
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 05D-01-PLAN.md — critic.js validation engine (citation, completeness, confidence, multi-source, red flags, data gaps)
+- [ ] 05D-02-PLAN.md — contextBudget.js token estimation and cost tracking
+- [ ] 05D-03-PLAN.md — Quality system integration into CC skill + failure recovery
 
 ### Phase 6: Pitch Deck
 **Goal**: Users can generate a 10-section Pitch Deck through multi-agent orchestration with structured checkpoints, achieving full parity with the LULU Pitch Deck benchmark in depth and rigor
@@ -143,7 +148,7 @@ Phases execute: 5A -> 5C -> 5B -> 5D -> 6 -> 7 -> 8
 | 5A. Agent Definitions & Foundation | M1 | 0/5 | Planning complete | - |
 | 5C. CC Skill + First Analysis | M2 | 0/4 | Planning complete | - |
 | 5B. One Pager Display Components | M2 | 0/3 | Planning complete | - |
-| 5D. Quality System | M2 | 0/? | Not started | - |
+| 5D. Quality System | M2 | 0/3 | Planning complete | - |
 | 6. Pitch Deck | M3 | 0/? | Not started | - |
 | 7. Full Story & Debate | M4 | 0/? | Not started | - |
 | 8. Polish & Export | M5 | 0/? | Not started | - |
