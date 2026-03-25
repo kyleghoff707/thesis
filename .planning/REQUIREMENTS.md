@@ -7,10 +7,10 @@
 
 ### Comparison Harness Infrastructure
 
-- [ ] **HARNESS-01**: Fiscal year alignment engine with deterministic FY-end resolver using EDGAR `entityFiscalYearEnd` — maps every source's year labels to a canonical fiscal year
-- [ ] **HARNESS-02**: Universal sign convention normalizer — per source per field sign multiplier table, so expenses/capex/etc compare correctly across EDGAR, FMP, SimFin, mstarpy, Morningstar
-- [ ] **HARNESS-03**: Scale normalizer — mstarpy returns millions (×1e6), all others return full dollars. Applied automatically per source
-- [ ] **HARNESS-04**: Universal field mapping JSON — single config file mapping all source field names to Thes1s canonical names (FMP `netIncome`, SimFin `Net Income`, Morningstar `Net Income after Non-Controlling/Minority Interests` → `net_income_loss`)
+- [x] **HARNESS-01**: Fiscal year alignment engine with deterministic FY-end resolver using EDGAR `entityFiscalYearEnd` — maps every source's year labels to a canonical fiscal year
+- [x] **HARNESS-02**: Universal sign convention normalizer — per source per field sign multiplier table, so expenses/capex/etc compare correctly across EDGAR, FMP, SimFin, mstarpy, Morningstar
+- [x] **HARNESS-03**: Scale normalizer — mstarpy returns millions (×1e6), all others return full dollars. Applied automatically per source
+- [x] **HARNESS-04**: Universal field mapping JSON — single config file mapping all source field names to Thes1s canonical names (FMP `netIncome`, SimFin `Net Income`, Morningstar `Net Income after Non-Controlling/Minority Interests` → `net_income_loss`)
 - [ ] **HARNESS-05**: All-JavaScript comparison harness replacing Python comparison scripts — single-language pipeline, no dual-language field mapping bugs
 
 ### Multi-Source Triangulation
@@ -63,10 +63,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HARNESS-01 | Phase 1 | Pending |
-| HARNESS-02 | Phase 1 | Pending |
-| HARNESS-03 | Phase 1 | Pending |
-| HARNESS-04 | Phase 1 | Pending |
+| HARNESS-01 | Phase 1 | Complete |
+| HARNESS-02 | Phase 1 | Complete |
+| HARNESS-03 | Phase 1 | Complete |
+| HARNESS-04 | Phase 1 | Complete |
 | HARNESS-05 | Phase 1 | Pending |
 | TRI-01 | Phase 2 | Pending |
 | TRI-02 | Phase 2 | Pending |

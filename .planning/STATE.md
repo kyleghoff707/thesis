@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 1 context gathered
-last_updated: "2026-03-25T22:52:11.064Z"
-last_activity: 2026-03-25 — Roadmap created from requirements + research summary
+status: Ready to execute
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-03-25T23:46:27.898Z"
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 2
+  completed_plans: 1
 ---
 
 # Project State
@@ -21,16 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** 98%+ accuracy match to Morningstar across all US-listed equities, achieved by triangulating XBRL output against FMP, SimFin, and mstarpy — then fixing normalization rules so paid sources are never needed again.
-**Current focus:** Phase 1 — Comparison Harness
+**Current focus:** Phase 01 — comparison-harness
 
 ## Current Position
 
-Phase: 1 of 5 (Comparison Harness)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-25 — Roadmap created from requirements + research summary
-
-Progress: [░░░░░░░░░░] 0%
+Phase: 01 (comparison-harness) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -52,6 +46,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01 P01 | 9min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -65,6 +60,9 @@ Recent decisions affecting current work:
 - All-JavaScript pipeline — no Python for computation, only mstarpy subprocess for data fetch
 - Three-phase accuracy rollout: 50-company truth set → S&P 500 → full market
 - Compensation normalization (Phase 5) is secondary and can run in parallel after Phase 1
+- [Phase 01]: Used fiscalYearEnd metadata as primary FY resolver with revenue-matching validation (not brute-force-first)
+- [Phase 01]: Injectable specialHandlers pattern for comparator extensibility in Phase 2 multi-source comparison
+- [Phase 01]: field-mapping.json has 101 mapped fields (not 87 as stale metadata claims) -- tests use actual count
 
 ### Pending Todos
 
@@ -78,6 +76,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T22:52:11.055Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-comparison-harness/01-CONTEXT.md
+Last session: 2026-03-25T23:46:27.895Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None
