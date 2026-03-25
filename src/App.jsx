@@ -4,7 +4,6 @@ import { useTheme } from './hooks/useTheme';
 import { useResearch } from './hooks/useResearch';
 import { useSettings } from './hooks/useSettings';
 import Layout from './components/Layout';
-import ResearchList from './components/ResearchList';
 import ResearchEmpty from './components/ResearchEmpty';
 import Toolbox from './components/Toolbox';
 import Watchlists from './components/Watchlists';
@@ -16,6 +15,8 @@ import TickerAudit from './components/TickerAudit';
 import NportAudit from './components/NportAudit';
 import CompAudit from './components/CompAudit';
 import Settings from './components/Settings';
+import OnePager from './components/OnePager';
+import ReportsList from './components/ReportsList';
 
 function StagePlaceholder({ label }) {
   return (
@@ -54,10 +55,10 @@ export default function App() {
         <Route path="/research" element={<ResearchRedirect reports={reports} />} />
         <Route path="/research/:id" element={<Toolbox getReport={getReport} updateReport={updateReport} settings={settings} />} />
         <Route path="/research/:id/toolbox" element={<ToolboxRedirect />} />
-        <Route path="/research/:id/one-pager" element={<StagePlaceholder label="One Pager" />} />
+        <Route path="/research/:id/one-pager" element={<OnePager getReport={getReport} updateReport={updateReport} />} />
         <Route path="/research/:id/pitch-deck" element={<StagePlaceholder label="Pitch Deck" />} />
         <Route path="/research/:id/full-story" element={<StagePlaceholder label="Full Story" />} />
-        <Route path="/reports" element={<ResearchList reports={reports} onDelete={deleteReport} />} />
+        <Route path="/reports" element={<ReportsList reports={reports} getReport={getReport} />} />
         <Route path="/gurus" element={<Gurus />} />
         <Route path="/gurus/:cik" element={<GuruPortfolio />} />
         <Route path="/validation" element={<Validation />} />
