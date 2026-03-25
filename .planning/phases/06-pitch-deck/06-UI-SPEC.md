@@ -45,7 +45,7 @@ Exceptions:
 - Section card padding: `16px 20px` (matches SectionRenderer.jsx established pattern)
 - Sticky nav top offset: `72px` (matches OnePager.jsx `top: 72` for header clearance)
 - Section scroll margin: `120px` (matches existing `scrollMarginTop: 120`)
-- Collapsible header padding: `14px 16px` (matches CollapsibleSection.jsx)
+- CollapsibleSection.jsx is reused as-is from Phase 5B — its internal padding (`14px 16px`) is not part of Phase 6's spacing contract
 
 **Source:** Measured from existing SectionRenderer.jsx, OnePager.jsx, CollapsibleSection.jsx
 
@@ -53,23 +53,24 @@ Exceptions:
 
 ## Typography
 
+**Primary scale (new Phase 6 components use ONLY these 4 sizes and 2 weights):**
+
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
-| Body | 13px | 400 | 1.7 | Narrative text, verdict rationale, data labels |
-| Label | 10px | 600 | 1.4 | Uppercase category labels, citation IDs, muted metadata |
-| Subheading | 15px | 700 | 1.3 | Collapsible section titles, sub-section headers |
-| Heading | 16px | 700 | 1.3 | Section card titles (inside SectionRenderer header) |
-| Display | 24px | 800 | 1.2 | Report hero: company name |
+| Body | 13px | 400 | 1.7 | Narrative text, verdict rationale, data labels, data grid values, summary callouts, sensitivity table cells |
+| Label | 10px | 700 | 1.4 | Uppercase category labels, citation IDs, muted metadata, confidence badges, verdict badges, industry card category |
+| Heading | 16px | 700 | 1.3 | Section card titles, collapsible section titles, sub-section headers, FGR final range, sensitivity table titles |
+| Display | 24px | 700 | 1.2 | Report hero: company name |
 
-Additional type tokens (established, not new):
-- Data value: 14px / 700 -- structured data grid values
-- Ticker badge: 14px / 600 -- ticker symbol in hero (accent color)
-- Table header: 12px / 600 -- table column headers
-- Table cell: 12px / 400 -- table body content
-- Nav item: 12px / 400 (inactive) / 600 (active) -- sticky sidebar navigation
-- Summary callout: 13px / 400 / line-height 1.6 -- accent-bordered summary blocks
-- Confidence badge: 10px / 600 / uppercase / letterSpacing 0.04em
-- Verdict badge: 11px (default) or 13px (large) / 700 / uppercase / letterSpacing 0.04em
+**Weights:** 400 (regular) and 700 (emphasis) only. No 600 or 800 in new components.
+
+**Inherited tokens (Phase 5B components reused as-is — NOT new declarations):**
+
+Phase 6C reuses SectionRenderer.jsx, VerdictBadge.jsx, ConfidenceBadge.jsx, CitationTooltip.jsx, RedFlagCallout.jsx, and CollapsibleSection.jsx from Phase 5B without modification. These components contain their own hardcoded font sizes and weights from Phase 5B. Phase 6 does NOT change these values — they render as-is. For reference only (not part of Phase 6's type scale):
+
+- Table header/cell in SectionRenderer: 12px
+- Nav item in sticky sidebar: 12px
+- Ticker badge in hero: 13px / 700 (maps to Body size)
 
 **Source:** Measured from OnePager.jsx, SectionRenderer.jsx, VerdictBadge.jsx, CollapsibleSection.jsx
 
@@ -82,6 +83,10 @@ Additional type tokens (established, not new):
 | Dominant (60%) | `#f8f9fb` (C.bg) | `#0f172a` (C.bg) | Page background, content surface |
 | Secondary (30%) | `#ffffff` (C.bgCard) | `#1e293b` (C.bgCard) | Section cards, nav panel, sidebar, tooltips |
 | Accent (10%) | `#0f766e` (C.accent) | `#2dd4bf` (C.accent) | See reserved-for list below |
+| Accent Light | `#f0fdfa` (C.accentLight) | `#042f2e` (C.accentLight) | Summary callout background, sensitivity table intersection cell |
+| Hover | `#f1f5f9` (C.bgHover) | `#334155` (C.bgHover) | Nav item hover, assumption tracker toggle hover |
+| Badge | `#f1f5f9` (C.badge) | `#334155` (C.badge) | Assumption tracker toggle background, metadata pills |
+| Shadow | `rgba(0,0,0,0.08)` (C.shadow) | `rgba(0,0,0,0.3)` (C.shadow) | IndustryCard box shadow, tooltip shadow |
 | Destructive | `#dc2626` (C.red) | `#f87171` (C.red) | Failed sections, reject button, FAIL badge |
 
 Accent reserved for:
@@ -193,7 +198,7 @@ Three connected phases displayed horizontally above the two-column layout:
 
 - Circle size: 24px diameter
 - Connector line: 2px, centered vertically on circles
-- Phase label: 12px / 500, below each circle
+- Phase label: 10px / 700, below each circle, uppercase
 - Total height: 64px including label
 - Margin bottom: 16px before two-column layout
 
@@ -215,7 +220,7 @@ Identical pattern to OnePager.jsx nav, extended to 10 sections:
 | 10 | valuation | Valuation |
 
 - Each item: 8px colored dot (verdict color) + section number + truncated title (max 20 chars)
-- Active section: `C.bgHover` background, fontWeight 600, `C.text` color
+- Active section: `C.bgHover` background, fontWeight 700, `C.text` color
 - Inactive section: transparent background, fontWeight 400, `C.textSecondary` color
 - Hover: `C.bgHover` background
 - Click: smooth scroll to `#section-{key}`
@@ -249,11 +254,11 @@ Displays a 2D matrix varying two assumptions against each other, showing resulti
 
 ### Visual Rules
 
-- **Title:** 14px / 700, C.text
-- **Subtitle (axis labels):** 12px / 500, C.textSecondary
-- **Column headers:** 12px / 600, C.textMuted, right-aligned
-- **Row headers:** 12px / 600, C.textMuted, left-aligned
-- **Cell values:** 12px / 400, C.text, right-aligned, `fontVariantNumeric: 'tabular-nums'`
+- **Title:** 16px / 700, C.text
+- **Subtitle (axis labels):** 10px / 700, C.textSecondary
+- **Column headers:** 10px / 700, C.textMuted, right-aligned, uppercase
+- **Row headers:** 10px / 700, C.textMuted, left-aligned
+- **Cell values:** 13px / 400, C.text, right-aligned, `fontVariantNumeric: 'tabular-nums'`
 - **Current input intersection cell:** 13px / 700, C.accent, background C.accentLight, borderRadius 4px
 - **Table border:** outer `1px solid C.border`, inner rows `1px solid C.borderLight`
 - **Cell padding:** `8px 12px`
@@ -298,7 +303,7 @@ A small "Tell me more" text button appended to any section point, table row, or 
 ### Trigger Button
 
 - Text: "Tell me more" (no icon)
-- Style: 11px / 500, C.accent, no background, no border, underline on hover
+- Style: 10px / 700, C.accent, no background, no border, underline on hover
 - Cursor: pointer
 - Position: inline, after the relevant text or at the end of a table row
 
@@ -309,7 +314,7 @@ A small "Tell me more" text button appended to any section point, table row, or 
 - **Overlay:** Semi-transparent backdrop (`rgba(0,0,0,0.3)`)
 - **Background:** C.bgCard
 - **Border-left:** `1px solid C.border`
-- **Header:** 16px / 700, C.text + close button (X icon, 20px, C.textMuted, hover C.text)
+- **Header:** 16px / 700, C.text + close button (X icon, 20px, C.textMuted, hover C.text, `aria-label="Close panel"`)
 - **Content:** 13px / 400, line-height 1.7, C.text
 - **Loading state:** Spinner (same as OnePager.jsx) + "Analyzing..." label
 - **Close:** Click X, click overlay, or press Escape
@@ -376,12 +381,12 @@ Underlined terms in narrative text that have industry-specific definitions. Term
 +----------------------------------+
 ```
 
-- **Term:** 14px / 700, C.text
-- **Category:** 11px / 500, C.textMuted, in parentheses
-- **"Definition:" label:** 10px / 600, C.textMuted, uppercase
+- **Term:** 16px / 700, C.text
+- **Category:** 10px / 400, C.textMuted, in parentheses
+- **"Definition:" label:** 10px / 700, C.textMuted, uppercase
 - **Definition text:** 13px / 400, line-height 1.5, C.text
-- **"Industry Benchmark:" label:** 10px / 600, C.textMuted, uppercase, marginTop 12px
-- **Benchmark values:** 12px / 400, C.textSecondary; company value in 12px / 700, C.text
+- **"Industry Benchmark:" label:** 10px / 700, C.textMuted, uppercase, marginTop 12px
+- **Benchmark values:** 13px / 400, C.textSecondary; company value in 13px / 700, C.text
 - **Dismiss:** Click outside the card
 
 ---
@@ -395,7 +400,7 @@ A toggle button in the PitchDeck hero area: "Assumptions (N)" where N is the cou
 ### Toggle Button
 
 - Text: "Assumptions (N)"
-- Style: 12px / 600, C.textSecondary, background C.badge, borderRadius 6px, padding `4px 12px`
+- Style: 10px / 700, C.textSecondary, background C.badge, borderRadius 6px, padding `4px 12px`, uppercase
 - Hover: background C.bgHover
 - Active state (sidebar open): background C.accentLight, color C.accent
 
@@ -405,8 +410,8 @@ A toggle button in the PitchDeck hero area: "Assumptions (N)" where N is the cou
 - **Actually:** Use the same slide-out pattern as DeepDivePanel for consistency. 360px wide, fixed right.
 - **Background:** C.bgCard
 - **Border-left:** `1px solid C.border`
-- **Header:** "Key Assumptions" -- 15px / 700, C.text
-- **Close:** X button, same as DeepDivePanel
+- **Header:** "Key Assumptions" -- 16px / 700, C.text
+- **Close:** X button, same as DeepDivePanel (`aria-label="Close panel"`)
 
 ### Assumption Item
 
@@ -420,13 +425,13 @@ A toggle button in the PitchDeck hero area: "Assumptions (N)" where N is the cou
 +------------------------------------+
 ```
 
-- **Assumption label:** 13px / 600, C.text
+- **Assumption label:** 13px / 700, C.text
 - **Confidence bar:** 120px wide, 6px tall, borderRadius 3px
   - Background: C.border
   - Fill: C.green (HIGH), C.yellow (MEDIUM), C.red (LOW)
-- **Confidence label:** 10px / 600, same color as fill, uppercase, next to bar
-- **Source:** 11px / 400, C.textSecondary
-- **Affects:** 11px / 400, C.textMuted, lists section numbers that use this assumption
+- **Confidence label:** 10px / 700, same color as fill, uppercase, next to bar
+- **Source:** 10px / 400, C.textSecondary
+- **Affects:** 10px / 400, C.textMuted, lists section numbers that use this assumption
 - **Item border:** `1px solid C.borderLight` bottom, paddingBottom 12px, marginBottom 12px
 - **Cascade indicator:** If an assumption changes, affected sections show a small warning dot (6px, C.yellow) next to their nav entry
 
@@ -444,7 +449,7 @@ Pitch Deck sections are rendered by SectionRenderer (same as One Pager) and are 
 
 Checkpoints are a generation-time concept (terminal dialogue in the CC skill). In the React UI, checkpoint data is displayed as a summary block between phase groups. Each checkpoint shows:
 
-- **Phase label:** "Phase 1: Business Fundamentals" -- 13px / 600, C.textSecondary
+- **Phase label:** "Phase 1: Business Fundamentals" -- 13px / 700, C.textSecondary
 - **Data gaps found:** bulleted list (if any)
 - **PM notes injected:** quoted text (if any)
 - **Confidence snapshot:** per-section confidence at that point
@@ -603,6 +608,34 @@ Same pattern as `useOnePager`:
 | none | not applicable | not applicable |
 
 No third-party component registries. All components are custom-built with inline styles using the `C` palette. No shadcn, no Radix, no external UI library.
+
+---
+
+## Prior Phase UI Debt (Must Address)
+
+Issues identified in Phase 5B and 5D polish notes that carry forward into Phase 6C/6D. Since PitchDeck.jsx reuses SectionRenderer.jsx, these fixes apply to both One Pager and Pitch Deck.
+
+### From 05B-UI-POLISH-NOTES.md
+
+| Issue | Fix Required | Affects |
+|-------|-------------|---------|
+| Confidence badge has no label | Change to "CONFIDENCE: HIGH" so users know what the badge means | ConfidenceBadge.jsx |
+| Summary callouts are run-on text | Parse summary text into bullet points where applicable (lists of metrics, gate results) | SectionRenderer.jsx |
+| Data grid shows raw unformatted numbers | Apply `fmtNum`/`fmtDollar`/`fmtPct` formatters, group by category, handle `--` for non-numeric fields | SectionRenderer.jsx data grid |
+| Commentary sections are unreadable text blobs | Parse markdown structure from narrative (paragraphs, bold, line breaks, subheadings). Content quality is good — needs presentation. | SectionRenderer.jsx narrative rendering |
+| Citations not visible inline | Agents must include `[N]` markers in narrative OR post-process to insert them. Show citation list below each section. | CitationTooltip.jsx + agent prompts |
+| Nav highlighting wrong on Reports → research route | `/research/:id/one-pager` highlights "Research" instead of "Reports" | Layout.jsx route matching |
+
+### From 05D-UI-POLISH-NOTES.md
+
+| Issue | Fix Required | Affects |
+|-------|-------------|---------|
+| Quality scores not visible to user | Add quality score badge or collapsible quality panel per section | SectionRenderer.jsx or new QualityBadge.jsx |
+| Citation validation results hidden | Show per-section citation validation status ("12/14 verified, 2 flagged") with expandable details | OnePager.jsx / PitchDeck.jsx |
+| Cost breakdown not displayed | Show generation cost summary (e.g., "~$1.40: 3 Sonnet + 1 Opus") in report footer or list card | PitchDeck.jsx footer or ReportsList.jsx |
+| Quality dashboard concept | Aggregate quality view: overall score, sections with issues, citation coverage %, cost per report. Tab within report viewer or separate panel. | New quality panel in PitchDeck.jsx |
+
+**Implementation note:** These fixes should be applied to the shared SectionRenderer.jsx (benefits both One Pager and Pitch Deck) rather than duplicated per report type.
 
 ---
 
