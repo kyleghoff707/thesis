@@ -115,15 +115,15 @@ Plans:
 Plans:
 - [x] 06A-01-PLAN.md — New PSR agent directories (annual-reader + quarterly-reader) + configs + briefs + dispatch-table update
 - [x] 06A-02-PLAN.md — Light update pass on 4 existing agent prompts for Pitch Deck depth
-- [ ] 06A-03-PLAN.md — Author competitor-evaluator prompt via /writing-skills
-- [ ] 06A-04-PLAN.md — Author management-evaluator prompt via /writing-skills
-- [ ] 06A-05-PLAN.md — Author risk-analyst prompt via /writing-skills
+- [x] 06A-03-PLAN.md — Author competitor-evaluator prompt via /writing-skills
+- [x] 06A-04-PLAN.md — Author management-evaluator prompt via /writing-skills
+- [x] 06A-05-PLAN.md — Author risk-analyst prompt via /writing-skills
 - [x] 06A-06-PLAN.md — Author annual-reader + quarterly-reader prompts via /writing-skills
-- [ ] 06B-01-PLAN.md — /generate:pitch-deck CC skill (3-phase dispatch + checkpoints + PSR + FGR)
-- [ ] 06B-02-PLAN.md — /generate:section CC skill (CMD-01 single section re-run)
-- [ ] 06C-01-PLAN.md — SectionRenderer UI debt fixes + usePitchDeck hook + Vite middleware
-- [ ] 06C-02-PLAN.md — PitchDeck.jsx + SensitivityTable.jsx + routes + visual verification
-- [ ] 06D-01-PLAN.md — DeepDivePanel + IndustryCard + AssumptionTracker delight features
+- [x] 06B-01-PLAN.md — /generate:pitch-deck CC skill (3-phase dispatch + checkpoints + PSR + FGR)
+- [x] 06B-02-PLAN.md — /generate:section CC skill (CMD-01 single section re-run)
+- [x] 06C-01-PLAN.md — SectionRenderer UI debt fixes + usePitchDeck hook + Vite middleware
+- [x] 06C-02-PLAN.md — PitchDeck.jsx + SensitivityTable.jsx + routes + visual verification
+- [x] 06D-01-PLAN.md — DeepDivePanel + IndustryCard + AssumptionTracker delight features
 - [ ] 06D-02-PLAN.md — LULU parity verification (generation run + PM comparison)
 
 ### Phase 7: Full Story & Debate

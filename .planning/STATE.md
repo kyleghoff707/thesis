@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 06A-03-PLAN.md
-last_updated: "2026-03-25T19:37:27.209Z"
+stopped_at: Completed 06D-02-PLAN.md
+last_updated: "2026-03-25T21:11:46.765Z"
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 27
-  completed_plans: 21
+  completed_plans: 30
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 ## Current Position
 
 Phase: 06 (pitch-deck) — EXECUTING
-Plan: 6 of 12
+Plan: 12 of 12
 
 ## Performance Metrics
 
@@ -61,6 +61,12 @@ Plan: 6 of 12
 | Phase 06A P05 | 4min | 1 tasks | 1 files |
 | Phase 06A P04 | 6min | 1 tasks | 1 files |
 | Phase 06A P03 | 6min | 1 tasks | 1 files |
+| Phase 06B P02 | 5min | 1 tasks | 1 files |
+| Phase 06B P01 | 6min | 1 tasks | 1 files |
+| Phase 06C P01 | 5min | 2 tasks | 4 files |
+| Phase 06C P02 | 5min | 2 tasks | 3 files |
+| Phase 06D P01 | 3min | 2 tasks | 4 files |
+| Phase 06D P02 | 5min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -97,6 +103,14 @@ Recent decisions affecting current work:
 - [Phase 06A]: Risk-analyst prompt: 3 red flag minimum per PEST section (higher bar than other agents), FGR attack methodology, cyclical risk assessment with cycle position matrix
 - [Phase 06A]: Embedded all 43 gurus inline in management-evaluator prompt rather than referencing external file
 - [Phase 06A]: Competitor-evaluator prompt uses 4-tier market share ceiling verdict (realistic/ambitious/unrealistic/implausible) and 15-point moat checklist scoring
+- [Phase 06B]: Section re-run skill uses same prompt layering as generate-one-pager; PM guidance appended last for priority
+- [Phase 06B]: 972-line SKILL.md covers full 16-step pipeline; model selection per agent config.json (Opus for PSR/risk/valuation/synthesis, Sonnet for analysts)
+- [Phase 06C]: Defined formatters locally in SectionRenderer rather than importing from keyMetrics.js -- consistent with codebase pattern of local formatter definitions per component
+- [Phase 06C]: Used regex key-pattern detection (DOLLAR_KEYS, PCT_KEYS) for data grid auto-formatting rather than explicit type annotations
+- [Phase 06C]: Phase progress indicator built inline in PitchDeck.jsx; sensitivity table cells lookup from pre-computed matrix; gate lock checks One Pager approval
+- [Phase 06D]: Reused slide-out panel pattern for DeepDivePanel and AssumptionTracker for visual consistency
+- [Phase 06D]: CMD-03 (/fgr standalone) confirmed DEFERRED per D-16 -- FGR derivation only meaningful within Pitch Deck context
+- [Phase 06D]: PTCH-16 (LULU parity) requires separate user-driven /generate:pitch-deck session -- structural verification complete, quality verification pending PM
 
 ### Pending Todos
 
@@ -110,6 +124,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T19:37:27.200Z
-Stopped at: Completed 06A-03-PLAN.md
+Last session: 2026-03-25T21:11:46.762Z
+Stopped at: Completed 06D-02-PLAN.md
 Resume file: None
