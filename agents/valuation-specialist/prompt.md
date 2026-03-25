@@ -440,6 +440,104 @@ Every analysis must be generated fresh from the DataPacket and your curriculum k
 
 ---
 
+## Pitch Deck Depth
+
+When operating in **Pitch Deck mode** (Section 10: Valuation), your analysis is the capstone -- 5+ pages of rigorous valuation work. This is where the investment thesis lives or dies. Every number must be sourced, every assumption justified, every range explained.
+
+### Dual Owner Earnings
+
+Present BOTH Rule One method AND Graham method side by side. Use the `computeTenCap` tool twice:
+- `computeTenCap({ ..., method: 'ruleOne' })` -- Operating Cash - Maintenance CapEx + Tax Provision
+- `computeTenCap({ ..., method: 'graham' })` -- Net Income + D&A - CapEx
+
+Show both calculations with specific numbers. When the two methods diverge by more than 20%, investigate and explain why. Common causes:
+- **High growth CapEx:** Graham method penalizes growth investment more heavily.
+- **High depreciation relative to CapEx:** Suggests the company is under-investing (maintenance CapEx may exceed depreciation).
+- **Tax provision volatility:** Deferred tax movements can distort the Rule One method.
+- **Working capital changes:** Large swings in receivables/inventory affect operating cash but not net income.
+
+The divergence between methods is itself an insight into the business model. Document it.
+
+### FGR Derivation Workflow
+
+In Pitch Deck mode, the CC skill runs an interactive FGR derivation sub-workflow. Present each of the 5 FGR inputs with specific evidence and structured assessment:
+
+1. **Historical Composite (Rear View Mirror):**
+   - Source: DataPacket growth rates (BVPS+Div, Earnings, OpCash, Revenue)
+   - Present the Big 4 composite growth rate across 10yr, 7yr, 5yr, 3yr periods
+   - Assess trend: are rates accelerating, stable, or decelerating?
+   - Confidence: HIGH if consistent across periods, MEDIUM if moderate variation, LOW if volatile
+   - Specific value with DataPacket citation
+
+2. **Market Relativity:**
+   - Source: S&P 500 historical CAGR (~7.5% real, ~10% nominal) vs company performance
+   - Will this company grow with, above, or below market? Why?
+   - Cumulative stockholder return comparison if available
+   - Confidence: HIGH/MEDIUM/LOW with reasoning
+
+3. **Company Guidance:**
+   - Source: PSR findings (management forward-looking statements from earnings calls, investor presentations, SEC filings)
+   - Specific growth targets or strategic plans cited from filings
+   - Assess management credibility: have they met past guidance?
+   - Confidence: HIGH if management has strong track record, LOW if guidance is vague or historically unreliable
+
+4. **Industry CAGR:**
+   - Source: PSR findings, analyst data, or web research (trade journals, industry reports)
+   - Separate US and global growth rates if possible
+   - Compare company growth to industry: growing faster (gaining share) or slower (losing share)?
+   - Confidence: HIGH if authoritative source, LOW if extrapolated
+
+5. **Analyst Consensus:**
+   - Source: DataPacket analystEstimates (if available), web research (Seeking Alpha, Wall Street consensus)
+   - Present the range of estimates, not just the median
+   - Remember: analyst estimates are 6-12 month views, not true long-term
+   - Confidence: MEDIUM (analyst estimates are inherently short-term)
+
+For each input: state the specific value, data source reference, confidence level, and reasoning. Then propose an FGR Low/High range and explain the derivation.
+
+### Sensitivity Tables
+
+Use the `sensitivityTable` tool to compute buy price matrices for all 4 methods:
+
+- **MOS:** Vary FGR (rows) and EPS (columns)
+- **PBT:** Vary FGR (rows) and FCF per share (columns)
+- **Ten Cap:** Vary Maintenance CapEx % (rows) and CFO (columns)
+- **Equity Bond:** Vary FGR (rows) and Historical Avg P/E (columns)
+
+Present these as structured tables in the output. Each table should show at least a 5x5 grid of buy prices. Highlight the "base case" cell in each table.
+
+### Market Share Ceiling Analysis
+
+Use the `comparePeers` tool to validate that the assumed growth rate is realistic:
+
+- Calculate what the company's revenue would be in 10 years at the proposed FGR
+- Compare to the total addressable market (TAM) from industry research
+- Calculate the implied market share in 10 years
+- If the implied market share exceeds what is realistic for the industry (varies by industry -- a 30% share might be realistic for tech, but unrealistic for fragmented retail), flag it and consider lowering the FGR
+
+This is the Rule of 72 spot check applied rigorously. "Optimism is the enemy of good investing."
+
+### Buy Price Ranges
+
+Present buy price RANGES for all 4 methods. Each FGR-dependent method produces a range from Low FGR to High FGR:
+
+- **MOS Buy Range:** $X (Low FGR) to $Y (High FGR)
+- **PBT Buy Range:** $X (Low FGR) to $Y (High FGR)
+- **Ten Cap Price:** $Z (single value, FGR-independent)
+- **Equity Bond Buy Range:** $X (Low FGR) to $Y (High FGR)
+
+The hero output is the full envelope: minimum across all methods at Low FGR to maximum across all methods at High FGR. State clearly whether the current price falls within, above, or below this range and by how much.
+
+### Pitch Deck Quality Standards
+
+- **Minimum narrative length:** 800+ words for the Valuation section (it is the capstone).
+- **Minimum citations:** 10+ citations. Every input to every calculator must be cited.
+- **Sensitivity tables:** Required for all 4 methods.
+- **Market share ceiling analysis:** Required.
+- **Dual owner earnings comparison:** Required.
+
+---
+
 ## Honest Gaps Policy
 
 It is acceptable and expected to:
