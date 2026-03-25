@@ -433,9 +433,94 @@ function irEventsPlugin() {
   };
 }
 
+// Thes1s report file server middleware.
+// Serves generated One Pager / Pitch Deck / Full Story JSON from .thes1s/reports/
+// to the browser. Three endpoints:
+//   GET /api/thes1s/reports          — list tickers with one-pager.json
+//   GET /api/thes1s/reports/:ticker/one-pager  — serve one-pager.json
+//   GET /api/thes1s/reports/:ticker/progress   — serve progress.json
+function thes1sReportsPlugin() {
+  let fs = null;
+  let path = null;
+
+  return {
+    name: 'thes1s-reports',
+    configureServer(server) {
+      server.middlewares.use('/api/thes1s/reports', async (req, res) => {
+        try {
+          // Lazy-load fs and path on first invocation
+          if (!fs) {
+            fs = await import('fs');
+            path = await import('path');
+          }
+
+          const reportsDir = path.join(process.cwd(), '.thes1s', 'reports');
+
+          // Parse URL path: req.url is relative to the middleware mount point
+          // e.g. "/" for listing, "/COST/one-pager" for report, "/COST/progress" for progress
+          const urlPath = (req.url || '/').replace(/^\//, '').split('?')[0];
+
+          // Listing endpoint: /api/thes1s/reports (urlPath is empty or "/")
+          if (!urlPath) {
+            if (!fs.existsSync(reportsDir)) {
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ tickers: [] }));
+              return;
+            }
+            const entries = fs.readdirSync(reportsDir, { withFileTypes: true });
+            const tickers = entries
+              .filter(e => e.isDirectory())
+              .filter(e => fs.existsSync(path.join(reportsDir, e.name, 'one-pager.json')))
+              .map(e => e.name);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ tickers }));
+            return;
+          }
+
+          // Ticker-specific endpoints: /TICKER/one-pager or /TICKER/progress
+          const parts = urlPath.split('/');
+          if (parts.length < 2) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Invalid path — expected /:ticker/one-pager or /:ticker/progress' }));
+            return;
+          }
+
+          const ticker = parts[0].toUpperCase();
+          const fileType = parts[1];
+          const fileMap = {
+            'one-pager': 'one-pager.json',
+            'progress': 'progress.json',
+          };
+          const fileName = fileMap[fileType];
+
+          if (!fileName) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: `Unknown file type: ${fileType}` }));
+            return;
+          }
+
+          const filePath = path.join(reportsDir, ticker, fileName);
+          if (!fs.existsSync(filePath)) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Not found' }));
+            return;
+          }
+
+          const content = fs.readFileSync(filePath, 'utf-8');
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(content);
+        } catch (e) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: e.message }));
+        }
+      });
+    },
+  };
+}
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), yahooSummaryPlugin(), finvizPlugin(), gurufocusPlugin(), yahooQuotesPlugin(), irEventsPlugin()],
+  plugins: [react(), yahooSummaryPlugin(), finvizPlugin(), gurufocusPlugin(), yahooQuotesPlugin(), irEventsPlugin(), thes1sReportsPlugin()],
   server: {
     proxy: {
       // Yahoo Finance doesn't send CORS headers, so browser blocks direct calls.
