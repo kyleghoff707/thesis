@@ -21,10 +21,11 @@ must_haves:
     - "SectionRenderer handles missing narrative field without errors"
     - "CitationTooltip renders superscript numbers with hover tooltip showing source and value"
     - "CitationTooltip handles all 3 citation types with distinct formatting"
+    - "camelToTitle and formatDataValue helpers pass sectionRenderer.test.js"
   artifacts:
     - path: "src/components/SectionRenderer.jsx"
       provides: "Reusable report section display with narrative, data, citations, red flags, cross-cutting findings"
-      exports: ["default"]
+      exports: ["default", "_testExports"]
       min_lines: 100
     - path: "src/components/CitationTooltip.jsx"
       provides: "Inline citation superscript with tooltip and 3-type formatting"
@@ -56,7 +57,7 @@ Build the reusable SectionRenderer component that transforms report section JSON
 
 Purpose: SectionRenderer is the core rendering engine for all report sections. It takes a section object from the One Pager JSON and renders it as a complete visual block with verdict badge, confidence indicator, prose narrative, structured data, red flag callouts, cross-cutting findings, and inline citations. This component is reused for all 6 One Pager sections and will be reused for Pitch Deck and Full Story sections in later phases.
 
-Output: SectionRenderer.jsx, CitationTooltip.jsx, RedFlagCallout.jsx
+Output: SectionRenderer.jsx (with _testExports for camelToTitle + formatDataValue), CitationTooltip.jsx, RedFlagCallout.jsx
 </objective>
 
 <execution_context>
@@ -77,6 +78,7 @@ Output: SectionRenderer.jsx, CitationTooltip.jsx, RedFlagCallout.jsx
 @src/components/CollapsibleSection.jsx
 @.thes1s/reports/COST/one-pager.json
 @src/schemas/reportSection.js
+@src/components/__tests__/sectionRenderer.test.js
 
 <interfaces>
 <!-- The COST One Pager JSON section structure (verified from real data) -->
@@ -128,6 +130,14 @@ From Plan 01 outputs:
 // VerdictBadge: <VerdictBadge verdict="PASS" size="default" />
 // ConfidenceBadge: <ConfidenceBadge confidence="HIGH" />
 ```
+
+From Plan 01 test scaffolds:
+```javascript
+// sectionRenderer.test.js expects:
+//   import { _testExports } from '../SectionRenderer.jsx'
+//   _testExports.camelToTitle('mosBuyPrice') === 'MOS Buy Price'
+//   _testExports.formatDataValue('currentPrice', 972.33) === dollar string
+```
 </interfaces>
 </context>
 
@@ -137,7 +147,7 @@ From Plan 01 outputs:
   <name>Task 1: CitationTooltip and RedFlagCallout sub-components</name>
   <files>src/components/CitationTooltip.jsx, src/components/RedFlagCallout.jsx</files>
   <read_first>
-    - src/theme.js (C palette — C.yellowBg, C.yellow, C.redBg, C.red, C.tooltipBg, C.tooltipText, C.accent, C.textSecondary)
+    - src/theme.js (C palette -- C.yellowBg, C.yellow, C.redBg, C.red, C.tooltipBg, C.tooltipText, C.accent, C.textSecondary)
     - src/schemas/reportSection.js (CitationSchema: { id, ref, text, source })
     - .thes1s/reports/COST/one-pager.json (verify citations are empty [], verify redFlags is array of strings)
     - src/components/CollapsibleSection.jsx (reference for inline style patterns and animation)
@@ -168,7 +178,7 @@ From Plan 01 outputs:
     - Tooltip style: `background: C.tooltipBg`, `color: C.tooltipText`, `padding: '6px 10px'`, `borderRadius: 6`, `fontSize: 11`, `lineHeight: 1.4`, `whiteSpace: 'nowrap'` (with max-width 300px and text wrap for long content), `boxShadow: '0 2px 8px rgba(0,0,0,0.15)'`, `zIndex: 1000`.
     - Show on `onMouseEnter`, hide on `onMouseLeave`.
 
-    **Click behavior:** Calls `onClick(citation)` prop — the parent (SectionRenderer/OnePager) handles navigation/scrolling to reference list.
+    **Click behavior:** Calls `onClick(citation)` prop -- the parent (SectionRenderer/OnePager) handles navigation/scrolling to reference list.
 
     Export: `export default function CitationTooltip({ citation, onClick })`.
 
@@ -218,21 +228,34 @@ From Plan 01 outputs:
 </task>
 
 <task type="auto">
-  <name>Task 2: SectionRenderer — the core report section display component</name>
+  <name>Task 2: SectionRenderer with _testExports for camelToTitle and formatDataValue</name>
   <files>src/components/SectionRenderer.jsx</files>
   <read_first>
-    - .thes1s/reports/COST/one-pager.json (ALL 6 sections — understand what data is present/absent in each)
+    - .thes1s/reports/COST/one-pager.json (ALL 6 sections -- understand what data is present/absent in each)
     - src/components/VerdictBadge.jsx (import and use for section verdict)
     - src/components/ConfidenceBadge.jsx (import and use for section confidence)
     - src/components/RedFlagCallout.jsx (import and use for red flags)
     - src/components/CitationTooltip.jsx (import renderTextWithCitations for narrative)
     - src/theme.js (C palette)
-    - src/schemas/reportSection.js (ReportSectionSchema fields — the contract)
+    - src/schemas/reportSection.js (ReportSectionSchema fields -- the contract)
+    - src/components/__tests__/sectionRenderer.test.js (test expectations to satisfy -- camelToTitle, formatDataValue)
   </read_first>
   <action>
     **src/components/SectionRenderer.jsx — Reusable section display per ONEP-04:**
 
     Props: `{ section, sectionId, onCitationClick }` where section is a ReportSectionSchema object, sectionId is used for scroll anchoring (e.g., `id="section-company_info"`), onCitationClick is passed down to CitationTooltip.
+
+    **CRITICAL: Extract pure helper functions for testing.** The following helpers MUST be defined as standalone functions (not inside the component) and exported via `_testExports`:
+
+    1. `camelToTitle(str)` — Convert camelCase to Title Case. Split on capital letters, capitalize first letter of each word. Handle acronyms: "mos" -> "MOS", "pbt" -> "PBT", "fgr" -> "FGR". Implementation: `str.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim()`. Then apply acronym map: `{ mos: 'MOS', pbt: 'PBT', fgr: 'FGR', pe: 'P/E' }` for known financial terms.
+
+    2. `formatDataValue(key, value)` — Format a data value based on its key and type:
+       - If value is object with `low` and `high` keys: render as range "$X.XX - $Y.YY" (toLocaleString with 2 decimals). If key contains "FGR" or "fgr", format as percentage range.
+       - If value is number and key contains "Price" or "price": format as dollar "$X.XX"
+       - If value is number and key contains "FGR" or "fgr": format as percentage "X.X%"
+       - If value is number: format with 2 decimals
+       - If value is string: return as-is
+       - If value is null/undefined: return '--'
 
     The component renders a complete section card. Layout from top to bottom:
 
@@ -248,31 +271,24 @@ From Plan 01 outputs:
     - Content: `section.summary` in `fontSize: 13`, `color: C.text`, `lineHeight: 1.6`
 
     **3. Verdict Rationale (Primary Prose):**
-    - `section.verdictRationale` — this is the main body text
+    - `section.verdictRationale` -- this is the main body text
     - Render with `renderTextWithCitations(verdictRationale, section.citations, onCitationClick)` to inject any inline citation links
     - Style: `fontSize: 13`, `color: C.text`, `lineHeight: 1.7`, `marginBottom: 16`
 
-    **4. Narrative (Optional — future-proofing):**
+    **4. Narrative (Optional -- future-proofing):**
     - Only render if `section.narrative` exists and is non-empty string
     - Render with `renderTextWithCitations(narrative, section.citations, onCitationClick)`
     - Style same as verdictRationale but with a subtle top border separator
 
     **5. Structured Data (Only for sections with non-empty `data`):**
     - Only render if `section.data` is truthy and has keys: `Object.keys(section.data).length > 0`
-    - Render as formatted key-value pairs in a grid layout
+    - Render as formatted key-value pairs in a grid layout using `camelToTitle(key)` for labels and `formatDataValue(key, value)` for values
     - Grid: `display: 'grid'`, `gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))'`, `gap: 12`, `marginBottom: 16`
     - Each data item: card-like box with `background: C.bgCard`, `border: '1px solid ' + C.border`, `borderRadius: 6`, `padding: '10px 12px'`
-    - Label: camelCase key converted to title case with helper `camelToTitle(key)` — e.g., "mosBuyPrice" -> "MOS Buy Price", "currentPrice" -> "Current Price"
-    - Value: Format based on type:
-      - If value is object with `low` and `high` keys: render as range "$X.XX - $Y.YY" using `fmtDollar` style (toLocaleString with 2 decimals)
-      - If value is number and key contains "Price" or "price": format as dollar "$X.XX"
-      - If value is number and key contains "FGR" or "fgr": format as percentage "X.X%"
-      - If value is number: format with 2 decimals
-      - If value is string: render as-is
     - Label style: `fontSize: 10`, `fontWeight: 600`, `color: C.textMuted`, `textTransform: 'uppercase'`, `letterSpacing: '0.04em'`, `marginBottom: 4`
     - Value style: `fontSize: 14`, `fontWeight: 700`, `color: C.text`
 
-    **6. Tables (Optional — schema-defined but not in current data):**
+    **6. Tables (Optional -- schema-defined but not in current data):**
     - Only render if `section.tables` exists and is non-empty array
     - For each table: render `table.title` as header, then an HTML `<table>` with `table.headers` as `<thead>` and `table.rows` as `<tbody>`
     - Table styles: `width: '100%'`, `borderCollapse: 'collapse'`, cells with `padding: '8px 12px'`, `borderBottom: '1px solid ' + C.borderLight`, `fontSize: 12`
@@ -282,7 +298,7 @@ From Plan 01 outputs:
     - Header: "Cross-Cutting Findings" in `fontSize: 12`, `fontWeight: 600`, `color: C.textMuted`, `textTransform: 'uppercase'`, `marginBottom: 8`
     - Each finding as a small card: `background: C.bg`, `borderRadius: 6`, `padding: '8px 12px'`, `marginBottom: 6`
     - Finding text: `fontSize: 12`, `color: C.text`, `lineHeight: 1.5`
-    - Severity indicator: small dot (6x6 circle) — high: `C.red`, medium: `C.yellow`, low: `C.green`
+    - Severity indicator: small dot (6x6 circle) -- high: `C.red`, medium: `C.yellow`, low: `C.green`
     - Source: `fontSize: 11`, `color: C.textMuted`, `marginTop: 2`
 
     **8. Red Flags:**
@@ -290,15 +306,23 @@ From Plan 01 outputs:
 
     **Outer wrapper:** Card style matching existing CollapsibleSection: `border: '1px solid ' + C.border`, `borderRadius: 8`, `padding: '16px 20px'`, `marginBottom: 20`, `background: C.bgCard`, `boxShadow: '0 1px 3px 0 rgba(0,0,0,0.04)'`.
 
-    **Helper function `camelToTitle(str)`:** Convert camelCase to Title Case. Split on capital letters, capitalize first letter of each word. Handle acronyms: "mos" -> "MOS", "pbt" -> "PBT", "fgr" -> "FGR". Implementation: `str.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim()`. Then apply acronym map: `{ mos: 'MOS', pbt: 'PBT', fgr: 'FGR', pe: 'P/E' }` for known financial terms.
+    **Export both the component and test helpers:**
+    ```javascript
+    export default function SectionRenderer({ section, sectionId, onCitationClick }) { ... }
+    export const _testExports = { camelToTitle, formatDataValue };
+    ```
 
-    Export: `export default function SectionRenderer({ section, sectionId, onCitationClick })`.
+    **After creating the component, run the sectionRenderer tests to confirm they pass (Red -> Green).**
   </action>
   <verify>
-    <automated>grep -q "export default function SectionRenderer" src/components/SectionRenderer.jsx &amp;&amp; grep -q "import VerdictBadge" src/components/SectionRenderer.jsx &amp;&amp; grep -q "import ConfidenceBadge" src/components/SectionRenderer.jsx &amp;&amp; grep -q "import RedFlagCallout" src/components/SectionRenderer.jsx &amp;&amp; grep -q "renderTextWithCitations" src/components/SectionRenderer.jsx &amp;&amp; grep -q "crossCuttingFindings" src/components/SectionRenderer.jsx &amp;&amp; grep -q "scrollMarginTop" src/components/SectionRenderer.jsx &amp;&amp; npm test &amp;&amp; echo "PASS" || echo "FAIL"</automated>
+    <automated>npx vitest run src/components/__tests__/sectionRenderer.test.js -x &amp;&amp; grep -q "export default function SectionRenderer" src/components/SectionRenderer.jsx &amp;&amp; grep -q "_testExports" src/components/SectionRenderer.jsx &amp;&amp; grep -q "import VerdictBadge" src/components/SectionRenderer.jsx &amp;&amp; grep -q "import RedFlagCallout" src/components/SectionRenderer.jsx &amp;&amp; echo "PASS" || echo "FAIL"</automated>
   </verify>
   <acceptance_criteria>
+    - npx vitest run src/components/__tests__/sectionRenderer.test.js passes
     - grep -q "export default function SectionRenderer" src/components/SectionRenderer.jsx
+    - grep -q "_testExports" src/components/SectionRenderer.jsx (test-only exports)
+    - grep -q "camelToTitle" src/components/SectionRenderer.jsx (title formatting helper)
+    - grep -q "formatDataValue" src/components/SectionRenderer.jsx (value formatting helper)
     - grep -q "import VerdictBadge" src/components/SectionRenderer.jsx (uses VerdictBadge)
     - grep -q "import ConfidenceBadge" src/components/SectionRenderer.jsx (uses ConfidenceBadge)
     - grep -q "import RedFlagCallout" src/components/SectionRenderer.jsx (uses RedFlagCallout)
@@ -310,18 +334,18 @@ From Plan 01 outputs:
     - grep -q "section.narrative" src/components/SectionRenderer.jsx (handles optional narrative)
     - grep -q "section.tables" src/components/SectionRenderer.jsx (handles optional tables)
     - grep -q "scrollMarginTop" src/components/SectionRenderer.jsx (scroll offset for sticky header)
-    - grep -q "sectionId" src/components/SectionRenderer.jsx (anchor id for scroll nav)
     - grep -q "import { C } from" src/components/SectionRenderer.jsx (uses C palette)
     - npm test passes
   </acceptance_criteria>
   <done>
-    SectionRenderer renders a complete report section card from JSON: header with section number + title + verdict badge + confidence badge, summary callout, verdict rationale as primary prose with inline citations, optional narrative, structured data grid (buy prices, FGR), optional tables, cross-cutting findings with severity dots, and red flag callout. Handles all 6 COST sections correctly, including valuation_summary which has structured data. Gracefully handles empty citations, missing narrative, and missing tables.
+    SectionRenderer renders a complete report section card from JSON: header with section number + title + verdict badge + confidence badge, summary callout, verdict rationale as primary prose with inline citations, optional narrative, structured data grid (buy prices, FGR), optional tables, cross-cutting findings with severity dots, and red flag callout. Exports _testExports.camelToTitle and _testExports.formatDataValue, and sectionRenderer.test.js passes. Handles all 6 COST sections correctly, including valuation_summary which has structured data.
   </done>
 </task>
 
 </tasks>
 
 <verification>
+- `npx vitest run src/components/__tests__/sectionRenderer.test.js` passes
 - SectionRenderer correctly renders all 6 COST One Pager sections (verified by visual inspection in Plan 03)
 - Empty citations array produces no visual artifacts
 - Missing narrative field produces no errors
@@ -333,6 +357,8 @@ From Plan 01 outputs:
 
 <success_criteria>
 - SectionRenderer transforms report section JSON into rich visual display
+- SectionRenderer exports _testExports with camelToTitle and formatDataValue
+- sectionRenderer.test.js passes with all camelToTitle and formatDataValue test cases
 - CitationTooltip renders 3 citation types with distinct formatting and hover tooltips
 - RedFlagCallout renders amber warning boxes with bulleted flags
 - All 6 COST sections render without errors when fed real JSON data
