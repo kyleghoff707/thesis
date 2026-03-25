@@ -23,7 +23,8 @@
   "pitchDeck": {
     "preProcessing": [
       { "step": "data-assembly", "agent": "data-assembler", "parallel": false },
-      { "step": "primary-source-reading", "agent": "primary-source-reader", "parallel": false, "dependsOn": "data-assembly" }
+      { "step": "annual-reading", "agent": "annual-reader", "parallel": false, "dependsOn": "data-assembly" },
+      { "step": "quarterly-reading", "agent": "quarterly-reader", "parallel": true, "dependsOn": "data-assembly" }
     ],
     "phases": [
       {

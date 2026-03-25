@@ -25,7 +25,9 @@ Every reference file exists because it prevents a specific class of failure.
 
 | Agent | Brief | Model | Sections |
 |-------|-------|-------|----------|
-| Primary Source Reader | [primary-source-reader-brief.md](primary-source-reader-brief.md) | Opus | Pre-processing |
+| Primary Source Reader | [primary-source-reader-brief.md](primary-source-reader-brief.md) | Opus | Pre-processing (legacy -- see annual-reader + quarterly-reader) |
+| Annual Reader | [annual-reader-brief.md](annual-reader-brief.md) | Opus | Pre-processing (10-K, proxy, shareholder letters) |
+| Quarterly Reader | [quarterly-reader-brief.md](quarterly-reader-brief.md) | Opus | Pre-processing (10-Q, transcripts, promise tracking) |
 | Financial Analyst | [financial-analyst-brief.md](financial-analyst-brief.md) | Sonnet | OP 3-4, PD 5/7/8, FS 5 |
 | Business Analyst | [business-analyst-brief.md](business-analyst-brief.md) | Sonnet | OP 1-2, PD 1-2, FS 2-3 |
 | Competitor Evaluator | [competitor-evaluator-brief.md](competitor-evaluator-brief.md) | Sonnet | PD 3-4, FS 3 |
