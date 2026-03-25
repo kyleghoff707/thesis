@@ -26,7 +26,7 @@ export default function ConfidenceBadge({ confidence }) {
       background: style.bg,
       color: style.color,
     }}>
-      {confidence}
+      CONFIDENCE: {confidence}
     </span>
   );
 }
