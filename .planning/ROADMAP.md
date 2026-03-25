@@ -109,12 +109,12 @@ Plans:
   3. FGR derivation workflow walks the user through 5 inputs (Historical, Market Relativity, Company Guidance, Industry CAGR, Analyst Consensus) with user confirmation before valuation calculations proceed
   4. Sensitivity tables vary FGR/EPS/CapEx% across all 4 valuation methods (MOS, PBT, Ten Cap, Equity Bond) and display buy price ranges
   5. Generated Pitch Deck achieves full parity (and deeper) vs LULU Pitch Deck benchmark -- every section as thorough, with competitor benchmarking (15+ peers), market share ceiling analysis, and dual owner earnings (user-verified)
-**Plans:** 12 plans
+**Plans:** 2/12 plans executed
 **UI hint**: yes
 
 Plans:
-- [ ] 06A-01-PLAN.md — New PSR agent directories (annual-reader + quarterly-reader) + configs + briefs + dispatch-table update
-- [ ] 06A-02-PLAN.md — Light update pass on 4 existing agent prompts for Pitch Deck depth
+- [x] 06A-01-PLAN.md — New PSR agent directories (annual-reader + quarterly-reader) + configs + briefs + dispatch-table update
+- [x] 06A-02-PLAN.md — Light update pass on 4 existing agent prompts for Pitch Deck depth
 - [ ] 06A-03-PLAN.md — Author competitor-evaluator prompt via /writing-skills
 - [ ] 06A-04-PLAN.md — Author management-evaluator prompt via /writing-skills
 - [ ] 06A-05-PLAN.md — Author risk-analyst prompt via /writing-skills
@@ -163,6 +163,6 @@ Phases execute: 5A -> 5C -> 5B -> 5D -> 6 -> 7 -> 8
 | 5C. CC Skill + First Analysis | M2 | 0/4 | Planning complete | - |
 | 5B. One Pager Display Components | M2 | 0/3 | Planning complete | - |
 | 5D. Quality System | M2 | 0/3 | Planning complete | - |
-| 6. Pitch Deck | M3 | 0/12 | Planning complete | - |
+| 6. Pitch Deck | M3 | 2/12 | In Progress|  |
 | 7. Full Story & Debate | M4 | 0/? | Not started | - |
 | 8. Polish & Export | M5 | 0/? | Not started | - |

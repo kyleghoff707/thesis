@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 6 plans complete — 12 plans in 7 waves
-last_updated: "2026-03-25T19:02:20.292Z"
+status: Ready to execute
+stopped_at: Completed 06A-03-PLAN.md
+last_updated: "2026-03-25T19:37:27.209Z"
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 27
-  completed_plans: 19
+  completed_plans: 21
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours -- delivered in minutes, with zero shortcuts on rigor.
-**Current focus:** Phase 05D — quality-system
+**Current focus:** Phase 06 — pitch-deck
 
 ## Current Position
 
-Phase: 6
-Plan: Not started
+Phase: 06 (pitch-deck) — EXECUTING
+Plan: 6 of 12
 
 ## Performance Metrics
 
@@ -56,7 +56,11 @@ Plan: Not started
 | Phase 05D P02 | 2min | 1 tasks | 2 files |
 | Phase 05D P01 | 5min | 2 tasks | 4 files |
 | Phase 05D P03 | 23min | 2 tasks | 2 files |
-| Phase 06A P06 | 11min | 2 tasks | 2 files |
+| Phase 06A P01 | 3min | 2 tasks | 8 files |
+| Phase 06A P02 | 5min | 2 tasks | 4 files |
+| Phase 06A P05 | 4min | 1 tasks | 1 files |
+| Phase 06A P04 | 6min | 1 tasks | 1 files |
+| Phase 06A P03 | 6min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -87,9 +91,12 @@ Recent decisions affecting current work:
 - [Phase 05D]: Quality checks are informational, never blocking (per D-04) -- report saves first, quality runs after
 - [Phase 05D]: Retry-then-escalate: 1 retry with error context, then save partial with status failed (per D-05/D-06)
 - [Phase 05D]: Budget tracking is observational -- measures cost without enforcement
-- [Phase 06A]: Annual-reader has readFilingSection only -- no transcript access (clean separation per D-08)
-- [Phase 06A]: Promise tracker uses 5-status lifecycle: fulfilled, partially_fulfilled, missed, revised, pending
-- [Phase 06A]: Cross-validation severity: low (<1%), medium (1-5%), high (>5%) -- SEC always source of truth
+- [Phase 06A]: PSR split: annual-reader (10-K/proxy) + quarterly-reader (10-Q/transcripts) with parallel dispatch after data-assembly
+- [Phase 06A]: Agent prompt layering: base curriculum (One Pager) + additive depth sections (Pitch Deck) in same file per D-03
+- [Phase 06A]: Pitch Deck verdict weighting: moat+financial heaviest, PEST lightest, management contextual
+- [Phase 06A]: Risk-analyst prompt: 3 red flag minimum per PEST section (higher bar than other agents), FGR attack methodology, cyclical risk assessment with cycle position matrix
+- [Phase 06A]: Embedded all 43 gurus inline in management-evaluator prompt rather than referencing external file
+- [Phase 06A]: Competitor-evaluator prompt uses 4-tier market share ceiling verdict (realistic/ambitious/unrealistic/implausible) and 15-point moat checklist scoring
 
 ### Pending Todos
 
@@ -103,6 +110,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T19:40:00Z
-Stopped at: Completed 06A-06-PLAN.md (annual-reader + quarterly-reader prompts)
-Resume file: .planning/phases/06-pitch-deck/06B-01-PLAN.md
+Last session: 2026-03-25T19:37:27.200Z
+Stopped at: Completed 06A-03-PLAN.md
+Resume file: None

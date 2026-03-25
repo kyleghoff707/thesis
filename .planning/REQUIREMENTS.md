@@ -45,11 +45,11 @@
 - [ ] **PTCH-05**: `SensitivityTable.jsx` — vary FGR/EPS/CapEx% across MOS/PBT/TenCap/EquityBond
 - [ ] **PTCH-06**: FGR derivation workflow — 5 inputs (Historical, Market Relativity, Company Guidance, Industry CAGR, Analyst Consensus) with user confirmation
 - [x] **PTCH-07**: Primary Source Reader — 10-K text (business desc, risk factors, MD&A), transcripts (themes, tone, Q&A), proxy (comp, ownership, board), data verification against DataPacket
-- [ ] **PTCH-08**: Competitor benchmarking — 15+ peers via peer metrics engine + agent qualitative analysis
-- [ ] **PTCH-09**: Market share ceiling analysis — prove growth rate doesn't require unrealistic market dominance
-- [ ] **PTCH-10**: Dual Owner Earnings — Rule One method AND Graham method side by side
-- [ ] **PTCH-11**: Cyclical business handling — CAGR from "first positive year," multiple capex ratios (through-cycle, expansion-only)
-- [ ] **PTCH-12**: Acquisition history tracking — table of all acquisitions with dates, amounts, strategic rationale
+- [x] **PTCH-08**: Competitor benchmarking — 15+ peers via peer metrics engine + agent qualitative analysis
+- [x] **PTCH-09**: Market share ceiling analysis — prove growth rate doesn't require unrealistic market dominance
+- [x] **PTCH-10**: Dual Owner Earnings — Rule One method AND Graham method side by side
+- [x] **PTCH-11**: Cyclical business handling — CAGR from "first positive year," multiple capex ratios (through-cycle, expansion-only)
+- [x] **PTCH-12**: Acquisition history tracking — table of all acquisitions with dates, amounts, strategic rationale
 - [ ] **PTCH-13**: "Tell me more" deep-dive on any section point (targeted drill-down, not regeneration)
 - [ ] **PTCH-14**: Industry context cards — pop-up glossary for industry-specific terms and KPIs
 - [ ] **PTCH-15**: Assumption tracker sidebar with confidence levels — central registry, changes cascade through affected sections
@@ -155,11 +155,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PTCH-05 | Phase 6 | Pending |
 | PTCH-06 | Phase 6 | Pending |
 | PTCH-07 | Phase 6 | Complete |
-| PTCH-08 | Phase 6 | Pending |
-| PTCH-09 | Phase 6 | Pending |
-| PTCH-10 | Phase 6 | Pending |
-| PTCH-11 | Phase 6 | Pending |
-| PTCH-12 | Phase 6 | Pending |
+| PTCH-08 | Phase 6 | Complete |
+| PTCH-09 | Phase 6 | Complete |
+| PTCH-10 | Phase 6 | Complete |
+| PTCH-11 | Phase 6 | Complete |
+| PTCH-12 | Phase 6 | Complete |
 | PTCH-13 | Phase 6 | Pending |
 | PTCH-14 | Phase 6 | Pending |
 | PTCH-15 | Phase 6 | Pending |
