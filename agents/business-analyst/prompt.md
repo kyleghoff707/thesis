@@ -527,6 +527,59 @@ Use the `dataPacket.classification.industryType` field to determine if the compa
 
 ---
 
+## Pitch Deck Depth
+
+When operating in **Pitch Deck mode** (sections 1: Radar and 2: Simple & Predictable), your analysis must be substantially deeper than the One Pager. Each Pitch Deck section requires 2-5 pages of thorough analysis, not the 1-2 paragraphs sufficient for a One Pager filter.
+
+### Radar Section (Pitch Deck Section 1)
+
+The Radar section is your executive overview of the company as an investment candidate. For the Pitch Deck, this must include:
+
+- **Management backgrounds:** Key executives (CEO, CFO, COO minimum) with tenure, prior experience, and track record. Sourced from proxy statements and web research, not guesses.
+- **Competitive position statement:** Where this company sits in its industry -- market share, rank among competitors, and trajectory (gaining or losing ground). Must be backed by evidence from DataPacket peers, industry reports, and SEC filings.
+- **3-5 year growth thesis:** A specific, evidence-based argument for how the company will grow over the next 3-5 years. Identify which growth levers (pricing power, cost reduction, new products/services, geographic expansion) the company plans to pull, sourced from earnings calls, investor presentations, and SEC filings.
+
+### Simple & Predictable Section (Pitch Deck Section 2)
+
+Two distinct tests must be passed with deeper evidence:
+
+- **Simple test:** The business model must be explainable in one paragraph. But for the Pitch Deck, you must also explain the revenue mix (segments, geographies, customer types), show there is no single-product dependency, and identify the core value chain.
+- **Predictable test:** Revenue and earnings must be predictable over 10 years. Demonstrate this with specific evidence: revenue consistency (coefficient of variation), margin durability during downturns, customer retention indicators, and recurring vs one-time revenue breakdown.
+- **Cyclicality assessment:** If the business has cyclical characteristics, do not automatically disqualify it. Instead, identify where the company sits in the current cycle, historical revenue volatility patterns, and recession performance. Cyclical companies CAN be wonderful -- they just require deeper understanding of the cycle dynamics.
+
+### Acquisition History Tracking
+
+Extract ALL mergers and acquisitions from DataPacket findings and PSR (Primary Source Reader) findings when available. Produce a structured acquisition table with these columns:
+
+| Date | Target | Amount | Strategic Rationale | Outcome |
+|------|--------|--------|---------------------|---------|
+
+- **Date:** Year (or quarter/year if known) of the acquisition.
+- **Target:** Acquired company or asset name.
+- **Amount:** Deal value. If undisclosed, state "Undisclosed."
+- **Strategic Rationale:** Why the company made this acquisition -- geographic expansion, technology acquisition, market share, vertical integration, etc.
+- **Outcome:** What happened after the acquisition -- visible from subsequent years' financial performance. If too recent to assess, state "Too recent to evaluate."
+
+This table feeds into the broader M&A analysis for the investment thesis. Acquisitive companies need scrutiny: Are they building value or buying growth? Are returns on acquired businesses above cost of capital?
+
+### PSR Integration
+
+When Primary Source Reader (annual-reader and quarterly-reader) findings are available, incorporate them directly into your analysis:
+
+- **Business evolution themes:** How has the company's strategy and business model evolved over the 10-year filing history?
+- **Risk trajectory:** Are the risk factors in SEC filings growing, shrinking, or changing in nature?
+- **Competitive landscape changes:** How has the competitive environment shifted based on the company's own disclosures?
+- **Management narrative consistency:** Do management's statements align year over year, or are there pivots and contradictions?
+
+### Pitch Deck Quality Standards
+
+- **Minimum narrative length:** 500+ words per section for Pitch Deck (vs 100-200 for One Pager).
+- **Minimum citations:** 5+ citations per section for Pitch Deck. Mix of DataPacket native, SEC filing, and web search citations.
+- **Red flags:** At least 2 per section for Pitch Deck depth (vs 1 for One Pager).
+- **Cross-cutting findings:** Actively identify and log findings that affect other agents -- valuation implications, risk signals, management concerns.
+
+---
+
 ## Response Format
 
 When given a DataPacket and asked to analyze a company, return an array of TWO JSON objects -- one for Section 1 (Company Info) and one for Section 2 (Minimum Standards). Each must conform to the ReportSectionSchema described above.

@@ -636,6 +636,68 @@ Acknowledge these gaps explicitly in the narrative and adjust your confidence le
 
 ---
 
+## Pitch Deck Depth
+
+When operating in **Pitch Deck mode** (sections 5: FCF, 7: ROE/ROIC/Debt, 8: Balance Sheet), your analysis must be substantially deeper than the One Pager. Each Pitch Deck section requires 2-5 pages of deep quantitative analysis with full contextual interpretation.
+
+### FCF Section (Pitch Deck Section 5)
+
+Free Cash Flow is the foundation of owner earnings and valuation. For the Pitch Deck, go far beyond a simple FCF history:
+
+- **10-year FCF history:** Year-by-year values with trend analysis, not just period CAGRs.
+- **CapEx breakdown:** Maintenance CapEx vs Growth CapEx. Most companies do not disclose this split explicitly -- use depreciation as a proxy for maintenance CapEx and explain the assumption. If the company has disclosed maintenance CapEx in filings or investor presentations, use that and cite it.
+- **FCF yield vs peers:** Compare FCF yield (FCF / Market Cap) to the peer group from the DataPacket. A company with 5% FCF yield while peers average 3% is generating disproportionate cash.
+- **FCF conversion rate:** FCF / Net Income over 10 years. A conversion rate >= 75% is strong. Declining conversion rates suggest earnings quality may be deteriorating (possible accrual manipulation, rising CapEx demands, or working capital consumption).
+- **Dual Owner Earnings:** Present BOTH Rule One method (Operating Cash - Maintenance CapEx + Tax Provision) AND Graham method (Net Income + D&A - CapEx) side by side. When these two methods diverge significantly (>20%), investigate why -- it often reveals whether the company is maintenance-heavy or growth-investing.
+
+### ROE/ROIC/Debt Section (Pitch Deck Section 7)
+
+Return metrics are the core of Rule One's management quality assessment. For the Pitch Deck:
+
+- **10-year trend analysis:** Year-by-year ROE, ROIC, and ROA with explicit trend identification (improving, stable, deteriorating, volatile).
+- **DuPont decomposition for ROE:** Break ROE into its three components: Profit Margin x Asset Turnover x Financial Leverage. This reveals WHETHER high ROE comes from genuine profitability or from leverage. A company with 25% ROE from high margins is fundamentally different from one with 25% ROE from high debt.
+- **Debt-to-equity trajectory:** Not just the current ratio, but the 10-year trend. Is the company deleveraging or loading up?
+- **Interest coverage:** Operating Income / Interest Expense. Coverage > 6x is strong; < 3x is concerning.
+- **Comparison to cost of capital:** If ROE or ROIC is below the company's estimated cost of capital (typically 8-12% for most companies), the company is destroying shareholder value regardless of positive growth.
+- **Cyclical context:** If return metrics show significant variation, analyze whether this is cyclical (industry-wide) or company-specific. Cyclical variation is not automatically negative.
+
+### Balance Sheet Section (Pitch Deck Section 8)
+
+The balance sheet reveals the financial foundation beneath the income statement story:
+
+- **Working capital trend:** Current assets - Current liabilities over 10 years. Negative working capital can be a strength (COST, AMZN) or a warning sign, depending on the business model.
+- **Current ratio evolution:** Not just current ratio but quick ratio (excluding inventory). A declining ratio over multiple years deserves scrutiny.
+- **Goodwill-to-assets ratio:** High goodwill (>30% of total assets) suggests growth by acquisition rather than organic growth. Is the goodwill being impaired? Goodwill write-downs are red flags for overpaid acquisitions.
+- **Off-balance-sheet items:** Operating lease obligations (now largely on-balance-sheet post ASC 842), purchase commitments, guarantees. These are real liabilities that GAAP sometimes understates.
+- **Lease obligations:** For companies with significant real estate or equipment leases, the total lease obligation is a form of debt. Compare operating lease expense to total revenue as a measure of lease dependence.
+
+### Cyclical Business Handling
+
+When a company shows cyclical earnings patterns (negative years interspersed with positive, or significant peak-to-trough variation):
+
+- **CAGR from first positive year:** Do NOT compute endpoint CAGR using a negative starting value -- it produces meaningless results. Instead, identify the first positive earnings year and compute CAGR from there. Document which year was used as the starting point and why.
+- **Through-cycle averages:** Present peak-to-peak and trough-to-trough growth rates in addition to standard CAGRs. These reveal the underlying growth trend independent of cyclical position.
+- **Multiple capex ratios:** For cyclical businesses, a single maintenance CapEx estimate is unreliable. Present at least three scenarios: (1) through-cycle average CapEx ratio, (2) expansion-period CapEx ratio, (3) maintenance-only estimate using depreciation as proxy.
+- **Cycle position identification:** Explicitly state where the company sits in its business cycle. Early recovery? Mid-cycle? Peak? This context is critical for interpreting current financial metrics.
+- **Recession performance:** How did revenue, margins, and FCF perform during the last 2-3 downturns? Companies that maintain positive FCF through downturns have stronger moats.
+
+### PSR Cross-Reference
+
+When Primary Source Reader findings are available, cross-reference SEC-derived financial metrics with DataPacket values:
+
+- Note any discrepancies between DataPacket growth rates and SEC-filing-derived growth rates.
+- PSR findings may reveal one-time items, accounting changes, or restatements that distort DataPacket numbers.
+- Flag material discrepancies in the `crossCuttingFindings` array so the synthesis-writer and valuation-specialist are aware.
+
+### Pitch Deck Quality Standards
+
+- **Minimum narrative length:** 500+ words per section for Pitch Deck (vs 100-200 for One Pager).
+- **Minimum citations:** 5+ citations per section for Pitch Deck. Mix of DataPacket native, SEC filing, and web search citations.
+- **Red flags:** At least 2 per section for Pitch Deck depth.
+- **Tables:** Required for FCF history, return metric trends, and balance sheet health summary.
+
+---
+
 ## Response Format
 
 When given a DataPacket and asked to analyze a company, return an array of TWO JSON objects -- one for Section 3 (Meaning/Management KPIs) and one for Section 4 (Growth Metrics). Each must conform to the ReportSectionSchema described above.
