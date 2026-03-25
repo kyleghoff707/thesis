@@ -1,121 +1,104 @@
-# Thes1s — AI Agent Workflow
+# Thes1s Normalization Engine
 
 ## What This Is
 
-Thes1s is a professional AI-powered investment analyst team for Rule One stock research. The user is the portfolio manager; the AI agents are the analyst team. Each agent has a specialized role (financial analyst, business analyst, risk analyst, etc.), follows Rule One methodology exactly, and produces hedge-fund-quality investment theses through a 3-stage gated workflow: One Pager (filter) → Pitch Deck (research) → Full Story (conviction). The agents don't just generate reports — they investigate like their careers depend on it. Every unknown gets explored. Every claim gets cited. Every section gets checked.
-
-This is not a black box. The portfolio manager reads every output, challenges assumptions, provides data sources agents couldn't access, and makes final decisions. It's a collaborative research operation — the same operating model as a real hedge fund analyst team, except the analysts are AI agents working 1000x faster.
+A production-grade financial data normalization engine that extracts, normalizes, and validates SEC EDGAR XBRL data to match Morningstar's institutional-grade accuracy — without paying for Morningstar's data. Covers all ~5,758 US-listed equities. This is the data foundation that the AI agent team builds investment theses from — if the financial data is wrong, the analysis is wrong.
 
 ## Core Value
 
-**Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours — delivered in minutes, with zero shortcuts on rigor.**
-
-The power of Rule One research is the depth. A human analyst doing 70 hours of manual research inevitably hits "good enough" moments. AI agents don't. They explore every unknown, follow every thread, cross-reference every claim. The goal is not parity with manual research — it's *deeper* than manual research.
-
-## Design Litmus Test
-
-**"How would a real hedge fund do this?"**
-
-Every design decision about the agent team must pass this test:
-
-- Would a hedge fund prevent analysts from web searching? **No.** Give agents every research tool available.
-- Would a hedge fund prevent analysts from talking to each other? **No.** Build inter-agent communication channels.
-- Would a hedge fund expect quality analyses? **Yes.** Quality over quantity, always. No shortcuts.
-- Would a PM tolerate half-assed work? **No.** Every question investigated, every claim cited.
-- Would a good analyst make unwarranted assumptions? **No.** Acknowledge gaps honestly, never fabricate.
-- Would a hedge fund provide every possible tool to their analysts? **Yes.** Remove all barriers to effectiveness.
-
-If a real hedge fund wouldn't do it that way, don't build it that way.
+98%+ accuracy match to Morningstar across all US-listed equities, achieved by triangulating our XBRL output against FMP, SimFin, and mstarpy — then fixing the normalization rules so we never need paid sources again.
 
 ## Requirements
 
 ### Validated
 
-- Data layer: 20+ financial data engines (EDGAR XBRL, growth rates, return metrics, FCF, valuation, peers, gurus, insiders, compensation, transcripts, events, analyst estimates)
-- Three-layer XBRL engine validated across all 503 S&P 500 companies
-- 8 Toolbox tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit)
-- 173 vitest tests passing
-- Prototype validation: One Pagers work single-agent, Pitch Decks require multi-agent
+- ✓ Three-layer XBRL engine (static tags → taxonomy hierarchy → AI classification) — existing
+- ✓ Industry overlays for bank/REIT/insurance — existing
+- ✓ ~40 derived fields with provenance tracking — existing
+- ✓ 50-company Morningstar truth set (annual, restated) — existing
+- ✓ ~91% accuracy on truth set (annual financials) — existing (attempt #2)
+- ✓ 96.1% XBRL tag coverage on S&P 500 scoring-critical fields — existing (attempt #1)
+- ✓ API connections to FMP, SimFin, mstarpy, EODHD all working — existing
+- ✓ 5,758 US-listed companies classified in Thes1s taxonomy — existing
 
 ### Active
 
-- [ ] Agent definitions — 9 specialized roles with full curriculum, trained on Rule One methodology
-- [ ] DataPacket assembly — all engine output packaged as canonical JSON for agents
-- [ ] Report JSON schema — section-level granularity, citations, confidence, verdicts
-- [ ] Node.js data bridge — ~500-800 LOC adapter for CC skills and future backend
-- [ ] One Pager generation — CC skill + UI rendering
-- [ ] Pitch Deck generation — multi-agent orchestration with structured checkpoints
-- [ ] Full Story generation — deepest analysis with Bull/Bear/Judge debate
-- [ ] Quality system — citation validation, completeness scoring, confidence checks
-- [ ] Presentation-ready PDF export — branded, professional, charts + footnoted citations
-- [ ] Toolbox tools for agents — interactive data exploration during analysis
-- [ ] Management Promise Tracker — extract promises from earnings calls, compare to actuals
-- [ ] Primary Source Reader — 10-K text, transcripts, proxy, data verification against DataPacket
-- [ ] Delight features — deep-dive, source preview, Bull/Bear toggle, assumption tracker, industry cards, progress dashboard, version history
+- [ ] Production-grade comparison harness with proper fiscal year alignment, field mapping, and sign conventions
+- [ ] Multi-source triangulation engine (FMP + SimFin + mstarpy + our engine vs Morningstar truth)
+- [ ] 98%+ accuracy on the 50-company Morningstar truth set
+- [ ] 98%+ accuracy on S&P 500 companies
+- [ ] 98%+ accuracy across all US-listed equities
+- [ ] Improved XBRL normalization rules derived from triangulation findings
+- [ ] Executive compensation normalization (FMP has good data — secondary priority)
+- [ ] Automated validation pipeline for ongoing accuracy monitoring (new earnings, spinoffs, IPOs, accounting changes)
 
 ### Out of Scope
 
-- Server infrastructure / API gateway — local desktop app for now
-- Stripe billing / payment integration — commercial later
-- Team features / multi-tenant — single-user first
-- Mobile app — desktop only
-- Batch processing pipeline — one company at a time
-- Real-time thesis monitoring alerts — manual trigger only
-- Automated eval system — user IS the eval for first 5-10 reports, automated later
+- OTC stocks — non-standard filings, low value
+- International equities — different filing standards (IFRS vs US-GAAP)
+- UI changes — no component/hook work, that's the AI agent buildout in the other workspace
+- Real-time data — this is about historical financial statement accuracy
+- Quarterly financials — focus on annual first (quarterly is a separate milestone)
 
 ## Context
 
-### Brownfield — Extensive Existing Codebase
-Phases 1-4 complete. All data engines, all UI tabs, watchlists, 3-layer XBRL engine with provenance, 173 tests. The remaining work is the AI layer — the intelligence that transforms raw data into investment theses.
+### This Is Attempt #3
 
-### Architecture Plan (Source of Truth)
-`gstack/plans/gstack-ai-agent-workflow-plan-20260323.md` — 516-line authoritative plan. Reviewed by CEO review (scope expansion), Eng review (architecture validated + prototype confirmed). Contains: 9 agent roles, 3-layer architecture, stage orchestration, DataPacket + Toolbox tools, quality assurance system, report JSON schema, cost estimates, 22 key design decisions, prototype validation results.
+Two previous attempts at normalization optimization:
 
-### Rule One Knowledge Base
-`knowledge/` directory contains full Rule One curriculum: stage templates, curriculum files (one-pager.md, pitch-deck-I through IV, story-form-I and II), research references (fgr.md, equity-bond-research.md, rule-one-fundamentals.md, tools-for-analysis.md, advanced-financial-analysis.md), and the user's own manual research examples (LULU, EW, SFM, MU, ODFL).
+1. **Attempt #1 — XBRL tag coverage** (March 2026): Built three-layer engine, mapped thousands of tags, achieved "96% on scoring-critical fields for S&P 500." But when compared against actual Morningstar numbers, the values were still off. **Lesson: high XBRL tag coverage ≠ accurate normalized numbers.** Using XBRL tags as the optimization target was wrong.
 
-### LULU Example — Benchmark, Not Template
-The user's manual LULU analysis (One Pager PDF, Pitch Deck, Full Story) is the quality benchmark. Generated output must achieve full parity in depth and rigor — and ideally go deeper. CRITICAL: agents must NEVER see or pattern-match from LULU examples during generation. The examples exist only for the user to compare output quality after generation.
+2. **Attempt #2 — Morningstar truth set** (March 2026): Downloaded actual MS data for 50 companies, compared directly. Got to ~91% accuracy. Better, but fragile — likely breaks for companies outside the truth set. **Lesson: need multi-source triangulation, not just one-to-one comparison.**
 
-### Operating Model — Hedge Fund Analyst Team
-The user is the portfolio manager. Agents are the analyst team. This is not "click generate and walk away." The PM:
-- Reviews every output at structured checkpoints
-- Challenges assumptions and asks agents to go deeper
-- Provides data sources that agents couldn't access (paywalled, firewalled)
-- Verifies final output against their own expertise
-- Makes the invest/don't-invest decision
+3. **Attempt #3 — This project**: Triangulate across FMP + SimFin + mstarpy to reverse-engineer Morningstar's normalization methodology. When 3 sources agree and we don't, that's a normalization bug. When sources disagree, investigate why.
 
-Agents must escalate to the PM when they hit data walls — never guess, never skip.
+Previous plans preserved at:
+- `gstack/plans/gstack-xbrl-annual-normalization-eng-plan-20260319.md`
+- `gstack/plans/gstack-xbrl-engine-strategy-eng-plan-20260318.md`
+- `gstack/plans/gstack-xbrl-morningstar-engine-ceo-plan-20260318.md`
+- `gstack/plans/gstack-xbrl-quarterly-validation-eng-plan-20260320.md`
 
-### Agent Design Philosophy
-Each agent is a specialist. They follow Rule One methodology exactly as laid out in the curriculum files. They investigate every unknown. They cite every claim. They identify red flags even when the thesis is bullish. They don't produce "good enough" — they produce "thorough." The depth IS the competitive advantage.
+### Data Sources
 
-Context engineering is critical: enough curriculum to prevent hallucinations and ensure methodological correctness, but not so much that token budgets explode. This balance is the core design challenge of Phase 5A.
+| Source | Cost | Rate Limit | History | Strengths |
+|--------|------|------------|---------|-----------|
+| **FMP** | $20/mo | 250/day | 5 years | Normalizes same EDGAR XBRL — direct comparison reveals normalization diffs |
+| **SimFin** | $15/mo | 2,000/day | 10 years | Every value traced to source filing, separate bank/insurance templates |
+| **mstarpy** | Free | N/A | 10+ years | Actual Morningstar data from morningstar.com (fragile scraper) |
+| **EODHD** | Paid (existing) | 100,000/day | Varies | Fundamentals data, already have subscription |
+| **SEC EDGAR** | Free | 10 req/sec | All history | Raw XBRL source — what our engine normalizes |
 
-### Dual Audience
-Thes1s is used by both humans (reading reports, reviewing at checkpoints) and AI agents (consuming DataPacket, producing sections). The UI must serve both: human-friendly display AND structured data that downstream agents can consume.
+### Existing Test Infrastructure
+
+`validation/scripts/test-api-sources.mjs` connects to all APIs and compares against the truth set. APIs work, data comes back, but comparison logic has bugs:
+- Fiscal year alignment is naive (breaks for non-calendar FY: LULU, COST, NKE)
+- SimFin field name mapping incomplete for cash flow
+- Sign convention differences not handled
+- Reported accuracy scores are test harness bugs, not data quality issues
+
+### The Bigger Picture
+
+Two competitive moats for Thes1s:
+1. **This project** — Internal SEC data normalization engines producing institutional-grade financial data without paid external sources. Nobody has this.
+2. **AI agent team** (parallel workspace) — Professional investment theses in minutes using Rule One methodology. Both moats reinforce each other.
 
 ## Constraints
 
-- **Desktop only**: Tauri app, no server. API calls go direct to external services.
-- **Cost ceiling**: Full pipeline (One Pager + Pitch Deck + Full Story) should target ~$8-12 per company. Primary Source Reader is the biggest cost driver (~200K+ input tokens for a full 10-K).
-- **LULU contamination**: Agents must never access LULU examples during generation. Evaluation only.
-- **Rule One methodology**: Agents follow the curriculum exactly. Creative freedom is limited to investigation depth and narrative style — never methodology.
-- **User verification**: The user personally verifies agent output quality at each milestone. No milestone is "done" until the user says so.
+- **No UI work**: Only touch `validation/`, `src/engines/`, `src/data/`. Components, hooks, and agents are off-limits (parallel AI agent buildout).
+- **API rate limits**: FMP 250/day, SimFin 2,000/day. Must design comparison pipeline to work within limits.
+- **Fragile mstarpy**: Scraper could break anytime. Use it while it works, don't depend on it long-term.
+- **Cost ceiling**: FMP ($20/mo) + SimFin ($15/mo) are temporary. Goal is to eliminate both once normalization rules are solid.
+- **User is not a programmer**: Explain findings, strategies, and decisions in plain English.
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| 9 specialized agent roles | Prototype proved single-agent degrades on complex analysis. Each role = focused context + curriculum. | -- Pending |
-| GSD-style orchestration | Commands dispatch, agents execute in parallel with fresh context. Proven pattern. | -- Pending |
-| Build order 5A → 5C → 5B | Validate AI quality before investing in display components. See output in 5 days not 14. | -- Pending |
-| Node.js data bridge (not browser scraping) | Permanent infrastructure. Foundation for CC skills AND future backend. No tech debt shortcuts. | -- Pending |
-| Manual eval first, automated later | User IS the eval for first 5-10 reports. Build eval system after understanding what "good" looks like. | -- Pending |
-| JSON schema enforcement for agent output | Without it, parsing is fragile. Use Claude JSON mode or schema validation. | -- Pending |
-| Use /writing-skills for agent definitions | Agent skills are the core product value. Read all supporting files. Do it right. | -- Pending |
-| LULU examples as benchmark only | Keep for quality comparison. Exclude from agent context to prevent contamination. | -- Pending |
-| 5 milestones (not 1 mega-milestone) | Complex plan needs structured gates. User verifies quality at each boundary. | -- Pending |
+| Triangulate against 3 sources (not just MS truth set) | Single-source comparison can't distinguish MS quirks from our bugs. Consensus of 3 sources is more reliable | — Pending |
+| Three-phase accuracy rollout (truth set → S&P 500 → full market) | Each phase validates before expanding scope. Prevents boiling the ocean | — Pending |
+| Fix test harness before triangulation | Can't improve what you can't measure. Current harness reports wrong scores | — Pending |
+| Exec comp is secondary priority | FMP has good data, but financial statement accuracy is the foundation | — Pending |
+| Fixes go to existing engine or new layer — case by case | Some bugs are taxonomy fixes (edgarFinancials.js), some may need post-processing | — Pending |
 
 ## Evolution
 
@@ -135,4 +118,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-24 after initialization*
+*Last updated: 2026-03-25 after initialization*
