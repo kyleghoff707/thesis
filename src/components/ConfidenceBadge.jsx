@@ -21,11 +21,10 @@ export default function ConfidenceBadge({ confidence }) {
       borderRadius: 4,
       fontSize: 10,
       fontWeight: 600,
-      color: style.color,
-      background: style.bg,
       textTransform: 'uppercase',
       letterSpacing: '0.04em',
-      lineHeight: 1,
+      background: style.bg,
+      color: style.color,
     }}>
       {confidence}
     </span>

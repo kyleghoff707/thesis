@@ -52,6 +52,7 @@ Plan: Not started
 | Phase 05A P05 | 5min | 2 tasks | 7 files |
 | Phase 05A P04 | 11min | 3 tasks | 36 files |
 | Phase 05C P03 | 8min | 3 tasks | 4 files |
+| Phase 05B P02 | 4min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,7 @@ Recent decisions affecting current work:
 - [Phase 05A]: Worktree-aware curriculum path resolution via .git pointer for tests
 - [Phase 05C]: Custom Node ESM loader bridges Vite-style imports (extension-less, bare JSON, import.meta.env) for Node.js execution
 - [Phase 05C]: Removed unsupported SKILL.md frontmatter (context, model, allowed-tools) -- IDE confirmed not valid skill attributes
+- [Phase 05B]: camelToTitle uses dual-regex split with acronym map for financial terms; Plan 01 deps created inline for parallel worktree
 
 ### Pending Todos
 
@@ -88,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T23:30:52.171Z
-Stopped at: Phase 5B context gathered
-Resume file: .planning/phases/05B-one-pager-display-components/05B-CONTEXT.md
+Last session: 2026-03-25T00:23:59Z
+Stopped at: Completed 05B-02-PLAN.md
+Resume file: .planning/phases/05B-one-pager-display-components/05B-02-SUMMARY.md

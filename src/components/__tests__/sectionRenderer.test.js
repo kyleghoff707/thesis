@@ -1,71 +1,65 @@
-// Tests for SectionRenderer — camelToTitle and data formatting helpers
-// ONEP-04 coverage: section data display logic
-
 import { describe, it, expect } from 'vitest';
 import { _testExports } from '../SectionRenderer.jsx';
 
 const { camelToTitle, formatDataValue } = _testExports;
 
-describe('SectionRenderer: camelToTitle', () => {
-  it('mosBuyPrice -> MOS Buy Price', () => {
+describe('camelToTitle', () => {
+  it('converts mosBuyPrice to MOS Buy Price', () => {
     expect(camelToTitle('mosBuyPrice')).toBe('MOS Buy Price');
   });
 
-  it('pbtBuyPrice -> PBT Buy Price', () => {
+  it('converts pbtBuyPrice to PBT Buy Price', () => {
     expect(camelToTitle('pbtBuyPrice')).toBe('PBT Buy Price');
   });
 
-  it('currentPrice -> Current Price', () => {
+  it('converts currentPrice to Current Price', () => {
     expect(camelToTitle('currentPrice')).toBe('Current Price');
   });
 
-  it('preliminaryFGR -> Preliminary FGR', () => {
+  it('converts preliminaryFGR to Preliminary FGR', () => {
     expect(camelToTitle('preliminaryFGR')).toBe('Preliminary FGR');
   });
 
-  it('tenCapPrice -> Ten Cap Price', () => {
+  it('converts tenCapPrice to Ten Cap Price', () => {
     expect(camelToTitle('tenCapPrice')).toBe('Ten Cap Price');
   });
 
-  it('priceVsBuyRange -> Price Vs Buy Range', () => {
+  it('converts priceVsBuyRange to Price Vs Buy Range', () => {
     expect(camelToTitle('priceVsBuyRange')).toBe('Price Vs Buy Range');
   });
 
-  it('convergence -> Convergence', () => {
+  it('converts convergence to Convergence', () => {
     expect(camelToTitle('convergence')).toBe('Convergence');
   });
 });
 
-describe('SectionRenderer: formatDataValue', () => {
-  it('range object for mosBuyPrice shows both dollar amounts', () => {
+describe('formatDataValue', () => {
+  it('formats range object as dollar range', () => {
     const result = formatDataValue('mosBuyPrice', { low: 135.04, high: 177.16 });
     expect(result).toContain('135');
     expect(result).toContain('177');
   });
 
-  it('single number for currentPrice shows dollar-formatted string', () => {
+  it('formats currentPrice as dollar string', () => {
     const result = formatDataValue('currentPrice', 972.33);
     expect(result).toContain('972');
   });
 
-  it('range object for preliminaryFGR shows percentage-formatted string', () => {
+  it('formats FGR range as percentage', () => {
     const result = formatDataValue('preliminaryFGR', { low: 0.09, high: 0.12 });
     expect(result).toContain('9');
     expect(result).toContain('12');
   });
 
-  it('plain string for convergence returns string as-is', () => {
-    const result = formatDataValue('convergence', 'All 4 methods...');
-    expect(result).toBe('All 4 methods...');
+  it('returns string values as-is', () => {
+    expect(formatDataValue('convergence', 'All 4 methods converge')).toBe('All 4 methods converge');
   });
 
-  it('null value returns -- fallback', () => {
-    const result = formatDataValue('someField', null);
-    expect(result).toBe('--');
+  it('returns -- for null', () => {
+    expect(formatDataValue('someField', null)).toBe('--');
   });
 
-  it('undefined value returns -- fallback', () => {
-    const result = formatDataValue('someField', undefined);
-    expect(result).toBe('--');
+  it('returns -- for undefined', () => {
+    expect(formatDataValue('someField', undefined)).toBe('--');
   });
 });
