@@ -44,7 +44,7 @@
 - [ ] **PTCH-04**: Conversational checkpoint dialogue — PM can ask contextual questions ("show me how you calculated that", "why deeper on A but not B?"), not just approve/redirect. Scoped to section context, not open-ended chat.
 - [ ] **PTCH-05**: `SensitivityTable.jsx` — vary FGR/EPS/CapEx% across MOS/PBT/TenCap/EquityBond
 - [ ] **PTCH-06**: FGR derivation workflow — 5 inputs (Historical, Market Relativity, Company Guidance, Industry CAGR, Analyst Consensus) with user confirmation
-- [ ] **PTCH-07**: Primary Source Reader — 10-K text (business desc, risk factors, MD&A), transcripts (themes, tone, Q&A), proxy (comp, ownership, board), data verification against DataPacket
+- [x] **PTCH-07**: Primary Source Reader — 10-K text (business desc, risk factors, MD&A), transcripts (themes, tone, Q&A), proxy (comp, ownership, board), data verification against DataPacket
 - [ ] **PTCH-08**: Competitor benchmarking — 15+ peers via peer metrics engine + agent qualitative analysis
 - [ ] **PTCH-09**: Market share ceiling analysis — prove growth rate doesn't require unrealistic market dominance
 - [ ] **PTCH-10**: Dual Owner Earnings — Rule One method AND Graham method side by side
@@ -154,7 +154,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PTCH-04 | Phase 6 | Pending |
 | PTCH-05 | Phase 6 | Pending |
 | PTCH-06 | Phase 6 | Pending |
-| PTCH-07 | Phase 6 | Pending |
+| PTCH-07 | Phase 6 | Complete |
 | PTCH-08 | Phase 6 | Pending |
 | PTCH-09 | Phase 6 | Pending |
 | PTCH-10 | Phase 6 | Pending |
