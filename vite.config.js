@@ -435,9 +435,10 @@ function irEventsPlugin() {
 
 // Thes1s report file server middleware.
 // Serves generated One Pager / Pitch Deck / Full Story JSON from .thes1s/reports/
-// to the browser. Three endpoints:
-//   GET /api/thes1s/reports          — list tickers with one-pager.json
+// to the browser. Endpoints:
+//   GET /api/thes1s/reports                    — list tickers with any report
 //   GET /api/thes1s/reports/:ticker/one-pager  — serve one-pager.json
+//   GET /api/thes1s/reports/:ticker/pitch-deck — serve pitch-deck.json
 //   GET /api/thes1s/reports/:ticker/progress   — serve progress.json
 function thes1sReportsPlugin() {
   let fs = null;
@@ -470,18 +471,21 @@ function thes1sReportsPlugin() {
             const entries = fs.readdirSync(reportsDir, { withFileTypes: true });
             const tickers = entries
               .filter(e => e.isDirectory())
-              .filter(e => fs.existsSync(path.join(reportsDir, e.name, 'one-pager.json')))
+              .filter(e =>
+                fs.existsSync(path.join(reportsDir, e.name, 'one-pager.json')) ||
+                fs.existsSync(path.join(reportsDir, e.name, 'pitch-deck.json'))
+              )
               .map(e => e.name);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ tickers }));
             return;
           }
 
-          // Ticker-specific endpoints: /TICKER/one-pager or /TICKER/progress
+          // Ticker-specific endpoints: /TICKER/one-pager, /TICKER/pitch-deck, or /TICKER/progress
           const parts = urlPath.split('/');
           if (parts.length < 2) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Invalid path — expected /:ticker/one-pager or /:ticker/progress' }));
+            res.end(JSON.stringify({ error: 'Invalid path — expected /:ticker/one-pager, /:ticker/pitch-deck, or /:ticker/progress' }));
             return;
           }
 
@@ -489,6 +493,7 @@ function thes1sReportsPlugin() {
           const fileType = parts[1];
           const fileMap = {
             'one-pager': 'one-pager.json',
+            'pitch-deck': 'pitch-deck.json',
             'progress': 'progress.json',
           };
           const fileName = fileMap[fileType];
