@@ -112,6 +112,18 @@ After all 3 analyst agents complete:
 
 5. If a section fails validation, log the error and note which fields are missing. Continue with whatever sections succeeded — do not abort the entire pipeline for one section failure.
 
+6. **Retry failed sections** (per D-05). For each section that fails JSON parsing or validation:
+   a. Construct a retry prompt: Take the original agent prompt and append:
+      ```
+      RETRY: Your previous response could not be parsed as valid JSON.
+      Error: {the specific parse/validation error message}
+      Please output ONLY the JSON object(s) conforming to ReportSectionSchema. No surrounding text.
+      ```
+   b. Dispatch the same agent again with the retry prompt using the Agent tool.
+   c. Parse and validate the retry response.
+   d. If the retry also fails, save partial output by writing a section JSON with `status: "failed"` and `error: "{error message}"` to `.thes1s/reports/{TICKER}/sections/{section_key}.json`. Log: "Section {section_key} failed after retry: {error}. Partial output saved."
+   e. Continue with remaining sections — do not abort the pipeline.
+
 Expected sections from analysts:
 - business-analyst: `company_info` (section 1), `minimum_standards` (section 2)
 - financial-analyst: `meaning` (section 3), `growth_metrics` (section 4)
@@ -201,15 +213,103 @@ Log: "Dispatching synthesis-writer for {TICKER} overall verdict..."
    ...
    ```
 
-4. **Print summary:**
+4. **Print assembly summary:**
    - Sections completed: X/6
    - Overall verdict: PASS/FAIL/WATCHLIST
    - Total citations: N
    - Total red flags: N
+
+## Step 9: Quality Check
+
+Run the quality system on the assembled report:
+
+1. **Run critic.js validation** by executing:
+   ```bash
+   node --import ./scripts/node-esm-loader.js -e "
+     import { validateStage } from './src/engines/critic.js';
+     import { readFileSync } from 'fs';
+     const report = JSON.parse(readFileSync('.thes1s/reports/{TICKER}/one-pager.json', 'utf8'));
+     const dp = JSON.parse(readFileSync('.thes1s/reports/{TICKER}/data-packet.json', 'utf8'));
+     const quality = validateStage(report.sections, dp);
+     const { writeFileSync, mkdirSync } = await import('fs');
+     mkdirSync('.thes1s/reports/{TICKER}/quality', { recursive: true });
+     writeFileSync('.thes1s/reports/{TICKER}/quality/one-pager.quality.json', JSON.stringify(quality, null, 2));
+     console.log('Quality check complete. Overall score:', quality.overallScore, 'Passed:', quality.overallPassed);
+     console.log('Issues:', quality.sections.reduce((s, r) => s + r.issues.length, 0), 'total');
+     for (const r of quality.sections) {
+       const highCount = r.issues.filter(i => i.severity === 'high').length;
+       const medCount = r.issues.filter(i => i.severity === 'medium').length;
+       const lowCount = r.issues.filter(i => i.severity === 'low').length;
+       console.log('  ' + r.sectionKey + ': score=' + r.score + ' (high:' + highCount + ' med:' + medCount + ' low:' + lowCount + ')');
+     }
+   "
+   ```
+
+2. **Log quality results:**
+   - Overall quality score (0-100)
+   - Passed/failed status
+   - Per-section: score, issue counts by severity
+   - List any HIGH severity issues verbatim
+
+3. **Quality is informational, not blocking** (per D-04). The report is already saved. The quality report is supplementary data for the user to review.
+
+4. **Write quality report** to `.thes1s/reports/{TICKER}/quality/one-pager.quality.json`
+
+## Step 10: Budget Tracking
+
+Track token usage and estimated cost for the generation run:
+
+1. **Run contextBudget tracking** by executing:
+   ```bash
+   node --import ./scripts/node-esm-loader.js -e "
+     import { createBudgetTracker, formatBudgetReport } from './src/engines/contextBudget.js';
+     import { readFileSync, writeFileSync } from 'fs';
+     const report = JSON.parse(readFileSync('.thes1s/reports/{TICKER}/one-pager.json', 'utf8'));
+     const tracker = createBudgetTracker();
+     // Record estimates for each agent based on section tokenCost fields
+     for (const section of report.sections) {
+       const tc = section.tokenCost || { input: 0, output: 0 };
+       tracker.record(
+         section.key === 'overall_verdict' ? 'synthesis-writer' : 'analyst',
+         section.key,
+         tc.input || 0,
+         tc.output || 0,
+         section.modelUsed || 'claude-sonnet-4-20250514'
+       );
+     }
+     const summary = tracker.getSummary();
+     writeFileSync('.thes1s/reports/{TICKER}/budget.json', JSON.stringify(summary, null, 2));
+     console.log(formatBudgetReport(summary));
+   "
+   ```
+
+2. **Log budget summary:**
+   - Total input/output tokens across all agents
+   - Estimated cost for the full One Pager generation
+   - Per-agent breakdown
+
+3. **Budget tracking is observational** — it never blocks execution. The budget report helps the user understand cost per generation.
+
+4. **Write budget report** to `.thes1s/reports/{TICKER}/budget.json`
+
+## Step 11: Print Final Summary
+
+Print the complete generation summary:
+   - Sections completed: X/6
+   - Overall verdict: PASS/FAIL/WATCHLIST
+   - Total citations: N
+   - Total red flags: N
+   - Quality report: `.thes1s/reports/{TICKER}/quality/one-pager.quality.json`
+   - Quality score: {overall score}/100
+   - Issues found: {count} (high: {N}, medium: {N}, low: {N})
+   - Budget report: `.thes1s/reports/{TICKER}/budget.json`
+   - Estimated cost: ${total}
    - Output files:
      - `.thes1s/reports/{TICKER}/one-pager.json`
      - `.thes1s/reports/{TICKER}/one-pager.md`
      - `.thes1s/reports/{TICKER}/sections/*.json`
+     - `.thes1s/reports/{TICKER}/quality/one-pager.quality.json`
+     - `.thes1s/reports/{TICKER}/budget.json`
 
 ## Constraints
 
@@ -241,4 +341,6 @@ Log progress at each major step:
 - "Step 6: Collecting analyst outputs... ({N}/5 sections received)"
 - "Step 7: Dispatching synthesis-writer..."
 - "Step 8: Assembling final report..."
-- "Complete: One Pager for {TICKER} generated."
+- "Step 9: Running quality checks..."
+- "Step 10: Tracking token budget..."
+- "Step 11: Generation complete."
