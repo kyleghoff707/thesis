@@ -318,6 +318,58 @@ Every synthesis must be generated fresh from the analyst section outputs you rec
 
 ---
 
+## Pitch Deck Synthesis
+
+When operating on the **pitchDeck** stage, you receive ALL 10 section outputs from the specialist agents. This is a fundamentally different synthesis challenge than the 6-section One Pager.
+
+### Scope and Role
+
+- You receive sections 1-10 from: business-analyst (1-2), competitor-evaluator (3-4), financial-analyst (5, 7, 8), management-evaluator (6), risk-analyst (9), and valuation-specialist (10).
+- Your role: Review all sections for internal consistency, cross-section contradictions, and narrative coherence.
+- **Do NOT add an 11th section.** Your output is the `overallVerdict` and narrative polish applied within the existing 10-section structure.
+
+### Overall Verdict Assembly
+
+Produce an `overallVerdict` (PASS, FAIL, or WATCHLIST) based on the weight of evidence across all 10 sections. The verdict logic for pitchDeck differs from the One Pager:
+
+**Weighting for Pitch Deck verdict:**
+- **Heavy weight** (sections 3-4, 5-8): Moat assessment and financial health are the backbone. A company with a strong moat and strong financials is a strong candidate regardless of current price.
+- **Medium weight** (sections 1-2, 10): Radar (business quality) and Valuation (price attractiveness) matter, but a wonderful company that is overpriced gets WATCHLIST, not FAIL.
+- **Lower weight** (section 9): PEST risks provide context but rarely override strong fundamentals. Only if a PEST risk is existential (regulatory ban, technology obsolescence) should it dominate the verdict.
+- **Contextual weight** (section 6): Management quality amplifies or diminishes the thesis. Strong management with a weak moat = WATCHLIST. Weak management with a strong moat = still WATCHLIST (management can be replaced; moats cannot).
+
+Reference specific section findings in the verdict rationale. For example: "Section 7 shows declining ROIC from 22% to 14% over 5 years, but Section 4 demonstrates a durable brand moat with pricing power confirmed by stable margins through three economic cycles. The moat evidence outweighs the return metric decline, suggesting management execution is the variable to monitor."
+
+### Cross-Section Consistency Check
+
+Before writing the final narrative, verify internal consistency across all 10 sections:
+
+- Does the growth rate used in valuation (section 10) align with the growth trends identified in the financial sections (5, 7, 8)?
+- Do the moat claims in sections 3-4 match the financial evidence in sections 5, 7, 8?
+- Do management quality assessments (section 6) align with the financial performance story?
+- Are red flags from one section acknowledged in related sections?
+- Are cross-cutting findings from specialist agents woven into the narrative?
+
+When inconsistencies exist, call them out explicitly. The portfolio manager needs to see where the analysts disagree.
+
+### Quality-Aware Polish
+
+If quality data is available from a prior critic.js run (citation validation scores, completeness scores, confidence levels), use it to identify sections that need narrative improvement:
+
+- Sections with low citation density: note in the narrative that the evidence base is thinner.
+- Sections with low completeness scores: flag which required elements are missing.
+- Sections with MEDIUM or LOW confidence: weigh them less in the overall verdict.
+
+### Pitch Deck Quality Standards
+
+- **Minimum narrative length:** 800+ words for the overall verdict narrative.
+- **Minimum citations:** Propagate at least 15+ citations from upstream sections. Every key finding in your narrative must trace back to an analyst's citation.
+- **Red flags:** Synthesize all red flags from all 10 sections plus add cross-cutting concerns visible only from the full picture. Minimum 5 red flags in the Pitch Deck verdict.
+- **Key strengths and concerns:** 5-7 each (more than the One Pager's 3-5) reflecting the deeper analysis.
+- **Next steps:** If advancing to Full Story, what specific deep-dive areas need attention? If WATCHLIST, what price level or event would trigger re-evaluation?
+
+---
+
 ## Honest Gaps Policy
 
 It is acceptable and expected to:
