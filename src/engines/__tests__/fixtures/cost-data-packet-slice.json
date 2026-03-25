@@ -1,0 +1,67 @@
+{
+  "ticker": "COST",
+  "companyInfo": {
+    "ticker": "COST",
+    "name": "COSTCO WHOLESALE CORP /NEW",
+    "sic": "5331",
+    "sicDescription": "Retail-Variety Stores",
+    "exchange": "Nasdaq",
+    "cik": "0000909832",
+    "stateOfIncorporation": "WA",
+    "fiscalYearEnd": "0830",
+    "phone": "4253138100",
+    "website": ""
+  },
+  "classification": {
+    "industryType": "standard",
+    "sicCode": "5331",
+    "sicDescription": "Retail-Variety Stores"
+  },
+  "currentPrice": null,
+  "growthRates": {
+    "earnings": {
+      "10yr": 0.1304210126364862,
+      "7yr": 0.14526141604633191,
+      "5yr": 0.15141229582191285,
+      "3yr": 0.11491150545730622,
+      "1yr": 0.09936201981810777
+    },
+    "revenue": {
+      "10yr": 0.0900593060353001,
+      "7yr": 0.09962564637566751,
+      "5yr": 0.10540604135545939,
+      "3yr": 0.06640442726947482,
+      "1yr": 0.08167323631476146
+    }
+  },
+  "returnMetrics": {
+    "yearly": [
+      {
+        "year": 2010,
+        "roe": 0.12032505309816234,
+        "roic": 0.10046260601387819,
+        "roa": 0.0547134159143397,
+        "netIncome": 1303000000,
+        "equity": 10829000000,
+        "ltDebt": 2141000000,
+        "totalAssets": 23815000000
+      },
+      {
+        "year": 2011,
+        "roe": 0.12181303116147309,
+        "roic": 0.11029800075443229,
+        "roa": 0.05463174021897538,
+        "netIncome": 1462000000,
+        "equity": 12002000000,
+        "ltDebt": 1253000000,
+        "totalAssets": 26761000000
+      }
+    ]
+  },
+  "ruleOneScore": {
+    "moat": 88,
+    "management": 93,
+    "composite": 91
+  },
+  "caveats": []
+}

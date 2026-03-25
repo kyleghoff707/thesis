@@ -1,0 +1,107 @@
+{
+  "key": "company_info",
+  "title": "Company Information",
+  "sectionNumber": 1,
+  "status": "pass",
+  "confidence": "HIGH",
+  "verdict": "PASS",
+  "verdictRationale": "Costco is a textbook 'simple and predictable' business operating a warehouse membership club model that has compounded revenue and earnings at 8-13% annually for decades.",
+  "summary": "Costco Wholesale operates 924 warehouse club locations globally, generating $275B in annual revenue. Its profit engine is membership fees (~$5.3B in FY2025), not merchandise markup.",
+  "data": {
+    "companyName": "Costco Wholesale Corporation",
+    "ticker": "COST",
+    "lastPrice": 973.82,
+    "industry": "Discount Stores",
+    "sector": "Consumer Defensive",
+    "exchange": "NASDAQ",
+    "marketCap": 432040000000,
+    "employees": 341000,
+    "headquarters": "Issaquah, WA",
+    "yearEstablished": 1983,
+    "warehouses": 924,
+    "membershipMetrics": {
+      "membershipFeeRevenue": 5300000000,
+      "membershipRenewalRate": 0.9296,
+      "totalCardholders": 141000000
+    }
+  },
+  "narrative": "Costco is a textbook 'simple and predictable' business operating a warehouse membership club model that has compounded revenue and earnings at 8-13% annually for decades. Costco Wholesale operates 924 warehouse club locations globally, generating $275B in annual revenue. Its profit engine is membership fees (~$5.3B in FY2025), not merchandise markup. The membership model creates a captive, loyal customer base with 92.96% renewal rates and 141 million cardholders globally. Founded in 1983 and headquartered in Issaquah, WA, Costco employs 341,000 people and trades on NASDAQ with a market cap of $432B.",
+  "citations": [
+    {
+      "id": 1,
+      "source": "Costco FY2025 Annual Report",
+      "url": "",
+      "note": "Revenue, warehouse count, membership metrics"
+    },
+    {
+      "id": 2,
+      "source": "SEC EDGAR 10-K FY2025",
+      "url": "",
+      "note": "Membership fee revenue $5.3B"
+    },
+    {
+      "id": 3,
+      "source": "SEC EDGAR 10-K FY2025",
+      "url": "",
+      "note": "Employee count 341,000"
+    },
+    {
+      "id": 4,
+      "source": "SEC EDGAR 10-K FY2025",
+      "url": "",
+      "note": "Warehouse count 924 global locations"
+    },
+    {
+      "id": 5,
+      "source": "SEC EDGAR 10-K FY2025",
+      "url": "",
+      "note": "Membership renewal rate 92.96%"
+    },
+    {
+      "id": 6,
+      "source": "SEC EDGAR 10-K FY2025",
+      "url": "",
+      "note": "Total cardholders 141M"
+    },
+    {
+      "id": 7,
+      "source": "Yahoo Finance",
+      "url": "",
+      "note": "Last price $973.82, market cap $432B"
+    },
+    {
+      "id": 8,
+      "source": "Yahoo Finance",
+      "url": "",
+      "note": "Exchange NASDAQ, sector Consumer Defensive"
+    },
+    {
+      "id": 9,
+      "source": "Costco corporate history",
+      "url": "",
+      "note": "Year established 1983, Issaquah WA headquarters"
+    },
+    {
+      "id": 10,
+      "source": "SEC EDGAR company facts",
+      "url": "",
+      "note": "Annual revenue $275B FY2025"
+    }
+  ],
+  "tables": [],
+  "charts": [],
+  "redFlags": [
+    "Revenue growth reliant on warehouse expansion — organic same-store growth alone is ~5-6%",
+    "Membership model concentration risk — business model fully dependent on renewal rates staying above 90%",
+    "International expansion introduces currency and regulatory risk (non-US now 28% of warehouses)",
+    "E-commerce penetration remains low vs peers — digital transformation lag"
+  ],
+  "primarySourceInsights": [],
+  "crossCuttingFindings": [],
+  "generatedAt": "2026-03-25T00:59:56Z",
+  "modelUsed": "claude-sonnet-4-6",
+  "tokenCost": {
+    "input": 0,
+    "output": 0
+  }
+}
