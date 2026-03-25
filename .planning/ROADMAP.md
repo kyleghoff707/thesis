@@ -95,8 +95,8 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 05D-01-PLAN.md — critic.js validation engine (citation, completeness, confidence, multi-source, red flags, data gaps)
-- [ ] 05D-02-PLAN.md — contextBudget.js token estimation and cost tracking
+- [x] 05D-01-PLAN.md — critic.js validation engine (citation, completeness, confidence, multi-source, red flags, data gaps)
+- [x] 05D-02-PLAN.md — contextBudget.js token estimation and cost tracking
 - [ ] 05D-03-PLAN.md — Quality system integration into CC skill + failure recovery
 
 ### Phase 6: Pitch Deck

@@ -70,14 +70,14 @@
 
 ### Quality System
 
-- [ ] **QUAL-01**: `critic.js` — citation validation (every claim traceable to DataPacket field path, SEC filing, or URL)
-- [ ] **QUAL-02**: Completeness scoring — all required fields present per section schema
-- [ ] **QUAL-03**: Confidence scoring — HIGH/MEDIUM/LOW based on data completeness and source agreement
-- [ ] **QUAL-04**: Multi-source verification — financial metrics need EDGAR + peer, growth projections need CAGR + analyst + industry, moat claims need financial + qualitative evidence
-- [ ] **QUAL-05**: Red flags required in every section, even passing ones
-- [ ] **QUAL-06**: "Data not available" — honest gaps, never estimated numbers. If not in DataPacket, don't fabricate.
-- [ ] **QUAL-07**: Retry-then-escalate failure handling — agent fails → retry once with error context → fail again → escalate to PM
-- [ ] **QUAL-08**: `contextBudget.js` — token counting + budget management per agent. Measure actual usage, set budgets based on data.
+- [x] **QUAL-01**: `critic.js` — citation validation (every claim traceable to DataPacket field path, SEC filing, or URL)
+- [x] **QUAL-02**: Completeness scoring — all required fields present per section schema
+- [x] **QUAL-03**: Confidence scoring — HIGH/MEDIUM/LOW based on data completeness and source agreement
+- [x] **QUAL-04**: Multi-source verification — financial metrics need EDGAR + peer, growth projections need CAGR + analyst + industry, moat claims need financial + qualitative evidence
+- [x] **QUAL-05**: Red flags required in every section, even passing ones
+- [x] **QUAL-06**: "Data not available" — honest gaps, never estimated numbers. If not in DataPacket, don't fabricate.
+- [x] **QUAL-07**: Retry-then-escalate failure handling — agent fails → retry once with error context → fail again → escalate to PM
+- [x] **QUAL-08**: `contextBudget.js` — token counting + budget management per agent. Measure actual usage, set budgets based on data.
 
 ### Standalone Commands
 
@@ -174,14 +174,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FLST-08 | Phase 7 | Pending |
 | FLST-09 | Phase 7 | Pending |
 | FLST-10 | Phase 7 | Pending |
-| QUAL-01 | Phase 5D | Pending |
-| QUAL-02 | Phase 5D | Pending |
-| QUAL-03 | Phase 5D | Pending |
-| QUAL-04 | Phase 5D | Pending |
-| QUAL-05 | Phase 5D | Pending |
-| QUAL-06 | Phase 5D | Pending |
-| QUAL-07 | Phase 5D | Pending |
-| QUAL-08 | Phase 5D | Pending |
+| QUAL-01 | Phase 5D | Complete |
+| QUAL-02 | Phase 5D | Complete |
+| QUAL-03 | Phase 5D | Complete |
+| QUAL-04 | Phase 5D | Complete |
+| QUAL-05 | Phase 5D | Complete |
+| QUAL-06 | Phase 5D | Complete |
+| QUAL-07 | Phase 5D | Complete |
+| QUAL-08 | Phase 5D | Complete |
 | CMD-01 | Phase 6 | Pending |
 | CMD-02 | Phase 7 | Pending |
 | CMD-03 | Phase 6 | Pending |
