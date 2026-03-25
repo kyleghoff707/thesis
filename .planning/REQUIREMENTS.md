@@ -61,10 +61,26 @@
 
 ## Traceability
 
-| Requirement | Phase |
-|-------------|-------|
-| HARNESS-01 through HARNESS-05 | TBD — Roadmap |
-| TRI-01 through TRI-06 | TBD — Roadmap |
-| ENGINE-01 through ENGINE-04 | TBD — Roadmap |
-| SCALE-01 through SCALE-04 | TBD — Roadmap |
-| COMP-01, COMP-02 | TBD — Roadmap |
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| HARNESS-01 | Phase 1 | Pending |
+| HARNESS-02 | Phase 1 | Pending |
+| HARNESS-03 | Phase 1 | Pending |
+| HARNESS-04 | Phase 1 | Pending |
+| HARNESS-05 | Phase 1 | Pending |
+| TRI-01 | Phase 2 | Pending |
+| TRI-02 | Phase 2 | Pending |
+| TRI-03 | Phase 2 | Pending |
+| TRI-04 | Phase 2 | Pending |
+| TRI-05 | Phase 2 | Pending |
+| TRI-06 | Phase 2 | Pending |
+| ENGINE-01 | Phase 3 | Pending |
+| ENGINE-02 | Phase 3 | Pending |
+| ENGINE-03 | Phase 3 | Pending |
+| ENGINE-04 | Phase 3 | Pending |
+| SCALE-01 | Phase 4 | Pending |
+| SCALE-02 | Phase 4 | Pending |
+| SCALE-03 | Phase 4 | Pending |
+| SCALE-04 | Phase 4 | Pending |
+| COMP-01 | Phase 5 | Pending |
+| COMP-02 | Phase 5 | Pending |
