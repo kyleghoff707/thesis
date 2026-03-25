@@ -56,6 +56,7 @@ Plan: Not started
 | Phase 05D P02 | 2min | 1 tasks | 2 files |
 | Phase 05D P01 | 5min | 2 tasks | 4 files |
 | Phase 05D P03 | 23min | 2 tasks | 2 files |
+| Phase 06A P06 | 11min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -86,6 +87,9 @@ Recent decisions affecting current work:
 - [Phase 05D]: Quality checks are informational, never blocking (per D-04) -- report saves first, quality runs after
 - [Phase 05D]: Retry-then-escalate: 1 retry with error context, then save partial with status failed (per D-05/D-06)
 - [Phase 05D]: Budget tracking is observational -- measures cost without enforcement
+- [Phase 06A]: Annual-reader has readFilingSection only -- no transcript access (clean separation per D-08)
+- [Phase 06A]: Promise tracker uses 5-status lifecycle: fulfilled, partially_fulfilled, missed, revised, pending
+- [Phase 06A]: Cross-validation severity: low (<1%), medium (1-5%), high (>5%) -- SEC always source of truth
 
 ### Pending Todos
 
@@ -99,6 +103,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T19:02:20.283Z
-Stopped at: Phase 6 plans complete — 12 plans in 7 waves
+Last session: 2026-03-25T19:40:00Z
+Stopped at: Completed 06A-06-PLAN.md (annual-reader + quarterly-reader prompts)
 Resume file: .planning/phases/06-pitch-deck/06B-01-PLAN.md

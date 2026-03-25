@@ -118,7 +118,7 @@ Plans:
 - [ ] 06A-03-PLAN.md — Author competitor-evaluator prompt via /writing-skills
 - [ ] 06A-04-PLAN.md — Author management-evaluator prompt via /writing-skills
 - [ ] 06A-05-PLAN.md — Author risk-analyst prompt via /writing-skills
-- [ ] 06A-06-PLAN.md — Author annual-reader + quarterly-reader prompts via /writing-skills
+- [x] 06A-06-PLAN.md — Author annual-reader + quarterly-reader prompts via /writing-skills
 - [ ] 06B-01-PLAN.md — /generate:pitch-deck CC skill (3-phase dispatch + checkpoints + PSR + FGR)
 - [ ] 06B-02-PLAN.md — /generate:section CC skill (CMD-01 single section re-run)
 - [ ] 06C-01-PLAN.md — SectionRenderer UI debt fixes + usePitchDeck hook + Vite middleware
