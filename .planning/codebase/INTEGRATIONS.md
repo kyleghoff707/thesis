@@ -1,168 +1,237 @@
 # External Integrations
 
-**Analysis Date:** 2026-03-24
+**Analysis Date:** 2026-03-25
 
 ## APIs & External Services
 
-**AI / LLM:**
-- Anthropic Claude API - XBRL tag classification (Layer 3 runtime) + planned AI report generation (Phases 5-7)
-  - SDK/Client: `@anthropic-ai/sdk ^0.78.0`
-  - Auth: `VITE_CLAUDE_KEY` env var
-  - Header: `anthropic-dangerous-direct-browser-access` (direct browser calls, no server proxy)
-  - Engine: `src/engines/companyAdapter.js` (Layer 3 classification), planned `src/engines/aiResearch.js`
-  - Model: `claude-sonnet-4-20250514` (planned for report generation)
-  - Cost concern: ~$0.01/company for non-S&P 500 Layer 3 classification; report generation costs TBD
+**SEC EDGAR — Financial Data (Primary):**
+- Service: SEC EDGAR (data.sec.gov + www.sec.gov)
+- What it's used for: Complete financial statements (10-K, 10-Q), company facts (XBRL tags), CIK lookup, ticker mapping, filing metadata, 13F holdings, N-PORT fund holdings, insider Form 4, executive compensation (DEF 14A)
+- SDK/Client: Custom fetch via `/api/edgar` proxy (Vite dev) or direct to `https://data.sec.gov` (Tauri production)
+- Rate limits: None enforced; SEC requests User-Agent header with contact info
+- Integration points:
+  - `src/engines/edgar.js` — Core EDGAR API functions (lookupCIK, fetchCompanyFacts, fetchFilings, fetchCompanyInfo, ticker search index)
+  - `src/engines/edgarFinancials.js` — XBRL extraction from company facts (10-K filings, three-layer tag resolution)
+  - `src/engines/edgarFrames.js` — EDGAR Frames API cross-check (validates extracted values against aggregated data.sec.gov)
+  - `src/engines/gurus.js` — 13F filing fetches and parsing (CIK-based 10 lookup, accession number extraction)
+  - `src/engines/nport.js` — N-PORT fund holdings extraction (fund CIK + series ID matching)
+  - `src/engines/insiders.js` — Form 4 insider trading XML parsing and transaction extraction
+  - `src/engines/compensation.js` — DEF 14A proxy statement parsing, executive compensation table extraction
+  - `src/engines/peers.js` — Browse-edgar SIC code lookups, ticker discovery via Frames API fallback
+- Auth: None (public API); User-Agent required
+- Caching: IndexedDB (edgar-facts, edgar-statements, guru-data, nport-data, insider-data, comp-data stores); 10-year TTL for 10-K data, 1-year for other documents
 
-**Financial Data — SEC EDGAR (free, no API key):**
-- Company Facts XBRL API (`data.sec.gov/api/xbrl/companyfacts/`) - Primary financial statement source
-  - Engine: `src/engines/edgar.js`, `src/engines/edgarFinancials.js`
-  - Dev proxy: `/api/edgar` → `https://data.sec.gov` (Vite proxy, sets User-Agent header)
-  - Production: direct calls (Tauri webview bypasses CORS)
-  - Rate limit: 10 req/sec; `User-Agent: StockAnalyzer/1.0 kylehoff@example.com` required
-- EDGAR Submissions API (`data.sec.gov/submissions/`) - Filing history, company metadata
-  - Engine: `src/engines/edgar.js`, `src/engines/gurus.js`, `src/engines/insiders.js`
-  - Dev proxy: `/api/edgar`
-- EDGAR Frames API (`data.sec.gov/api/xbrl/frames/`) - Cross-company metrics for peer comparison
-  - Engine: `src/engines/edgarFrames.js`
-  - Dev proxy: `/api/edgar`
-  - Period convention: `CY{year}.json` (duration tags) vs `CY{year}Q4I.json` (instant/balance sheet tags)
-- SEC Archives (`www.sec.gov/Archives/`) - Full filing documents (10-K, 10-Q, 13F, Form 4, DEF 14A, N-PORT)
-  - Engines: `src/engines/gurus.js`, `src/engines/insiders.js`, `src/engines/compensation.js`, `src/engines/nport.js`, `src/engines/filingMarkdown.js`
-  - Dev proxy: `/api/sec` → `https://www.sec.gov`
-- SEC Ticker Map (`www.sec.gov/files/company_tickers.json`) - CIK lookup for all public companies
-  - Engine: `src/engines/edgar.js`
-  - Dev proxy: `/api/sec`
+**Yahoo Finance — Market Data & Analyst Estimates:**
+- Service: Yahoo Finance (query1.finance.yahoo.com)
+- What it's used for: Historical daily OHLCV prices, batch quotes (market cap, P/E, dividend yield, shares outstanding, book value), analyst estimates (earnings growth, EPS consensus, price targets, recommendations), earnings calendar events, upgrade/downgrade history
+- SDK/Client: `yahoo-finance2 ^3.13.2` (ESM, handles crumb/cookie auth internally)
+- Rate limits: None enforced; requests per day practical limit ~1000 (batch quotes in 50-ticker chunks)
+- Integration points:
+  - Vite middleware `yahooSummaryPlugin()` in `vite.config.js` — `/api/yahoo-summary/:ticker?modules=` for quoteSummary (analyst estimates)
+  - Vite middleware `yahooQuotesPlugin()` in `vite.config.js` — `/api/yahoo-quotes/AAPL,MSFT,GOOGL` for batch quotes
+  - `/api/yahoo` proxy → Yahoo's v8 chart endpoint for historical prices
+  - `src/engines/prices.js` — Daily historical price fetches (1y, 3y, 5y, 10y, 20y, max ranges)
+  - `src/engines/batchQuotes.js` — Multi-ticker quote fetch with caching and per-ticker rate limiting
+  - `src/engines/analystEstimates.js` — Parse Yahoo summary modules (earningsTrend, financialData, recommendationTrend)
+  - `src/engines/companyEvents.js` — Calendar events extraction from assetProfile module
+- Auth: None (public API, crumb handled internally by yahoo-finance2)
+- Caching: IndexedDB (priceStore.js) for full history; localStorage for analyst data; 1-hour TTL for estimates
 
-**Financial Data — Yahoo Finance (free, no API key):**
-- Yahoo Chart API (`query1.finance.yahoo.com/v8/finance/chart`) - Historical daily OHLCV prices
-  - Engine: `src/engines/prices.js`
-  - Dev proxy: `/api/yahoo` → `https://query1.finance.yahoo.com`
-  - Storage: IndexedDB via `src/engines/priceStore.js` (incremental updates)
-- Yahoo Quote Summary v10 (`query1.finance.yahoo.com/v10/finance/quoteSummary`) - Analyst estimates, earnings dates, company profile
-  - Modules used: `earningsTrend`, `financialData`, `recommendationTrend`, `upgradeDowngradeHistory`, `calendarEvents`, `assetProfile`
-  - Dev: Vite middleware `/api/yahoo-summary/:ticker` using `yahoo-finance2` (handles crumb/cookie auth)
-  - Engine: `src/engines/analystEstimates.js`, `src/engines/companyEvents.js`
-- Yahoo Quote API - Real-time/delayed quotes for peer competitor metrics
-  - Dev: Vite middleware `/api/yahoo-quotes/:tickers` (batches up to 50 tickers)
-  - Engine: `src/engines/batchQuotes.js`
-  - Fields: marketCap, price, P/E, forwardPE, EPS, bookValue, sharesOutstanding, dividendYield, 52-week range
+**Finviz — Analyst Consensus & Valuation:**
+- Service: Finviz (finviz.com/quote.ashx)
+- What it's used for: 5-year EPS growth consensus, forward P/E, PEG ratio, analyst target price, recommendation, short float, insider/institutional ownership, institutional transactions
+- SDK/Client: None; HTML scraping via cheerio in `vite.config.js` middleware
+- Rate limits: Practical ~5 requests/minute (will be blocked if exceeded)
+- Integration points:
+  - Vite middleware `finvizPlugin()` — `/api/finviz/:ticker` (fetches quote page server-side, parses HTML snapshot table with cheerio)
+  - `src/engines/finviz.js` — Normalize parsed data (percentage parsing, dollar parsing, numeric conversions)
+- Auth: None (public page)
+- Caching: localStorage; 24-hour TTL
 
-**Financial Data — Finviz (free, scraping):**
-- Finviz quote page (`finviz.com/quote.ashx`) - 5yr EPS growth consensus, analyst recommendation, short interest, PEG
-  - Approach: Server-side HTML scrape in Vite middleware (`/api/finviz/:ticker`) using cheerio; browser-like User-Agent required
-  - Production: Direct DOM parse via `DOMParser`
-  - Engine: `src/engines/finviz.js`
-  - No API key required; fragile to HTML structure changes
+**GuruFocus — Valuation Metrics & Guru Analytics:**
+- Service: GuruFocus (api.gurufocus.com, optional API; fallback scraping from www.gurufocus.com)
+- What it's used for: GF Value, Graham Number, Peter Lynch Valuation, DCF valuations, financial strength, profitability rank, predictability rank
+- SDK/Client: None (REST API or HTML scraping fallback)
+- Rate limits: Unknown (optional premium API; free scraping no formal limits)
+- Integration points:
+  - Vite middleware `gurufocusPlugin()` — `/api/gurufocus/:ticker` (API mode if `VITE_GURUFOCUS_KEY` set; HTML scrape fallback)
+  - `src/engines/gurufocus.js` — Parse API response or extract via regex from HTML
+- Auth: API key in `VITE_GURUFOCUS_KEY` (optional; $25/mo premium feature)
+- Caching: localStorage; 48-hour TTL
 
-**Financial Data — Finnhub (premium, optional):**
-- Earnings call transcripts (`finnhub.io/api/v1/stock/transcripts/list` + transcript fetch)
-  - Auth: `VITE_FINNHUB_KEY` env var (premium tier only; 403 on free tier, silently suppressed)
-  - Engine: `src/engines/transcripts.js`
-  - Cache: IndexedDB `transcript-data` store, 10-year TTL (transcripts are immutable)
+**Finnhub — Earnings Call Transcripts (Premium):**
+- Service: Finnhub (finnhub.io/api/v1)
+- What it's used for: Earnings call transcript list (quarterly), full transcript text for 10-K/10-Q filings
+- SDK/Client: Custom fetch to `https://finnhub.io/api/v1/stock/transcripts/list` and `/v1/stock/transcripts`
+- Rate limits: Premium tier required for transcripts; free tier returns 403 on transcript endpoints
+- Integration points:
+  - `src/engines/transcripts.js` — `fetchTranscriptList()`, `fetchTranscriptText()`, match transcripts to filings by date proximity
+  - `src/engines/filingMarkdown.js` — Fetches transcript text if matched to a filing
+  - Filings tab UI — Transcript buttons appear on 10-K/10-Q rows when matched
+- Auth: API key in `VITE_FINNHUB_KEY` (optional; premium tier ~$100/mo)
+- Caching: IndexedDB (transcript-data store); 10-year TTL (transcripts are immutable)
 
-**Financial Data — Alpha Vantage (free tier, optional):**
-- Earnings call transcripts (fallback when Finnhub unavailable)
-  - Auth: `VITE_ALPHA_VANTAGE_KEY` env var
-  - Free tier: 25 calls/day
-  - Engine: `src/engines/transcripts.js`
-  - Base URL: `https://www.alphavantage.co/query`
+**Alpha Vantage — Earnings Transcripts Fallback (Free):**
+- Service: Alpha Vantage (alphavantage.co)
+- What it's used for: Earnings call transcripts as free alternative to Finnhub (25 calls/day limit)
+- SDK/Client: Custom fetch to `https://www.alphavantage.co/query?function=EARNINGS_CALENDAR`
+- Rate limits: 5 requests/minute, 100 requests/day (free tier)
+- Integration points:
+  - `src/engines/transcripts.js` — `fetchTranscriptViaAlphaVantage()` fallback when Finnhub unavailable
+- Auth: API key in `VITE_ALPHA_VANTAGE_KEY` (optional; free tier 25 calls/day)
+- Caching: IndexedDB; 10-year TTL
 
-**Financial Data — GuruFocus (optional, $25/mo API or scrape fallback):**
-- GF Value, financial strength/profitability ranks, Graham Number, Peter Lynch Value, DCF estimates, growth rates
-  - Auth: `VITE_GURUFOCUS_KEY` env var (API mode); scrape mode if key absent
-  - Dev: Vite middleware `/api/gurufocus/:ticker` (dual mode: API or HTML scrape)
-  - Engine: `src/engines/gurufocus.js`
-  - API endpoint: `api.gurufocus.com/public/user/{key}/stock/{ticker}/summary`
+**Claude API — AI-Powered Tag Classification & Report Generation:**
+- Service: Claude (api.anthropic.com)
+- What it's used for:
+  - Layer 3 XBRL tag classification (companies outside S&P 500) — maps unresolved tags to financial fields
+  - AI report generation (planned Phase 5-7) — One Pager, Pitch Deck, Full Story generation
+  - AI criticism engine (planned) — factual validation and claim checking
+- SDK/Client: `@anthropic-ai/sdk ^0.78.0` for API calls; direct from browser via `anthropic-dangerous-direct-browser-access` header
+- Rate limits: Depends on plan; typically 50k+ requests/month on paid tier
+- Integration points:
+  - `src/engines/companyAdapter.js` — Layer 3 tag classification (runtime API calls for non-S&P 500 companies)
+  - `src/engines/critic.js` — Planned validation engine using Claude for fact-checking
+  - `src/engines/aiResearch.js` — Planned AI report generation (all three stages)
+- Auth: API key in `VITE_CLAUDE_KEY` (required for report generation; optional for core functionality if Layer 3 skipped)
+- Caching: Not cached (API calls are expensive, but necessary for non-S&P 500 companies); cost budget ~$0.01/company for Layer 3
 
 ## Data Storage
 
 **Databases:**
-- IndexedDB (`thes1s-cache`, version 5)
-  - Client: `idb ^8.0.3` via `src/engines/cacheStore.js`
-  - Object stores: `edgar-facts`, `edgar-statements`, `guru-data`, `nport-data`, `filing-markdown`, `insider-data`, `comp-data`, `transcript-data`
-  - TTLs: financials 24hr, prices 1hr, filings/transcripts 10yr (immutable), analyst/events 6hr
-
-**localStorage:**
-- Reports: key `stock-analyzer-reports` — full report objects (One Pager, Pitch Deck, Full Story)
-- Settings: `src/hooks/useSettings.js`
-- Watchlists: `src/hooks/useWatchlists.js`
-- Coverage monitor baselines: per-ticker XBRL field coverage snapshots
-- Small/fast cache entries (non-IDB-prefixed keys): routed here via `src/engines/cache.js`
+- **Type:** Browser-native IndexedDB (thes1s-cache, v5)
+  - Connection: `src/engines/cacheStore.js` via `idb ^8.0.3` wrapper
+  - Stores:
+    - `edgar-facts` — Raw company facts from SEC XBRL (10-15MB per company)
+    - `edgar-statements` — Extracted financial statements (1-2MB per company)
+    - `guru-data` — 13F holdings and related metadata (100KB per filing)
+    - `nport-data` — N-PORT fund portfolio data (50KB per filing)
+    - `filing-markdown` — Converted SEC filings (HTML→Markdown) (5-10MB per filing)
+    - `insider-data` — Form 4 transaction lists (100KB per company)
+    - `comp-data` — Executive compensation tables (50KB per company)
+    - `transcript-data` — Earnings call transcripts (500KB per transcript)
+  - TTL: 10 years for financials, 1 year for events/estimates, 10 years for immutable data (transcripts)
+  - Fallback in Node.js: IndexedDB detection (`HAS_IDB` flag), graceful null return in validation scripts
 
 **File Storage:**
-- Local filesystem only — no cloud storage
-- Static data files bundled with app:
-  - `src/data/taxonomy-hierarchy.json` (84KB — 1,937 FASB descendant tags for Layer 2)
-  - `src/data/sp500-tag-classifications.json` (387KB — 1,989 AI-classified tags for Layer 3)
-  - `industry-classification/thes1s-company-assignments.json` (5,758 company classifications)
+- **Local filesystem (Tauri):** `.thes1s/reports/` directory
+  - Stores: One Pager JSON, Pitch Deck JSON, Full Story JSON, progress.json per ticker
+  - Served via Vite middleware `thes1sReportsPlugin()` at `/api/thes1s/reports/:ticker/:fileType`
+  - Not in app bundle; created at runtime in user's home directory
 
 **Caching:**
-- Three-tier: in-memory Map → IndexedDB (large/immutable data) → localStorage (small/fast data)
-- Key routing logic: `src/engines/cache.js` (`IDB_PREFIXES` array determines storage tier)
+- **In-memory:** `Map` objects in hooks/engines for hot data (prevents redundant API calls within session)
+- **localStorage:** Small metadata (<1MB typical)
+  - `stock-analyzer-reports` — Research workflow records (reportData array)
+  - `sa-settings` — User theme, default price range, MARR values
+  - `sa-last-research` — Last viewed research ticker (resumption)
+  - `sa-competitors-tier` — User's peer data tier preference
+  - Analyst data, event lists, price cache metadata
+- **IndexedDB:** Large blobs (50MB+ typical total for 10+ companies)
+- **Three-tier strategy:**
+  1. In-memory → check
+  2. IndexedDB → check (if key matches `IDB_PREFIXES` in `src/engines/cache.js`)
+  3. localStorage → check (fallback)
+  4. Network fetch (API call)
 
 ## Authentication & Identity
 
 **Auth Provider:**
-- None — single-user local desktop app, no login system
-- API keys stored in `.env.local` (gitignored), accessed via `import.meta.env` through `src/engines/config.js`
+- None — No server, no user authentication
+- Each user runs app locally; all data stored locally or in browser storage
+
+**API Key Management:**
+- Keys stored in `.env.local` (dev-only, gitignored)
+- `.env.local` format:
+  ```
+  VITE_CLAUDE_KEY=sk-...
+  VITE_FINNHUB_KEY=xxxxxxxx
+  VITE_ALPHA_VANTAGE_KEY=xxxxxxxx
+  VITE_GURUFOCUS_KEY=xxxxxxxx
+  ```
+- Keys injected into `import.meta.env` by Vite at build time
+- Tauri production: Keys embedded in app binary (no `.env` loading) — must be rebuilt with new keys
 
 ## Monitoring & Observability
 
 **Error Tracking:**
-- None — no external error reporting service
+- None (no remote error reporting)
+- Errors logged to console via `console.warn()` (non-fatal) or `console.error()` (critical, rare)
+- Error state captured in React component state (`{ data, loading, error }` pattern)
+- No Sentry, Datadog, or similar
 
 **Logs:**
-- Tauri plugin log (`tauri-plugin-log 2`) for Rust shell
-- Browser console.warn/console.error throughout engines (e.g., Finnhub 403 suppressed deliberately)
-- No structured logging framework on the frontend
+- Browser console only (`console.warn`, `console.log` sparingly)
+- Tauri shell logs via `tauri-plugin-log` (optional, not yet integrated into UI)
+- No persistent log file by default
 
 ## CI/CD & Deployment
 
 **Hosting:**
-- Local macOS desktop app — no cloud hosting
-- Distribution: `.app` bundle via `npm run tauri:build` → `src-tauri/target/`
+- Local desktop (macOS `.app` bundle via Tauri)
+- No cloud hosting (single-user app)
+- No deployment pipeline (manual build)
 
 **CI Pipeline:**
-- None — no GitHub Actions or CI service configured
+- None configured
+- Manual testing via `npm test` (vitest) and `npm run tauri:dev`
 
 ## Environment Configuration
 
-**Required env vars (for full functionality):**
-- `VITE_CLAUDE_KEY` — Required for Layer 3 XBRL on non-S&P 500 companies; required for Phase 5-7 AI reports
-- `VITE_FINNHUB_KEY` — Optional; enables earnings call transcripts (premium endpoint)
-- `VITE_ALPHA_VANTAGE_KEY` — Optional; transcript fallback (25 calls/day free)
-- `VITE_GURUFOCUS_KEY` — Optional; reliable GuruFocus data ($25/mo) vs HTML scrape fallback
+**Required env vars:**
+- None (app works with zero keys for core functionality)
+- Optional premium features:
+  - `VITE_CLAUDE_KEY` — Claude API (for Layer 3 XBRL + AI report generation)
+  - `VITE_FINNHUB_KEY` — Finnhub transcripts (premium, ~$100/mo)
+  - `VITE_ALPHA_VANTAGE_KEY` — Free transcript fallback (25 calls/day)
+  - `VITE_GURUFOCUS_KEY` — GuruFocus API (optional, $25/mo; scraping fallback available)
 
 **Secrets location:**
-- `.env.local` in project root (gitignored, never committed)
-- Read exclusively through `src/engines/config.js`
+- `.env.local` file (development)
+- Embedded in Tauri binary (production)
+- Never committed to git (in `.gitignore`)
 
 ## Webhooks & Callbacks
 
 **Incoming:**
-- None — desktop app, no server, no incoming webhooks
+- None
 
 **Outgoing:**
-- None — all data fetching is request/response, no event-driven callbacks
+- None (all external calls are synchronous request-response)
 
-## CORS Strategy
+## Data Flow Summary
 
-The app uses different CORS strategies for dev vs production:
-
-**Dev (Vite dev server):**
-- `/api/sec` → proxy to `https://www.sec.gov` (strips browser fingerprint headers, sets proper User-Agent)
-- `/api/edgar` → proxy to `https://data.sec.gov` (same header manipulation)
-- `/api/yahoo` → proxy to `https://query1.finance.yahoo.com` (adds User-Agent)
-- `/api/yahoo-summary/:ticker` → Vite middleware using `yahoo-finance2` (handles Yahoo crumb/cookie)
-- `/api/yahoo-quotes/:tickers` → Vite middleware using `yahoo-finance2`
-- `/api/finviz/:ticker` → Vite middleware using `cheerio` (server-side HTML fetch)
-- `/api/gurufocus/:ticker` → Vite middleware (API or scrape mode)
-- `/api/ir-events` → Vite middleware (parallel IR page probing, no CORS needed server-side)
-
-**Production (Tauri native webview):**
-- Tauri's WKWebView on macOS does not enforce CORS — all APIs called directly
-- CSP is explicitly set to `null` in `src-tauri/tauri.conf.json`
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Browser (React + Hooks + Engines)                             │
+├──────────────────────────────────────────────────────────────┤
+│                                                               │
+│  Request Flow:                                               │
+│  Component → Hook → Engine → Cache (IDB/localStorage/mem)   │
+│                   ↓ (if miss)                                │
+│                   API Call (dev proxy or direct)            │
+│                                                               │
+└──────────────────────────────────────────────────────────────┘
+                           │
+         ┌─────────────────┼─────────────────┐
+         │                 │                 │
+    SEC EDGAR         Yahoo Finance      Finviz
+    (company facts,    (prices, quotes,   (consensus,
+     10-K/10-Q,       analyst est.)       multiples)
+     insider, gurus)      │                 │
+         │                 │                 │
+         ├─────────────────┼──────────────────┤
+         │                 │                 │
+    GuruFocus         Finnhub/Alpha    Claude API
+    (valuations)     Vantage (transcripts) (Layer 3)
+         │
+    IndexedDB Storage (cached EDGAR facts, statements, transcripts, guru data)
+         ↓
+    localStorage (reports, settings, metadata)
+         │
+    Tauri File System (.thes1s/reports/*.json)
+```
 
 ---
 
-*Integration audit: 2026-03-24*
+*Integration audit: 2026-03-25*

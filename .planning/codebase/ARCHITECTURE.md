@@ -1,233 +1,252 @@
 # Architecture
 
-**Analysis Date:** 2026-03-24
+**Analysis Date:** 2026-03-25
 
 ## Pattern Overview
 
-**Overall:** Layered client-side single-page application wrapped in a Tauri desktop shell. No backend server — all computation runs in the browser WebView and API calls go direct to external services.
+**Overall:** Three-tier engine layer + hook-mediated React binding + component view layer with three-layer XBRL tag resolution for financial data extraction.
 
 **Key Characteristics:**
-- Hook-mediated data flow: engines are pure async functions; hooks bind them to React state; components render the state
-- Three-layer XBRL tag resolution for financial data extraction from SEC EDGAR
-- Three-tier caching (in-memory → IndexedDB → localStorage) for API responses
-- All styling is inline via a mutable `C` palette object — no CSS files or CSS-in-JS library
-- Report data (the research workflow) is persisted in localStorage; financial caches live in IndexedDB
-
----
+- Pure async engine functions (no React dependency) → hooks bind to state → components render state
+- All financial data sourced from SEC EDGAR XBRL (single source of truth)
+- Three-layer XBRL tag resolution: static taxonomy (Layer 1) → taxonomy hierarchy fallback (Layer 2) → AI classification (Layer 3)
+- Industry-aware overlays (bank/REIT/insurance) augment base XBRL taxonomy
+- Three-tier caching: in-memory → IndexedDB → localStorage with TTL-based expiration
+- Data provenance tracking: every extracted value traces back to its XBRL source tag and resolution layer
+- All styling via mutable theme palette object `C` (inline styles, no CSS files)
 
 ## Layers
 
-**Shell / Entry:**
-- Purpose: Bootstrap React, provide router, inject global CSS reset
-- Location: `src/main.jsx`
-- Contains: `BrowserRouter` wrapper, root render, 8-line global style injection
-- Depends on: `src/App.jsx`
+**Bootstrap & Router:**
+- Purpose: Bootstrap React, provide routing, inject global styles
+- Location: `src/main.jsx`, `src/App.jsx`
+- Contains: BrowserRouter wrapper, route declarations, localStorage-backed research state
+- Depends on: `src/hooks/useResearch`, `src/hooks/useTheme`, `src/hooks/useSettings`
 - Used by: Tauri WebView (production) or Vite dev server
 
-**Routing / App Shell:**
-- Purpose: Top-level route declarations, cross-cutting state (theme, research list, settings)
-- Location: `src/App.jsx`
-- Contains: All route definitions for `/research`, `/watchlists`, `/gurus`, `/reports`, `/validation`, audit routes
-- Depends on: `useTheme`, `useResearch`, `useSettings`, all top-level page components
-- Used by: `src/main.jsx`
+**Layout & Navigation:**
+- Purpose: 52px top nav bar with logo, 4 nav tabs (Watchlists/Research/Gurus/Reports), ticker search, settings
+- Location: `src/components/Layout.jsx`, `src/components/TickerSearch.jsx`
+- Contains: NavLink tabs, search autocomplete, max-width 1400px content wrapper
+- Depends on: `src/theme.js` palette `C`, `useTheme` hook
+- Used by: All page routes in `App.jsx`
 
-**Layout / Chrome:**
-- Purpose: 52px top nav bar with logo, 4 nav tabs, ticker search, settings gear, and main content slot
-- Location: `src/components/Layout.jsx`
-- Contains: Inline-styled nav, `NavLink` tabs, `TickerSearch` component, max-width 1400px content wrapper
-- Depends on: `src/theme.js` (C palette), `TickerSearch.jsx`
-- Used by: `src/App.jsx` — wraps all routes
-
-**Toolbox (per-ticker research container):**
-- Purpose: Primary research surface — 8-tab container that orchestrates all data hooks and passes computed results to tab components
+**Primary Research Surface - Toolbox:**
+- Purpose: 8-tab container orchestrating all financial data, scoring computations, and metric calculations
 - Location: `src/components/Toolbox.jsx`
-- Contains: Tab switcher (Overview / Financials / Growth / Valuation / Competitors / Insiders / Filings / Data Audit), all hook invocations, all `useMemo` scoring computations
-- Depends on: `useFinancials`, `useEdgar`, `usePrices`, `useGurus`, `useInsiders`, `useCompensation`, `useCompanyEvents`, all scoring engines (`growthRates`, `returnMetrics`, `freeCashFlow`, `ruleOneScore`)
+- Contains: Tab switcher (Overview/Financials/Growth/Valuation/Competitors/Insiders/Filings/Data Audit), all hook invocations, `useMemo` scoring computations
+- Depends on: `useFinancials`, `useEdgar`, `usePrices`, `useGurus`, `useInsiders`, `useCompensation`, `useCompanyEvents`, `useCompetitors`, scoring engines
 - Used by: `/research/:id` route in `App.jsx`
 
-**UI Components:**
-- Purpose: Render specific views/tabs — receive computed data as props, no direct engine calls
-- Location: `src/components/*.jsx`
-- Contains: `FinancialStatements`, `GrowthAnalysis`, `Valuation`, `Competitors`, `Insiders`, `Filings`, `Gurus`, `GuruPortfolio`, `TickerDataAudit`, `CompanyEvents`, etc.
-- Depends on: `src/theme.js`, data props from Toolbox or their own hooks (Competitors uses `useCompetitors`)
-- Used by: `Toolbox.jsx` or directly by App routes (Gurus, Watchlists, audit views)
+**Tab Components:**
+- Purpose: Render specific analysis views — receive computed data as props, no direct engine calls
+- Location: `src/components/FinancialStatements.jsx`, `GrowthAnalysis.jsx`, `Valuation.jsx`, `Competitors.jsx`, `Insiders.jsx`, `Filings.jsx`, `Gurus.jsx`, `TickerDataAudit.jsx`, `CompanyEvents.jsx`
+- Contains: Data display, charts (Recharts), tables, collapsible sections, audit dashboards
+- Depends on: `src/theme.js`, data props from Toolbox or their own hooks
+- Used by: `Toolbox.jsx` or directly by App routes
 
-**Hooks (data-binding layer):**
-- Purpose: Bridge between async engine functions and React component state — handle loading, error, and cancellation patterns
+**Hooks - Data State Bridge:**
+- Purpose: Bridge between async engine functions and React component state — handle loading, error, cancellation patterns
 - Location: `src/hooks/*.js`
-- Contains: `useEdgar`, `useFinancials`, `usePrices`, `useGurus`, `useInsiders`, `useCompensation`, `useCompetitors`, `useCompanyEvents`, `useResearch`, `useSettings`, `useTheme`, `useWatchlists`, `useAnalystData`
-- Depends on: `src/engines/*.js`
-- Used by: `Toolbox.jsx` and individual components
+- Contains: `useEdgar`, `useFinancials`, `usePrices`, `useGurus`, `useInsiders`, `useCompensation`, `useCompetitors`, `useCompanyEvents`, `useResearch`, `useSettings`, `useTheme`, `useWatchlists`, `useAnalystData`, `useOnePager`
+- Standard pattern: `{ data, loading, error }` object returned; cancellation via `cancelled` flag in cleanup
+- Depends on: `src/engines/*.js` async functions
+- Used by: `Toolbox.jsx`, page components, other hooks
 
-**Engines (data + computation layer):**
-- Purpose: All external API calls, data extraction, and computation — pure async functions with no React dependency
+**Engines - Pure Data Logic:**
+- Purpose: All external API calls, data extraction, normalization, and computation — pure async functions with no React dependency
 - Location: `src/engines/*.js`
-- Contains: EDGAR fetchers (`edgar.js`, `edgarFinancials.js`, `edgarFrames.js`), scoring (`ruleOneScore.js`, `growthRates.js`, `returnMetrics.js`, `freeCashFlow.js`, `valuation.js`), other data sources (`gurus.js`, `insiders.js`, `prices.js`, `compensation.js`, `transcripts.js`, `analystEstimates.js`), and support engines (`cache.js`, `cacheStore.js`, `splits.js`, `peers.js`, `peerMetrics.js`, `batchQuotes.js`)
-- Depends on: `src/engines/config.js` (env keys), `src/engines/cache.js`, external APIs
+- Contains: EDGAR fetchers, XBRL tag resolution, financial normalization, scoring, caching layer
+- Depends on: `src/engines/cache.js`, `src/engines/cacheStore.js`, external APIs
 - Used by: `src/hooks/*.js`
 
-**Static Data:**
-- Purpose: Pre-built lookup tables loaded at import time — zero runtime API cost
-- Location: `src/data/`
-- Contains:
-  - `taxonomy-hierarchy.json` — 1,937 FASB descendant tags (Layer 2 XBRL, 84KB)
-  - `sp500-tag-classifications.json` — 1,989 AI-classified tags for S&P 500 (Layer 3 XBRL, 387KB)
-  - `validationCompanies.js` — 503 S&P 500 tickers for validation runs
-- Used by: `taxonomyResolver.js` (Layer 2), `companyAdapter.js` (Layer 3)
-
----
-
-## The Three-Layer XBRL Engine
-
-The core financial data engine (`src/engines/edgarFinancials.js`) resolves ~85 standardized financial fields from raw SEC EDGAR XBRL data using a three-layer fallback strategy. This is the most architecturally significant subsystem.
-
-**Layer 1 — Static Tag Map (handles ~96% of cases):**
-- Defined inline in `edgarFinancials.js` as `INCOME_TAXONOMY`, `BALANCE_TAXONOMY`, `CASHFLOW_TAXONOMY` arrays
-- Each field entry: `{ field: 'revenues', unit: 'USD', tags: ['RevenueFromContract...', 'Revenues', 'SalesRevenueNet', ...] }`
-- Tags ordered by prevalence — first tag's value wins per year
-- O(1) lookup per tag per year
-
-**Layer 2 — Taxonomy Hierarchy Fallback:**
-- `src/engines/taxonomyResolver.js` augments any taxonomy array with FASB calculation linkbase descendants
-- Pre-built data: `src/data/taxonomy-hierarchy.json` (1,937 descendant tags from 3 FASB taxonomy versions)
-- Used only when Layer 1 misses a field for a company
-- Currently dormant (commented out in `edgarFinancials.js`) — code retained for future re-enablement
-
-**Layer 3 — AI Tag Classification:**
-- `src/engines/companyAdapter.js` — two sub-layers:
-  - 3a: Pre-built S&P 500 classifications (`src/data/sp500-tag-classifications.json`) — zero API cost
-  - 3b: Runtime Claude API classification (for companies outside S&P 500, ~$0.01/company)
-- Confidence gating: classifications below 0.8 confidence are marked "inferred" in provenance
-- Currently dormant (commented out in `edgarFinancials.js`) — code retained
-
-**Industry Overlays (additive to all layers):**
-- `src/engines/industryClassifier.js` maps SIC codes → `'bank' | 'reit' | 'insurance' | 'standard'`
-- `src/engines/industryOverlays.js` provides additive XBRL taxonomy for bank/REIT/insurance
-- Applied after base extraction: bank gets NII/deposits/efficiency ratio; REIT gets FFO/NAV/NOI; insurance gets premiums/claims/combined ratio
-
-**Derived Fields:**
-- `computeDerivedFields()` in `edgarFinancials.js` computes ~40 fields not in XBRL (e.g., gross profit from revenue - COGS, total debt from components, working capital, EBITDA)
-- Every derived value carries a human-readable formula via `getDerivedFormula()`
-
-**Provenance System:**
-- Every extracted value carries parallel metadata: XBRL tag that resolved it, layer (1/2/3), whether derived, confidence score (Layer 3), human-readable formula
-- Annual AND TTM provenance tracked
-- Components read bare numbers; provenance is opt-in via `edgarStatements.provenance`
-
----
-
-## Three-Tier Cache Architecture
-
-**`src/engines/cache.js`** routes cache operations across three storage tiers:
-
-| Tier | What | TTL | Used For |
-|------|------|-----|----------|
-| In-memory (`Map`) | Hot data, avoids redundant reads | Session | All lookups |
-| IndexedDB (`cacheStore.js`) | Large blobs (EDGAR facts, guru filings, statements) | 24hr–10yr | `edgar:facts:*`, `edgar-statements:*`, `guru-*`, `nport-*`, `transcript-*`, `filing-md:*`, `insider-*`, `comp-*` |
-| localStorage | Small metadata (ticker map, events, analyst data) | 1hr–24hr | Everything else |
-
-The `idbGet/idbSet` API in `src/engines/cacheStore.js` manages a single IndexedDB named `thes1s-cache` (version 5) with 8 object stores. Falls back gracefully in Node.js (validation scripts).
-
----
+**Theme & Styling:**
+- Purpose: Mutable palette object for dark/light theme switching — all components read inline styles from this
+- Location: `src/theme.js`
+- Pattern: `import { C } from '../theme'` → `style={{ color: C.text, background: C.bgCard }}`
+- Contains: `C_LIGHT` and `C_DARK` palettes (stickeR1 slate + Rule One Toolbox teal accent)
 
 ## Data Flow
 
-**Standard per-ticker research flow:**
+**Component → Hook → Engine → Cache → External API:**
 
-1. User enters ticker in `TickerSearch.jsx` → `Layout.jsx` calls `createReport(ticker)` → navigates to `/research/:id`
-2. `Toolbox.jsx` mounts, reads report from `useResearch` (localStorage), extracts `ticker`
-3. Hooks fire in parallel:
-   - `useFinancials(ticker)` → `fetchCompanyDetails()` → EDGAR submissions API → company info
-   - `useEdgar(ticker, version, view)` → `fetchEdgarFinancials()` + `fetchEdgarStatements()` → EDGAR companyfacts API → 3-layer XBRL extraction → normalized financial statements
-   - `usePrices(ticker, range)` → Yahoo Finance prices + split detection
-   - `useGurus()` → EDGAR 13F filings for 43 named gurus (IndexedDB cached)
-   - `useInsiders()` → EDGAR Form 4 filings
-4. `Toolbox.jsx` runs scoring via `useMemo`:
-   - `computeAllGrowthRates(edgarStatements)` → BVPS, EPS, revenue, operatingCash, FCF CAGRs
-   - `computeReturnMetrics(edgarStatements)` → ROE, ROIC, ROA averages
-   - `computeFreeCashFlow(edgarStatements)` → FCF series
-   - `computeMoatScore(growthRates)` + `computeManagementScore(returns, debt)` → Rule One scores
-5. Computed data flows as props to tab components (no prop drilling beyond one level — Toolbox → tab component)
+1. **Component** (e.g., `Toolbox.jsx`) calls a hook: `const { edgarStatements, loading, error } = useEdgar(ticker, version, view)`
+2. **Hook** (e.g., `useEdgar.js`) sets up `useEffect`, calls engine function, manages state lifecycle
+3. **Engine** (e.g., `fetchEdgarStatements()` in `edgarFinancials.js`) orchestrates extraction:
+   - Checks cache via `cacheGetAsync()` (memory tier)
+   - If miss, fetches EDGAR companyfacts JSON
+   - **Applies three-layer XBRL tag resolution** to extract financial fields
+   - **Computes derived fields** (gross profit, free cash flow, EBITDA, etc.)
+   - **Applies industry overlays** (bank/REIT/insurance) for specialized fields
+   - Stores result in cache with TTL
+4. **Cache layer** (3-tier):
+   - **Memory tier** (in-memory `Map`): fastest, session-long
+   - **IndexedDB tier** (via `cacheStore.js`): large blobs (facts, statements), 24hr–10yr TTL
+   - **localStorage tier**: small metadata, 1hr–24hr TTL
+   - **Routing**: keys with certain prefixes automatically routed to IDB vs localStorage
+5. **External APIs**:
+   - SEC EDGAR (facts, submissions, Frames)
+   - Yahoo Finance (prices, events, analyst data)
+   - Finviz (analyst estimates, snapshot)
+   - GuruFocus (optional)
+   - Finnhub/Alpha Vantage (transcripts)
 
-**Competitors data flow (progressive 3-phase):**
+**Financial Data Extraction (Three-Layer XBRL):**
 
-1. Phase 1: `classifyCompany()` (in-memory Thes1s taxonomy JSON) → peer list from `industry-classification/thes1s-company-assignments.json`
-2. Phase 2: `fetchPeerFrameData()` via EDGAR Frames API → `fetchBatchQuotes()` via Yahoo → `mergeYahooData()` → `computePeerMetrics()`
-3. Phase 3: On-demand `computePeerScores()` (multi-year EDGAR Frames fetch)
+```
+Raw EDGAR companyfacts JSON (us-gaap namespace)
+  ↓
+Layer 1: Static XBRL Tag Map (in edgarFinancials.js)
+  - ~200 hand-curated tags ordered by prevalence
+  - O(1) lookup — first tag's value wins
+  - Handles ~96% of companies without additional processing
+  ↓ (if Layer 1 misses)
+Layer 2: Taxonomy Hierarchy Fallback (taxonomyResolver.js)
+  - Pre-built JSON (1,937 descendant tags from FASB calc linkbase)
+  - Augments Layer 1 tags with descendant tags as additional fallbacks
+  - O(1) lookup, <100KB data file
+  ↓ (if Layer 1+2 miss)
+Layer 3: AI Tag Classification (companyAdapter.js)
+  - Pre-built S&P 500 tag classifications (JSON, zero API cost)
+  - Runtime Claude API classification for non-S&P 500 companies
+  - Confidence gating: <0.8 confidence tagged "inferred" in provenance
+  ↓
+Normalized Financial Statements: { years, income, balance, cashFlow, provenance }
+  - Every value carries parallel metadata: XBRL tag, layer (1/2/3), derived status, formula
+  - TTM (trailing twelve months) provenance tracked separately from annual
+```
 
-**State Management:**
-- React `useState` / `useMemo` / `useCallback` — no global state library
-- Reports/settings: localStorage (`stock-analyzer-reports`, `sa-settings`)
-- Financial caches: IndexedDB via `cacheStore.js`
-- Last-viewed research: localStorage (`sa-last-research`)
-- Competitors tier preference: localStorage (`sa-competitors-tier`)
+**Derived Field Computation:**
 
----
+After base extraction, `computeDerivedFields()` computes ~40 fields not directly in XBRL:
+- **Gross Profit**: Revenue - COGS (when not tagged)
+- **Operating Income**: EBIT (when Operating Income tag is missing)
+- **Free Cash Flow**: Operating CF - CapEx
+- **Total Debt**: Sum of short-term + long-term debt with sanity check fallback
+- **EBITDA**: Operating Income + D&A
+- **Working Capital**: Current Assets - Current Liabilities
+- **Return metrics**: ROE, ROIC, ROA (computed per year, then averaged)
+- All derive fields include human-readable formula via `getDerivedFormula()`
+
+**Industry Overlays (Applied Post-Extraction):**
+
+After base XBRL extraction, industry-specific overlays add specialized fields:
+- **Bank overlay** (`industryOverlays.js`, applied to SIC 6020–6036):
+  - Net Interest Income, Noninterest Income, Provision for Credit Losses
+  - Deposits, Loans, Investment Securities, Fed Funds, Cash Due from Banks
+  - Derived: Efficiency Ratio (Noninterest Expense / NII + Noninterest Income)
+- **REIT overlay** (SIC 6512, 6798):
+  - FFO (Funds from Operations): Net Income + D&A - Gains on Real Estate Sales
+  - NOI (Net Operating Income): Operating Income + depreciation
+  - NAV (Net Asset Value): Equity / Shares Outstanding
+- **Insurance overlay** (SIC 6311–6399):
+  - Premiums Earned, Loss Ratio, Combined Ratio, Loss and Loss Adjustment Expense
+  - Float (approximated from balance sheet items)
+
+**Stock Split Normalization:**
+
+`splits.js` detects and applies split adjustments:
+1. **Primary source**: Yahoo Finance chart endpoint (events.splits)
+2. **Fallback**: EDGAR explicit split ratio tag (`StockholdersEquityNoteStockSplitConversionRatio1`)
+3. **Fallback**: EDGAR share count jump detection (>1.8x forward or <0.55x reverse)
+4. Returns cumulative split factor for a given fiscal year → applied to per-share metrics and share counts
 
 ## Key Abstractions
 
-**Report:**
-- Purpose: A research workflow record — ticker + stage approvals + stage content (onePager/pitchDeck/fullStory)
-- Managed by: `useResearch.js`
-- Structure: `{ id, ticker, companyName, currentStage, stageApprovals, onePager, pitchDeck, fullStory, watchlist, competitors }`
-
-**edgarStatements:**
-- Purpose: Normalized financial statements — the single source of truth for all scoring and display
+**EDGAR Statements (Normalized Financial Data):**
+- Purpose: Single source of truth for all financial data — the normalized, provenance-tracked result of three-layer XBRL extraction
 - Produced by: `fetchEdgarStatements()` in `edgarFinancials.js`
-- Structure: `{ years, income: {year: {field: value}}, balance: {year: {field: value}}, cashFlow: {year: {field: value}}, provenance: {year: {field: {tag, layer, formula}}} }`
+- Structure: `{ years: [2020, 2021, ...], income: {year: {field: value}}, balance: {year: {field: value}}, cashFlow: {year: {field: value}}, provenance: {year: {field: {tag, layer, formula, confidence}}} }`
+- Used by: All scoring engines (growthRates, returnMetrics, freeCashFlow, ruleOneScore), valuation calculators, key metrics, UI display tabs
+- Fields: ~100 standardized line items (revenues, net_income_loss, total_debt, equity, free_cash_flow, etc.)
 
-**C palette:**
+**Research Report (Workflow State):**
+- Purpose: Persistent research workflow record — ticker + stage approvals + stage content
+- Managed by: `useResearch.js` hook
+- Stored in: localStorage (`stock-analyzer-reports` key)
+- Structure: `{ id, ticker, companyName, currentStage, stageApprovals: {onePager, pitchDeck, fullStory}, onePager: {...}, pitchDeck: {...}, fullStory: {...}, notes, watchlist, competitors: {privateCompetitors: [...]} }`
+
+**Theme Palette (C object):**
 - Purpose: Mutable theme object — all components read from this; dark/light themes applied via `Object.assign(C, source)`
 - Location: `src/theme.js`
-- Pattern: `import { C } from '../theme'` → `style={{ color: C.text, background: C.bgCard }}`
+- Pattern: `import { C } from '../theme'` → used in inline styles
+- Exported: `C`, `C_LIGHT`, `C_DARK`, `applyTheme(isDark)`
 
-**Cache key routing:**
+**Cache Key Routing:**
 - Purpose: Determines whether a cache key goes to IndexedDB or localStorage by prefix inspection
 - Location: `src/engines/cache.js` — `IDB_PREFIXES` array + `isIDBKey()` + `getStoreName()`
-
----
+- IDB keys: `edgar:facts:*`, `edgar-statements:*`, `guru-*`, `nport-*`, `filing-md:*`, `transcript:*`, `insider-*`, `comp-*`
+- localStorage keys: everything else (ticker map, events, analyst data, settings)
 
 ## Entry Points
 
-**Browser/Dev:**
+**Browser Entry (Development & Tauri Production):**
 - Location: `src/main.jsx`
-- Triggers: Vite dev server serves `index.html` → loads `main.jsx`
-- Responsibilities: Mount React root, inject global styles, provide BrowserRouter
+- Triggers: Vite dev server serves `index.html` → loads `main.jsx`, or Tauri WebView loads `dist/index.html`
+- Responsibilities: Mount React root, inject global CSS reset, provide `BrowserRouter` wrapper
 
-**Tauri (production):**
-- Location: `src-tauri/src/` (Rust shell), `src-tauri/tauri.conf.json`
+**Application Entry:**
+- Location: `src/App.jsx`
+- Triggers: React root mounts `<App />`
+- Responsibilities: Declare all routes (`/research`, `/research/:id`, `/watchlists`, `/gurus`, `/reports`, `/validation`, audit routes), provide top-level state (`useResearch`, `useTheme`, `useSettings`)
+
+**Tauri Native Shell:**
+- Location: `src-tauri/src/` (Rust), `src-tauri/tauri.conf.json`
 - Triggers: macOS `.app` launch
-- Responsibilities: Create native window (1400×900), load `dist/` as frontend, no CORS enforcement on network requests
+- Responsibilities: Create native 1400×900 window, load `dist/` as frontend, disable CORS enforcement (allows arbitrary headers on network requests)
 
-**Vite dev proxy:**
-- Location: `vite.config.js` — custom middleware plugins
+**Dev Middleware & API Proxying:**
+- Location: `vite.config.js` — 5 custom middleware plugins
 - Triggers: Any `/api/*` request in dev mode
-- Responsibilities: Proxy EDGAR/SEC requests (adds User-Agent header), serve Yahoo Finance via `yahoo-finance2` package, serve Finviz/GuruFocus/IR events via server-side fetch
-
----
+- Responsibilities:
+  - EDGAR proxy (adds User-Agent header for SEC rate-limiting)
+  - Yahoo Finance quoteSummary (via `yahoo-finance2` package)
+  - Finviz quote scraper (server-side fetch + cheerio parsing)
+  - GuruFocus data fetch (if API key available)
+  - IR events discovery middleware
 
 ## Error Handling
 
-**Strategy:** Per-hook try/catch with `loading`/`error` state. Hooks surface errors as string messages; components render error states inline. No global error boundary.
-
-**Patterns:**
+**Standard Pattern:**
 - All hooks follow: `setLoading(true)` → `try { ... } catch (err) { setError(err.message) } finally { setLoading(false) }`
 - Cancellation: `let cancelled = false` + cleanup `return () => { cancelled = true }` in `useEffect`
-- Cache misses are silent — engines fall back to network without surfacing errors
-- EDGAR 404s (missing filings) return `null` gracefully; components show "no data" states
 
----
+**Graceful Degradation:**
+- Cache misses are silent — engines fall back to network without surfacing errors to UI
+- EDGAR 404s (missing filings) return `null` gracefully; components show "no data" states
+- Third-party API failures (Finnhub free tier 403s, Finviz scrape timeouts) logged via `console.warn`, not thrown
+- IndexedDB quota exceeded: automatic eviction + retry; if still full, silent degrade to memory-only cache
+
+**Data Validation:**
+- Guard clauses at function entry: `if (!fgr || !eps || !futurePE) return null`
+- Null coalescing used throughout: `company?.website`, `settings?.defaultPriceRange || '5y'`
+- Display fallback: `score != null ? score : '--'` for missing metric values
+- Formatter guard: `if (n == null || isNaN(n)) return '--'`
 
 ## Cross-Cutting Concerns
 
-**Logging:** `console.warn` for non-fatal issues (cache failures, API 403s). No structured logging.
+**Logging:**
+- `console.warn(...)` for non-fatal errors, degraded functionality, API failures
+- `console.log(...)` sparingly for diagnostic milestones (e.g., "EDGAR statements AAPL [restated]: 12 years loaded")
+- Never use `console.error(...)` — errors are captured in state and displayed in UI or silently degraded
+- Third-party 403s (Finnhub free tier) are suppressed to avoid console noise
 
-**Validation:** `src/engines/validation.js` (572 lines) — rule-based validation of extracted EDGAR data against known good values. Used in dev/QA, not in production flow.
+**Validation & Audit:**
+- Data provenance tracking: every extracted value carries parallel metadata (tag, layer, confidence, formula)
+- Five audit systems:
+  1. **Ticker Audit** (`tickerAudit.js`): Validates ticker lookup consistency across data sources
+  2. **Guru Audit** (`GuruAudit.jsx`): Validates 13F holdings parsing and deduplication
+  3. **N-PORT Audit** (`NportAudit.jsx`): Validates N-PORT filing extraction
+  4. **Compensation Audit** (`CompAudit.jsx`): Validates executive compensation extraction
+  5. **Financial Audit** (`TickerDataAudit.jsx`): Validates EDGAR extraction, provenance, and coverage
+- Coverage Monitor: Baseline storage + change detection (fields gained/lost/tags changed) per ticker in localStorage
 
-**Split adjustment:** `src/engines/splits.js` — stock split detection and cumulative split factor calculation. Applied to per-share fields during XBRL extraction to ensure historical comparability.
-
-**CORS handling:** Dev mode routes all external API calls through Vite middleware plugins in `vite.config.js`. Production (Tauri) bypasses CORS entirely via native WebView.
+**EDGAR Frames API (Cross-Check):**
+- Purpose: Validates extracted values against SEC's aggregated Frames endpoint
+- Period distinction: balance sheet (instant) tags use `CY{year}Q4I.json`; income statement (duration) tags use `CY{year}.json`
+- Returned metadata: `{ tag, year, ours, frames, diff, pctDiff, status: 'match'|'missing_ours'|'error' }`
+- Status: Error if >5% difference, yellow if >1%, green if <1%
 
 ---
 
-*Architecture analysis: 2026-03-24*
+*Architecture analysis: 2026-03-25*

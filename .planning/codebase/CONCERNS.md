@@ -1,218 +1,593 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-03-24
+**Analysis Date:** 2026-03-25
+
+## Overview
+
+This document identifies technical debt, known limitations, and areas of concern in the SEC XBRL financial data normalization engine and supporting systems. Focus is on data accuracy, API resilience, cache invalidation, and architecture gaps.
 
 ---
 
 ## Tech Debt
 
-**Layers 2 and 3 of XBRL Engine Deliberately Disconnected:**
-- Issue: Both Layer 2 (taxonomy hierarchy augmentation) and Layer 3 (AI tag classification) are commented out and dormant in `src/engines/edgarFinancials.js`. Lines 11-15 and 630-633 mark them as "disconnected — kept dormant." Line 1737-1739 forces `layer3Count = 0`. The `companyAdapter.js` and `taxonomyResolver.js` engines exist and are fully built but not wired into the extraction pipeline.
-- Files: `src/engines/edgarFinancials.js` (lines 11, 630, 1737), `src/engines/companyAdapter.js`, `src/engines/taxonomyResolver.js`
-- Impact: Coverage for companies outside the S&P 500 is Layer 1 only (~96% for S&P 500 but lower for smaller-cap names). AI reports on non-S&P-500 companies may have data gaps. The Layer 3 runtime AI path (~$0.01/company) exists in `companyAdapter.js` but is never invoked.
-- Fix approach: Re-enable the imports and augmentation calls in `edgarFinancials.js` per the eng plan at `gstack/plans/gstack-xbrl-engine-strategy-eng-plan-20260318.md` section B1. Requires reconnecting the `augmentTaxonomy` and `getLayer3Suggestions` calls.
+### Layer 2 and Layer 3 XBRL Resolution — Currently Dormant
 
-**`batchQuotes.js` Uses Same URL for Dev and Production:**
-- Issue: `src/engines/batchQuotes.js` lines 35-37 construct the same `/api/yahoo-quotes/` URL for both `IS_DEV` and production. The `/api/yahoo-quotes/` endpoint is a Vite middleware (defined in `vite.config.js`) that doesn't exist in the compiled Tauri `.app`. This will silently fail (404) in production.
-- Files: `src/engines/batchQuotes.js` (lines 35-37)
-- Impact: All competitor peer market cap, PE, EPS, and book value data (shown in the Competitors tab) will be unavailable in the packaged macOS app. The batch quotes feed the Yahoo backfill path in `peerMetrics.js` as well.
-- Fix approach: Add a production code path using direct Yahoo Finance v7 quote endpoint (same pattern as `prices.js`), or bundle `yahoo-finance2` as a Tauri sidecar.
+**Status:** Disabled but code retained
+**Files:** `src/engines/edgarFinancials.js` (lines 11-15, 1738), `src/engines/taxonomyResolver.js`, `src/engines/companyAdapter.js`
+**Issue:** Layer 2 (pre-built taxonomy JSON) and Layer 3 (AI tag classification) are fully implemented and validated but are commented out in production. The engine currently uses only Layer 1 (static 200-tag map).
 
-**GuruFocus Production Scrape Falls Back to `return null`:**
-- Issue: In Tauri production without `VITE_GURUFOCUS_KEY`, `src/engines/gurufocus.js` line 149 comments "GuruFocus is JS-heavy so this will likely return empty" and explicitly returns `null`. No actual extraction is attempted. The scrape mode that works in dev (via Vite middleware + cheerio) has no equivalent in production.
-- Files: `src/engines/gurufocus.js` (lines 140-150)
-- Impact: The GF Value, Graham Number, Peter Lynch Value, and DCF valuation reference data shown in the Valuation tab will never populate in the packaged app unless the user pays for the $25/mo API key.
-- Fix approach: Document clearly in Settings UI that GuruFocus requires an API key. Consider disabling the UI section when data is unavailable rather than showing empty/missing indicators silently.
+**Impact:**
+- Leaves ~4-7% of S&P 500 companies with coverage gaps that could be fixed via Layer 2 descendant tags
+- No runtime AI classification for non-S&P 500 companies or companies with unusual reporting structures
+- Single-layer extraction means no fallback for edge-case companies in different industries (banks reporting unique loan tags, REITs with property-specific depreciation, insurance with premium variants)
 
-**IR Events Discovery Degrades to Single Pattern in Production:**
-- Issue: In dev, `discoverIREventsUrl()` in `src/engines/companyEvents.js` uses the Vite `/api/ir-events` middleware which probes 19 URL candidates in parallel. In Tauri production (line 231), it falls back to a single hardcoded guess: `https://investors.${baseDomain}`. Most companies use variations like `ir.`, `corporate.`, or `/${baseDomain}/investor-relations`.
-- Files: `src/engines/companyEvents.js` (lines 225-247)
-- Impact: The IR Events link shown in the Overview tab will frequently be wrong or missing in the packaged app, pointing users to generic investor pages rather than events/presentations pages.
-- Fix approach: Replicate the parallel probe loop in production using direct fetch (CORS-free in Tauri). The logic already exists in the Vite plugin — port it to a shared utility function called by both paths.
+**Root cause:** Layer 2/3 were disabled during the refactoring to support industry overlays (Phase 4). The comment states "Layer 2/3 disconnected — kept dormant, not deleted" and references "B1 in eng plan" (gstack-xbrl-engine-strategy-eng-plan-20260318.md) but no re-enablement timeline exists.
 
-**Historical P/E Per Year Not Implemented:**
-- Issue: CLAUDE.md "Known Risks" section explicitly flags this: "Historical P/E per year not yet implemented (would need historical price × FY mapping)." The `Valuation.jsx` computes an averaged `historicalPE` from daily price data, but this is an approximation, not a per-fiscal-year high/avg/low P/E.
-- Files: `src/components/Valuation.jsx` (lines 408-415, 504)
-- Impact: The Equity Bond calculator and Historical Buy Prices component use an averaged P/E across all years, which can be distorted by periods of abnormally high or low valuations. This affects the accuracy of historical MOS calculations shown in `HistoricalBuyPrices.jsx`.
-- Fix approach: Map daily prices to fiscal years using `fiscalMonths` data already available in EDGAR statements, then compute high/avg/low P/E per year. This would unlock year-specific P/E inputs for sensitivity tables.
-
-**REIT AFFO Uses Hardcoded 15% Maintenance CapEx:**
-- Issue: `src/engines/industryOverlays.js` line 321 hardcodes `maintenanceCapex = Math.abs(capex) * 0.15` for AFFO computation. CLAUDE.md documents this explicitly: data center REITs (EQIX) are ~30-40%, industrial REITs (PLD) ~10-15%. The TODO comment at line 314 says AI reports should use the user's maintenance capex % from Valuation Calculators.
-- Files: `src/engines/industryOverlays.js` (lines 314-322)
-- Impact: AFFO is systematically understated for data center REITs and overstated for some industrial REITs. This flows into the Financials tab display and will flow into AI report generation once Phase 5-7 is built.
-- Fix approach: When AI reports are built, pass the user's maintenance capex % (from `ValuationInputs`) through to the overlay computation. For the Financials tab, add a UI note that AFFO uses 15% default and users should adjust in Valuation.
-
-**REIT FFO Missing for Post-2018 Companies:**
-- Issue: `src/engines/industryOverlays.js` line 296 documents that `gain_loss_on_real_estate_sales` XBRL tag was discontinued by many REITs (e.g., PLD) after FY2018. FFO is computed as `net_income + da + impairment - gains`, so missing gains makes FFO approximate or overstated.
-- Files: `src/engines/industryOverlays.js` (lines 294-305)
-- Impact: FFO figures for major industrial and retail REITs from 2019+ will be slightly overstated. NAREIT-published FFO from earnings supplements should be preferred for AI reports.
-- Fix approach: Flag FFO values computed with `gain_loss_on_real_estate_sales = 0` as approximate in provenance. In AI report generation, instruct the model to cross-reference NAREIT-published FFO.
-
-**ROIC Formula Differs Between Peer Metrics and Core Engine:**
-- Issue: `src/engines/peerMetrics.js` line 89-91 computes ROIC as `net_income / (equity + long_term_debt)` — omitting cash from invested capital. `src/engines/returnMetrics.js` line 30 uses the same formula and comments "NO cash subtraction — matches Toolbox." However `peerMetrics.js` also has a fallback (line 91) that uses `net_income / equity` when `long_term_debt` is null, making it equal to ROE — which is incorrect and will inflate ROIC for zero-debt companies like LULU in the Competitors tab.
-- Files: `src/engines/peerMetrics.js` (lines 89-92), `src/engines/returnMetrics.js` (lines 28-35)
-- Impact: Competitors with no long-term debt will show ROIC = ROE in the Competitors tab, inflating their apparent capital efficiency. This is inconsistent with how the main toolbox calculates the same metric.
-- Fix approach: When `long_term_debt` is null, default to 0 (not skip) so `ROIC = net_income / equity` only when debt is genuinely zero, not when the Frames API didn't return a value.
+**Fix approach:**
+1. Understand why they were disconnected (likely integration complexity with overlay architecture)
+2. Re-enable Layer 2 augmentation in `extractSection()` call chain
+3. Add Layer 3 safeguard with confidence gating (<80% → "inferred" tag, don't treat as definitive)
+4. Re-run S&P 500 coverage audit to measure improvement
+5. Test with non-S&P 500 companies to confirm Layer 3 runtime AI works
 
 ---
 
-## Known Bugs
+## Known Bugs (Documented & Fixed)
 
-**peerMetrics Fallback Tag Early-Exit Bug (Test-Documented):**
-- Symptoms: In the Competitors tab, a peer company with revenue reported under `RevenueFromContractWithCustomerExcludingAssessedTax` (ASC 606) shows null revenue if any other peer has revenue under the primary `Revenues` tag.
-- Files: `src/engines/peerMetrics.js` (lines 40-44), `src/engines/__tests__/peerMetrics.test.js` (line 189, comment "THIS IS THE BUG")
-- Trigger: When the primary tag returns data for at least one peer, the `allHaveField` check on line 42 breaks early if any peer has data, even if other peers are still missing the field. This was caught in test but the test comment indicates the fix was not yet applied.
-- Workaround: None — affected peers simply show missing data indicators in the Competitors tab.
+### ✅ TTM Q4 Stale Data (FIXED)
+
+**Status:** Fixed as of 2026-03-21
+**Files:** `src/engines/edgar.js`, `src/engines/edgarFinancials.js`
+**Original Issue:** When the latest filing was a 10-K (not a 10-Q), TTM calculation bypassed it and reported stale Q3 data. Affected every company during the 2-3 month window between their 10-K filing and the next Q1 10-Q. Examples: LULU (Feb 26 10-K, but TTM stale until Jun Q1 10-Q).
+
+**What was broken:**
+- `findLatestQuarter()` filtered `form === '10-Q'`, making Q4 (which comes from 10-K) invisible
+- Q1/Q2/Q3 quarterly formula was applied even when 10-K was latest, producing stale values
+
+**How it was fixed:**
+- Track both latest 10-Q AND latest 10-K
+- Return whichever has the later end date
+- When Q4 (fp === 'FY'), bypass quarterly formula and return annual 10-K value directly
+- Cache key bumped `v8 → v9` to force re-extraction
 
 ---
 
-## Security Considerations
+### ✅ Total Debt Over-Inflated (FIXED)
 
-**CSP Disabled in Tauri Production:**
-- Risk: `src-tauri/tauri.conf.json` line 23 sets `"csp": null`. This disables Content Security Policy entirely in the native webview. While Tauri's IPC model provides some isolation, a null CSP means any injected script (e.g., via a malicious SEC filing HTML rendered in the app) has no sandbox restrictions.
-- Files: `src-tauri/tauri.conf.json` (line 23)
-- Current mitigation: Tauri v2's capability system (`src-tauri/capabilities/default.json`) limits IPC to `core:default` permissions only. The app does not use `tauri-plugin-fs` or shell commands.
-- Recommendations: Define a restrictive CSP that allows only the external origins actually used (anthropic.com, sec.gov, finnhub.io, alphavantage.co, finviz.com, gurufocus.com, yahoo finance). This limits blast radius if any rendered HTML is malicious.
+**Status:** Fixed as of 2026-03-21
+**Files:** `src/engines/edgarFinancials.js`
+**Original Issue:** Zero-debt companies with large operating lease liabilities were incorrectly classified as leveraged. LULU showed `total_debt = $2,272M` vs actual $0. The sanity check for missing debt tags fired incorrectly on companies with $0 financial debt.
 
-**API Keys Exposed in Compiled Vite Bundle:**
-- Risk: `VITE_CLAUDE_KEY`, `VITE_FINNHUB_KEY`, and `VITE_ALPHA_VANTAGE_KEY` are inlined into the production JavaScript bundle at build time (this is standard Vite behavior for `VITE_` prefixed vars). Anyone with access to the compiled `.app` bundle can extract these keys from the JS files.
-- Files: `src/engines/config.js`, `src-tauri/tauri.conf.json`
-- Current mitigation: This is a single-user local desktop app — the user's own keys are exposed only to themselves. The `.env.local` file is gitignored.
-- Recommendations: For the current single-user use case, this is acceptable. If the app ever moves toward multi-user distribution, keys must move to a backend service. Document this limitation explicitly in the Settings UI so the user understands the key storage model.
+**What was broken:**
+- Sanity check: `if (total_debt / liabilities < 5%) → derive debt from (liabilities - known_non_debt)`
+- For zero-debt retailers with high lease liabilities, `knownNonDebt` deductions were incomplete
+- `taxes_payable` was missing from deduction buckets, causing unclassified liabilities to be misclassified as debt
 
-**SEC User-Agent Contains Placeholder Email:**
-- Risk: Both SEC proxy entries in `vite.config.js` (lines 473, 500) set `User-Agent: StockAnalyzer/1.0 kylehoff@example.com`. SEC's API terms of service require a real contact email in the User-Agent string for automated requests. Using a placeholder email technically violates the SEC's bot policy and could result in rate limiting or IP blocking.
-- Files: `vite.config.js` (lines 473, 500)
-- Current mitigation: Only active in dev mode (Vite proxy). In Tauri production, the native webview sends requests directly without this header.
-- Fix approach: Replace `kylehoff@example.com` with the user's real email address. Consider reading it from an env var or the Settings store so the user can configure it.
+**How it was fixed:**
+- Gated the sanity check on `interest_expense > 0` (zero-debt companies have zero interest expense)
+- Added `taxes_payable` as a new `BALANCE_TAXONOMY` field with proper deductions
+- REITs/banks/insurance with genuine debt gaps still trigger the fallback (they have significant interest expense)
+
+---
+
+### ✅ Fiscal Year Label Offset (FIXED)
+
+**Status:** Fixed as of 2026-03-21
+**Files:** `src/engines/edgarFinancials.js`, `src/engines/edgar.js`
+**Original Issue:** Companies with Jan/Feb fiscal year ends had year labels offset by -1. LULU FY ending Feb 2, 2025 was labeled "2024" (XBRL `fy` convention) instead of "2025" (calendar year convention matching R1/Morningstar).
+
+**Affected companies:** LULU, NVDA, WMT, HD, TGT, CRM, CRWD, ROST, DG, SFM, MRVL, WDAY (all Jan FY ends)
+
+**How it was fixed:**
+- Detect if FY end month is Jan or Feb
+- After all computation, remap all year keys by +1 before caching
+- Applied to both annual and quarterly extraction paths
+- Cache keys bumped to force re-extraction
+
+---
+
+## Known Limitations (By Design)
+
+### Industry Overlay Approximations
+
+**REIT FFO Approximation**
+
+Files: `src/engines/edgarFinancials.js`, `src/engines/industryOverlays.js`, `src/engines/dataExport.js`
+
+**Limitation:** FFO (Funds From Operations) is derived, not tagged in XBRL. After FY2018, many REITs discontinued reporting the underlying `gain_loss_on_real_estate_sales` tag, making post-2018 FFO approximate.
+
+Formula: `FFO = net_income + depreciation + amortization - gain_loss_on_real_estate_sales`
+
+**Impact:** FFO values for REIT years 2019+ are estimates. Exact values require cross-reference with NAREIT-published FFO or company investor relations documents.
+
+**Where surfaced:** `src/engines/dataExport.js:buildCaveats()` line 291 — AI reports should cite this caveat.
+
+**Fix approach:** When building AI report generation (Phase 5+), add a data source toggle allowing the user to provide exact NAREIT FFO or override the derived value.
+
+---
+
+**Insurance Float Approximation**
+
+Files: `src/engines/industryOverlays.js`, `src/engines/dataExport.js`
+
+**Limitation:** Insurance float is approximated from XBRL balance sheet items (`future_policy_benefits`, `unpaid_claims_reserves`, `unearned_premiums`). This reconstruction is accurate for pure-play insurers (MET, ALL) but fails for conglomerates like BRK where the float calculation is more complex.
+
+**Impact:** BRK's reported float cannot be reliably reconstructed from standard us-gaap tags. Use with caution for multi-line insurers.
+
+**Where surfaced:** `src/engines/dataExport.js:buildCaveats()` line 295
+
+**Fix approach:** Flag high-risk float calculations at extraction time. For BRK and other conglomerates, recommend manual entry from company proxy or annual letter.
+
+---
+
+**AFFO Maintenance CapEx Hardcoded to 15%**
+
+Files: `src/engines/industryOverlays.js`, `src/engines/edgarFinancials.js`
+
+**Limitation:** AFFO (Adjusted Funds From Operations) requires subtracting maintenance CapEx. The overlay hardcodes maintenance CapEx at 15% of total CapEx.
+
+```javascript
+maintenance_capex = total_capex * 0.15  // fixed ratio
+affo = ffo - maintenance_capex
+```
+
+This varies significantly by REIT subtype:
+- EQIX (data center): ~30-40% maintenance ratio
+- PLD (industrial): ~10-15% maintenance ratio
+- Residential REITs: ~5-10%
+
+**Impact:** AFFO for REITs outside industrial/office is inaccurate. High-capex companies like EQIX will show understated AFFO.
+
+**Where surfaced:** `src/engines/industryOverlays.js` line 314 (TODO comment), `src/engines/dataExport.js` line 292
+
+**Fix approach:** When AI report generation (Phase 5+) consumes AFFO, allow the user to override maintenance CapEx % per REIT subtype. Provide a lookup table: `{ 'data-center': 0.35, 'industrial': 0.12, 'residential': 0.08, ... }`
+
+---
+
+### Bank Overlay Limitations
+
+Files: `src/engines/industryOverlays.js`
+
+**Limitation:** Bank overlay provides NII, NIM, efficiency ratio, but doesn't fully capture:
+- Loan portfolio breakdowns (commercial, residential, consumer — each with different loss provisioning)
+- Interest rate sensitivity (duration gaps, basis risk) — requires market data not in XBRL
+- Deposit stability (transaction vs savings) — XBRL doesn't distinguish
+
+**Impact:** Growth rate analysis for banks is incomplete. Earnings growth doesn't reflect interest rate risk or deposit mix shifts.
+
+**Where surfaced:** `src/engines/dataExport.js:buildCaveats()` line 298
+
+**Fix approach:** Add a warning in the Competitors tab when analyzing banks: "NIM and efficiency ratio are primary metrics. Gross margin is not meaningful for banks."
+
+---
+
+## Cache Invalidation Risks
+
+### IndexedDB TTL-Based Expiration Without Cleanup
+
+Files: `src/engines/cacheStore.js`
+
+**Issue:** Cache entries expire based on TTL (time-to-live), but the expired entries are not automatically cleared from IndexedDB. They're cleaned up lazily: only when a read attempts to access an expired entry does it get deleted.
+
+```javascript
+// cacheStore.js line 44-46
+if (Date.now() >= record.expiresAt) {
+  db.delete(store, key).catch(() => {});  // async, not awaited
+  return null;
+}
+```
+
+**Impact:**
+- Over time, IndexedDB can accumulate expired entries, bloating the database
+- On browsers with storage quota limits, the app could exhaust quota without visible feedback
+- No UI for manual cache clearing or quota monitoring
+
+**Risk level:** Medium — affects app performance over weeks/months of heavy use, not immediately.
+
+**Fix approach:**
+1. Add a periodic background cleanup task (e.g., weekly) that deletes all expired entries
+2. Expose cache size metrics in Settings tab for user visibility
+3. Add a "Clear Cache" button in Settings with TTL options (clear all vs clear >7 days old)
+4. Monitor IndexedDB quota via `navigator.storage.estimate()` and warn user if >80% full
+
+---
+
+### No Cache Invalidation Trigger for External Data Changes
+
+Files: `src/engines/edgarFinancials.js` (cache keys: `edgar-statements:v9`, `edgar-facts:v1`)
+
+**Issue:** Cache keys include a version number (e.g., `v9`) but there's no mechanism to invalidate caches when:
+- SEC EDGAR data is restated (company corrects a prior filing via 8-K or amended 10-K)
+- A company changes fiscal year end (rare but happens)
+- Taxonomy interpretation changes (e.g., ASC 606 adoption)
+
+When a restatement is filed, the app continues serving the old cached values until the version number is manually bumped.
+
+**Impact:** User sees stale financials for 1-24 hours after a restatement is filed, unaware that data has changed.
+
+**Where this matters:** Companies that file 8-K amendments or corrected 10-K/A filings. Example: LULU filed a corrected 10-K in 2024 — users who had cached the original would see outdated numbers.
+
+**Risk level:** Low for most users (restatements are rare), but high impact when they occur (conviction changes based on stale data).
+
+**Fix approach:**
+1. Add a check-on-load to see if EDGAR has a newer version of the filing
+2. Detect restatements by comparing `accessionNumber` of latest annual vs cached value
+3. If restatement detected, auto-clear cache key and re-fetch
+4. Add a "Data Restated" indicator in the UI (Audit tab) to alert user
+
+---
+
+## API Rate Limit & Failure Mode Concerns
+
+### Finnhub Transcript API — Premium-Only on Free Tier
+
+Files: `src/engines/transcripts.js`
+
+**Issue:** The Finnhub transcript list endpoint (`/stock/transcripts/list`) is premium-only. Free-tier API keys return 403 Forbidden.
+
+```javascript
+// transcripts.js line 35-37
+if (!res.ok) {
+  if (res.status === 403) cacheSet(cacheKey, [], 'events');
+  return [];
+}
+```
+
+The code silently caches an empty array, so the user never sees transcripts.
+
+**Impact:** Earnings transcripts won't work unless the user upgrades to Finnhub paid. The app provides no feedback that the feature is disabled.
+
+**Fix approach:**
+1. Check `FINNHUB_KEY` presence and log a console warning if present but 403 is returned
+2. Add a user-facing message in the Filings tab: "Transcripts require Finnhub premium subscription"
+3. Provide an optional `ALPHA_VANTAGE_KEY` (free tier) as primary fallback for transcript search
+
+---
+
+### Alpha Vantage — 25 Calls/Day Rate Limit
+
+Files: `src/engines/transcripts.js`
+
+**Issue:** Alpha Vantage's free tier is limited to 25 API calls per day. There's no rate-limit detection or queuing — requests just fail silently once quota is hit.
+
+**Impact:**
+- If a user researches 5+ companies in one day (transcript search for each), they hit the limit
+- Subsequent requests fail with no indication why
+- User thinks transcripts aren't available, not that they hit a rate limit
+
+**Fix approach:**
+1. Detect 429 (Too Many Requests) or quota-exhausted error from Alpha Vantage
+2. Cache the "quota hit" state for the day with TTL = time-to-midnight
+3. Surface a message: "Transcript lookup limit reached today (Alpha Vantage free tier: 25/day). Try again tomorrow."
+4. Suggest switching to Finnhub premium or SpotifyAPI alternative
+
+---
+
+### Yahoo Finance — CORS Blocked in Browser
+
+Files: `src/engines/prices.js`, `vite.config.js`
+
+**Issue:** Yahoo Finance doesn't send CORS headers, so direct browser fetch fails. The app works around this via Vite middleware proxy (dev) and Tauri native webview (prod).
+
+```javascript
+// prices.js line 7-8
+// CORS: Yahoo doesn't send Access-Control-Allow-Origin, so browser fetch fails.
+```
+
+**Impact:**
+- Breaks if the app ever migrates away from Tauri (e.g., to web-based deployment)
+- Vite proxy adds ~500ms latency on each price fetch in dev mode
+- No fallback if Yahoo API changes or becomes unavailable
+
+**Risk level:** Low for current desktop app, high if future multi-user backend is added.
+
+**Fix approach:** When planning multi-user (Phase X), add a server-side price cache proxy instead of relying on Vite middleware.
+
+---
+
+## Data Quality & Coverage Gaps
+
+### S&P 500 Coverage Baseline — 91.7% Annual, 96.1% for Scoring-Critical Fields
+
+Files: `gstack/plans/gstack-xbrl-engine-strategy-eng-plan-20260318.md`, validation reports
+
+**Current State:**
+- Tier 1 (scoring-critical, 23 fields): 96.1% coverage
+- Tier 2 (display, 32 fields): 90.8% coverage
+- Tier 3 (expanded, 30 fields): 83.9% coverage
+
+**Remaining Gaps (Tier 1):**
+- `dividends_per_share`: 81.3% — many companies don't pay dividends (legitimate zeros)
+- `short_term_debt`: 84.9% — growth companies genuinely have no ST debt
+- `current_portion_lt_debt`: 80.3% — some bundle into `DebtCurrent` or have none
+- `shares_outstanding`: 94.0% — some companies only report in DEI namespace, not us-gaap
+
+**Impact:**
+- ~4% of companies are missing 1-3 critical fields despite the three-layer engine
+- Scoring calculations (Rule One Score, growth rates) will use fallbacks or skip the company
+- Undetected: which of these gaps are "legitimate zeros" vs actual data quality issues
+
+**Fix approach:**
+1. Audit the 4% gap companies to understand the root cause per field
+2. Add company-level data quality indicators in Audit tab
+3. For companies with gaps, show derivation path used instead of raw tag
+4. Add user override capability: "I know this field value; let me enter it manually"
+
+---
+
+### Quarterly Data Accuracy — 92.8% Rollup Match Rate
+
+Files: `src/engines/__tests__/morningstarQuarterlyAccuracy.test.js`
+
+**Issue:** TTM quarterly calculations match Morningstar at 92.8% accuracy (was 100% before TTM Q4 fix). Remaining 7.2% are:
+- Companies with unusual fiscal calendars (53-week years, mid-quarter earnings)
+- Quarterly data availability lags (EDGAR publishes Q results 40+ days after period end)
+- Complex stock splits during the quarter (recalculation timing)
+
+**Impact:** TTM growth rates for companies with quarterly data mismatches will be off by 5-15%.
+
+**Fix approach:**
+1. Build a company-level "quarterly data quality score" in Audit tab
+2. Flag quarters with >5% rollup mismatch
+3. For research reports (Phase 5+), use annual data instead of TTM for companies with poor quarterly quality
+
+---
+
+### Derived Field Formulas — No Validation of Output Reasonableness
+
+Files: `src/engines/edgarFinancials.js`, `src/engines/industryOverlays.js`
+
+**Issue:** Derived fields are computed via hardcoded formulas (e.g., `liabilities = total_assets - equity`). There's no post-computation sanity check that the derived value is reasonable.
+
+Examples of potential issues:
+- Negative `working_capital` for seasonal businesses (not necessarily wrong, but worth flagging)
+- `operating_income` derived from income statement components doesn't match reported GAAP operating income (due to reclassifications or unusual items)
+- `free_cash_flow` negative despite positive net income (could indicate capex spike or working capital shift)
+
+**Impact:** Derived fields may be mathematically correct but economically nonsensical. User trust in the data decreases if they spot obviously wrong derived values.
+
+**Fix approach:**
+1. Add reasonableness ranges for derived fields (e.g., working capital should be between -10% and +50% of revenue for most industries)
+2. Flag derived values outside expected ranges as "review" in Audit tab
+3. When building AI reports, include a note: "Derived from [formula]. Manual verification recommended."
 
 ---
 
 ## Performance Bottlenecks
 
-**2.8MB Company Assignments JSON Bundled Into App:**
-- Problem: `industry-classification/thes1s-company-assignments.json` (97,910 lines, 2.8MB) is imported as a static JSON import in `src/engines/thes1sClassification.js` line 9. Vite will inline this into the JS bundle at build time.
-- Files: `src/engines/thes1sClassification.js` (line 9), `industry-classification/thes1s-company-assignments.json`
-- Cause: The file covers 5,758 companies and is required for instant peer discovery without network calls. The lazy index build (`ensureIndexes()`) defers parsing, but the data is still part of the initial bundle parse.
-- Improvement path: Consider splitting into sector-level chunks and lazy-loading only the relevant sector when the user loads the Competitors tab. Alternatively, move to a build-time lookup table keyed by ticker only (not full CIK+taxonomy tree), reducing the size by ~60%.
+### Peer Metrics Computation — O(n*m) for n Companies × m Metrics
 
-**Competitors Tab Makes 22+ Parallel Frames API Calls Per Year:**
-- Problem: `src/engines/peerMetrics.js` `fetchPeerFrameData()` issues up to 22 EDGAR Frames API requests per tag definition, batched 6 at a time with 100ms delays between batches. With multi-year scoring enabled, this multiplies by 10 years × 4 growth tags + current year metrics.
-- Files: `src/engines/peerMetrics.js` (lines 16-52, 199-270), `src/hooks/useCompetitors.js`
-- Cause: Each Frames request returns data for all ~10,000 SEC filers and is filtered in memory. These are large JSON payloads (100KB-2MB each). The per-request 100ms delays are conservative rate limiting.
-- Improvement path: The Frames data is cached in IndexedDB (see `edgarFrames.js` with 10-year TTL for immutable data). On repeat visits, all calls are cache hits. The cold-load experience for the Competitors tab on a new ticker will still be slow (15-30 seconds). Consider showing a clear progress indicator rather than the current opacity-reduced loading state.
+Files: `src/engines/peerMetrics.js`, `src/hooks/useCompetitors.js`
 
-**edgarFinancials.js Is 1,884 Lines:**
-- Problem: `src/engines/edgarFinancials.js` is the largest file in the codebase at 1,884 lines. It contains the taxonomy definitions, extraction logic, TTM computation, derived field calculations, industry overlay merging, fiscal year relabeling, and provenance tracking all in one file.
-- Files: `src/engines/edgarFinancials.js`
-- Cause: Organic growth as features were added; separation is complex because the taxonomy arrays reference helper functions in the same file.
-- Improvement path: No immediate impact — the file is well-commented and internally organized with clear section headers. Splitting is a medium-term refactor, not urgent.
+**Issue:** When Competitors tab loads 20+ peers, the app:
+1. Fetches EDGAR Frames data for each peer (20 API calls)
+2. For each peer, computes 22 metrics (derived metrics, completeness scoring)
+3. Compares against cached peer scores (multi-year lookup)
+
+Total: ~20 × 22 + 20 × 3-year-lookups = expensive.
+
+**Impact:** Competitors tab takes 15-30 seconds to load on slow connections, with sequential API calls creating bottlenecks.
+
+**Where surfaced:** Comments in `useCompetitors.js` note "Progressive 3-phase loading" but implementation is still linear.
+
+**Fix approach:**
+1. Pre-compute peer metrics at build time for the current S&P 500 (ship pre-built scores with the app)
+2. Update quarterly (via cronjob or user-triggered sync)
+3. Only compute new/updated peers at runtime
+4. Parallelize Frames API calls (batch 5 tickers per request if EDGAR supports)
 
 ---
 
 ## Fragile Areas
 
-**Finviz HTML Scraper in Production:**
-- Files: `src/engines/finviz.js` (lines 119-127)
-- Why fragile: Production Tauri path fetches `finviz.com/quote.ashx` HTML directly and parses it with `DOMParser`. Finviz has anti-scraping measures (User-Agent sniffing, occasional CAPTCHAs) and changes their HTML structure periodically. The `parseFinvizHtml()` function searches for a `table.snapshot-table2` CSS class that is subject to change without notice.
-- Safe modification: When modifying `finviz.js`, always test both dev (Vite middleware + cheerio) and the production code path (DOMParser variant). The two parsers are separate implementations and can diverge.
-- Test coverage: No tests exist for `finviz.js`.
+### SIC Code → Industry Type Mapping — 250 SIC codes, no validation
 
-**Compensation Proxy HTML Parser:**
-- Files: `src/engines/compensation.js` (1,521 lines)
-- Why fragile: Fetches DEF 14A proxy HTML from SEC EDGAR and parses compensation tables using string/regex matching and DOM traversal. The parser has a multi-step fallback (table structure → XBRL ECD → graceful degradation). Proxy filings vary enormously in HTML structure between companies and years. The compensation engine has the most `console.warn` calls in the codebase.
-- Safe modification: Always test against the XBRL ECD fallback path. Run `npm run test` which includes `compensation.test.js`. The XBRL fallback at line 1042 is the safer path.
-- Test coverage: `src/engines/__tests__/compensation.test.js` (779 lines) — the most thoroughly tested engine.
+Files: `src/engines/sicClassification.js`, `src/engines/industryClassifier.js`
 
-**Alpha Vantage Quarterly Mapping Approximation:**
-- Files: `src/engines/transcripts.js` (lines 203-208)
-- Why fragile: When Finnhub has no transcript match, the Alpha Vantage fallback derives the fiscal quarter from `Math.ceil(reportMonth / 3)` — a calendar quarter approximation. For companies with non-calendar fiscal years (e.g., SFM, LULU), this maps to the wrong fiscal quarter, causing transcript mismatches. The comment on line 207 acknowledges "correct for 80%+ of companies."
-- Safe modification: No safe fix without a fiscal-quarter-to-calendar-quarter mapping. For now, transcript buttons for non-calendar FY companies may silently fetch the wrong quarter's transcript.
-- Test coverage: No tests for `transcripts.js`.
+**Issue:** The SIC mapping is a simple lookup table. No validation that:
+- Company's reported SIC code is current (companies don't update SIC frequently)
+- SIC code is accurate (some companies misclassify themselves)
+- Fallback industry type ('standard') is correct for unmapped SIC codes
 
-**Report Data Stored Only in localStorage (No Backup):**
-- Files: `src/hooks/useResearch.js`
-- Why fragile: All research reports (One Pager, Pitch Deck, Full Story content) live in the `stock-analyzer-reports` localStorage key. There is no export, backup, or sync mechanism. If the user clears browser/Tauri storage, all report content is permanently lost. The `QuotaExceededError` handler at line 32 evicts caches and retries, but if the reports themselves become too large (e.g., after Phase 5-7 adds AI-generated content), the retry could also fail.
-- Safe modification: Before implementing Phase 5-7 AI report generation, assess whether the full report payload (including generated text) could exceed the ~5MB localStorage budget for a single `JSON.stringify()`. Consider migrating reports to IndexedDB using the existing `cacheStore.js` infrastructure.
-- Test coverage: No tests for `useResearch.js`.
+**Impact:**
+- REIT overlay won't apply if SIC is slightly off (e.g., SIC 6512 is real estate, but company reports 7389 "business services")
+- Banks with SIC 6022 (state banks) but assigned SIC 6021 (national banks) get wrong overlay
+- Unknown SIC codes always default to 'standard', losing industry context
 
-**`discoverIREventsUrl` Production Fallback Returns Only Root IR Page:**
-- Files: `src/engines/companyEvents.js` (lines 228-232)
-- Why fragile: In Tauri production, the IR discovery returns `https://investors.${baseDomain}` — the investor relations root, not the events/presentations subpage. The CompanyEvents component then displays this link as if it were a valid events page. Users clicking it will land on a generic IR home page and have to navigate further.
-- Safe modification: Consider making the production path also probe `investors.${baseDomain}/events` and `ir.${baseDomain}/events` with direct fetches before falling back to the root.
-- Test coverage: No tests for `companyEvents.js`.
+**Risk level:** Medium — affects maybe 5-10% of companies with unusual business models.
+
+**Fix approach:**
+1. Add a user override in Toolbox: "Company Type: [Auto-Detected | Bank | REIT | Insurance | Standard]"
+2. Store override in report metadata so it persists
+3. Add a coverage audit for SIC mapping accuracy (compare our overlay choice vs Morningstar/Yahoo classification)
 
 ---
 
-## Scaling Limits
+### Guru Holdings Data — 43 Gurus, Manual List with No Update Schedule
 
-**localStorage Budget for Reports:**
-- Current capacity: Approximately 5MB across all localStorage keys in Tauri's WebKit webview. Current usage: reports JSON + cache metadata + validation results + settings.
-- Limit: Once Phase 5-7 generates full AI text for One Pager, Pitch Deck, and Full Story sections, a single report with all three stages could contain 10,000-50,000 characters of generated text. At 20+ reports, this could exceed 5MB.
-- Scaling path: Migrate the `stock-analyzer-reports` storage key from localStorage to IndexedDB (`cacheStore.js` already provides the infrastructure). This removes the 5MB ceiling entirely.
+Files: `src/engines/gurus.js` (lines 48-93)
 
-**Competitors Tab with 100+ Industry Peers:**
-- Current capacity: Works well for industries with 10-50 peers. Industries with 100+ companies (e.g., Financial Services sector) may load slowly.
-- Limit: The sparse peer filter (`completeness < 17%`) mitigates this, but tier switching to "sector" level could expose 200+ peers to the Frames API pipeline.
-- Scaling path: Add a hard cap (e.g., top 50 by market cap) when peer count exceeds a threshold. The completeness filter handles most cases today.
+**Issue:** The guru list is hardcoded:
+```javascript
+export const GURUS = [
+  { name: 'Warren Buffett', fund: 'Berkshire Hathaway', cik: '0000912057' },
+  ...
+  // 43 gurus total
+]
+```
+
+No mechanism to:
+- Add new gurus without a code change
+- Detect if a guru has retired or stopped filing
+- Validate CIK numbers are current
+
+**Impact:**
+- If a guru name changes or CIK changes, the app breaks silently (returns no holdings)
+- New Rule One investors added to the list won't be available until next app release
+- User might assume a guru has no holdings, when actually the data source is stale
+
+**Risk level:** Low — gurus rarely change, but high impact when they do (Gurus tab shows "no holdings").
+
+**Fix approach:**
+1. Store guru list in a separate JSON file with version tracking
+2. Update quarterly via GitHub releases or an in-app data sync
+3. Add fallback: if CIK lookup fails, try alternative CIKs or fallback to SEC's company ticker list
+4. Surface "Last updated: [date]" in the Gurus tab UI
 
 ---
 
-## Dependencies at Risk
+## Security Considerations
 
-**Finviz (Free Scraping, No Terms of Service Agreement):**
-- Risk: Finviz's terms prohibit automated scraping. The app uses Finviz for analyst estimates (EPS next 5Y, forward PE, target price) without an API key or formal agreement. Finviz may block access, implement CAPTCHA, or change HTML structure.
-- Impact: Loss of analyst estimate data in the Valuation tab. The app degrades gracefully (shows missing indicators), but the FGR input loses one data source.
-- Migration plan: If Finviz blocks access, the app already uses multiple analyst sources (Yahoo Finance via `analystEstimates.js` is the primary path). Finviz is supplementary.
+### Claude API Key in Environment — Direct Fetch from Browser
 
-**Yahoo Finance v8/v10 Unofficial Endpoints:**
-- Risk: `prices.js` uses `query1.finance.yahoo.com/v8/finance/chart` and `analystEstimates.js` uses `v10/finance/quoteSummary`. These are unofficial endpoints that Yahoo has broken before. No API agreement or key.
-- Impact: Loss of historical price data (breaks Valuation tab, Growth charts, historical buy prices). Loss of analyst estimates and earnings trends.
-- Migration plan: `yahoo-finance2` package wraps these endpoints with crumb/cookie management. In Tauri production, the app calls them directly. If Yahoo enforces crumb auth in production, prices will stop loading. The dev path (Vite middleware via `yahoo-finance2`) would still work, but production would need a sidecar.
+Files: `src/engines/config.js`, `src/engines/companyAdapter.js` (Layer 3 AI)
 
-**GuruFocus Scrape Mode (Production Without API Key):**
-- Risk: GuruFocus is JS-rendered. The production scrape path explicitly returns `null` (line 149 of `gurufocus.js`). The optional `$25/mo` API key is the only reliable production data source.
-- Impact: GF Value and other GuruFocus metrics never appear in the packaged `.app` without the API key. The UI shows empty/missing states silently.
-- Migration plan: Already documented — add a prominent Settings prompt encouraging the user to add the GuruFocus API key for production use.
+**Issue:** The Claude API key is stored in `.env.local` and loaded into `VITE_CLAUDE_KEY`. When Layer 3 AI classification is re-enabled, the app will make direct Claude API calls from the browser using this key.
+
+```javascript
+// Potential Layer 3 code (currently dormant)
+const res = await fetch('https://api.anthropic.com/v1/messages', {
+  headers: { 'x-api-key': VITE_CLAUDE_KEY }
+});
+```
+
+**Risk:** If the key is exposed in bundle source or network traffic, an attacker can:
+- Burn through API quota by generating bogus tags
+- Classify company data to learn business strategies
+- Use the key to make other API calls
+
+**Current mitigation:** Tauri desktop app doesn't expose the environment to browser DevTools, and API calls use HTTPS. The key never leaves the app process.
+
+**Risk level:** Low for desktop app, critical if ever ported to web.
+
+**Fix approach:**
+1. Keep Claude API calls server-side if multi-user backend is added (Phase X)
+2. Document in CLAUDE.md that browser-based deployment requires API key rotation and rate-limiting
+3. When enabling Layer 3 for non-S&P 500 companies, use batch API calls (classify multiple companies at once) to reduce key exposure
 
 ---
 
 ## Missing Critical Features
 
-**`aiResearch.js` Engine Does Not Exist:**
-- Problem: The file `src/engines/aiResearch.js` is listed in CLAUDE.md as the planned implementation target for Phase 5 (Step 5.1), but the file has not been created. Phases 5-7 (One Pager, Pitch Deck, Full Story) are entirely blocked on this engine. The routes at `/research/:id/one-pager`, `/research/:id/pitch-deck`, and `/research/:id/full-story` all render `<StagePlaceholder>` components.
-- Blocks: All Phase 5-8 work. The core value proposition of the app (AI-driven research reports) is not yet built.
+### No Manual Data Override Capability
 
-**No Data Export or Backup for Reports:**
-- Problem: Research reports exist only in localStorage with no export, JSON download, or backup mechanism. The Validation tab has an "Export JSON" button for validation results, but no equivalent exists for research reports.
-- Blocks: Data portability, disaster recovery if storage is cleared.
+Files: None
 
-**Sensitivity Tables Not Built:**
-- Problem: `src/components/SensitivityTable.jsx` is listed in CLAUDE.md as "planned" and referenced in the Phase 6.4 implementation plan. The component file does not exist. Valuation calculators produce single values or ranges but no cross-tabulation of FGR × EPS × method.
-- Blocks: Phase 8 polish, and the research patterns described in CLAUDE.md requirement #2.
+**Issue:** If a user discovers incorrect XBRL data (restatement not yet in EDGAR, wrong SIC code, missing tag), they can't correct it. The app forces them to use incorrect data in research reports.
 
----
+**Impact:** AI report generation (Phase 5+) will generate analyses based on incorrect data. User must manually edit the PDF after export (defeats the purpose of automation).
 
-## Test Coverage Gaps
+**Example:** LULU's SIC was wrong at one point; user had no way to override it without modifying the code.
 
-**Most Engines Have No Tests:**
-- What's not tested: `analystEstimates.js`, `batchQuotes.js`, `cache.js`, `cacheStore.js`, `companyDetails.js`, `companyEvents.js`, `config.js`, `edgar.js`, `edgarFrames.js`, `fgr.js`, `filingMarkdown.js`, `finviz.js`, `freeCashFlow.js`, `growthRates.js`, `gurufocus.js`, `gurus.js`, `industryClassifier.js`, `insiders.js`, `keyMetrics.js`, `nport.js`, `peers.js`, `priceStore.js`, `prices.js`, `returnMetrics.js`, `ruleOneScore.js`, `sicClassification.js`, `thes1sClassification.js`, `tickerAudit.js`, `tickerSearch.js`, `transcripts.js`, `valuation.js`, `validation.js`
-- Files: `src/engines/__tests__/` (13 test files for ~40 engine files)
-- Risk: Logic regressions in the financial calculation engines (growth rates, FCF, valuation calculators) could go undetected. The ROIC peer metrics bug documented above is an example of a bug that has a test noting it but not verifying the fix.
-- Priority: High for `valuation.js` (buy price calculations), `growthRates.js` (Composite GR affects FGR), `fgr.js`, and `returnMetrics.js` (ROE/ROIC/ROA drives moat scoring). Medium for the data engines.
-
-**No React Component Tests:**
-- What's not tested: Zero test files exist for any component in `src/components/`. All 28 components are untested.
-- Files: `src/components/` (28 files, no corresponding test files)
-- Risk: The large components (`FinancialStatements.jsx` at 1,036 lines, `Competitors.jsx` at 772 lines, `Valuation.jsx` at 924 lines) have complex conditional rendering and calculation logic that could silently break.
-- Priority: Medium — the Toolbox data display components are low-risk for regressions. The valuation calculation display (`ValuationCalculators.jsx`) is higher risk because errors affect investment decisions.
-
-**Known Bug in Test Without Confirmed Fix:**
-- What's not tested: The peerMetrics fallback tag early-exit bug at `src/engines/__tests__/peerMetrics.test.js` line 189 has a comment "THIS IS THE BUG" but the test is not marked as expected-to-fail. If the test is passing, the bug may be fixed in the production code but the comment was not updated. If the test is failing, CI would catch it.
-- Files: `src/engines/__tests__/peerMetrics.test.js` (line 189), `src/engines/peerMetrics.js` (lines 40-44)
-- Risk: Ambiguous state — run `npm test` and verify whether this test passes or fails before modifying `peerMetrics.js`.
-- Priority: High — verify test state before any work on the Competitors tab.
+**Fix approach:**
+1. Add an "Overrides" object to report data model: `{ ticker, overrides: { sic_code: 6512, revenues_2024: 12345 } }`
+2. In engines, check for overrides before returning computed values
+3. Store overrides in report metadata and in localStorage
+4. Surface override UI in Audit tab: "Override value: [field] [current] → [override]"
 
 ---
 
-*Concerns audit: 2026-03-24*
+### No Data Recency Indicator
+
+Files: `src/engines/cacheStore.js`
+
+**Issue:** The app caches data with TTLs (EDGAR facts: 10 years, guru data: 30 days, prices: 1 day), but doesn't display when data was last fetched.
+
+User sees financials and doesn't know:
+- If the data is from this morning or 30 days ago
+- If a restatement has been filed since the last fetch
+- If the company just announced earnings and quarter end data isn't available yet
+
+**Impact:** User makes investment decisions based on data they think is current but might be months old.
+
+**Fix approach:**
+1. Add a `fetchedAt` timestamp to all cached objects
+2. Display in the UI: "Data as of: [date]. Refresh?" with a button
+3. In Audit tab, show which engines have stale data
+4. For production app (Phase 5+), warn if any financial data is >30 days old
+
+---
+
+## Quarterly Data Extraction — Limited to Last 4 Quarters
+
+Files: `src/engines/edgarFinancials.js`, `src/engines/edgar.js`
+
+**Issue:** The quarterly extraction only pulls data for the last 4 quarters (current Q1/Q2/Q3/Q4). Historical quarterly data (e.g., Q1 2022 earnings) isn't available.
+
+**Impact:**
+- User can't analyze quarterly trends over 5+ years (e.g., "have margins improved over time?")
+- AI report generation (Phase 5+) can't show quarterly progression charts
+- Seasonal business analysis (retailer December sales trend) is limited to last year
+
+**Fix approach:**
+1. Fetch all quarterly filings (not just latest 4) via EDGAR submissions endpoint
+2. Store in IndexedDB under `edgar-quarterly-history:v1:TICKER`
+3. In Valuation tab, add "Quarterly History" chart showing last 20 quarters
+4. For AI reports, compute seasonal patterns from historical quarters
+
+---
+
+## Testing Coverage Gaps
+
+### Industry Overlay — Limited Test Coverage for Edge Cases
+
+Files: `src/engines/__tests__/industryOverlays.test.js`
+
+**Issue:** Tests cover basic overlay application (bank, REIT, insurance) but don't test:
+- Companies with multiple overlays (e.g., insurance company that owns a REIT subsidiary) — which overlay wins?
+- Overlay field interactions (e.g., `net_interest_income` from overlay interferes with `net_income_loss` from base)
+- SIC code boundary cases (e.g., SIC 6515 is "real estate agents/brokers" but shouldn't get REIT overlay)
+
+**Impact:** Edge-case companies may get incorrect overlays, producing wrong growth rates and valuation.
+
+**Risk level:** Low for S&P 500 (well-defined companies), medium for smaller companies with hybrid business models.
+
+**Fix approach:**
+1. Add test cases for companies with unclear classification (e.g., BRK — insurance + holding company)
+2. Test overlay precedence rules (if a company matches multiple overlays, which is applied?)
+3. Add a "Suggested Overlay" indicator in Audit tab with rationale
+
+---
+
+### Derived Field Test Coverage — 42 Derived Fields, Limited Bounds Testing
+
+Files: `src/engines/__tests__/edgarFinancials.test.js`
+
+**Issue:** Tests verify that derived fields are computed correctly for normal cases but don't test:
+- Negative inputs (e.g., company reports negative depreciation due to XBRL error)
+- Division by zero (e.g., computing ratios when denominator is 0 or null)
+- Extreme values (e.g., company with $1B revenue and $0 equity → infinite ROE)
+
+**Impact:** AI report generation could surface nonsensical ratios without warning.
+
+**Fix approach:**
+1. Add "bounds tests" for derived fields: verify output is within reasonable range
+2. Add NaN/Infinity checks and replace with null if invalid
+3. Add confidence scoring: computed values far from historical range get "low confidence" flag
+
+---
+
+## Recommendations by Priority
+
+### High Priority
+
+1. **Re-enable Layer 2/3 XBRL resolution** — Unlock the remaining 4-7% coverage gains and remove dead code
+2. **Add manual data override capability** — Essential for AI report generation phase to handle XBRL data quality issues
+3. **Implement cache invalidation for restated data** — Prevents stale data from contaminating research reports
+4. **Add data recency indicators** — User awareness of when data was last fetched
+
+### Medium Priority
+
+5. **Audit SIC → industry type mapping accuracy** — Test against 100+ companies to verify correct overlay selection
+6. **Add quarterly data history** — Support multi-year seasonal analysis and research narrative
+7. **Parallelize peer metrics computation** — Make Competitors tab load in <5 seconds
+8. **Add reasonableness checks for derived fields** — Flag obviously wrong values before they reach AI reports
+
+### Low Priority
+
+9. **Automate guru list updates** — Reduce manual maintenance, improve data freshness
+10. **IndexedDB cleanup and quota monitoring** — Prevent app slowdown from cache bloat over months of use
+
+---
+
+*Concerns audit: 2026-03-25*
