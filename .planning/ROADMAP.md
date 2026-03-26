@@ -61,12 +61,13 @@ Plans:
   2. No fix creates a net regression — the regression diff report shows fields gained exceeding fields lost for every applied fix
   3. The residual "Other" field computation is enabled only for company-years where named item coverage reaches the 95% precondition gate — the B7 failure mode (residuals amplifying upstream errors) does not recur
   4. Financial sector companies (BRK-B, JPM, WFC, MET) show improved accuracy after bank/REIT/insurance overlay tuning — the overlay fields are no longer the primary failure cluster for those companies
-**Plans:** 3 plans
+**Plans:** 4 plans
 
 Plans:
 - [ ] 03-01-PLAN.md — Field alias map (16 naming mismatches) + pre-fix baseline snapshots for regression tracking
 - [ ] 03-02-PLAN.md — REIT overlay fixes (revenue/COGS/interest/D&A) + short-term debt summation + bank null handling + PP&E reclassification
-- [ ] 03-03-PLAN.md — Residual "Other" computation with 95% precondition gate + FY offset investigation + final validation
+- [ ] 03-03-PLAN.md — Residual "Other" computation with 95% precondition gate + FY offset investigation + final 98%+ validation
+- [ ] 03-04-PLAN.md — Category B harness alignment: accrued liabilities per-year fix + intangibles/operating income handler verification
 
 ### Phase 4: Scale Validation
 **Goal**: Engine accuracy confirmed at 98%+ across all US-listed equities and paid data source subscriptions are cancelled
@@ -97,6 +98,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4. Phase 5 can begin after Ph
 |-------|----------------|--------|-----------|
 | 1. Comparison Harness | 2/2 | Complete   | 2026-03-26 |
 | 2. Multi-Source Triangulation | 0/3 | Planned | - |
-| 3. Engine Fixes | 0/3 | Planned | - |
+| 3. Engine Fixes | 0/4 | Planned | - |
 | 4. Scale Validation | 0/TBD | Not started | - |
 | 5. Compensation Engine | 0/TBD | Not started | - |

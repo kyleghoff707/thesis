@@ -2,8 +2,8 @@
 phase: 03
 slug: engine-fixes
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-26
 ---
 
@@ -38,14 +38,16 @@ created: 2026-03-26
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 03-01-01 | 01 | 1 | ENGINE-01 | integration | `node validation/scripts/triangulate.mjs --ticker AAPL` | ✅ | ⬜ pending |
-| 03-01-02 | 01 | 1 | ENGINE-04 | integration | `node validation/scripts/compare-morningstar.mjs --ticker AAPL` | ✅ | ⬜ pending |
-| 03-02-01 | 02 | 2 | ENGINE-01 | integration | `node validation/scripts/triangulate.mjs --ticker AMT` | ✅ | ⬜ pending |
-| 03-02-02 | 02 | 2 | ENGINE-03 | integration | `node validation/scripts/triangulate.mjs --ticker JPM,WFC,MET` | ✅ | ⬜ pending |
-| 03-03-01 | 03 | 3 | ENGINE-02 | unit | `npx vitest run src/engines/__tests__/edgarFinancials.test.js --bail 1` | ✅ | ⬜ pending |
-| 03-04-01 | 04 | 4 | ENGINE-04 | integration | `node validation/scripts/compare-morningstar.mjs` | ✅ | ⬜ pending |
+| 03-01-01 | 01 | 1 | ENGINE-01 | integration | `node validation/scripts/triangulate.mjs --ticker AAPL` | yes | pending |
+| 03-01-02 | 01 | 1 | ENGINE-04 | integration | `node validation/scripts/compare-morningstar.mjs --ticker AAPL` | yes | pending |
+| 03-04-01 | 04 | 2 | ENGINE-01 | integration | `node validation/scripts/compare-morningstar.mjs --ticker CRM,AAPL,MSFT` | yes | pending |
+| 03-04-02 | 04 | 2 | ENGINE-03 | integration | `node validation/scripts/compare-morningstar.mjs` | yes | pending |
+| 03-02-01 | 02 | 2 | ENGINE-01 | integration | `node validation/scripts/triangulate.mjs --ticker AMT` | yes | pending |
+| 03-02-02 | 02 | 2 | ENGINE-03 | integration | `node validation/scripts/triangulate.mjs --ticker JPM,WFC,MET` | yes | pending |
+| 03-03-01 | 03 | 3 | ENGINE-02 | unit | `npx vitest run src/engines/__tests__/edgarFinancials.test.js --bail 1` | yes | pending |
+| 03-03-02 | 03 | 3 | ENGINE-04 | integration | `node validation/scripts/compare-morningstar.mjs` | yes | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
@@ -73,11 +75,11 @@ No new test infrastructure needed.
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 25s (vitest), < 5min (pipelines)
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 25s (vitest), < 5min (pipelines)
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending
