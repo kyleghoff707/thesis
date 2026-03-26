@@ -6,7 +6,7 @@
 // Failed engines set their field to null and log to the errors array.
 
 import { fetchEdgarStatements } from './edgarFinancials.js';
-import { fetchCompanyInfo } from './edgar.js';
+import { fetchCompanyInfo, fetchFilings } from './edgar.js';
 import { classifyIndustryType } from './industryClassifier.js';
 import { computeAllGrowthRates } from './growthRates.js';
 import { computeReturnMetrics, computeDebtMetrics } from './returnMetrics.js';
@@ -101,6 +101,7 @@ export async function assembleDataPacket(ticker) {
     safeCall(() => fetchCompanyEvents(ticker), 'events', errors),
     safeCall(() => fetchPrices(ticker, '10y'), 'prices', errors),
     safeCall(() => fetchTranscriptList(ticker), 'transcripts', errors),
+    safeCall(() => fetchFilingList(ticker), 'filings', errors),
   ]);
 
   const gurus = step3[0].value ?? null;
@@ -109,8 +110,23 @@ export async function assembleDataPacket(ticker) {
   const peers = step3[3].value ?? null;
   const analystEstimates = step3[4].value ?? null;
   const events = step3[5].value ?? null;
-  const prices = step3[6].value ?? null;
+  let prices = step3[6].value ?? null;
   const transcriptList = step3[7].value ?? null;
+  const filings = step3[8].value ?? null;
+
+  // Price fallback for Node.js (priceStore.js uses IndexedDB which fails in Node)
+  if (!prices && typeof window === 'undefined') {
+    try {
+      const { yahooQuotes } = await import('./nodeYahoo.js');
+      const quotes = await yahooQuotes(ticker);
+      if (quotes && quotes.length > 0) {
+        const q = quotes[0];
+        prices = [{ date: new Date().toISOString().split('T')[0], close: q.price }];
+      }
+    } catch (e) {
+      errors.push(`priceFallback: ${e.message}`);
+    }
+  }
 
   // ── Step 4: Dependent data (depends on previous steps) ──
 
@@ -209,6 +225,7 @@ export async function assembleDataPacket(ticker) {
     events,
     prices: prices ? { data: prices, currentPrice } : null,
     transcriptAvailability,
+    filings,
     caveats: buildCaveats(classification),
     errors: errors.length > 0 ? errors : undefined,
     assembledAt: new Date().toISOString(),
@@ -272,6 +289,38 @@ function deriveDebtMetrics(statements, fcf) {
     netDebtToFCF: freeCashFlow !== 0 ? netDebt / freeCashFlow : null,
     isNetCash: netDebt < 0,
   };
+}
+
+// ─── Helper: Fetch filing list for DataPacket ───────────────────
+
+const FILING_FORMS = new Set(['10-K', '10-Q', '8-K', 'DEF 14A']);
+const MAX_PER_FORM = 20;
+
+/**
+ * Fetch a filtered list of SEC filings for the DataPacket.
+ * Uses the existing fetchFilings engine, then filters to forms
+ * of interest and limits to MAX_PER_FORM per form type.
+ * @param {string} ticker
+ * @returns {Promise<object[]>} Array of { form, filingDate, accessionNumber, primaryDocument }
+ */
+async function fetchFilingList(ticker) {
+  const allFilings = await fetchFilings(ticker);
+  if (!allFilings || allFilings.length === 0) return null;
+
+  const counts = {};
+  const result = [];
+  for (const f of allFilings) {
+    if (!FILING_FORMS.has(f.form)) continue;
+    counts[f.form] = (counts[f.form] || 0) + 1;
+    if (counts[f.form] > MAX_PER_FORM) continue;
+    result.push({
+      form: f.form,
+      filingDate: f.filingDate,
+      accessionNumber: f.accessionNumber,
+      primaryDocument: f.primaryDocument,
+    });
+  }
+  return result.length > 0 ? result : null;
 }
 
 // ─── Industry-Aware Caveats ─────────────────────────────────────

@@ -189,3 +189,108 @@ describe('constants', () => {
     expect(SEC_HEADERS['Accept']).toBe('application/json');
   });
 });
+
+// ─── Node.js Global Shims (Phase 06.1 additions) ────────────
+
+describe('Node.js global shims', () => {
+  it('globalThis.DOMParser is defined when running in Node', () => {
+    // nodeAdapter.js sets DOMParser globally when IS_NODE is true
+    expect(globalThis.DOMParser).toBeDefined();
+    expect(typeof globalThis.DOMParser).toBe('function');
+  });
+
+  it('globalThis.DOMParser parses HTML correctly', () => {
+    const parser = new globalThis.DOMParser();
+    const doc = parser.parseFromString('<div><p>test</p></div>', 'text/html');
+    const ps = doc.querySelectorAll('p');
+    expect(ps.length).toBe(1);
+    expect(ps[0].textContent).toBe('test');
+  });
+
+  it('globalThis.localStorage has getItem/setItem/removeItem/key/length', () => {
+    expect(globalThis.localStorage).toBeDefined();
+    expect(typeof globalThis.localStorage.getItem).toBe('function');
+    expect(typeof globalThis.localStorage.setItem).toBe('function');
+    expect(typeof globalThis.localStorage.removeItem).toBe('function');
+    expect(typeof globalThis.localStorage.key).toBe('function');
+    expect(typeof globalThis.localStorage.length).toBe('number');
+  });
+
+  it('globalThis.localStorage stores and retrieves values', () => {
+    globalThis.localStorage.setItem('__test_key__', 'hello');
+    expect(globalThis.localStorage.getItem('__test_key__')).toBe('hello');
+    globalThis.localStorage.removeItem('__test_key__');
+    expect(globalThis.localStorage.getItem('__test_key__')).toBeNull();
+  });
+
+  it('globalThis.indexedDB is defined (truthy placeholder)', () => {
+    expect(globalThis.indexedDB).toBeDefined();
+    expect(globalThis.indexedDB).toBeTruthy();
+  });
+
+  it('globalThis.__nodeCache has cacheGet and cacheSet functions', () => {
+    expect(globalThis.__nodeCache).toBeDefined();
+    expect(typeof globalThis.__nodeCache.cacheGet).toBe('function');
+    expect(typeof globalThis.__nodeCache.cacheSet).toBe('function');
+  });
+
+  it('globalThis.__nodeCache.cacheGet/cacheSet work for round-trip', () => {
+    const key = '__shim_test_roundtrip__';
+    globalThis.__nodeCache.cacheSet(key, { data: 42 }, 60000);
+    const result = globalThis.__nodeCache.cacheGet(key);
+    expect(result).toEqual({ data: 42 });
+  });
+});
+
+// ─── Fetch Interception ─────────────────────────────────────
+
+describe('fetch interception', () => {
+  it('globalThis.fetch is a patched function (not native)', () => {
+    // The patched fetch has a name of 'patchedFetch'
+    expect(globalThis.fetch.name).toBe('patchedFetch');
+  });
+
+  it('intercepts /api/yahoo-summary/ URLs and returns a Response', async () => {
+    // This test verifies the interception mechanism, not the Yahoo API
+    // In vitest, the dynamic import of nodeYahoo.js will execute real code,
+    // so we just verify the fetch returns a Response-like object
+    const resp = await globalThis.fetch('/api/yahoo-summary/AAPL');
+    expect(resp).toBeDefined();
+    expect(typeof resp.json).toBe('function');
+    // Should return 200 or 500 (depending on yahoo-finance2 availability)
+    expect([200, 500]).toContain(resp.status);
+  });
+
+  it('intercepts /api/yahoo-quotes/ URLs and returns a Response', async () => {
+    const resp = await globalThis.fetch('/api/yahoo-quotes/AAPL');
+    expect(resp).toBeDefined();
+    expect(typeof resp.json).toBe('function');
+    expect([200, 500]).toContain(resp.status);
+  });
+
+  it('intercepts /api/finviz/ URLs and returns a Response', async () => {
+    const resp = await globalThis.fetch('/api/finviz/AAPL');
+    expect(resp).toBeDefined();
+    expect(typeof resp.json).toBe('function');
+    expect([200, 500]).toContain(resp.status);
+  });
+});
+
+// ─── cache.js IS_NODE Routing ────────────────────────────────
+
+describe('cache.js IS_NODE routing', () => {
+  it('cacheGet routes to file cache via __nodeCache in Node.js', async () => {
+    // Import cache.js — in Node.js (vitest), it should detect IS_NODE
+    const { cacheGet: cachejsGet, cacheSet: cachejsSet } = await import('../cache.js');
+
+    // The __nodeCache is set by nodeAdapter.js. In vitest, since we imported
+    // nodeAdapter.js above, __nodeCache should be available.
+    // Set a value via nodeAdapter's file cache
+    const testKey = '__cache_routing_test__';
+    globalThis.__nodeCache.cacheSet(testKey.replace(/[/:]/g, '_'), { routed: true }, 60000);
+
+    // Read it back via cache.js — should route to file cache
+    const result = cachejsGet(testKey);
+    expect(result).toEqual({ routed: true });
+  });
+});
