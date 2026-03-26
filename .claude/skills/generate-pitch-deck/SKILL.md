@@ -101,9 +101,46 @@ Convert the most recent 10-K and 10-Q filings to clean markdown BEFORE dispatchi
 node --loader ./scripts/node-esm-loader.js scripts/preprocess-filings.js {TICKER}
 ```
 
-The pre-processed filings are now in `.thes1s/reports/{TICKER}/filings-md/`. Each JSON file contains extracted sections (Business, Risk Factors, MD&A, etc.) as markdown text. PSR agents should READ these files instead of fetching raw HTML from EDGAR.
+The pre-processed filings are now in `.thes1s/reports/{TICKER}/filings-md/`. Each JSON file contains extracted sections as markdown text. 10-K files extract Business, Risk Factors, MD&A, and Financial Statements (4 sections). 10-Q files extract Financial Statements, MD&A, and Risk Factors (3 sections). Filenames use full filing dates (e.g., `10-K-2024-09-15.json`, `10-Q-2024-07-30.json`) to prevent collisions. PSR agents should READ these files instead of fetching raw HTML from EDGAR.
 
 If `filingSections.js` is not yet available (Phase 06.1-02 dependency), skip this step -- PSR agents will fall back to web-fetching filings directly. The pipeline works either way, but pre-processing saves significant tokens.
+
+## Step 2.6: Data Quality Checkpoint
+
+Run the data quality checkpoint to verify DataPacket completeness and filing extraction results before dispatching expensive PSR agents:
+
+```bash
+node --loader ./scripts/node-esm-loader.js scripts/data-quality-checkpoint.js {TICKER}
+```
+
+The script outputs a structured summary to stderr (human-readable table) and JSON to stdout (machine-parseable).
+
+**If the script exits with code 1 (BLOCKED):** Critical fields are missing (companyInfo, financials, or filings). Do NOT proceed to Step 3. Instead:
+1. Print the full checkpoint summary for the PM
+2. Ask: "Critical data is missing. Would you like to:
+   (a) Provide file paths or paste data to fill gaps
+   (b) Re-run data assembly (scripts/assemble-data.js)
+   (c) Abort generation"
+3. If PM provides file paths, read those files and include their content as supplementary context for agents
+4. If PM pastes text, save it to `.thes1s/reports/{TICKER}/pm-supplementary.md` and include in agent context
+5. After gap-fill, re-run the checkpoint to verify
+
+**If the script exits with code 0 (PROCEED):** Print the summary for PM visibility, note any warnings (missing non-critical fields), and continue to Step 3.
+
+**PM gap-fill at checkpoint (per D-12):** If the PM wants to fill gaps manually:
+- PM can say "attach /path/to/file.md" -- read the file and include its content in relevant agent prompts
+- PM can paste text directly -- save to `.thes1s/reports/{TICKER}/pm-supplementary.md`
+- PM can say "continue" -- proceed with available data, agents will note gaps in their output
+
+The checkpoint ensures transparent degradation (per D-13): every missing field is visible, the PM decides whether gaps are acceptable, and agents receive the fullest possible context.
+
+Log:
+```
+Step 2.6: Data quality checkpoint for {TICKER}
+  DataPacket: {populated}/{total} fields
+  Filings: {tenKCount} 10-Ks, {tenQCount} 10-Qs processed
+  Verdict: PROCEED / BLOCKED
+```
 
 ## Step 3: Pre-Processing -- Primary Source Reading (Annual + Quarterly)
 
@@ -1180,9 +1217,10 @@ Every section output MUST conform to the ReportSectionSchema. Validate before sa
 ### Progress Display
 Log progress at each major step:
 ```
-Step 1:  Validating input and gate check...
-Step 2:  Assembling DataPacket for {TICKER}...
-Step 3:  Pre-processing -- dispatching PSR agents (annual + quarterly)...
+Step 1:   Validating input and gate check...
+Step 2:   Assembling DataPacket for {TICKER}...
+Step 2.6: Data quality checkpoint (block on critical gaps, warn on non-critical)
+Step 3:   Pre-processing -- dispatching PSR agents (annual + quarterly)...
 Step 4:  Reading agent configurations...
 Step 5:  Phase 1 -- Business Fundamentals (3 sections)...
 Step 6:  CHECKPOINT 1 -- Business Fundamentals Review [INTERACTIVE]
