@@ -36,12 +36,12 @@ async function main() {
     process.exit(1);
   }
 
-  // Select filings to process: most recent 3 10-Ks + 4 10-Qs
-  const annuals = filings.filter(f => f.form === '10-K').slice(0, 3);
-  const quarterly = filings.filter(f => f.form === '10-Q').slice(0, 4);
+  // Select filings to process: most recent 5 10-Ks + 8 10-Qs (full business cycle)
+  const annuals = filings.filter(f => f.form === '10-K').slice(0, 5);
+  const quarterly = filings.filter(f => f.form === '10-Q').slice(0, 8);
   const toProcess = [...annuals, ...quarterly];
 
-  console.log(`Pre-processing ${annuals.length} 10-Ks and ${quarterly.length} 10-Qs for ${ticker}...`);
+  console.log(`Pre-processing ${annuals.length} 10-Ks (max 5) and ${quarterly.length} 10-Qs (max 8) for ${ticker}...`);
 
   // Create output directory
   const outDir = join(process.cwd(), '.thes1s', 'reports', ticker, 'filings-md');
@@ -49,6 +49,7 @@ async function main() {
 
   let successCount = 0;
   let failCount = 0;
+  const successByForm = {};
 
   for (const f of toProcess) {
     try {
@@ -67,12 +68,12 @@ async function main() {
         continue;
       }
 
-      // Extract sections from the markdown
-      const sections = extractAllSections(result.markdown);
+      // Extract sections from the markdown (form-aware: 10-K vs 10-Q item numbers)
+      const sections = extractAllSections(result.markdown, f.form);
       const sectionCount = Object.keys(sections).length;
 
-      // Write processed filing to disk
-      const outFile = join(outDir, `${f.form}-${f.filingDate.slice(0, 4)}.json`);
+      // Write processed filing to disk (full filing date prevents collision for multiple 10-Qs in same year)
+      const outFile = join(outDir, `${f.form}-${f.filingDate}.json`);
       writeFileSync(outFile, JSON.stringify({
         form: f.form,
         date: f.filingDate,
@@ -83,13 +84,17 @@ async function main() {
 
       console.log(`  Processed: ${f.form} ${f.filingDate} (${result.markdown.length} chars, ${sectionCount} sections, ${result.fromCache ? 'cached' : 'fetched'})`);
       successCount++;
+      successByForm[f.form] = (successByForm[f.form] || 0) + 1;
     } catch (err) {
       console.warn(`  Failed: ${f.form} ${f.filingDate} — ${err.message}`);
       failCount++;
     }
   }
 
+  const tenKSuccess = successByForm['10-K'] || 0;
+  const tenQSuccess = successByForm['10-Q'] || 0;
   console.log(`\nFiling pre-processing complete: ${successCount} succeeded, ${failCount} failed out of ${toProcess.length}`);
+  console.log(`  10-Ks: ${tenKSuccess}/${annuals.length} | 10-Qs: ${tenQSuccess}/${quarterly.length}`);
 
   if (successCount === 0) {
     console.error('WARNING: No filings were processed successfully. PSR agents will work with DataPacket data only.');
