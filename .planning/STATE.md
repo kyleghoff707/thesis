@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-03-26T01:38:53.049Z"
+status: Executing Phase 02
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-03-26T01:46:52.826Z"
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -49,6 +49,7 @@ Plan: 2 of 3
 | Phase 01 P01 | 9min | 2 tasks | 7 files |
 | Phase 01-comparison-harness P02 | 21min | 3 tasks | 3 files |
 | Phase 02 P02 | 4min | 2 tasks | 4 files |
+| Phase 02 P01 | 11min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,8 @@ Recent decisions affecting current work:
 - [Phase 01-comparison-harness]: Accuracy denominator excludes missing fields — accuracy = match/(match+close+diff) consistent with Vitest suite
 - [Phase 02]: Kept isClose helper duplicated between consensus.mjs and root-cause-tagger.mjs for zero coupling
 - [Phase 02]: Bitmask subset enumeration for cluster finding — O(2^N) but N always 3-5 sources
+- [Phase 02]: [Phase 02-01]: FMP capex sign: -1 per RESEARCH.md (FMP negative -> canonical positive), correcting plan inline analysis
+- [Phase 02]: [Phase 02-01]: Per-source field mappings in _sources section (not inline per-entry) -- 61 FMP + 42 SimFin GENERAL + 19 BANKS + 17 INSURANCE + 37 mstarpy
 
 ### Pending Todos
 
@@ -83,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T01:38:53.046Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-03-26T01:46:52.824Z
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None
