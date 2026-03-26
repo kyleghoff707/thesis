@@ -21,11 +21,9 @@ A production-grade financial data normalization engine that extracts, normalizes
 - ✓ API connections to FMP, SimFin, mstarpy, EODHD all working — existing
 - ✓ 5,758 US-listed companies classified in Thes1s taxonomy — existing
 - ✓ Production-grade comparison harness (91.2% baseline, all-JS, 174 tests) — Phase 1
+- ✓ Multi-source triangulation engine: 3 data collectors, consensus engine, root cause tagger, 50-company pipeline producing fix-recommendations.json (609 CONSENSUS_DIFF + 2,177 LIKELY_BUG = 2,786 actionable items) — Phase 2
 
 ### Active
-
-- [ ] Multi-source triangulation engine (FMP + SimFin + mstarpy + our engine vs Morningstar truth)
-- [ ] Multi-source triangulation engine (FMP + SimFin + mstarpy + our engine vs Morningstar truth)
 - [ ] 98%+ accuracy on the 50-company Morningstar truth set (currently 91.2%)
 - [ ] 98%+ accuracy on S&P 500 companies
 - [ ] 98%+ accuracy across all US-listed equities
@@ -95,9 +93,9 @@ Two competitive moats for Thes1s:
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Triangulate against 3 sources (not just MS truth set) | Single-source comparison can't distinguish MS quirks from our bugs. Consensus of 3 sources is more reliable | — Pending |
+| Triangulate against 3 sources (not just MS truth set) | Single-source comparison can't distinguish MS quirks from our bugs. Consensus of 3 sources is more reliable | ✓ Phase 2 — 2,786 actionable items identified |
 | Three-phase accuracy rollout (truth set → S&P 500 → full market) | Each phase validates before expanding scope. Prevents boiling the ocean | — Pending |
-| Fix test harness before triangulation | Can't improve what you can't measure. Current harness reports wrong scores | — Pending |
+| Fix test harness before triangulation | Can't improve what you can't measure. Current harness reports wrong scores | ✓ Phase 1 — 91.2% baseline established |
 | Exec comp is secondary priority | FMP has good data, but financial statement accuracy is the foundation | — Pending |
 | Fixes go to existing engine or new layer — case by case | Some bugs are taxonomy fixes (edgarFinancials.js), some may need post-processing | — Pending |
 
@@ -119,4 +117,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after Phase 1 completion*
+*Last updated: 2026-03-26 after Phase 2 completion*
