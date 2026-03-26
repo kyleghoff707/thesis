@@ -80,15 +80,7 @@ Step 2: DataPacket assembled for {TICKER}
 Fetch all 43 guru 13F portfolios so the DataPacket `gurus` field is populated. This is a one-time fetch per ticker — results are cached in `.thes1s/cache/` for future runs.
 
 ```bash
-node --import scripts/node-esm-loader.js -e "
-import './src/engines/nodeAdapter.js';
-import { fetchAllGuruPortfolios, findGuruHoldingsForTicker } from './src/engines/gurus.js';
-
-console.log('Fetching guru portfolios (43 gurus, ~2-3 min first time, cached after)...');
-const portfolios = await fetchAllGuruPortfolios();
-const holdings = findGuruHoldingsForTicker(portfolios, '{TICKER}');
-console.log('Guru pre-fetch complete: ' + portfolios.length + ' portfolios loaded, ' + holdings.length + ' hold {TICKER}');
-"
+node --loader ./scripts/node-esm-loader.js scripts/prefetch-gurus.js {TICKER}
 ```
 
 If the guru fetch fails or times out, log the error and **continue** — guru data is useful context for the management-evaluator agent but not required. The agent will use WebSearch to find guru holdings if the DataPacket field is null.
@@ -106,34 +98,7 @@ Log the updated field count to confirm guru data is now included.
 Convert the most recent 10-K and 10-Q filings to clean markdown BEFORE dispatching PSR agents. This eliminates the need for agents to fetch raw HTML from EDGAR (which wastes 100-200K+ tokens per filing) and provides structured sections they can read directly.
 
 ```bash
-node --import scripts/node-esm-loader.js -e "
-import './src/engines/nodeAdapter.js';
-import { fetchFilingMarkdown } from './src/engines/filingMarkdown.js';
-import { extractAllSections } from './src/engines/filingSections.js';
-import { readFileSync, writeFileSync, mkdirSync } from 'fs';
-import { join } from 'path';
-
-const dp = JSON.parse(readFileSync('.thes1s/reports/{TICKER}/data-packet.json', 'utf8'));
-const filings = dp.filings || [];
-const annuals = filings.filter(f => f.form === '10-K').slice(0, 3);
-const quarterly = filings.filter(f => f.form === '10-Q').slice(0, 4);
-
-const outDir = '.thes1s/reports/{TICKER}/filings-md';
-mkdirSync(outDir, { recursive: true });
-
-for (const f of [...annuals, ...quarterly]) {
-  try {
-    const md = await fetchFilingMarkdown(dp.companyInfo.cik, f.accessionNumber, f.primaryDocument);
-    const sections = extractAllSections(md);
-    const outFile = join(outDir, f.form + '-' + f.filingDate.slice(0, 4) + '.json');
-    writeFileSync(outFile, JSON.stringify({ form: f.form, date: f.filingDate, sections, fullLength: md.length }, null, 2));
-    console.log('Processed: ' + f.form + ' ' + f.filingDate);
-  } catch (err) {
-    console.warn('Failed to process filing: ' + f.form + ' ' + f.filingDate + ' -- ' + err.message);
-  }
-}
-console.log('Filing pre-processing complete.');
-"
+node --loader ./scripts/node-esm-loader.js scripts/preprocess-filings.js {TICKER}
 ```
 
 The pre-processed filings are now in `.thes1s/reports/{TICKER}/filings-md/`. Each JSON file contains extracted sections (Business, Risk Factors, MD&A, etc.) as markdown text. PSR agents should READ these files instead of fetching raw HTML from EDGAR.

@@ -9,15 +9,15 @@
 // ─── Section Header Patterns ────────────────────────────────────
 
 export const SECTION_MAP = {
-  'Business': /^#{1,3}\s*(?:Item\s*1[.:\s]\s*)?Business/im,
-  'Risk Factors': /^#{1,3}\s*(?:Item\s*1A[.:\s]\s*)?Risk\s*Factors/im,
-  'MD&A': /^#{1,3}\s*(?:Item\s*7[.:\s]\s*)?Management[''\u2019]?s?\s*Discussion/im,
-  'Financial Statements': /^#{1,3}\s*(?:Item\s*8[.:\s]\s*)?Financial\s*Statements/im,
-  'Controls': /^#{1,3}\s*(?:Item\s*9A[.:\s]\s*)?Controls/im,
-  'Properties': /^#{1,3}\s*(?:Item\s*2[.:\s]\s*)?Properties/im,
-  'Legal': /^#{1,3}\s*(?:Item\s*3[.:\s]\s*)?Legal/im,
-  'Executive Compensation': /^#{1,3}\s*(?:Item\s*11[.:\s]\s*)?Executive\s*Comp/im,
-  'Market Risk': /^#{1,3}\s*(?:Item\s*7A[.:\s]\s*)?Quantitative.*Market\s*Risk/im,
+  'Business': /^(?:#{1,3}\s*)?Item\s*1[.:\s]\s*Business/im,
+  'Risk Factors': /^(?:#{1,3}\s*)?Item\s*1A[.:\s]\s*Risk\s*Factors/im,
+  'MD&A': /^(?:#{1,3}\s*)?Item\s*7[.:\s]\s*Management[''\u2019]?s?\s*Discussion/im,
+  'Financial Statements': /^(?:#{1,3}\s*)?Item\s*8[.:\s]\s*Financial\s*Statements/im,
+  'Controls': /^(?:#{1,3}\s*)?Item\s*9A[.:\s]\s*Controls/im,
+  'Properties': /^(?:#{1,3}\s*)?Item\s*2[.:\s]\s*Properties/im,
+  'Legal': /^(?:#{1,3}\s*)?Item\s*3[.:\s]\s*Legal/im,
+  'Executive Compensation': /^(?:#{1,3}\s*)?Item\s*11[.:\s]\s*Executive\s*Comp/im,
+  'Market Risk': /^(?:#{1,3}\s*)?Item\s*7A[.:\s]\s*Quantitative.*Market\s*Risk/im,
 };
 
 // ─── Section Extraction ─────────────────────────────────────────
@@ -49,7 +49,7 @@ export function extractSection(markdown, sectionName) {
   if (!pattern) {
     try {
       const escaped = sectionName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      pattern = new RegExp('^#{1,3}\\s*(?:Item\\s*\\w+[.:\\s]\\s*)?' + escaped.replace(/\s+/g, '\\s+'), 'im');
+      pattern = new RegExp('^(?:#{1,3}\\s*)?(?:Item\\s*\\w+[.:\\s]\\s*)?' + escaped.replace(/\s+/g, '\\s+'), 'im');
     } catch {
       return null;
     }
@@ -63,12 +63,19 @@ export function extractSection(markdown, sectionName) {
 
   // Determine the heading level of the matched header
   const headerLine = markdown.substring(startIdx).split('\n')[0];
-  const headingLevel = (headerLine.match(/^(#{1,6})/) || ['', '#'])[1].length;
+  const headingMatch = headerLine.match(/^(#{1,6})/);
+  const headingLevel = headingMatch ? headingMatch[1].length : 0;
 
-  // Find the next header at the same or higher level (fewer or equal #'s)
-  // Look for next heading that is at this level or above
+  // Find the next section boundary
   const afterHeader = markdown.substring(startIdx + headerLine.length);
-  const nextHeaderPattern = new RegExp(`^#{1,${headingLevel}}\\s+\\S`, 'm');
+  let nextHeaderPattern;
+  if (headingLevel > 0) {
+    // Heading-formatted: find next heading at same or higher level
+    nextHeaderPattern = new RegExp(`^#{1,${headingLevel}}\\s+\\S`, 'm');
+  } else {
+    // Plain-text Item line: find next Item N pattern (same format)
+    nextHeaderPattern = /^Item\s+\d+[A-Z]?[.:\s]/im;
+  }
   const nextMatch = afterHeader.match(nextHeaderPattern);
 
   let endIdx;
