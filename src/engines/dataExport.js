@@ -119,23 +119,58 @@ export async function assembleDataPacket(ticker) {
   const insiders = step3[1].value ?? null;
   const compensation = step3[2].value ?? null;
   const peers = step3[3].value ?? null;
-  const analystEstimates = step3[4].value ?? null;
+  let analystEstimates = step3[4].value ?? null;
   const events = step3[5].value ?? null;
   let prices = step3[6].value ?? null;
   const transcriptList = step3[7].value ?? null;
   const filings = step3[8].value ?? null;
 
   // Price fallback for Node.js (priceStore.js uses IndexedDB which fails in Node)
+  let yahooQuoteData = null;
   if (!prices && typeof window === 'undefined') {
     try {
       const { yahooQuotes } = await import('./nodeYahoo.js');
       const quotes = await yahooQuotes(ticker);
       if (quotes && quotes.length > 0) {
-        const q = quotes[0];
-        prices = [{ date: new Date().toISOString().split('T')[0], close: q.price }];
+        yahooQuoteData = quotes[0];
+        prices = [{
+          date: new Date().toISOString().split('T')[0],
+          close: yahooQuoteData.price,
+          change: yahooQuoteData.change,
+          changePct: yahooQuoteData.changePct,
+        }];
       }
     } catch (e) {
       errors.push(`priceFallback: ${e.message}`);
+    }
+  }
+
+  // Yahoo assetProfile enrichment for Node.js (description, employees, HQ)
+  if (typeof window === 'undefined' && companyInfo) {
+    try {
+      const { yahooSummary } = await import('./nodeYahoo.js');
+      const summary = await yahooSummary(ticker);
+      const ap = summary?.assetProfile;
+      if (ap) {
+        if (!companyInfo.description && ap.longBusinessSummary) companyInfo.description = ap.longBusinessSummary;
+        if (!companyInfo.employees && ap.fullTimeEmployees) companyInfo.employees = ap.fullTimeEmployees;
+        if (!companyInfo.headquarters && ap.city) companyInfo.headquarters = [ap.city, ap.state, ap.country].filter(Boolean).join(', ');
+        if ((!companyInfo.website || companyInfo.website === '') && ap.website) companyInfo.website = ap.website;
+      }
+      // Wire market cap from quote data
+      if (!companyInfo.marketCap && yahooQuoteData?.marketCap) companyInfo.marketCap = yahooQuoteData.marketCap;
+
+      // analystEstimates from same Yahoo call (Fix 4: bypasses import.meta.env.DEV routing)
+      if (!analystEstimates) {
+        const et = summary?.earningsTrend;
+        const fd = summary?.financialData;
+        const rt = summary?.recommendationTrend;
+        if (et || fd || rt) {
+          analystEstimates = { earningsTrend: et || null, financialData: fd || null, recommendationTrend: rt || null };
+        }
+      }
+    } catch (e) {
+      errors.push(`yahooEnrichment: ${e.message}`);
     }
   }
 
@@ -149,7 +184,9 @@ export async function assembleDataPacket(ticker) {
     const latestYear = statements?.years?.[0] || new Date().getFullYear();
 
     try {
-      peerMetrics = await computePeerScores(peerCIKs, latestYear);
+      const raw = await computePeerScores(peerCIKs, latestYear);
+      // Fix: computePeerScores returns a Map; JSON.stringify(Map) = '{}'
+      peerMetrics = raw instanceof Map ? Object.fromEntries(raw) : raw;
     } catch (err) {
       errors.push(`peerMetrics: ${err.message}`);
     }
@@ -208,6 +245,34 @@ export async function assembleDataPacket(ticker) {
     ? { count: transcriptList.length, latestQuarter: transcriptList[0]?.title || null }
     : null;
 
+  // ── Wire Yahoo quote data into keyMetrics price ratios ──
+
+  if (yahooQuoteData && keyMetrics?.metrics) {
+    const latestYear = statements?.years?.[0];
+    if (latestYear && keyMetrics.metrics[latestYear]) {
+      const yearMetrics = keyMetrics.metrics[latestYear];
+      if (!yearMetrics.price) yearMetrics.price = {};
+      if (yahooQuoteData.pe != null) yearMetrics.price.peRatio = yahooQuoteData.pe;
+      if (yahooQuoteData.priceToBook != null) yearMetrics.price.priceToBook = yahooQuoteData.priceToBook;
+    }
+  }
+
+  // ── TTM field aliases + BVPS derivation ──
+
+  const ttm = statements?.ttm || null;
+  if (ttm) {
+    // Fix 5: operating_cash_flow alias for net_cash_flow_from_operating_activities
+    if (ttm.cashFlow?.net_cash_flow_from_operating_activities && !ttm.cashFlow.operating_cash_flow) {
+      ttm.cashFlow.operating_cash_flow = ttm.cashFlow.net_cash_flow_from_operating_activities;
+    }
+    // Fix 6: derive book_value_per_share in TTM balance
+    if (ttm.balance && !ttm.balance.book_value_per_share) {
+      const equity = ttm.balance.stockholders_equity;
+      const shares = ttm.balance.common_shares_outstanding;
+      if (equity && shares) ttm.balance.book_value_per_share = equity / shares;
+    }
+  }
+
   // ── Assemble DataPacket ──
 
   return {
@@ -216,7 +281,7 @@ export async function assembleDataPacket(ticker) {
     classification,
     currentPrice,
     financials: statements ? { years: statements.years, income: statements.income, balance: statements.balance, cashFlow: statements.cashFlow } : null,
-    ttm: statements?.ttm || null,
+    ttm,
     growthRates,
     returnMetrics: returnMetrics || null,
     debtMetrics: derivedDebtMetrics || debtMetrics || null,

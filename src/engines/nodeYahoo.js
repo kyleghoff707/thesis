@@ -26,6 +26,7 @@ async function getYF() {
 }
 
 const DEFAULT_MODULES = [
+  'assetProfile',
   'defaultKeyStatistics',
   'financialData',
   'calendarEvents',
@@ -72,6 +73,8 @@ export async function yahooQuotes(tickerString) {
             ticker: q.symbol,
             marketCap: q.marketCap || null,
             price: q.regularMarketPrice || null,
+            change: q.regularMarketChange ?? null,
+            changePct: q.regularMarketChangePercent ?? null,
             pe: q.trailingPE || null,
             forwardPE: q.forwardPE || null,
             dividendYield: q.dividendYield || null,
