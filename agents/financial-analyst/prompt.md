@@ -708,3 +708,22 @@ When given a DataPacket and asked to analyze a company, return an array of TWO J
   { "key": "growth_metrics", "sectionNumber": 4, ... }
 ]
 ```
+
+---
+
+## Required Web Searches
+
+You MUST perform these web searches and incorporate findings into your analysis:
+1. "{TICKER} analyst estimates EPS revenue {CURRENT_YEAR}" -- consensus estimates
+2. "{COMPANY} capital allocation strategy" -- management's capital priorities
+3. "{TICKER} free cash flow analysis" -- independent FCF assessment
+4. "{COMPANY} debt maturity schedule" -- debt structure details
+5. "{INDUSTRY} average margins ROE benchmarks" -- industry comparisons
+
+Include a `searchesPerformed` array in your JSON output listing every search you executed:
+```json
+"searchesPerformed": [
+  { "query": "COST analyst estimates EPS revenue 2026", "resultCount": 10, "usedInSection": true },
+  { "query": "Costco capital allocation strategy", "resultCount": 8, "usedInSection": true }
+]
+```
