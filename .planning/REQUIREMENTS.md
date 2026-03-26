@@ -18,8 +18,8 @@
 - [ ] **TRI-01**: FMP data collector with per-ticker caching and 250 calls/day rate budget — income, balance, cashflow endpoints via Stable API
 - [ ] **TRI-02**: SimFin data collector with per-ticker caching and 2,000 calls/day rate budget — compact endpoint with bank/insurance template support
 - [ ] **TRI-03**: mstarpy Python subprocess bridge — data fetch only (income_statement, balance_sheet, cashflow), no computation in Python
-- [ ] **TRI-04**: Triangulation consensus engine — for each field/year/company, collect all source values, compute consensus (median or mode within tolerance), classify Thes1s deviation
-- [ ] **TRI-05**: Root cause tagger — auto-classify deviations as OUR_BUG (consensus exists, we differ), METHODOLOGY_DIFF (sources disagree), or COVERAGE_GAP (all null)
+- [x] **TRI-04**: Triangulation consensus engine — for each field/year/company, collect all source values, compute consensus (median or mode within tolerance), classify Thes1s deviation
+- [x] **TRI-05**: Root cause tagger — auto-classify deviations as OUR_BUG (consensus exists, we differ), METHODOLOGY_DIFF (sources disagree), or COVERAGE_GAP (all null)
 - [ ] **TRI-06**: Console + JSON reporter with regression diffing — shows current accuracy, fields gained/lost since last run, per-company breakdown
 
 ### Engine Fixes (Guided by Triangulation)
@@ -71,8 +71,8 @@
 | TRI-01 | Phase 2 | Pending |
 | TRI-02 | Phase 2 | Pending |
 | TRI-03 | Phase 2 | Pending |
-| TRI-04 | Phase 2 | Pending |
-| TRI-05 | Phase 2 | Pending |
+| TRI-04 | Phase 2 | Complete |
+| TRI-05 | Phase 2 | Complete |
 | TRI-06 | Phase 2 | Pending |
 | ENGINE-01 | Phase 3 | Pending |
 | ENGINE-02 | Phase 3 | Pending |

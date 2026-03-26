@@ -49,7 +49,7 @@ Plans:
 
 Plans:
 - [ ] 02-01-PLAN.md — Data collectors: field-mapping extension, shared disk cache, FMP/SimFin/mstarpy collectors + Python pre-fetch
-- [ ] 02-02-PLAN.md — Consensus engine + root cause auto-tagger (TDD)
+- [x] 02-02-PLAN.md — Consensus engine + root cause auto-tagger (TDD)
 - [ ] 02-03-PLAN.md — Triangulation orchestrator + reporter with regression diffing + pipeline verification
 
 ### Phase 3: Engine Fixes
