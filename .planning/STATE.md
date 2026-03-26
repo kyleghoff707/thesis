@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to plan
-stopped_at: Phase 07 context gathered
-last_updated: "2026-03-26T00:36:41.892Z"
+stopped_at: Completed 06.1-05-PLAN.md (visual verification checkpoint pending)
+last_updated: "2026-03-26T01:56:17.813Z"
 progress:
-  total_phases: 7
-  completed_phases: 5
-  total_plans: 27
-  completed_plans: 31
+  total_phases: 8
+  completed_phases: 6
+  total_plans: 32
+  completed_plans: 36
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours -- delivered in minutes, with zero shortcuts on rigor.
-**Current focus:** Phase 06 — pitch-deck
+**Current focus:** Phase 06.1 — pipeline-hardening
 
 ## Current Position
 
-Phase: 07
+Phase: 7
 Plan: Not started
 
 ## Performance Metrics
@@ -67,6 +67,11 @@ Plan: Not started
 | Phase 06C P02 | 5min | 2 tasks | 3 files |
 | Phase 06D P01 | 3min | 2 tasks | 4 files |
 | Phase 06D P02 | 5min | 1 tasks | 1 files |
+| Phase 06.1 P01 | 28min | 2 tasks | 8 files |
+| Phase 06.1 P04 | 4min | 2 tasks | 12 files |
+| Phase 06.1 P02 | 4min | 2 tasks | 4 files |
+| Phase 06.1 P03 | 10min | 2 tasks | 3 files |
+| Phase 06.1 P05 | 3min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -111,6 +116,18 @@ Recent decisions affecting current work:
 - [Phase 06D]: Reused slide-out panel pattern for DeepDivePanel and AssumptionTracker for visual consistency
 - [Phase 06D]: CMD-03 (/fgr standalone) confirmed DEFERRED per D-16 -- FGR derivation only meaningful within Pitch Deck context
 - [Phase 06D]: PTCH-16 (LULU parity) requires separate user-driven /generate:pitch-deck session -- structural verification complete, quality verification pending PM
+- [Phase 06.1]: Fetch interceptor pattern for Vite middleware + Yahoo v10 URLs in nodeAdapter.js
+- [Phase 06.1]: Full IDB class stubs (IDBRequest etc.) with addEventListener-based error propagation for idb package
+- [Phase 06.1]: 30-second timeout wrapper for yahoo-finance2 calls to prevent indefinite hangs
+- [Phase 06.1]: 4-layer search compliance checking in critic.js: self-report, evidence, cross-check, empty-results detection
+- [Phase 06.1]: PSR and synthesis agents exempt from web search requirements in QUAL-07 check
+- [Phase 06.1]: Async executor: createToolExecutor returns async function for filing/transcript await support
+- [Phase 06.1]: Section extraction uses heading-level boundary matching (not fixed Item N patterns) for flexibility
+- [Phase 06.1]: Transcript topic filtering splits on speaker block markers for passage-level granularity
+- [Phase 06.1]: generation-status.json is a separate pollable file from progress.json -- UI polling vs state machine
+- [Phase 06.1]: Single retry (30s backoff) then save-as-failed -- PM re-runs via /generate:section
+- [Phase 06.1]: Filing pre-processing (Step 2.5) is optional -- pipeline works without filingSections.js
+- [Phase 06.1]: GenerationStatusPanel renders inline in PitchDeck.jsx with dual-endpoint polling (progress + generation-status) and local 1s elapsed time ticking
 
 ### Roadmap Evolution
 
@@ -128,6 +145,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T00:36:41.882Z
-Stopped at: Phase 07 context gathered
-Resume file: .planning/phases/06.1-pipeline-hardening/06.1-CONTEXT.md
+Last session: 2026-03-26T01:55:26.842Z
+Stopped at: Completed 06.1-05-PLAN.md (visual verification checkpoint pending)
+Resume file: None
