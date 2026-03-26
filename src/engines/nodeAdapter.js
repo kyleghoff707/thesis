@@ -166,3 +166,128 @@ export function cacheSet(key, value, ttlMs = 24 * 60 * 60 * 1000) {
     cachedAt: new Date().toISOString(),
   }));
 }
+
+// ─── Node.js Global Shims ──────────────────────────────────────
+// When running in Node.js, inject browser-like globals so engines
+// can run unmodified. This block must run at import time (side-effect)
+// so that all subsequent engine imports find these globals.
+
+if (IS_NODE) {
+  // 1. Global DOMParser via linkedom
+  // Engines (insiders.js, compensation.js, finviz.js, filingMarkdown.js)
+  // use `new DOMParser()` directly — inject it globally.
+  globalThis.DOMParser = class NodeDOMParser {
+    parseFromString(html, type) {
+      const { document } = parseHTML(html);
+      return document;
+    }
+  };
+
+  // 2. Fake indexedDB to prevent cacheStore.js crash on import
+  // cacheStore.js checks `typeof indexedDB !== 'undefined'` (HAS_IDB).
+  // Setting a truthy placeholder makes HAS_IDB true, but openDB will
+  // fail gracefully — cacheStore functions return null/no-op.
+  if (typeof globalThis.indexedDB === 'undefined') {
+    globalThis.indexedDB = {};
+  }
+
+  // 3. Global localStorage shim (Map-backed)
+  // cache.js and several engines use localStorage directly for
+  // small-key caching. This prevents ReferenceError in Node.js.
+  if (typeof globalThis.localStorage === 'undefined') {
+    const _store = new Map();
+    globalThis.localStorage = {
+      getItem(k) { return _store.get(k) ?? null; },
+      setItem(k, v) { _store.set(k, String(v)); },
+      removeItem(k) { _store.delete(k); },
+      key(i) { return [..._store.keys()][i] ?? null; },
+      get length() { return _store.size; },
+      clear() { _store.clear(); },
+    };
+  }
+
+  // 4. Expose file-based cache for cache.js Node routing
+  // cache.js checks globalThis.__nodeCache to redirect all
+  // cacheGet/cacheSet/cacheGetAsync to file-based storage.
+  globalThis.__nodeCache = { cacheGet, cacheSet };
+
+  // 5. Patch fetch to intercept Vite middleware URLs
+  // In the browser, engines call /api/yahoo-summary/:ticker etc.
+  // which are Vite middleware endpoints (not simple proxies).
+  // In Node.js, we intercept these and call the underlying
+  // libraries directly (yahoo-finance2, cheerio).
+  const _origFetch = globalThis.fetch;
+  globalThis.fetch = async function patchedFetch(url, opts = {}) {
+    const urlStr = typeof url === 'string' ? url : url.toString();
+
+    // Yahoo Summary middleware interception
+    if (urlStr.startsWith('/api/yahoo-summary/')) {
+      try {
+        const pathAndQs = urlStr.replace('/api/yahoo-summary/', '');
+        const [tickerPart, qs] = pathAndQs.split('?');
+        const ticker = decodeURIComponent(tickerPart);
+        const params = new URLSearchParams(qs || '');
+        const modules = params.has('modules')
+          ? params.get('modules').split(',').map(m => m.trim()).filter(Boolean)
+          : undefined;
+        const { yahooSummary } = await import('./nodeYahoo.js');
+        const data = await yahooSummary(ticker, modules);
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Yahoo Quotes middleware interception
+    if (urlStr.startsWith('/api/yahoo-quotes/')) {
+      try {
+        const tickerStr = urlStr.replace('/api/yahoo-quotes/', '').split('?')[0];
+        const { yahooQuotes } = await import('./nodeYahoo.js');
+        const data = await yahooQuotes(tickerStr);
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Finviz middleware interception
+    if (urlStr.startsWith('/api/finviz/')) {
+      try {
+        const ticker = decodeURIComponent(
+          urlStr.replace('/api/finviz/', '').split('?')[0]
+        );
+        const { finvizData } = await import('./nodeFinviz.js');
+        const data = await finvizData(ticker);
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Standard proxy resolution for SEC/EDGAR/Yahoo URLs
+    const resolvedURL = resolveURL(urlStr);
+    const headers = {
+      'User-Agent': 'Thes1s/1.0 (contact@thes1s.com)',
+      ...opts.headers,
+    };
+    return _origFetch(resolvedURL, { ...opts, headers });
+  };
+}

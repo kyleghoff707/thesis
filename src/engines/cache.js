@@ -1,7 +1,11 @@
 // Three-tier cache: in-memory (fast) + IndexedDB (large data) + localStorage (small data)
 // TTL in milliseconds
+// In Node.js: routes ALL operations to file-based cache via globalThis.__nodeCache
+// (set by nodeAdapter.js before any engine imports)
 
 import { idbGet, idbSet, idbGetMeta, idbBulkGet, idbClear } from './cacheStore.js';
+
+const IS_NODE = typeof window === 'undefined';
 
 const memoryCache = new Map();
 
@@ -79,6 +83,11 @@ migrateOnce();
 // --- Sync cache (memory + localStorage for small keys) ---
 
 export function cacheGet(key) {
+  // Node.js: route to file-based cache (set by nodeAdapter.js)
+  if (IS_NODE && globalThis.__nodeCache) {
+    return globalThis.__nodeCache.cacheGet(key.replace(/[/:]/g, '_'));
+  }
+
   // Memory tier — always checked first
   const mem = memoryCache.get(key);
   if (mem && Date.now() < mem.expiresAt) {
@@ -109,6 +118,13 @@ export function cacheGet(key) {
 }
 
 export function cacheSet(key, data, category = 'financials') {
+  // Node.js: route to file-based cache (set by nodeAdapter.js)
+  if (IS_NODE && globalThis.__nodeCache) {
+    const ttl = TTL[category] || TTL.financials;
+    globalThis.__nodeCache.cacheSet(key.replace(/[/:]/g, '_'), data, ttl);
+    return;
+  }
+
   const ttl = TTL[category] || TTL.financials;
   const now = Date.now();
   const entry = { data, expiresAt: now + ttl, fetchedAt: now };
@@ -135,6 +151,11 @@ export function cacheSet(key, data, category = 'financials') {
 // --- Async cache (checks memory then IndexedDB) ---
 
 export async function cacheGetAsync(key) {
+  // Node.js: route to file-based cache (set by nodeAdapter.js)
+  if (IS_NODE && globalThis.__nodeCache) {
+    return globalThis.__nodeCache.cacheGet(key.replace(/[/:]/g, '_'));
+  }
+
   // Memory tier first (sync fast path)
   const mem = memoryCache.get(key);
   if (mem && Date.now() < mem.expiresAt) {
