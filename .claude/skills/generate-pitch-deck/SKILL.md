@@ -75,6 +75,32 @@ Step 2: DataPacket assembled for {TICKER}
   Errors: {count or "none"}
 ```
 
+## Step 2.1: Pre-Fetch Guru Holdings
+
+Fetch all 43 guru 13F portfolios so the DataPacket `gurus` field is populated. This is a one-time fetch per ticker — results are cached in `.thes1s/cache/` for future runs.
+
+```bash
+node --import scripts/node-esm-loader.js -e "
+import './src/engines/nodeAdapter.js';
+import { fetchAllGuruPortfolios, findGuruHoldingsForTicker } from './src/engines/gurus.js';
+
+console.log('Fetching guru portfolios (43 gurus, ~2-3 min first time, cached after)...');
+const portfolios = await fetchAllGuruPortfolios();
+const holdings = findGuruHoldingsForTicker(portfolios, '{TICKER}');
+console.log('Guru pre-fetch complete: ' + portfolios.length + ' portfolios loaded, ' + holdings.length + ' hold {TICKER}');
+"
+```
+
+If the guru fetch fails or times out, log the error and **continue** — guru data is useful context for the management-evaluator agent but not required. The agent will use WebSearch to find guru holdings if the DataPacket field is null.
+
+After guru fetch, re-run the DataPacket assembly to pick up the cached guru data:
+
+```bash
+node --loader ./scripts/node-esm-loader.js scripts/assemble-data.js {TICKER}
+```
+
+Log the updated field count to confirm guru data is now included.
+
 ## Step 2.5: Pre-Process Filings to Markdown
 
 Convert the most recent 10-K and 10-Q filings to clean markdown BEFORE dispatching PSR agents. This eliminates the need for agents to fetch raw HTML from EDGAR (which wastes 100-200K+ tokens per filing) and provides structured sections they can read directly.
