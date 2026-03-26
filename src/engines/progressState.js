@@ -115,6 +115,12 @@ export function advanceState(ticker, newState) {
   progress.state = newState;
   progress.lastUpdated = new Date().toISOString();
   writeProgress(ticker, progress);
+
+  // Also update generation-status.json for UI polling
+  try {
+    updateGenerationStatus(ticker, { state: newState });
+  } catch { /* non-critical */ }
+
   return progress;
 }
 
@@ -192,5 +198,159 @@ export function readQualityReport(ticker) {
   }
 }
 
+// --- generation-status.json writer ---
+// Per D-07-a, D-07-c, D-07-d: PM progress visibility via a pollable status file
+// Written at every state transition so the UI component can show real-time progress
+
+// Section-to-agent mapping for status display
+const SECTION_AGENT_MAP = {
+  radar: 'business-analyst',
+  simple_predictable: 'business-analyst',
+  market_position: 'competitor-evaluator',
+  barriers_moats: 'competitor-evaluator',
+  fcf: 'financial-analyst',
+  management: 'management-evaluator',
+  roe_roic_debt: 'financial-analyst',
+  balance_sheet: 'financial-analyst',
+  pest: 'risk-analyst',
+  valuation: 'valuation-specialist',
+};
+
+// Pitch Deck dispatch phases for status tracking
+const DISPATCH_PHASES = [
+  { phase: 1, sections: ['radar', 'simple_predictable', 'market_position'] },
+  { phase: 2, sections: ['barriers_moats', 'fcf', 'management', 'roe_roic_debt', 'balance_sheet'] },
+  { phase: 3, sections: ['pest', 'valuation'] },
+];
+
+// Returns the path to generation-status.json for a ticker
+function getStatusPath(ticker) {
+  return join(REPORTS_DIR, ticker.toUpperCase(), 'generation-status.json');
+}
+
+// Initialize generation-status.json with all sections as pending
+export function initGenerationStatus(ticker, stage) {
+  const keys = SECTION_KEYS[stage] || [];
+  const now = new Date().toISOString();
+  const sections = {};
+  for (const key of keys) {
+    sections[key] = { status: 'pending' };
+  }
+  const phases = DISPATCH_PHASES.map(p => ({
+    phase: p.phase,
+    status: 'pending',
+  }));
+  const status = {
+    ticker: ticker.toUpperCase(),
+    stage,
+    state: 'IDLE',
+    startedAt: now,
+    lastUpdated: now,
+    elapsedMs: 0,
+    sections,
+    phases,
+    currentAgent: null,
+    completedCount: 0,
+    totalSections: keys.length,
+  };
+  const statusPath = getStatusPath(ticker);
+  mkdirSync(dirname(statusPath), { recursive: true });
+  writeFileSync(statusPath, JSON.stringify(status, null, 2));
+  return status;
+}
+
+// Read, deep-merge updates, recompute derived fields, write back
+export function updateGenerationStatus(ticker, updates) {
+  const statusPath = getStatusPath(ticker);
+  let status;
+  try {
+    const raw = readFileSync(statusPath, 'utf-8');
+    status = JSON.parse(raw);
+  } catch {
+    // If no status file exists, initialize one (fallback)
+    status = initGenerationStatus(ticker, 'pitchDeck');
+  }
+
+  // Deep-merge sections if provided
+  if (updates.sections) {
+    for (const [key, val] of Object.entries(updates.sections)) {
+      status.sections[key] = { ...status.sections[key], ...val };
+    }
+    delete updates.sections;
+  }
+
+  // Deep-merge phases if provided
+  if (updates.phases) {
+    for (const phaseUpdate of updates.phases) {
+      const idx = status.phases.findIndex(p => p.phase === phaseUpdate.phase);
+      if (idx >= 0) {
+        status.phases[idx] = { ...status.phases[idx], ...phaseUpdate };
+      }
+    }
+    delete updates.phases;
+  }
+
+  // Apply remaining top-level updates
+  Object.assign(status, updates);
+
+  // Recompute derived fields
+  status.lastUpdated = new Date().toISOString();
+  if (status.startedAt) {
+    status.elapsedMs = Date.now() - new Date(status.startedAt).getTime();
+  }
+  status.completedCount = Object.values(status.sections)
+    .filter(s => s.status === 'complete').length;
+
+  writeFileSync(statusPath, JSON.stringify(status, null, 2));
+  return status;
+}
+
+// Mark a section as running with agent info
+export function startSection(ticker, sectionKey, agent) {
+  const now = new Date().toISOString();
+  return updateGenerationStatus(ticker, {
+    sections: { [sectionKey]: { status: 'running', startedAt: now, agent: agent || SECTION_AGENT_MAP[sectionKey] || null } },
+    currentAgent: agent || SECTION_AGENT_MAP[sectionKey] || null,
+  });
+}
+
+// Mark a section as complete with computed duration
+export function completeSection(ticker, sectionKey) {
+  const statusPath = getStatusPath(ticker);
+  let section = {};
+  try {
+    const raw = readFileSync(statusPath, 'utf-8');
+    const status = JSON.parse(raw);
+    section = status.sections[sectionKey] || {};
+  } catch { /* non-critical */ }
+
+  const now = new Date().toISOString();
+  const durationMs = section.startedAt
+    ? Date.now() - new Date(section.startedAt).getTime()
+    : 0;
+
+  return updateGenerationStatus(ticker, {
+    sections: { [sectionKey]: { status: 'complete', completedAt: now, durationMs } },
+  });
+}
+
+// Update a dispatch phase's status and timestamps
+export function updatePhaseStatus(ticker, phaseNum, phaseStatus) {
+  const now = new Date().toISOString();
+  const phaseUpdate = { phase: phaseNum, status: phaseStatus };
+  if (phaseStatus === 'active' || phaseStatus === 'running') {
+    phaseUpdate.startedAt = now;
+  }
+  if (phaseStatus === 'complete') {
+    phaseUpdate.completedAt = now;
+  }
+  return updateGenerationStatus(ticker, {
+    phases: [phaseUpdate],
+  });
+}
+
 // Export constants for testing
-export const _testExports = { SECTION_KEYS, VALID_TRANSITIONS, getProgressPath, getSectionsDir, getQualityDir, getTickerDir };
+export const _testExports = {
+  SECTION_KEYS, VALID_TRANSITIONS, getProgressPath, getSectionsDir, getQualityDir, getTickerDir,
+  getStatusPath, SECTION_AGENT_MAP, DISPATCH_PHASES,
+};
