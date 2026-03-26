@@ -42,6 +42,15 @@ Setting up Pitch Deck generation for {TICKER}...
 
 Store the one-pager data for later reference -- Phase 3 agents may reference One Pager findings.
 
+**Initialize Generation Status (D-07-a):**
+```bash
+node --import scripts/node-esm-loader.js -e "
+import { initGenerationStatus } from './src/engines/progressState.js';
+initGenerationStatus('{TICKER}', 'pitchDeck');
+console.log('Generation status initialized for {TICKER}');
+"
+```
+
 ## Step 2: Assemble DataPacket
 
 Run the data assembly script to gather all financial data:
@@ -65,6 +74,45 @@ Step 2: DataPacket assembled for {TICKER}
   Financials: {number of years} years
   Errors: {count or "none"}
 ```
+
+## Step 2.5: Pre-Process Filings to Markdown
+
+Convert the most recent 10-K and 10-Q filings to clean markdown BEFORE dispatching PSR agents. This eliminates the need for agents to fetch raw HTML from EDGAR (which wastes 100-200K+ tokens per filing) and provides structured sections they can read directly.
+
+```bash
+node --import scripts/node-esm-loader.js -e "
+import './src/engines/nodeAdapter.js';
+import { fetchFilingMarkdown } from './src/engines/filingMarkdown.js';
+import { extractAllSections } from './src/engines/filingSections.js';
+import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { join } from 'path';
+
+const dp = JSON.parse(readFileSync('.thes1s/reports/{TICKER}/data-packet.json', 'utf8'));
+const filings = dp.filings || [];
+const annuals = filings.filter(f => f.form === '10-K').slice(0, 3);
+const quarterly = filings.filter(f => f.form === '10-Q').slice(0, 4);
+
+const outDir = '.thes1s/reports/{TICKER}/filings-md';
+mkdirSync(outDir, { recursive: true });
+
+for (const f of [...annuals, ...quarterly]) {
+  try {
+    const md = await fetchFilingMarkdown(dp.companyInfo.cik, f.accessionNumber, f.primaryDocument);
+    const sections = extractAllSections(md);
+    const outFile = join(outDir, f.form + '-' + f.filingDate.slice(0, 4) + '.json');
+    writeFileSync(outFile, JSON.stringify({ form: f.form, date: f.filingDate, sections, fullLength: md.length }, null, 2));
+    console.log('Processed: ' + f.form + ' ' + f.filingDate);
+  } catch (err) {
+    console.warn('Failed to process filing: ' + f.form + ' ' + f.filingDate + ' -- ' + err.message);
+  }
+}
+console.log('Filing pre-processing complete.');
+"
+```
+
+The pre-processed filings are now in `.thes1s/reports/{TICKER}/filings-md/`. Each JSON file contains extracted sections (Business, Risk Factors, MD&A, etc.) as markdown text. PSR agents should READ these files instead of fetching raw HTML from EDGAR.
+
+If `filingSections.js` is not yet available (Phase 06.1-02 dependency), skip this step -- PSR agents will fall back to web-fetching filings directly. The pipeline works either way, but pre-processing saves significant tokens.
 
 ## Step 3: Pre-Processing -- Primary Source Reading (Annual + Quarterly)
 
@@ -91,21 +139,51 @@ Always include regardless of config: `ticker`, `companyInfo`, `classification`, 
 
 ### 3c: Dispatch Both PSR Agents in Parallel
 
+**Start progress tracking for PSR phase:**
+```bash
+node --import scripts/node-esm-loader.js -e "
+import { updateGenerationStatus } from './src/engines/progressState.js';
+updateGenerationStatus('{TICKER}', { state: 'PRIMARY_SOURCE_READING', currentAgent: 'annual-reader + quarterly-reader' });
+"
+```
+
 Dispatch BOTH agents simultaneously using the Agent tool. Both PSR agents use Opus model (per their config.json -- these are deep reading tasks requiring maximum comprehension).
+
+**Include pre-processed filings in agent prompts:** If `.thes1s/reports/{TICKER}/filings-md/` contains pre-processed filing JSONs (from Step 2.5), read each file and include the relevant sections directly in the agent's prompt. This replaces any instruction for agents to use curl, WebFetch, or fetch for SEC filings.
+
+For each PSR agent, read the pre-processed filings and format as:
+```
+## Pre-Processed Filing Sections
+
+### 10-K 2024
+#### Business Description
+{sections.business}
+
+#### Risk Factors
+{sections.riskFactors}
+
+#### MD&A
+{sections.mda}
+
+### 10-K 2023
+...
+```
 
 **Annual Reader prompt content** (concatenated in this order):
 1. The agent's `prompt.md` content
 2. The sliced DataPacket as a fenced JSON code block labeled "DataPacket"
-3. All curriculum file contents
-4. Universal context file contents
-5. Task instruction: "Read {TICKER}'s annual SEC filings (10-K, proxy statements) chronologically from oldest to newest. For each filing year, extract: key financial developments, strategic shifts, management promises and commitments, competitive position changes, risk factor evolution, and any shareholder letter insights. Cross-validate Rule-One-relevant financial metrics against the DataPacket. Flag any discrepancies between filing data and DataPacket values. Return your findings as a structured JSON object with fields: yearlyInsights (array of per-year objects), discrepancies (array), strategicThemes (array of multi-year patterns), managementPromises (array), and overallNarrative (string summary)."
+3. Pre-processed annual filing sections (from filings-md/) -- agents should use these instead of fetching EDGAR
+4. All curriculum file contents
+5. Universal context file contents
+6. Task instruction: "Read {TICKER}'s annual SEC filings (10-K, proxy statements) chronologically from oldest to newest. The filing sections are provided inline below -- do NOT fetch them from EDGAR. For each filing year, extract: key financial developments, strategic shifts, management promises and commitments, competitive position changes, risk factor evolution, and any shareholder letter insights. Cross-validate Rule-One-relevant financial metrics against the DataPacket. Flag any discrepancies between filing data and DataPacket values. Return your findings as a structured JSON object with fields: yearlyInsights (array of per-year objects), discrepancies (array), strategicThemes (array of multi-year patterns), managementPromises (array), and overallNarrative (string summary)."
 
 **Quarterly Reader prompt content** (concatenated in this order):
 1. The agent's `prompt.md` content
 2. The sliced DataPacket as a fenced JSON code block labeled "DataPacket"
-3. All curriculum file contents
-4. Universal context file contents
-5. Task instruction: "Read {TICKER}'s recent quarterly SEC filings (10-Q) and earnings call transcripts chronologically from oldest to newest. Cover at minimum the last 4 quarters. For each quarter, extract: revenue and earnings trends, management guidance changes, competitive dynamics mentioned, analyst concerns raised, forward-looking statements, and any red flags. Cross-validate Rule-One-relevant quarterly metrics against the DataPacket. Return your findings as a structured JSON object with fields: quarterlyInsights (array of per-quarter objects), discrepancies (array), guidanceEvolution (object tracking guidance changes over time), analystConcerns (array), and recentMomentum (string assessing current trajectory)."
+3. Pre-processed quarterly filing sections (from filings-md/) -- agents should use these instead of fetching EDGAR
+4. All curriculum file contents
+5. Universal context file contents
+6. Task instruction: "Read {TICKER}'s recent quarterly SEC filings (10-Q) and earnings call transcripts chronologically from oldest to newest. The filing sections are provided inline below -- do NOT fetch them from EDGAR. Cover at minimum the last 4 quarters. For each quarter, extract: revenue and earnings trends, management guidance changes, competitive dynamics mentioned, analyst concerns raised, forward-looking statements, and any red flags. Cross-validate Rule-One-relevant quarterly metrics against the DataPacket. Return your findings as a structured JSON object with fields: quarterlyInsights (array of per-quarter objects), discrepancies (array), guidanceEvolution (object tracking guidance changes over time), analystConcerns (array), and recentMomentum (string assessing current trajectory)."
 
 Log:
 ```
@@ -120,6 +198,30 @@ After both agents complete:
 
 1. Parse structured JSON from each agent's response
 2. Validate that each output has the expected top-level fields
+
+**JSON Output Extraction (Fallback - D-02-a, D-03-a):**
+After each PSR agent completes, check if the output file exists:
+```bash
+test -f .thes1s/reports/{TICKER}/sections/annual-reader-insights.json && echo "EXISTS" || echo "MISSING"
+test -f .thes1s/reports/{TICKER}/sections/quarterly-reader-insights.json && echo "EXISTS" || echo "MISSING"
+```
+If MISSING, the agent could not write the file (permission denied). Extract the JSON from the agent's response text:
+1. Look for a JSON code block (```json ... ```) in the agent's response text
+2. If found, extract the JSON content and write it using Bash:
+```bash
+cat << 'SECTION_EOF' > .thes1s/reports/{TICKER}/sections/{key}.json
+{extracted JSON}
+SECTION_EOF
+```
+3. If no JSON block found, create a minimal output with the agent's response as narrative text
+
+**Retry Logic (D-02-d):**
+If a PSR agent fails entirely (rate limit, timeout, or error), retry ONCE after a 30-second wait:
+```bash
+sleep 30
+```
+Then re-dispatch the agent with the same prompt. If the retry also fails, log the error and continue -- downstream agents will work with DataPacket data alone.
+
 3. Save outputs:
    - `.thes1s/reports/{TICKER}/sections/annual-reader-insights.json`
    - `.thes1s/reports/{TICKER}/sections/quarterly-reader-insights.json`
@@ -173,7 +275,31 @@ Step 4: Agent configurations loaded
 
 ## Step 5: Phase 1 -- Business Fundamentals (Parallel Dispatch)
 
+**Update phase status:**
+```bash
+node --import scripts/node-esm-loader.js -e "
+import { updatePhaseStatus, startSection } from './src/engines/progressState.js';
+updatePhaseStatus('{TICKER}', 1, 'active');
+startSection('{TICKER}', 'radar', 'business-analyst');
+startSection('{TICKER}', 'simple_predictable', 'business-analyst');
+startSection('{TICKER}', 'market_position', 'competitor-evaluator');
+"
+```
+
 Prepare DataPacket slices for Phase 1 agents. For each agent, extract only the fields from `config.json` `dataPacketSlice`. Always include: `ticker`, `companyInfo`, `classification`, `caveats`.
+
+### Standardized Prompt Assembly (D-02-b)
+
+Each agent dispatch follows this exact template:
+1. Read agent config: `agents/{agent-dir}/config.json`
+2. Read agent prompt: `agents/{agent-dir}/prompt.md`
+3. Read curriculum files listed in config
+4. Slice DataPacket: Extract fields listed in config `dataPacketSlice`
+5. Build prompt: system = prompt.md + curriculum, user = DataPacket slice + PSR findings + prior phase context
+6. Start section timer (via startSection)
+7. Dispatch subagent with built prompt
+8. Extract/verify output (with fallback)
+9. Complete section timer (via completeSection)
 
 Dispatch agents in parallel using the Agent tool:
 
@@ -215,13 +341,43 @@ After both agents complete:
 
 3. **Save** each validated section to `.thes1s/reports/{TICKER}/sections/{section_key}.json`
 
+**JSON Output Extraction (Fallback - D-02-a, D-03-a):**
+After each agent completes, check if the output file exists:
+```bash
+test -f .thes1s/reports/{TICKER}/sections/{key}.json && echo "EXISTS" || echo "MISSING"
+```
+If MISSING, the agent could not write the file (permission denied). Extract the JSON from the agent's response:
+1. Look for a JSON code block (```json ... ```) in the agent's response text
+2. If found, extract the JSON content and write it to `.thes1s/reports/{TICKER}/sections/{key}.json` using Bash:
+```bash
+cat << 'SECTION_EOF' > .thes1s/reports/{TICKER}/sections/{key}.json
+{extracted JSON}
+SECTION_EOF
+```
+3. If no JSON block found, create a minimal section with status "failed" and the agent's response as narrative
+
 4. **Log** results per section: key, verdict, confidence, citation count, red flag count.
 
 5. **Handle failures** with retry-then-escalate (per D-05/D-06). For each section that fails JSON parsing or validation:
-   a. Construct a retry prompt: original agent prompt + error details + instruction to output ONLY valid JSON.
-   b. Dispatch the same agent again with the retry prompt.
-   c. If retry also fails, save partial output with `status: "failed"` and `error: "{error}"`.
-   d. Continue -- do not abort the pipeline for one section failure.
+
+**Retry Logic (D-02-d):**
+   a. Wait 30 seconds before retrying: `sleep 30`
+   b. Construct a retry prompt: original agent prompt + error details + instruction to output ONLY valid JSON.
+   c. Dispatch the same agent again with the retry prompt.
+   d. Apply the same JSON extraction fallback on the retry response.
+   e. If retry also fails, save partial output with `status: "failed"` and `error: "{error}"`.
+   f. Continue -- do not abort the pipeline for one section failure. Do NOT retry more than once -- the PM can re-run individual sections with `/generate:section`.
+
+**Complete section timers:**
+```bash
+node --import scripts/node-esm-loader.js -e "
+import { completeSection, updatePhaseStatus } from './src/engines/progressState.js';
+completeSection('{TICKER}', 'radar');
+completeSection('{TICKER}', 'simple_predictable');
+completeSection('{TICKER}', 'market_position');
+updatePhaseStatus('{TICKER}', 1, 'complete');
+"
+```
 
 Expected sections from Phase 1:
 - business-analyst: `radar` (section 1), `simple_predictable` (section 2)
@@ -309,6 +465,17 @@ Save checkpoint data in memory for the final report:
 
 ## Step 7: Phase 2 -- Financial Deep-Dive (Mixed Dispatch)
 
+### Collect Phase 1 Context (D-02-c -- Automated Context Threading)
+
+Automatically collect all completed section findings for downstream agents. Read all completed section files:
+```bash
+for f in .thes1s/reports/{TICKER}/sections/*.json; do
+  echo "=== $(basename $f .json) ==="
+  node -e "const s=JSON.parse(require('fs').readFileSync('$f','utf8')); console.log('Verdict:', s.verdict, '|', s.summary?.substring(0,200)); if(s.redFlags) console.log('Red flags:', s.redFlags.join('; ')); if(s.crossCuttingFindings) s.crossCuttingFindings.forEach(f=>console.log('Cross-cutting:', f.finding))"
+done
+```
+Include this output as "Prior Phase Findings" in every Phase 2 agent prompt.
+
 ### Prepare Inter-Phase Context
 
 Collect Phase 1 outputs and format as "Prior Analysis Context" for Phase 2 agents. For each Phase 1 section, extract:
@@ -340,6 +507,15 @@ Red Flags: {list}
 
 ### Dispatch Phase 2 Agents
 
+**Update phase status:**
+```bash
+node --import scripts/node-esm-loader.js -e "
+import { updatePhaseStatus, startSection } from './src/engines/progressState.js';
+updatePhaseStatus('{TICKER}', 2, 'active');
+startSection('{TICKER}', 'barriers_moats', 'competitor-evaluator');
+"
+```
+
 Phase 2 has a dependency: `barriers_moats` (S4) needs Phase 1's `market_position` context. Therefore:
 
 **First:** Dispatch competitor-evaluator for barriers_moats (S4) alone:
@@ -368,7 +544,22 @@ Step 7: Phase 2 -- Financial Deep-Dive
 
 ### Collect and Validate Phase 2 Outputs
 
-Same validation pattern as Phase 1. Expected sections:
+Same validation pattern as Phase 1, including:
+- **JSON Output Extraction Fallback (D-02-a):** Check if each output file exists after agent completes. If MISSING, extract JSON from agent response text and write via Bash `cat << 'SECTION_EOF'`.
+- **Retry Logic (D-02-d):** If an agent fails, wait 30 seconds and retry once. If retry fails, save with `status: "failed"` and continue.
+
+**Start section timers for parallel agents:**
+```bash
+node --import scripts/node-esm-loader.js -e "
+import { startSection } from './src/engines/progressState.js';
+startSection('{TICKER}', 'fcf', 'financial-analyst');
+startSection('{TICKER}', 'management', 'management-evaluator');
+startSection('{TICKER}', 'roe_roic_debt', 'financial-analyst');
+startSection('{TICKER}', 'balance_sheet', 'financial-analyst');
+"
+```
+
+Expected sections:
 - competitor-evaluator: `barriers_moats` (section 4)
 - financial-analyst: `fcf` (section 5), `roe_roic_debt` (section 7), `balance_sheet` (section 8)
 - management-evaluator: `management` (section 6)
@@ -376,6 +567,19 @@ Same validation pattern as Phase 1. Expected sections:
 Save all validated sections to `.thes1s/reports/{TICKER}/sections/{key}.json`
 
 Apply retry-then-escalate for any failed sections.
+
+**Complete section timers:**
+```bash
+node --import scripts/node-esm-loader.js -e "
+import { completeSection, updatePhaseStatus } from './src/engines/progressState.js';
+completeSection('{TICKER}', 'barriers_moats');
+completeSection('{TICKER}', 'fcf');
+completeSection('{TICKER}', 'management');
+completeSection('{TICKER}', 'roe_roic_debt');
+completeSection('{TICKER}', 'balance_sheet');
+updatePhaseStatus('{TICKER}', 2, 'complete');
+"
+```
 
 ## Step 8: Checkpoint 2 -- Financial Deep-Dive Review
 
@@ -409,6 +613,17 @@ Save checkpoint 2 data:
 
 ## Step 9: Phase 3 -- Risk & Valuation (Parallel Dispatch)
 
+### Collect Phase 1+2 Context (D-02-c -- Automated Context Threading)
+
+Automatically collect all completed section findings for Phase 3 agents:
+```bash
+for f in .thes1s/reports/{TICKER}/sections/*.json; do
+  echo "=== $(basename $f .json) ==="
+  node -e "const s=JSON.parse(require('fs').readFileSync('$f','utf8')); console.log('Verdict:', s.verdict, '|', s.summary?.substring(0,200)); if(s.redFlags) console.log('Red flags:', s.redFlags.join('; ')); if(s.crossCuttingFindings) s.crossCuttingFindings.forEach(f=>console.log('Cross-cutting:', f.finding))"
+done
+```
+Include this complete output as "Prior Phase Findings" in Phase 3 agent prompts.
+
 ### Prepare Full Inter-Phase Context
 
 Collect Phase 1 AND Phase 2 section summaries, verdicts, red flags, and cross-cutting findings. Format as comprehensive prior analysis context for Phase 3 agents. This is the richest context any agents receive -- they see the full thesis taking shape.
@@ -434,6 +649,16 @@ Collect Phase 1 AND Phase 2 section summaries, verdicts, red flags, and cross-cu
 
 ### Dispatch Phase 3 Agents in Parallel
 
+**Update phase status:**
+```bash
+node --import scripts/node-esm-loader.js -e "
+import { updatePhaseStatus, startSection } from './src/engines/progressState.js';
+updatePhaseStatus('{TICKER}', 3, 'active');
+startSection('{TICKER}', 'pest', 'risk-analyst');
+startSection('{TICKER}', 'valuation', 'valuation-specialist');
+"
+```
+
 **Agent: risk-analyst** -- Section: pest (9)
 - Model: Opus (per config -- risk requires deep reasoning)
 - Receives: prompt.md + sliced DataPacket + curriculum + universal context + PSR findings + Phase 1+2 context + supplementaryContext + ReportSectionSchema
@@ -454,11 +679,25 @@ Step 9: Phase 3 -- Risk & Valuation
 
 ### Collect and Validate Phase 3 Outputs
 
-Same validation pattern. Expected sections:
+Same validation pattern as Phase 1, including:
+- **JSON Output Extraction Fallback (D-02-a):** Check if each output file exists. If MISSING, extract JSON from agent response and write via Bash.
+- **Retry Logic (D-02-d):** If an agent fails, wait 30 seconds and retry once. If retry fails, save with `status: "failed"`.
+
+Expected sections:
 - risk-analyst: `pest` (section 9)
 - valuation-specialist: `valuation` (section 10)
 
 Save all validated sections to `.thes1s/reports/{TICKER}/sections/{key}.json`
+
+**Complete section timers:**
+```bash
+node --import scripts/node-esm-loader.js -e "
+import { completeSection, updatePhaseStatus } from './src/engines/progressState.js';
+completeSection('{TICKER}', 'pest');
+completeSection('{TICKER}', 'valuation');
+updatePhaseStatus('{TICKER}', 3, 'complete');
+"
+```
 
 ## Step 10: FGR Derivation Sub-Workflow
 
@@ -601,6 +840,18 @@ Step 12: Dispatching synthesis-writer for final polish [Opus]...
 ```
 
 Collect the synthesis output. The `overallVerdict` becomes the Pitch Deck's final verdict.
+
+**JSON Output Extraction Fallback (D-02-a):** If the synthesis-writer's output file was not written, extract JSON from its response text using the same fallback pattern as section agents.
+
+**Retry Logic (D-02-d):** If the synthesis-writer fails, retry once after 30 seconds. If the retry also fails, use individual section verdicts to compute an overall verdict (majority rule weighted by confidence).
+
+**Update generation status:**
+```bash
+node --import scripts/node-esm-loader.js -e "
+import { updateGenerationStatus } from './src/engines/progressState.js';
+updateGenerationStatus('{TICKER}', { state: 'SYNTHESIS', currentAgent: 'synthesis-writer' });
+"
+```
 
 ## Step 13: Assemble Final Report
 
@@ -842,6 +1093,15 @@ Log budget summary:
 Write budget report to `.thes1s/reports/{TICKER}/budget.json` (appended, not overwritten -- preserves One Pager budget data).
 
 ## Step 16: Print Final Summary
+
+**Finalize generation status:**
+```bash
+node --import scripts/node-esm-loader.js -e "
+import { updateGenerationStatus } from './src/engines/progressState.js';
+updateGenerationStatus('{TICKER}', { state: 'COMPLETE', currentAgent: null });
+console.log('Generation status finalized for {TICKER}');
+"
+```
 
 Print the complete generation summary:
 
