@@ -38,21 +38,21 @@
 
 ### Pitch Deck (Stage 2)
 
-- [ ] **PTCH-01**: CC skill `/generate:pitch-deck` with 3-phase agent dispatch (parallel Phase 1, sequential Phase 2, context-heavy Phase 3)
-- [ ] **PTCH-02**: `PitchDeck.jsx` + 10 section sub-components
-- [ ] **PTCH-03**: Structured checkpoints after each phase — findings, data gaps, questions, confidence levels
-- [ ] **PTCH-04**: Conversational checkpoint dialogue — PM can ask contextual questions ("show me how you calculated that", "why deeper on A but not B?"), not just approve/redirect. Scoped to section context, not open-ended chat.
-- [ ] **PTCH-05**: `SensitivityTable.jsx` — vary FGR/EPS/CapEx% across MOS/PBT/TenCap/EquityBond
-- [ ] **PTCH-06**: FGR derivation workflow — 5 inputs (Historical, Market Relativity, Company Guidance, Industry CAGR, Analyst Consensus) with user confirmation
+- [x] **PTCH-01**: CC skill `/generate:pitch-deck` with 3-phase agent dispatch (parallel Phase 1, sequential Phase 2, context-heavy Phase 3)
+- [x] **PTCH-02**: `PitchDeck.jsx` + 10 section sub-components
+- [x] **PTCH-03**: Structured checkpoints after each phase — findings, data gaps, questions, confidence levels
+- [x] **PTCH-04**: Conversational checkpoint dialogue — PM can ask contextual questions ("show me how you calculated that", "why deeper on A but not B?"), not just approve/redirect. Scoped to section context, not open-ended chat.
+- [x] **PTCH-05**: `SensitivityTable.jsx` — vary FGR/EPS/CapEx% across MOS/PBT/TenCap/EquityBond
+- [x] **PTCH-06**: FGR derivation workflow — 5 inputs (Historical, Market Relativity, Company Guidance, Industry CAGR, Analyst Consensus) with user confirmation
 - [x] **PTCH-07**: Primary Source Reader — 10-K text (business desc, risk factors, MD&A), transcripts (themes, tone, Q&A), proxy (comp, ownership, board), data verification against DataPacket
 - [x] **PTCH-08**: Competitor benchmarking — 15+ peers via peer metrics engine + agent qualitative analysis
 - [x] **PTCH-09**: Market share ceiling analysis — prove growth rate doesn't require unrealistic market dominance
 - [x] **PTCH-10**: Dual Owner Earnings — Rule One method AND Graham method side by side
 - [x] **PTCH-11**: Cyclical business handling — CAGR from "first positive year," multiple capex ratios (through-cycle, expansion-only)
 - [x] **PTCH-12**: Acquisition history tracking — table of all acquisitions with dates, amounts, strategic rationale
-- [ ] **PTCH-13**: "Tell me more" deep-dive on any section point (targeted drill-down, not regeneration)
-- [ ] **PTCH-14**: Industry context cards — pop-up glossary for industry-specific terms and KPIs
-- [ ] **PTCH-15**: Assumption tracker sidebar with confidence levels — central registry, changes cascade through affected sections
+- [x] **PTCH-13**: "Tell me more" deep-dive on any section point (targeted drill-down, not regeneration)
+- [x] **PTCH-14**: Industry context cards — pop-up glossary for industry-specific terms and KPIs
+- [x] **PTCH-15**: Assumption tracker sidebar with confidence levels — central registry, changes cascade through affected sections
 - [ ] **PTCH-16**: Full parity (and deeper) vs LULU Pitch Deck benchmark (user-verified)
 
 ### Full Story (Stage 3)
@@ -81,7 +81,7 @@
 
 ### Standalone Commands
 
-- [ ] **CMD-01**: `/generate:section TICKER stage section#` — regenerate a specific section without re-running entire stage
+- [x] **CMD-01**: `/generate:section TICKER stage section#` — regenerate a specific section without re-running entire stage
 - [ ] **CMD-02**: `/debate TICKER` — run inversion debate standalone on any completed pitch deck
 - [ ] **CMD-03**: `/fgr TICKER` — run FGR derivation workflow standalone
 
@@ -148,21 +148,21 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ONEP-04 | Phase 5B | Pending |
 | ONEP-05 | Phase 5B | Pending |
 | ONEP-06 | Phase 5C | Pending |
-| PTCH-01 | Phase 6 | Pending |
-| PTCH-02 | Phase 6 | Pending |
-| PTCH-03 | Phase 6 | Pending |
-| PTCH-04 | Phase 6 | Pending |
-| PTCH-05 | Phase 6 | Pending |
-| PTCH-06 | Phase 6 | Pending |
+| PTCH-01 | Phase 6 | Complete |
+| PTCH-02 | Phase 6 | Complete |
+| PTCH-03 | Phase 6 | Complete |
+| PTCH-04 | Phase 6 | Complete |
+| PTCH-05 | Phase 6 | Complete |
+| PTCH-06 | Phase 6 | Complete |
 | PTCH-07 | Phase 6 | Complete |
 | PTCH-08 | Phase 6 | Complete |
 | PTCH-09 | Phase 6 | Complete |
 | PTCH-10 | Phase 6 | Complete |
 | PTCH-11 | Phase 6 | Complete |
 | PTCH-12 | Phase 6 | Complete |
-| PTCH-13 | Phase 6 | Pending |
-| PTCH-14 | Phase 6 | Pending |
-| PTCH-15 | Phase 6 | Pending |
+| PTCH-13 | Phase 6 | Complete |
+| PTCH-14 | Phase 6 | Complete |
+| PTCH-15 | Phase 6 | Complete |
 | PTCH-16 | Phase 6 | Pending |
 | FLST-01 | Phase 7 | Pending |
 | FLST-02 | Phase 7 | Pending |
@@ -182,7 +182,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUAL-06 | Phase 5D | Complete |
 | QUAL-07 | Phase 5D | Complete |
 | QUAL-08 | Phase 5D | Complete |
-| CMD-01 | Phase 6 | Pending |
+| CMD-01 | Phase 6 | Complete |
 | CMD-02 | Phase 7 | Pending |
 | CMD-03 | Phase 6 | Pending |
 | EXPT-01 | Phase 8 | Pending |
