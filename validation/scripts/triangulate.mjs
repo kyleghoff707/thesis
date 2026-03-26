@@ -165,10 +165,6 @@ const { fetchEdgarStatements } = await import(BUNDLE_PATH);
 
 const fieldMapping = JSON.parse(fs.readFileSync(FIELD_MAPPING_PATH, 'utf-8'));
 
-// Build canonical field -> statement map from all _sources
-const FIELD_STATEMENT_MAP = buildFieldStatementMap(fieldMapping);
-
-// Also build it from the main MS entries for completeness
 const STMT_KEY_NORMALIZE = {
   income: 'income',
   balance: 'balance',
@@ -223,6 +219,9 @@ function buildFieldStatementMap(fm) {
 
   return map;
 }
+
+// Build canonical field -> statement map from all _sources
+const FIELD_STATEMENT_MAP = buildFieldStatementMap(fieldMapping);
 
 // ─── Parse CLI Args ────────────────────────────────────────
 
