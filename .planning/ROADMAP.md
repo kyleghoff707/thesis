@@ -128,13 +128,17 @@ Plans:
 
 ### Phase 06.1: Pipeline Hardening (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
+**Goal:** Make the Pitch Deck generation pipeline production-grade by fixing all 42 engineering issues from the COST debrief -- DataPacket 90%+ populated in Node.js, filing pre-processing to markdown, automated CC orchestration, web search enforcement, and PM progress visibility
+**Requirements**: D-01-a through D-01-j, D-02-a through D-02-d, D-03-a, D-04-a through D-04-c, D-05-a, D-06-a through D-06-c, D-07-a through D-07-d, D-08
 **Depends on:** Phase 6
-**Plans:** 0 plans
+**Plans:** 5 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 06.1 to break down)
+- [ ] 06.1-01-PLAN.md — DataPacket Node.js fixes (DOMParser, IndexedDB, Vite middleware shims, cache routing, filing assembler)
+- [ ] 06.1-02-PLAN.md — Filing tools + PSR optimization (filingSections.js, readFilingSection, getTranscriptExcerpt)
+- [ ] 06.1-03-PLAN.md — CC orchestration automation (SKILL.md: file write fallback, retry, progress writes, filing pre-processing)
+- [ ] 06.1-04-PLAN.md — Quality enforcement (searchesPerformed schema, Required Searches prompts, critic.js audit)
+- [ ] 06.1-05-PLAN.md — PM experience (generation-status.json middleware, usePitchDeck extension, status panel UI)
 
 ### Phase 7: Full Story & Debate
 **Goal**: Users can generate the deepest analysis stage with Bull/Bear/Judge adversarial debate, scored checklists (43 items), and Management Promise Tracker -- achieving full parity with the LULU Full Story benchmark
@@ -165,7 +169,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute: 5A -> 5C -> 5B -> 5D -> 6 -> 7 -> 8
+Phases execute: 5A -> 5C -> 5B -> 5D -> 6 -> 06.1 -> 7 -> 8
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -174,5 +178,6 @@ Phases execute: 5A -> 5C -> 5B -> 5D -> 6 -> 7 -> 8
 | 5B. One Pager Display Components | M2 | 0/3 | Planning complete | - |
 | 5D. Quality System | M2 | 0/3 | Planning complete | - |
 | 6. Pitch Deck | M3 | 2/12 | In Progress|  |
+| 06.1. Pipeline Hardening | M3 | 0/5 | Planning complete | - |
 | 7. Full Story & Debate | M4 | 0/? | Not started | - |
 | 8. Polish & Export | M5 | 0/? | Not started | - |
