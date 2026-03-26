@@ -20,12 +20,13 @@ A production-grade financial data normalization engine that extracts, normalizes
 - ✓ 96.1% XBRL tag coverage on S&P 500 scoring-critical fields — existing (attempt #1)
 - ✓ API connections to FMP, SimFin, mstarpy, EODHD all working — existing
 - ✓ 5,758 US-listed companies classified in Thes1s taxonomy — existing
+- ✓ Production-grade comparison harness (91.2% baseline, all-JS, 174 tests) — Phase 1
 
 ### Active
 
-- [ ] Production-grade comparison harness with proper fiscal year alignment, field mapping, and sign conventions
 - [ ] Multi-source triangulation engine (FMP + SimFin + mstarpy + our engine vs Morningstar truth)
-- [ ] 98%+ accuracy on the 50-company Morningstar truth set
+- [ ] Multi-source triangulation engine (FMP + SimFin + mstarpy + our engine vs Morningstar truth)
+- [ ] 98%+ accuracy on the 50-company Morningstar truth set (currently 91.2%)
 - [ ] 98%+ accuracy on S&P 500 companies
 - [ ] 98%+ accuracy across all US-listed equities
 - [ ] Improved XBRL normalization rules derived from triangulation findings
@@ -118,4 +119,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-25 after initialization*
+*Last updated: 2026-03-26 after Phase 1 completion*
