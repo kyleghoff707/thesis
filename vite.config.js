@@ -440,6 +440,7 @@ function irEventsPlugin() {
 //   GET /api/thes1s/reports/:ticker/one-pager  — serve one-pager.json
 //   GET /api/thes1s/reports/:ticker/pitch-deck — serve pitch-deck.json
 //   GET /api/thes1s/reports/:ticker/progress   — serve progress.json
+//   GET /api/thes1s/reports/:ticker/generation-status — serve generation-status.json
 function thes1sReportsPlugin() {
   let fs = null;
   let path = null;
@@ -485,7 +486,7 @@ function thes1sReportsPlugin() {
           const parts = urlPath.split('/');
           if (parts.length < 2) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Invalid path — expected /:ticker/one-pager, /:ticker/pitch-deck, or /:ticker/progress' }));
+            res.end(JSON.stringify({ error: 'Invalid path — expected /:ticker/one-pager, /:ticker/pitch-deck, /:ticker/progress, or /:ticker/generation-status' }));
             return;
           }
 
@@ -495,6 +496,7 @@ function thes1sReportsPlugin() {
             'one-pager': 'one-pager.json',
             'pitch-deck': 'pitch-deck.json',
             'progress': 'progress.json',
+            'generation-status': 'generation-status.json',
           };
           const fileName = fileMap[fileType];
 
