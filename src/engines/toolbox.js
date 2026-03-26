@@ -17,6 +17,9 @@ import {
 } from './valuation.js';
 
 import { computeGrowthRates } from './growthRates.js';
+import { fetchFilingMarkdown } from './filingMarkdown.js';
+import { extractSection } from './filingSections.js';
+import { fetchTranscript } from './transcripts.js';
 
 // ─── Tool Definitions (Claude tool_use API compatible) ──────────
 
@@ -282,7 +285,7 @@ export function executeTool(toolName, input) {
  * @returns {function(string, object): *} Executor function
  */
 export function createToolExecutor(dataPacket) {
-  return function executor(toolName, input) {
+  return async function executor(toolName, input) {
     // Data-dependent tools
     switch (toolName) {
       case 'getMetric':
@@ -294,9 +297,9 @@ export function createToolExecutor(dataPacket) {
       case 'comparePeers':
         return comparePeersFromPacket(dataPacket, input);
       case 'readFilingSection':
-        return readFilingSectionStub(input);
+        return await readFilingSectionImpl(dataPacket, input);
       case 'getTranscriptExcerpt':
-        return getTranscriptExcerptStub(input);
+        return await getTranscriptExcerptImpl(dataPacket, input);
       default:
         // Fall through to standalone tools
         return executeTool(toolName, input);
@@ -394,30 +397,188 @@ function comparePeersFromPacket(dataPacket, { metric, topN = 10 }) {
 }
 
 /**
- * Read a filing section. Stub — requires async filing fetch.
- * In production, this will call fetchFilingMarkdown + section extraction.
- * Returns a placeholder indicating the tool needs async execution context.
+ * Read a specific section from a 10-K or 10-Q filing.
+ * Fetches the filing markdown via filingMarkdown.js, then extracts the
+ * requested section via filingSections.js.
+ *
+ * @param {object} dataPacket - DataPacket with filings and companyInfo
+ * @param {object} input - { form, section, year }
+ * @returns {object} { available, section, form, year, content, charCount } or { available: false, message }
  */
-function readFilingSectionStub({ form, section, year }) {
-  return {
-    available: false,
-    message: `Filing section reader requires async context. Requested: ${form} ${section}${year ? ` (${year})` : ''}`,
-    form,
-    section,
-    year: year || null,
-  };
+async function readFilingSectionImpl(dataPacket, { form, section, year }) {
+  // Find the matching filing from dataPacket
+  const filings = dataPacket?.filings;
+  if (!filings || !Array.isArray(filings) || filings.length === 0) {
+    return { available: false, message: `No filings available in DataPacket` };
+  }
+
+  // Filter by form type
+  let candidates = filings.filter(f =>
+    f.form && f.form.toLowerCase() === (form || '').toLowerCase()
+  );
+
+  if (candidates.length === 0) {
+    return { available: false, message: `No ${form} filing found` };
+  }
+
+  // Filter by year if specified, otherwise use most recent
+  if (year) {
+    const yearStr = String(year);
+    const yearFiltered = candidates.filter(f =>
+      f.filingDate && f.filingDate.startsWith(yearStr)
+    );
+    if (yearFiltered.length > 0) {
+      candidates = yearFiltered;
+    } else {
+      return { available: false, message: `No ${form} filing found for ${year}` };
+    }
+  }
+
+  // Sort by filing date descending, pick most recent
+  candidates.sort((a, b) => (b.filingDate || '').localeCompare(a.filingDate || ''));
+  const filing = candidates[0];
+
+  // Get CIK from dataPacket
+  const cik = dataPacket?.companyInfo?.cik;
+  if (!cik) {
+    return { available: false, message: 'Company CIK not available in DataPacket' };
+  }
+
+  // Fetch the full markdown
+  try {
+    const result = await fetchFilingMarkdown({
+      cik,
+      accessionNumber: filing.accessionNumber,
+      primaryDocument: filing.primaryDocument,
+    });
+
+    if (!result?.markdown) {
+      return { available: false, message: `Failed to fetch ${form} filing markdown` };
+    }
+
+    const markdown = result.markdown;
+
+    // Extract the requested section
+    if (section) {
+      const extracted = extractSection(markdown, section);
+      if (extracted) {
+        return {
+          available: true,
+          section,
+          form,
+          year: filing.filingDate?.slice(0, 4) || null,
+          content: extracted,
+          charCount: extracted.length,
+        };
+      }
+    }
+
+    // Section not found or not specified — return full markdown (truncated)
+    const MAX_CHARS = 50000;
+    const truncated = markdown.length > MAX_CHARS;
+    const content = truncated
+      ? markdown.slice(0, MAX_CHARS) + `\n\n[...truncated — ${markdown.length - MAX_CHARS} chars omitted]`
+      : markdown;
+
+    return {
+      available: true,
+      section: section || '(full filing)',
+      form,
+      year: filing.filingDate?.slice(0, 4) || null,
+      content,
+      charCount: content.length,
+      note: section ? `Section "${section}" not found — returning full filing` : undefined,
+    };
+  } catch (err) {
+    return { available: false, message: `Error fetching filing: ${err.message}` };
+  }
 }
 
 /**
- * Get transcript excerpt. Stub — requires async transcript fetch.
- * In production, this will call fetchTranscript + topic search.
- * Returns a placeholder indicating the tool needs async execution context.
+ * Get transcript excerpt by quarter and optional topic.
+ * Fetches the transcript via transcripts.js and optionally filters
+ * for topic-relevant passages.
+ *
+ * @param {object} dataPacket - DataPacket with ticker
+ * @param {object} input - { quarter, topic }
+ * @returns {object} { available, quarter, topic, passages, totalPassages } or { available: false, message }
  */
-function getTranscriptExcerptStub({ quarter, topic }) {
-  return {
-    available: false,
-    message: `Transcript excerpt requires async context. Requested: ${quarter}${topic ? ` topic="${topic}"` : ''}`,
-    quarter,
-    topic: topic || null,
-  };
+async function getTranscriptExcerptImpl(dataPacket, { quarter, topic }) {
+  if (!quarter) {
+    return { available: false, message: 'Quarter is required (e.g., "Q4 2024")' };
+  }
+
+  const ticker = dataPacket?.ticker;
+  if (!ticker) {
+    return { available: false, message: 'Ticker not available in DataPacket' };
+  }
+
+  // Parse quarter string (e.g., "Q4 2024" or "Q1 2025")
+  const qMatch = quarter.match(/Q(\d)\s*(\d{4})/i);
+  if (!qMatch) {
+    return { available: false, message: `Invalid quarter format: "${quarter}". Expected "Q4 2024" style.` };
+  }
+  const quarterNum = parseInt(qMatch[1], 10);
+  const year = parseInt(qMatch[2], 10);
+
+  // Fetch the transcript — transcripts.js expects a transcriptEntry object
+  try {
+    const result = await fetchTranscript(ticker, { year, quarter: quarterNum, id: null });
+
+    if (!result?.found || !result?.text) {
+      return { available: false, message: `Transcript not available for ${quarter}` };
+    }
+
+    const fullText = result.text;
+
+    // No topic filter — return the full transcript (truncated if needed)
+    if (!topic) {
+      const MAX_CHARS = 30000;
+      const truncated = fullText.length > MAX_CHARS;
+      const content = truncated
+        ? fullText.slice(0, MAX_CHARS) + `\n\n[...truncated — ${fullText.length - MAX_CHARS} chars omitted]`
+        : fullText;
+
+      return {
+        available: true,
+        quarter,
+        topic: null,
+        content,
+        charCount: content.length,
+        totalCharCount: fullText.length,
+      };
+    }
+
+    // Topic-based filtering: split into speaker blocks and find mentions
+    const topicLower = topic.toLowerCase();
+    const blocks = fullText.split(/(?=\*\*[^*]+:\*\*)/);
+    const matchingPassages = [];
+
+    for (const block of blocks) {
+      if (block.toLowerCase().includes(topicLower)) {
+        matchingPassages.push(block.trim());
+      }
+    }
+
+    if (matchingPassages.length === 0) {
+      return {
+        available: true,
+        quarter,
+        topic,
+        passages: [],
+        totalPassages: 0,
+        message: `No passages found mentioning "${topic}" in ${quarter} transcript`,
+      };
+    }
+
+    return {
+      available: true,
+      quarter,
+      topic,
+      passages: matchingPassages,
+      totalPassages: matchingPassages.length,
+    };
+  } catch (err) {
+    return { available: false, message: `Error fetching transcript: ${err.message}` };
+  }
 }
