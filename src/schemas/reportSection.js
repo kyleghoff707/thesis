@@ -56,6 +56,11 @@ export const ReportSectionSchema = z.object({
     severity: z.enum(['high', 'medium', 'low']),             // How important for overall thesis
     source: z.string(),                                      // Where this came from
   })).optional().default([]),
+  searchesPerformed: z.array(z.object({
+    query: z.string(),                                       // The search query executed
+    resultCount: z.number(),                                 // Number of results returned
+    usedInSection: z.boolean(),                              // Whether findings were incorporated
+  })).optional().default([]),
   generatedAt: z.string(),                                  // ISO timestamp
   modelUsed: z.string(),                                    // e.g., "claude-sonnet-4-6"
   tokenCost: z.object({ input: z.number(), output: z.number() }),

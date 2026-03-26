@@ -716,3 +716,24 @@ When given a DataPacket and asked to analyze a company, return a JSON array cont
 ```
 
 Each object must conform to the ReportSectionSchema described above.
+
+---
+
+## Required Web Searches
+
+You MUST perform these web searches and incorporate findings into your analysis:
+1. "{COMPANY} risks challenges {CURRENT_YEAR}" -- current risk landscape
+2. "{INDUSTRY} regulatory changes {CURRENT_YEAR}" -- regulatory environment
+3. "{COMPANY} lawsuit litigation legal" -- legal risks
+4. "{COMPANY} tariff trade war impact" -- geopolitical risks
+5. "{INDUSTRY} disruption technology threats" -- technological displacement
+6. "{COMPANY} ESG sustainability controversy" -- social/environmental risks
+7. "{TICKER} short interest bear thesis" -- contra perspective
+
+Include a `searchesPerformed` array in your JSON output listing every search you executed:
+```json
+"searchesPerformed": [
+  { "query": "Costco risks challenges 2026", "resultCount": 12, "usedInSection": true },
+  { "query": "retail grocery regulatory changes 2026", "resultCount": 8, "usedInSection": true }
+]
+```
