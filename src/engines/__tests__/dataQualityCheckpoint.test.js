@@ -92,7 +92,7 @@ describe('assessDataPacket', () => {
       fcf: { fcfPerShare: 6.5 },
       keyMetrics: { peRatio: 28 },
       ruleOneScore: { moat: 85, management: 78, composite: 80 },
-      gurus: { holders: [] },
+      gurus: { count: 0, holdings: [] },
       insiders: { transactions: [] },
       compensation: { executives: [] },
       peers: { tickers: ['MSFT', 'GOOG'] },

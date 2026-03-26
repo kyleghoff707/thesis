@@ -130,7 +130,7 @@ function describeField(field, value) {
   if (field === 'financials') return `${value.years?.length || '?'} years`;
   if (field === 'filings') return `${Array.isArray(value) ? value.length : '?'} filings`;
   if (field === 'gurus') {
-    const count = value.holders?.length || value.length || 0;
+    const count = value.holdings?.length || value.count || value.holders?.length || value.length || 0;
     return `${count} gurus`;
   }
   if (field === 'growthRates') return 'populated';

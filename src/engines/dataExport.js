@@ -142,31 +142,40 @@ export async function assembleDataPacket(ticker) {
   }
 
   // Yahoo assetProfile enrichment for Node.js (description, employees, HQ)
+  // Retries once on timeout since yahoo-finance2 crumb auth can be slow on first call.
   if (typeof window === 'undefined' && companyInfo) {
-    try {
-      const { yahooSummary } = await import('./nodeYahoo.js');
-      const summary = await yahooSummary(ticker);
-      const ap = summary?.assetProfile;
-      if (ap) {
-        if (!companyInfo.description && ap.longBusinessSummary) companyInfo.description = ap.longBusinessSummary;
-        if (!companyInfo.employees && ap.fullTimeEmployees) companyInfo.employees = ap.fullTimeEmployees;
-        if (!companyInfo.headquarters && ap.city) companyInfo.headquarters = [ap.city, ap.state, ap.country].filter(Boolean).join(', ');
-        if ((!companyInfo.website || companyInfo.website === '') && ap.website) companyInfo.website = ap.website;
-      }
-      // Wire market cap from quote data
-      if (!companyInfo.marketCap && yahooQuoteData?.marketCap) companyInfo.marketCap = yahooQuoteData.marketCap;
-
-      // analystEstimates from same Yahoo call (Fix 4: bypasses import.meta.env.DEV routing)
-      if (!analystEstimates) {
-        const et = summary?.earningsTrend;
-        const fd = summary?.financialData;
-        const rt = summary?.recommendationTrend;
-        if (et || fd || rt) {
-          analystEstimates = { earningsTrend: et || null, financialData: fd || null, recommendationTrend: rt || null };
+    const MAX_YAHOO_TRIES = 2;
+    for (let attempt = 1; attempt <= MAX_YAHOO_TRIES; attempt++) {
+      try {
+        const { yahooSummary } = await import('./nodeYahoo.js');
+        const summary = await yahooSummary(ticker);
+        const ap = summary?.assetProfile;
+        if (ap) {
+          if (!companyInfo.description && ap.longBusinessSummary) companyInfo.description = ap.longBusinessSummary;
+          if (!companyInfo.employees && ap.fullTimeEmployees) companyInfo.employees = ap.fullTimeEmployees;
+          if (!companyInfo.headquarters && ap.city) companyInfo.headquarters = [ap.city, ap.state, ap.country].filter(Boolean).join(', ');
+          if ((!companyInfo.website || companyInfo.website === '') && ap.website) companyInfo.website = ap.website;
         }
+        // Wire market cap from quote data
+        if (!companyInfo.marketCap && yahooQuoteData?.marketCap) companyInfo.marketCap = yahooQuoteData.marketCap;
+
+        // analystEstimates from same Yahoo call (Fix 4: bypasses import.meta.env.DEV routing)
+        if (!analystEstimates) {
+          const et = summary?.earningsTrend;
+          const fd = summary?.financialData;
+          const rt = summary?.recommendationTrend;
+          if (et || fd || rt) {
+            analystEstimates = { earningsTrend: et || null, financialData: fd || null, recommendationTrend: rt || null };
+          }
+        }
+        break; // success — exit retry loop
+      } catch (e) {
+        if (attempt < MAX_YAHOO_TRIES && e.message.includes('timeout')) {
+          // Retry once on timeout — yahoo-finance2 crumb/cookie auth can be slow on first call
+          continue;
+        }
+        errors.push(`yahooEnrichment: ${e.message}`);
       }
-    } catch (e) {
-      errors.push(`yahooEnrichment: ${e.message}`);
     }
   }
 

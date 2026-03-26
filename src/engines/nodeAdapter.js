@@ -13,6 +13,7 @@ import dotenv from 'dotenv';
 import { resolve, join } from 'path';
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
 import { parseHTML } from 'linkedom';
+import { DOMParser as XmlDOMParser } from '@xmldom/xmldom';
 
 // ─── Load .env.local ─────────────────────────────────────────
 // CRITICAL: Load .env.local specifically, NOT bare `import 'dotenv/config'`.
@@ -83,15 +84,40 @@ export function resolveURL(proxyURL) {
 // ─── DOM Parser (linkedom) ───────────────────────────────────
 
 /**
- * Create a DOMParser-compatible object using linkedom.
+ * Patch an @xmldom/xmldom document with minimal querySelector/querySelectorAll.
+ * xmldom only supports DOM Level 2 (getElementsByTagName, getElementsByTagNameNS).
+ * Several engines (insiders.js, compensation.js) call querySelector('parsererror')
+ * on XML documents. This polyfill handles simple tag-name-only selectors.
+ */
+function patchXmlDoc(doc) {
+  if (!doc.querySelector) {
+    doc.querySelector = function (selector) {
+      // Simple tag-name selector only (e.g., 'parsererror')
+      const els = this.getElementsByTagName(selector);
+      return els.length > 0 ? els[0] : null;
+    };
+  }
+  if (!doc.querySelectorAll) {
+    doc.querySelectorAll = function (selector) {
+      return Array.from(this.getElementsByTagName(selector));
+    };
+  }
+  return doc;
+}
+
+/**
+ * Create a DOMParser-compatible object using linkedom (HTML) or @xmldom/xmldom (XML).
  * Provides querySelectorAll, textContent, getAttribute — the subset
  * used by filingMarkdown.js for HTML-to-markdown conversion.
  * @returns {{ parseFromString: (html: string, type: string) => Document }}
  */
 export function createDOMParser() {
   return {
-    parseFromString(html, type) {
-      const { document } = parseHTML(html);
+    parseFromString(content, type) {
+      if (type === 'text/xml' || type === 'application/xml') {
+        return patchXmlDoc(new XmlDOMParser().parseFromString(content, type));
+      }
+      const { document } = parseHTML(content);
       return document;
     },
   };
@@ -177,8 +203,11 @@ if (IS_NODE) {
   // Engines (insiders.js, compensation.js, finviz.js, filingMarkdown.js)
   // use `new DOMParser()` directly — inject it globally.
   globalThis.DOMParser = class NodeDOMParser {
-    parseFromString(html, type) {
-      const { document } = parseHTML(html);
+    parseFromString(content, type) {
+      if (type === 'text/xml' || type === 'application/xml') {
+        return patchXmlDoc(new XmlDOMParser().parseFromString(content, type));
+      }
+      const { document } = parseHTML(content);
       return document;
     }
   };
