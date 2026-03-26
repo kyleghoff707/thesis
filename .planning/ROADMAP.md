@@ -45,7 +45,12 @@ Plans:
   3. The root cause tagger labels each CONSENSUS_DIFF with a machine-readable cause (sign_flip, fy_offset, scale_error, tag_miss, derivation_error) — reducing manual root cause analysis from hours to reading a JSON file
   4. The reporter shows not just current accuracy but fields gained and lost compared to the previous run — regression diffing is visible from the console output
   5. Running the full pipeline against the 50-company truth set reveals which of the remaining 13.6% failures are real engine bugs vs Morningstar quirks vs definitional ambiguity
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Data collectors: field-mapping extension, shared disk cache, FMP/SimFin/mstarpy collectors + Python pre-fetch
+- [ ] 02-02-PLAN.md — Consensus engine + root cause auto-tagger (TDD)
+- [ ] 02-03-PLAN.md — Triangulation orchestrator + reporter with regression diffing + pipeline verification
 
 ### Phase 3: Engine Fixes
 **Goal**: The normalization engine reaches 98%+ accuracy on the 50-company Morningstar truth set, with every fix verified against the full truth set before merging
@@ -86,7 +91,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4. Phase 5 can begin after Ph
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Comparison Harness | 2/2 | Complete   | 2026-03-26 |
-| 2. Multi-Source Triangulation | 0/TBD | Not started | - |
+| 2. Multi-Source Triangulation | 0/3 | Planned | - |
 | 3. Engine Fixes | 0/TBD | Not started | - |
 | 4. Scale Validation | 0/TBD | Not started | - |
 | 5. Compensation Engine | 0/TBD | Not started | - |
