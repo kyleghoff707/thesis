@@ -229,6 +229,23 @@ export async function cacheGetMeta(key) {
 
 // Bulk-load keys from IndexedDB into memory cache. Returns array of { key, data }.
 export async function hydrateFromIDB(store, keys) {
+  // Node.js: hydrate from file-based cache (no IndexedDB)
+  if (IS_NODE && globalThis.__nodeCache) {
+    const results = [];
+    for (const key of keys) {
+      const data = globalThis.__nodeCache.cacheGet(key.replace(/[/:]/g, '_'));
+      if (data !== null) {
+        results.push({ key, data, fetchedAt: Date.now() });
+        memoryCache.set(key, {
+          data,
+          expiresAt: Date.now() + TTL.financials,
+          fetchedAt: Date.now(),
+        });
+      }
+    }
+    return results;
+  }
+
   const results = await idbBulkGet(store, keys);
   // Promote all results to memory
   for (const r of results) {

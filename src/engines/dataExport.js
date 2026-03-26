@@ -8,6 +8,7 @@
 import { fetchEdgarStatements } from './edgarFinancials.js';
 import { fetchCompanyInfo, fetchFilings } from './edgar.js';
 import { classifyIndustryType } from './industryClassifier.js';
+import { classifyCompany } from './thes1sClassification.js';
 import { computeAllGrowthRates } from './growthRates.js';
 import { computeReturnMetrics, computeDebtMetrics } from './returnMetrics.js';
 import { computeFreeCashFlow } from './freeCashFlow.js';
@@ -58,12 +59,22 @@ export async function assembleDataPacket(ticker) {
     errors.push(`companyInfo: ${err.message}`);
   }
 
-  // Classification from EDGAR SIC code
+  // Classification from EDGAR SIC code + Thes1s taxonomy
   const sicCode = companyInfo?.sic || statements?.industryType || '';
+  const thes1sClass = classifyCompany(
+    ticker,
+    companyInfo?.cik || null,
+    sicCode,
+    companyInfo?.sicDescription || ''
+  );
   const classification = {
     industryType: statements?.industryType || classifyIndustryType(sicCode),
     sicCode: companyInfo?.sic || '',
     sicDescription: companyInfo?.sicDescription || '',
+    // Thes1s taxonomy fields needed by peers.js fetchPeersByTier
+    sector: thes1sClass?.sector || null,
+    industryGroup: thes1sClass?.industryGroup || null,
+    industry: thes1sClass?.industry || null,
   };
 
   // ── Step 2: Computed metrics (parallel — depend only on financials) ──
@@ -257,10 +268,11 @@ async function fetchGurusForTicker(ticker) {
 // ─── Helper: Fetch insider data for a ticker ────────────────────
 
 async function fetchInsidersForTicker(ticker) {
-  const transactions = await fetchInsiderTransactions(ticker);
-  if (!transactions || transactions.length === 0) return { summary: null, recentTransactions: [] };
-  const summary = computeInsiderSummary(transactions);
-  return { summary, recentTransactions: transactions.slice(0, 50) };
+  const result = await fetchInsiderTransactions(ticker);
+  // fetchInsiderTransactions returns { transactions, monthlyAggregates, summary, ... }
+  const txns = result?.transactions || [];
+  if (txns.length === 0) return { summary: result?.summary || null, recentTransactions: [] };
+  return { summary: result.summary, recentTransactions: txns.slice(0, 50) };
 }
 
 // ─── Helper: Derive debt metrics from financials ────────────────

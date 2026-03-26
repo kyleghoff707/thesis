@@ -185,10 +185,31 @@ if (IS_NODE) {
 
   // 2. Fake indexedDB to prevent cacheStore.js crash on import
   // cacheStore.js checks `typeof indexedDB !== 'undefined'` (HAS_IDB).
-  // Setting a truthy placeholder makes HAS_IDB true, but openDB will
-  // fail gracefully — cacheStore functions return null/no-op.
+  // The idb package calls indexedDB.open() — provide a minimal stub that
+  // returns an IDBOpenDBRequest-like object. The onerror handler fires
+  // asynchronously, causing openDB to reject, which cacheStore.js handles.
   if (typeof globalThis.indexedDB === 'undefined') {
-    globalThis.indexedDB = {};
+    globalThis.indexedDB = {
+      open() {
+        const req = {
+          result: null,
+          error: new Error('IndexedDB not available in Node.js'),
+          onerror: null,
+          onsuccess: null,
+          onupgradeneeded: null,
+          addEventListener(evt, fn) {
+            if (evt === 'error') this.onerror = fn;
+            else if (evt === 'success') this.onsuccess = fn;
+          },
+          removeEventListener() {},
+        };
+        // Fire error asynchronously to match real IDB behavior
+        setTimeout(() => {
+          if (req.onerror) req.onerror({ target: req });
+        }, 0);
+        return req;
+      },
+    };
   }
 
   // 3. Global localStorage shim (Map-backed)
@@ -220,7 +241,34 @@ if (IS_NODE) {
   globalThis.fetch = async function patchedFetch(url, opts = {}) {
     const urlStr = typeof url === 'string' ? url : url.toString();
 
-    // Yahoo Summary middleware interception
+    // Yahoo Summary middleware interception (dev path)
+    // AND Yahoo v10 quoteSummary (production path — engines use this when isDev is false)
+    // Both need to route through yahoo-finance2 for crumb/cookie auth.
+    const yahooV10Match = urlStr.match(
+      /^https:\/\/query\d\.finance\.yahoo\.com\/v10\/finance\/quoteSummary\/([^?]+)/
+    );
+    if (yahooV10Match) {
+      try {
+        const ticker = decodeURIComponent(yahooV10Match[1]);
+        const qs = urlStr.split('?')[1] || '';
+        const params = new URLSearchParams(qs);
+        const modules = params.has('modules')
+          ? params.get('modules').split(',').map(m => m.trim()).filter(Boolean)
+          : undefined;
+        const { yahooSummary } = await import('./nodeYahoo.js');
+        const data = await yahooSummary(ticker, modules);
+        return new Response(JSON.stringify({ quoteSummary: { result: [data] } }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     if (urlStr.startsWith('/api/yahoo-summary/')) {
       try {
         const pathAndQs = urlStr.replace('/api/yahoo-summary/', '');
