@@ -522,6 +522,83 @@ function getDomainPatterns(domain) {
   }
 }
 
+// ─── Search Compliance (QUAL-07 / D-06) ─────────────────────────────
+
+/**
+ * Check that an agent performed mandated web searches (QUAL-07 extension / D-06).
+ * Two-layer verification:
+ *   Layer 1: Self-report — does searchesPerformed have entries?
+ *   Layer 2: Evidence — do web citations exist that corroborate the searches?
+ *
+ * @param {object} section - Validated report section
+ * @returns {{ score: number, issues: Array }}
+ */
+function checkSearchCompliance(section) {
+  const issues = [];
+  const searches = section.searchesPerformed || [];
+  const citations = section.citations || [];
+
+  // PSR agents (annual-reader, quarterly-reader) read filings, not web
+  // Synthesis writer reads section files, not web
+  // These sections are exempt from web search requirements
+  const EXEMPT_SECTIONS = ['psr_annual', 'psr_quarterly', 'synthesis', 'overall_verdict'];
+  if (EXEMPT_SECTIONS.includes(section.key)) {
+    return { score: 100, issues: [] };
+  }
+
+  // Count web citations
+  const webCitations = citations.filter(c => classifyCitation(c) === 'web_url');
+
+  // Layer 1: Self-report check
+  if (searches.length === 0) {
+    issues.push({
+      type: 'search_compliance',
+      severity: 'high',
+      message: `Section "${section.title}" reports zero web searches. Curriculum mandates at least 3-5 web searches per analysis section.`,
+      field: 'searchesPerformed',
+    });
+  }
+
+  // Layer 2: Evidence check
+  if (webCitations.length === 0) {
+    issues.push({
+      type: 'search_compliance',
+      severity: 'high',
+      message: `Section "${section.title}" has zero web-sourced citations. Web research is required for independent verification.`,
+      field: 'citations',
+    });
+  }
+
+  // Layer 3: Cross-check — searches reported but no web citations = suspicious
+  if (searches.length > 0 && webCitations.length === 0) {
+    issues.push({
+      type: 'search_compliance',
+      severity: 'medium',
+      message: `Section "${section.title}" reports ${searches.length} searches but has zero web citations. Agent may have fabricated search activity.`,
+      field: 'searchesPerformed',
+    });
+  }
+
+  // Layer 4: Searches with resultCount: 0 are suspicious
+  const emptySearches = searches.filter(s => s.resultCount === 0);
+  if (emptySearches.length > searches.length / 2 && searches.length > 0) {
+    issues.push({
+      type: 'search_compliance',
+      severity: 'low',
+      message: `${emptySearches.length}/${searches.length} searches returned 0 results. Search queries may be too specific or fabricated.`,
+      field: 'searchesPerformed',
+    });
+  }
+
+  // Score: 100 if both layers pass, deduct per issue
+  const highCount = issues.filter(i => i.severity === 'high').length;
+  const medCount = issues.filter(i => i.severity === 'medium').length;
+  const lowCount = issues.filter(i => i.severity === 'low').length;
+  const score = Math.max(0, 100 - highCount * 30 - medCount * 15 - lowCount * 5);
+
+  return { score, issues };
+}
+
 // ─── Overall Score Computation ──────────────────────────────────────
 
 /**
@@ -575,6 +652,10 @@ export function validateSection(section, dataPacket, options = {}) {
   const gapIssues = detectDataGaps(section, dataPacket);
   issues.push(...gapIssues);
 
+  // 7. Search compliance (QUAL-07 / D-06)
+  const searchCompliance = checkSearchCompliance(section);
+  issues.push(...searchCompliance.issues);
+
   const score = computeOverallScore(completeness, issues);
 
   return {
@@ -619,4 +700,5 @@ export const _testExports = {
   checkMultiSource,
   validateRedFlags,
   detectDataGaps,
+  checkSearchCompliance,
 };
