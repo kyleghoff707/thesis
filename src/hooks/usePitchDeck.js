@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 
-// Hook for fetching Pitch Deck report data and polling generation progress.
-// Returns { report, progress, loading, error }.
-// When progress.state !== 'COMPLETE', polls every 2s.
+// Hook for fetching Pitch Deck report data, polling generation progress,
+// and polling generation-status.json for real-time section status.
+// Returns { report, progress, generationStatus, loading, error }.
+// When generation is in progress, polls every 2s.
 // On completion, waits 500ms then re-fetches the report.
 export function usePitchDeck(ticker) {
   const [report, setReport] = useState(null);
   const [progress, setProgress] = useState(null);
+  const [generationStatus, setGenerationStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const pollRef = useRef(null);
@@ -45,13 +47,35 @@ export function usePitchDeck(ticker) {
       }
     }
 
-    async function pollProgress() {
+    async function fetchGenerationStatus() {
+      try {
+        const res = await fetch(`/api/thes1s/reports/${encodeURIComponent(ticker)}/generation-status`);
+        if (cancelled) return null;
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) setGenerationStatus(data);
+          return data;
+        }
+        return null;
+      } catch (e) {
+        if (!cancelled) console.warn('usePitchDeck: generation status fetch failed:', e.message);
+        return null;
+      }
+    }
+
+    async function pollAll() {
       if (cancelled) return;
-      const prog = await fetchProgress();
+      const [prog, genStatus] = await Promise.all([fetchProgress(), fetchGenerationStatus()]);
       if (cancelled) return;
-      if (prog && prog.state !== 'COMPLETE') {
-        pollRef.current = setTimeout(pollProgress, 2000);
-      } else if (prog && prog.state === 'COMPLETE') {
+
+      // Determine if generation is still active
+      const progressActive = prog && prog.state !== 'COMPLETE';
+      const genStatusActive = genStatus && genStatus.state !== 'COMPLETE';
+
+      if (progressActive || genStatusActive) {
+        // Still generating — continue polling
+        pollRef.current = setTimeout(pollAll, 2000);
+      } else if ((prog && prog.state === 'COMPLETE') || (genStatus && genStatus.state === 'COMPLETE')) {
         // Generation just completed — wait briefly then re-fetch the report
         pollRef.current = setTimeout(async () => {
           if (!cancelled) await fetchReport();
@@ -63,8 +87,8 @@ export function usePitchDeck(ticker) {
       setLoading(true);
       setError(null);
       try {
-        // Fetch report and progress in parallel
-        await Promise.all([fetchReport(), fetchProgress()]);
+        // Fetch report, progress, and generation status in parallel
+        await Promise.all([fetchReport(), fetchProgress(), fetchGenerationStatus()]);
       } catch (e) {
         if (!cancelled) setError(e.message);
       } finally {
@@ -75,10 +99,13 @@ export function usePitchDeck(ticker) {
     init().then(() => {
       // After initial fetch, start polling if generation is in progress
       if (!cancelled) {
-        // Re-read progress from state won't work (closure), so check again
-        fetchProgress().then(prog => {
-          if (!cancelled && prog && prog.state !== 'COMPLETE') {
-            pollRef.current = setTimeout(pollProgress, 2000);
+        // Re-read from endpoints since closure state is stale
+        Promise.all([fetchProgress(), fetchGenerationStatus()]).then(([prog, genStatus]) => {
+          if (cancelled) return;
+          const progressActive = prog && prog.state !== 'COMPLETE';
+          const genStatusActive = genStatus && genStatus.state !== 'COMPLETE';
+          if (progressActive || genStatusActive) {
+            pollRef.current = setTimeout(pollAll, 2000);
           }
         });
       }
@@ -93,7 +120,7 @@ export function usePitchDeck(ticker) {
     };
   }, [ticker]);
 
-  if (!ticker) return { report: null, progress: null, loading: false, error: null };
+  if (!ticker) return { report: null, progress: null, generationStatus: null, loading: false, error: null };
 
-  return { report, progress, loading, error };
+  return { report, progress, generationStatus, loading, error };
 }
