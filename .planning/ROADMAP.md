@@ -131,11 +131,11 @@ Plans:
 **Goal:** Make the data pipeline bulletproof for any company -- form-aware filing extraction (10-K and 10-Q), expanded filing depth (5 10-Ks, 8 10-Qs), guru prefetch CUSIP-to-ticker resolution, analyst estimates fallback chain, DataPacket parallelization, and a data quality checkpoint that gates agent dispatch
 **Requirements**: DPH-01, DPH-02, DPH-03, DPH-04, DPH-05, DPH-06, DPH-07
 **Depends on:** Phase 6
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 06.2-01-PLAN.md — Form-aware filing section extraction (SECTION_MAP_10K/10Q) + preprocess-filings.js depth expansion
-- [ ] 06.2-02-PLAN.md — Guru prefetch ticker resolution fix + DataPacket retry/fallback/parallelization
+- [x] 06.2-01-PLAN.md — Form-aware filing section extraction (SECTION_MAP_10K/10Q) + preprocess-filings.js depth expansion
+- [x] 06.2-02-PLAN.md — Guru prefetch ticker resolution fix + DataPacket retry/fallback/parallelization
 - [ ] 06.2-03-PLAN.md — Data quality checkpoint script + SKILL.md pipeline integration
 
 ### Phase 06.1: Pipeline Hardening (INSERTED)
@@ -191,6 +191,6 @@ Phases execute: 5A -> 5C -> 5B -> 5D -> 6 -> 06.1 -> 06.2 -> 7 -> 8
 | 5D. Quality System | M2 | 0/3 | Planning complete | - |
 | 6. Pitch Deck | M3 | 2/12 | In Progress|  |
 | 06.1. Pipeline Hardening | M3 | 4/5 | Complete    | 2009-03-26 |
-| 06.2. Data Pipeline Hardening | M3 | 0/3 | Planning complete | - |
+| 06.2. Data Pipeline Hardening | M3 | 2/3 | Complete    | 2026-03-26 |
 | 7. Full Story & Debate | M4 | 0/? | Not started | - |
 | 8. Polish & Export | M5 | 0/? | Not started | - |

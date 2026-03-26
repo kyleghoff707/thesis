@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to plan
-stopped_at: Phase 6.2 plans verified
-last_updated: "2026-03-26T15:49:04.757Z"
+stopped_at: Completed 06.2-03-PLAN.md
+last_updated: "2026-03-26T16:16:46.968Z"
 progress:
   total_phases: 9
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 35
-  completed_plans: 37
+  completed_plans: 40
 ---
 
 # Project State
@@ -19,7 +19,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours -- delivered in minutes, with zero shortcuts on rigor.
-**Current focus:** Phase 06.1 — pipeline-hardening
+**Current focus:** Phase 06.2 — data-pipeline-hardening-make-datapacket-assembly-guru-prefetch-and-filing-pre-processing-bulletproof-for-any-company
 
 ## Current Position
 
@@ -72,6 +72,9 @@ Plan: Not started
 | Phase 06.1 P02 | 4min | 2 tasks | 4 files |
 | Phase 06.1 P03 | 10min | 2 tasks | 3 files |
 | Phase 06.1 P05 | 3min | 2 tasks | 3 files |
+| Phase 06.2 P02 | 3min | 2 tasks | 3 files |
+| Phase 06.2 P01 | 3min | 2 tasks | 3 files |
+| Phase 06.2 P03 | 9min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -128,6 +131,12 @@ Recent decisions affecting current work:
 - [Phase 06.1]: Single retry (30s backoff) then save-as-failed -- PM re-runs via /generate:section
 - [Phase 06.1]: Filing pre-processing (Step 2.5) is optional -- pipeline works without filingSections.js
 - [Phase 06.1]: GenerationStatusPanel renders inline in PitchDeck.jsx with dual-endpoint polling (progress + generation-status) and local 1s elapsed time ticking
+- [Phase 06.2]: safeCall retry-with-backoff pattern: 5000ms default, { retry: true } for timeout-prone calls
+- [Phase 06.2]: Finviz fallback marks analystEstimates with _source: finviz-fallback for downstream transparency
+- [Phase 06.2]: Step 1 parallelized: fetchEdgarStatements + fetchCompanyInfo via Promise.allSettled
+- [Phase 06.2]: SECTION_MAP_10K limited to 4 pipeline-relevant sections; legacy SECTION_MAP retained for backward compat
+- [Phase 06.2]: Three-tier field classification (critical/important/nice-to-have) gates dispatch on critical gaps only
+- [Phase 06.2]: Human-readable checkpoint summary to stderr, machine-parseable JSON to stdout for pipeline integration
 
 ### Roadmap Evolution
 
@@ -146,6 +155,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T15:49:04.751Z
-Stopped at: Phase 6.2 plans verified
-Resume file: .planning/phases/06.2-data-pipeline-hardening-make-datapacket-assembly-guru-prefetch-and-filing-pre-processing-bulletproof-for-any-company/06.2-CONTEXT.md
+Last session: 2026-03-26T16:11:25.894Z
+Stopped at: Completed 06.2-03-PLAN.md
+Resume file: None
