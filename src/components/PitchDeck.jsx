@@ -168,12 +168,245 @@ function Spinner({ size = 20 }) {
   );
 }
 
+// --- Format elapsed milliseconds as mm:ss ---
+function fmtElapsed(ms) {
+  if (ms == null || ms < 0) return '0:00';
+  const totalSec = Math.floor(ms / 1000);
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return `${min}:${sec.toString().padStart(2, '0')}`;
+}
+
+// Convert kebab-case agent name to Title Case
+function agentDisplayName(name) {
+  if (!name) return '';
+  return name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+// --- Generation Status Panel ---
+// Shows real-time pipeline progress during Pitch Deck generation
+function GenerationStatusPanel({ generationStatus, ticker }) {
+  const [elapsedMs, setElapsedMs] = useState(generationStatus?.elapsedMs || 0);
+
+  // Tick elapsed time every second from startedAt
+  useEffect(() => {
+    if (!generationStatus?.startedAt || generationStatus.state === 'COMPLETE') {
+      setElapsedMs(generationStatus?.elapsedMs || 0);
+      return;
+    }
+
+    function tick() {
+      const start = new Date(generationStatus.startedAt).getTime();
+      setElapsedMs(Date.now() - start);
+    }
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [generationStatus?.startedAt, generationStatus?.state, generationStatus?.elapsedMs]);
+
+  if (!generationStatus) return null;
+
+  const { state, sections, completedCount, totalSections, currentAgent, phases } = generationStatus;
+  const completed = completedCount || 0;
+  const total = totalSections || 10;
+  const pct = total > 0 ? (completed / total) * 100 : 0;
+  const isComplete = state === 'COMPLETE';
+
+  // Find active phase
+  const activePhase = phases?.find(p => p.status === 'active');
+  const activePhaseLabel = activePhase ? PHASE_LABELS[activePhase.phase - 1] : null;
+
+  // Completed summary banner
+  if (isComplete) {
+    return (
+      <div style={{
+        background: C.bgCard,
+        border: '1px solid ' + C.green,
+        borderRadius: 8,
+        padding: '12px 16px',
+        marginBottom: 16,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+      }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.green} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+        <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>
+          Generation complete -- {total}/{total} sections in {fmtElapsed(generationStatus.elapsedMs || elapsedMs)}
+        </span>
+      </div>
+    );
+  }
+
+  // Active generation panel
+  return (
+    <div style={{
+      background: C.bgCard,
+      border: '1px solid ' + C.border,
+      borderRadius: 8,
+      padding: '16px 20px',
+      marginBottom: 20,
+    }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+      }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>
+          Generating Pitch Deck for {ticker}
+        </span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: C.accent }}>
+          {completed}/{total} sections
+        </span>
+      </div>
+
+      {/* Progress bar */}
+      <div style={{
+        height: 8,
+        background: C.bg,
+        borderRadius: 4,
+        overflow: 'hidden',
+        marginBottom: 8,
+      }}>
+        <div style={{
+          height: '100%',
+          background: C.accent,
+          borderRadius: 4,
+          width: pct + '%',
+          transition: 'width 0.5s ease',
+        }} />
+      </div>
+
+      {/* Phase + elapsed */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 16,
+        fontSize: 11,
+        color: C.textMuted,
+      }}>
+        <span>{activePhaseLabel || stateToLabel(state)}</span>
+        <span>{fmtElapsed(elapsedMs)} elapsed</span>
+      </div>
+
+      {/* Section status grid */}
+      {sections && (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 8,
+        }}>
+          {SECTION_DEFS.map(def => {
+            const sec = sections[def.key];
+            if (!sec) return null;
+
+            const secStatus = sec.status || 'pending';
+            const isRunning = secStatus === 'running';
+            const isDone = secStatus === 'complete';
+            const duration = sec.durationMs ? Math.round(sec.durationMs / 1000) : null;
+
+            // Icon styles
+            let iconColor = C.textMuted;
+            let iconBg = 'transparent';
+            let iconBorder = C.border;
+            let animation = 'none';
+
+            if (isDone) {
+              iconColor = '#fff';
+              iconBg = C.accent;
+              iconBorder = C.accent;
+            } else if (isRunning) {
+              iconColor = C.yellow;
+              iconBg = C.yellowBg;
+              iconBorder = C.yellow;
+              animation = 'thes1s-pulse 2s ease-in-out infinite';
+            }
+
+            return (
+              <div key={def.key} style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '4px 0',
+              }}>
+                {/* Status icon */}
+                <div style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  border: '2px solid ' + iconBorder,
+                  background: iconBg,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  animation: animation,
+                }}>
+                  {isDone && (
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                  {isRunning && (
+                    <div style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: C.yellow,
+                    }} />
+                  )}
+                </div>
+
+                {/* Label + duration/agent */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: 12,
+                    color: isDone ? C.text : isRunning ? C.text : C.textMuted,
+                    fontWeight: isRunning ? 600 : 400,
+                  }}>
+                    {def.label}
+                    {isDone && duration != null && (
+                      <span style={{ color: C.textMuted, fontWeight: 400 }}> ({duration}s)</span>
+                    )}
+                  </div>
+                  {isRunning && sec.agent && (
+                    <div style={{ fontSize: 10, color: C.textMuted }}>
+                      {agentDisplayName(sec.agent)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Current agent footer */}
+      {currentAgent && (
+        <div style={{
+          marginTop: 12,
+          paddingTop: 8,
+          borderTop: '1px solid ' + C.borderLight,
+          fontSize: 11,
+          color: C.textMuted,
+        }}>
+          Current: {agentDisplayName(currentAgent)}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- Main Component ---
 
 export default function PitchDeck({ getReport, updateReport }) {
   const { id } = useParams();
   const report = getReport ? getReport(id) : null;
-  const { report: pitchDeckData, progress, loading, error } = usePitchDeck(report?.ticker);
+  const { report: pitchDeckData, progress, generationStatus, loading, error } = usePitchDeck(report?.ticker);
   const [activeSection, setActiveSection] = useState(null);
   const observerRef = useRef(null);
 
@@ -552,6 +785,14 @@ export default function PitchDeck({ getReport, updateReport }) {
             {stateToLabel(progress.state)}
           </div>
         </div>
+      )}
+
+      {/* Generation Status Panel */}
+      {generationStatus && (
+        <GenerationStatusPanel
+          generationStatus={generationStatus}
+          ticker={pitchDeckData?.ticker || report?.ticker}
+        />
       )}
 
       {/* C. Two-Column Layout */}
