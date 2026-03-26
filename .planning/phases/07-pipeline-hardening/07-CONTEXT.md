@@ -1,177 +1,142 @@
----
-phase: 07
-name: pipeline-hardening
-status: preliminary
-source: COST Pitch Deck generation debrief (2026-03-25)
-created: 2026-03-25
----
+# Phase 7: Pipeline Hardening - Context
 
-# Phase 7: Pipeline Hardening — CONTEXT.md (Preliminary)
+**Gathered:** 2026-03-25
+**Status:** Ready for planning
 
-## Origin
+<domain>
+## Phase Boundary
 
-This phase addresses ALL 42 engineering issues identified during the first production run of `/generate:pitch-deck` on COST (Costco Wholesale) on 2026-03-25.
+Phase 7 makes the Pitch Deck generation pipeline production-grade. All 42 engineering issues from the COST debrief (2026-03-25) must be resolved — no shortcuts. Split into 5 sub-phases: 7A (DataPacket Node.js fixes), 7B (filing tools + PSR optimization), 7C (CC orchestration automation), 7D (quality enforcement), 7E (PM experience).
 
-**Source documents:**
-- `.thes1s/reports/COST/pitch-deck-generation-debrief.md` — 12-question engineering debrief with root causes and recommendations
-- `.thes1s/reports/COST/pitch-deck.md` — The generated report (used as quality baseline)
+**Key constraint:** We are optimizing the CC subagent pipeline (free with CC subscription), NOT building the Claude API pipeline yet. `aiResearch.js` (direct API calls for the Tauri production app) is deferred to a future phase. Agent prompts are identical either way — they carry over directly when we switch.
 
-**Guiding principle:** Quality over everything. All 42 issues must be addressed — no shortcuts, no deferrals within this phase.
+</domain>
 
----
+<decisions>
+## Implementation Decisions
 
-## Proposed Sub-phases
+### Node.js Engine Strategy
+- **D-01:** Extend `nodeAdapter.js` to handle ALL browser-only APIs. Engines stay untouched — the adapter does the heavy lifting. Shims needed: IndexedDB → file cache, Vite middleware endpoints → direct HTTPS fetch, DOMParser (already done). This makes the DataPacket 90%+ populated in Node.js.
 
-| Sub-phase | Name | Issues | What it builds |
-|-----------|------|--------|----------------|
-| **7A** | Node.js DataPacket | #1-12 | Full DataPacket population outside browser |
-| **7B** | Filing Tools + PSR | #13-15 | `readFilingSection` tool for token-efficient filing access |
-| **7C** | Orchestration Engine | #16-24 | `aiResearch.js` — code-driven pipeline replacing manual CC orchestration |
-| **7D** | Quality Enforcement | #25-33, #40-41 | Web search + citation enforcement, timing, quality audit |
-| **7E** | PM Experience | #34-39, #42 | Live progress UI, checkpoint modals, FGR confirmation |
+### Orchestration Approach
+- **D-02:** Fix and automate the CC subagent pipeline. Patch file permissions, add retry logic, automate orchestration within CC. `aiResearch.js` (direct Claude API mode) deferred to a future phase once quality is proven. Agent prompts carry over directly.
+- **D-03:** Agent I/O stays file-based (CC subagent pattern). Fix file write permission issues — pre-authorize write paths or use Bash writes as fallback. Agents write section JSON to `.thes1s/reports/{TICKER}/sections/`.
 
-**Execution order matters:** 7A-7B fix data foundation -> 7C automates orchestration -> 7D enforces quality -> 7E makes it visible to the PM.
+### Filing Access
+- **D-04:** Pre-process filings. Orchestrator converts filings to markdown via `filingMarkdown.js` BEFORE dispatching PSR agents. Agents receive clean markdown sections in their prompt — not raw HTML. Simpler, predictable token usage, no mid-generation EDGAR API calls. Requires making `filingMarkdown.js` work in Node.js (via D-01 nodeAdapter extension).
 
----
+### Data Gaps
+- **D-05:** Fix the DataPacket, not workarounds. The nodeAdapter extension (D-01) makes the DataPacket 90%+ populated. No separate "data gap resolution" mechanism needed. Agents still web search per curriculum — that's research quality, not missing data.
 
-## Full Issue Catalog (42 issues, 9 work streams)
+### Web Search Enforcement
+- **D-06:** Both self-report AND audit. Each agent prompt includes a "Required Searches" checklist. Agent must include a `searchesPerformed` array in its JSON output listing every search executed. Post-generation, `critic.js` cross-checks citations against curriculum-mandated searches. If an agent claims it searched but has no web citations, that's flagged. Double verification — belt and suspenders.
 
-### Work Stream 1: DataPacket / Node.js Compatibility (Debrief Q2) -> Sub-phase 7A
+### PM Progress Visibility
+- **D-07:** Dual progress views (eventual). For Phase 7 specifically: build the generation status panel (progress bar + section status cards reading `generation-status.json`). The live orchestration log ("stroll through the office" — watching agents work in real-time) comes with `aiResearch.js` in a future phase. In CC mode, the CC terminal already IS the live view.
+  - **Status panel shows:** which sections are done/generating/pending, per-section timing, overall progress bar, current phase (1/2/3)
+  - **Orchestration log (future):** live feed showing agent dispatch, data flow, synthesis — transparent about what Thes1s is doing
 
-The DataPacket is ~40% populated when run in Node.js. The engines were designed for the browser with Vite middleware proxying. The `nodeAdapter.js` patches some things but doesn't handle DOMParser, indexedDB, or the Vite middleware endpoints.
+### Verification
+- **D-08:** SFM (Sprouts Farmers Market) for the verification run. Similar enough to COST (grocery/retail) to compare quality, different enough to test generalization. User has pre-course research to benchmark against.
 
-| # | Issue | Current State | Fix |
-|---|-------|--------------|-----|
-| 1 | `filings` field undefined | `dataExport.js` doesn't assemble filing accession numbers | Add filings assembler: EDGAR submissions API -> accession numbers + dates + form types |
-| 2 | `transcripts` count: 0 | Finnhub list gated behind premium; AV is fallback-only | Fix transcript pipeline so AV works standalone (currently gated behind Finnhub for list) |
-| 3 | `prices` failed | `indexedDB is not defined` — browser-only API | Node.js-compatible price fetch (direct Yahoo Finance) |
-| 4 | `insiders` failed | `DOMParser is not defined` — browser-only API | Node.js-compatible insider fetch (direct EDGAR) |
-| 5 | `compensation` failed | `DOMParser is not defined` — browser-only API | Node.js-compatible compensation fetch (direct EDGAR) |
-| 6 | `peers` empty array | SIC peer discovery uses Vite dev middleware | Direct EDGAR SIC browse (engine exists, needs Vite middleware bypass) |
-| 7 | `peerMetrics` empty | Cascading failure from peers | Resolves when #6 is fixed |
-| 8 | `analystEstimates` null | Depends on Vite middleware (Finviz scraper) | Node.js-compatible Finviz fetch |
-| 9 | `currentPrice` null | Depends on prices engine (indexedDB) | Simple Yahoo Finance quote call |
-| 10 | `events` likely failed | Browser APIs | Node.js-compatible events fetch |
-| 11 | Balance sheet fields undefined | `total_assets`, `total_equity`, `cash_and_equivalents`, `shares_diluted` all undefined despite income working | Investigate taxonomy gap for COST specifically; may be extraction issue |
-| 12 | EPS diluted undefined | Not in DataPacket | Ensure EPS flows through dataExport.js |
+### Claude's Discretion
+- CC skill internal refactoring approach (how `/generate:pitch-deck` is updated to implement these fixes)
+- Exact `generation-status.json` schema
+- How `searchesPerformed` array is structured
+- nodeAdapter.js implementation details (which APIs to shim, caching strategy)
+- `filingMarkdown.js` Node.js bridge implementation
+- Timing/metrics data structure within section JSON
+- Error handling and retry patterns within CC orchestration
+- Status panel component structure and polling interval
 
-**Key files:** `src/engines/dataExport.js`, `src/engines/nodeAdapter.js`, all engine files that depend on browser APIs
+</decisions>
 
-### Work Stream 2: PSR Filing Access (Debrief Q4) -> Sub-phase 7B
+<canonical_refs>
+## Canonical References
 
-PSR agents currently fetch raw HTML from EDGAR via curl. The app has `filingMarkdown.js` which converts SEC filings to clean markdown — this was never used by agents.
+**Downstream agents MUST read these before planning or implementing.**
 
-| # | Issue | Current State | Fix |
-|---|-------|--------------|-----|
-| 13 | PSR agents fetch raw HTML via curl | 100-200K+ tokens per 10-K filing | Build `readFilingSection` tool |
-| 14 | No markdown conversion for agents | Agents parse raw HTML with formatting noise | Use existing `filingMarkdown.js` converter |
-| 15 | No section extraction | Agents read entire filings | Tool takes accession number + section name, returns just that section as markdown |
+### Source of Truth — COST Debrief
+- `.thes1s/reports/COST/pitch-deck-generation-debrief.md` — 12-question engineering debrief. All 42 issues traced here. THE requirements document for Phase 7.
+- `.thes1s/reports/COST/pitch-deck.md` — The generated COST report. Quality baseline for comparison.
 
-**Key files:** `src/engines/filingMarkdown.js` (existing converter), agent configs in `agents/*/config.json` (tool definitions)
+### Architecture
+- `gstack/plans/gstack-ai-agent-workflow-plan-20260323.md` — Authoritative architecture plan
+- `agents/orchestrator/dispatch-table.json` — Pitch Deck dispatch: phases, agents, checkpoints
+- `agents/orchestrator/config.json` — Section-to-agent mapping
 
-### Work Stream 3: Agent Communication & Data Flow (Debrief Q3, Q5) -> Sub-phase 7C
+### Phase 5-6 Foundations (Code to Modify/Extend)
+- `src/engines/nodeAdapter.js` — Browser-to-Node shim (D-01 extends this)
+- `src/engines/dataExport.js` — DataPacket assembler (consumers of nodeAdapter)
+- `src/engines/filingMarkdown.js` — HTML-to-markdown converter (needs Node.js bridge via D-04)
+- `src/engines/toolbox.js` — 23 tool definitions, `readFilingSection` + `getTranscriptExcerpt` stubs
+- `src/engines/critic.js` — Quality validation (extend for D-06 search audit)
+- `src/engines/progressState.js` — State machine + crash recovery
+- `src/schemas/reportSection.js` — ReportSectionSchema (Zod)
+- `src/schemas/dataPacket.js` — DataPacketSchema + sliceDataPacket()
 
-No agent-to-agent communication exists. No data regen pathway was triggered. Context threading was done manually by the orchestrator.
+### CC Skills (To Be Updated)
+- `.claude/skills/generate-pitch-deck/SKILL.md` — Main pipeline skill (972 lines)
+- `.claude/skills/generate-section/SKILL.md` — Single section re-run skill
+- `.claude/skills/generate-one-pager/SKILL.md` — One Pager pipeline (reference)
 
-| # | Issue | Current State | Fix |
-|---|-------|--------------|-----|
-| 16 | No agent mechanism to request additional data | Agents adapt or use WebSearch to fill gaps | Build `requestData` tool — orchestrator catches requests, runs targeted fetches, re-injects |
-| 17 | No mid-phase data enrichment protocol | Orchestrator doesn't support data regen loop | Design data gap resolution loop in aiResearch.js |
-| 18 | Zero direct agent-to-agent communication | All context threading manual | Agents read prior section files from disk directly |
-| 19 | Manual context threading by orchestrator | Orchestrator builds downstream prompts with summaries | Code-driven context assembly in aiResearch.js |
-| 20 | Agents receive summaries instead of full prior sections | Downstream agents get compressed context | Agents read full prior section JSON files, not summary injections |
+### Agent Prompts (May Need Search Checklist Additions)
+- `agents/*/prompt.md` — All 10 agent prompts (D-06 adds Required Searches checklists)
 
-### Work Stream 4: Orchestration (Debrief Q1) -> Sub-phase 7C
+### UI Components (Status Panel)
+- `src/components/PitchDeck.jsx` — May integrate status panel
+- `src/hooks/usePitchDeck.js` — May extend for progress polling
 
-~30% of wall clock time was engineering overhead: manual prompt building, config reading, DataPacket slicing, file extraction from killed agents.
+### User Pre-Course Research (Verification Benchmark)
+- `knowledge/pre-course-examples/` — SFM research for D-08 verification comparison
 
-| # | Issue | Current State | Fix |
-|---|-------|--------------|-----|
-| 21 | Orchestration overhead | Manual prompt building, config reading, DataPacket prep | Code-driven orchestration in `aiResearch.js` |
-| 22 | Sequential CC orchestration | CC can only dispatch and wait serially | `aiResearch.js` dispatches parallel Claude API calls, monitors, retries |
-| 23 | Agent file write permissions | Write tool denied; JSON extracted from agent transcripts | Pre-authorize write paths OR agents return JSON in response text |
-| 24 | Fragile extraction from killed/hung agents | Agents completed analysis but output lost | Structured response format; retry logic; partial result recovery |
+</canonical_refs>
 
-**Key file:** `src/engines/aiResearch.js` (planned but not built)
+<code_context>
+## Existing Code Insights
 
-### Work Stream 5: Web Search Quality (Debrief Q10, Q12) -> Sub-phase 7D
+### Reusable Assets
+- `nodeAdapter.js` — Already shims DOMParser via linkedom, proxy URL rewriting, file-based cache. Foundation for D-01.
+- `filingMarkdown.js` — Complete HTML-to-markdown converter with EDGAR table handling. Just needs Node.js bridge.
+- `toolbox.js` — 21 working tools + 2 stubs. `readFilingSection` and `getTranscriptExcerpt` need implementation.
+- `critic.js` — 6 quality checks already implemented. Extend for web search audit (D-06).
+- `progressState.js` — Full state machine with crash recovery + section/quality/budget file I/O.
 
-Phase 1 agents did zero web research due to rate limits. No mechanism to verify agents execute curriculum-mandated searches.
+### Established Patterns
+- `safeCall()` in dataExport.js wraps engine calls in try/catch with error accumulation
+- `IS_NODE` detection flag in nodeAdapter.js for environment branching
+- `PROXY_MAP` in nodeAdapter.js maps Vite proxy routes to real endpoints
+- File-based cache in `.thes1s/cache/` with TTL support (nodeAdapter.js)
 
-| # | Issue | Current State | Fix |
-|---|-------|--------------|-----|
-| 25 | Phase 1 agents did zero web research | Rate limits prevented execution; manually regenerated without web search | Retry logic + rate limit handling in orchestrator |
-| 26 | Inconsistent web searching across agents | Some agents searched extensively, others not at all | Enforce mandated search lists per agent |
-| 27 | No verification mechanism for mandated searches | Agent prompts say "MUST perform" but no enforcement | Post-generation audit comparing manifest vs actual |
-| 28 | Need search manifest | Curriculum search examples not machine-readable | Extract mandated searches from agent prompts into structured manifest |
-| 29 | Need search logging | No record of what agents actually searched | Log each WebSearch call: agent, section, query, timestamp, resultCount |
-| 30 | Need post-generation audit | No comparison of mandated vs actual searches | Audit tool reads manifest + log, flags gaps in quality report |
+### Integration Points
+- `generation-status.json` — New file written by CC skill, read by status panel component
+- `searchesPerformed` — New field in ReportSectionSchema output
+- nodeAdapter extensions → consumed by all engines that currently fail in Node.js
+- `filingMarkdown.js` Node bridge → consumed by CC skill pre-processing step
 
-### Work Stream 6: Citation Quality (Debrief Q11) -> Sub-phase 7D
+</code_context>
 
-105 total citations across 10 sections. Web citations concentrated in only 3 agents. Business fundamentals sections light on web citations.
+<specifics>
+## Specific Ideas
 
-| # | Issue | Current State | Fix |
-|---|-------|--------------|-----|
-| 31 | Web citations concentrated in 3 of 9 agents | Management, risk, valuation agents searched; others didn't | Enforce minimum web citations per section |
-| 32 | S1-S4 light on web citations | Business fundamentals sections lack independent web evidence | Minimum citation mix: at least 2 DataPacket + 2 filing + 2 web per section |
-| 33 | No citation mix enforcement | Quality check doesn't validate citation diversity | Add citation mix check to critic.js / quality system |
+- **"Stroll through the office"** — The PM described wanting a live orchestration log that shows agents working in real-time, like a PM walking through the office checking on analysts. This is the eventual vision for the in-app orchestration view (deferred to `aiResearch.js` phase). For now in CC, the terminal IS this view.
+- **Transparency as a feature** — "It shows that Thes1s is transparent about what it's doing, and it shows the true power of Thes1s at the same time." The status panel and future orchestration log are not just progress indicators — they're product differentiators.
+- **Quality over everything** — All 42 issues must be addressed. No shortcuts. No deferrals within this phase.
+- **SFM verification** — User has pre-course research on SFM to benchmark against. Compare depth, rigor, and coverage.
 
-### Work Stream 7: Timing & Metrics (Debrief Q9) -> Sub-phase 7D
+</specifics>
 
-No timing data captured during generation.
+<deferred>
+## Deferred Ideas
 
-| # | Issue | Current State | Fix |
-|---|-------|--------------|-----|
-| 40 | No per-section timing | No startedAt/completedAt on sections | Add timestamps to section JSON output; orchestrator records dispatch/completion times |
-| 41 | No overall generation timing | Report has `generatedAt` but no duration | Add `generationStartedAt` + `totalDurationMs` to report-level JSON |
+- **aiResearch.js (Claude API direct)** — Full in-app orchestration engine. Deferred per D-02 until CC pipeline quality is proven and agent prompts are stable. Agent prompts carry over directly.
+- **Live orchestration log component** — Real-time feed showing agent dispatch/synthesis/data flow. Requires aiResearch.js. Deferred to that phase.
+- **requestData agent tool** — Real-time callback for agents to request additional data mid-generation. Not needed if DataPacket is 90%+ populated (D-05). Revisit if gaps persist after nodeAdapter extension.
+- **A/B test reverse-chronological PSR reading order** — Noted in Phase 6 D-09. Revisit once pipeline is stable.
 
-### Work Stream 8: PM Progress Visibility (Debrief Q8) -> Sub-phase 7E
-
-PM sees nothing during generation until orchestrator prints a checkpoint summary.
-
-| # | Issue | Current State | Fix |
-|---|-------|--------------|-----|
-| 34 | PM blind during generation | No visibility until checkpoint | Live report viewer polling section files as they appear |
-| 35 | Need live report viewer | Sections are JSON on disk, not visible in app | New component (or extend PitchDeck.jsx) that renders sections progressively |
-| 36 | Need section status indicators | No visual state per section | Cards with pending -> generating -> complete states |
-| 37 | Need checkpoint modals | Checkpoints are text in terminal | Modal showing verdicts, red flags, cross-cutting findings; blocks until PM approves |
-| 38 | Need progress bar | No overall progress indicator | Simple: "3/10 sections complete | Phase 1 done | Generating Phase 2..." |
-| 39 | Need FGR confirmation UI | FGR inputs confirmed in terminal text | Dedicated panel with 5 editable inputs; PM adjusts and confirms |
-
-### Work Stream 9: VS Code / Runtime (Debrief Q7) -> Sub-phase 7E
-
-| # | Issue | Current State | Fix |
-|---|-------|--------------|-----|
-| 42 | "Not Responding" in VS Code during heavy I/O | UI thread freezes when agents do heavy work | Resolves naturally when pipeline moves to aiResearch.js (in-app orchestration) |
+</deferred>
 
 ---
 
-## Decisions to Lock in `/gsd:discuss-phase 7`
-
-These are the gray areas that need user input before planning:
-
-1. **Node.js adapter strategy** — Duplicate engines for Node.js? Or make existing engines environment-aware (detect browser vs Node.js)?
-2. **`aiResearch.js` architecture** — Single orchestrator function? Event-driven? How does it integrate with the Claude API SDK already in the project?
-3. **Agent output format** — Agents return JSON in response text vs write to disk? Hybrid?
-4. **`readFilingSection` tool** — CC tool (agents call it)? Or pre-processing step (orchestrator converts before dispatch)?
-5. **`requestData` tool** — Real-time tool call during generation? Or a structured "needs" field in agent output that triggers a second pass?
-6. **Search manifest format** — Static JSON per agent? Extracted from prompt.md at build time? Runtime extraction?
-7. **Live progress architecture** — File polling? localStorage events? Something else that fits the desktop-first, no-server model?
-8. **Quality report format** — Extend existing critic.js? New quality system? What does the PM see?
-9. **Verification test** — Which ticker for the second production run? (Not COST, not LULU)
-
----
-
-## Verification Criteria
-
-Phase 7 is verified when:
-1. A second Pitch Deck generation (different ticker) completes with all 42 issues resolved
-2. DataPacket is 90%+ populated (vs ~40% on COST run)
-3. PSR agents read clean markdown, not raw HTML
-4. All agents perform mandated web searches (manifest audit passes)
-5. Every section has minimum citation mix (2 DataPacket + 2 filing + 2 web)
-6. PM can see live progress during generation
-7. Per-section and overall timing captured in report JSON
-8. No manual orchestration steps — `aiResearch.js` handles the full pipeline
-9. Wall clock time reduced by 30%+ vs COST baseline (~60-75 min -> target ~40-50 min)
+*Phase: 07-pipeline-hardening*
+*Context gathered: 2026-03-25*
