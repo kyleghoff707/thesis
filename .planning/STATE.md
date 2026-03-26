@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-03-25T23:46:27.898Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-03-26T00:11:37.236Z"
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -47,6 +47,7 @@ Plan: 2 of 2
 
 *Updated after each plan completion*
 | Phase 01 P01 | 9min | 2 tasks | 7 files |
+| Phase 01-comparison-harness P02 | 21min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -63,6 +64,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Used fiscalYearEnd metadata as primary FY resolver with revenue-matching validation (not brute-force-first)
 - [Phase 01]: Injectable specialHandlers pattern for comparator extensibility in Phase 2 multi-source comparison
 - [Phase 01]: field-mapping.json has 101 mapped fields (not 87 as stale metadata claims) -- tests use actual count
+- [Phase 01-comparison-harness]: Harness accuracy 91.2% established as baseline — the 8.8% gap is what Phases 2-3 will close, not a harness methodology error
+- [Phase 01-comparison-harness]: JSON report structure (companies array + topFailurePatterns) designed for Phase 2 regression diffing
+- [Phase 01-comparison-harness]: Accuracy denominator excludes missing fields — accuracy = match/(match+close+diff) consistent with Vitest suite
 
 ### Pending Todos
 
@@ -76,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T23:46:27.895Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-03-26T00:11:37.233Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
