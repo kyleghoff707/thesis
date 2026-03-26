@@ -50,7 +50,7 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md — Data collectors: field-mapping extension, shared disk cache, FMP/SimFin/mstarpy collectors + Python pre-fetch
 - [x] 02-02-PLAN.md — Consensus engine + root cause auto-tagger (TDD)
-- [ ] 02-03-PLAN.md — Triangulation orchestrator + reporter with regression diffing + pipeline verification
+- [x] 02-03-PLAN.md — Triangulation orchestrator + reporter with regression diffing + pipeline verification
 
 ### Phase 3: Engine Fixes
 **Goal**: The normalization engine reaches 98%+ accuracy on the 50-company Morningstar truth set, with every fix verified against the full truth set before merging
