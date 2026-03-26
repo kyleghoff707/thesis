@@ -64,9 +64,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Field alias map in triangulation pipeline + pre-fix baseline snapshots
-- [ ] 03-02-PLAN.md — REIT/tag coverage + PP&E derivation + debt tags + financial overlay fixes
-- [ ] 03-03-PLAN.md — FY offset investigation + residual "Other" gate + final Phase 3 validation
+- [ ] 03-01-PLAN.md — Field alias map (16 naming mismatches) + pre-fix baseline snapshots for regression tracking
+- [ ] 03-02-PLAN.md — REIT overlay fixes (revenue/COGS/interest/D&A) + short-term debt summation + bank null handling + PP&E reclassification
+- [ ] 03-03-PLAN.md — Residual "Other" computation with 95% precondition gate + FY offset investigation + final validation
 
 ### Phase 4: Scale Validation
 **Goal**: Engine accuracy confirmed at 98%+ across all US-listed equities and paid data source subscriptions are cancelled
