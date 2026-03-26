@@ -5,6 +5,17 @@
 
 let yf = null;
 
+// Timeout wrapper to prevent yahoo-finance2 from hanging indefinitely
+const YAHOO_TIMEOUT_MS = 30000; // 30 seconds
+function withTimeout(promise, ms = YAHOO_TIMEOUT_MS) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`Yahoo Finance timeout after ${ms}ms`)), ms)
+    ),
+  ]);
+}
+
 async function getYF() {
   if (!yf) {
     const mod = await import('yahoo-finance2');
@@ -33,7 +44,7 @@ const DEFAULT_MODULES = [
 export async function yahooSummary(ticker, modules) {
   const client = await getYF();
   const mods = modules && modules.length > 0 ? modules : DEFAULT_MODULES;
-  return client.quoteSummary(ticker, { modules: mods });
+  return withTimeout(client.quoteSummary(ticker, { modules: mods }));
 }
 
 /**
@@ -53,7 +64,7 @@ export async function yahooQuotes(tickerString) {
   for (let i = 0; i < tickers.length; i += 50) {
     const batch = tickers.slice(i, i + 50);
     try {
-      const quotes = await client.quote(batch);
+      const quotes = await withTimeout(client.quote(batch));
       const arr = Array.isArray(quotes) ? quotes : [quotes];
       for (const q of arr) {
         if (q && q.symbol) {

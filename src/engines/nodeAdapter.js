@@ -183,28 +183,47 @@ if (IS_NODE) {
     }
   };
 
-  // 2. Fake indexedDB to prevent cacheStore.js crash on import
+  // 2. Fake IndexedDB globals to prevent idb package crashes
+  // The idb package references IDBRequest, IDBDatabase, IDBObjectStore,
+  // IDBIndex, IDBCursor, IDBTransaction as globals. Define minimal stubs.
   // cacheStore.js checks `typeof indexedDB !== 'undefined'` (HAS_IDB).
-  // The idb package calls indexedDB.open() — provide a minimal stub that
-  // returns an IDBOpenDBRequest-like object. The onerror handler fires
-  // asynchronously, causing openDB to reject, which cacheStore.js handles.
+  // The idb openDB wraps indexedDB.open() result with promisifyRequest.
+  const FakeIDBClass = class {};
+  for (const name of [
+    'IDBRequest', 'IDBOpenDBRequest', 'IDBDatabase', 'IDBObjectStore',
+    'IDBIndex', 'IDBCursor', 'IDBTransaction', 'IDBKeyRange',
+  ]) {
+    if (typeof globalThis[name] === 'undefined') {
+      globalThis[name] = FakeIDBClass;
+    }
+  }
   if (typeof globalThis.indexedDB === 'undefined') {
     globalThis.indexedDB = {
       open() {
-        const req = {
+        const listeners = {};
+        const req = Object.create(FakeIDBClass.prototype);
+        Object.assign(req, {
           result: null,
           error: new Error('IndexedDB not available in Node.js'),
+          readyState: 'done',
           onerror: null,
           onsuccess: null,
           onupgradeneeded: null,
           addEventListener(evt, fn) {
-            if (evt === 'error') this.onerror = fn;
-            else if (evt === 'success') this.onsuccess = fn;
+            if (!listeners[evt]) listeners[evt] = [];
+            listeners[evt].push(fn);
           },
-          removeEventListener() {},
-        };
-        // Fire error asynchronously to match real IDB behavior
+          removeEventListener(evt, fn) {
+            if (listeners[evt]) {
+              listeners[evt] = listeners[evt].filter(f => f !== fn);
+            }
+          },
+          dispatchEvent() { return true; },
+        });
+        // Fire error asynchronously — idb's promisifyRequest listens via addEventListener('error', ...)
         setTimeout(() => {
+          const errorHandlers = listeners['error'] || [];
+          for (const fn of errorHandlers) fn();
           if (req.onerror) req.onerror({ target: req });
         }, 0);
         return req;
