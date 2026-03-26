@@ -112,6 +112,10 @@ Recent decisions affecting current work:
 - [Phase 06D]: CMD-03 (/fgr standalone) confirmed DEFERRED per D-16 -- FGR derivation only meaningful within Pitch Deck context
 - [Phase 06D]: PTCH-16 (LULU parity) requires separate user-driven /generate:pitch-deck session -- structural verification complete, quality verification pending PM
 
+### Roadmap Evolution
+
+- Phase 06.1 inserted after Phase 06: Pipeline Hardening (URGENT) — fixes all 42 engineering issues from COST Pitch Deck debrief before proceeding to Full Story
+
 ### Pending Todos
 
 None yet.
@@ -126,4 +130,4 @@ None yet.
 
 Last session: 2026-03-26T00:36:41.882Z
 Stopped at: Phase 07 context gathered
-Resume file: .planning/phases/07-pipeline-hardening/07-CONTEXT.md
+Resume file: .planning/phases/06.1-pipeline-hardening/06.1-CONTEXT.md

@@ -126,6 +126,16 @@ Plans:
 - [x] 06D-01-PLAN.md — DeepDivePanel + IndustryCard + AssumptionTracker delight features
 - [ ] 06D-02-PLAN.md — LULU parity verification (generation run + PM comparison)
 
+### Phase 06.1: Pipeline Hardening (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 6
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 06.1 to break down)
+
 ### Phase 7: Full Story & Debate
 **Goal**: Users can generate the deepest analysis stage with Bull/Bear/Judge adversarial debate, scored checklists (43 items), and Management Promise Tracker -- achieving full parity with the LULU Full Story benchmark
 **Depends on**: Phase 6 (Full Story inherits all Pitch Deck findings and agent maturity)
