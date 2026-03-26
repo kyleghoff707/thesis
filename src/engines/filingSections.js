@@ -8,6 +8,23 @@
 
 // ─── Section Header Patterns ────────────────────────────────────
 
+// 10-K focused map: 4 sections the pipeline uses for annual filings
+export const SECTION_MAP_10K = {
+  'Business': /^(?:#{1,3}\s*)?Item\s*1[.:\s]\s*Business/im,
+  'Risk Factors': /^(?:#{1,3}\s*)?Item\s*1A[.:\s]\s*Risk\s*Factors/im,
+  'MD&A': /^(?:#{1,3}\s*)?Item\s*7[.:\s]\s*Management[''\u2019]?s?\s*Discussion/im,
+  'Financial Statements': /^(?:#{1,3}\s*)?Item\s*8[.:\s]\s*Financial\s*Statements/im,
+};
+
+// 10-Q focused map: 3 sections with 10-Q item numbers
+// Item 1 = Financial Statements (not Business), Item 2 = MD&A (not Properties)
+export const SECTION_MAP_10Q = {
+  'Financial Statements': /^(?:#{1,3}\s*)?Item\s*1[.:\s]\s*Financial\s*Statements/im,
+  'MD&A': /^(?:#{1,3}\s*)?Item\s*2[.:\s]\s*Management[''\u2019]?s?\s*Discussion/im,
+  'Risk Factors': /^(?:#{1,3}\s*)?Item\s*1A[.:\s]\s*Risk\s*Factors/im,
+};
+
+// Backward-compatible full map — includes all legacy sections (10-K items)
 export const SECTION_MAP = {
   'Business': /^(?:#{1,3}\s*)?Item\s*1[.:\s]\s*Business/im,
   'Risk Factors': /^(?:#{1,3}\s*)?Item\s*1A[.:\s]\s*Risk\s*Factors/im,
@@ -30,15 +47,16 @@ export const SECTION_MAP = {
  *
  * @param {string} markdown - Full filing markdown text
  * @param {string} sectionName - Section to extract (e.g., 'Risk Factors', 'MD&A')
+ * @param {Object} [sectionMap=SECTION_MAP] - Section map to use for lookup
  * @returns {string|null} Section text, or null if not found / too short
  */
-export function extractSection(markdown, sectionName) {
+export function extractSection(markdown, sectionName, sectionMap = SECTION_MAP) {
   if (!markdown || !sectionName) return null;
 
-  // Find the matching regex — check SECTION_MAP first (case-insensitive key lookup)
+  // Find the matching regex — check sectionMap first (case-insensitive key lookup)
   let pattern = null;
   const lowerName = sectionName.toLowerCase();
-  for (const [key, regex] of Object.entries(SECTION_MAP)) {
+  for (const [key, regex] of Object.entries(sectionMap)) {
     if (key.toLowerCase() === lowerName) {
       pattern = regex;
       break;
@@ -95,17 +113,19 @@ export function extractSection(markdown, sectionName) {
 
 /**
  * Extract all known sections from SEC filing markdown.
- * Iterates over SECTION_MAP, extracts each section, omits nulls.
+ * Uses form-specific section map (10-K vs 10-Q) to avoid item number collisions.
  *
  * @param {string} markdown - Full filing markdown text
+ * @param {string} [formType='10-K'] - Filing form type ('10-K' or '10-Q')
  * @returns {Object} Map of section name to content (null values omitted)
  */
-export function extractAllSections(markdown) {
+export function extractAllSections(markdown, formType = '10-K') {
   if (!markdown) return {};
 
+  const map = formType === '10-Q' ? SECTION_MAP_10Q : SECTION_MAP_10K;
   const result = {};
-  for (const key of Object.keys(SECTION_MAP)) {
-    const section = extractSection(markdown, key);
+  for (const key of Object.keys(map)) {
+    const section = extractSection(markdown, key, map);
     if (section != null) {
       result[key] = section;
     }

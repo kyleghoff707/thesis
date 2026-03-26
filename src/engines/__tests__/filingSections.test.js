@@ -2,7 +2,7 @@
 // Tests extractSection and extractAllSections against realistic 10-K markdown
 
 import { describe, it, expect } from 'vitest';
-import { extractSection, extractAllSections, SECTION_MAP } from '../filingSections.js';
+import { extractSection, extractAllSections, SECTION_MAP, SECTION_MAP_10K, SECTION_MAP_10Q } from '../filingSections.js';
 
 // ─── Sample 10-K Markdown ─────────────────────────────────────────
 
@@ -160,11 +160,12 @@ describe('extractAllSections', () => {
   it('extracts multiple sections from a full 10-K markdown', () => {
     const sections = extractAllSections(SAMPLE_10K_MARKDOWN);
     expect(typeof sections).toBe('object');
-    // Should have at least Business, Risk Factors, Properties, MD&A
+    // Default formType='10-K' uses SECTION_MAP_10K with 4 focused keys
     expect(sections['Business']).toBeTruthy();
     expect(sections['Risk Factors']).toBeTruthy();
     expect(sections['MD&A']).toBeTruthy();
-    expect(sections['Controls']).toBeTruthy();
+    // Controls is not in the focused SECTION_MAP_10K (only in legacy SECTION_MAP)
+    expect(sections['Controls']).toBeUndefined();
   });
 
   it('omits sections that are not present in the markdown', () => {
@@ -210,5 +211,146 @@ describe('SECTION_MAP', () => {
     for (const value of Object.values(SECTION_MAP)) {
       expect(value).toBeInstanceOf(RegExp);
     }
+  });
+
+  it('exports SECTION_MAP_10K with 4 keys', () => {
+    const keys = Object.keys(SECTION_MAP_10K);
+    expect(keys.length).toBe(4);
+    expect(keys).toContain('Business');
+    expect(keys).toContain('Risk Factors');
+    expect(keys).toContain('MD&A');
+    expect(keys).toContain('Financial Statements');
+  });
+
+  it('exports SECTION_MAP_10Q with exactly 3 keys', () => {
+    const keys = Object.keys(SECTION_MAP_10Q);
+    expect(keys.length).toBe(3);
+    expect(keys).toContain('Financial Statements');
+    expect(keys).toContain('MD&A');
+    expect(keys).toContain('Risk Factors');
+  });
+
+  it('SECTION_MAP_10K values are all RegExp', () => {
+    for (const value of Object.values(SECTION_MAP_10K)) {
+      expect(value).toBeInstanceOf(RegExp);
+    }
+  });
+
+  it('SECTION_MAP_10Q values are all RegExp', () => {
+    for (const value of Object.values(SECTION_MAP_10Q)) {
+      expect(value).toBeInstanceOf(RegExp);
+    }
+  });
+});
+
+// ─── Sample 10-Q Markdown ─────────────────────────────────────────
+
+const SAMPLE_10Q_MARKDOWN = `# PART I - FINANCIAL INFORMATION
+
+## Item 1. Financial Statements
+
+COSTCO WHOLESALE CORPORATION
+CONDENSED CONSOLIDATED BALANCE SHEETS
+(amounts in millions, except share and per share data)
+(unaudited)
+
+| | November 24, 2024 | September 1, 2024 |
+|---|---|---|
+| ASSETS | | |
+| Current assets | | |
+| Cash and cash equivalents | $10,124 | $9,906 |
+| Short-term investments | $1,231 | $1,227 |
+| Total current assets | $30,281 | $30,158 |
+| Total assets | $70,847 | $69,838 |
+
+Net sales for the first quarter of fiscal 2025 were $62.15 billion, an increase of 7.5% from $57.80 billion in the first quarter of fiscal 2024.
+
+## Item 2. Management's Discussion and Analysis of Financial Condition and Results of Operations
+
+The following discussion should be read in conjunction with the condensed consolidated financial statements and notes included elsewhere in this Quarterly Report on Form 10-Q. The Company's fiscal year ends on the Sunday closest to August 31.
+
+**Overview.** Net sales increased 7.5% to $62.15 billion in the first quarter of fiscal 2025, compared to $57.80 billion in the first quarter of fiscal 2024. The increase was primarily attributable to an increase in comparable sales of 7.1%. Net income was $1.80 billion in the first quarter of fiscal 2025 compared to $1.59 billion in the first quarter of fiscal 2024.
+
+**Comparable Sales.** Comparable sales for the first twelve weeks of fiscal 2025 increased 7.1% compared to the comparable period last year. United States comparable sales increased 6.8%, Canada increased 7.0%, and Other International increased 8.5%.
+
+# PART II - OTHER INFORMATION
+
+## Item 1A. Risk Factors
+
+There have been no material changes to the risk factors disclosed in Part I, Item 1A, Risk Factors, of our Annual Report on Form 10-K for the fiscal year ended September 1, 2024, except as noted below.
+
+**Supply Chain Disruptions.** The Company's operations depend on effective supply chain management. Global supply chain disruptions, including transportation delays, port congestion, and labor shortages, could adversely affect product availability and increase costs. The Company continues to monitor these risks and implement mitigation strategies.
+
+## Item 2. Unregistered Sales of Equity Securities and Use of Proceeds
+
+During the quarter ended November 24, 2024, the Company repurchased 438,000 shares of its common stock at a total cost of approximately $425 million under the stock repurchase program authorized by the Board of Directors.
+
+## Item 6. Exhibits
+
+Exhibits are listed in the Exhibit Index.`;
+
+// ─── SECTION_MAP_10Q Tests ──────────────────────────────────────
+
+describe('SECTION_MAP_10Q', () => {
+  it('Financial Statements regex matches "Item 1. Financial Statements" (10-Q numbering)', () => {
+    expect(SECTION_MAP_10Q['Financial Statements'].test('## Item 1. Financial Statements')).toBe(true);
+  });
+
+  it('MD&A regex matches "Item 2. Management\'s Discussion" (10-Q numbering)', () => {
+    expect(SECTION_MAP_10Q['MD&A'].test('## Item 2. Management\'s Discussion')).toBe(true);
+  });
+
+  it('Risk Factors regex matches "Item 1A. Risk Factors" (same in both forms)', () => {
+    expect(SECTION_MAP_10Q['Risk Factors'].test('## Item 1A. Risk Factors')).toBe(true);
+  });
+
+  it('does NOT have a Business key (Business is 10-K only)', () => {
+    expect(SECTION_MAP_10Q['Business']).toBeUndefined();
+  });
+});
+
+// ─── extractAllSections with formType Tests ─────────────────────
+
+describe('extractAllSections with formType', () => {
+  it('extracts 3 sections from 10-Q markdown with formType="10-Q"', () => {
+    const sections = extractAllSections(SAMPLE_10Q_MARKDOWN, '10-Q');
+    const keys = Object.keys(sections);
+    expect(keys).toContain('Financial Statements');
+    expect(keys).toContain('MD&A');
+    expect(keys).toContain('Risk Factors');
+  });
+
+  it('does NOT return Business section for 10-Q (no Item 1 Business collision)', () => {
+    const sections = extractAllSections(SAMPLE_10Q_MARKDOWN, '10-Q');
+    expect(sections['Business']).toBeUndefined();
+  });
+
+  it('backward compatible: extractAllSections(tenKMarkdown) defaults to 10-K', () => {
+    const sections = extractAllSections(SAMPLE_10K_MARKDOWN);
+    expect(sections['Business']).toBeTruthy();
+    expect(sections['Risk Factors']).toBeTruthy();
+    expect(sections['MD&A']).toBeTruthy();
+  });
+
+  it('extractAllSections(tenKMarkdown, "10-K") returns 4 core sections', () => {
+    const sections = extractAllSections(SAMPLE_10K_MARKDOWN, '10-K');
+    expect(sections['Business']).toBeTruthy();
+    expect(sections['Risk Factors']).toBeTruthy();
+    expect(sections['MD&A']).toBeTruthy();
+    // Financial Statements in our sample may be too short (< 100 chars), check presence
+    expect(Object.keys(sections).length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('extractSection with explicit sectionMap parameter works for 10-Q', () => {
+    const section = extractSection(SAMPLE_10Q_MARKDOWN, 'MD&A', SECTION_MAP_10Q);
+    expect(section).not.toBeNull();
+    expect(section).toContain('Management\'s Discussion');
+    expect(section).toContain('Net sales increased 7.5%');
+  });
+
+  it('extractSection with explicit sectionMap extracts Financial Statements from 10-Q', () => {
+    const section = extractSection(SAMPLE_10Q_MARKDOWN, 'Financial Statements', SECTION_MAP_10Q);
+    expect(section).not.toBeNull();
+    expect(section).toContain('CONDENSED CONSOLIDATED BALANCE SHEETS');
   });
 });
