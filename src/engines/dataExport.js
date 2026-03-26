@@ -20,10 +20,13 @@ import { fetchCompensation } from './compensation.js';
 import { fetchPeersByTier } from './peers.js';
 import { fetchPeerFrameData, computePeerMetrics, computePeerScores } from './peerMetrics.js';
 import { fetchAnalystEstimates } from './analystEstimates.js';
+import { fetchFinvizData } from './finviz.js';
 import { fetchCompanyEvents } from './companyEvents.js';
 import { fetchPrices, latestPrice } from './prices.js';
 import { fetchBatchQuotes } from './batchQuotes.js';
 import { fetchTranscriptList } from './transcripts.js';
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // ─── DataPacket Assembly ────────────────────────────────────────
 
@@ -42,22 +45,15 @@ import { fetchTranscriptList } from './transcripts.js';
 export async function assembleDataPacket(ticker) {
   const errors = [];
 
-  // ── Step 1: Core financial data (sequential — others depend on this) ──
+  // ── Step 1: Core financial data (parallel — companyInfo only needs ticker, not statements) ──
 
-  let statements = null;
-  let companyInfo = null;
+  const [statementsResult, companyInfoResult] = await Promise.allSettled([
+    fetchEdgarStatements(ticker).catch(err => { errors.push(`edgarFinancials: ${err.message}`); return null; }),
+    fetchCompanyInfo(ticker).catch(err => { errors.push(`companyInfo: ${err.message}`); return null; }),
+  ]);
 
-  try {
-    statements = await fetchEdgarStatements(ticker);
-  } catch (err) {
-    errors.push(`edgarFinancials: ${err.message}`);
-  }
-
-  try {
-    companyInfo = await fetchCompanyInfo(ticker);
-  } catch (err) {
-    errors.push(`companyInfo: ${err.message}`);
-  }
+  const statements = statementsResult.status === 'fulfilled' ? statementsResult.value : null;
+  let companyInfo = companyInfoResult.status === 'fulfilled' ? companyInfoResult.value : null;
 
   // Classification from EDGAR SIC code + Thes1s taxonomy
   const sicCode = companyInfo?.sic || statements?.industryType || '';
@@ -108,10 +104,10 @@ export async function assembleDataPacket(ticker) {
     safeCall(() => fetchInsidersForTicker(ticker), 'insiders', errors),
     safeCall(() => fetchCompensation(ticker), 'compensation', errors),
     safeCall(() => fetchPeersByTier('industry', classification), 'peers', errors),
-    safeCall(() => fetchAnalystEstimates(ticker), 'analystEstimates', errors),
-    safeCall(() => fetchCompanyEvents(ticker), 'events', errors),
-    safeCall(() => fetchPrices(ticker, '10y'), 'prices', errors),
-    safeCall(() => fetchTranscriptList(ticker), 'transcripts', errors),
+    safeCall(() => fetchAnalystEstimates(ticker), 'analystEstimates', errors, { retry: true }),
+    safeCall(() => fetchCompanyEvents(ticker), 'events', errors, { retry: true }),
+    safeCall(() => fetchPrices(ticker, '10y'), 'prices', errors, { retry: true }),
+    safeCall(() => fetchTranscriptList(ticker), 'transcripts', errors, { retry: true }),
     safeCall(() => fetchFilingList(ticker), 'filings', errors),
   ]);
 
@@ -171,6 +167,27 @@ export async function assembleDataPacket(ticker) {
       }
     } catch (e) {
       errors.push(`yahooEnrichment: ${e.message}`);
+    }
+  }
+
+  // Finviz fallback for analystEstimates (per D-08)
+  if (!analystEstimates) {
+    try {
+      const finviz = await fetchFinvizData(ticker);
+      if (finviz?.epsNext5Y != null) {
+        analystEstimates = {
+          earningsTrend: null,
+          financialData: null,
+          recommendationTrend: null,
+          growthRate: finviz.epsNext5Y,
+          priceTargets: finviz.targetPrice ? { mean: finviz.targetPrice } : null,
+          recommendation: finviz.recom ? { score: finviz.recom } : null,
+          _source: 'finviz-fallback',
+          _fetchedAt: Date.now(),
+        };
+      }
+    } catch (e) {
+      errors.push(`analystEstimates-finviz-fallback: ${e.message}`);
     }
   }
 
@@ -310,10 +327,20 @@ export async function assembleDataPacket(ticker) {
 
 // ─── Helper: Safe engine call ───────────────────────────────────
 
-async function safeCall(fn, label, errors) {
+async function safeCall(fn, label, errors, { retry = false, backoffMs = 5000 } = {}) {
   try {
     return await fn();
   } catch (err) {
+    if (retry) {
+      // Retry once after backoff (per D-09)
+      await sleep(backoffMs);
+      try {
+        return await fn();
+      } catch (retryErr) {
+        errors.push(`${label}: ${retryErr.message} (after retry)`);
+        return null;
+      }
+    }
     errors.push(`${label}: ${err.message}`);
     return null;
   }
@@ -426,3 +453,6 @@ export function buildCaveats(classification) {
 
   return caveats;
 }
+
+// Test-only exports (matches codebase convention — see companyAdapter.js, edgarFinancials.js)
+export const _testExports = { safeCall };

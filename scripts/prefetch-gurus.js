@@ -7,7 +7,7 @@
 // Also re-runs assemble-data.js to pick up cached guru data in the DataPacket.
 
 import '../src/engines/nodeAdapter.js';
-import { fetchAllGuruHoldings, findGurusOwning } from '../src/engines/gurus.js';
+import { fetchAllGuruHoldings, findGurusOwning, resolveTickersForHoldings } from '../src/engines/gurus.js';
 
 const ticker = process.argv[2]?.toUpperCase();
 
@@ -27,6 +27,19 @@ async function main() {
 
   const validPortfolios = portfolios.filter(p => p.holdings && p.holdings.length > 0);
   console.log(`Guru pre-fetch complete: ${validPortfolios.length}/${portfolios.length} portfolios with holdings`);
+
+  // Resolve CUSIP -> ticker for each portfolio (per D-07)
+  console.log('Resolving CUSIP identifiers to ticker symbols...');
+  let resolvedCount = 0;
+  for (const p of validPortfolios) {
+    if (p.holdings && p.holdings.some(h => !h.ticker && h.cusip)) {
+      p.holdings = await resolveTickersForHoldings(p.holdings);
+      resolvedCount++;
+    }
+  }
+  if (resolvedCount > 0) {
+    console.log(`  Resolved tickers for ${resolvedCount} portfolios`);
+  }
 
   // Find which gurus hold this ticker
   const holdings = findGurusOwning(portfolios, ticker);
