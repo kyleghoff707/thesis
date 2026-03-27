@@ -242,6 +242,12 @@ Run the quality system on the assembled report:
        const lowCount = r.issues.filter(i => i.severity === 'low').length;
        console.log('  ' + r.sectionKey + ': score=' + r.score + ' (high:' + highCount + ' med:' + medCount + ' low:' + lowCount + ')');
      }
+
+     // Generate human-readable quality report
+     const { formatQualityReport } = await import('./src/engines/qualityFormatter.js');
+     const qualityMd = formatQualityReport(quality, { ticker: '{TICKER}', stage: 'one-pager' });
+     writeFileSync('.thes1s/reports/{TICKER}/quality/one-pager.quality.md', qualityMd);
+     console.log('Quality report written: .thes1s/reports/{TICKER}/quality/one-pager.quality.md');
    "
    ```
 
@@ -309,6 +315,7 @@ Print the complete generation summary:
      - `.thes1s/reports/{TICKER}/one-pager.md`
      - `.thes1s/reports/{TICKER}/sections/*.json`
      - `.thes1s/reports/{TICKER}/quality/one-pager.quality.json`
+     - `.thes1s/reports/{TICKER}/quality/one-pager.quality.md`
      - `.thes1s/reports/{TICKER}/budget.json`
 
 ## Constraints

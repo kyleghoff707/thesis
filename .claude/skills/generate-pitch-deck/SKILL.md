@@ -1112,6 +1112,12 @@ node --import ./scripts/node-esm-loader.js -e "
     const lowCount = r.issues.filter(i => i.severity === 'low').length;
     console.log('  ' + r.sectionKey + ': score=' + r.score + ' (high:' + highCount + ' med:' + medCount + ' low:' + lowCount + ')');
   }
+
+  // Generate human-readable quality report
+  const { formatQualityReport } = await import('./src/engines/qualityFormatter.js');
+  const qualityMd = formatQualityReport(quality, { ticker: '{TICKER}', stage: 'pitch-deck' });
+  writeFileSync('.thes1s/reports/{TICKER}/quality/pitch-deck.quality.md', qualityMd);
+  console.log('Quality report written: .thes1s/reports/{TICKER}/quality/pitch-deck.quality.md');
 "
 ```
 
@@ -1263,6 +1269,7 @@ Overall verdict: {PASS/FAIL/WATCHLIST} ({confidence})
   PSR Insights:  .thes1s/reports/{TICKER}/sections/annual-reader-insights.json
                  .thes1s/reports/{TICKER}/sections/quarterly-reader-insights.json
   Quality:       .thes1s/reports/{TICKER}/quality/pitch-deck.quality.json
+                 .thes1s/reports/{TICKER}/quality/pitch-deck.quality.md
   Budget:        .thes1s/reports/{TICKER}/budget.json
 
 ================================================================
