@@ -125,9 +125,9 @@ export function compareCompany(ticker, fixture, engineData, fieldMapping, option
           msValue = specialHandlers.operating_income_reported(msValue, msStmt[msYear] || {});
         }
 
-        // Accrued liabilities: skip combined-only companies
+        // Accrued liabilities: skip years where MS has no separate accrued line
         if (msField === 'Accrued Expenses, Current' && msValue != null && specialHandlers.accrued_combined_skip) {
-          const adjusted = specialHandlers.accrued_combined_skip(msValue, msStmt);
+          const adjusted = specialHandlers.accrued_combined_skip(msValue, msStmt, msYear);
           if (adjusted === 'SKIP') continue;
           msValue = adjusted;
         }

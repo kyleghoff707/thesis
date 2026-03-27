@@ -88,20 +88,30 @@ export function getSpecialFieldHandlers() {
     },
 
     /**
-     * Accrued liabilities: Skip for companies that only report combined
-     * "Payables and Accrued Expenses" (no separate accrued breakdown).
+     * Accrued liabilities: Skip comparison for year-level entries where MS has no
+     * separate "Accrued Expenses, Current" field.
      *
-     * @param {number} msValue - Raw MS value for "Accrued Expenses, Current"
+     * MS uses two DataIDs:
+     * - DataID 23004: "Accrued Expenses, Current" (separate — when XBRL has distinct tag)
+     * - DataID 23166: "Payables and Accrued Expenses" (combined AP+Accrued — when XBRL
+     *   only has AccountsPayableAndAccruedLiabilitiesCurrent)
+     *
+     * When only the combined tag exists, MS shows it under "Payables and Accrued Expenses"
+     * and does NOT produce a separate accrued line. Comparing against a null or absent
+     * accrued line is a false failure.
+     *
+     * Changed from v1 (all-or-nothing company-level check) to per-year check: skip only
+     * years where the current year's data lacks the separate accrued field.
+     *
+     * @param {number} msValue - Raw MS value for "Accrued Expenses, Current" for THIS year
      * @param {object} allYearsData - All years' MS data { year: { field: val } }
+     * @param {string} currentYear - The year being compared
      * @returns {number|'SKIP'} Original value or 'SKIP'
      */
-    accrued_combined_skip(msValue, allYearsData) {
-      const years = Object.keys(allYearsData).filter(y => y !== 'TTM');
-      const hasAnySeparateAccrued = years.some(
-        yr => allYearsData[yr]?.['Accrued Expenses, Current'] != null
-      );
-
-      if (!hasAnySeparateAccrued) {
+    accrued_combined_skip(msValue, allYearsData, currentYear) {
+      // If this specific year has no separate accrued field, skip
+      const yearData = allYearsData[currentYear];
+      if (!yearData || yearData['Accrued Expenses, Current'] == null) {
         return 'SKIP';
       }
       return msValue;
@@ -175,7 +185,7 @@ export function mapMorningstarToCanonical(msStatements, fieldMapping, options = 
         }
 
         if (msField === 'Accrued Expenses, Current' && handlers.accrued_combined_skip) {
-          const adjusted = handlers.accrued_combined_skip(msValue, msStmt);
+          const adjusted = handlers.accrued_combined_skip(msValue, msStmt, msYear);
           if (adjusted === 'SKIP') continue;
           msValue = adjusted;
         }
