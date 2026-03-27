@@ -900,6 +900,89 @@ describe('Investment flow component summation', () => {
     // Purchase should be negative (was negative before override)
     expect(cashFlow[2024].purchase_of_investments).toBe(-7000000000);
   });
+
+  // Plan 11: New tag additions
+  it('sale_of_investments includes ProceedsFromSaleMaturityAndCollectionsOfInvestments as aggregate tag', () => {
+    const saleField = CASHFLOW_TAXONOMY.find(f => f.field === 'sale_of_investments');
+    expect(saleField).toBeDefined();
+    expect(saleField.tags).toContain('ProceedsFromSaleMaturityAndCollectionsOfInvestments');
+  });
+
+  it('sale_of_investments includes ProceedsFromSaleOfLongtermInvestments as aggregate tag', () => {
+    const saleField = CASHFLOW_TAXONOMY.find(f => f.field === 'sale_of_investments');
+    expect(saleField).toBeDefined();
+    expect(saleField.tags).toContain('ProceedsFromSaleOfLongtermInvestments');
+  });
+
+  it('purchase_of_investments includes PaymentsToAcquireLongtermInvestments as aggregate tag', () => {
+    const purchaseField = CASHFLOW_TAXONOMY.find(f => f.field === 'purchase_of_investments');
+    expect(purchaseField).toBeDefined();
+    expect(purchaseField.tags).toContain('PaymentsToAcquireLongtermInvestments');
+  });
+
+  it('purchase_of_investments_equity includes PaymentsToAcquireEquitySecuritiesFvNi', () => {
+    const equityField = CASHFLOW_TAXONOMY.find(f => f.field === 'purchase_of_investments_equity');
+    expect(equityField).toBeDefined();
+    expect(equityField.tags).toContain('PaymentsToAcquireEquitySecuritiesFvNi');
+  });
+
+  it('sale_of_investments_equity includes ProceedsFromSaleOfEquitySecuritiesFvNi', () => {
+    const equityField = CASHFLOW_TAXONOMY.find(f => f.field === 'sale_of_investments_equity');
+    expect(equityField).toBeDefined();
+    expect(equityField.tags).toContain('ProceedsFromSaleOfEquitySecuritiesFvNi');
+  });
+
+  it('sale_of_investments_afs includes ProceedsFromSaleOfAvailableForSaleSecuritiesEquity', () => {
+    const afsField = CASHFLOW_TAXONOMY.find(f => f.field === 'sale_of_investments_afs');
+    expect(afsField).toBeDefined();
+    expect(afsField.tags).toContain('ProceedsFromSaleOfAvailableForSaleSecuritiesEquity');
+  });
+
+  it('sale_of_investments_maturity includes HTM and short-term maturity tags', () => {
+    const matField = CASHFLOW_TAXONOMY.find(f => f.field === 'sale_of_investments_maturity');
+    expect(matField).toBeDefined();
+    expect(matField.tags).toContain('ProceedsFromSaleAndMaturityOfHeldToMaturitySecurities');
+    expect(matField.tags).toContain('ProceedsFromSaleOfHeldToMaturitySecurities');
+    expect(matField.tags).toContain('ProceedsFromMaturitiesPrepaymentsAndCallsOfShorttermInvestments');
+  });
+
+  it('sale_of_investments_other field exists for catch-all other investment proceeds', () => {
+    const otherField = CASHFLOW_TAXONOMY.find(f => f.field === 'sale_of_investments_other');
+    expect(otherField).toBeDefined();
+    expect(otherField.tags).toContain('ProceedsFromSaleAndMaturityOfOtherInvestments');
+    expect(otherField.tags).toContain('ProceedsFromSaleOfOtherInvestments');
+  });
+
+  it('sale_of_investments component sum includes sale_of_investments_other', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      sale_of_investments: null,
+      sale_of_investments_afs: 5000000000,
+      sale_of_investments_maturity: 3000000000,
+      sale_of_investments_sti: 0,
+      sale_of_investments_equity: 0,
+      sale_of_investments_other: 2000000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // 5B + 3B + 0 + 0 + 2B = 10B
+    expect(cashFlow[2024].sale_of_investments).toBe(10000000000);
+  });
+
+  it('sale_of_investments_sti includes ProceedsFromSaleMaturityAndCollectionOfShorttermInvestments', () => {
+    const stiField = CASHFLOW_TAXONOMY.find(f => f.field === 'sale_of_investments_sti');
+    expect(stiField).toBeDefined();
+    expect(stiField.tags).toContain('ProceedsFromSaleMaturityAndCollectionOfShorttermInvestments');
+  });
+
+  it('purchase_of_investments_afs includes PaymentsToAcquireAvailableForSaleSecuritiesEquity', () => {
+    const afsField = CASHFLOW_TAXONOMY.find(f => f.field === 'purchase_of_investments_afs');
+    expect(afsField).toBeDefined();
+    expect(afsField.tags).toContain('PaymentsToAcquireAvailableForSaleSecuritiesEquity');
+  });
 });
 
 // ─── Debt tag coverage and summation ─────────────────────────────────────────

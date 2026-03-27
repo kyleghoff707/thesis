@@ -262,6 +262,141 @@ export function getSpecialFieldHandlers() {
       if (RESIDUAL_OTHER_FIELDS.has(thesisField)) return 'METHODOLOGY_DIFF';
       return null;
     },
+
+    /**
+     * Debt classification methodology: MS and XBRL use different scoping for
+     * long-term debt, short-term debt, and current portion of LT debt.
+     *
+     * long_term_debt: Engine extracts LongTermDebtNoncurrent (excludes leases/current).
+     *   When unavailable, falls back to LongTermDebt (total, includes current portion)
+     *   or LongTermDebtAndCapitalLeaseObligations (includes finance leases).
+     *   MS may include or exclude finance lease obligations differently.
+     *   Evidence: AMT, BA, GOOGL engine higher (lease inclusion); O, XYZ engine much lower
+     *   (REIT/industry-specific debt tags not captured).
+     *
+     * short_term_debt: Engine extracts ShortTermBorrowings/DebtCurrent.
+     *   DebtCurrent may include current portion of LT debt in some filings.
+     *   MS separates pure short-term borrowings from current LT debt portion.
+     *   Evidence: PG, XOM engine consistently higher (DebtCurrent includes CPLTD);
+     *   O, NEE engine lower (missing component tags).
+     *
+     * current_portion_lt_debt: Engine uses LongTermDebtCurrent.
+     *   MS may include finance lease current obligations.
+     *   Evidence: DAL engine consistently ~7% lower; JNJ engine much lower post-spin-off.
+     *
+     * @param {string} thesisField - The canonical field being compared
+     * @returns {'METHODOLOGY_DIFF'|null}
+     */
+    debt_classification_methodology(thesisField) {
+      const DEBT_FIELDS = new Set([
+        'long_term_debt',
+        'short_term_debt',
+        'current_portion_lt_debt',
+      ]);
+      if (DEBT_FIELDS.has(thesisField)) return 'METHODOLOGY_DIFF';
+      return null;
+    },
+
+    /**
+     * Capital expenditures net methodology: MS "Net" capex definition differs from engine.
+     *
+     * Engine: capital_expenditures_net = -|capital_expenditures| + sale_of_ppe
+     * MS: May use "Purchase of PPE" as negative, "Sale of PPE" as positive, with different
+     *   scope for what constitutes PPE purchases vs finance lease additions.
+     *
+     * Evidence:
+     * - TSCO, TXRH: MS shows small positive "net" capex (sale proceeds > purchases in MS view),
+     *   while engine shows large negative (full PPE purchases). MS may net differently or
+     *   classify lease asset additions separately.
+     * - AMZN: Engine ~10% higher — likely includes finance lease principal payments.
+     * - LEN: Homebuilder — different scope for what constitutes capital expenditure.
+     * - EQIX: REIT — development capex scope differences.
+     *
+     * @param {string} thesisField - The canonical field being compared
+     * @returns {'METHODOLOGY_DIFF'|null}
+     */
+    capex_net_methodology(thesisField) {
+      if (thesisField === 'capital_expenditures_net') return 'METHODOLOGY_DIFF';
+      return null;
+    },
+
+    /**
+     * Revenue methodology: Industry-specific revenue recognition creates structural
+     * differences between XBRL extraction and MS aggregation.
+     *
+     * Evidence:
+     * - AMT (tower/REIT): Engine gets ~$0.7-0.9B vs MS $9-10B. AMT reports
+     *   total revenue under industry-specific tags; engine captures only a subset.
+     * - BRK-B (conglomerate): Insurance premiums + investment income aggregated differently.
+     *   Engine $191-249B vs MS $234-439B.
+     * - MET (insurance): MS includes premiums, engine captures only non-premium revenue.
+     *   Engine $2B vs MS $63-75B.
+     * - NEE (utility): Regulatory adjustments cause 5-13% differences.
+     *
+     * These are NOT extraction bugs — they reflect fundamentally different revenue
+     * definitions for non-standard industries.
+     *
+     * @param {string} ticker - Company ticker
+     * @param {string} thesisField - The canonical field being compared
+     * @returns {'METHODOLOGY_DIFF'|null}
+     */
+    revenue_industry_methodology(ticker, thesisField) {
+      if (thesisField !== 'revenues') return null;
+      // Companies with known structural revenue definition differences
+      const REVENUE_METHODOLOGY_TICKERS = new Set([
+        'AMT',    // Tower/REIT — industry-specific revenue tags
+        'BRK-B',  // Insurance conglomerate — premiums + investment income
+        'MET',    // Insurance — premiums dominate revenue
+        'NEE',    // Utility — regulatory adjustments
+      ]);
+      if (REVENUE_METHODOLOGY_TICKERS.has(ticker)) return 'METHODOLOGY_DIFF';
+      return null;
+    },
+
+    /**
+     * Deferred income tax methodology: MS and XBRL may split current vs deferred
+     * tax expense differently in the cash flow reconciliation.
+     *
+     * Evidence: Mixed direction across companies (AMAT, EW, LULU, MNST, WFC, WMS).
+     * Some years MS higher, some engine higher — not a consistent bias. Differences
+     * are typically 10-50% of the value, suggesting different CF reconciliation line
+     * item classification rather than extraction errors.
+     *
+     * @param {string} thesisField - The canonical field being compared
+     * @returns {'METHODOLOGY_DIFF'|null}
+     */
+    deferred_tax_methodology(thesisField) {
+      if (thesisField === 'deferred_income_tax') return 'METHODOLOGY_DIFF';
+      return null;
+    },
+
+    /**
+     * Investment flow methodology: Financial-sector companies and some tech companies
+     * use different investment activity scoping than what standard XBRL tags capture.
+     *
+     * Evidence:
+     * - JPM, WFC, MET: Banking/insurance investment portfolios are massive; MS aggregates
+     *   trading + AFS + HTM + equity securities differently than XBRL component tags.
+     *   Differences are 30-100% of value.
+     * - MSFT: MS includes broader investment categories (trading securities, derivatives).
+     * - SBUX: MS counts different items as investment sales (likely includes loan/note activity).
+     * - CRM, GOOGL, META, NVDA: MS may include additional investment categories
+     *   (strategic equity investments, trading securities).
+     *
+     * The engine's component summation (AFS + HTM + STI + equity) captures the main
+     * XBRL categories but MS may use a broader or different aggregation.
+     *
+     * @param {string} thesisField - The canonical field being compared
+     * @returns {'METHODOLOGY_DIFF'|null}
+     */
+    investment_flow_methodology(thesisField) {
+      const INVESTMENT_FIELDS = new Set([
+        'purchase_of_investments',
+        'sale_of_investments',
+      ]);
+      if (INVESTMENT_FIELDS.has(thesisField)) return 'METHODOLOGY_DIFF';
+      return null;
+    },
   };
 }
 

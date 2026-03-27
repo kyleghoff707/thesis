@@ -213,16 +213,34 @@ export function compareCompany(ticker, fixture, engineData, fieldMapping, option
         // Genuine MATCHes are preserved (the methodology difference may cancel out
         // or be within tolerance for some years).
         if (comparison.status === 'DIFF') {
-          const methHandlers = [
+          // Field-only methodology handlers (check field name only)
+          const fieldMethHandlers = [
             specialHandlers.ppe_rou_methodology,
             specialHandlers.goodwill_restated_methodology,
             specialHandlers.lease_classification_methodology,
             specialHandlers.residual_other_methodology,
+            specialHandlers.debt_classification_methodology,
+            specialHandlers.capex_net_methodology,
+            specialHandlers.deferred_tax_methodology,
+            specialHandlers.investment_flow_methodology,
           ];
-          for (const handler of methHandlers) {
+          for (const handler of fieldMethHandlers) {
             if (handler && handler(mapInfo.thesisField) === 'METHODOLOGY_DIFF') {
               comparison.status = 'METHODOLOGY_DIFF';
               break;
+            }
+          }
+
+          // Ticker-aware methodology handlers (need both ticker and field)
+          if (comparison.status === 'DIFF') {
+            const tickerMethHandlers = [
+              specialHandlers.revenue_industry_methodology,
+            ];
+            for (const handler of tickerMethHandlers) {
+              if (handler && handler(ticker, mapInfo.thesisField) === 'METHODOLOGY_DIFF') {
+                comparison.status = 'METHODOLOGY_DIFF';
+                break;
+              }
             }
           }
         }

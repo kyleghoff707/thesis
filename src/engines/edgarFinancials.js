@@ -562,11 +562,13 @@ const CASHFLOW_TAXONOMY = [
     'PaymentsToAcquireInvestments',
     'PaymentsToAcquireMarketableSecurities',
     'PaymentsToAcquireOtherInvestments',
+    'PaymentsToAcquireLongtermInvestments',          // DAL, CRM, MLI, XPEL — long-term investment purchases
   ]},
   // Component fields for companies that report AFS/HTM/STI separately (JPM, WFC, MET, AAPL)
   { field: 'purchase_of_investments_afs', unit: 'USD', tags: [
     'PaymentsToAcquireAvailableForSaleSecuritiesDebt',
     'PaymentsToAcquireAvailableForSaleSecurities',
+    'PaymentsToAcquireAvailableForSaleSecuritiesEquity', // BRK-B, MET — equity AFS
   ]},
   { field: 'purchase_of_investments_htm', unit: 'USD', tags: [
     'PaymentsToAcquireHeldToMaturitySecurities',
@@ -578,6 +580,7 @@ const CASHFLOW_TAXONOMY = [
   { field: 'purchase_of_investments_equity', unit: 'USD', tags: [
     'PaymentsToAcquireEquityMethodInvestments',
     'PaymentsToAcquireEquitySecurities',
+    'PaymentsToAcquireEquitySecuritiesFvNi',            // NVDA, AMT, BRK-B, MET — FV-NI equity securities
   ]},
   // Investment sales: aggregate tag (first-match) then component fields for summation
   { field: 'sale_of_investments', unit: 'USD', tags: [
@@ -585,23 +588,36 @@ const CASHFLOW_TAXONOMY = [
     'ProceedsFromSaleAndMaturityOfMarketableSecurities',
     'ProceedsFromSaleAndMaturityOfAvailableForSaleSecurities',
     'ProceedsFromSaleOfDebtSecurities',
+    'ProceedsFromSaleMaturityAndCollectionsOfInvestments',  // broad aggregate — 12 companies (BA, DAL, CRM, AMZN, EQIX, etc.)
+    'ProceedsFromSaleOfLongtermInvestments',                // DAL, NEE, CRM — long-term investment sales
   ]},
   // Component fields for companies that report sale + maturity separately
   { field: 'sale_of_investments_afs', unit: 'USD', tags: [
     'ProceedsFromSaleOfAvailableForSaleSecuritiesDebt',
     'ProceedsFromSaleOfAvailableForSaleSecurities',
+    'ProceedsFromSaleOfAvailableForSaleSecuritiesEquity',  // INTU, BRK-B, MET — equity AFS sales
   ]},
   { field: 'sale_of_investments_maturity', unit: 'USD', tags: [
     'ProceedsFromMaturitiesPrepaymentsAndCallsOfAvailableForSaleSecurities',
     'ProceedsFromMaturitiesPrepaymentsAndCallsOfHeldToMaturitySecurities',
+    'ProceedsFromSaleAndMaturityOfHeldToMaturitySecurities',  // MNST, TSCO, LEN, EW
+    'ProceedsFromSaleOfHeldToMaturitySecurities',             // CPRT, TSCO, LEN, CMG
+    'ProceedsFromMaturitiesPrepaymentsAndCallsOfShorttermInvestments', // NKE, ODFL, COST, NEM
   ]},
   { field: 'sale_of_investments_sti', unit: 'USD', tags: [
     'ProceedsFromSaleOfShortTermInvestments',
     'ProceedsFromSaleAndMaturityOfShortTermInvestments',
+    'ProceedsFromSaleMaturityAndCollectionOfShorttermInvestments', // DAL, MLI, MET, ULTA
   ]},
   { field: 'sale_of_investments_equity', unit: 'USD', tags: [
     'ProceedsFromSaleOfEquitySecurities',
     'ProceedsFromSaleOfEquityMethodInvestments',
+    'ProceedsFromSaleOfEquitySecuritiesFvNi',              // NVDA, AMT, BRK-B, MET — FV-NI equity sales
+  ]},
+  // Other investment proceeds (catch-all for companies with non-standard tags)
+  { field: 'sale_of_investments_other', unit: 'USD', tags: [
+    'ProceedsFromSaleAndMaturityOfOtherInvestments',       // AMAT, AAPL, NEE, LEN, EW, EQIX, V, GOOGL
+    'ProceedsFromSaleOfOtherInvestments',                  // EQIX, V
   ]},
   { field: 'purchase_of_business', unit: 'USD', tags: [
     'PaymentsToAcquireBusinessesNetOfCashAcquired',
@@ -1356,7 +1372,8 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       const maturity = cf.sale_of_investments_maturity;
       const sti = cf.sale_of_investments_sti;
       const equity = cf.sale_of_investments_equity;
-      const componentSum = (afs ?? 0) + (maturity ?? 0) + (sti ?? 0) + (equity ?? 0);
+      const other = cf.sale_of_investments_other;
+      const componentSum = (afs ?? 0) + (maturity ?? 0) + (sti ?? 0) + (equity ?? 0) + (other ?? 0);
       // Use component sum if: (a) aggregate is null, or (b) components sum to more (aggregate is partial)
       if (componentSum > 0 && (cf.sale_of_investments == null || componentSum > cf.sale_of_investments * 1.05)) {
         cf.sale_of_investments = componentSum;
