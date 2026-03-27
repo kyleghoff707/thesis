@@ -68,9 +68,9 @@ Plans:
 - [x] 03-02-PLAN.md — REIT overlay fixes (revenue/COGS/interest/D&A) + short-term debt summation + bank null handling + PP&E reclassification
 - [x] 03-03-PLAN.md — Residual "Other" computation with 95% precondition gate + FY offset investigation + final validation (91.1% -- gap analysis documents methodology diffs)
 - [x] 03-04-PLAN.md — Category B harness alignment: accrued liabilities per-year fix + intangibles/operating income handler verification
-- [ ] 03-05-PLAN.md — Gap closure: Residual Other balance sheet fields (OtherNCA, OtherNCL, OtherCA) with 95% coverage gates
-- [ ] 03-06-PLAN.md — Gap closure: Investment flow summation + debt tag coverage improvements
-- [ ] 03-07-PLAN.md — Gap closure: Per-field tag additions (accounts_receivable, deferred_revenue, short_term_investments, minority_interest, common_stock) + final MS comparison
+- [x] 03-05-PLAN.md — Gap closure: Residual Other balance sheet fields (OtherNCA, OtherNCL, OtherCA) with 95% coverage gates
+- [x] 03-06-PLAN.md — Gap closure: Investment flow summation + debt tag coverage improvements
+- [x] 03-07-PLAN.md — Gap closure: Per-field tag additions (accounts_receivable, deferred_revenue, short_term_investments, minority_interest, common_stock) + final MS comparison (90.9%)
 
 ### Phase 4: Scale Validation
 **Goal**: Engine accuracy confirmed at 98%+ across all US-listed equities and paid data source subscriptions are cancelled
