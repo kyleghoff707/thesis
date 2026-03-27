@@ -748,3 +748,341 @@ describe('TTM Q4 bug: TTM should equal annual when 10-K is latest filing', () =>
     expect(ttm.quarter).toContain('2025');
   });
 });
+
+// ─── Residual Other computation ───────────────────────────────────────────
+
+describe('Residual Other computation: OtherCurrentLiabilities', () => {
+  it('computes OtherCL when 8/8 named CL items present (coverage >= 95%)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 20000000000,
+      accounts_payable: 5000000000,
+      accrued_liabilities: 3000000000,
+      short_term_debt: 2000000000,
+      current_portion_lt_debt: 1000000000,
+      operating_lease_liability_current: 500000000,
+      finance_lease_liability_current: 200000000,
+      deferred_revenue_current: 1500000000,
+      taxes_payable: 800000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // named sum = 5+3+2+1+0.5+0.2+1.5+0.8 = 14B, residual = 20 - 14 = 6B
+    expect(balance[2024].other_current_liabilities).toBe(6000000000);
+  });
+
+  it('does NOT compute OtherCL when coverage < 95% (6/8 items)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 20000000000,
+      accounts_payable: 5000000000,
+      accrued_liabilities: 3000000000,
+      short_term_debt: 2000000000,
+      current_portion_lt_debt: 1000000000,
+      operating_lease_liability_current: 500000000,
+      finance_lease_liability_current: 200000000,
+      // missing: deferred_revenue_current, taxes_payable (6/8 = 75%)
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_liabilities).toBeUndefined();
+  });
+
+  it('sets OtherCL to null when residual is negative (overcounting guard)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 10000000000,
+      accounts_payable: 5000000000,
+      accrued_liabilities: 3000000000,
+      short_term_debt: 2000000000,
+      current_portion_lt_debt: 1000000000,
+      operating_lease_liability_current: 500000000,
+      finance_lease_liability_current: 200000000,
+      deferred_revenue_current: 1500000000,
+      taxes_payable: 800000000,
+      // named sum = 14B > current_liabilities 10B → negative residual
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_liabilities).toBeUndefined();
+  });
+
+  it('preserves existing XBRL value for OtherCL (no-overwrite)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 20000000000,
+      other_current_liabilities: 999000000, // existing XBRL value
+      accounts_payable: 5000000000,
+      accrued_liabilities: 3000000000,
+      short_term_debt: 2000000000,
+      current_portion_lt_debt: 1000000000,
+      operating_lease_liability_current: 500000000,
+      finance_lease_liability_current: 200000000,
+      deferred_revenue_current: 1500000000,
+      taxes_payable: 800000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_liabilities).toBe(999000000);
+  });
+});
+
+describe('Residual Other computation: OtherNonCurrentAssets', () => {
+  it('computes OtherNCA when 5/5 named NCA items present (coverage >= 95%)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      assets: 100000000000,
+      current_assets: 40000000000,
+      // noncurrent_assets will be derived as 100 - 40 = 60B
+      property_plant_equipment: 20000000000, // post-ROU-merge (no operating_lease_rou_asset to merge)
+      goodwill: 10000000000,
+      intangible_assets: 5000000000,
+      long_term_investments: 8000000000,
+      deferred_tax_assets: 2000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // noncurrent_assets = 100 - 40 = 60B
+    // named sum = 20 + 10 + 5 + 8 + 2 = 45B
+    // residual = 60 - 45 = 15B
+    expect(balance[2024].other_noncurrent_assets).toBe(15000000000);
+  });
+
+  it('does NOT compute OtherNCA when coverage < 95% (3/5 items)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      assets: 100000000000,
+      current_assets: 40000000000,
+      property_plant_equipment: 20000000000,
+      goodwill: 10000000000,
+      intangible_assets: 5000000000,
+      // missing: long_term_investments, deferred_tax_assets (3/5 = 60%)
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_noncurrent_assets).toBeUndefined();
+  });
+
+  it('sets OtherNCA to null when residual is negative (overcounting guard)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      assets: 50000000000,
+      current_assets: 40000000000,
+      // noncurrent_assets = 10B
+      property_plant_equipment: 5000000000,
+      goodwill: 3000000000,
+      intangible_assets: 2000000000,
+      long_term_investments: 4000000000,
+      deferred_tax_assets: 1000000000,
+      // named sum = 15B > noncurrent_assets 10B → negative
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_noncurrent_assets).toBeUndefined();
+  });
+
+  it('preserves existing XBRL value for OtherNCA (no-overwrite)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      assets: 100000000000,
+      current_assets: 40000000000,
+      other_noncurrent_assets: 888000000, // existing XBRL value
+      property_plant_equipment: 20000000000,
+      goodwill: 10000000000,
+      intangible_assets: 5000000000,
+      long_term_investments: 8000000000,
+      deferred_tax_assets: 2000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_noncurrent_assets).toBe(888000000);
+  });
+});
+
+describe('Residual Other computation: OtherNonCurrentLiabilities', () => {
+  it('computes OtherNCL when 6/6 named NCL items present (coverage >= 95%)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      liabilities: 50000000000,
+      current_liabilities: 15000000000,
+      // noncurrent_liabilities will be derived as 50 - 15 = 35B
+      long_term_debt: 10000000000,
+      operating_lease_liability_noncurrent: 4000000000,
+      finance_lease_liability_noncurrent: 1000000000,
+      deferred_tax_liabilities: 3000000000,
+      pension_liabilities: 2000000000,
+      deferred_revenue_noncurrent: 500000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // noncurrent_liabilities = 50 - 15 = 35B
+    // named sum = 10 + 4 + 1 + 3 + 2 + 0.5 = 20.5B
+    // residual = 35 - 20.5 = 14.5B
+    expect(balance[2024].other_noncurrent_liabilities).toBe(14500000000);
+  });
+
+  it('does NOT compute OtherNCL when coverage < 95% (3/6 items)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      liabilities: 50000000000,
+      current_liabilities: 15000000000,
+      long_term_debt: 10000000000,
+      operating_lease_liability_noncurrent: 4000000000,
+      finance_lease_liability_noncurrent: 1000000000,
+      // missing: deferred_tax_liabilities, pension_liabilities, deferred_revenue_noncurrent (3/6 = 50%)
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_noncurrent_liabilities).toBeUndefined();
+  });
+
+  it('sets OtherNCL to null when residual is negative (overcounting guard)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      liabilities: 20000000000,
+      current_liabilities: 15000000000,
+      // noncurrent_liabilities = 5B
+      long_term_debt: 3000000000,
+      operating_lease_liability_noncurrent: 2000000000,
+      finance_lease_liability_noncurrent: 1000000000,
+      deferred_tax_liabilities: 1500000000,
+      pension_liabilities: 500000000,
+      deferred_revenue_noncurrent: 200000000,
+      // named sum = 8.2B > noncurrent_liabilities 5B → negative
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_noncurrent_liabilities).toBeUndefined();
+  });
+
+  it('preserves existing XBRL value for OtherNCL (no-overwrite)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      liabilities: 50000000000,
+      current_liabilities: 15000000000,
+      other_noncurrent_liabilities: 777000000, // existing XBRL value
+      long_term_debt: 10000000000,
+      operating_lease_liability_noncurrent: 4000000000,
+      finance_lease_liability_noncurrent: 1000000000,
+      deferred_tax_liabilities: 3000000000,
+      pension_liabilities: 2000000000,
+      deferred_revenue_noncurrent: 500000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_noncurrent_liabilities).toBe(777000000);
+  });
+});
+
+describe('Residual Other computation: OtherCurrentAssets', () => {
+  it('computes OtherCA when 5/5 named CA items present (coverage >= 95%)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_assets: 30000000000,
+      cash: 10000000000,
+      short_term_investments: 5000000000,
+      accounts_receivable: 4000000000,
+      inventory: 3000000000,
+      prepaid_expenses: 1000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // named sum = 10 + 5 + 4 + 3 + 1 = 23B
+    // residual = 30 - 23 = 7B
+    expect(balance[2024].other_current_assets).toBe(7000000000);
+  });
+
+  it('does NOT compute OtherCA when coverage < 95% (3/5 items)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_assets: 30000000000,
+      cash: 10000000000,
+      short_term_investments: 5000000000,
+      accounts_receivable: 4000000000,
+      // missing: inventory, prepaid_expenses (3/5 = 60%)
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_assets).toBeUndefined();
+  });
+
+  it('sets OtherCA to null when residual is negative (overcounting guard)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_assets: 15000000000,
+      cash: 10000000000,
+      short_term_investments: 5000000000,
+      accounts_receivable: 4000000000,
+      inventory: 3000000000,
+      prepaid_expenses: 1000000000,
+      // named sum = 23B > current_assets 15B → negative
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_assets).toBeUndefined();
+  });
+
+  it('preserves existing XBRL value for OtherCA (no-overwrite)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_assets: 30000000000,
+      other_current_assets: 666000000, // existing XBRL value
+      cash: 10000000000,
+      short_term_investments: 5000000000,
+      accounts_receivable: 4000000000,
+      inventory: 3000000000,
+      prepaid_expenses: 1000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_assets).toBe(666000000);
+  });
+});
