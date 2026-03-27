@@ -730,6 +730,77 @@ describe('Investment flow component summation', () => {
   });
 });
 
+// ─── Debt tag coverage and summation ─────────────────────────────────────────
+
+describe('Debt tag coverage and summation', () => {
+  it('short_term_debt component summation includes notes_payable_current alongside commercial_paper and short_term_borrowings', () => {
+    // When short_term_debt aggregate tag (DebtCurrent) is null but component fields exist
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      short_term_debt: null,
+      commercial_paper: 6000000000,
+      short_term_borrowings: 2000000000,
+      notes_payable_current: 3000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // 6B + 2B + 3B = 11B
+    expect(balance[2024].short_term_debt).toBe(11000000000);
+  });
+
+  it('short_term_debt summation result = commercial_paper + short_term_borrowings + notes_payable_current when all present', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      short_term_debt: 5000000000,  // aggregate is lower than component sum
+      commercial_paper: 4000000000,
+      short_term_borrowings: 3000000000,
+      notes_payable_current: 2000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Component sum 9B > aggregate 5B → use component sum
+    expect(balance[2024].short_term_debt).toBe(9000000000);
+  });
+
+  it('long_term_debt resolves from ConvertibleDebt tag when primary tags are null', () => {
+    const ltDebtField = BALANCE_TAXONOMY.find(f => f.field === 'long_term_debt');
+    expect(ltDebtField).toBeDefined();
+    expect(ltDebtField.tags).toContain('ConvertibleDebt');
+    expect(ltDebtField.tags).toContain('ConvertibleLongTermNotesPayable');
+  });
+
+  it('short_term_debt resolves from NotesPayable tag as additional fallback', () => {
+    const stdField = BALANCE_TAXONOMY.find(f => f.field === 'short_term_debt');
+    expect(stdField).toBeDefined();
+    expect(stdField.tags).toContain('NotesPayable');
+    expect(stdField.tags).toContain('BankOverdrafts');
+  });
+
+  it('component summation does NOT double-count when DebtCurrent already includes components', () => {
+    // If DebtCurrent (15.6B) already includes all sub-components, component sum should NOT override
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      short_term_debt: 15600000000,  // DebtCurrent, already comprehensive
+      commercial_paper: 6000000000,
+      short_term_borrowings: 4000000000,
+      notes_payable_current: null,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Component sum 10B < aggregate 15.6B → keep aggregate
+    expect(balance[2024].short_term_debt).toBe(15600000000);
+  });
+});
+
 // ─── TTM Q4 Bug: When latest filing is 10-K, TTM should equal annual ────────
 // Bug: findLatestQuarter only looks at 10-Q filings (Q1/Q2/Q3), so when the
 // latest data is a 10-K (Q4/FY), TTM uses stale Q3 data instead of annual values.
