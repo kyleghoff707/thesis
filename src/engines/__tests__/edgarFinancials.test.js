@@ -1425,3 +1425,105 @@ describe('Residual Other computation: OtherCurrentAssets', () => {
     expect(balance[2024].other_current_assets).toBe(666000000);
   });
 });
+
+// ─── Plan 07: Per-field tag additions for gap closure ───────────────────
+
+describe('Plan 07: accounts_receivable broader fallback tag', () => {
+  it('should include AccountsNotesAndLoansReceivableNetCurrent as last fallback', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'accounts_receivable');
+    expect(field).toBeDefined();
+    expect(field.tags).toContain('AccountsNotesAndLoansReceivableNetCurrent');
+  });
+
+  it('should prefer narrow AccountsReceivableNetCurrent over broader fallback', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'accounts_receivable');
+    const narrowIdx = field.tags.indexOf('AccountsReceivableNetCurrent');
+    const broadIdx = field.tags.indexOf('AccountsNotesAndLoansReceivableNetCurrent');
+    expect(narrowIdx).toBeLessThan(broadIdx);
+  });
+
+  it('should resolve accounts_receivable via broad fallback when narrow tags absent', () => {
+    extractAnnualFact.mockReset();
+    extractAnnualFact.mockImplementation((_facts, tag, _unit) => {
+      if (tag === 'AccountsNotesAndLoansReceivableNetCurrent') return { 2024: 8500000000 };
+      return null;
+    });
+
+    const taxonomy = [
+      { field: 'accounts_receivable', unit: 'USD', tags: [
+        'AccountsReceivableNetCurrent',
+        'ReceivablesNetCurrent',
+        'AccountsReceivableNet',
+        'AccountsNotesAndLoansReceivableNetCurrent',
+      ]},
+    ];
+
+    const { fieldData } = extractSection({}, taxonomy, 'restated');
+    expect(fieldData.accounts_receivable[2024]).toBe(8500000000);
+  });
+});
+
+describe('Plan 07: deferred_revenue_current additional tags', () => {
+  it('should include CustomerDepositsCurrent tag', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'deferred_revenue_current');
+    expect(field).toBeDefined();
+    expect(field.tags).toContain('CustomerDepositsCurrent');
+  });
+
+  it('should include DeferredIncomeCurrent tag', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'deferred_revenue_current');
+    expect(field.tags).toContain('DeferredIncomeCurrent');
+  });
+
+  it('should prefer DeferredRevenueCurrent over new fallbacks', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'deferred_revenue_current');
+    const primaryIdx = field.tags.indexOf('DeferredRevenueCurrent');
+    const depositsIdx = field.tags.indexOf('CustomerDepositsCurrent');
+    const deferredIncIdx = field.tags.indexOf('DeferredIncomeCurrent');
+    expect(primaryIdx).toBeLessThan(depositsIdx);
+    expect(primaryIdx).toBeLessThan(deferredIncIdx);
+  });
+});
+
+describe('Plan 07: short_term_investments additional tags', () => {
+  it('should include OtherShortTermInvestments tag', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'short_term_investments');
+    expect(field).toBeDefined();
+    expect(field.tags).toContain('OtherShortTermInvestments');
+  });
+
+  it('should include HeldToMaturitySecuritiesCurrent tag', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'short_term_investments');
+    expect(field.tags).toContain('HeldToMaturitySecuritiesCurrent');
+  });
+});
+
+describe('Plan 07: minority_interest additional tag', () => {
+  it('should include RedeemableNoncontrollingInterest as fallback', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'minority_interest');
+    expect(field).toBeDefined();
+    expect(field.tags).toContain('RedeemableNoncontrollingInterest');
+  });
+
+  it('should prefer MinorityInterest over redeemable NCI', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'minority_interest');
+    const primaryIdx = field.tags.indexOf('MinorityInterest');
+    const redeemableIdx = field.tags.indexOf('RedeemableNoncontrollingInterest');
+    expect(primaryIdx).toBeLessThan(redeemableIdx);
+  });
+});
+
+describe('Plan 07: common_stock additional tag', () => {
+  it('should include CommonStockValueOutstanding as fallback', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'common_stock');
+    expect(field).toBeDefined();
+    expect(field.tags).toContain('CommonStockValueOutstanding');
+  });
+
+  it('should prefer CommonStockValue over CommonStockValueOutstanding', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'common_stock');
+    const primaryIdx = field.tags.indexOf('CommonStockValue');
+    const outstandingIdx = field.tags.indexOf('CommonStockValueOutstanding');
+    expect(primaryIdx).toBeLessThan(outstandingIdx);
+  });
+});
