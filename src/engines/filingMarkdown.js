@@ -39,7 +39,7 @@ function cellText(td) {
 // Handles colspan/rowspan by extracting raw cell text — loses spanning
 // info but produces clean readable output for AI consumption.
 function tableToMarkdown(tableEl) {
-  const rows = tableEl.querySelectorAll('tr');
+  const rows = Array.from(tableEl.querySelectorAll('tr'));
   if (rows.length === 0) return '';
 
   const mdRows = [];

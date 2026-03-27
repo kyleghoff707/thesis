@@ -20,6 +20,7 @@ const {
   checkMultiSource,
   validateRedFlags,
   detectDataGaps,
+  checkSearchCompliance,
 } = _testExports;
 
 // Fixtures — real COST data
@@ -332,6 +333,136 @@ describe('QUAL-06: Data Gap Detection', () => {
     // Should not flag growth-related gaps since growthRates exists
     const growthGaps = issues.filter(i => i.message.includes('growthRates'));
     expect(growthGaps.length).toBe(0);
+  });
+});
+
+// ─── QUAL-07: Search Compliance (D-06) ───────────────────────────────
+
+describe('QUAL-07: Search Compliance', () => {
+  // Helper to build a section with specific search/citation config
+  function makeSection(overrides = {}) {
+    return {
+      ...companyInfoSection,
+      key: overrides.key || 'radar',
+      title: overrides.title || 'Radar',
+      searchesPerformed: overrides.searchesPerformed || [],
+      citations: overrides.citations || [],
+    };
+  }
+
+  it('should score 100 for section with searches and web citations', () => {
+    const section = makeSection({
+      searchesPerformed: [
+        { query: 'Costco business model overview', resultCount: 12, usedInSection: true },
+        { query: 'Costco competitive advantages moat', resultCount: 8, usedInSection: true },
+        { query: 'COST bull bear case 2026', resultCount: 15, usedInSection: true },
+      ],
+      citations: [
+        { id: 1, ref: 'Web source', text: 'Business model data', source: 'Web', url: 'https://example.com/costco-analysis' },
+        { id: 2, ref: 'DataPacket', text: 'Revenue data', source: 'DataPacket' },
+      ],
+    });
+    const result = checkSearchCompliance(section);
+    expect(result.score).toBe(100);
+    expect(result.issues.length).toBe(0);
+  });
+
+  it('should flag section with zero searchesPerformed as severity high', () => {
+    const section = makeSection({
+      searchesPerformed: [],
+      citations: [
+        { id: 1, ref: 'Web', text: 'Data', source: 'Web', url: 'https://example.com' },
+      ],
+    });
+    const result = checkSearchCompliance(section);
+    const noSearchIssues = result.issues.filter(i => i.type === 'search_compliance' && i.message.includes('zero web searches'));
+    expect(noSearchIssues.length).toBe(1);
+    expect(noSearchIssues[0].severity).toBe('high');
+  });
+
+  it('should flag section with zero web citations as severity high', () => {
+    const section = makeSection({
+      searchesPerformed: [
+        { query: 'Costco business model', resultCount: 10, usedInSection: true },
+      ],
+      citations: [
+        { id: 1, ref: 'dataPacket.ticker', text: 'COST', source: 'DataPacket' },
+      ],
+    });
+    const result = checkSearchCompliance(section);
+    const noCitationIssues = result.issues.filter(i => i.type === 'search_compliance' && i.message.includes('zero web-sourced citations'));
+    expect(noCitationIssues.length).toBe(1);
+    expect(noCitationIssues[0].severity).toBe('high');
+  });
+
+  it('should flag searches reported but no web citations as suspicious (medium)', () => {
+    const section = makeSection({
+      searchesPerformed: [
+        { query: 'Costco business model', resultCount: 10, usedInSection: true },
+        { query: 'COST bull case 2026', resultCount: 5, usedInSection: true },
+      ],
+      citations: [
+        { id: 1, ref: 'dataPacket.ticker', text: 'COST', source: 'DataPacket' },
+      ],
+    });
+    const result = checkSearchCompliance(section);
+    const suspiciousIssues = result.issues.filter(i => i.type === 'search_compliance' && i.message.includes('fabricated'));
+    expect(suspiciousIssues.length).toBe(1);
+    expect(suspiciousIssues[0].severity).toBe('medium');
+  });
+
+  it('should always score 100 for exempt sections (synthesis)', () => {
+    const section = makeSection({
+      key: 'synthesis',
+      title: 'Overall Synthesis',
+      searchesPerformed: [],
+      citations: [],
+    });
+    const result = checkSearchCompliance(section);
+    expect(result.score).toBe(100);
+    expect(result.issues.length).toBe(0);
+  });
+
+  it('should always score 100 for exempt sections (psr_annual)', () => {
+    const section = makeSection({
+      key: 'psr_annual',
+      title: 'Primary Source Reader - Annual',
+      searchesPerformed: [],
+      citations: [],
+    });
+    const result = checkSearchCompliance(section);
+    expect(result.score).toBe(100);
+    expect(result.issues.length).toBe(0);
+  });
+
+  it('should always score 100 for exempt sections (overall_verdict)', () => {
+    const section = makeSection({
+      key: 'overall_verdict',
+      title: 'Overall Verdict',
+      searchesPerformed: [],
+      citations: [],
+    });
+    const result = checkSearchCompliance(section);
+    expect(result.score).toBe(100);
+    expect(result.issues.length).toBe(0);
+  });
+
+  it('should flag mostly empty search results as low severity warning', () => {
+    const section = makeSection({
+      searchesPerformed: [
+        { query: 'very specific query 1', resultCount: 0, usedInSection: false },
+        { query: 'very specific query 2', resultCount: 0, usedInSection: false },
+        { query: 'very specific query 3', resultCount: 0, usedInSection: false },
+        { query: 'Costco overview', resultCount: 10, usedInSection: true },
+      ],
+      citations: [
+        { id: 1, ref: 'Web', text: 'Data', source: 'Web', url: 'https://example.com' },
+      ],
+    });
+    const result = checkSearchCompliance(section);
+    const emptyIssues = result.issues.filter(i => i.type === 'search_compliance' && i.message.includes('returned 0 results'));
+    expect(emptyIssues.length).toBe(1);
+    expect(emptyIssues[0].severity).toBe('low');
   });
 });
 

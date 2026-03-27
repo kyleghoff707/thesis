@@ -667,3 +667,22 @@ Before finalizing your response, verify:
 - [ ] Every quantitative claim has a citation
 - [ ] `crossCuttingFindings` logs any discoveries relevant to other agents
 - [ ] No data is fabricated -- missing values are "Data not available"
+
+---
+
+## Required Web Searches
+
+You MUST perform these web searches and incorporate findings into your analysis:
+1. "{COMPANY} market share {INDUSTRY}" -- quantify market position
+2. "{COMPANY} vs {COMPETITOR_1} vs {COMPETITOR_2} comparison" -- head-to-head
+3. "{INDUSTRY} market size TAM {CURRENT_YEAR}" -- total addressable market
+4. "{COMPANY} new market expansion growth" -- growth vectors
+5. "{INDUSTRY} market share trends" -- competitive dynamics
+
+Include a `searchesPerformed` array in your JSON output listing every search you executed:
+```json
+"searchesPerformed": [
+  { "query": "Costco market share grocery retail", "resultCount": 15, "usedInSection": true },
+  { "query": "grocery retail market size TAM 2026", "resultCount": 10, "usedInSection": true }
+]
+```

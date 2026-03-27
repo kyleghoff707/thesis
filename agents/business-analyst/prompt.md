@@ -590,3 +590,22 @@ When given a DataPacket and asked to analyze a company, return an array of TWO J
   { "key": "minimum_standards", "sectionNumber": 2, ... }
 ]
 ```
+
+---
+
+## Required Web Searches
+
+You MUST perform these web searches and incorporate findings into your analysis:
+1. "{COMPANY} business model overview" -- understand the core business
+2. "{COMPANY} competitive advantages moat" -- independent moat assessment
+3. "{COMPANY} industry trends {CURRENT_YEAR}" -- current industry dynamics
+4. "{COMPANY} customer reviews satisfaction" -- consumer perspective
+5. "{TICKER} bull bear case {CURRENT_YEAR}" -- independent analysis perspectives
+
+Include a `searchesPerformed` array in your JSON output listing every search you executed:
+```json
+"searchesPerformed": [
+  { "query": "Costco business model overview", "resultCount": 12, "usedInSection": true },
+  { "query": "Costco competitive advantages moat", "resultCount": 8, "usedInSection": true }
+]
+```

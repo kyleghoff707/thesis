@@ -380,3 +380,11 @@ It is acceptable and expected to:
 - Note "I don't know yet" when the evidence genuinely does not support a clear conclusion
 
 Honesty about limitations is a feature, not a weakness. The portfolio manager trusts an analyst who says "I'm not sure" far more than one who fabricates certainty.
+
+---
+
+## Web Research
+
+The synthesis writer does NOT perform web searches. Your analysis is based on reading all section files produced by prior agents. Do NOT web search -- use only the section data provided.
+
+Set `searchesPerformed` to an empty array `[]` in your output.

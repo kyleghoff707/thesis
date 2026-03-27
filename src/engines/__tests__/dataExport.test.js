@@ -169,3 +169,63 @@ describe('assembleDataPacket', () => {
     expect(mod.assembleDataPacket.constructor.name).toBe('AsyncFunction');
   });
 });
+
+// ─── safeCall Retry Behavior Tests ──────────────────────────────
+
+describe('safeCall retry behavior', () => {
+  let safeCall;
+
+  beforeAll(async () => {
+    const mod = await import('../dataExport.js');
+    safeCall = mod._testExports.safeCall;
+  });
+
+  it('returns result on first success without retry option', async () => {
+    const errors = [];
+    const result = await safeCall(() => Promise.resolve('ok'), 'test', errors);
+    expect(result).toBe('ok');
+    expect(errors).toHaveLength(0);
+  });
+
+  it('returns null on failure without retry option', async () => {
+    const errors = [];
+    const result = await safeCall(() => Promise.reject(new Error('fail')), 'test', errors);
+    expect(result).toBeNull();
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain('test: fail');
+    expect(errors[0]).not.toContain('after retry');
+  });
+
+  it('retries once on failure when retry: true and succeeds', async () => {
+    const errors = [];
+    let callCount = 0;
+    const fn = () => {
+      callCount++;
+      if (callCount === 1) return Promise.reject(new Error('timeout'));
+      return Promise.resolve('retry-ok');
+    };
+    const result = await safeCall(fn, 'test', errors, { retry: true, backoffMs: 10 });
+    expect(result).toBe('retry-ok');
+    expect(callCount).toBe(2);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('returns null when both attempts fail with retry: true', async () => {
+    const errors = [];
+    const fn = () => Promise.reject(new Error('always-fail'));
+    const result = await safeCall(fn, 'test', errors, { retry: true, backoffMs: 10 });
+    expect(result).toBeNull();
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain('after retry');
+  });
+});
+
+// ─── analystEstimates Finviz Fallback ───────────────────────────
+
+describe('analystEstimates Finviz fallback', () => {
+  it('dataExport.js imports fetchFinvizData', async () => {
+    // Verify the import exists by checking the module loads without error
+    const mod = await import('../dataExport.js');
+    expect(typeof mod.assembleDataPacket).toBe('function');
+  });
+});

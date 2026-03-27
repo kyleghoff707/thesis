@@ -31,6 +31,7 @@ export const DataPacketSchema = z.object({
   events: z.looseObject({}).nullable().optional(),
   prices: z.looseObject({}).nullable().optional(),
   transcriptAvailability: z.looseObject({}).nullable().optional(),
+  filings: z.array(z.looseObject({})).nullable().optional(),
   caveats: z.array(z.string()).optional().default([]),
   assembledAt: z.string(),
 }).passthrough();

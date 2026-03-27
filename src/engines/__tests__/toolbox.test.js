@@ -146,22 +146,22 @@ describe('executeTool', () => {
 // ─── createToolExecutor Tests ───────────────────────────────────
 
 describe('createToolExecutor', () => {
-  it('getMetric retrieves dot-notation path from DataPacket', () => {
+  it('getMetric retrieves dot-notation path from DataPacket', async () => {
     const mockPacket = {
       growthRates: { earnings: { '5yr': 12.5, '10yr': 15.0 } },
       ruleOneScore: { moat: 85, management: 78, composite: 82 },
     };
     const executor = createToolExecutor(mockPacket);
-    expect(executor('getMetric', { metric: 'growthRates.earnings.5yr' })).toBe(12.5);
+    expect(await executor('getMetric', { metric: 'growthRates.earnings.5yr' })).toBe(12.5);
   });
 
-  it('getMetric returns undefined for missing path', () => {
+  it('getMetric returns undefined for missing path', async () => {
     const executor = createToolExecutor({ growthRates: {} });
-    const result = executor('getMetric', { metric: 'growthRates.earnings.5yr' });
+    const result = await executor('getMetric', { metric: 'growthRates.earnings.5yr' });
     expect(result).toBeUndefined();
   });
 
-  it('getFinancialLine retrieves yearly values from financials', () => {
+  it('getFinancialLine retrieves yearly values from financials', async () => {
     const mockPacket = {
       financials: {
         years: [2024, 2023, 2022],
@@ -173,14 +173,14 @@ describe('createToolExecutor', () => {
       },
     };
     const executor = createToolExecutor(mockPacket);
-    const result = executor('getFinancialLine', {
+    const result = await executor('getFinancialLine', {
       statement: 'income',
       field: 'revenues',
     });
     expect(result).toEqual({ 2024: 100000, 2023: 90000, 2022: 80000 });
   });
 
-  it('getFinancialLine filters by years when specified', () => {
+  it('getFinancialLine filters by years when specified', async () => {
     const mockPacket = {
       financials: {
         years: [2024, 2023, 2022],
@@ -192,7 +192,7 @@ describe('createToolExecutor', () => {
       },
     };
     const executor = createToolExecutor(mockPacket);
-    const result = executor('getFinancialLine', {
+    const result = await executor('getFinancialLine', {
       statement: 'income',
       field: 'revenues',
       years: [2024, 2023],
@@ -200,9 +200,9 @@ describe('createToolExecutor', () => {
     expect(result).toEqual({ 2024: 100000, 2023: 90000 });
   });
 
-  it('executor still supports standalone valuation tools', () => {
+  it('executor still supports standalone valuation tools', async () => {
     const executor = createToolExecutor({});
-    const result = executor('computeMOS', { fgr: 0.12, eps: 5.0, futurePE: 24 });
+    const result = await executor('computeMOS', { fgr: 0.12, eps: 5.0, futurePE: 24 });
     expect(result).not.toBeNull();
     expect(result.stickerPrice).toBeGreaterThan(0);
   });
@@ -225,7 +225,7 @@ describe('createToolExecutor', () => {
     }
   });
 
-  it('every tool in TOOL_DEFINITIONS has a handler in createToolExecutor', () => {
+  it('every tool in TOOL_DEFINITIONS has a handler in createToolExecutor', async () => {
     const executor = createToolExecutor({
       financials: { years: [], income: {}, balance: {}, cashFlow: {} },
       growthRates: {},
@@ -238,7 +238,7 @@ describe('createToolExecutor', () => {
     for (const name of dataTools) {
       let threwUnknown = false;
       try {
-        executor(name, {});
+        await executor(name, {});
       } catch (err) {
         if (err.message.includes('Unknown tool')) threwUnknown = true;
       }

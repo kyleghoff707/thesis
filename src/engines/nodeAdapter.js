@@ -13,6 +13,7 @@ import dotenv from 'dotenv';
 import { resolve, join } from 'path';
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
 import { parseHTML } from 'linkedom';
+import { DOMParser as XmlDOMParser } from '@xmldom/xmldom';
 
 // ─── Load .env.local ─────────────────────────────────────────
 // CRITICAL: Load .env.local specifically, NOT bare `import 'dotenv/config'`.
@@ -83,15 +84,40 @@ export function resolveURL(proxyURL) {
 // ─── DOM Parser (linkedom) ───────────────────────────────────
 
 /**
- * Create a DOMParser-compatible object using linkedom.
+ * Patch an @xmldom/xmldom document with minimal querySelector/querySelectorAll.
+ * xmldom only supports DOM Level 2 (getElementsByTagName, getElementsByTagNameNS).
+ * Several engines (insiders.js, compensation.js) call querySelector('parsererror')
+ * on XML documents. This polyfill handles simple tag-name-only selectors.
+ */
+function patchXmlDoc(doc) {
+  if (!doc.querySelector) {
+    doc.querySelector = function (selector) {
+      // Simple tag-name selector only (e.g., 'parsererror')
+      const els = this.getElementsByTagName(selector);
+      return els.length > 0 ? els[0] : null;
+    };
+  }
+  if (!doc.querySelectorAll) {
+    doc.querySelectorAll = function (selector) {
+      return Array.from(this.getElementsByTagName(selector));
+    };
+  }
+  return doc;
+}
+
+/**
+ * Create a DOMParser-compatible object using linkedom (HTML) or @xmldom/xmldom (XML).
  * Provides querySelectorAll, textContent, getAttribute — the subset
  * used by filingMarkdown.js for HTML-to-markdown conversion.
  * @returns {{ parseFromString: (html: string, type: string) => Document }}
  */
 export function createDOMParser() {
   return {
-    parseFromString(html, type) {
-      const { document } = parseHTML(html);
+    parseFromString(content, type) {
+      if (type === 'text/xml' || type === 'application/xml') {
+        return patchXmlDoc(new XmlDOMParser().parseFromString(content, type));
+      }
+      const { document } = parseHTML(content);
       return document;
     },
   };
@@ -165,4 +191,199 @@ export function cacheSet(key, value, ttlMs = 24 * 60 * 60 * 1000) {
     expiresAt: Date.now() + ttlMs,
     cachedAt: new Date().toISOString(),
   }));
+}
+
+// ─── Node.js Global Shims ──────────────────────────────────────
+// When running in Node.js, inject browser-like globals so engines
+// can run unmodified. This block must run at import time (side-effect)
+// so that all subsequent engine imports find these globals.
+
+if (IS_NODE) {
+  // 1. Global DOMParser via linkedom
+  // Engines (insiders.js, compensation.js, finviz.js, filingMarkdown.js)
+  // use `new DOMParser()` directly — inject it globally.
+  globalThis.DOMParser = class NodeDOMParser {
+    parseFromString(content, type) {
+      if (type === 'text/xml' || type === 'application/xml') {
+        return patchXmlDoc(new XmlDOMParser().parseFromString(content, type));
+      }
+      const { document } = parseHTML(content);
+      return document;
+    }
+  };
+
+  // 2. Fake IndexedDB globals to prevent idb package crashes
+  // The idb package references IDBRequest, IDBDatabase, IDBObjectStore,
+  // IDBIndex, IDBCursor, IDBTransaction as globals. Define minimal stubs.
+  // cacheStore.js checks `typeof indexedDB !== 'undefined'` (HAS_IDB).
+  // The idb openDB wraps indexedDB.open() result with promisifyRequest.
+  const FakeIDBClass = class {};
+  for (const name of [
+    'IDBRequest', 'IDBOpenDBRequest', 'IDBDatabase', 'IDBObjectStore',
+    'IDBIndex', 'IDBCursor', 'IDBTransaction', 'IDBKeyRange',
+  ]) {
+    if (typeof globalThis[name] === 'undefined') {
+      globalThis[name] = FakeIDBClass;
+    }
+  }
+  if (typeof globalThis.indexedDB === 'undefined') {
+    globalThis.indexedDB = {
+      open() {
+        const listeners = {};
+        const req = Object.create(FakeIDBClass.prototype);
+        Object.assign(req, {
+          result: null,
+          error: new Error('IndexedDB not available in Node.js'),
+          readyState: 'done',
+          onerror: null,
+          onsuccess: null,
+          onupgradeneeded: null,
+          addEventListener(evt, fn) {
+            if (!listeners[evt]) listeners[evt] = [];
+            listeners[evt].push(fn);
+          },
+          removeEventListener(evt, fn) {
+            if (listeners[evt]) {
+              listeners[evt] = listeners[evt].filter(f => f !== fn);
+            }
+          },
+          dispatchEvent() { return true; },
+        });
+        // Fire error asynchronously — idb's promisifyRequest listens via addEventListener('error', ...)
+        setTimeout(() => {
+          const errorHandlers = listeners['error'] || [];
+          for (const fn of errorHandlers) fn();
+          if (req.onerror) req.onerror({ target: req });
+        }, 0);
+        return req;
+      },
+    };
+  }
+
+  // 3. Global localStorage shim (Map-backed)
+  // cache.js and several engines use localStorage directly for
+  // small-key caching. This prevents ReferenceError in Node.js.
+  if (typeof globalThis.localStorage === 'undefined') {
+    const _store = new Map();
+    globalThis.localStorage = {
+      getItem(k) { return _store.get(k) ?? null; },
+      setItem(k, v) { _store.set(k, String(v)); },
+      removeItem(k) { _store.delete(k); },
+      key(i) { return [..._store.keys()][i] ?? null; },
+      get length() { return _store.size; },
+      clear() { _store.clear(); },
+    };
+  }
+
+  // 4. Expose file-based cache for cache.js Node routing
+  // cache.js checks globalThis.__nodeCache to redirect all
+  // cacheGet/cacheSet/cacheGetAsync to file-based storage.
+  globalThis.__nodeCache = { cacheGet, cacheSet };
+
+  // 5. Patch fetch to intercept Vite middleware URLs
+  // In the browser, engines call /api/yahoo-summary/:ticker etc.
+  // which are Vite middleware endpoints (not simple proxies).
+  // In Node.js, we intercept these and call the underlying
+  // libraries directly (yahoo-finance2, cheerio).
+  const _origFetch = globalThis.fetch;
+  globalThis.fetch = async function patchedFetch(url, opts = {}) {
+    const urlStr = typeof url === 'string' ? url : url.toString();
+
+    // Yahoo Summary middleware interception (dev path)
+    // AND Yahoo v10 quoteSummary (production path — engines use this when isDev is false)
+    // Both need to route through yahoo-finance2 for crumb/cookie auth.
+    const yahooV10Match = urlStr.match(
+      /^https:\/\/query\d\.finance\.yahoo\.com\/v10\/finance\/quoteSummary\/([^?]+)/
+    );
+    if (yahooV10Match) {
+      try {
+        const ticker = decodeURIComponent(yahooV10Match[1]);
+        const qs = urlStr.split('?')[1] || '';
+        const params = new URLSearchParams(qs);
+        const modules = params.has('modules')
+          ? params.get('modules').split(',').map(m => m.trim()).filter(Boolean)
+          : undefined;
+        const { yahooSummary } = await import('./nodeYahoo.js');
+        const data = await yahooSummary(ticker, modules);
+        return new Response(JSON.stringify({ quoteSummary: { result: [data] } }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    if (urlStr.startsWith('/api/yahoo-summary/')) {
+      try {
+        const pathAndQs = urlStr.replace('/api/yahoo-summary/', '');
+        const [tickerPart, qs] = pathAndQs.split('?');
+        const ticker = decodeURIComponent(tickerPart);
+        const params = new URLSearchParams(qs || '');
+        const modules = params.has('modules')
+          ? params.get('modules').split(',').map(m => m.trim()).filter(Boolean)
+          : undefined;
+        const { yahooSummary } = await import('./nodeYahoo.js');
+        const data = await yahooSummary(ticker, modules);
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Yahoo Quotes middleware interception
+    if (urlStr.startsWith('/api/yahoo-quotes/')) {
+      try {
+        const tickerStr = urlStr.replace('/api/yahoo-quotes/', '').split('?')[0];
+        const { yahooQuotes } = await import('./nodeYahoo.js');
+        const data = await yahooQuotes(tickerStr);
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Finviz middleware interception
+    if (urlStr.startsWith('/api/finviz/')) {
+      try {
+        const ticker = decodeURIComponent(
+          urlStr.replace('/api/finviz/', '').split('?')[0]
+        );
+        const { finvizData } = await import('./nodeFinviz.js');
+        const data = await finvizData(ticker);
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Standard proxy resolution for SEC/EDGAR/Yahoo URLs
+    const resolvedURL = resolveURL(urlStr);
+    const headers = {
+      'User-Agent': 'Thes1s/1.0 (contact@thes1s.com)',
+      ...opts.headers,
+    };
+    return _origFetch(resolvedURL, { ...opts, headers });
+  };
 }

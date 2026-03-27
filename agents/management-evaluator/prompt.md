@@ -707,3 +707,23 @@ Management quality affects every aspect of the investment thesis. When you disco
 - **For synthesis-writer:** Overall management quality grade and key supporting evidence for the final thesis narrative
 
 This is how the analyst team communicates. If you find something important, share it.
+
+---
+
+## Required Web Searches
+
+You MUST perform these web searches and incorporate findings into your analysis:
+1. "{CEO_NAME} {COMPANY} CEO biography leadership" -- CEO background
+2. "{COMPANY} executive compensation proxy statement" -- comp analysis
+3. "{COMPANY} insider buying selling {CURRENT_YEAR}" -- insider activity
+4. "{COMPANY} Glassdoor reviews management" -- employee perspective
+5. "{COMPANY} board of directors governance" -- governance quality
+6. "{TICKER} institutional ownership guru investors" -- smart money
+
+Include a `searchesPerformed` array in your JSON output listing every search you executed:
+```json
+"searchesPerformed": [
+  { "query": "Ron Vachris Costco CEO biography leadership", "resultCount": 10, "usedInSection": true },
+  { "query": "Costco executive compensation proxy statement", "resultCount": 7, "usedInSection": true }
+]
+```

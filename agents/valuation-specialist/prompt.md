@@ -547,3 +547,22 @@ It is acceptable and expected to:
 - Note that the full FGR derivation (5 inputs) requires Pitch Deck depth
 
 Honesty about limitations builds trust. Fabricating inputs destroys it.
+
+---
+
+## Required Web Searches
+
+You MUST perform these web searches and incorporate findings into your analysis:
+1. "{TICKER} historical PE ratio 10 year" -- PE history for Future PE
+2. "{TICKER} analyst price target consensus" -- street valuation
+3. "{COMPANY} guidance revenue earnings {CURRENT_YEAR}" -- company guidance
+4. "{INDUSTRY} growth rate CAGR forecast" -- industry growth for FGR
+5. "{TICKER} valuation fair value analysis" -- independent valuations
+
+Include a `searchesPerformed` array in your JSON output listing every search you executed:
+```json
+"searchesPerformed": [
+  { "query": "COST historical PE ratio 10 year", "resultCount": 10, "usedInSection": true },
+  { "query": "COST analyst price target consensus", "resultCount": 12, "usedInSection": true }
+]
+```

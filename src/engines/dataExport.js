@@ -6,8 +6,9 @@
 // Failed engines set their field to null and log to the errors array.
 
 import { fetchEdgarStatements } from './edgarFinancials.js';
-import { fetchCompanyInfo } from './edgar.js';
+import { fetchCompanyInfo, fetchFilings } from './edgar.js';
 import { classifyIndustryType } from './industryClassifier.js';
+import { classifyCompany } from './thes1sClassification.js';
 import { computeAllGrowthRates } from './growthRates.js';
 import { computeReturnMetrics, computeDebtMetrics } from './returnMetrics.js';
 import { computeFreeCashFlow } from './freeCashFlow.js';
@@ -19,10 +20,13 @@ import { fetchCompensation } from './compensation.js';
 import { fetchPeersByTier } from './peers.js';
 import { fetchPeerFrameData, computePeerMetrics, computePeerScores } from './peerMetrics.js';
 import { fetchAnalystEstimates } from './analystEstimates.js';
+import { fetchFinvizData } from './finviz.js';
 import { fetchCompanyEvents } from './companyEvents.js';
 import { fetchPrices, latestPrice } from './prices.js';
 import { fetchBatchQuotes } from './batchQuotes.js';
 import { fetchTranscriptList } from './transcripts.js';
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // ─── DataPacket Assembly ────────────────────────────────────────
 
@@ -41,29 +45,32 @@ import { fetchTranscriptList } from './transcripts.js';
 export async function assembleDataPacket(ticker) {
   const errors = [];
 
-  // ── Step 1: Core financial data (sequential — others depend on this) ──
+  // ── Step 1: Core financial data (parallel — companyInfo only needs ticker, not statements) ──
 
-  let statements = null;
-  let companyInfo = null;
+  const [statementsResult, companyInfoResult] = await Promise.allSettled([
+    fetchEdgarStatements(ticker).catch(err => { errors.push(`edgarFinancials: ${err.message}`); return null; }),
+    fetchCompanyInfo(ticker).catch(err => { errors.push(`companyInfo: ${err.message}`); return null; }),
+  ]);
 
-  try {
-    statements = await fetchEdgarStatements(ticker);
-  } catch (err) {
-    errors.push(`edgarFinancials: ${err.message}`);
-  }
+  const statements = statementsResult.status === 'fulfilled' ? statementsResult.value : null;
+  let companyInfo = companyInfoResult.status === 'fulfilled' ? companyInfoResult.value : null;
 
-  try {
-    companyInfo = await fetchCompanyInfo(ticker);
-  } catch (err) {
-    errors.push(`companyInfo: ${err.message}`);
-  }
-
-  // Classification from EDGAR SIC code
+  // Classification from EDGAR SIC code + Thes1s taxonomy
   const sicCode = companyInfo?.sic || statements?.industryType || '';
+  const thes1sClass = classifyCompany(
+    ticker,
+    companyInfo?.cik || null,
+    sicCode,
+    companyInfo?.sicDescription || ''
+  );
   const classification = {
     industryType: statements?.industryType || classifyIndustryType(sicCode),
     sicCode: companyInfo?.sic || '',
     sicDescription: companyInfo?.sicDescription || '',
+    // Thes1s taxonomy fields needed by peers.js fetchPeersByTier
+    sector: thes1sClass?.sector || null,
+    industryGroup: thes1sClass?.industryGroup || null,
+    industry: thes1sClass?.industry || null,
   };
 
   // ── Step 2: Computed metrics (parallel — depend only on financials) ──
@@ -97,20 +104,101 @@ export async function assembleDataPacket(ticker) {
     safeCall(() => fetchInsidersForTicker(ticker), 'insiders', errors),
     safeCall(() => fetchCompensation(ticker), 'compensation', errors),
     safeCall(() => fetchPeersByTier('industry', classification), 'peers', errors),
-    safeCall(() => fetchAnalystEstimates(ticker), 'analystEstimates', errors),
-    safeCall(() => fetchCompanyEvents(ticker), 'events', errors),
-    safeCall(() => fetchPrices(ticker, '10y'), 'prices', errors),
-    safeCall(() => fetchTranscriptList(ticker), 'transcripts', errors),
+    safeCall(() => fetchAnalystEstimates(ticker), 'analystEstimates', errors, { retry: true }),
+    safeCall(() => fetchCompanyEvents(ticker), 'events', errors, { retry: true }),
+    safeCall(() => fetchPrices(ticker, '10y'), 'prices', errors, { retry: true }),
+    safeCall(() => fetchTranscriptList(ticker), 'transcripts', errors, { retry: true }),
+    safeCall(() => fetchFilingList(ticker), 'filings', errors),
   ]);
 
   const gurus = step3[0].value ?? null;
   const insiders = step3[1].value ?? null;
   const compensation = step3[2].value ?? null;
   const peers = step3[3].value ?? null;
-  const analystEstimates = step3[4].value ?? null;
+  let analystEstimates = step3[4].value ?? null;
   const events = step3[5].value ?? null;
-  const prices = step3[6].value ?? null;
+  let prices = step3[6].value ?? null;
   const transcriptList = step3[7].value ?? null;
+  const filings = step3[8].value ?? null;
+
+  // Price fallback for Node.js (priceStore.js uses IndexedDB which fails in Node)
+  let yahooQuoteData = null;
+  if (!prices && typeof window === 'undefined') {
+    try {
+      const { yahooQuotes } = await import('./nodeYahoo.js');
+      const quotes = await yahooQuotes(ticker);
+      if (quotes && quotes.length > 0) {
+        yahooQuoteData = quotes[0];
+        prices = [{
+          date: new Date().toISOString().split('T')[0],
+          close: yahooQuoteData.price,
+          change: yahooQuoteData.change,
+          changePct: yahooQuoteData.changePct,
+        }];
+      }
+    } catch (e) {
+      errors.push(`priceFallback: ${e.message}`);
+    }
+  }
+
+  // Yahoo assetProfile enrichment for Node.js (description, employees, HQ)
+  // Retries once on timeout since yahoo-finance2 crumb auth can be slow on first call.
+  if (typeof window === 'undefined' && companyInfo) {
+    const MAX_YAHOO_TRIES = 2;
+    for (let attempt = 1; attempt <= MAX_YAHOO_TRIES; attempt++) {
+      try {
+        const { yahooSummary } = await import('./nodeYahoo.js');
+        const summary = await yahooSummary(ticker);
+        const ap = summary?.assetProfile;
+        if (ap) {
+          if (!companyInfo.description && ap.longBusinessSummary) companyInfo.description = ap.longBusinessSummary;
+          if (!companyInfo.employees && ap.fullTimeEmployees) companyInfo.employees = ap.fullTimeEmployees;
+          if (!companyInfo.headquarters && ap.city) companyInfo.headquarters = [ap.city, ap.state, ap.country].filter(Boolean).join(', ');
+          if ((!companyInfo.website || companyInfo.website === '') && ap.website) companyInfo.website = ap.website;
+        }
+        // Wire market cap from quote data
+        if (!companyInfo.marketCap && yahooQuoteData?.marketCap) companyInfo.marketCap = yahooQuoteData.marketCap;
+
+        // analystEstimates from same Yahoo call (Fix 4: bypasses import.meta.env.DEV routing)
+        if (!analystEstimates) {
+          const et = summary?.earningsTrend;
+          const fd = summary?.financialData;
+          const rt = summary?.recommendationTrend;
+          if (et || fd || rt) {
+            analystEstimates = { earningsTrend: et || null, financialData: fd || null, recommendationTrend: rt || null };
+          }
+        }
+        break; // success — exit retry loop
+      } catch (e) {
+        if (attempt < MAX_YAHOO_TRIES && e.message.includes('timeout')) {
+          // Retry once on timeout — yahoo-finance2 crumb/cookie auth can be slow on first call
+          continue;
+        }
+        errors.push(`yahooEnrichment: ${e.message}`);
+      }
+    }
+  }
+
+  // Finviz fallback for analystEstimates (per D-08)
+  if (!analystEstimates) {
+    try {
+      const finviz = await fetchFinvizData(ticker);
+      if (finviz?.epsNext5Y != null) {
+        analystEstimates = {
+          earningsTrend: null,
+          financialData: null,
+          recommendationTrend: null,
+          growthRate: finviz.epsNext5Y,
+          priceTargets: finviz.targetPrice ? { mean: finviz.targetPrice } : null,
+          recommendation: finviz.recom ? { score: finviz.recom } : null,
+          _source: 'finviz-fallback',
+          _fetchedAt: Date.now(),
+        };
+      }
+    } catch (e) {
+      errors.push(`analystEstimates-finviz-fallback: ${e.message}`);
+    }
+  }
 
   // ── Step 4: Dependent data (depends on previous steps) ──
 
@@ -122,7 +210,9 @@ export async function assembleDataPacket(ticker) {
     const latestYear = statements?.years?.[0] || new Date().getFullYear();
 
     try {
-      peerMetrics = await computePeerScores(peerCIKs, latestYear);
+      const raw = await computePeerScores(peerCIKs, latestYear);
+      // Fix: computePeerScores returns a Map; JSON.stringify(Map) = '{}'
+      peerMetrics = raw instanceof Map ? Object.fromEntries(raw) : raw;
     } catch (err) {
       errors.push(`peerMetrics: ${err.message}`);
     }
@@ -181,6 +271,34 @@ export async function assembleDataPacket(ticker) {
     ? { count: transcriptList.length, latestQuarter: transcriptList[0]?.title || null }
     : null;
 
+  // ── Wire Yahoo quote data into keyMetrics price ratios ──
+
+  if (yahooQuoteData && keyMetrics?.metrics) {
+    const latestYear = statements?.years?.[0];
+    if (latestYear && keyMetrics.metrics[latestYear]) {
+      const yearMetrics = keyMetrics.metrics[latestYear];
+      if (!yearMetrics.price) yearMetrics.price = {};
+      if (yahooQuoteData.pe != null) yearMetrics.price.peRatio = yahooQuoteData.pe;
+      if (yahooQuoteData.priceToBook != null) yearMetrics.price.priceToBook = yahooQuoteData.priceToBook;
+    }
+  }
+
+  // ── TTM field aliases + BVPS derivation ──
+
+  const ttm = statements?.ttm || null;
+  if (ttm) {
+    // Fix 5: operating_cash_flow alias for net_cash_flow_from_operating_activities
+    if (ttm.cashFlow?.net_cash_flow_from_operating_activities && !ttm.cashFlow.operating_cash_flow) {
+      ttm.cashFlow.operating_cash_flow = ttm.cashFlow.net_cash_flow_from_operating_activities;
+    }
+    // Fix 6: derive book_value_per_share in TTM balance
+    if (ttm.balance && !ttm.balance.book_value_per_share) {
+      const equity = ttm.balance.stockholders_equity;
+      const shares = ttm.balance.common_shares_outstanding;
+      if (equity && shares) ttm.balance.book_value_per_share = equity / shares;
+    }
+  }
+
   // ── Assemble DataPacket ──
 
   return {
@@ -189,7 +307,7 @@ export async function assembleDataPacket(ticker) {
     classification,
     currentPrice,
     financials: statements ? { years: statements.years, income: statements.income, balance: statements.balance, cashFlow: statements.cashFlow } : null,
-    ttm: statements?.ttm || null,
+    ttm,
     growthRates,
     returnMetrics: returnMetrics || null,
     debtMetrics: derivedDebtMetrics || debtMetrics || null,
@@ -209,6 +327,7 @@ export async function assembleDataPacket(ticker) {
     events,
     prices: prices ? { data: prices, currentPrice } : null,
     transcriptAvailability,
+    filings,
     caveats: buildCaveats(classification),
     errors: errors.length > 0 ? errors : undefined,
     assembledAt: new Date().toISOString(),
@@ -217,10 +336,20 @@ export async function assembleDataPacket(ticker) {
 
 // ─── Helper: Safe engine call ───────────────────────────────────
 
-async function safeCall(fn, label, errors) {
+async function safeCall(fn, label, errors, { retry = false, backoffMs = 5000 } = {}) {
   try {
     return await fn();
   } catch (err) {
+    if (retry) {
+      // Retry once after backoff (per D-09)
+      await sleep(backoffMs);
+      try {
+        return await fn();
+      } catch (retryErr) {
+        errors.push(`${label}: ${retryErr.message} (after retry)`);
+        return null;
+      }
+    }
     errors.push(`${label}: ${err.message}`);
     return null;
   }
@@ -240,10 +369,11 @@ async function fetchGurusForTicker(ticker) {
 // ─── Helper: Fetch insider data for a ticker ────────────────────
 
 async function fetchInsidersForTicker(ticker) {
-  const transactions = await fetchInsiderTransactions(ticker);
-  if (!transactions || transactions.length === 0) return { summary: null, recentTransactions: [] };
-  const summary = computeInsiderSummary(transactions);
-  return { summary, recentTransactions: transactions.slice(0, 50) };
+  const result = await fetchInsiderTransactions(ticker);
+  // fetchInsiderTransactions returns { transactions, monthlyAggregates, summary, ... }
+  const txns = result?.transactions || [];
+  if (txns.length === 0) return { summary: result?.summary || null, recentTransactions: [] };
+  return { summary: result.summary, recentTransactions: txns.slice(0, 50) };
 }
 
 // ─── Helper: Derive debt metrics from financials ────────────────
@@ -274,6 +404,38 @@ function deriveDebtMetrics(statements, fcf) {
   };
 }
 
+// ─── Helper: Fetch filing list for DataPacket ───────────────────
+
+const FILING_FORMS = new Set(['10-K', '10-Q', '8-K', 'DEF 14A']);
+const MAX_PER_FORM = 20;
+
+/**
+ * Fetch a filtered list of SEC filings for the DataPacket.
+ * Uses the existing fetchFilings engine, then filters to forms
+ * of interest and limits to MAX_PER_FORM per form type.
+ * @param {string} ticker
+ * @returns {Promise<object[]>} Array of { form, filingDate, accessionNumber, primaryDocument }
+ */
+async function fetchFilingList(ticker) {
+  const allFilings = await fetchFilings(ticker);
+  if (!allFilings || allFilings.length === 0) return null;
+
+  const counts = {};
+  const result = [];
+  for (const f of allFilings) {
+    if (!FILING_FORMS.has(f.form)) continue;
+    counts[f.form] = (counts[f.form] || 0) + 1;
+    if (counts[f.form] > MAX_PER_FORM) continue;
+    result.push({
+      form: f.form,
+      filingDate: f.filingDate,
+      accessionNumber: f.accessionNumber,
+      primaryDocument: f.primaryDocument,
+    });
+  }
+  return result.length > 0 ? result : null;
+}
+
 // ─── Industry-Aware Caveats ─────────────────────────────────────
 
 /**
@@ -300,3 +462,6 @@ export function buildCaveats(classification) {
 
   return caveats;
 }
+
+// Test-only exports (matches codebase convention — see companyAdapter.js, edgarFinancials.js)
+export const _testExports = { safeCall };
