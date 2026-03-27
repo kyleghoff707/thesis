@@ -420,7 +420,10 @@ For each section you generate, produce a JSON object with ALL of these fields:
   ],
   "generatedAt": "ISO timestamp",
   "modelUsed": "model identifier",
-  "tokenCost": { "input": 0, "output": 0 }
+  "tokenCost": { "input": 0, "output": 0 },
+  "searchesPerformed": [
+    { "query": "string", "resultCount": 0, "usedInSection": true }
+  ]
 }
 ```
 
@@ -444,6 +447,7 @@ For each section you generate, produce a JSON object with ALL of these fields:
 - `generatedAt` -- ISO 8601 timestamp of generation
 - `modelUsed` -- Model identifier string
 - `tokenCost` -- Token usage (set to 0 if unknown)
+- `searchesPerformed` -- Array of web searches performed. MUST NOT be empty for non-exempt agents. Each entry: query (the search string), resultCount (number of results), usedInSection (whether findings were incorporated). This field is validated by the pipeline -- omitting it triggers a quality failure.
 
 ---
 

@@ -351,9 +351,15 @@ Every section you produce MUST conform to this schema:
   ],
   generatedAt: string,            // ISO timestamp
   modelUsed: string,              // e.g., "claude-sonnet-4-6"
-  tokenCost: { input: number, output: number }
+  tokenCost: { input: number, output: number },
+  searchesPerformed: [
+    { query: string, resultCount: number, usedInSection: boolean }
+  ]
 }
 ```
+
+**Field requirements:**
+- `searchesPerformed` -- Array of web searches performed. MUST NOT be empty for non-exempt agents. Each entry: query (the search string), resultCount (number of results), usedInSection (whether findings were incorporated). This field is validated by the pipeline -- omitting it triggers a quality failure.
 
 ### Section 5: Valuation Summary (One Pager)
 

@@ -399,6 +399,8 @@ There are three types of citations. Use ALL that apply:
 
 **Rule:** If you state a number, it needs a citation. If you make a qualitative claim, it needs a citation. If you can't cite it, flag it in `primarySourceInsights` as needing verification -- do NOT leave it uncited in the narrative.
 
+**Anti-pattern: flat sources arrays.** Do NOT include `"sources": ["url1", "url2"]` anywhere in your `data` field objects. ALL source attribution MUST go through the `citations` array using the canonical format `{ "id": number, "ref": string, "text": string, "source": string }`. If you need to cite a source for an acquisition, insider transaction, or other data point, add it to the top-level `citations` array -- not as a nested `sources` field within `data`.
+
 ---
 
 ## Output Format: ReportSectionSchema
@@ -436,7 +438,10 @@ For each section you generate, produce a JSON object with ALL of these fields:
   ],
   "generatedAt": "ISO timestamp",
   "modelUsed": "model identifier",
-  "tokenCost": { "input": 0, "output": 0 }
+  "tokenCost": { "input": 0, "output": 0 },
+  "searchesPerformed": [
+    { "query": "string", "resultCount": 0, "usedInSection": true }
+  ]
 }
 ```
 
@@ -460,6 +465,7 @@ For each section you generate, produce a JSON object with ALL of these fields:
 - `generatedAt` -- ISO 8601 timestamp of generation
 - `modelUsed` -- Model identifier string
 - `tokenCost` -- Token usage (set to 0 if unknown)
+- `searchesPerformed` -- Array of web searches performed. MUST NOT be empty for non-exempt agents. Each entry: query (the search string), resultCount (number of results), usedInSection (whether findings were incorporated). This field is validated by the pipeline -- omitting it triggers a quality failure.
 
 ---
 

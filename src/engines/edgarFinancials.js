@@ -309,18 +309,10 @@ const BALANCE_TAXONOMY = [
     'EmployeeRelatedLiabilitiesCurrent',
   ]},
   { field: 'short_term_debt', unit: 'USD', tags: [
-    'DebtCurrent',
     'ShortTermBorrowings',
+    'DebtCurrent',
     'CommercialPaper',
     'LineOfCredit',
-    'ShortTermBankLoansAndNotesPayable',
-  ]},
-  // Component fields for short-term debt summation (AAPL, others report separately)
-  { field: 'commercial_paper', unit: 'USD', tags: [
-    'CommercialPaper',
-  ]},
-  { field: 'short_term_borrowings', unit: 'USD', tags: [
-    'ShortTermBorrowings',
     'ShortTermBankLoansAndNotesPayable',
   ]},
   { field: 'current_portion_lt_debt', unit: 'USD', tags: [
@@ -805,7 +797,6 @@ function getDerivedFormula(field, inc, bal, cf) {
       if (bal.current_liabilities != null && bal.noncurrent_liabilities != null)
         return 'current_liabilities + noncurrent_liabilities';
       return 'liabilities_and_equity - equity - minority_interest';
-    case 'short_term_debt': return 'max(direct_tag, commercial_paper + short_term_borrowings)';
     case 'total_debt':
       if (bal.liabilities != null && bal.liabilities > 0
         && ((bal.short_term_debt ?? 0) + (bal.current_portion_lt_debt ?? 0) + (bal.long_term_debt ?? 0) + (bal.finance_lease_liability_current ?? 0) + (bal.finance_lease_liability_noncurrent ?? 0)) / bal.liabilities < 0.05
@@ -821,6 +812,11 @@ function getDerivedFormula(field, inc, bal, cf) {
     case 'invested_capital': return 'equity + long_term_debt - cash';
     case 'net_tangible_assets': return 'equity - goodwill - intangible_assets';
     case 'total_capitalization': return 'equity + total_debt';
+    case 'other_current_liabilities': return 'current_liabilities - accounts_payable - accrued_liabilities - short_term_debt - current_portion_lt_debt - operating_lease_current - finance_lease_current - deferred_revenue_current - taxes_payable';
+    case 'other_noncurrent_assets': return 'noncurrent_assets - property_plant_equipment - goodwill - intangible_assets - long_term_investments - deferred_tax_assets';
+    case 'other_noncurrent_liabilities': return 'noncurrent_liabilities - long_term_debt - operating_lease_noncurrent - finance_lease_noncurrent - deferred_tax_liabilities - pension_liabilities - deferred_revenue_noncurrent';
+    case 'other_current_assets': return 'current_assets - cash - short_term_investments - accounts_receivable - inventory - prepaid_expenses';
+    case 'other_income_expense': return 'income_before_tax - operating_income_loss - interest_income + interest_expense';
 
     // Cash Flow
     case 'depreciation_amortization':
@@ -1022,24 +1018,6 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       bal.liabilities = bal.liabilities_and_equity - bal.equity - (bal.minority_interest ?? 0);
     }
 
-    // Short-term debt component summation: Companies like AAPL report CommercialPaper +
-    // ShortTermBorrowings as separate line items, but the first-tag-wins for short_term_debt
-    // picks only one (e.g., DebtCurrent = $10B misses $6B commercial paper, or vice versa).
-    // Sum the separately-extracted components when they provide a larger total.
-    {
-      const components = [
-        bal.commercial_paper,
-        bal.short_term_borrowings,
-      ].filter(v => v != null && v > 0);
-      const componentSum = components.reduce((s, v) => s + v, 0);
-      // Use component sum if it exceeds the direct first-tag-wins value.
-      // This catches AAPL where CommercialPaper ($6B) + ShortTermBorrowings are separate
-      // from the aggregate DebtCurrent tag.
-      if (componentSum > 0 && (bal.short_term_debt == null || componentSum > bal.short_term_debt)) {
-        bal.short_term_debt = componentSum;
-      }
-    }
-
     // Total Debt = Traditional Debt + Finance/Capital Lease Obligations (matches Morningstar)
     // Includes finance leases, excludes operating leases.
     const std = bal.short_term_debt ?? 0;
@@ -1136,8 +1114,10 @@ function computeDerivedFields(years, income, balance, cashFlow) {
 
     // ── Residual "Other" Fields (Gated) ──
     // MS DataID 23151 confirmed formula for OtherCurrentLiabilities.
-    // Only compute when 95%+ of named CL items are non-null for this company-year.
+    // Only compute when 95%+ of named items are non-null for this company-year.
     // This prevents B7 error amplification from incomplete named item extraction.
+
+    // OtherCurrentLiabilities = CL - sum(8 named CL items)
     if (bal.other_current_liabilities == null && bal.current_liabilities != null) {
       const clNamedItems = [
         bal.accounts_payable,
@@ -1150,12 +1130,70 @@ function computeDerivedFields(years, income, balance, cashFlow) {
         bal.taxes_payable,
       ];
       const clCoverage = clNamedItems.filter(v => v != null).length / clNamedItems.length;
-
       if (clCoverage >= 0.95) {
         const namedSum = clNamedItems.reduce((sum, v) => sum + (v ?? 0), 0);
         const residual = bal.current_liabilities - namedSum;
         if (residual >= 0) {
           bal.other_current_liabilities = residual;
+        }
+      }
+    }
+
+    // OtherNonCurrentAssets = noncurrent_assets - sum(5 named NCA items)
+    // PP&E already includes ROU (merged at line ~968), so do NOT subtract operating_lease_rou_asset
+    if (bal.other_noncurrent_assets == null && bal.noncurrent_assets != null) {
+      const ncaNamedItems = [
+        bal.property_plant_equipment,
+        bal.goodwill,
+        bal.intangible_assets,
+        bal.long_term_investments,
+        bal.deferred_tax_assets,
+      ];
+      const ncaCoverage = ncaNamedItems.filter(v => v != null).length / ncaNamedItems.length;
+      if (ncaCoverage >= 0.95) {
+        const namedSum = ncaNamedItems.reduce((sum, v) => sum + (v ?? 0), 0);
+        const residual = bal.noncurrent_assets - namedSum;
+        if (residual >= 0) {
+          bal.other_noncurrent_assets = residual;
+        }
+      }
+    }
+
+    // OtherNonCurrentLiabilities = noncurrent_liabilities - sum(6 named NCL items)
+    if (bal.other_noncurrent_liabilities == null && bal.noncurrent_liabilities != null) {
+      const nclNamedItems = [
+        bal.long_term_debt,
+        bal.operating_lease_liability_noncurrent,
+        bal.finance_lease_liability_noncurrent,
+        bal.deferred_tax_liabilities,
+        bal.pension_liabilities,
+        bal.deferred_revenue_noncurrent,
+      ];
+      const nclCoverage = nclNamedItems.filter(v => v != null).length / nclNamedItems.length;
+      if (nclCoverage >= 0.95) {
+        const namedSum = nclNamedItems.reduce((sum, v) => sum + (v ?? 0), 0);
+        const residual = bal.noncurrent_liabilities - namedSum;
+        if (residual >= 0) {
+          bal.other_noncurrent_liabilities = residual;
+        }
+      }
+    }
+
+    // OtherCurrentAssets = current_assets - sum(5 named CA items)
+    if (bal.other_current_assets == null && bal.current_assets != null) {
+      const caNamedItems = [
+        bal.cash,
+        bal.short_term_investments,
+        bal.accounts_receivable,
+        bal.inventory,
+        bal.prepaid_expenses,
+      ];
+      const caCoverage = caNamedItems.filter(v => v != null).length / caNamedItems.length;
+      if (caCoverage >= 0.95) {
+        const namedSum = caNamedItems.reduce((sum, v) => sum + (v ?? 0), 0);
+        const residual = bal.current_assets - namedSum;
+        if (residual >= 0) {
+          bal.other_current_assets = residual;
         }
       }
     }
@@ -1313,7 +1351,7 @@ function computeDerivedFields(years, income, balance, cashFlow) {
     }
 
     // B7/B8: Residual "Other" CF categories — still blocked for cash flow.
-    // Balance sheet residuals (OtherCL) are now gated at 95% named item coverage.
+    // Balance sheet residuals (OtherCL, OtherNCA, OtherNCL, OtherCA) are now gated at 95% named item coverage.
     // CF residuals remain higher risk due to investment/D&A error amplification.
 
     // Ending cash position = current year balance sheet cash (prefer broader definition including restricted cash)
@@ -1713,18 +1751,14 @@ export async function fetchEdgarQuarterly(ticker, options = {}) {
 // Merge overlay-extracted fields into base statements.
 // Overlay fields are additive — they never overwrite base fields.
 
-// Overlay merge strategy:
-// - For fields that ONLY exist in the overlay (additive): always add to base
-// - For fields that exist in BOTH base and overlay: overlay wins (more industry-specific)
-//   This handles REITs where the base `revenues` picks a narrow ASC 606 tag but
-//   the REIT overlay has broader tags like `Revenues` that resolve to total revenue.
 function mergeOverlayStatements(base, overlay, years) {
   for (const year of years) {
     if (!overlay[year]) continue;
     if (!base[year]) base[year] = {};
     for (const [field, value] of Object.entries(overlay[year])) {
-      // Overlay value always wins when present — it's more industry-specific
-      base[year][field] = value;
+      if (base[year][field] == null) {
+        base[year][field] = value;
+      }
     }
   }
 }
@@ -1734,8 +1768,9 @@ function mergeOverlayProvenance(baseProv, overlayProv, years) {
     if (!overlayProv[year]) continue;
     if (!baseProv[year]) baseProv[year] = {};
     for (const [field, prov] of Object.entries(overlayProv[year])) {
-      // Overlay provenance always wins when present
-      baseProv[year][field] = prov;
+      if (!baseProv[year][field]) {
+        baseProv[year][field] = prov;
+      }
     }
   }
 }

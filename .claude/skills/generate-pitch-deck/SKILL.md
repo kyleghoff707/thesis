@@ -433,6 +433,7 @@ After both agents complete:
    - `narrative` (string)
    - `citations` (array)
    - `redFlags` (array with at least 1 item)
+   - `searchesPerformed` (array -- required for non-exempt sections; exempt: psr_annual, psr_quarterly, synthesis, overall_verdict)
 
 3. **Save** each validated section to `.thes1s/reports/{TICKER}/sections/{section_key}.json`
 
@@ -645,6 +646,7 @@ Step 7: Phase 2 -- Financial Deep-Dive
 Same validation pattern as Phase 1, including:
 - **JSON Output Extraction Fallback (D-02-a):** Check if each output file exists after agent completes. If MISSING, extract JSON from agent response text and write via Bash `cat << 'SECTION_EOF'`.
 - **Retry Logic (D-02-d):** If an agent fails, wait 30 seconds and retry once. If retry fails, save with `status: "failed"` and continue.
+- **searchesPerformed check:** Verify `searchesPerformed` is a non-empty array for risk-analyst, valuation-specialist, management-evaluator, business-analyst, and competitor-evaluator sections. Log a warning if missing or empty -- this is the primary enforcement point for QUAL-07 search compliance.
 
 **Start section timers for parallel agents:**
 ```bash
@@ -783,6 +785,7 @@ Step 9: Phase 3 -- Risk & Valuation
 Same validation pattern as Phase 1, including:
 - **JSON Output Extraction Fallback (D-02-a):** Check if each output file exists. If MISSING, extract JSON from agent response and write via Bash.
 - **Retry Logic (D-02-d):** If an agent fails, wait 30 seconds and retry once. If retry fails, save with `status: "failed"`.
+- **searchesPerformed check:** Verify `searchesPerformed` is a non-empty array for risk-analyst, valuation-specialist, management-evaluator, business-analyst, and competitor-evaluator sections. Log a warning if missing or empty -- this is the primary enforcement point for QUAL-07 search compliance.
 
 Expected sections:
 - risk-analyst: `pest` (section 9)
