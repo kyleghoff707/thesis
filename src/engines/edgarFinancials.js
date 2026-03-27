@@ -309,11 +309,24 @@ const BALANCE_TAXONOMY = [
     'EmployeeRelatedLiabilitiesCurrent',
   ]},
   { field: 'short_term_debt', unit: 'USD', tags: [
-    'ShortTermBorrowings',
     'DebtCurrent',
+    'ShortTermBorrowings',
     'CommercialPaper',
     'LineOfCredit',
     'ShortTermBankLoansAndNotesPayable',
+    'NotesPayable',
+    'BankOverdrafts',
+  ]},
+  // Component fields for short-term debt summation
+  { field: 'commercial_paper', unit: 'USD', tags: [
+    'CommercialPaper',
+  ]},
+  { field: 'short_term_borrowings', unit: 'USD', tags: [
+    'ShortTermBorrowings',
+  ]},
+  { field: 'notes_payable_current', unit: 'USD', tags: [
+    'NotesPayable',
+    'NotesPayableRelatedPartiesCurrentAndNoncurrent',
   ]},
   { field: 'current_portion_lt_debt', unit: 'USD', tags: [
     'LongTermDebtCurrent',
@@ -347,6 +360,9 @@ const BALANCE_TAXONOMY = [
     'LongTermDebtNoncurrent',
     'LongTermDebt',
     'LongTermLineOfCredit',
+    // Convertible debt
+    'ConvertibleDebt',
+    'ConvertibleLongTermNotesPayable',
     // REIT-specific
     'SecuredDebt',
     'UnsecuredDebt',
@@ -817,6 +833,7 @@ function getDerivedFormula(field, inc, bal, cf) {
     case 'total_debt_with_leases': return 'total_debt + operating_lease_liabilities';
     case 'net_debt': return 'total_debt - cash';
     case 'payables_and_accrued': return 'accounts_payable + accrued_liabilities';
+    case 'short_term_debt': return 'commercial_paper + short_term_borrowings + notes_payable_current';
     case 'short_term_debt_and_leases': return 'short_term_debt + current_portion_lt_debt + finance_lease_liability_current';
     case 'lt_debt_and_leases_noncurrent': return 'long_term_debt + finance_lease_liability_noncurrent';
     case 'working_capital': return 'current_assets - current_liabilities';
@@ -1015,6 +1032,21 @@ function computeDerivedFields(years, income, balance, cashFlow) {
     // Liabilities nor LiabilitiesNoncurrent tags exist — 31+ companies)
     if (bal.liabilities == null && bal.liabilities_and_equity != null && bal.equity != null) {
       bal.liabilities = bal.liabilities_and_equity - bal.equity - (bal.minority_interest ?? 0);
+    }
+
+    // Short-term debt component summation: sum commercial_paper + short_term_borrowings + notes_payable_current
+    // when aggregate (DebtCurrent) is null or the component sum exceeds it.
+    // Note: does NOT include current_portion_lt_debt (tracked separately to avoid double-counting in total_debt).
+    {
+      const components = [
+        bal.commercial_paper,
+        bal.short_term_borrowings,
+        bal.notes_payable_current,
+      ].filter(v => v != null && v > 0);
+      const componentSum = components.reduce((s, v) => s + v, 0);
+      if (componentSum > 0 && (bal.short_term_debt == null || componentSum > bal.short_term_debt)) {
+        bal.short_term_debt = componentSum;
+      }
     }
 
     // Total Debt = Traditional Debt + Finance/Capital Lease Obligations (matches Morningstar)
