@@ -88,7 +88,7 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — S&P 500 FMP comparison infrastructure (ticker list, batch fetcher, tiered comparator, reporter, orchestrator)
+- [x] 04-01-PLAN.md — S&P 500 FMP comparison infrastructure (ticker list, batch fetcher, tiered comparator, reporter, orchestrator)
 - [ ] 04-02-PLAN.md — FMP data fetch + initial comparison + outlier investigation + iterative fix+validate cycle
 - [ ] 04-03-PLAN.md — Accounting identity checks at S&P 500 scale + comprehensive final report
 
@@ -111,5 +111,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4. Phase 5 can begin after Ph
 | 1. Comparison Harness | 2/2 | Complete   | 2026-03-26 |
 | 2. Multi-Source Triangulation | 3/3 | Complete | 2026-03-26 |
 | 3. Engine Fixes | 11/11 | Complete | 2026-03-26 |
-| 4. Scale Validation | 0/3 | In Progress | - |
+| 4. Scale Validation | 1/3 | In Progress | - |
 | 5. Compensation Engine | 0/TBD | Not started | - |

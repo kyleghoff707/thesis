@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase 03 Complete
-stopped_at: Phase 4 context gathered
-last_updated: "2026-03-27T03:58:09.022Z"
+status: Phase 04 In Progress
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-03-27T04:47:36Z"
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 16
-  completed_plans: 18
+  total_plans: 19
+  completed_plans: 19
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** 98%+ accuracy match to Morningstar across all US-listed equities, achieved by triangulating XBRL output against FMP, SimFin, and mstarpy — then fixing normalization rules so paid sources are never needed again.
-**Current focus:** Phase 03 complete — ready for Phase 04
+**Current focus:** Phase 04 — S&P 500 Scale Validation
 
 ## Current Position
 
-Phase: 03 (engine-fixes) — COMPLETE
-Plan: 11/11 complete
+Phase: 04 (scale-validation) — IN PROGRESS
+Plan: 1/3 complete
 
 ## Performance Metrics
 
@@ -46,6 +46,7 @@ Plan: 11/11 complete
 | Phase 03 P09 | 15min | 2 tasks | 4 files |
 | Phase 03 P10 | 17min | 2 tasks | 4 files |
 | Phase 03 P11 | 11min | 2 tasks | 5 files |
+| Phase 04 P01 | 5min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [Phase 03]: D&A broadening: 3% threshold guards against double-counting; only add components when primary DDA is within 3% of depreciation_only + amort
 - [Phase 03]: Residual Other fields: XBRL company-defined scope vs MS strict residual -- METHODOLOGY_DIFF, not fixable
 - [Phase 03]: Debt/investment/revenue: methodology handlers with ticker-aware variant for industry-specific revenue
+- [Phase 04]: FIELD_TIERS actual counts: 23 Tier1 + 32 Tier2 + 30 Tier3 = 85 (not 22/30/33 from plan text)
+- [Phase 04]: FMP fetch and comparison are separate scripts (fetch once, compare many times)
+- [Phase 04]: EDGAR cache for S&P 500 stored in validation/cache/edgar-sp500/ separate from MS comparison cache
 
 ### Pending Todos
 
@@ -89,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T03:58:09.013Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-scale-validation/04-CONTEXT.md
+Last session: 2026-03-27T04:47:36Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: None
