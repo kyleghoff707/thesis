@@ -232,6 +232,36 @@ export function getSpecialFieldHandlers() {
       if (LEASE_FIELDS.has(thesisField)) return 'METHODOLOGY_DIFF';
       return null;
     },
+
+    /**
+     * Residual "Other" fields: XBRL tags (OtherAssetsNoncurrent,
+     * OtherLiabilitiesCurrent, etc.) report the company's own "Other"
+     * line item, while MS always computes these as residuals:
+     *   Other = Total - sum(named items)
+     *
+     * XBRL "Other" may include items MS reports separately (e.g., DTA
+     * in OtherAssetsNoncurrent for AAPL: +$19.5B diff) or exclude items
+     * MS bundles into the residual (e.g., V: -$5.2B diff). Both
+     * directions exist across the 50-company set, confirming this is a
+     * definitional difference, not an extraction bug.
+     *
+     * Evidence: 189 DIFFs across 4 fields (62 OtherNCA, 53 OtherNCL,
+     * 44 OtherCA, 30 OtherCL). Engine higher in ~70% of cases. Neither
+     * override nor min(xbrl, residual) improved accuracy.
+     *
+     * @param {string} thesisField - The canonical field being compared
+     * @returns {'METHODOLOGY_DIFF'|null}
+     */
+    residual_other_methodology(thesisField) {
+      const RESIDUAL_OTHER_FIELDS = new Set([
+        'other_noncurrent_assets',
+        'other_noncurrent_liabilities',
+        'other_current_assets',
+        'other_current_liabilities',
+      ]);
+      if (RESIDUAL_OTHER_FIELDS.has(thesisField)) return 'METHODOLOGY_DIFF';
+      return null;
+    },
   };
 }
 

@@ -719,12 +719,12 @@ describe('Residual Other computation', () => {
     expect(balance[2024].other_current_liabilities).toBe(0);
   });
 
-  it('overrides existing XBRL OtherCL with residual when coverage >= 95%', () => {
+  it('does not overwrite existing OtherCL from XBRL tag', () => {
     const years = [2024];
     const income = { 2024: {} };
     const balance = { 2024: {
       current_liabilities: 50000000000,
-      other_current_liabilities: 12000000000, // XBRL value — broader than MS definition
+      other_current_liabilities: 12000000000, // Already has a value from direct XBRL extraction
       accounts_payable: 10000000000,
       accrued_liabilities: 8000000000,
       short_term_debt: 5000000000,
@@ -738,8 +738,8 @@ describe('Residual Other computation', () => {
 
     computeDerivedFields(years, income, balance, cashFlow);
 
-    // MS always re-derives residual: 50 - (10+8+5+3+2+1+4+2) = 15B
-    expect(balance[2024].other_current_liabilities).toBe(15000000000);
+    // Existing XBRL value preserved — XBRL vs MS residual is a METHODOLOGY_DIFF
+    expect(balance[2024].other_current_liabilities).toBe(12000000000);
   });
 
   it('computes OtherIncomeExpense when components available', () => {
@@ -1155,12 +1155,12 @@ describe('Residual Other computation: OtherCurrentLiabilities', () => {
     expect(balance[2024].other_current_liabilities).toBeUndefined();
   });
 
-  it('overrides existing XBRL OtherCL with MS residual when coverage >= 95%', () => {
+  it('preserves existing XBRL value for OtherCL (no-overwrite)', () => {
     const years = [2024];
     const income = { 2024: {} };
     const balance = { 2024: {
       current_liabilities: 20000000000,
-      other_current_liabilities: 999000000, // XBRL value — broader than MS definition
+      other_current_liabilities: 999000000, // existing XBRL value
       accounts_payable: 5000000000,
       accrued_liabilities: 3000000000,
       short_term_debt: 2000000000,
@@ -1174,8 +1174,7 @@ describe('Residual Other computation: OtherCurrentLiabilities', () => {
 
     computeDerivedFields(years, income, balance, cashFlow);
 
-    // MS residual: 20 - (5+3+2+1+0.5+0.2+1.5+0.8) = 6B
-    expect(balance[2024].other_current_liabilities).toBe(6000000000);
+    expect(balance[2024].other_current_liabilities).toBe(999000000);
   });
 });
 
@@ -1242,13 +1241,13 @@ describe('Residual Other computation: OtherNonCurrentAssets', () => {
     expect(balance[2024].other_noncurrent_assets).toBeUndefined();
   });
 
-  it('overrides existing XBRL OtherNCA with MS residual when coverage >= 95%', () => {
+  it('preserves existing XBRL value for OtherNCA (no-overwrite)', () => {
     const years = [2024];
     const income = { 2024: {} };
     const balance = { 2024: {
       assets: 100000000000,
       current_assets: 40000000000,
-      other_noncurrent_assets: 888000000, // XBRL value — broader than MS definition
+      other_noncurrent_assets: 888000000, // existing XBRL value
       property_plant_equipment: 20000000000,
       goodwill: 10000000000,
       intangible_assets: 5000000000,
@@ -1259,9 +1258,7 @@ describe('Residual Other computation: OtherNonCurrentAssets', () => {
 
     computeDerivedFields(years, income, balance, cashFlow);
 
-    // noncurrent_assets = 100 - 40 = 60B
-    // MS residual: 60 - (20+10+5+8+2) = 15B
-    expect(balance[2024].other_noncurrent_assets).toBe(15000000000);
+    expect(balance[2024].other_noncurrent_assets).toBe(888000000);
   });
 });
 
@@ -1330,13 +1327,13 @@ describe('Residual Other computation: OtherNonCurrentLiabilities', () => {
     expect(balance[2024].other_noncurrent_liabilities).toBeUndefined();
   });
 
-  it('overrides existing XBRL OtherNCL with MS residual when coverage >= 95%', () => {
+  it('preserves existing XBRL value for OtherNCL (no-overwrite)', () => {
     const years = [2024];
     const income = { 2024: {} };
     const balance = { 2024: {
       liabilities: 50000000000,
       current_liabilities: 15000000000,
-      other_noncurrent_liabilities: 777000000, // XBRL value — broader than MS definition
+      other_noncurrent_liabilities: 777000000, // existing XBRL value
       long_term_debt: 10000000000,
       operating_lease_liability_noncurrent: 4000000000,
       finance_lease_liability_noncurrent: 1000000000,
@@ -1348,9 +1345,7 @@ describe('Residual Other computation: OtherNonCurrentLiabilities', () => {
 
     computeDerivedFields(years, income, balance, cashFlow);
 
-    // noncurrent_liabilities = 50 - 15 = 35B
-    // MS residual: 35 - (10+4+1+3+2+0.5) = 14.5B
-    expect(balance[2024].other_noncurrent_liabilities).toBe(14500000000);
+    expect(balance[2024].other_noncurrent_liabilities).toBe(777000000);
   });
 });
 
@@ -1411,12 +1406,12 @@ describe('Residual Other computation: OtherCurrentAssets', () => {
     expect(balance[2024].other_current_assets).toBeUndefined();
   });
 
-  it('overrides existing XBRL OtherCA with MS residual when coverage >= 95%', () => {
+  it('preserves existing XBRL value for OtherCA (no-overwrite)', () => {
     const years = [2024];
     const income = { 2024: {} };
     const balance = { 2024: {
       current_assets: 30000000000,
-      other_current_assets: 666000000, // XBRL value — broader than MS definition
+      other_current_assets: 666000000, // existing XBRL value
       cash: 10000000000,
       short_term_investments: 5000000000,
       accounts_receivable: 4000000000,
@@ -1427,8 +1422,7 @@ describe('Residual Other computation: OtherCurrentAssets', () => {
 
     computeDerivedFields(years, income, balance, cashFlow);
 
-    // MS residual: 30 - (10+5+4+3+1) = 7B
-    expect(balance[2024].other_current_assets).toBe(7000000000);
+    expect(balance[2024].other_current_assets).toBe(666000000);
   });
 });
 

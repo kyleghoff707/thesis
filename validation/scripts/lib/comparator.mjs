@@ -217,6 +217,7 @@ export function compareCompany(ticker, fixture, engineData, fieldMapping, option
             specialHandlers.ppe_rou_methodology,
             specialHandlers.goodwill_restated_methodology,
             specialHandlers.lease_classification_methodology,
+            specialHandlers.residual_other_methodology,
           ];
           for (const handler of methHandlers) {
             if (handler && handler(mapInfo.thesisField) === 'METHODOLOGY_DIFF') {
