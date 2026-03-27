@@ -812,6 +812,11 @@ function getDerivedFormula(field, inc, bal, cf) {
     case 'invested_capital': return 'equity + long_term_debt - cash';
     case 'net_tangible_assets': return 'equity - goodwill - intangible_assets';
     case 'total_capitalization': return 'equity + total_debt';
+    case 'other_current_liabilities': return 'current_liabilities - accounts_payable - accrued_liabilities - short_term_debt - current_portion_lt_debt - operating_lease_current - finance_lease_current - deferred_revenue_current - taxes_payable';
+    case 'other_noncurrent_assets': return 'noncurrent_assets - property_plant_equipment - goodwill - intangible_assets - long_term_investments - deferred_tax_assets';
+    case 'other_noncurrent_liabilities': return 'noncurrent_liabilities - long_term_debt - operating_lease_noncurrent - finance_lease_noncurrent - deferred_tax_liabilities - pension_liabilities - deferred_revenue_noncurrent';
+    case 'other_current_assets': return 'current_assets - cash - short_term_investments - accounts_receivable - inventory - prepaid_expenses';
+    case 'other_income_expense': return 'income_before_tax - operating_income_loss - interest_income + interest_expense';
 
     // Cash Flow
     case 'depreciation_amortization':
@@ -940,6 +945,15 @@ function computeDerivedFields(years, income, balance, cashFlow) {
     // Effective Tax Rate = Tax / Pre-Tax Income × 100
     if (inc.effective_tax_rate == null && inc.income_tax != null && inc.income_before_tax != null && inc.income_before_tax !== 0) {
       inc.effective_tax_rate = (inc.income_tax / inc.income_before_tax) * 100;
+    }
+
+    // Residual "Other Income/Expense" — simpler formula, fewer error amplification concerns
+    if (inc.other_income_expense == null &&
+        inc.income_before_tax != null && inc.operating_income_loss != null) {
+      const interestIncome = inc.interest_income ?? 0;
+      const interestExpense = inc.interest_expense ?? 0;
+      inc.other_income_expense = inc.income_before_tax - inc.operating_income_loss
+                                  - interestIncome + interestExpense;
     }
 
     // ── Balance Sheet Derived ──
@@ -1098,9 +1112,91 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       bal.net_tangible_assets = (bal.equity ?? 0) - (bal.goodwill ?? 0) - (bal.intangible_assets ?? 0);
     }
 
-    // NOTE: Residual "Other" BS derivations (OtherCL, OtherNCL, OtherNCA) were attempted
-    // but reverted — named items aren't accurate enough. Residual computation amplifies
-    // tag-level errors (e.g., OtherCL went 28→64 DIFF). Blocked until named items reach ~100%.
+    // ── Residual "Other" Fields (Gated) ──
+    // MS DataID 23151 confirmed formula for OtherCurrentLiabilities.
+    // Only compute when 95%+ of named items are non-null for this company-year.
+    // This prevents B7 error amplification from incomplete named item extraction.
+
+    // OtherCurrentLiabilities = CL - sum(8 named CL items)
+    if (bal.other_current_liabilities == null && bal.current_liabilities != null) {
+      const clNamedItems = [
+        bal.accounts_payable,
+        bal.accrued_liabilities,
+        bal.short_term_debt,
+        bal.current_portion_lt_debt,
+        bal.operating_lease_liability_current,
+        bal.finance_lease_liability_current,
+        bal.deferred_revenue_current,
+        bal.taxes_payable,
+      ];
+      const clCoverage = clNamedItems.filter(v => v != null).length / clNamedItems.length;
+      if (clCoverage >= 0.95) {
+        const namedSum = clNamedItems.reduce((sum, v) => sum + (v ?? 0), 0);
+        const residual = bal.current_liabilities - namedSum;
+        if (residual >= 0) {
+          bal.other_current_liabilities = residual;
+        }
+      }
+    }
+
+    // OtherNonCurrentAssets = noncurrent_assets - sum(5 named NCA items)
+    // PP&E already includes ROU (merged at line ~968), so do NOT subtract operating_lease_rou_asset
+    if (bal.other_noncurrent_assets == null && bal.noncurrent_assets != null) {
+      const ncaNamedItems = [
+        bal.property_plant_equipment,
+        bal.goodwill,
+        bal.intangible_assets,
+        bal.long_term_investments,
+        bal.deferred_tax_assets,
+      ];
+      const ncaCoverage = ncaNamedItems.filter(v => v != null).length / ncaNamedItems.length;
+      if (ncaCoverage >= 0.95) {
+        const namedSum = ncaNamedItems.reduce((sum, v) => sum + (v ?? 0), 0);
+        const residual = bal.noncurrent_assets - namedSum;
+        if (residual >= 0) {
+          bal.other_noncurrent_assets = residual;
+        }
+      }
+    }
+
+    // OtherNonCurrentLiabilities = noncurrent_liabilities - sum(6 named NCL items)
+    if (bal.other_noncurrent_liabilities == null && bal.noncurrent_liabilities != null) {
+      const nclNamedItems = [
+        bal.long_term_debt,
+        bal.operating_lease_liability_noncurrent,
+        bal.finance_lease_liability_noncurrent,
+        bal.deferred_tax_liabilities,
+        bal.pension_liabilities,
+        bal.deferred_revenue_noncurrent,
+      ];
+      const nclCoverage = nclNamedItems.filter(v => v != null).length / nclNamedItems.length;
+      if (nclCoverage >= 0.95) {
+        const namedSum = nclNamedItems.reduce((sum, v) => sum + (v ?? 0), 0);
+        const residual = bal.noncurrent_liabilities - namedSum;
+        if (residual >= 0) {
+          bal.other_noncurrent_liabilities = residual;
+        }
+      }
+    }
+
+    // OtherCurrentAssets = current_assets - sum(5 named CA items)
+    if (bal.other_current_assets == null && bal.current_assets != null) {
+      const caNamedItems = [
+        bal.cash,
+        bal.short_term_investments,
+        bal.accounts_receivable,
+        bal.inventory,
+        bal.prepaid_expenses,
+      ];
+      const caCoverage = caNamedItems.filter(v => v != null).length / caNamedItems.length;
+      if (caCoverage >= 0.95) {
+        const namedSum = caNamedItems.reduce((sum, v) => sum + (v ?? 0), 0);
+        const residual = bal.current_assets - namedSum;
+        if (residual >= 0) {
+          bal.other_current_assets = residual;
+        }
+      }
+    }
 
     // Total Capitalization = Equity + Total Debt (traditional)
     if (bal.total_capitalization == null && bal.equity != null) {
@@ -1254,10 +1350,9 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       }
     }
 
-    // B7/B8: Residual "Other" categories — still blocked.
-    // Attempted twice (B7 and B8) — both caused accuracy regressions because
-    // errors in named items (especially sale/purchase of investments, D&A) get
-    // amplified into the residual. Will only work when named items are ~100% accurate.
+    // B7/B8: Residual "Other" CF categories — still blocked for cash flow.
+    // Balance sheet residuals (OtherCL, OtherNCA, OtherNCL, OtherCA) are now gated at 95% named item coverage.
+    // CF residuals remain higher risk due to investment/D&A error amplification.
 
     // Ending cash position = current year balance sheet cash (prefer broader definition including restricted cash)
     if (cf.ending_cash_position == null) {
