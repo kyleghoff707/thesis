@@ -183,11 +183,14 @@ const BALANCE_TAXONOMY = [
     'MarketableSecuritiesCurrent',
     'AvailableForSaleSecuritiesCurrent',
     'DebtSecuritiesAvailableForSaleCurrent',
+    'OtherShortTermInvestments',              // CPRT and others
+    'HeldToMaturitySecuritiesCurrent',        // HTM classified as current
   ]},
   { field: 'accounts_receivable', unit: 'USD', tags: [
     'AccountsReceivableNetCurrent',
     'ReceivablesNetCurrent',
     'AccountsReceivableNet',
+    'AccountsNotesAndLoansReceivableNetCurrent',  // broader — includes notes receivable (BA, WMS)
   ]},
   // Expanded receivables detail
   { field: 'accounts_receivable_gross', unit: 'USD', tags: [
@@ -342,6 +345,8 @@ const BALANCE_TAXONOMY = [
   { field: 'deferred_revenue_current', unit: 'USD', tags: [
     'DeferredRevenueCurrent',
     'ContractWithCustomerLiabilityCurrent',
+    'CustomerDepositsCurrent',               // retail companies (COST, CPRT)
+    'DeferredIncomeCurrent',                  // variant used by some filers
   ]},
   { field: 'taxes_payable', unit: 'USD', tags: [
     'TaxesPayableCurrent',
@@ -411,6 +416,7 @@ const BALANCE_TAXONOMY = [
   { field: 'common_stock', unit: 'USD', tags: [
     'CommonStockValue',
     'CommonStocksIncludingAdditionalPaidInCapital',
+    'CommonStockValueOutstanding',            // variant used by some filers
   ]},
   { field: 'additional_paid_in_capital', unit: 'USD', tags: [
     'AdditionalPaidInCapitalCommonStock',
@@ -443,6 +449,7 @@ const BALANCE_TAXONOMY = [
     'MinorityInterest',
     'NoncontrollingInterestInEquity',
     'RedeemableNoncontrollingInterestEquityCarryingAmount',
+    'RedeemableNoncontrollingInterest',       // some companies report redeemable NCI separately
   ]},
   { field: 'preferred_stock', unit: 'USD', tags: [
     'PreferredStockValue',
