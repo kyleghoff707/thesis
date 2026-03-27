@@ -1,298 +1,332 @@
 # Testing Patterns
 
-**Analysis Date:** 2026-03-24
+**Analysis Date:** 2026-03-25
 
 ## Test Framework
 
 **Runner:**
-- Vitest 4.x
-- Config: embedded in `vite.config.js` (no separate `vitest.config.*` file)
+- Vitest 4.1.0 — test runner for `npm test` / `npm run test:watch`
+- Default config (no `vitest.config.js` — uses Vite + ESM defaults)
+- Environment: jsdom 29.0.1 for DOM tests, Node.js for engine tests
 
 **Assertion Library:**
-- Vitest built-in (`expect`)
+- Vitest built-in: `describe()`, `it()` (alias `test()`), `expect()`, `beforeEach()`, `afterEach()`
+- Matchers: `.toBe()`, `.toEqual()`, `.toContain()`, `.toHaveLength()`, `.toBeDefined()`, `.toBeCloseTo()`, `.not`, etc.
+
+**Mocking:**
+- `vi.mock()` — mock entire modules with vi.fn() replacements
+- `vi.fn()` — create mock functions with `.mockImplementation()`, `.mockReset()`, `.mockReturnValue()`
+- Pattern: mock external dependencies at top of test file so engine logic runs in isolation
 
 **Run Commands:**
 ```bash
-npm test              # Run all tests (vitest run — single pass)
-npm run test:watch    # Watch mode (vitest)
+npm test              # Run all tests once (vitest run)
+npm run test:watch   # Watch mode — re-run on file changes (vitest)
 ```
-
-No coverage command configured in `package.json`. Coverage not enforced.
 
 ## Test File Organization
 
-**Location:** Co-located in `src/engines/__tests__/` — all tests live in a single flat directory alongside the engine source files they test.
+**Location:**
+- Tests live alongside source in `__tests__/` directory
+- Structure: `src/engines/__tests__/edgarFinancials.test.js` mirrors `src/engines/edgarFinancials.js`
+- Agent tests: `agents/__tests__/`
+- Schema tests: `src/schemas/__tests__/`
+- Component tests: `src/components/__tests__/`
 
-**Naming:** `{engineName}.test.js` mirrors `src/engines/{engineName}.js`
-- `edgarFinancials.test.js` → tests `engines/edgarFinancials.js`
-- `splits.test.js` → tests `engines/splits.js`
-- `peerMetrics.test.js` → tests `engines/peerMetrics.js`
-- `compensation.test.js` → tests `engines/compensation.js`
-
-**No component tests** — only engine (pure logic) files have tests. React components are untested.
-
-**Fixture data:**
-```
-src/engines/__tests__/fixtures/
-├── morningstar/              # Annual Morningstar golden fixtures (50 tickers) + field-mapping.json
-│   └── edgar-cache/          # Disk-cached SEC EDGAR responses (gitignored, shared)
-├── morningstar-quarterly/    # Quarterly Morningstar fixtures (50 tickers)
-└── r1toolbox/                # Rule One Toolbox reference data
-```
+**Naming:**
+- Test files: `{module}.test.js` — `edgarFinancials.test.js`, `splits.test.js`, `industryOverlays.test.js`
+- Test suites: descriptive strings — `'Fix 2 (P1b): Cash tag — restricted cash included'`
+- Test cases: specific assertions — `'should have CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents in cash tags'`
 
 ## Test Structure
 
-**Suite Organization:**
-```js
-// Tests for {engine} — {brief description}
-// Fix 2 (P1b): {what was fixed}
-
+**Suite organization:**
+```javascript
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-describe('Phase/Fix/Feature label: Human-readable title', () => {
-  it('should {expected behavior}', () => {
-    expect(result).toBe(expected);
+// Mock external dependencies
+vi.mock('../edgar', () => ({
+  lookupCIK: vi.fn(),
+  fetchCompanyFacts: vi.fn(),
+}));
+
+// Import module under test
+const { computeDerivedFields, INCOME_TAXONOMY } = await import('../edgarFinancials');
+
+describe('Feature/Fix name', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should do specific thing', () => {
+    // Arrange: set up data
+    const years = [2024];
+    const income = { 2024: { revenues: 100 } };
+
+    // Act: call function
+    computeDerivedFields(years, income, {}, {});
+
+    // Assert: verify result
+    expect(income[2024].gross_profit).toBe(null); // not derived without cost_of_revenue
   });
 });
 ```
 
-Describes are labeled by: phase (`Phase 4: Industry Classifier`), bug number (`Bug 1: ...`), or fix reference (`Fix 3 (P1a): ...`). This traces each test directly back to the issue it validates.
-
-**Async tests:** `async/await` throughout, no callbacks:
-```js
-it('should parse Yahoo splits format', async () => {
-  const { parseYahooSplits } = await import('../splits');
-  const result = parseYahooSplits(yahooEvents);
-  expect(result).toHaveLength(2);
-});
-```
-
-**Dynamic imports in tests:** Used when mocks must be set up before module initialization:
-```js
-vi.mock('../edgar', () => ({ lookupCIK: vi.fn(), ... }));
-// Then dynamic import AFTER mocks are in place:
-const { INCOME_TAXONOMY, computeDerivedFields } = await import('../edgarFinancials');
-```
-
-**Setup/Teardown:**
-```js
-beforeEach(() => {
-  fetchFrameCalls.length = 0;
-  mockFrameResponses = {};
-  vi.clearAllMocks();
-});
-```
-
-`beforeAll` / `afterAll` used in integration tests for fetch interceptor setup and cleanup.
+**Patterns:**
+- Setup: `beforeEach()` block for mock reset, shared data initialization
+- Teardown: none typically needed (mocks auto-reset)
+- Arrange-Act-Assert: three-phase test structure
+- Async tests: use `async/await` with `vi.fn()` mocks for Promise handling
 
 ## Mocking
 
-**Framework:** `vi` from Vitest (`vi.mock`, `vi.fn`, `vi.clearAllMocks`, `vi.importActual`)
+**Framework:**
+- Vitest `vi` object — mocking API is vi.mock, vi.fn, vi.spyOn
+- No external mocking library (jest-compatible API is built-in)
 
-**Standard mock pattern — external dependencies:**
-Every engine test mocks the same three modules to isolate unit under test:
-```js
+**Patterns:**
+```javascript
+// Mock an entire module — replaces all exports
 vi.mock('../edgar', () => ({
   lookupCIK: vi.fn(),
   fetchCompanyFacts: vi.fn(),
   extractAnnualFact: vi.fn(),
-  extractAnnualFactOriginal: vi.fn(),
-  extractFiscalYearEnds: vi.fn(() => ({})),
-  findLatestQuarter: vi.fn(),
 }));
-vi.mock('../cache', () => ({
-  cacheGet: () => null,
-  cacheGetAsync: async () => null,
-  cacheSet: () => {},
-}));
-vi.mock('../splits', () => ({
-  fetchSplits: vi.fn(async () => []),
-  cumulativeSplitFactor: vi.fn(() => 1),
-}));
-```
 
-**Partial mock with `vi.importActual`** — when mocking only one function of a module:
-```js
-vi.mock('../edgarFrames', async () => {
-  const actual = await vi.importActual('../edgarFrames');
-  return {
-    ...actual,
-    fetchFrame: vi.fn(async (tag, unit, cyYear) => {
-      fetchFrameCalls.push({ tag, unit, cyYear });
-      return mockFrameResponses[`${tag}:${unit}:${cyYear}`] || null;
-    }),
-  };
+// Mock individual functions in implementation
+vi.fn().mockImplementation((input) => {
+  if (input === 'special') return { special: true };
+  return null;
 });
-```
 
-**localStorage mock** — for tests that exercise cache/storage logic:
-```js
-const store = {};
-const mockLocalStorage = {
-  getItem: vi.fn((key) => store[key] ?? null),
-  setItem: vi.fn((key, value) => { store[key] = String(value); }),
-  removeItem: vi.fn((key) => { delete store[key]; }),
-  clear: vi.fn(() => { for (const k of Object.keys(store)) delete store[k]; }),
-};
-globalThis.localStorage = mockLocalStorage;
-```
-
-**Configurable mock responses** — used in `peerMetrics.test.js` to simulate different API responses per test:
-```js
-let mockFrameResponses = {};
-// In test:
-mockFrameResponses['Assets:USD:CY2023Q4I'] = makeFrameData([{ cik: 100, val: 5e9 }]);
+// Reset mocks between tests
+beforeEach(() => {
+  vi.clearAllMocks();
+  // or per-function: lookupCIK.mockReset();
+});
 ```
 
 **What to Mock:**
-- All external network calls (`fetchCompanyFacts`, `fetchFrame`, etc.)
-- Cache layer (`cacheGet`, `cacheSet`, `cacheGetAsync`) — always return null/no-op in unit tests
-- Browser globals not available in Node (`localStorage`, `DOMParser`)
-- `../config` when it reads env vars (`vi.mock('../config', () => ({ CLAUDE_KEY: '' }))`)
+- External network APIs: `fetch()`, HTTP clients
+- External file system: `readFileSync()`, `writeFileSync()`
+- Cache storage: `cacheGet()`, `cacheGetAsync()`, `cacheSet()` — return null to test cache misses
+- Database/IndexedDB: `idbGet()`, `idbSet()` — mock to control timing, test offline scenarios
+- Complex dependencies with side effects: rarely needed; prefer integration testing for most engines
 
 **What NOT to Mock:**
-- The module under test itself
-- Pure math/utility functions imported by the module under test
-- JSON data files (`taxonomy-hierarchy.json`, `sp500-tag-classifications.json`) unless testing classification logic specifically
+- The engine under test — run the real function
+- Pure math functions — no mocking, deterministic
+- XBRL taxonomy definitions (INCOME_TAXONOMY, etc.) — load the real module
+- Derived field computation logic — test the real output
+- Internal helper functions within a module — test via public API
 
 ## Fixtures and Factories
 
-**Inline fixture builders** — small helper functions inside test files:
-```js
-// peerMetrics.test.js
-function makeFrameData(entries) {
-  return { data: entries.map(e => ({ cik: e.cik, entityName: e.name || '', val: e.val })) };
-}
+**Test Data (inline):**
+```javascript
+it('Fix 3: debt sanity check', () => {
+  const years = [2024];
+  const income = { 2024: { interest_expense: 1500000000 } };
+  const balance = { 2024: {
+    liabilities: 50000000000,
+    short_term_debt: 100000000,
+    long_term_debt: 200000000,
+    accounts_payable: 2000000000,
+    // ... all fields hardcoded
+  }};
 
-// coverageMonitor.test.js
-const makeFieldDetails = (fields) =>
-  fields.map(f => ({
-    field: f.field,
-    label: FIELD_LABELS[f.field] || f.field.replace(/_/g, ' '),
-    section: f.section || 'Income',
-    tier: f.tier ?? (FIELD_TIERS[f.field] || 0),
-    tag: f.tag || null,
-    layer: f.layer ?? 1,
-    derived: f.derived ?? false,
-  }));
+  computeDerivedFields(years, income, balance, {});
+
+  expect(balance[2024].total_debt).toBe(34200000000);
+});
 ```
 
-**DOM fixture helpers** — for `compensation.test.js` (uses `@vitest-environment jsdom`):
-```js
-function makeDoc(html) {
-  return new DOMParser().parseFromString(html, 'text/html');
-}
-function makeCell(html) {
-  const doc = makeDoc(`<table><tr>${html}</tr></table>`);
-  return doc.querySelector('td') || doc.querySelector('th');
-}
+**Pattern:** Test data is inline and hardcoded (not in separate fixture files). Numeric values use realistic numbers with comments explaining meaning:
+```javascript
+const balance = { 2024: {
+  liabilities: 50000000000,      // $50B total liabilities
+  short_term_debt: 100000000,    // $100M
+  interest_expense: 1500000000,  // $1.5B
+}};
 ```
 
-**Golden fixture JSON files:**
-- `src/engines/__tests__/fixtures/morningstar/{TICKER}.json` — 50 tickers, annual Morningstar truth set
-- `src/engines/__tests__/fixtures/morningstar-quarterly/{TICKER}.json` — 50 tickers, quarterly
-- `src/engines/__tests__/fixtures/morningstar/field-mapping.json` — maps MS field names to engine field names
-- `src/engines/__tests__/fixtures/edgar-cache/` — disk-cached SEC responses (gitignored, auto-populated on first run)
-
-**Test exports pattern** — engines with private internal functions expose them via a named export at file bottom:
-```js
-// At bottom of compensation.js:
-export const _testExports = {
-  cellText, normalizeText, parseCompValue, parseYear,
-  parseSummaryCompensationTable, parseDirectorCompensationTable,
-  // ...25+ internal helpers
-};
-
-// In test:
-const { _testExports } = await import('../compensation');
-const { cellText, parseCompValue } = _testExports;
-```
-
-**Location:** All fixtures in `src/engines/__tests__/fixtures/`. No separate `test/` directory at project root.
+**Location:** Test data lives in test files, no factories or builders. Data is specific to each test case.
 
 ## Coverage
 
-**Requirements:** None enforced — no coverage thresholds configured.
+**Requirements:**
+- No coverage enforcement in project config
+- Manual review: engine tests cover major code paths (see below)
+- PR practice: new features include tests demonstrating functionality
 
 **View Coverage:**
 ```bash
-# Not configured — would need: vitest run --coverage
+# Generate coverage report (if configured)
+npm test -- --coverage
 ```
+
+No coverage report is currently enabled; vitest runs tests but doesn't produce coverage output.
 
 ## Test Types
 
-**Unit Tests:**
-All tests in `src/engines/__tests__/` except `morningstarAccuracy.test.js`, `morningstarQuarterlyAccuracy.test.js`, and `diag-revequity.test.js`. Test individual functions in isolation with mocked dependencies.
-- `edgarFinancials.test.js` (750 lines) — taxonomy structure, `computeDerivedFields`, provenance
-- `splits.test.js` (110 lines) — `cumulativeSplitFactor` edge cases (non-calendar FY, same-year splits)
-- `industryOverlays.test.js` (499 lines) — SIC classifier, bank/REIT/insurance overlay fields
-- `coverageMonitor.test.js` (298 lines) — localStorage baseline storage and comparison logic
-- `companyAdapter.test.js` (441 lines) — Layer 3 tag classification, orphan discovery
-- `taxonomyResolver.test.js` (317 lines) — Layer 2 FASB hierarchy augmentation
-- `peerMetrics.test.js` (308 lines) — Frames API period types, fallback tags, derived metrics
-- `formatCompanyName.test.js` (181 lines) — company name normalization edge cases
-- `compensation.test.js` (779 lines) — SEC proxy table parsing, all internal parsers
+**Unit Tests (primary):**
+- **Scope:** Single engine function + its inputs, no external APIs
+- **Approach:** Mock external dependencies, test computation logic
+- **Examples:**
+  - `edgarFinancials.test.js` — computeDerivedFields, extractSection, buildStatements
+  - `splits.test.js` — cumulativeSplitFactor with various fiscal year scenarios
+  - `industryOverlays.test.js` — industry classifier detection, overlay application
 
-**Integration Tests (Morningstar Parity):**
-- `morningstarAccuracy.test.js` (525 lines) — runs live XBRL engine against 50 Morningstar annual fixtures
-- `morningstarQuarterlyAccuracy.test.js` (570 lines) — same for quarterly data
-- Both intercept `globalThis.fetch` to rewrite Vite proxy URLs to direct SEC URLs and disk-cache responses
-- Rate-limited to 100ms/request (10 req/sec) when fetching live SEC data
+**Integration Tests (secondary):**
+- **Scope:** Multiple engines working together
+- **Approach:** Use real API mocks where needed; focus on data flow
+- **Examples:**
+  - `peerMetrics.test.js` — peer discovery + metrics extraction + score computation
+  - Quarterly financial extraction testing span income/balance/cashflow coordination
 
-**Diagnostic Tests:**
-- `diag-revequity.test.js` (373 lines) — deep-dive comparison for `revenues` and `equity` failures, outputs diff tables
-
-**E2E Tests:** Not used.
+**E2E Tests:**
+- **Framework:** Not currently implemented
+- **Status:** Manual QA only — app launched via `npm run tauri:dev` for dev testing
 
 ## Common Patterns
 
-**Taxonomy structure verification:**
-```js
-it('should have negate flag on change_in_receivables', () => {
-  const field = CASHFLOW_TAXONOMY.find(f => f.field === 'change_in_receivables');
-  expect(field).toBeDefined();
-  expect(field.negate).toBe(true);
+**Async Testing:**
+```javascript
+it('should fetch and cache data', async () => {
+  const cacheGetAsync = vi.fn(async () => null); // cache miss
+  const fetchCompanyFacts = vi.fn(async () => ({ facts: {...} }));
+
+  const result = await fetchEdgarStatements('AAPL');
+
+  expect(fetchCompanyFacts).toHaveBeenCalledWith('1018724');
+  expect(result).toBeDefined();
 });
 ```
 
-**Derived field computation (inject controlled data):**
-```js
-it('Fix 5: should derive SGA from selling + G&A when combined tag is null', () => {
+**Error Testing (null returns, not exceptions):**
+```javascript
+it('should return null when CIK lookup fails', async () => {
+  lookupCIK.mockResolvedValue(null);
+
+  const result = await fetchEdgarStatements('INVALID');
+
+  expect(result).toBe(null);
+});
+
+it('should return null when facts fetch fails', async () => {
+  lookupCIK.mockResolvedValue('1018724');
+  fetchCompanyFacts.mockRejectedValue(new Error('Network error'));
+
+  const result = await fetchEdgarStatements('AAPL');
+
+  expect(result).toBe(null);
+});
+```
+
+**Guard Clause Testing:**
+```javascript
+it('should return null for missing EPS', () => {
+  const result = computeMOS({ fgr: 0.12, eps: null, futurePE: 20 });
+  expect(result).toBe(null);
+});
+
+it('should return null for invalid FGR (<=0)', () => {
+  const result = computeMOS({ fgr: 0, eps: 5, futurePE: 20 });
+  expect(result).toBe(null);
+});
+```
+
+**Data Transformation Testing:**
+```javascript
+it('should negate working capital components correctly', () => {
   const years = [2024];
-  const income = { 2024: { selling_expense: 25_000_000_000, general_and_admin_expense: 7_000_000_000 } };
-  const balance = { 2024: {} };
-  const cashFlow = { 2024: {} };
-  computeDerivedFields(years, income, balance, cashFlow);
-  expect(income[2024].sga).toBe(32_000_000_000);
+  const cashFlow = { 2024: {
+    change_in_receivables: -500,  // already negated by extractSection
+    change_in_inventory: -200,
+    change_in_payables: 300,      // NOT negated
+  }};
+
+  computeDerivedFields(years, {}, {}, cashFlow);
+
+  // -500 + -200 + 300 + 0 = -400
+  expect(cashFlow[2024].change_in_working_capital).toBe(-400);
 });
 ```
 
-**Null/missing field handling:**
-```js
-it('should handle missing fields gracefully (null, not NaN or errors)', () => {
-  const peer = { cik: 100, ticker: 'TEST', netIncome: null, equity: null, assets: null };
-  const metrics = computePeerMetrics([peer]);
-  expect(metrics[0].roe).toBeNull();  // never NaN
-});
+## Test Coverage by Module
+
+**Well-tested:**
+- `edgarFinancials.js` — 173 tests via `edgarFinancials.test.js`, `taxonomyResolver.test.js`, `companyAdapter.test.js`, `industryOverlays.test.js`
+  - Derived field computation (gross profit, EBIT, debt fallback, SGA sum)
+  - Negate flags on working capital components
+  - Tax rate calculation, operating income derivation
+  - Industry overlay application (bank NII, REIT FFO, insurance loss ratio)
+  - Layer 1 tag expansion testing
+
+- `splits.test.js` — Cumululative split factor, fiscal year-aware date comparison, Yahoo split parsing
+
+- `industryOverlays.test.js` — SIC classification detection, bank/REIT/insurance field addition
+
+- `peerMetrics.test.js` — Peer metrics computation, completeness scoring, multi-year averaging
+
+- `taxonomyResolver.test.js` — Layer 2 taxonomy augmentation from FASB calc linkbase
+
+- `companyAdapter.test.js` — Layer 3 AI classification, orphan tag discovery
+
+**Partially tested:**
+- `edgar.js` — CIK lookup, ticker search (mocked API calls)
+- `cache.js` — Memory/localStorage tier (mocked IndexedDB)
+- `compensation.js` — Executive compensation extraction
+- `gurus.js` — Guru holdings and filing parsing
+
+**Not tested:**
+- React components (no Jest/React Testing Library setup)
+- Hooks (integration tests only)
+- UI rendering, event handling, state management
+- CLI/validation scripts (manual script execution)
+- Tauri native integration
+
+## Validation Scripts
+
+**Purpose:** External verification of XBRL coverage, tag accuracy, taxonomy completeness
+
+**Scripts in `validation/scripts/`:**
+- `coverage-audit.js` — Measures XBRL tag mapping coverage across S&P 500, produces detailed report
+- `build-taxonomy-json.js` — Builds Layer 2 taxonomy hierarchy from FASB calc linkbase XML
+- `build-tag-classifications.js` — Pre-classifies tags for Layer 3 using Claude API (S&P 500 only)
+
+**Running validation:**
+```bash
+# Full coverage audit (60-90 minutes, S&P 500)
+node validation/scripts/coverage-audit.js
+
+# Build Layer 2 taxonomy data
+node validation/scripts/build-taxonomy-json.js
+
+# Build Layer 3 AI classifications
+node validation/scripts/build-tag-classifications.js
 ```
 
-**Async module test with configurable mock response:**
-```js
-it('fetchPeerFrameData should pass correct cyYear format based on period type', async () => {
-  mockFrameResponses['Assets:USD:CY2023Q4I'] = makeFrameData([{ cik: 100, val: 5e9 }]);
-  await fetchPeerFrameData([{ cik: 100 }], 2023);
-  const call = fetchFrameCalls.find(c => c.tag === 'Assets');
-  expect(call.cyYear).toBe('CY2023Q4I');
-});
-```
+**Output:**
+- Reports: `validation/reports/*.md` (coverage audit report, detailed findings)
+- Data: `src/data/taxonomy-hierarchy.json` (Layer 2), `src/data/sp500-tag-classifications.json` (Layer 3)
+- Checkpoints: `validation/reports/coverage-audit-checkpoint.json` (resume on interrupt)
 
-**Vitest environment directive** (for DOM-dependent tests):
-```js
-// @vitest-environment jsdom
-// Must be first line of file
-```
-Only `compensation.test.js` uses this — it tests HTML table parsing logic requiring `DOMParser`.
+## Known Testing Gaps
+
+**Component testing:** No tests for React components (OnePager, PitchDeck, Toolbox, etc.). Would require:
+- React Testing Library or similar
+- Mock data providers (usePrices, useFinancials, etc.)
+- jsdom environment configuration in vitest
+
+**Hook integration:** useFinancials, useCompanyEvents tested indirectly via component screenshots; no unit tests for hook state management
+
+**End-to-end:** No Playwright/Cypress tests for full workflows. Manual QA only via `npm run tauri:dev`.
+
+**API mocking:** No mock server setup (e.g., MSW); all API mocking is inline with `vi.mock()` and `vi.fn()`
+
+**Performance testing:** No performance/load testing. Coverage audit scripts measure data accuracy, not speed.
 
 ---
 
-*Testing analysis: 2026-03-24*
+*Testing analysis: 2026-03-25*

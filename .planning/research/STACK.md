@@ -1,310 +1,399 @@
-# Technology Stack
+# Technology Stack — Normalization Engine
 
-**Project:** Thes1s AI Agent Workflow
-**Researched:** 2026-03-24
-**Overall confidence:** HIGH
+**Project:** Thes1s Normalization Engine (Multi-Source Triangulation)
+**Researched:** 2026-03-25
+**Overall confidence:** MEDIUM (all web search tools were unavailable; recommendations draw on training data, existing codebase analysis, and project documentation. Versions flagged where unverifiable.)
+
+---
+
+## Context
+
+This STACK.md covers the **normalization engine milestone** -- building a production-grade comparison harness and multi-source triangulation pipeline to reach 98%+ accuracy against Morningstar across all US-listed equities. This is NOT about the AI agent layer (covered by the existing research from 2026-03-24).
+
+**What already exists:**
+- Three-layer XBRL engine in `edgarFinancials.js` (~85 normalized fields, ~200 static tags, taxonomy hierarchy, AI classification layer)
+- 50-company Morningstar truth set with CSV parser, field mapping (87 mapped fields), and accuracy test suite (`morningstarAccuracy.test.js`)
+- Layer 2/3 validation scripts (Python: `layer2_statements.py`, `layer3_metrics.py`)
+- Node.js engine bundler (`bundle.mjs` via esbuild) and JSON data exporter
+- Working API connections to FMP, SimFin, mstarpy, Yahoo Finance, EDGAR
+- Current accuracy: ~91% against Morningstar truth set
+
+**What's needed:**
+- Production comparison harness with proper fiscal year alignment, sign conventions, and field mapping
+- Multi-source triangulation engine (our engine + FMP + SimFin + mstarpy vs Morningstar truth)
+- Automated validation pipeline for ongoing accuracy monitoring
+- Normalization rule improvements derived from triangulation findings
 
 ---
 
 ## Recommended Stack
 
-This stack covers the AI agent layer being added to an existing Tauri + Vite + React desktop app with 20+ validated financial data engines. The data layer and UI framework are already decided (React 19, Vite 7, Tauri 2). This document covers only the NEW technology needed for Phases 5-8: the intelligence layer.
+### Core: Keep the Existing JavaScript Pipeline
+
+The normalization engine is JavaScript. The comparison and triangulation harness should also be JavaScript. Rationale: the engine under test IS `edgarFinancials.js`, the bundler already compiles it for Node.js, the test infrastructure already uses vitest, and introducing a second language (Python) for the comparison harness creates a maintenance burden.
+
+**Decision: Migrate validation logic from Python to JavaScript/Node.js.**
+
+The existing `layer2_statements.py` and `layer3_metrics.py` are ~300 LOC each and use yfinance + mstarpy (Python packages). But the triangulation engine needs to:
+1. Run against the live JS engine (already bundled for Node.js)
+2. Integrate with the existing vitest test suite
+3. Share field mappings, sign conventions, and tolerance configs with the accuracy tests
+4. Be maintainable by a single-language team
+
+Keeping Python for API fetching and JS for engine testing means maintaining two field mapping systems, two sign convention tables, and two fiscal year alignment implementations. That's exactly the bug source that previous attempts encountered.
+
+**Exception:** mstarpy has no JavaScript equivalent. Use a thin Python bridge (spawn process, read JSON stdout) for mstarpy data fetching only. Everything else in JS.
 
 ---
 
-### Dual-Path Agent Infrastructure
-
-The architecture plan defines two deployment paths: CC Skills (Claude Code, personal use) and In-App Generation (Claude API, commercial). Both paths share schemas, prompts, and data assembly. The stack must serve both.
+### Comparison Harness Infrastructure
 
 | Technology | Version | Purpose | Why |
-|---|---|---|---|
-| `@anthropic-ai/claude-agent-sdk` | ^0.1.x (latest) | CC Skills path: programmatic orchestration of subagents with built-in tools | Powers the same agent loop as Claude Code itself. Subagents get fresh 1M-token contexts, context isolation, parallel execution. Directly maps to the 9-agent architecture. |
-| `@anthropic-ai/sdk` | ^0.78.0 (already installed) | In-App API path: direct Claude API calls with tool_use + structured outputs | Already in the project. Supports `output_config.format` with JSON schema enforcement, strict tool_use, and Zod integration for type-safe responses. |
-| `zod` | ^3.24.x (import `zod/v4` subpath) | JSON schema definition + runtime validation for all agent outputs | Zod 4 has native `.toJSONSchema()` (no external library needed). Works with both SDKs. Defines report section schemas, DataPacket validation, tool input/output contracts. |
+|------------|---------|---------|-----|
+| **vitest** | ^4.1.0 (installed) | Test runner for accuracy suite | Already used for 173+ tests. Parallel execution, watch mode, structured reporting. No new dependency. |
+| **esbuild** | (installed via vitest/vite) | Bundle browser engines for Node.js | Already used in `bundle.mjs`. Handles `import.meta.env` shimming, tree-shaking. No new dependency. |
+| **Node.js native fetch** | Built-in (Node 18+) | HTTP client for FMP, SimFin, EDGAR APIs | Node 18+ has native fetch. No axios/got/node-fetch needed. Already verified working in the existing validation scripts. |
 
-**Confidence:** HIGH -- All three packages are from Anthropic (first two) or de facto standard (Zod). Verified against official documentation.
+**Confidence:** HIGH -- all already in use and working.
 
-### Why Two SDKs
+### Data Source API Clients
 
-The Agent SDK and the Client SDK serve different purposes and are NOT interchangeable:
+| Technology | Approach | Purpose | Why |
+|------------|----------|---------|-----|
+| **FMP** | Direct fetch with API key | Normalized financial statements (income, balance, cash flow) | 100% accuracy on AAPL test. Uses same EDGAR XBRL source, so differences reveal normalization methodology. $20/mo, 300 calls/min. |
+| **SimFin** | Direct fetch with API key + auth header | Financial statements with source traceability | 83% accuracy but traceable to specific filings. Separate bank/insurance templates. $15/mo, 5 req/sec. |
+| **mstarpy** | Python subprocess bridge | Morningstar data (the truth standard) | No JS equivalent. Fragile scraper -- treat as a validation oracle, not a runtime dependency. Spawn `python3 -c "..."` and parse JSON stdout. |
+| **Yahoo Finance** | `yahoo-finance2` (installed) | Supplementary validation source | Already installed, already used in the app. 4yr annual max history -- insufficient as primary but useful as tie-breaker. |
 
-| Aspect | Agent SDK (`claude-agent-sdk`) | Client SDK (`@anthropic-ai/sdk`) |
-|---|---|---|
-| **Tool execution** | Built-in (Read, Write, Bash, Grep, Glob, WebSearch, Agent) | You implement the tool loop yourself |
-| **Subagents** | Native support with context isolation | Not supported |
-| **Cost model** | Uses your Claude Code Pro subscription (included) or API key | Per-token API billing |
-| **Best for** | CC Skills path, orchestration, development-time workflows | In-app generation, production API calls, commercial deployment |
-| **Context** | Access to filesystem, CLAUDE.md, skills, commands | Stateless API calls, you manage all context |
+**Confidence:** HIGH for FMP/SimFin/Yahoo (APIs verified working per memory). MEDIUM for mstarpy (scraper fragility acknowledged, but v9.0.2 working as of 2026-03-25).
 
-Phase 5A-5C uses the Agent SDK (CC Skills). Phase 8 adds the Client SDK path (in-app generation via `aiResearch.js`). Both share Zod schemas and DataPacket assembly.
+### Fiscal Year Alignment Engine
 
----
+This is the single most important piece of new infrastructure. The existing `layer2_statements.py` discovered the fiscal year alignment problem (LULU went from 1.9% to 19.2% match after adding bidirectional year-offset fallback) but solved it naively. The production solution needs:
 
-### Structured Output Enforcement
+| Component | What It Does | Why |
+|-----------|-------------|-----|
+| **Fiscal calendar resolver** | Maps ticker -> fiscal year end month/day using EDGAR company info (`entityFiscalYearEnd` from CompanyFacts) | Each data source labels fiscal years differently. EDGAR uses XBRL `fy` field, FMP uses `fiscalYear`, SimFin uses `report-date`, yfinance uses period-end-date year. Without knowing the company's FY end, you can't align them. |
+| **Period matcher** | Given a company's FY end, translates each source's year label to a canonical fiscal year identifier | Eliminates the bidirectional guessing. Example: LULU FY ends Jan 31 -- EDGAR calls it FY2022, FMP calls it FY2023, yfinance calls it 2023. The period matcher maps all three to the same canonical period. |
+| **Overlap detector** | Finds the intersection of years available across sources | Not all sources have the same history depth. FMP: 5yr, SimFin: 10yr, mstarpy: 10+yr, Yahoo: 4yr. Only compare years all sources have. |
 
-| Technology | Version | Purpose | Why |
-|---|---|---|---|
-| `zod` (via `zod/v4`) | ^3.24.x | Schema definition for report sections, DataPacket, tool contracts | Native `z.toJSONSchema()` eliminates `zod-to-json-schema` dependency. 14x faster parsing than v3. Production-ready despite v4 subpath publishing. |
+**Build this as:** `validation/engines/fiscalAlignment.js` (~200-300 LOC)
 
-**How it works with each SDK:**
+**Confidence:** HIGH for the approach. The field mapping JSON already has `fiscalYearEnd` data per Morningstar fixture. EDGAR CompanyFacts has `entityFiscalYearEnd`. This is a solved problem once you centralize it instead of doing ad-hoc offset guessing.
 
-**Agent SDK (CC Skills path):**
-```typescript
-import { z } from "zod/v4";
-import { query } from "@anthropic-ai/claude-agent-sdk";
+### Sign Convention & Field Mapping Engine
 
-const SectionSchema = z.object({
-  key: z.string(),
-  title: z.string(),
-  status: z.enum(["pass", "fail", "review", "pending"]),
-  confidence: z.enum(["HIGH", "MEDIUM", "LOW"]),
-  verdict: z.enum(["PASS", "FAIL", "WATCHLIST"]).nullable(),
-  verdictRationale: z.string(),
-  summary: z.string(),
-  narrative: z.string(),
-  citations: z.array(z.object({ id: z.number(), ref: z.string(), text: z.string(), source: z.string() })),
-  redFlags: z.array(z.string()),
-});
+| Component | What It Does | Why |
+|-----------|-------------|-----|
+| **Universal field mapping** | Maps field names across all sources to canonical Thes1s field names | Each source uses different names: FMP `netIncome`, SimFin `Net Income`, yfinance `Net Income`, mstarpy `Net Income`, Thes1s `net_income_loss`. One canonical mapping table, not per-source scripts. |
+| **Sign convention normalizer** | Applies sign multipliers per source per field | FMP returns CapEx as negative, EDGAR as positive. Morningstar returns cost_of_revenue as negative, EDGAR as positive. The existing `field-mapping.json` has sign multipliers for Morningstar; extend it to all sources. |
+| **Scale normalizer** | Handles unit differences (millions vs full dollars vs thousands) | mstarpy returns values in millions. FMP returns full dollars. SimFin returns full dollars. Normalize everything to full dollars (Thes1s convention). |
 
-for await (const message of query({
-  prompt: "Analyze FCF for COST using the DataPacket...",
-  options: {
-    outputFormat: { type: "json_schema", schema: z.toJSONSchema(SectionSchema) }
-  }
-})) {
-  if (message.type === "result" && message.structured_output) {
-    const parsed = SectionSchema.safeParse(message.structured_output);
-    // Guaranteed valid, type-safe section data
-  }
-}
-```
+**Build this as:** `validation/engines/fieldMapping.js` (~300-400 LOC) + `validation/data/source-mappings.json`
 
-**Client SDK (In-App API path):**
-```typescript
-import { z } from "zod/v4";
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+**Confidence:** HIGH -- the `field-mapping.json` pattern already works for Morningstar. This extends the pattern to all sources.
 
-const response = await client.messages.parse({
-  model: "claude-sonnet-4-20250514",
-  max_tokens: 4096,
-  messages: [{ role: "user", content: sectionPrompt }],
-  output_config: { format: zodOutputFormat(SectionSchema) },
-  tools: toolboxTools, // getMetric, computeMOS, etc.
-});
-```
+### Triangulation Engine
 
-**Confidence:** HIGH -- Structured outputs are GA on all current Claude models (Opus 4.6, Sonnet 4.6, Sonnet 4.5, Opus 4.5, Haiku 4.5). Zod 4 JSON schema generation verified in official docs. The `zodOutputFormat` helper is a first-party SDK utility.
+| Component | What It Does | Why |
+|-----------|-------------|-----|
+| **Consensus scorer** | For each field/year/company, collects values from all available sources and determines consensus | When FMP + SimFin + mstarpy agree and Thes1s doesn't, that's a normalization bug. When sources disagree among themselves, it's a methodology difference. The distinction is critical. |
+| **Deviation classifier** | Categorizes each deviation: consensus mismatch (our bug), source disagreement (methodology), missing data (coverage gap) | Different categories need different fixes. A consensus mismatch goes to `edgarFinancials.js`. A methodology difference goes to documentation. A coverage gap goes to tag expansion. |
+| **Root cause tagger** | Labels common deviation patterns: sign flip, FY offset, scale error, XBRL tag miss, derivation error, classification difference | Automates the root cause analysis the user has been doing manually. The eng plan already categorizes failures into "named line items", "subtotals & derived formulas", and "residual categories". |
 
----
+**Build this as:** `validation/engines/triangulation.js` (~400-500 LOC)
 
-### Node.js Data Bridge
+**Confidence:** MEDIUM -- the approach is sound (validated by the user's Attempt #3 strategy), but the consensus scoring thresholds will need tuning. Start with: "3 sources agree within 1% and Thes1s disagrees by >5% = definite bug."
 
-The existing engines use three browser-only APIs that must be adapted for Node.js (Claude Code runs in Node, not a browser):
-
-| Browser API | Adapter | Why This Adapter |
-|---|---|---|
-| `import.meta.env.DEV` / `import.meta.env.VITE_*` | `dotenv` + env wrapper module | Engines use `import.meta.env.DEV` for URL routing (proxy in dev, direct in Tauri). Node adapter sets `process.env` and provides a shim. Simple, zero-dependency (dotenv is ubiquitous). |
-| `DOMParser` / `document.querySelectorAll` | `linkedom` | Used in `filingMarkdown.js` for HTML-to-markdown conversion (SEC filings). LinkedOM is 3x faster than jsdom, 1/3 the memory, and sufficient for DOM traversal without full browser emulation. Already have `jsdom` as devDep but linkedom is better for production Node use. |
-| Vite dev proxy (`/api/sec/*`, `/api/yahoo/*`, etc.) | Direct `fetch` with headers | In Node, no CORS restriction exists. The proxy routes (`/api/sec` -> `sec.gov`, `/api/edgar` -> `data.sec.gov`, etc.) become direct fetch calls with the proper User-Agent header. The adapter maps proxy URLs to real URLs. |
-| `localStorage` / `IndexedDB` | File-based JSON cache | `cacheStore.js` already has `HAS_IDB` feature detection and falls back gracefully. For Node, cache to `.thes1s/cache/` directory as JSON files. Keep the same TTL structure. |
-| `fetch` | Node.js native `fetch` (v18+) | Node 18+ has native fetch. No polyfill needed. Already verified the project targets Node 18+ (Tauri 2 requires it). |
+### Reporting & Diagnostics
 
 | Technology | Version | Purpose | Why |
-|---|---|---|---|
-| `linkedom` | ^0.16.x | DOM parsing for filing markdown conversion in Node context | 3x faster than jsdom, 1/3 memory usage. The engine only needs `querySelectorAll`, `textContent`, basic traversal -- not full browser emulation. |
-| `dotenv` | ^16.x | Load `.env.local` variables into `process.env` for Node adapter | Standard approach. Zero config. Reads the same `.env.local` file the Vite app uses. |
+|------------|---------|---------|-----|
+| **JSON output** | Native | Structured comparison results | Machine-readable for automated regression detection. Already the pattern used by `layer2_raw_*.json`. |
+| **Console reporter** | Custom (~100 LOC) | Human-readable accuracy dashboard | Print to terminal: overall accuracy, top failures, per-source breakdowns, per-field breakdowns. No dependency needed. |
+| **vitest custom reporter** | vitest built-in | CI-friendly accuracy tracking | vitest supports custom reporters. Output accuracy percentages as test metadata for trend tracking. |
 
-**The adapter is ~500-800 LOC** (per eng review estimate) and consists of:
-
-1. **`src/engines/nodeAdapter.js`** (~200 LOC) -- Environment shim (`import.meta.env` -> `process.env`), URL mapper (proxy -> direct), DOMParser provider (linkedom), cache provider (fs-based JSON).
-2. **`src/engines/dataExport.js`** (~300 LOC) -- DataPacket assembly. Calls all engines, packages output as canonical JSON. No AI logic. Pure data assembly.
-3. **Toolbox tool wrappers** (~200 LOC) -- Functions that agents can call: `getMetric()`, `computeMOS()`, `comparePeers()`, etc. Thin wrappers around existing engine functions.
-
-**Confidence:** HIGH for the approach. MEDIUM for the LOC estimate (could be 400-1000 depending on how many engines need adaptation). The cacheStore.js already has graceful Node.js fallback, which validates the pattern.
+**Confidence:** HIGH -- no new dependencies, just structured JSON + console output.
 
 ---
 
-### Agent Definitions
+## What NOT to Use
 
-| Technology | Version | Purpose | Why |
-|---|---|---|---|
-| Markdown files in `agents/` directory | N/A | Agent role definitions (system prompts, curriculum refs, tool access, model selection) | The architecture plan defines 9 agents as `agents/{role}/prompt.md` + `config.json`. This maps directly to the Agent SDK's `AgentDefinition` type for programmatic creation, and to Claude Code's `.claude/agents/` filesystem convention for CC Skills. |
-
-**Agent definition format** (works with both paths):
-
-```
-agents/
-  financial-analyst/
-    prompt.md          -- System prompt with Rule One curriculum
-    config.json        -- { "tools": [...], "model": "sonnet", "curriculum": [...], "dataSlice": [...] }
-  valuation-specialist/
-    prompt.md
-    config.json
-  ...
-```
-
-The CC Skills path loads these as `AgentDefinition` objects. The in-app API path uses the same prompts as system messages in `messages.create()` calls.
-
-**Confidence:** HIGH -- This is the architecture plan's own recommendation. Agent SDK docs confirm both programmatic and filesystem-based agent definitions are supported.
+| Technology | Why Not |
+|------------|---------|
+| **pandas / NumPy** (Python) | Tempting for data comparison, but creates a two-language maintenance burden. The comparison logic is simple arithmetic (percentage differences, sign flips, scale factors) -- nothing that needs pandas. Keep everything in JS. |
+| **Arelle** (Python XBRL processor) | Full XBRL taxonomy processor (~20K LOC). Massive overkill. The engine already handles XBRL extraction from EDGAR's pre-parsed JSON CompanyFacts API. Arelle is for parsing raw XBRL instance documents, which EDGAR already does for you. |
+| **XBRL.js / xbrl-parse** (npm) | Same problem as Arelle -- designed for raw XBRL parsing. EDGAR's CompanyFacts API returns pre-parsed JSON. No raw XBRL parsing needed. |
+| **edgartools** (Python) | Convenient Python wrapper for EDGAR, but the JS engine already handles all EDGAR interactions. Adding a Python EDGAR client duplicates work. |
+| **sec-edgar-downloader** (Python) | Downloads raw filing documents. The engine uses the CompanyFacts JSON API, not raw filings. Different use case. |
+| **calcbench / Intrinio / Polygon** | Additional paid data sources. The project already has FMP + SimFin + mstarpy + Yahoo -- four sources are sufficient for triangulation. More sources add cost without proportional accuracy gains once consensus is established. |
+| **PostgreSQL / SQLite** | Tempting for storing comparison results, but the dataset is small (~500 companies x ~85 fields x ~5 years = ~212K data points). JSON files + in-memory processing handle this fine. A database adds deployment complexity to a desktop app's validation pipeline. |
+| **D3.js / Chart.js** | Visualization of accuracy trends is a nice-to-have but not needed for the normalization pipeline. Console reports and JSON are sufficient. The app already has Recharts if visualization is needed later. |
+| **OpenFIGI / CUSIP lookup** | Ticker resolution isn't the problem. EDGAR CIK lookup already works across all 5,758 companies. |
+| **dbt / Great Expectations** | Data quality frameworks designed for data warehouse pipelines. Overkill for a Node.js validation script that runs locally. The vitest + JSON output pattern is simpler and sufficient. |
 
 ---
 
-### Supporting Libraries
+## How Other Projects Solve Normalization
 
-| Library | Version | Purpose | When to Use |
-|---|---|---|---|
-| `linkedom` | ^0.16.x | Node.js DOM parsing for filing markdown | Only in Node adapter (not needed in browser -- browser has native DOMParser) |
-| `dotenv` | ^16.x | Load .env.local in Node context | Only in Node adapter and CC Skills scripts |
-| `zod` (v4 subpath) | ^3.24.x | Schema validation for all agent I/O | Every agent output, DataPacket validation, tool contracts |
-| `cheerio` | ^1.2.0 (already installed) | HTML parsing for web scraping in Vite plugins | Already used. No change needed. |
-| `turndown` + `turndown-plugin-gfm` | ^7.2.2 / ^1.0.2 (already installed) | HTML-to-markdown conversion | Already used in filingMarkdown.js. No change needed. |
+Understanding the competitive landscape informs what's actually hard and what's already solved.
+
+### Commercial Data Providers (Morningstar, S&P Capital IQ, Bloomberg)
+
+These companies employ teams of analysts (hundreds at Morningstar) who manually review and normalize financial statements. Their normalization rules are proprietary. Key patterns:
+- **Manual review for edge cases** -- no fully automated system handles 100% of companies. The last 5% requires human judgment (reclassifications, restatements, M&A adjustments).
+- **Company-specific overrides** -- major companies get hand-tuned mappings. The "standard" taxonomy handles 95%; exceptions are catalogued per-company.
+- **Restated vs. as-originally-filed** -- Morningstar uses restated numbers (the latest 10-K's comparative data), which is what the existing engine extracts via XBRL `fy` + `frame` parameters.
+
+### Open Source XBRL Projects
+
+| Project | Language | What It Does | Relevance |
+|---------|----------|-------------|-----------|
+| **Arelle** | Python | Full XBRL processor (taxonomy validation, instance parsing, formula processor) | The reference implementation for XBRL standards. Not relevant -- EDGAR provides pre-parsed data. But useful for understanding taxonomy relationships. |
+| **calcbench/python_api_client** | Python | Calcbench API wrapper | Commercial API wrapper, not a normalization engine. |
+| **edgartools** | Python | Pythonic EDGAR API wrapper | Convenient but handles raw filing access, not normalization. |
+| **sec-api.io** | SaaS | EDGAR full-text search + XBRL data | Commercial. Doesn't normalize -- just makes EDGAR data searchable. |
+| **Financial Modeling Prep (FMP)** | API | Normalized EDGAR XBRL data | The best reference for how a commercial provider normalizes the same XBRL source. Their normalization differences ARE our research subjects. |
+
+### The Key Insight from the Ecosystem
+
+Nobody has open-sourced a production-grade XBRL normalization engine. The open-source tools handle parsing/downloading, but normalization (mapping 14,000+ XBRL tags to ~85 standardized fields with correct sign conventions, fiscal year alignment, industry-specific rules, and derived field formulas) is treated as proprietary by every commercial provider.
+
+**This means Thes1s's three-layer engine + triangulation approach is genuinely novel.** There's no existing library to plug in. The "stack" for this milestone is less about choosing the right library and more about building the right comparison infrastructure to systematically find and fix normalization rules.
 
 ---
 
 ## Alternatives Considered
 
 | Category | Recommended | Alternative | Why Not |
-|---|---|---|---|
-| Agent orchestration | `@anthropic-ai/claude-agent-sdk` | LangChain / LangGraph | Adds a massive abstraction layer between you and Claude. The Agent SDK IS Claude's own orchestration. LangChain's model-agnostic abstractions add complexity without value when you're committed to Claude. |
-| Agent orchestration | `@anthropic-ai/claude-agent-sdk` | Vercel AI SDK (`@ai-sdk/anthropic`) | Good for chat UIs, but missing subagent support, context isolation, and the built-in tool loop that maps to your 9-agent architecture. It's an adapter, not an orchestrator. |
-| Agent orchestration | `@anthropic-ai/claude-agent-sdk` | Custom `aiResearch.js` from scratch | The original plan before the hybrid model decision. Would require reimplementing tool loops, context management, retries, and error handling that the Agent SDK provides out of the box. ~2000 LOC of orchestration code you don't need to write. |
-| JSON schema | Zod v4 | Pydantic | Pydantic is Python-only. Your stack is Node.js/TypeScript. |
-| JSON schema | Zod v4 | `ajv` (JSON Schema validator) | Ajv validates but doesn't generate schemas. Zod does both: define once, validate everywhere, generate JSON Schema for API calls. Single source of truth. |
-| JSON schema | Zod v4 | `zod-to-json-schema` | Deprecated as of November 2025. Zod 4 has native `.toJSONSchema()`. No external library needed. |
-| DOM parsing (Node) | `linkedom` | `jsdom` (already installed as devDep) | jsdom is 3x slower and 3x more memory. It emulates a full browser environment you don't need. LinkedOM does exactly what the engines require (DOM traversal, querySelectorAll) at a fraction of the cost. |
-| DOM parsing (Node) | `linkedom` | `@xmldom/xmldom` (already installed as devDep) | xmldom is XML-focused, not HTML. The filing HTML is real HTML with tables, divs, spans. LinkedOM handles HTML natively. |
-| Context compression | Manual context engineering (curriculum slicing per agent) | Anthropic prompt caching | Prompt caching reduces cost but doesn't reduce context window usage. The real challenge is giving each agent exactly the right curriculum slice (not the full 500+ line CLAUDE.md). Manual curation > automatic compression for this use case. |
-| Agent framework | None (Agent SDK + custom orchestrator) | CrewAI, AutoGen | Python-only frameworks. Your stack is Node.js. Even if ported, they add opinionated abstractions that conflict with your GSD-style orchestration pattern. |
+|----------|-------------|-------------|---------|
+| Comparison language | JavaScript (all JS pipeline) | Python (keep layer2/layer3.py) | Two-language maintenance burden. Field mappings, sign conventions, and FY alignment must be duplicated. Previous Python scripts had bugs in all three areas. |
+| mstarpy access | Python subprocess bridge | Port mstarpy to JS | mstarpy is a Python scraper with complex anti-bot handling. No JS equivalent exists. Spawning a Python subprocess for data fetching only is the pragmatic solution. |
+| Data storage | JSON files in `validation/data/` | SQLite database | ~212K data points fit comfortably in memory. JSON files are human-readable, git-diffable, and need no driver. SQLite adds complexity for marginal benefit at this scale. |
+| Test framework | vitest (existing) | Jest | Already using vitest with 173+ tests. Migration cost with zero benefit. |
+| API client | Native fetch | axios / got / node-fetch | Node 18+ native fetch works. Already proven in the existing validation scripts. Zero dependency additions. |
+| Accuracy reporting | Console + JSON | Jupyter notebooks | Jupyter is great for exploration but terrible for CI/automation. The validation pipeline should be fully scriptable. |
+| Rate limiting | Manual delays (sleep) | p-queue / bottleneck | FMP 300/min, SimFin 5/sec, EDGAR 10/sec. Simple `await sleep(ms)` between requests is sufficient. A rate limiting library adds a dependency for a pattern that's ~3 lines of code. |
 
 ---
 
-## Context Engineering Strategy
+## Architecture of the Comparison Pipeline
 
-This is the core design challenge per the architecture plan. Each agent needs enough curriculum to prevent hallucinations but not so much that token budgets explode.
-
-### The Strategy: Write, Select, Compress, Isolate
-
-| Principle | Implementation |
-|---|---|
-| **Write** | Agent definitions in `agents/{role}/prompt.md` with focused system prompts. 500 lines max per SKILL.md (Claude Code best practice). |
-| **Select** | Each agent gets ONLY its curriculum slice. Financial Analyst gets `fgr.md` + `advanced-financial-analysis.md`. Business Analyst gets `pitch-deck-I.md`. No agent gets everything. |
-| **Compress** | Universal context (rule-one-fundamentals.md + tools-for-analysis.md + 7 Operating Rules) is a ~2K token shared preamble. Keep it tight. |
-| **Isolate** | Agent SDK subagents run in fresh context windows. The Primary Source Reader's 200K+ token 10-K text stays in ITS context -- other agents only see the Reader's summary output. This is the killer feature of the Agent SDK's subagent model. |
-
-### Token Budget Estimates (per agent invocation)
-
-| Context Component | Tokens | Notes |
-|---|---|---|
-| Universal context (R1 fundamentals + tools) | ~2,000 | Loaded into every agent |
-| Agent-specific curriculum | ~3,000-8,000 | Varies by role. Financial Analyst needs more (fgr + advanced + capex docs) |
-| DataPacket (full) | ~15,000-25,000 | 10 years of financials, metrics, peers. Biggest single item. |
-| DataPacket (sliced for agent) | ~5,000-10,000 | Each agent gets its relevant slice, not the full packet |
-| Section outputs from prior phases | ~2,000-5,000 | Synthesis Writer needs all prior sections; others need less |
-| **Total per agent** | **~12,000-45,000** | Well within 200K context. Room for Toolbox exploration. |
-| **Primary Source Reader (10-K)** | **~200,000+** | The outlier. Full 10-K text. This is why it runs as a separate subagent. |
-
-### The `contextBudget.js` Module (Phase 5D)
-
-Token counting utility that measures context usage per agent invocation. Not a hard limiter for Phase 5A-5C -- let agents use tokens freely in CC mode. Measure actual usage, then set budgets for the API mode based on real data.
-
-```javascript
-// contextBudget.js — measure, don't limit (for now)
-export function estimateTokens(text) { return Math.ceil(text.length / 4); }
-export function measureAgentContext(prompt, curriculum, dataSlice) {
-  return { prompt: estimateTokens(prompt), curriculum: estimateTokens(curriculum),
-           data: estimateTokens(JSON.stringify(dataSlice)), total: /* sum */ };
-}
 ```
+VALIDATION PIPELINE (all Node.js except mstarpy bridge)
+═══════════════════════════════════════════════════════
 
-**Confidence:** HIGH for the strategy. MEDIUM for token estimates (need real measurement once DataPacket assembly is built). The 65% enterprise failure rate from context drift (per context engineering research) validates the importance of the Select + Isolate approach.
-
----
-
-## Model Selection Strategy
-
-| Agent Role | Model | Why |
-|---|---|---|
-| Data Assembler | N/A (pure code, no AI) | Runs `dataExport.js` -- no LLM call |
-| Primary Source Reader | Opus 4.6 | 200K+ token 10-K input. Needs strongest reasoning for nuanced qualitative extraction (management tone, promise tracking, competitive positioning). |
-| Financial Analyst | Sonnet 4.5 | Quantitative analysis with structured data. Sonnet handles numbers and formulas well at 60% lower cost. |
-| Business Analyst | Sonnet 4.5 | Business model analysis. Web search for qualitative research. Sonnet sufficient for structured qualitative work. |
-| Competitor Evaluator | Sonnet 4.5 | Landscape analysis with peer metrics data. Structured comparison work. |
-| Management Evaluator | Sonnet 4.5 | Insider activity + compensation analysis. Structured data + web search. |
-| Risk Analyst | Opus 4.6 | Adversarial thinking (PEST, bear cases, inversion). Needs strongest reasoning to construct compelling counter-arguments. |
-| Valuation Specialist | Opus 4.6 | FGR derivation (5 inputs, synthesis), sensitivity analysis, growth ceiling checks. Complex multi-variable reasoning. |
-| Synthesis Writer | Opus 4.6 | Buffett-style narrative. Final thesis. Needs the best writing quality. |
-
-**In Agent SDK:**
-```typescript
-agents: {
-  "financial-analyst": {
-    description: "...",
-    prompt: financialAnalystPrompt,
-    tools: ["Read", "Bash"],  // Bash for engine functions
-    model: "sonnet"  // SDK handles model routing
-  },
-  "risk-analyst": {
-    description: "...",
-    prompt: riskAnalystPrompt,
-    tools: ["Read", "Bash", "WebSearch"],
-    model: "opus"
-  }
-}
+┌──────────────────────────┐
+│  1. Data Collection      │
+│                          │
+│  validation/collectors/  │
+│  ├── thes1s.js          │ ← calls bundled engine (esbuild)
+│  ├── fmp.js             │ ← direct fetch + API key
+│  ├── simfin.js          │ ← direct fetch + auth header
+│  ├── mstarpy-bridge.js  │ ← spawns python3, reads JSON
+│  └── yahoo.js           │ ← yahoo-finance2 package
+└──────────┬───────────────┘
+           │ raw JSON per source per ticker
+           ▼
+┌──────────────────────────┐
+│  2. Normalization        │
+│                          │
+│  validation/engines/     │
+│  ├── fieldMapping.js     │ ← universal field name map
+│  ├── signConvention.js   │ ← per-source sign multipliers
+│  ├── scaleNormalizer.js  │ ← millions → full dollars
+│  └── fiscalAlignment.js  │ ← FY-end-aware period matching
+└──────────┬───────────────┘
+           │ normalized {field: value} per source per year
+           ▼
+┌──────────────────────────┐
+│  3. Triangulation        │
+│                          │
+│  validation/engines/     │
+│  ├── triangulation.js    │ ← consensus scoring
+│  ├── deviationClassifier │ ← categorize discrepancies
+│  └── rootCauseTagger.js  │ ← pattern-match known issues
+└──────────┬───────────────┘
+           │ deviation reports per ticker
+           ▼
+┌──────────────────────────┐
+│  4. Reporting            │
+│                          │
+│  validation/reporters/   │
+│  ├── console.js          │ ← terminal dashboard
+│  ├── json.js             │ ← machine-readable output
+│  └── regression.js       │ ← diff vs previous run
+└──────────┬───────────────┘
+           │
+           ▼
+┌──────────────────────────┐
+│  5. Fix Application      │
+│                          │
+│  src/engines/            │
+│  └── edgarFinancials.js  │ ← taxonomy fixes, derivation
+│                          │    fixes, sign convention fixes
+│  + re-run pipeline       │
+└──────────────────────────┘
 ```
-
-**Confidence:** HIGH for the model selection rationale. The Agent SDK's `model` field in `AgentDefinition` directly supports per-subagent model selection ("sonnet", "opus", "haiku", "inherit").
 
 ---
 
 ## Installation
 
 ```bash
-# New dependencies for AI agent layer
-npm install @anthropic-ai/claude-agent-sdk zod linkedom dotenv
+# No new npm dependencies needed for the comparison pipeline.
+# Everything uses existing packages (vitest, esbuild, yahoo-finance2, native fetch).
 
-# Already installed (no change needed)
-# @anthropic-ai/sdk ^0.78.0
-# cheerio ^1.2.0
-# turndown ^7.2.2
-# turndown-plugin-gfm ^1.0.2
+# Python dependencies (mstarpy bridge only):
+pip install mstarpy yfinance
+# mstarpy v9.0.2 confirmed working as of 2026-03-25
 ```
 
-**Note on Zod 4:** Install `zod@^3.24.x` and import from `zod/v4` subpath. Zod 4 is published as a subpath of the v3 package, not as a separate `zod@4` package. This is the official recommendation per Zod's versioning docs.
+**New files to create (no external dependencies):**
 
-```javascript
-// Correct import for Zod 4 features (toJSONSchema, faster parsing)
-import { z } from "zod/v4";
-
-// NOT: import { z } from "zod";  // This gets Zod 3
 ```
+validation/
+├── collectors/
+│   ├── thes1s.js          # ~80 LOC - calls bundled engine
+│   ├── fmp.js             # ~120 LOC - FMP API client
+│   ├── simfin.js          # ~150 LOC - SimFin API client
+│   ├── mstarpy-bridge.js  # ~60 LOC - python3 subprocess
+│   └── yahoo.js           # ~80 LOC - yahoo-finance2 wrapper
+├── engines/
+│   ├── fieldMapping.js    # ~300 LOC - universal field map
+│   ├── signConvention.js  # ~100 LOC - sign normalizer
+│   ├── scaleNormalizer.js # ~50 LOC - unit converter
+│   ├── fiscalAlignment.js # ~250 LOC - FY period matcher
+│   ├── triangulation.js   # ~400 LOC - consensus scorer
+│   └── rootCauseTagger.js # ~200 LOC - deviation classifier
+├── reporters/
+│   ├── console.js         # ~150 LOC - terminal output
+│   ├── json.js            # ~80 LOC - structured output
+│   └── regression.js      # ~100 LOC - diff vs baseline
+├── data/
+│   ├── source-mappings.json       # field name mappings per source
+│   ├── sign-conventions.json      # sign multipliers per source per field
+│   ├── fiscal-calendars.json      # FY-end dates per ticker (cached from EDGAR)
+│   ├── thesis/                    # existing: Thes1s engine exports
+│   ├── fmp/                       # cached FMP responses
+│   ├── simfin/                    # cached SimFin responses
+│   ├── mstarpy/                   # existing: cached mstarpy responses
+│   └── yfinance/                  # existing: cached yfinance responses
+└── scripts/
+    ├── run-triangulation.mjs      # main pipeline entry point
+    ├── collect-all-sources.mjs    # batch data collection
+    └── generate-baseline.mjs     # snapshot current accuracy
+```
+
+**Estimated total new code:** ~2,100 LOC (all JavaScript except mstarpy's 10-line Python snippet)
 
 ---
 
-## What NOT to Install
+## Key Technical Decisions
 
-| Library | Why Not |
-|---|---|
-| `langchain` / `@langchain/anthropic` | Adds 50+ transitive dependencies and model-agnostic abstractions you don't need. You're using Claude exclusively. The Agent SDK gives you the orchestration loop directly. |
-| `@ai-sdk/anthropic` (Vercel AI SDK) | Designed for chat UIs with streaming. No subagent support. Doesn't map to your 9-agent architecture. |
-| `crewai` / `autogen` | Python-only. Your stack is Node.js. |
-| `openai` | You're not using OpenAI. Don't add it "just in case." |
-| `zod-to-json-schema` | Deprecated. Zod 4 has native `.toJSONSchema()`. |
-| `jsdom` (for production Node adapter) | 3x slower than linkedom for DOM traversal. Keep it as devDep for vitest only. |
-| `tiktoken` / `@anthropic-ai/tokenizer` | For Phase 5A-5C, use the simple `text.length / 4` estimate. Don't add a tokenizer dependency until Phase 5D when you build `contextBudget.js` and need precision. Even then, Claude's API returns token counts in response metadata. |
-| `express` / `fastify` | No server needed. This is a desktop app. The Node adapter runs locally for CC Skills, not as a web server. |
+| Decision | Rationale |
+|----------|-----------|
+| **All-JS pipeline** | Single language for field mappings, sign conventions, FY alignment. Eliminates the class of bugs caused by maintaining parallel implementations in Python and JS. |
+| **Collector pattern** (thin API wrappers) | Each source gets a ~100 LOC collector that fetches and returns raw JSON. Normalization happens downstream in shared code. This decouples "how to call the API" from "how to interpret the data." |
+| **JSON file caching** per source per ticker | FMP 300/day, SimFin 2000/day. Cache raw responses so re-running triangulation doesn't re-fetch. Files are human-inspectable for debugging. |
+| **Universal field mapping** as a single JSON config | One file maps all sources to canonical fields. When a new source is added, add a column. When a field is renamed, change one place. |
+| **mstarpy as subprocess, not dependency** | mstarpy is Python-only and fragile. Don't make the JS pipeline depend on it. If mstarpy breaks, the pipeline degrades gracefully to 3-source triangulation. |
+| **vitest for accuracy tests** | The accuracy suite already runs in vitest. Keep it there. Add triangulation as additional test suites in the same framework. |
+| **Consensus threshold: 3 sources agree within 1%** | Start conservative. When FMP + SimFin + mstarpy all report the same value (within 1%) and Thes1s differs by >5%, that's a high-confidence normalization bug. Loosen thresholds later based on empirical results. |
+
+---
+
+## API-Specific Integration Notes
+
+### FMP (Financial Modeling Prep)
+
+```javascript
+// Stable endpoints (verified working per memory reference)
+const income = await fetch(
+  `https://financialmodelingprep.com/api/v3/income-statement/${ticker}?period=annual&apikey=${key}`
+);
+// Also: balance-sheet-statement, cash-flow-statement
+// Returns array of objects with camelCase keys: { revenue, costOfRevenue, netIncome, ... }
+// Uses `fiscalYear` field for year labeling (calendar year of FY end)
+// Full dollars (not millions)
+```
+
+**Key mapping challenge:** FMP field names are camelCase and mostly match Thes1s semantics, but `totalDebt`, `netDebt`, `investedCapital` use different formulas. Map ~40 fields.
+
+### SimFin
+
+```javascript
+// Compact endpoint (verified working per memory reference)
+const data = await fetch(
+  `https://backend.simfin.com/api/v3/companies/statements/compact?ticker=${ticker}&statements=PL&period=FY`,
+  { headers: { 'Authorization': `api-key ${key}` } }
+);
+// Returns { statements: [{ columns: [...], data: [[...]] }] }
+// Separate templates for banks/insurance: statements=PL,BS,CF vs statements=BANK
+// Full dollars, fiscal period dates in data
+```
+
+**Key mapping challenge:** SimFin uses its own field names (e.g., "Depreciation & Amortisation" not "Depreciation And Amortization"). Compact format requires column-index mapping. ~30 fields for standard companies, additional bank/insurance fields.
+
+### mstarpy Python Bridge
+
+```javascript
+// Spawn Python subprocess to fetch mstarpy data
+import { execFile } from 'child_process';
+
+function fetchMstarpy(ticker) {
+  return new Promise((resolve, reject) => {
+    execFile('python3', ['-c', `
+import json, mstarpy
+sec = mstarpy.SecurityAnalysis(ticker="${ticker}", exchange="XNAS")
+fs = sec.financial_statements(frequency="annual", statement_type="income")
+print(json.dumps(fs))
+    `], (err, stdout) => {
+      if (err) return resolve(null); // graceful degradation
+      resolve(JSON.parse(stdout));
+    });
+  });
+}
+```
+
+**Key mapping challenge:** mstarpy returns values in millions (multiply by 1e6). Field names match Morningstar CSV labels (the truth set). This is the easiest source to map because the field-mapping.json already exists.
+
+---
+
+## Confidence Assessment
+
+| Area | Confidence | Notes |
+|------|------------|-------|
+| All-JS pipeline decision | HIGH | Already proven by the bundler + vitest pattern. Two-language bugs documented in previous attempts. |
+| FMP/SimFin API integration | HIGH | API connections verified working, accuracy tested on AAPL (per memory reference). |
+| Fiscal year alignment approach | HIGH | Problem well-understood from layer2_statements.py experience. Solution is deterministic (use FY-end month from EDGAR). |
+| mstarpy subprocess bridge | MEDIUM | mstarpy scraper is fragile by nature. Works today, could break tomorrow. The pipeline must handle mstarpy failure gracefully. |
+| Triangulation consensus thresholds | MEDIUM | Starting thresholds (3 agree within 1%, Thes1s off by >5%) are reasonable but need empirical tuning. May need per-field or per-statement-type thresholds. |
+| Total LOC estimate (~2,100) | MEDIUM | Could be 1,500-3,000 depending on how many edge cases the field mappings need. The collector pattern keeps individual files small. |
+| Version numbers for existing deps | HIGH | Read directly from `package.json` in this session. |
+
+---
+
+## Gaps to Address in Phase-Specific Research
+
+1. **SimFin bank/insurance template mapping** -- SimFin uses different statement templates for financial companies. Need to verify which fields are available and how they map to Thes1s industry overlays. Research this when implementing the SimFin collector.
+
+2. **FMP field completeness** -- FMP's 100% accuracy on AAPL (single ticker) may not hold across all 50 truth set companies. Need batch comparison to validate. This is a Phase 1 deliverable, not pre-research.
+
+3. **mstarpy v9 field name stability** -- mstarpy v9 changed its API surface (nested `subLevel` format). Need to verify field names match across statement types. Do this during mstarpy bridge implementation.
+
+4. **Consensus scoring for derived fields** -- Total debt, invested capital, EBITDA, and similar derived fields differ by formula across ALL providers. These may never reach consensus. Need to categorize derived fields differently from directly-extracted fields.
+
+5. **EDGAR CompanyFacts API changes** -- SEC occasionally changes API behavior. The `entityFiscalYearEnd` field for fiscal calendar resolution needs to be verified for reliability across the full company universe.
 
 ---
 
 ## Sources
 
-- [Claude Agent SDK Overview](https://platform.claude.com/docs/en/agent-sdk/overview) -- Official docs, subagent patterns, tool definitions
-- [Claude Agent SDK Subagents](https://platform.claude.com/docs/en/agent-sdk/subagents) -- Context isolation, parallel execution, AgentDefinition API
-- [Claude Agent SDK Structured Outputs](https://platform.claude.com/docs/en/agent-sdk/structured-outputs) -- outputFormat, Zod integration, error handling
-- [Claude API Structured Outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs) -- output_config.format, strict tool_use, JSON schema enforcement
-- [Claude Code Skills Documentation](https://code.claude.com/docs/en/skills) -- SKILL.md format, frontmatter, triggering conditions
-- [Zod v4 Release Notes](https://zod.dev/v4) -- Native toJSONSchema(), 14x faster parsing, subpath publishing
-- [Zod JSON Schema Docs](https://zod.dev/json-schema) -- Schema generation, supported features
-- [LinkedOM GitHub](https://github.com/WebReflection/linkedom) -- Performance benchmarks vs jsdom
-- [Skill Authoring Best Practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) -- Description triggers, progressive disclosure
-- [Context Engineering Guide 2026](https://www.newsletter.swirlai.com/p/state-of-context-engineering-in-2026) -- Write/Select/Compress/Isolate framework
+- Existing codebase: `package.json`, `edgarFinancials.js`, `morningstarAccuracy.test.js`, `field-mapping.json`, `bundle.mjs`, `layer2_statements.py`, `export-financials.mjs`
+- Engineering plans: `gstack-xbrl-annual-normalization-eng-plan-20260319.md`, `gstack-xbrl-engine-strategy-eng-plan-20260318.md`
+- Validation reports: `validation-summary-2026-03-10.md`
+- Memory references: `reference_financial_data_apis.md` (API keys, endpoints, rate limits, accuracy results)
+- Project definition: `.planning/PROJECT.md` (Attempt #3 strategy, data source table, constraints)
+
+**Note:** WebSearch, WebFetch, and Bash tools were all unavailable during this research session. Ecosystem claims about Arelle, edgartools, sec-edgar-downloader, and commercial providers are based on training data (cutoff May 2025) and flagged accordingly. Version recommendations for external tools should be verified before implementation.
