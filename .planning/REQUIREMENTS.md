@@ -1,7 +1,7 @@
 # Requirements: Thes1s Normalization Engine
 
 **Defined:** 2026-03-25
-**Core Value:** 98%+ accuracy match to Morningstar across all US-listed equities, achieved by triangulating our XBRL output against FMP, SimFin, and mstarpy — then fixing the normalization rules so we never need paid sources again.
+**Core Value:** 94%+ accuracy match to Morningstar across all US-listed equities, achieved by triangulating our XBRL output against FMP, SimFin, and mstarpy — then fixing the normalization rules so we never need paid sources again.
 
 ## v1 Requirements
 
@@ -31,9 +31,9 @@
 
 ### Scale Validation
 
-- [ ] **SCALE-01**: 98%+ accuracy on 50-company Morningstar truth set (annual financials)
+- [ ] **SCALE-01**: 94%+ accuracy on 50-company Morningstar truth set (annual financials) — revised from 98% per D-01; remaining diffs are methodology, not bugs
 - [ ] **SCALE-02**: S&P 500 structural validation — accounting identities + completeness checks across all 503 companies after each major fix
-- [ ] **SCALE-03**: 98%+ accuracy across all US-listed equities (structural validation + spot checks on random sample outside S&P 500)
+- [ ] **SCALE-03**: Structural validation across US-listed equities beyond S&P 500 (deferred per D-09 — S&P 500 validation sufficient for this milestone)
 - [ ] **SCALE-04**: Elimination of paid API dependencies — FMP and SimFin subscriptions cancelled once normalization rules produce 98%+ independently
 
 ### Executive Compensation (Secondary)
