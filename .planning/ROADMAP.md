@@ -61,7 +61,7 @@ Plans:
   2. No fix creates a net regression — the regression diff report shows fields gained exceeding fields lost for every applied fix
   3. The residual "Other" field computation is enabled only for company-years where named item coverage reaches the 95% precondition gate — the B7 failure mode (residuals amplifying upstream errors) does not recur
   4. Financial sector companies (BRK-B, JPM, WFC, MET) show improved accuracy after bank/REIT/insurance overlay tuning — the overlay fields are no longer the primary failure cluster for those companies
-**Plans:** 7 plans
+**Plans:** 11 plans
 
 Plans:
 - [x] 03-01-PLAN.md — Field alias map (16 naming mismatches) + pre-fix baseline snapshots for regression tracking
@@ -71,6 +71,10 @@ Plans:
 - [x] 03-05-PLAN.md — Gap closure: Residual Other balance sheet fields (OtherNCA, OtherNCL, OtherCA) with 95% coverage gates
 - [x] 03-06-PLAN.md — Gap closure: Investment flow summation + debt tag coverage improvements
 - [x] 03-07-PLAN.md — Gap closure: Per-field tag additions (accounts_receivable, deferred_revenue, short_term_investments, minority_interest, common_stock) + final MS comparison (90.9%)
+- [ ] 03-08-PLAN.md — Gap closure round 2: Methodology reclassifications (PPE ROU, goodwill restated, lease classification) + net_change_in_cash FX exclusion
+- [ ] 03-09-PLAN.md — Gap closure round 2: Accrued liabilities scope handling + D&A broadening (MSFT, NEE, NKE, SFM)
+- [ ] 03-10-PLAN.md — Gap closure round 2: Residual Other formula alignment with MS named item definitions
+- [ ] 03-11-PLAN.md — Gap closure round 2: Debt classification + investment flow + remaining per-field fixes + final accuracy report
 
 ### Phase 4: Scale Validation
 **Goal**: Engine accuracy confirmed at 98%+ across all US-listed equities and paid data source subscriptions are cancelled
@@ -101,6 +105,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4. Phase 5 can begin after Ph
 |-------|----------------|--------|-----------|
 | 1. Comparison Harness | 2/2 | Complete   | 2026-03-26 |
 | 2. Multi-Source Triangulation | 3/3 | Complete | 2026-03-26 |
-| 3. Engine Fixes | 4/7 | Executing | - |
+| 3. Engine Fixes | 7/11 | Executing | - |
 | 4. Scale Validation | 0/TBD | Not started | - |
 | 5. Compensation Engine | 0/TBD | Not started | - |
