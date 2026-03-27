@@ -202,7 +202,41 @@ export const BANK_OVERLAY = {
 
 export const REIT_OVERLAY = {
   incomeFields: [
-    // Property operating costs (the REIT's "COGS")
+    // Revenue — REITs use total revenue tags that differ from standard companies.
+    // AMT (tower REIT) was picking a sub-revenue tag ($717M) instead of total ($9.4B).
+    // Priority: broad total revenue tags first, then REIT-specific.
+    { field: 'revenues', unit: 'USD', tags: [
+      'Revenues',
+      'RevenueFromContractWithCustomerExcludingAssessedTax',
+      'RealEstateRevenueNet',
+      'RealEstateRevenueGross',
+      'RevenueFromContractWithCustomerIncludingAssessedTax',
+    ]},
+    // Cost of revenue — REITs report different COGS tags than standard companies.
+    // CostOfRevenue is the broadest; REIT-specific tags fill gaps.
+    { field: 'cost_of_revenue', unit: 'USD', tags: [
+      'CostOfRevenue',
+      'CostOfGoodsAndServicesSold',
+      'CostOfRealEstateRevenue',
+      'DirectCostsOfLeasedAndRentedPropertyOrEquipment',
+      'CostOfPropertyRepairsAndMaintenance',
+    ]},
+    // Interest expense — REITs carry significant debt; engine was returning null for AMT ($1.4B).
+    { field: 'interest_expense', unit: 'USD', tags: [
+      'InterestExpense',
+      'InterestExpenseDebt',
+      'InterestCostsIncurred',
+      'InterestExpenseOperating',
+    ]},
+    // IS-level D&A — REITs have large depreciation on real estate assets.
+    // AMT reports $2.3B IS D&A that engine was missing.
+    { field: 'depreciation_amortization_is', unit: 'USD', tags: [
+      'DepreciationAndAmortization',
+      'DepreciationDepletionAndAmortization',
+      'Depreciation',
+      'CostOfGoodsAndServicesSoldDepreciationAndAmortization',
+    ]},
+    // Property operating costs (the REIT's "COGS" for NOI calculation)
     { field: 'property_operating_costs', unit: 'USD', tags: [
       'DirectCostsOfLeasedAndRentedPropertyOrEquipment',
       'CostOfOtherPropertyOperatingRevenue',

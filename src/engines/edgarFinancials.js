@@ -309,10 +309,18 @@ const BALANCE_TAXONOMY = [
     'EmployeeRelatedLiabilitiesCurrent',
   ]},
   { field: 'short_term_debt', unit: 'USD', tags: [
-    'ShortTermBorrowings',
     'DebtCurrent',
+    'ShortTermBorrowings',
     'CommercialPaper',
     'LineOfCredit',
+    'ShortTermBankLoansAndNotesPayable',
+  ]},
+  // Component fields for short-term debt summation (AAPL, others report separately)
+  { field: 'commercial_paper', unit: 'USD', tags: [
+    'CommercialPaper',
+  ]},
+  { field: 'short_term_borrowings', unit: 'USD', tags: [
+    'ShortTermBorrowings',
     'ShortTermBankLoansAndNotesPayable',
   ]},
   { field: 'current_portion_lt_debt', unit: 'USD', tags: [
@@ -797,6 +805,7 @@ function getDerivedFormula(field, inc, bal, cf) {
       if (bal.current_liabilities != null && bal.noncurrent_liabilities != null)
         return 'current_liabilities + noncurrent_liabilities';
       return 'liabilities_and_equity - equity - minority_interest';
+    case 'short_term_debt': return 'max(direct_tag, commercial_paper + short_term_borrowings)';
     case 'total_debt':
       if (bal.liabilities != null && bal.liabilities > 0
         && ((bal.short_term_debt ?? 0) + (bal.current_portion_lt_debt ?? 0) + (bal.long_term_debt ?? 0) + (bal.finance_lease_liability_current ?? 0) + (bal.finance_lease_liability_noncurrent ?? 0)) / bal.liabilities < 0.05
@@ -1002,6 +1011,24 @@ function computeDerivedFields(years, income, balance, cashFlow) {
     // Liabilities nor LiabilitiesNoncurrent tags exist — 31+ companies)
     if (bal.liabilities == null && bal.liabilities_and_equity != null && bal.equity != null) {
       bal.liabilities = bal.liabilities_and_equity - bal.equity - (bal.minority_interest ?? 0);
+    }
+
+    // Short-term debt component summation: Companies like AAPL report CommercialPaper +
+    // ShortTermBorrowings as separate line items, but the first-tag-wins for short_term_debt
+    // picks only one (e.g., DebtCurrent = $10B misses $6B commercial paper, or vice versa).
+    // Sum the separately-extracted components when they provide a larger total.
+    {
+      const components = [
+        bal.commercial_paper,
+        bal.short_term_borrowings,
+      ].filter(v => v != null && v > 0);
+      const componentSum = components.reduce((s, v) => s + v, 0);
+      // Use component sum if it exceeds the direct first-tag-wins value.
+      // This catches AAPL where CommercialPaper ($6B) + ShortTermBorrowings are separate
+      // from the aggregate DebtCurrent tag.
+      if (componentSum > 0 && (bal.short_term_debt == null || componentSum > bal.short_term_debt)) {
+        bal.short_term_debt = componentSum;
+      }
     }
 
     // Total Debt = Traditional Debt + Finance/Capital Lease Obligations (matches Morningstar)
@@ -1656,14 +1683,18 @@ export async function fetchEdgarQuarterly(ticker, options = {}) {
 // Merge overlay-extracted fields into base statements.
 // Overlay fields are additive — they never overwrite base fields.
 
+// Overlay merge strategy:
+// - For fields that ONLY exist in the overlay (additive): always add to base
+// - For fields that exist in BOTH base and overlay: overlay wins (more industry-specific)
+//   This handles REITs where the base `revenues` picks a narrow ASC 606 tag but
+//   the REIT overlay has broader tags like `Revenues` that resolve to total revenue.
 function mergeOverlayStatements(base, overlay, years) {
   for (const year of years) {
     if (!overlay[year]) continue;
     if (!base[year]) base[year] = {};
     for (const [field, value] of Object.entries(overlay[year])) {
-      if (base[year][field] == null) {
-        base[year][field] = value;
-      }
+      // Overlay value always wins when present — it's more industry-specific
+      base[year][field] = value;
     }
   }
 }
@@ -1673,9 +1704,8 @@ function mergeOverlayProvenance(baseProv, overlayProv, years) {
     if (!overlayProv[year]) continue;
     if (!baseProv[year]) baseProv[year] = {};
     for (const [field, prov] of Object.entries(overlayProv[year])) {
-      if (!baseProv[year][field]) {
-        baseProv[year][field] = prov;
-      }
+      // Overlay provenance always wins when present
+      baseProv[year][field] = prov;
     }
   }
 }
