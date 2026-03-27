@@ -12,6 +12,22 @@
 import { compareField, EUR_COMPANIES } from './comparator.mjs';
 import { resolveFieldName } from './field-alias-map.mjs';
 
+// ─── FMP Sign Convention Fix ────────────────────────────────
+// FMP stores cash outflow fields as NEGATIVE (outflow convention).
+// Our XBRL engine stores Payments/Repayments tags as POSITIVE.
+// These fields need sign flip (multiply by -1) before comparison.
+//
+// Note: capital_expenditures already has sign:-1 in field-mapping.json,
+// so it's stored as positive in the FMP cache. These fields have sign:1
+// in the mapping, so they're stored as raw FMP negative values.
+const SIGN_FLIP_FIELDS = new Set([
+  'share_repurchases',
+  'dividends_paid',
+  'purchase_of_investments',
+  'purchase_of_business',
+  'repayments_of_lt_debt',
+]);
+
 // ─── Field Tier Definitions ─────────────────────────────────
 // Mirrors src/engines/tickerAudit.js FIELD_TIERS (engine field names)
 
@@ -125,6 +141,70 @@ export function tierToTolerance(tier) {
   }
 }
 
+// ─── Fiscal Year Alignment ──────────────────────────────────
+// FMP labels fiscal years by the FY-end year: LULU FY ending Jan 2025 = FMP "2025".
+// Our XBRL engine labels them by the calendar year covering most of the fiscal period:
+// LULU FY ending Jan 2025 = engine "2024".
+//
+// For companies with Jan-May fiscal year ends, FMP year = engine year + 1.
+// For June-Dec fiscal year ends, FMP year = engine year (no offset needed).
+
+/**
+ * Detect fiscal year offset between FMP and engine year labels.
+ *
+ * Uses revenue matching: for each FMP year, check if the revenue value
+ * matches engine's same year (offset=0), previous year (offset=-1),
+ * or next year (offset=+1).
+ *
+ * Non-December FY companies have different year labeling between FMP and engine:
+ * - FMP uses the fiscal year designation (e.g., FY2025 ending Jan 2025 = FMP "2025")
+ * - Engine may use the XBRL period end year or filing year, which can differ by +1 or -1
+ *
+ * @param {object} fmpData - FMP data with statement keyed by year
+ * @param {object} engineData - Engine data with statement keyed by year
+ * @returns {number} Offset to ADD to FMP year to get engine year (-1, 0, or +1)
+ */
+function detectFYOffset(fmpData, engineData) {
+  const fmpIncome = fmpData.income || {};
+  const engineIncome = engineData.income || {};
+  const fmpYears = Object.keys(fmpIncome).sort();
+
+  let matchNeg1 = 0, match0 = 0, matchPos1 = 0;
+
+  for (const fmpYear of fmpYears) {
+    const fmpRevenue = fmpIncome[fmpYear]?.revenues;
+    if (fmpRevenue == null || Math.abs(fmpRevenue) < 1000) continue;
+
+    // Check offset=0: FMP year -> engine same year
+    const engine0 = engineIncome[fmpYear]?.revenues;
+    if (engine0 != null) {
+      const pct0 = Math.abs((engine0 - fmpRevenue) / fmpRevenue);
+      if (pct0 < 0.01) match0++;
+    }
+
+    // Check offset=-1: FMP year -> engine year-1
+    const prevYear = String(Number(fmpYear) - 1);
+    const engineNeg1 = engineIncome[prevYear]?.revenues;
+    if (engineNeg1 != null) {
+      const pctNeg1 = Math.abs((engineNeg1 - fmpRevenue) / fmpRevenue);
+      if (pctNeg1 < 0.01) matchNeg1++;
+    }
+
+    // Check offset=+1: FMP year -> engine year+1
+    const nextYear = String(Number(fmpYear) + 1);
+    const enginePos1 = engineIncome[nextYear]?.revenues;
+    if (enginePos1 != null) {
+      const pctPos1 = Math.abs((enginePos1 - fmpRevenue) / fmpRevenue);
+      if (pctPos1 < 0.01) matchPos1++;
+    }
+  }
+
+  // Pick the offset with the most revenue matches (need at least 2 matches)
+  if (matchPos1 > match0 && matchPos1 > matchNeg1 && matchPos1 >= 2) return 1;
+  if (matchNeg1 > match0 && matchNeg1 > matchPos1 && matchNeg1 >= 2) return -1;
+  return 0;
+}
+
 // ─── Statement Key Mapping ──────────────────────────────────
 
 // Engine statement keys match FMP canonical keys
@@ -153,6 +233,9 @@ export function compareFmpToEngine(ticker, fmpData, engineData) {
 
   const results = [];
 
+  // Detect fiscal year offset (0 for Dec FY, +1 or -1 for non-Dec FY)
+  const fyOffset = detectFYOffset(fmpData, engineData);
+
   // Determine overlapping years across all statement types
   const allOverlappingYears = new Set();
 
@@ -163,19 +246,28 @@ export function compareFmpToEngine(ticker, fmpData, engineData) {
     const fmpYears = Object.keys(fmpStmt);
     const engineYears = new Set(Object.keys(engineStmt));
 
-    const overlappingYears = fmpYears.filter(y => engineYears.has(y));
+    // Apply FY offset: FMP year N -> engine year (N + offset)
+    const overlappingYears = fmpYears.filter(y => {
+      const engineYearKey = String(Number(y) + fyOffset);
+      return engineYears.has(engineYearKey);
+    });
 
     for (const year of overlappingYears) {
       allOverlappingYears.add(year);
 
+      const engineYearKey = String(Number(year) + fyOffset);
       const fmpYear = fmpStmt[year] || {};
-      const engineYear = engineStmt[year] || {};
+      const engineYear = engineStmt[engineYearKey] || {};
 
-      for (const [canonicalField, fmpValue] of Object.entries(fmpYear)) {
-        if (fmpValue == null) continue;
+      for (const [canonicalField, rawFmpValue] of Object.entries(fmpYear)) {
+        if (rawFmpValue == null) continue;
 
         // Resolve canonical FMP field name to engine field name
         const engineFieldName = resolveFieldName(canonicalField);
+
+        // Apply sign flip for fields where FMP uses outflow convention (negative)
+        // but engine stores XBRL Payments tags as positive
+        const fmpValue = SIGN_FLIP_FIELDS.has(engineFieldName) ? -rawFmpValue : rawFmpValue;
 
         // Look up engine value
         const engineValue = engineYear[engineFieldName];
@@ -202,6 +294,7 @@ export function compareFmpToEngine(ticker, fmpData, engineData) {
         }
 
         // Compare: sign is 1 because FMP data is already sign-normalized
+        // (and sign-flip fields have been corrected above)
         const comparison = compareField(fmpValue, engineValue, 1, tolerance);
 
         results.push({
