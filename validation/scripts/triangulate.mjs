@@ -153,6 +153,7 @@ import { fetchSimfinData } from './lib/simfin-collector.mjs';
 import { readMstarpyData } from './lib/mstarpy-collector.mjs';
 import { classifyField } from './lib/consensus.mjs';
 import { tagRootCause } from './lib/root-cause-tagger.mjs';
+import { resolveFieldName, resolveCanonicalName } from './lib/field-alias-map.mjs';
 import {
   generateTriangulationConsoleReport,
   generateFixRecommendations,
@@ -286,26 +287,39 @@ function collectAllYears(engineData, sources) {
  * Collect union of all canonical field names from BOTH the XBRL engine and all external sources.
  * Including engine fields is required so that fields we extract but external sources don't have
  * are classified as UNIQUE_COVERAGE (D-06) rather than silently omitted.
+ *
+ * Engine fields are mapped to canonical names via resolveCanonicalName so that
+ * the union contains canonical names only (e.g., engine's 'equity' -> 'stockholders_equity').
+ * Source fields are already canonical.
  */
 function collectAllFields(engineData, sources) {
   const fields = new Set();
 
-  function addFields(data) {
-    if (!data) return;
+  // Add engine fields, resolving engine names -> canonical names
+  if (engineData) {
     for (const stmtKey of ['income', 'balance', 'cashFlow']) {
-      if (data[stmtKey]) {
-        for (const yearData of Object.values(data[stmtKey])) {
+      if (engineData[stmtKey]) {
+        for (const yearData of Object.values(engineData[stmtKey])) {
           for (const field of Object.keys(yearData)) {
-            fields.add(field);
+            fields.add(resolveCanonicalName(field));
           }
         }
       }
     }
   }
 
-  addFields(engineData);
+  // Add source fields (already canonical)
   for (const s of sources) {
-    addFields(s.data);
+    if (!s.data) continue;
+    for (const stmtKey of ['income', 'balance', 'cashFlow']) {
+      if (s.data[stmtKey]) {
+        for (const yearData of Object.values(s.data[stmtKey])) {
+          for (const field of Object.keys(yearData)) {
+            fields.add(field);
+          }
+        }
+      }
+    }
   }
 
   return [...fields].sort();
@@ -326,11 +340,23 @@ function getFieldValue(data, field, year) {
 }
 
 /**
+ * Get a field value from ENGINE data, resolving canonical -> engine field names.
+ * The engine uses short names (equity, assets, cash) while sources use canonical
+ * names (stockholders_equity, total_assets, cash_and_equivalents).
+ * This wrapper resolves the alias before looking up the value.
+ */
+function getEngineFieldValue(engineData, canonicalField, year) {
+  const engineField = resolveFieldName(canonicalField);
+  return getFieldValue(engineData, engineField, year);
+}
+
+/**
  * Look up which statement section a field belongs to.
  * Uses pre-built FIELD_STATEMENT_MAP from field-mapping.json _sources entries.
+ * Falls back to engine field name via alias resolution.
  */
 function getFieldStatement(field) {
-  return FIELD_STATEMENT_MAP[field] || 'unknown';
+  return FIELD_STATEMENT_MAP[field] || FIELD_STATEMENT_MAP[resolveFieldName(field)] || 'unknown';
 }
 
 /**
@@ -410,7 +436,7 @@ for (let i = 0; i < tickers.length; i++) {
 
     for (const year of allYears) {
       for (const field of allFields) {
-        const thesisValue = getFieldValue(engineData, field, year);
+        const thesisValue = getEngineFieldValue(engineData, field, year);
         const sourceValues = sources.map(s => ({
           source: s.name,
           value: getFieldValue(s.data, field, year),
