@@ -634,6 +634,178 @@ describe('Phase 2: derived field detection via pre/post diff', () => {
   });
 });
 
+// ─── Residual "Other" computation with 95% precondition gate ────────────────
+describe('Residual Other computation', () => {
+  it('computes OtherCL when named item coverage >= 95%', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 50000000000,       // $50B total CL
+      accounts_payable: 10000000000,          // $10B
+      accrued_liabilities: 8000000000,        // $8B
+      short_term_debt: 5000000000,            // $5B
+      current_portion_lt_debt: 3000000000,    // $3B
+      operating_lease_liability_current: 2000000000, // $2B
+      finance_lease_liability_current: 1000000000,   // $1B
+      deferred_revenue_current: 4000000000,   // $4B
+      taxes_payable: 2000000000,              // $2B
+      // Named sum = 10+8+5+3+2+1+4+2 = $35B
+      // Residual = 50 - 35 = $15B
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_liabilities).toBe(15000000000);
+  });
+
+  it('does NOT compute OtherCL when coverage < 95%', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 50000000000,       // $50B total CL
+      accounts_payable: 10000000000,          // Only 3 of 8 named items present = 37.5%
+      accrued_liabilities: 8000000000,
+      short_term_debt: 5000000000,
+      // Missing: current_portion_lt_debt, operating_lease_liability_current,
+      //          finance_lease_liability_current, deferred_revenue_current, taxes_payable
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_liabilities).toBeUndefined();
+  });
+
+  it('does NOT set negative OtherCL (overcounting guard)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 20000000000,       // $20B total CL
+      accounts_payable: 10000000000,          // Named items sum to $45B > $20B CL
+      accrued_liabilities: 8000000000,
+      short_term_debt: 5000000000,
+      current_portion_lt_debt: 3000000000,
+      operating_lease_liability_current: 2000000000,
+      finance_lease_liability_current: 1000000000,
+      deferred_revenue_current: 10000000000,
+      taxes_payable: 6000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_liabilities).toBeUndefined();
+  });
+
+  it('sets OtherCL = 0 when named items exactly sum to current_liabilities', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 35000000000,       // $35B = exact sum of named items
+      accounts_payable: 10000000000,
+      accrued_liabilities: 8000000000,
+      short_term_debt: 5000000000,
+      current_portion_lt_debt: 3000000000,
+      operating_lease_liability_current: 2000000000,
+      finance_lease_liability_current: 1000000000,
+      deferred_revenue_current: 4000000000,
+      taxes_payable: 2000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_liabilities).toBe(0);
+  });
+
+  it('does not overwrite existing OtherCL from XBRL tag', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 50000000000,
+      other_current_liabilities: 12000000000, // Already has a value from direct XBRL extraction
+      accounts_payable: 10000000000,
+      accrued_liabilities: 8000000000,
+      short_term_debt: 5000000000,
+      current_portion_lt_debt: 3000000000,
+      operating_lease_liability_current: 2000000000,
+      finance_lease_liability_current: 1000000000,
+      deferred_revenue_current: 4000000000,
+      taxes_payable: 2000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Existing value must NOT be overwritten
+    expect(balance[2024].other_current_liabilities).toBe(12000000000);
+  });
+
+  it('computes OtherIncomeExpense when components available', () => {
+    const years = [2024];
+    const income = { 2024: {
+      income_before_tax: 15000000000,         // $15B pretax
+      operating_income_loss: 12000000000,     // $12B operating
+      interest_income: 500000000,             // $500M interest income
+      interest_expense: 800000000,            // $800M interest expense
+      // OtherIncomeExpense = 15B - 12B - 0.5B + 0.8B = $3.3B
+    }};
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(income[2024].other_income_expense).toBe(3300000000);
+  });
+
+  it('does not overwrite existing OtherIncomeExpense from XBRL tag', () => {
+    const years = [2024];
+    const income = { 2024: {
+      income_before_tax: 15000000000,
+      operating_income_loss: 12000000000,
+      interest_income: 500000000,
+      interest_expense: 800000000,
+      other_income_expense: 2000000000,       // Existing value from XBRL
+    }};
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Existing value must NOT be overwritten
+    expect(income[2024].other_income_expense).toBe(2000000000);
+  });
+
+  it('coverage gate counts only the 8 named CL items', () => {
+    // Even if balance sheet has many other fields, only the 8 CL-specific items matter
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 50000000000,
+      // Lots of non-CL fields present
+      assets: 100000000000,
+      equity: 40000000000,
+      goodwill: 5000000000,
+      liabilities: 60000000000,
+      // But only 6 of 8 CL named items = 75% coverage (below 95%)
+      accounts_payable: 10000000000,
+      accrued_liabilities: 8000000000,
+      short_term_debt: 5000000000,
+      current_portion_lt_debt: 3000000000,
+      operating_lease_liability_current: 2000000000,
+      finance_lease_liability_current: 1000000000,
+      // Missing: deferred_revenue_current, taxes_payable
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // 6/8 = 75% < 95% — should NOT compute residual
+    expect(balance[2024].other_current_liabilities).toBeUndefined();
+  });
+});
+
 // ─── TTM Q4 Bug: When latest filing is 10-K, TTM should equal annual ────────
 // Bug: findLatestQuarter only looks at 10-Q filings (Q1/Q2/Q3), so when the
 // latest data is a 10-K (Q4/FY), TTM uses stale Q3 data instead of annual values.

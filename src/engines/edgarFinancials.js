@@ -951,6 +951,15 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       inc.effective_tax_rate = (inc.income_tax / inc.income_before_tax) * 100;
     }
 
+    // Residual "Other Income/Expense" — simpler formula, fewer error amplification concerns
+    if (inc.other_income_expense == null &&
+        inc.income_before_tax != null && inc.operating_income_loss != null) {
+      const interestIncome = inc.interest_income ?? 0;
+      const interestExpense = inc.interest_expense ?? 0;
+      inc.other_income_expense = inc.income_before_tax - inc.operating_income_loss
+                                  - interestIncome + interestExpense;
+    }
+
     // ── Balance Sheet Derived ──
 
     // Cash & Marketable Securities combined (matches R1 Toolbox "Cash, Cash Equivalents, & Marketable Securities")
@@ -1125,9 +1134,31 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       bal.net_tangible_assets = (bal.equity ?? 0) - (bal.goodwill ?? 0) - (bal.intangible_assets ?? 0);
     }
 
-    // NOTE: Residual "Other" BS derivations (OtherCL, OtherNCL, OtherNCA) were attempted
-    // but reverted — named items aren't accurate enough. Residual computation amplifies
-    // tag-level errors (e.g., OtherCL went 28→64 DIFF). Blocked until named items reach ~100%.
+    // ── Residual "Other" Fields (Gated) ──
+    // MS DataID 23151 confirmed formula for OtherCurrentLiabilities.
+    // Only compute when 95%+ of named CL items are non-null for this company-year.
+    // This prevents B7 error amplification from incomplete named item extraction.
+    if (bal.other_current_liabilities == null && bal.current_liabilities != null) {
+      const clNamedItems = [
+        bal.accounts_payable,
+        bal.accrued_liabilities,
+        bal.short_term_debt,
+        bal.current_portion_lt_debt,
+        bal.operating_lease_liability_current,
+        bal.finance_lease_liability_current,
+        bal.deferred_revenue_current,
+        bal.taxes_payable,
+      ];
+      const clCoverage = clNamedItems.filter(v => v != null).length / clNamedItems.length;
+
+      if (clCoverage >= 0.95) {
+        const namedSum = clNamedItems.reduce((sum, v) => sum + (v ?? 0), 0);
+        const residual = bal.current_liabilities - namedSum;
+        if (residual >= 0) {
+          bal.other_current_liabilities = residual;
+        }
+      }
+    }
 
     // Total Capitalization = Equity + Total Debt (traditional)
     if (bal.total_capitalization == null && bal.equity != null) {
@@ -1281,10 +1312,9 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       }
     }
 
-    // B7/B8: Residual "Other" categories — still blocked.
-    // Attempted twice (B7 and B8) — both caused accuracy regressions because
-    // errors in named items (especially sale/purchase of investments, D&A) get
-    // amplified into the residual. Will only work when named items are ~100% accurate.
+    // B7/B8: Residual "Other" CF categories — still blocked for cash flow.
+    // Balance sheet residuals (OtherCL) are now gated at 95% named item coverage.
+    // CF residuals remain higher risk due to investment/D&A error amplification.
 
     // Ending cash position = current year balance sheet cash (prefer broader definition including restricted cash)
     if (cf.ending_cash_position == null) {
