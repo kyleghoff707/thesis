@@ -1,310 +1,737 @@
-# Technology Stack
+# Technology Stack: Claude API Migration
 
-**Project:** Thes1s AI Agent Workflow
-**Researched:** 2026-03-24
+**Project:** Thes1s v1.1 -- API Migration & Pitch Deck Quality
+**Researched:** 2026-03-27
 **Overall confidence:** HIGH
+**Scope:** Focused on the 4 new capabilities needed for direct Claude API orchestration. Does NOT re-research validated infrastructure (Node.js data bridge, agent definitions, DataPacket assembly, Zod schemas).
 
 ---
 
-## Recommended Stack
+## Executive Summary
 
-This stack covers the AI agent layer being added to an existing Tauri + Vite + React desktop app with 20+ validated financial data engines. The data layer and UI framework are already decided (React 19, Vite 7, Tauri 2). This document covers only the NEW technology needed for Phases 5-8: the intelligence layer.
-
----
-
-### Dual-Path Agent Infrastructure
-
-The architecture plan defines two deployment paths: CC Skills (Claude Code, personal use) and In-App Generation (Claude API, commercial). Both paths share schemas, prompts, and data assembly. The stack must serve both.
-
-| Technology | Version | Purpose | Why |
-|---|---|---|---|
-| `@anthropic-ai/claude-agent-sdk` | ^0.1.x (latest) | CC Skills path: programmatic orchestration of subagents with built-in tools | Powers the same agent loop as Claude Code itself. Subagents get fresh 1M-token contexts, context isolation, parallel execution. Directly maps to the 9-agent architecture. |
-| `@anthropic-ai/sdk` | ^0.78.0 (already installed) | In-App API path: direct Claude API calls with tool_use + structured outputs | Already in the project. Supports `output_config.format` with JSON schema enforcement, strict tool_use, and Zod integration for type-safe responses. |
-| `zod` | ^3.24.x (import `zod/v4` subpath) | JSON schema definition + runtime validation for all agent outputs | Zod 4 has native `.toJSONSchema()` (no external library needed). Works with both SDKs. Defines report section schemas, DataPacket validation, tool input/output contracts. |
-
-**Confidence:** HIGH -- All three packages are from Anthropic (first two) or de facto standard (Zod). Verified against official documentation.
-
-### Why Two SDKs
-
-The Agent SDK and the Client SDK serve different purposes and are NOT interchangeable:
-
-| Aspect | Agent SDK (`claude-agent-sdk`) | Client SDK (`@anthropic-ai/sdk`) |
-|---|---|---|
-| **Tool execution** | Built-in (Read, Write, Bash, Grep, Glob, WebSearch, Agent) | You implement the tool loop yourself |
-| **Subagents** | Native support with context isolation | Not supported |
-| **Cost model** | Uses your Claude Code Pro subscription (included) or API key | Per-token API billing |
-| **Best for** | CC Skills path, orchestration, development-time workflows | In-app generation, production API calls, commercial deployment |
-| **Context** | Access to filesystem, CLAUDE.md, skills, commands | Stateless API calls, you manage all context |
-
-Phase 5A-5C uses the Agent SDK (CC Skills). Phase 8 adds the Client SDK path (in-app generation via `aiResearch.js`). Both share Zod schemas and DataPacket assembly.
+The existing `@anthropic-ai/sdk@0.78.0` and `zod@4.3.6` already support everything needed for the API migration. No new dependencies are required. The SDK's `zodOutputFormat` helper, prompt caching via `cache_control`, `Promise.allSettled` for parallel dispatch, and the built-in `web_search_20250305` server tool cover all four target capabilities. The main work is upgrading the SDK to `^0.80.0` (for full `output_config` GA support) and building the orchestration layer in `aiResearch.js`.
 
 ---
 
-### Structured Output Enforcement
+## Question 1: Structured Outputs
 
-| Technology | Version | Purpose | Why |
-|---|---|---|---|
-| `zod` (via `zod/v4`) | ^3.24.x | Schema definition for report sections, DataPacket, tool contracts | Native `z.toJSONSchema()` eliminates `zod-to-json-schema` dependency. 14x faster parsing than v3. Production-ready despite v4 subpath publishing. |
+### Does @anthropic-ai/sdk support structured outputs?
 
-**How it works with each SDK:**
+**YES.** Structured outputs are GA (generally available) on all current Claude models: Opus 4.6, Sonnet 4.6, Sonnet 4.5, Opus 4.5, Haiku 4.5. No beta header required.
 
-**Agent SDK (CC Skills path):**
-```typescript
-import { z } from "zod/v4";
-import { query } from "@anthropic-ai/claude-agent-sdk";
+**Confidence:** HIGH -- Verified against official docs and the installed SDK's type definitions.
 
-const SectionSchema = z.object({
-  key: z.string(),
-  title: z.string(),
-  status: z.enum(["pass", "fail", "review", "pending"]),
-  confidence: z.enum(["HIGH", "MEDIUM", "LOW"]),
-  verdict: z.enum(["PASS", "FAIL", "WATCHLIST"]).nullable(),
-  verdictRationale: z.string(),
-  summary: z.string(),
-  narrative: z.string(),
-  citations: z.array(z.object({ id: z.number(), ref: z.string(), text: z.string(), source: z.string() })),
-  redFlags: z.array(z.string()),
+### API Parameter
+
+The parameter is `output_config.format` (not the older `output_format`):
+
+```javascript
+const response = await client.messages.create({
+  model: 'claude-sonnet-4-20250514',
+  max_tokens: 8192,
+  messages: [{ role: 'user', content: prompt }],
+  output_config: {
+    format: {
+      type: 'json_schema',
+      schema: {
+        type: 'object',
+        properties: { /* ... */ },
+        required: ['key', 'title', 'narrative'],
+        additionalProperties: false,  // REQUIRED for all objects
+      }
+    }
+  }
 });
 
-for await (const message of query({
-  prompt: "Analyze FCF for COST using the DataPacket...",
-  options: {
-    outputFormat: { type: "json_schema", schema: z.toJSONSchema(SectionSchema) }
-  }
-})) {
-  if (message.type === "result" && message.structured_output) {
-    const parsed = SectionSchema.safeParse(message.structured_output);
-    // Guaranteed valid, type-safe section data
-  }
-}
+// Response is guaranteed-valid JSON in:
+const parsed = JSON.parse(response.content[0].text);
 ```
 
-**Client SDK (In-App API path):**
-```typescript
-import { z } from "zod/v4";
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+**Migration note:** The old `output_format` parameter and `structured-outputs-2025-11-13` beta header still work during the transition period, but `output_config.format` is the GA path. The SDK helper methods (`parse()`, `zodOutputFormat()`) handle the translation internally.
+
+### Zod Integration -- zodOutputFormat
+
+The SDK provides a first-party `zodOutputFormat` helper that converts Zod schemas directly:
+
+```javascript
+import { z } from 'zod';
+import Anthropic from '@anthropic-ai/sdk';
+import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
+
+const client = new Anthropic({ apiKey: process.env.VITE_CLAUDE_KEY });
 
 const response = await client.messages.parse({
-  model: "claude-sonnet-4-20250514",
-  max_tokens: 4096,
-  messages: [{ role: "user", content: sectionPrompt }],
-  output_config: { format: zodOutputFormat(SectionSchema) },
-  tools: toolboxTools, // getMetric, computeMOS, etc.
+  model: 'claude-sonnet-4-20250514',
+  max_tokens: 8192,
+  messages: [{ role: 'user', content: sectionPrompt }],
+  output_config: { format: zodOutputFormat(ReportSectionSchema) },
+});
+
+// Automatically parsed + Zod-validated:
+console.log(response.parsed_output);  // Typed, validated object
+```
+
+**Critical finding: The existing `ReportSectionSchema` in `src/schemas/reportSection.js` works directly with `zodOutputFormat`.** Verified locally:
+
+```
+SUCCESS: zodOutputFormat works with ReportSectionSchema
+Schema type: json_schema
+Has parse fn: true
+Top-level keys: [key, title, sectionNumber, status, confidence, verdict, ...]
+```
+
+This means the Zod schemas already written for critic.js validation can be reused as-is for constrained decoding. No schema conversion needed.
+
+### The .parse() Method
+
+The SDK's `client.messages.parse()` method (not `.create()`) provides:
+1. Automatic `output_config` injection from `zodOutputFormat`
+2. JSON parsing of the response text
+3. Zod validation of the parsed result
+4. A `parsed_output` property on the response with the typed result
+
+Use `.parse()` for agent dispatch. Use `.create()` only when you need raw responses.
+
+### JSON Schema Limitations
+
+Structured outputs support standard JSON Schema with these constraints:
+
+**Supported:**
+- All basic types: object, array, string, integer, number, boolean, null
+- `enum` (strings, numbers, bools, nulls only)
+- `anyOf`, `allOf` (no `allOf` with `$ref`)
+- `$ref`, `$def`, `definitions` (no external `$ref`)
+- `required` and `additionalProperties` (must be `false` for objects)
+- String formats: date-time, date, email, uri, uuid, etc.
+- Array `minItems` (0 or 1 only)
+
+**NOT Supported:**
+- Recursive schemas
+- Numerical constraints (minimum, maximum, multipleOf)
+- String constraints (minLength, maxLength)
+- Array constraints beyond minItems 0/1
+- `additionalProperties` set to anything other than `false`
+
+**Impact on ReportSectionSchema:** The `z.looseObject({})` fields (`data`, `charts.config`, `charts.data`) use `additionalProperties: true` internally. The `zodOutputFormat` helper's `transformJSONSchema` function converts these to be compatible. Verified working locally. However, if the API rejects the schema at runtime, the fallback is to replace `z.looseObject({})` with explicit fields or `z.record(z.string(), z.unknown())`.
+
+### Recommendation
+
+Use `client.messages.parse()` with `zodOutputFormat(ReportSectionSchema)` for all agent dispatch. This mechanically solves the citation format anarchy, searchesPerformed chaos, and DataPacket path fabrication issues identified in V3 validation -- the model physically cannot produce output that violates the schema.
+
+---
+
+## Question 2: Prompt Caching
+
+### How does prompt caching work?
+
+Prompt caching stores previously processed prompt segments and reuses them across API calls. Identical prompt prefixes hit the cache at 10% of the normal input token cost. No beta header required.
+
+**Confidence:** HIGH -- Verified against official pricing page and SDK type definitions.
+
+### API Parameters
+
+Mark cacheable content with `cache_control` on content blocks:
+
+```javascript
+const response = await client.messages.create({
+  model: 'claude-sonnet-4-20250514',
+  max_tokens: 8192,
+  system: [
+    {
+      type: 'text',
+      text: agentSystemPrompt,      // ~3,000-8,000 tokens of curriculum
+      cache_control: { type: 'ephemeral' }  // 5-min TTL (default)
+    }
+  ],
+  messages: [
+    {
+      role: 'user',
+      content: [
+        {
+          type: 'text',
+          text: dataPacketJSON,       // ~15,000-25,000 tokens of financial data
+          cache_control: { type: 'ephemeral' }
+        }
+      ]
+    }
+  ],
+  tools: [
+    {
+      type: 'web_search_20250305',
+      name: 'web_search',
+      max_uses: 5,
+      cache_control: { type: 'ephemeral' }  // Tool defs can be cached too
+    }
+  ]
 });
 ```
 
-**Confidence:** HIGH -- Structured outputs are GA on all current Claude models (Opus 4.6, Sonnet 4.6, Sonnet 4.5, Opus 4.5, Haiku 4.5). Zod 4 JSON schema generation verified in official docs. The `zodOutputFormat` helper is a first-party SDK utility.
+### Cache Control Options
 
----
+| TTL | Syntax | Write Cost | Read Cost | Use When |
+|-----|--------|------------|-----------|----------|
+| 5 minutes | `{ type: 'ephemeral' }` | 1.25x base | 0.1x base | Multiple agents dispatched within 5 min (our parallel dispatch pattern) |
+| 1 hour | `{ type: 'ephemeral', ttl: '1h' }` | 2.0x base | 0.1x base | When re-running sections or iterating on agent output over longer sessions |
 
-### Node.js Data Bridge
+### Cache Prefix Order
 
-The existing engines use three browser-only APIs that must be adapted for Node.js (Claude Code runs in Node, not a browser):
+Content is cached in this hierarchy (must be identical prefix to hit):
+1. `tools` -- all tool definitions up to and including the breakpoint
+2. `system` -- all system blocks up to and including the breakpoint
+3. `messages` -- conversation history up to and including the breakpoint
 
-| Browser API | Adapter | Why This Adapter |
-|---|---|---|
-| `import.meta.env.DEV` / `import.meta.env.VITE_*` | `dotenv` + env wrapper module | Engines use `import.meta.env.DEV` for URL routing (proxy in dev, direct in Tauri). Node adapter sets `process.env` and provides a shim. Simple, zero-dependency (dotenv is ubiquitous). |
-| `DOMParser` / `document.querySelectorAll` | `linkedom` | Used in `filingMarkdown.js` for HTML-to-markdown conversion (SEC filings). LinkedOM is 3x faster than jsdom, 1/3 the memory, and sufficient for DOM traversal without full browser emulation. Already have `jsdom` as devDep but linkedom is better for production Node use. |
-| Vite dev proxy (`/api/sec/*`, `/api/yahoo/*`, etc.) | Direct `fetch` with headers | In Node, no CORS restriction exists. The proxy routes (`/api/sec` -> `sec.gov`, `/api/edgar` -> `data.sec.gov`, etc.) become direct fetch calls with the proper User-Agent header. The adapter maps proxy URLs to real URLs. |
-| `localStorage` / `IndexedDB` | File-based JSON cache | `cacheStore.js` already has `HAS_IDB` feature detection and falls back gracefully. For Node, cache to `.thes1s/cache/` directory as JSON files. Keep the same TTL structure. |
-| `fetch` | Node.js native `fetch` (v18+) | Node 18+ has native fetch. No polyfill needed. Already verified the project targets Node 18+ (Tauri 2 requires it). |
+**Maximum of 4 explicit breakpoints per request.**
 
-| Technology | Version | Purpose | Why |
-|---|---|---|---|
-| `linkedom` | ^0.16.x | DOM parsing for filing markdown conversion in Node context | 3x faster than jsdom, 1/3 memory usage. The engine only needs `querySelectorAll`, `textContent`, basic traversal -- not full browser emulation. |
-| `dotenv` | ^16.x | Load `.env.local` variables into `process.env` for Node adapter | Standard approach. Zero config. Reads the same `.env.local` file the Vite app uses. |
+### Minimum Cacheable Token Lengths
 
-**The adapter is ~500-800 LOC** (per eng review estimate) and consists of:
+| Model | Minimum Tokens |
+|-------|---------------|
+| Claude Sonnet 4.6 | 2,048 |
+| Claude Sonnet 4.5 / 4 | 1,024 |
+| Claude Opus 4.6 / 4.5 | 4,096 |
+| Claude Haiku 4.5 | 4,096 |
 
-1. **`src/engines/nodeAdapter.js`** (~200 LOC) -- Environment shim (`import.meta.env` -> `process.env`), URL mapper (proxy -> direct), DOMParser provider (linkedom), cache provider (fs-based JSON).
-2. **`src/engines/dataExport.js`** (~300 LOC) -- DataPacket assembly. Calls all engines, packages output as canonical JSON. No AI logic. Pure data assembly.
-3. **Toolbox tool wrappers** (~200 LOC) -- Functions that agents can call: `getMetric()`, `computeMOS()`, `comparePeers()`, etc. Thin wrappers around existing engine functions.
+If the minimum is not met, the request succeeds but no caching occurs. Check the response `usage` fields.
 
-**Confidence:** HIGH for the approach. MEDIUM for the LOC estimate (could be 400-1000 depending on how many engines need adaptation). The cacheStore.js already has graceful Node.js fallback, which validates the pattern.
-
----
-
-### Agent Definitions
-
-| Technology | Version | Purpose | Why |
-|---|---|---|---|
-| Markdown files in `agents/` directory | N/A | Agent role definitions (system prompts, curriculum refs, tool access, model selection) | The architecture plan defines 9 agents as `agents/{role}/prompt.md` + `config.json`. This maps directly to the Agent SDK's `AgentDefinition` type for programmatic creation, and to Claude Code's `.claude/agents/` filesystem convention for CC Skills. |
-
-**Agent definition format** (works with both paths):
-
-```
-agents/
-  financial-analyst/
-    prompt.md          -- System prompt with Rule One curriculum
-    config.json        -- { "tools": [...], "model": "sonnet", "curriculum": [...], "dataSlice": [...] }
-  valuation-specialist/
-    prompt.md
-    config.json
-  ...
-```
-
-The CC Skills path loads these as `AgentDefinition` objects. The in-app API path uses the same prompts as system messages in `messages.create()` calls.
-
-**Confidence:** HIGH -- This is the architecture plan's own recommendation. Agent SDK docs confirm both programmatic and filesystem-based agent definitions are supported.
-
----
-
-### Supporting Libraries
-
-| Library | Version | Purpose | When to Use |
-|---|---|---|---|
-| `linkedom` | ^0.16.x | Node.js DOM parsing for filing markdown | Only in Node adapter (not needed in browser -- browser has native DOMParser) |
-| `dotenv` | ^16.x | Load .env.local in Node context | Only in Node adapter and CC Skills scripts |
-| `zod` (v4 subpath) | ^3.24.x | Schema validation for all agent I/O | Every agent output, DataPacket validation, tool contracts |
-| `cheerio` | ^1.2.0 (already installed) | HTML parsing for web scraping in Vite plugins | Already used. No change needed. |
-| `turndown` + `turndown-plugin-gfm` | ^7.2.2 / ^1.0.2 (already installed) | HTML-to-markdown conversion | Already used in filingMarkdown.js. No change needed. |
-
----
-
-## Alternatives Considered
-
-| Category | Recommended | Alternative | Why Not |
-|---|---|---|---|
-| Agent orchestration | `@anthropic-ai/claude-agent-sdk` | LangChain / LangGraph | Adds a massive abstraction layer between you and Claude. The Agent SDK IS Claude's own orchestration. LangChain's model-agnostic abstractions add complexity without value when you're committed to Claude. |
-| Agent orchestration | `@anthropic-ai/claude-agent-sdk` | Vercel AI SDK (`@ai-sdk/anthropic`) | Good for chat UIs, but missing subagent support, context isolation, and the built-in tool loop that maps to your 9-agent architecture. It's an adapter, not an orchestrator. |
-| Agent orchestration | `@anthropic-ai/claude-agent-sdk` | Custom `aiResearch.js` from scratch | The original plan before the hybrid model decision. Would require reimplementing tool loops, context management, retries, and error handling that the Agent SDK provides out of the box. ~2000 LOC of orchestration code you don't need to write. |
-| JSON schema | Zod v4 | Pydantic | Pydantic is Python-only. Your stack is Node.js/TypeScript. |
-| JSON schema | Zod v4 | `ajv` (JSON Schema validator) | Ajv validates but doesn't generate schemas. Zod does both: define once, validate everywhere, generate JSON Schema for API calls. Single source of truth. |
-| JSON schema | Zod v4 | `zod-to-json-schema` | Deprecated as of November 2025. Zod 4 has native `.toJSONSchema()`. No external library needed. |
-| DOM parsing (Node) | `linkedom` | `jsdom` (already installed as devDep) | jsdom is 3x slower and 3x more memory. It emulates a full browser environment you don't need. LinkedOM does exactly what the engines require (DOM traversal, querySelectorAll) at a fraction of the cost. |
-| DOM parsing (Node) | `linkedom` | `@xmldom/xmldom` (already installed as devDep) | xmldom is XML-focused, not HTML. The filing HTML is real HTML with tables, divs, spans. LinkedOM handles HTML natively. |
-| Context compression | Manual context engineering (curriculum slicing per agent) | Anthropic prompt caching | Prompt caching reduces cost but doesn't reduce context window usage. The real challenge is giving each agent exactly the right curriculum slice (not the full 500+ line CLAUDE.md). Manual curation > automatic compression for this use case. |
-| Agent framework | None (Agent SDK + custom orchestrator) | CrewAI, AutoGen | Python-only frameworks. Your stack is Node.js. Even if ported, they add opinionated abstractions that conflict with your GSD-style orchestration pattern. |
-
----
-
-## Context Engineering Strategy
-
-This is the core design challenge per the architecture plan. Each agent needs enough curriculum to prevent hallucinations but not so much that token budgets explode.
-
-### The Strategy: Write, Select, Compress, Isolate
-
-| Principle | Implementation |
-|---|---|
-| **Write** | Agent definitions in `agents/{role}/prompt.md` with focused system prompts. 500 lines max per SKILL.md (Claude Code best practice). |
-| **Select** | Each agent gets ONLY its curriculum slice. Financial Analyst gets `fgr.md` + `advanced-financial-analysis.md`. Business Analyst gets `pitch-deck-I.md`. No agent gets everything. |
-| **Compress** | Universal context (rule-one-fundamentals.md + tools-for-analysis.md + 7 Operating Rules) is a ~2K token shared preamble. Keep it tight. |
-| **Isolate** | Agent SDK subagents run in fresh context windows. The Primary Source Reader's 200K+ token 10-K text stays in ITS context -- other agents only see the Reader's summary output. This is the killer feature of the Agent SDK's subagent model. |
-
-### Token Budget Estimates (per agent invocation)
-
-| Context Component | Tokens | Notes |
-|---|---|---|
-| Universal context (R1 fundamentals + tools) | ~2,000 | Loaded into every agent |
-| Agent-specific curriculum | ~3,000-8,000 | Varies by role. Financial Analyst needs more (fgr + advanced + capex docs) |
-| DataPacket (full) | ~15,000-25,000 | 10 years of financials, metrics, peers. Biggest single item. |
-| DataPacket (sliced for agent) | ~5,000-10,000 | Each agent gets its relevant slice, not the full packet |
-| Section outputs from prior phases | ~2,000-5,000 | Synthesis Writer needs all prior sections; others need less |
-| **Total per agent** | **~12,000-45,000** | Well within 200K context. Room for Toolbox exploration. |
-| **Primary Source Reader (10-K)** | **~200,000+** | The outlier. Full 10-K text. This is why it runs as a separate subagent. |
-
-### The `contextBudget.js` Module (Phase 5D)
-
-Token counting utility that measures context usage per agent invocation. Not a hard limiter for Phase 5A-5C -- let agents use tokens freely in CC mode. Measure actual usage, then set budgets for the API mode based on real data.
+### Response Usage (Cache Diagnostics)
 
 ```javascript
-// contextBudget.js — measure, don't limit (for now)
-export function estimateTokens(text) { return Math.ceil(text.length / 4); }
-export function measureAgentContext(prompt, curriculum, dataSlice) {
-  return { prompt: estimateTokens(prompt), curriculum: estimateTokens(curriculum),
-           data: estimateTokens(JSON.stringify(dataSlice)), total: /* sum */ };
-}
-```
-
-**Confidence:** HIGH for the strategy. MEDIUM for token estimates (need real measurement once DataPacket assembly is built). The 65% enterprise failure rate from context drift (per context engineering research) validates the importance of the Select + Isolate approach.
-
----
-
-## Model Selection Strategy
-
-| Agent Role | Model | Why |
-|---|---|---|
-| Data Assembler | N/A (pure code, no AI) | Runs `dataExport.js` -- no LLM call |
-| Primary Source Reader | Opus 4.6 | 200K+ token 10-K input. Needs strongest reasoning for nuanced qualitative extraction (management tone, promise tracking, competitive positioning). |
-| Financial Analyst | Sonnet 4.5 | Quantitative analysis with structured data. Sonnet handles numbers and formulas well at 60% lower cost. |
-| Business Analyst | Sonnet 4.5 | Business model analysis. Web search for qualitative research. Sonnet sufficient for structured qualitative work. |
-| Competitor Evaluator | Sonnet 4.5 | Landscape analysis with peer metrics data. Structured comparison work. |
-| Management Evaluator | Sonnet 4.5 | Insider activity + compensation analysis. Structured data + web search. |
-| Risk Analyst | Opus 4.6 | Adversarial thinking (PEST, bear cases, inversion). Needs strongest reasoning to construct compelling counter-arguments. |
-| Valuation Specialist | Opus 4.6 | FGR derivation (5 inputs, synthesis), sensitivity analysis, growth ceiling checks. Complex multi-variable reasoning. |
-| Synthesis Writer | Opus 4.6 | Buffett-style narrative. Final thesis. Needs the best writing quality. |
-
-**In Agent SDK:**
-```typescript
-agents: {
-  "financial-analyst": {
-    description: "...",
-    prompt: financialAnalystPrompt,
-    tools: ["Read", "Bash"],  // Bash for engine functions
-    model: "sonnet"  // SDK handles model routing
-  },
-  "risk-analyst": {
-    description: "...",
-    prompt: riskAnalystPrompt,
-    tools: ["Read", "Bash", "WebSearch"],
-    model: "opus"
+{
+  usage: {
+    input_tokens: 50,              // Tokens AFTER last cache breakpoint
+    cache_read_input_tokens: 15000, // Tokens retrieved from cache (90% savings)
+    cache_creation_input_tokens: 248, // Tokens newly written to cache
+    output_tokens: 4000,
+    cache_creation: {
+      ephemeral_5m_input_tokens: 15248,  // Total 5-min cached
+      ephemeral_1h_input_tokens: 0,      // Total 1-hr cached
+    }
   }
 }
 ```
 
-**Confidence:** HIGH for the model selection rationale. The Agent SDK's `model` field in `AgentDefinition` directly supports per-subagent model selection ("sonnet", "opus", "haiku", "inherit").
+### Pricing Impact for Thes1s
+
+Using Claude Sonnet 4 ($3/MTok input, $15/MTok output):
+
+| Scenario | Input Cost | Notes |
+|----------|------------|-------|
+| No caching (9 agents, ~20K shared tokens each) | $0.54 for shared content | 180K tokens at $3/MTok |
+| With caching (first agent writes, 8 agents read) | $0.12 for shared content | 20K write at $3.75/MTok + 160K read at $0.30/MTok |
+| **Savings** | **78% on shared input** | Cache the system prompt + Rule One curriculum + DataPacket |
+
+### Caching Strategy for Thes1s
+
+**What to cache (high payoff):**
+1. **Rule One curriculum** (~2,000 tokens) -- Shared by all 9 agents. Put in system message with `cache_control`.
+2. **DataPacket JSON** (~15,000-25,000 tokens) -- Identical for all agents analyzing the same ticker. Put as first user message content block with `cache_control`.
+3. **Tool definitions** (~500 tokens) -- Same web search + custom tool defs for all agents. Put `cache_control` on the last tool.
+
+**What NOT to cache:**
+- Agent-specific curriculum (varies per agent, defeats caching)
+- Prior section outputs (unique per dispatch, small enough to not matter)
+
+**Optimal pattern:** Structure prompts so the cacheable prefix (curriculum + DataPacket) comes first, and the agent-specific content (section assignment, prior outputs) comes last. This maximizes cache hit rate across parallel dispatches.
+
+### Recommendation
+
+Use 5-minute cache TTL (`{ type: 'ephemeral' }`) for parallel agent dispatch. Place the shared Rule One curriculum and DataPacket in the system message / first user message with cache breakpoints. This targets the $14 to $8-12 cost reduction goal without code complexity.
 
 ---
 
-## Installation
+## Question 3: Parallel Agent Dispatch
 
-```bash
-# New dependencies for AI agent layer
-npm install @anthropic-ai/claude-agent-sdk zod linkedom dotenv
+### What's the best pattern for parallel dispatch in Node.js?
 
-# Already installed (no change needed)
-# @anthropic-ai/sdk ^0.78.0
-# cheerio ^1.2.0
-# turndown ^7.2.2
-# turndown-plugin-gfm ^1.0.2
-```
+**`Promise.allSettled` -- already the pattern used in `dataExport.js`.**
 
-**Note on Zod 4:** Install `zod@^3.24.x` and import from `zod/v4` subpath. Zod 4 is published as a subpath of the v3 package, not as a separate `zod@4` package. This is the official recommendation per Zod's versioning docs.
+**Confidence:** HIGH -- This is standard Node.js async/await, no library needed.
+
+### Pattern
 
 ```javascript
-// Correct import for Zod 4 features (toJSONSchema, faster parsing)
-import { z } from "zod/v4";
+// Dispatch all 9 agents in parallel
+const agentPromises = agentConfigs.map(agent =>
+  dispatchAgent(agent, dataPacket, sharedContext)
+);
 
-// NOT: import { z } from "zod";  // This gets Zod 3
+// Promise.allSettled: all resolve, even if individual agents fail
+const results = await Promise.allSettled(agentPromises);
+
+// Process results -- partial success is acceptable
+const sections = [];
+const errors = [];
+
+for (const result of results) {
+  if (result.status === 'fulfilled') {
+    sections.push(result.value);
+  } else {
+    errors.push(result.reason);
+  }
+}
+```
+
+### Why Promise.allSettled (not Promise.all)
+
+| Method | On First Failure | Use Case |
+|--------|-----------------|----------|
+| `Promise.all` | Rejects immediately, cancels remaining | When ALL must succeed |
+| `Promise.allSettled` | Waits for all, reports each | When partial success is acceptable |
+
+For Thes1s, partial success IS acceptable. If the Risk Analyst fails but 8 other agents succeed, you want those 8 sections. The V3 validation already demonstrated this -- individual section failures don't invalidate the entire report.
+
+### Concurrency Control
+
+The Anthropic API has rate limits per tier. For parallel dispatch of 9 agents, no throttling is needed at Tier 1 (60 requests/min, 80K tokens/min). If rate-limited, add a simple semaphore:
+
+```javascript
+// Simple concurrency limiter -- no external dependency needed
+function createSemaphore(limit) {
+  let active = 0;
+  const queue = [];
+
+  return function throttle(fn) {
+    return new Promise((resolve, reject) => {
+      const run = async () => {
+        active++;
+        try { resolve(await fn()); }
+        catch (e) { reject(e); }
+        finally {
+          active--;
+          if (queue.length > 0) queue.shift()();
+        }
+      };
+      if (active < limit) run();
+      else queue.push(run);
+    });
+  };
+}
+
+// Usage: limit to 4 concurrent API calls
+const throttle = createSemaphore(4);
+const results = await Promise.allSettled(
+  agentConfigs.map(agent => throttle(() => dispatchAgent(agent, dataPacket)))
+);
+```
+
+### Dispatch Groups (Dependency-Aware)
+
+Not all agents can run simultaneously -- some need outputs from others:
+
+```
+Group 1 (parallel): Financial Analyst, Business Analyst, Competitor Evaluator,
+                     Management Evaluator, Risk Analyst
+Group 2 (after Group 1): Valuation Specialist (needs Financial Analyst output for FGR)
+Group 3 (after Group 2): Synthesis Writer (needs all prior section outputs)
+```
+
+```javascript
+// Group 1: Independent agents
+const group1 = await Promise.allSettled([
+  dispatchAgent('financial-analyst', ...),
+  dispatchAgent('business-analyst', ...),
+  dispatchAgent('competitor-evaluator', ...),
+  dispatchAgent('management-evaluator', ...),
+  dispatchAgent('risk-analyst', ...),
+]);
+
+// Group 2: Depends on Group 1
+const group2 = await Promise.allSettled([
+  dispatchAgent('valuation-specialist', ..., { priorSections: extractSections(group1) }),
+]);
+
+// Group 3: Depends on all
+const group3 = await Promise.allSettled([
+  dispatchAgent('synthesis-writer', ..., { priorSections: extractSections([...group1, ...group2]) }),
+]);
+```
+
+### Runtime Estimate
+
+Current CC subagent pipeline: ~2.5 hours (agents run sequentially with CC overhead).
+Target with parallel API dispatch: ~30-40 minutes.
+
+| Phase | Duration | Bottleneck |
+|-------|----------|------------|
+| DataPacket assembly | ~2-3 min | EDGAR API rate limits |
+| Group 1 (5 agents parallel) | ~10-15 min | Longest agent (web search agents take longer) |
+| Group 2 (valuation) | ~5-8 min | Single agent, moderate complexity |
+| Group 3 (synthesis) | ~5-10 min | Single agent, reads all prior output |
+| **Total** | **~22-36 min** | **Within 30-40 min target** |
+
+### Recommendation
+
+Use `Promise.allSettled` with 3 dispatch groups. No external concurrency library needed. The existing `dataExport.js` already uses `Promise.allSettled` for engine calls, so this is a proven pattern in the codebase.
+
+---
+
+## Question 4: Web Search via tool_use
+
+### How does tool_use work for web search?
+
+Web search is a **server tool** -- Anthropic executes the search on their infrastructure. You include it in the `tools` array, and the API handles the search + result injection automatically. No client-side search execution needed.
+
+**Confidence:** HIGH -- Verified against official docs and SDK type definitions. Both `WebSearchTool20250305` and `WebSearchTool20260209` interfaces exist in the installed SDK.
+
+### API Parameters
+
+```javascript
+const response = await client.messages.create({
+  model: 'claude-sonnet-4-20250514',
+  max_tokens: 8192,
+  messages: [{ role: 'user', content: sectionPrompt }],
+  tools: [
+    {
+      type: 'web_search_20250305',   // Server tool type
+      name: 'web_search',
+      max_uses: 5,                   // Limit searches per request (cost control)
+      // Optional domain filtering:
+      // allowed_domains: ['sec.gov', 'reuters.com', 'wsj.com'],
+      // blocked_domains: ['reddit.com'],
+    }
+  ],
+  output_config: {
+    format: zodOutputFormat(ReportSectionSchema),
+  },
+});
+```
+
+### Two Tool Versions
+
+| Version | Type String | Features | Best For |
+|---------|------------|----------|----------|
+| Basic | `web_search_20250305` | Standard web search | Sonnet 4 agents (our default) |
+| Dynamic Filtering | `web_search_20260209` | Code execution filters results before context | Opus 4.6 / Sonnet 4.6 agents (reduces token waste) |
+
+**Dynamic filtering** (`web_search_20260209`) requires the code execution tool to also be enabled. It lets Claude write code to filter search results before they enter the context window, keeping only relevant content. This reduces token consumption on search-heavy agents.
+
+For initial implementation, use `web_search_20250305` (basic). Upgrade to `web_search_20260209` later if token costs from search results are excessive.
+
+### Response Structure
+
+The response includes actual URLs and cited text:
+
+```javascript
+// In response.content array:
+{
+  type: 'server_tool_use',
+  id: 'srvtoolu_...',
+  name: 'web_search',
+  input: { query: 'SFM Sprouts Farmers Market competitive landscape 2025' }
+}
+
+// Followed by:
+{
+  type: 'web_search_tool_result',
+  tool_use_id: 'srvtoolu_...',
+  content: [
+    {
+      type: 'web_search_result',
+      url: 'https://www.reuters.com/...',
+      title: 'Sprouts Farmers Market...',
+      encrypted_content: '...',       // Encrypted -- for multi-turn only
+      page_age: 'March 15, 2026'
+    }
+  ]
+}
+
+// Claude's text blocks include inline citations:
+{
+  type: 'text',
+  text: 'Sprouts Farmers Market holds approximately 1.5% of the US grocery market',
+  citations: [
+    {
+      type: 'web_search_result_location',
+      url: 'https://www.reuters.com/...',
+      title: 'Sprouts Farmers Market...',
+      cited_text: 'Sprouts commands roughly 1.5% share...'
+    }
+  ]
+}
+```
+
+### Extracting Citation URLs
+
+The citations in the response contain actual URLs. This directly solves the "web citation laundering" issue from V3 validation:
+
+```javascript
+function extractWebCitations(response) {
+  const citations = [];
+  for (const block of response.content) {
+    if (block.citations) {
+      for (const cite of block.citations) {
+        if (cite.type === 'web_search_result_location') {
+          citations.push({
+            url: cite.url,
+            title: cite.title,
+            citedText: cite.cited_text,
+          });
+        }
+      }
+    }
+  }
+  return citations;
+}
+```
+
+### Pricing
+
+- **$10 per 1,000 searches** ($0.01 per search)
+- Plus standard token costs for search result content (counted as input tokens)
+- Search results that return errors are not billed
+
+For a Pitch Deck with 5 web-searching agents at 5 searches each: 25 searches = $0.25 per company. Negligible compared to token costs.
+
+### searchesPerformed Schema Compliance
+
+With structured outputs, the `searchesPerformed` field in `ReportSectionSchema` is mechanically enforced. The response's `usage.server_tool_use.web_search_requests` count can be cross-referenced against what the agent reports in `searchesPerformed.length` for quality validation.
+
+### Recommendation
+
+Use `web_search_20250305` for all agents that need web search capability (Business Analyst, Management Evaluator, Risk Analyst, Valuation Specialist, Competitor Evaluator). Set `max_uses: 5` to control cost. Extract citation URLs from `response.content[].citations[]` for the citation system. This mechanically solves the citation URL verification issue.
+
+---
+
+## Question 5: New Dependencies Needed
+
+### Short Answer: None.
+
+The existing stack already has everything needed:
+
+| Capability | Already Have | Version | Status |
+|-----------|-------------|---------|--------|
+| Claude API client | `@anthropic-ai/sdk` | ^0.78.0 (installed) | Upgrade to ^0.80.0 recommended |
+| Zod schemas | `zod` | 4.3.6 (installed) | No change needed |
+| zodOutputFormat helper | `@anthropic-ai/sdk/helpers/zod` | Included in SDK | No change needed |
+| Prompt caching | `cache_control` parameter | In SDK types | No change needed |
+| Web search tool | `WebSearchTool20250305` | In SDK types | No change needed |
+| Parallel dispatch | `Promise.allSettled` | Native Node.js | No change needed |
+| Environment config | `dotenv` | 17.3.1 (installed) | No change needed |
+| DOM parsing (Node) | `linkedom` | 0.18.12 (installed) | No change needed |
+| Token estimation | `contextBudget.js` | Already built | No change needed |
+| Budget tracking | `contextBudget.js` | Already built | No change needed |
+
+### SDK Version Upgrade
+
+Upgrade `@anthropic-ai/sdk` from `^0.78.0` to `^0.80.0`:
+
+```bash
+npm install @anthropic-ai/sdk@latest
+```
+
+The `^0.78.0` semver range already covers 0.80.0, so `npm install` should pull it automatically. But an explicit update ensures the latest fixes for `output_config` GA support.
+
+Key changes from 0.78.0 to 0.80.0 (verified from npm):
+- Full `output_config.format` GA support (no beta header needed)
+- `zodOutputFormat` at non-beta path (`@anthropic-ai/sdk/helpers/zod`)
+- `client.messages.parse()` method available
+- `WebSearchTool20260209` type added
+
+### What NOT to Add
+
+| Library | Why Not |
+|---------|---------|
+| `@anthropic-ai/claude-agent-sdk` | Was in the original STACK.md for the dual-path approach. The v1.1 milestone is API-only. Agent SDK would add CC orchestration overhead that the migration specifically aims to eliminate. |
+| `langchain` / `@langchain/anthropic` | Unnecessary abstraction layer. The SDK's `messages.parse()` + `zodOutputFormat` already provides type-safe structured outputs. |
+| `@ai-sdk/anthropic` (Vercel AI SDK) | Chat UI focused. No structured output enforcement. No `parse()` method. |
+| `p-limit` / `p-queue` | Concurrency control for Promise.allSettled. A 15-line semaphore function handles this without a dependency. |
+| `tiktoken` / `@anthropic-ai/tokenizer` | The API returns actual token counts in `response.usage`. Use `contextBudget.js` estimates for pre-dispatch budgeting, API response for post-dispatch tracking. |
+| `retry` / `p-retry` | Simple retry logic (exponential backoff) is ~10 lines of code. Not worth a dependency. |
+| `zod-to-json-schema` | Deprecated. `zodOutputFormat` uses Zod v4's native `z.toJSONSchema()` internally. |
+
+---
+
+## Recommended Stack (Summary)
+
+### Core (No Changes)
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `@anthropic-ai/sdk` | ^0.80.0 (upgrade from 0.78.0) | Claude API client with structured outputs, caching, web search | First-party SDK. Has `messages.parse()`, `zodOutputFormat`, `cache_control` types, `WebSearchTool` types. Everything needed. |
+| `zod` | 4.3.6 (already installed) | Schema definition + runtime validation | `zodOutputFormat` uses `z.toJSONSchema()` internally. ReportSectionSchema already works. |
+
+### Already Built (Reuse As-Is)
+
+| Module | Purpose | Reuse Strategy |
+|--------|---------|---------------|
+| `src/schemas/reportSection.js` | Report section Zod schema | Pass directly to `zodOutputFormat()` for structured outputs |
+| `src/engines/contextBudget.js` | Token estimation + cost tracking | Use for pre-dispatch budgeting. Update `MODEL_PRICING` with cache pricing. |
+| `src/engines/dataExport.js` | DataPacket assembly | Call `assembleDataPacket(ticker)` before agent dispatch |
+| `src/engines/nodeAdapter.js` | Node.js environment shims | Already handles dotenv, proxy mapping, DOM parsing |
+| `agents/*/config.json` | Agent role configuration | Read `sections`, `tools`, `model`, `curriculum`, `dataPacketSlice` |
+| `agents/*/prompt.md` | Agent system prompts | Load as system message content for `messages.parse()` |
+| `src/engines/critic.js` | Quality validation | Run on each section AFTER structured output parsing |
+
+### New (To Build)
+
+| Module | Purpose | Key APIs Used |
+|--------|---------|---------------|
+| `src/engines/aiResearch.js` | Orchestration layer: dispatches agents, manages caching, collects results | `client.messages.parse()`, `zodOutputFormat()`, `cache_control`, `web_search_20250305` |
+
+This is the ONLY new file. It imports from existing modules (schemas, contextBudget, agent configs) and calls the Claude API.
+
+---
+
+## Integration Patterns
+
+### Pattern 1: Agent Dispatch with Structured Output + Caching
+
+```javascript
+import Anthropic from '@anthropic-ai/sdk';
+import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
+import { ReportSectionSchema } from '../schemas/reportSection.js';
+import { getEnv } from './nodeAdapter.js';
+
+const client = new Anthropic({ apiKey: getEnv('VITE_CLAUDE_KEY') });
+
+async function dispatchAgent(agentConfig, dataPacket, priorSections = []) {
+  const systemPrompt = await loadPrompt(agentConfig.role);
+  const curriculum = await loadCurriculum(agentConfig.curriculum);
+  const dataSlice = sliceDataPacket(dataPacket, agentConfig.dataPacketSlice);
+
+  const tools = [];
+  if (agentConfig.tools?.includes('web_search')) {
+    tools.push({
+      type: 'web_search_20250305',
+      name: 'web_search',
+      max_uses: 5,
+      cache_control: { type: 'ephemeral' },
+    });
+  }
+
+  const response = await client.messages.parse({
+    model: agentConfig.model === 'opus'
+      ? 'claude-opus-4-6'
+      : 'claude-sonnet-4-20250514',
+    max_tokens: 8192,
+    system: [
+      {
+        type: 'text',
+        text: `${systemPrompt}\n\n${curriculum}`,
+        cache_control: { type: 'ephemeral' },
+      }
+    ],
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(dataSlice),
+            cache_control: { type: 'ephemeral' },
+          },
+          {
+            type: 'text',
+            text: buildSectionAssignment(agentConfig, priorSections),
+            // No cache_control -- this varies per agent
+          }
+        ]
+      }
+    ],
+    tools,
+    output_config: { format: zodOutputFormat(ReportSectionSchema) },
+  });
+
+  return {
+    section: response.parsed_output,
+    usage: response.usage,
+    webCitations: extractWebCitations(response),
+  };
+}
+```
+
+### Pattern 2: Parallel Dispatch with Budget Tracking
+
+```javascript
+import { createBudgetTracker } from './contextBudget.js';
+
+async function generatePitchDeck(ticker) {
+  const dataPacket = await assembleDataPacket(ticker);
+  const budget = createBudgetTracker();
+
+  // Group 1: Independent agents (parallel)
+  const group1Results = await Promise.allSettled([
+    dispatchAgent(agents['financial-analyst'], dataPacket),
+    dispatchAgent(agents['business-analyst'], dataPacket),
+    dispatchAgent(agents['competitor-evaluator'], dataPacket),
+    dispatchAgent(agents['management-evaluator'], dataPacket),
+    dispatchAgent(agents['risk-analyst'], dataPacket),
+  ]);
+
+  const group1Sections = collectSections(group1Results);
+  trackBudget(budget, group1Results);
+
+  // Group 2: Depends on Group 1
+  const group2Results = await Promise.allSettled([
+    dispatchAgent(agents['valuation-specialist'], dataPacket, group1Sections),
+  ]);
+
+  const allSections = [...group1Sections, ...collectSections(group2Results)];
+  trackBudget(budget, group2Results);
+
+  // Group 3: Synthesis
+  const group3Results = await Promise.allSettled([
+    dispatchAgent(agents['synthesis-writer'], dataPacket, allSections),
+  ]);
+
+  trackBudget(budget, group3Results);
+
+  return {
+    sections: [...allSections, ...collectSections(group3Results)],
+    budget: budget.getSummary(),
+  };
+}
 ```
 
 ---
 
-## What NOT to Install
+## contextBudget.js Updates Needed
 
-| Library | Why Not |
-|---|---|
-| `langchain` / `@langchain/anthropic` | Adds 50+ transitive dependencies and model-agnostic abstractions you don't need. You're using Claude exclusively. The Agent SDK gives you the orchestration loop directly. |
-| `@ai-sdk/anthropic` (Vercel AI SDK) | Designed for chat UIs with streaming. No subagent support. Doesn't map to your 9-agent architecture. |
-| `crewai` / `autogen` | Python-only. Your stack is Node.js. |
-| `openai` | You're not using OpenAI. Don't add it "just in case." |
-| `zod-to-json-schema` | Deprecated. Zod 4 has native `.toJSONSchema()`. |
-| `jsdom` (for production Node adapter) | 3x slower than linkedom for DOM traversal. Keep it as devDep for vitest only. |
-| `tiktoken` / `@anthropic-ai/tokenizer` | For Phase 5A-5C, use the simple `text.length / 4` estimate. Don't add a tokenizer dependency until Phase 5D when you build `contextBudget.js` and need precision. Even then, Claude's API returns token counts in response metadata. |
-| `express` / `fastify` | No server needed. This is a desktop app. The Node adapter runs locally for CC Skills, not as a web server. |
+The existing `contextBudget.js` needs pricing updates for cache-aware cost tracking:
+
+```javascript
+// Add to MODEL_PRICING:
+export const MODEL_PRICING = {
+  'claude-sonnet-4-20250514': {
+    input: 3.0,
+    output: 15.0,
+    cacheWrite5m: 3.75,    // 1.25x input
+    cacheWrite1h: 6.0,     // 2.0x input
+    cacheRead: 0.30,       // 0.1x input
+  },
+  'claude-opus-4-6': {
+    input: 5.0,
+    output: 25.0,
+    cacheWrite5m: 6.25,    // 1.25x input
+    cacheWrite1h: 10.0,    // 2.0x input
+    cacheRead: 0.50,       // 0.1x input
+  },
+};
+
+// Add web search cost tracking:
+export const WEB_SEARCH_COST = 0.01; // $0.01 per search
+```
+
+---
+
+## Existing companyAdapter.js: Migration Path
+
+The existing `companyAdapter.js` uses raw `fetch()` with the `anthropic-dangerous-direct-browser-access` header. For the API migration, this should eventually migrate to the SDK client. But it works and is not blocking -- leave it as-is for v1.1, migrate in a future cleanup pass.
+
+Key difference: `companyAdapter.js` runs in the **browser** (Vite dev server / Tauri webview). The new `aiResearch.js` runs in **Node.js** (via nodeAdapter.js). They use different API access patterns:
+- Browser: `fetch()` with `anthropic-dangerous-direct-browser-access` header
+- Node.js: `new Anthropic({ apiKey })` SDK client (no browser header needed)
 
 ---
 
 ## Sources
 
-- [Claude Agent SDK Overview](https://platform.claude.com/docs/en/agent-sdk/overview) -- Official docs, subagent patterns, tool definitions
-- [Claude Agent SDK Subagents](https://platform.claude.com/docs/en/agent-sdk/subagents) -- Context isolation, parallel execution, AgentDefinition API
-- [Claude Agent SDK Structured Outputs](https://platform.claude.com/docs/en/agent-sdk/structured-outputs) -- outputFormat, Zod integration, error handling
-- [Claude API Structured Outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs) -- output_config.format, strict tool_use, JSON schema enforcement
-- [Claude Code Skills Documentation](https://code.claude.com/docs/en/skills) -- SKILL.md format, frontmatter, triggering conditions
-- [Zod v4 Release Notes](https://zod.dev/v4) -- Native toJSONSchema(), 14x faster parsing, subpath publishing
-- [Zod JSON Schema Docs](https://zod.dev/json-schema) -- Schema generation, supported features
-- [LinkedOM GitHub](https://github.com/WebReflection/linkedom) -- Performance benchmarks vs jsdom
-- [Skill Authoring Best Practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) -- Description triggers, progressive disclosure
-- [Context Engineering Guide 2026](https://www.newsletter.swirlai.com/p/state-of-context-engineering-in-2026) -- Write/Select/Compress/Isolate framework
+- [Structured Outputs - Claude API Docs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs) -- output_config.format GA, JSON Schema limitations, Zod integration
+- [Prompt Caching - Claude API Docs](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) -- cache_control, TTL options, pricing multipliers, minimum token lengths
+- [Web Search Tool - Claude API Docs](https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool) -- tool type strings, max_uses, response structure, citation format
+- [Pricing - Claude API Docs](https://platform.claude.com/docs/en/about-claude/pricing) -- Model pricing, cache pricing, web search $10/1000 searches
+- [@anthropic-ai/sdk npm](https://www.npmjs.com/package/@anthropic-ai/sdk) -- SDK v0.80.0, peer dependency on Zod ^3.25.0 || ^4.0.0
+- [Anthropic SDK TypeScript - DeepWiki](https://deepwiki.com/anthropics/anthropic-sdk-typescript) -- zodOutputFormat, betaZodTool, helper paths
+- [Introducing web search on the Anthropic API](https://claude.com/blog/web-search-api) -- Web search announcement, dynamic filtering
+- [Anthropic Launches Structured Outputs](https://techbytes.app/posts/claude-structured-outputs-json-schema-api/) -- Constrained decoding explanation
+- Local verification: `node -e "..."` tests confirming zodOutputFormat + ReportSectionSchema compatibility

@@ -1,421 +1,425 @@
-# Domain Pitfalls
+# Domain Pitfalls: Claude Code to API Migration
 
-**Domain:** Multi-agent AI investment analysis (Rule One methodology)
-**Project:** Thes1s — 9-agent research pipeline generating One Pager / Pitch Deck / Full Story
-**Researched:** 2026-03-24
-**Overall confidence:** HIGH (grounded in project-specific prototype failures, industry research, and XBRL engine experience)
+**Domain:** Migrating multi-agent AI pipeline from Claude Code subagent orchestration to direct Claude API calls
+**Project:** Thes1s v1.1 -- Pitch Deck pipeline API migration
+**Researched:** 2026-03-27
+**Overall confidence:** HIGH (grounded in official Anthropic documentation, project-specific V1-V3 validation failures, and verified API behavior)
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause rewrites, lost user trust, or fundamentally broken output. Each of these has been observed in the wild — either in this project's prototype testing or documented across the multi-agent AI industry.
+Mistakes that cause pipeline failures, silent quality degradation, or cost blowups. Each is either documented in official sources or observed in this project's 3 validation runs.
 
 ---
 
-### Pitfall 1: Example Contamination — "The LULU Echo"
+### Pitfall 1: Structured Outputs + Citations Are Mutually Exclusive
 
-**What goes wrong:** Agents with example outputs in their context (or accessible through any path) pattern-match from the example instead of performing independent analysis. The LULU prototype pitch deck proved this: the agent regurgitated the LULU example structure, phrasing, and analytical framing rather than doing fresh research. TSCO (no example available) produced different but worse output — confirming agents lean on examples as a crutch.
+**What goes wrong:** You enable `output_config.format` (JSON schema) on a request that also uses the web search tool, expecting Claude's built-in citation system to provide web URLs alongside your structured JSON output. The API returns a **400 error**: "Citations cannot be used together with structured outputs." Your pipeline crashes on every agent that does web research.
 
-**Why it happens:** LLMs are powerful pattern-matchers. When they see a completed example alongside a template, the path of least resistance is to fill in the template by adapting the example rather than reasoning from data. This is especially dangerous with investment analysis because the output *looks* independent — same section headings, different numbers — but the analytical logic, emphasis, and conclusions mirror the example rather than emerging from the company's actual data.
+**Why it happens:** Claude's citation system interleaves `citation` blocks within `text` content blocks (e.g., `{ type: "text", text: "Revenue grew 18%", citations: [{type: "web_search_result_location", url: "..."}] }`). Structured outputs constrain the entire response to a single JSON object. These two output formats are physically incompatible -- you cannot interleave citation metadata within a JSON string field.
 
 **Consequences:**
-- Output appears competent but is actually derivative — a sophisticated "find and replace" of LULU details with the new company's details
-- Industry-specific nuances get missed because the agent applies athleisure framing to, say, a semiconductor company
-- The portfolio manager (user) might not catch it if they haven't memorized the LULU example
-- Every company starts to read like LULU with different numbers — homogeneous, unconvincing output
+- Cannot use both structured outputs AND automatic web citations in the same API call
+- Must choose: guaranteed JSON schema compliance OR automatic citation URLs from web search
+- The V3 "web citation laundering" problem (agents citing domain names instead of URLs) cannot be solved by simply turning on both features
 
 **Warning signs:**
-- Similar sentence structures across reports for different companies
-- The same moat framework applied regardless of industry (e.g., "brand moat" attributed to a B2B company)
-- Identical section ordering emphasis when different companies would naturally emphasize different strengths
-- Phrases that match the example verbatim with only company names swapped
+- 400 errors when combining `output_config.format` with web search tool
+- Planning documents that assume web search citations will "just work" with structured outputs
 
 **Prevention:**
-1. **Hard architectural boundary**: LULU examples must NEVER enter agent context — not in system prompts, not in curriculum files loaded by agents, not accessible via Toolbox tools. The architecture plan already mandates this (KDD #15). Enforce it in `agents/` config files with explicit exclusion rules.
-2. **Template without examples**: Agents receive the template structure and curriculum (methodology) but never a completed example. The curriculum files (pitch-deck-I.md through IV.md) teach the *method* without showing a completed analysis.
-3. **Post-generation contamination check**: The `critic.js` quality system should include a similarity check — if section phrasing scores above a threshold against the LULU benchmark, flag for regeneration.
-4. **Industry-specific framing**: The DataPacket should include SIC classification and industry type so agents frame their analysis in industry-appropriate terms from the start.
+1. **Two-phase agent calls.** Phase 1: Agent uses web search tool (no structured output) -- produces free-form analysis with automatic citations. Phase 2: Same conversation, ask Claude to reformat into the JSON schema (with structured output) -- the web search results and citations are already in the conversation context. Claude can extract URLs from the `web_search_result` content blocks visible in its own conversation history.
+2. **Extract URLs from tool results programmatically.** The orchestrator receives `web_search_tool_result` content blocks containing `web_search_result` objects with `url`, `title`, and `page_age` fields. Parse these server-side and inject them into the agent's follow-up prompt: "You used these URLs in your research: [url1, url2, ...]. Include the actual URL in every citation's `source` field."
+3. **Post-processing URL injection.** After an agent completes (with structured output), scan the conversation's `server_tool_use` and `web_search_tool_result` blocks for URLs. Match search queries to citation sources and replace domain-name-only citations with full URLs.
 
-**Detection:** Run the first 5 generated reports through a manual comparison against LULU examples. If any section reads like an adapted LULU section, the contamination boundary has leaked.
+**Detection:** Unit test that sends a request with both `output_config.format` and `tools: [{type: "web_search_20250305"}]` and verifies it either works (in some future API version) or is handled gracefully.
 
-**Phase:** Address in Phase 5A (agent definitions) and Phase 5D (quality system). This is the single most important guardrail to get right before any generation runs.
+**Which migration phase:** Phase 1 (aiResearch.js architecture) -- this is a fundamental design constraint that shapes how every agent call is structured. Get this wrong and every web-searching agent fails.
+
+**Confidence:** HIGH -- Verified in official Anthropic structured outputs documentation: "Incompatible with Citations: Citations require interleaving citation blocks with text, which conflicts with strict JSON schema constraints. Returns 400 error if citations enabled with output_config.format."
 
 ---
 
-### Pitfall 2: Citation Fabrication and Broken Reference Chains
+### Pitfall 2: Narrative Collapse Under Schema Constraints (The JSON Squeeze)
 
-**What goes wrong:** Agents generate convincing citations that don't exist, misattribute data to the wrong source, or create circular reference chains where citations point to other generated content rather than primary sources. Research shows hallucinated citation rates across LLMs range from 14% to 95%, and 50-90% of LLM responses are not fully supported by cited sources.
+**What goes wrong:** When Claude must produce a complex JSON object with many required fields, it budget-constrains the long string fields (like `narrative`) to fit everything within its output token limit. Instead of a 1,200-word Buffett-style analysis, you get a 150-word stub like "See full narrative in agent output" or a choppy summary. This is the exact V2 failure (6/10 sections produced stubs) that the two-pass pattern solved.
 
-**Why it happens:** LLMs don't have an index of source material — they generate plausible-sounding references based on patterns in training data. When an agent writes "Revenue grew 18.2% [EDGAR, 10-year CAGR]," it may have pulled a plausible-but-wrong number, cited the right source for the wrong metric, or cited a source that doesn't contain that specific data point. The problem compounds across 9 agents: if Agent A fabricates a citation and Agent B references Agent A's output, the fabrication propagates through the report.
+**Why it happens:** Two compounding factors:
+1. **Token budget pressure.** Claude sees the full schema and mentally reserves tokens for all required fields. With 15+ required fields including arrays of citations, tables, charts, and cross-cutting findings, the model naturally "compresses" the longest fields (narrative, verdictRationale) to make room for everything else.
+2. **Constrained decoding overhead.** Structured outputs compile the JSON schema into a grammar that constrains each token. The grammar state machine must track position within nested objects. For complex schemas with many optional parameters, this creates larger grammar state spaces. The model's effective "creative bandwidth" for prose generation within a JSON string field is lower than when generating free-form text.
+3. **max_tokens truncation is schema-breaking.** If the response hits `max_tokens`, the output has `stop_reason: "max_tokens"` and the JSON may be **incomplete and invalid** -- not just missing the closing brace, but potentially truncated mid-field. The API docs explicitly state: "The output may be incomplete and not match your schema."
 
 **Consequences:**
-- User trusts a claim, makes an investment decision, then discovers the supporting data doesn't exist
-- A single fabricated citation undermines trust in the entire report
-- Reference chains become untraceable — you can't verify claim X because it cites section Y which cites a DataPacket field that doesn't say what was claimed
-- Professional credibility destroyed if reports are shared or used for commercial licensing
+- Narratives shrink from 1,200 words (V3 two-pass) to 150 words (V2 single-pass)
+- Executive summary collapses from 4,700 chars to 350 chars
+- Quality score drops from 75 to 56 (V2 vs V3)
+- Truncated JSON on max_tokens hit -- `JSON.parse()` fails, entire agent output lost
 
 **Warning signs:**
-- Citations that reference DataPacket fields but the actual DataPacket value differs from what's quoted
-- Round numbers in citations (revenue of "exactly $10B" when the real number is $9.837B)
-- Citations to "10-K filing" without a specific page, section, or paragraph reference
-- Multiple citations from the same source all supporting the agent's pre-formed conclusion
+- Narrative fields under 500 characters when the prompt asks for 800+ words
+- `stop_reason: "max_tokens"` in API responses
+- JSON parse errors on agent output
+- Section quality scores below 60
 
 **Prevention:**
-1. **DataPacket field paths as citations**: The architecture already mandates that every quantitative claim cites a DataPacket field path (e.g., `DataPacket.growthRates.revenue.10yr`). The `critic.js` validator should resolve each field path and verify the cited value matches the actual value.
-2. **Two-tier citation system**: Tier 1 = DataPacket references (machine-verifiable, auto-validated). Tier 2 = external references (web search, 10-K text, transcripts — requires URL and can be spot-checked). Never accept Tier 2 citations without a URL or specific document reference.
-3. **Citation resolution in `critic.js`**: For every citation in a section, resolve it: Does the DataPacket field exist? Does the value match? Does the URL return content? Does the quoted text appear in the source? Failed citations get flagged and the section marked for review.
-4. **No implicit citations**: Agents must cite every quantitative claim. "Revenue has been growing steadily" is rejected — it must be "Revenue grew at a 10-year CAGR of 18.2% [DataPacket.growthRates.revenue.10yr]."
+1. **Keep the two-pass pattern.** Even with structured outputs, use a two-phase approach per agent call:
+   - Turn 1: "Write your full analysis as prose. Be thorough. 800+ words minimum."
+   - Turn 2: "Now format your analysis into this JSON schema: [schema]. Your narrative field MUST contain the full prose you just wrote, not a summary."
+   - Turn 2 uses `output_config.format` with the JSON schema. The full narrative is already in the conversation context, so Claude copies it into the JSON rather than generating a compressed version.
+2. **Set max_tokens generously.** The ReportSectionSchema with a full narrative, 15 citations, tables, and data typically needs 6,000-10,000 output tokens. Set `max_tokens: 16384` per agent call. The API docs confirm: "max_tokens does not factor into OTPM rate limit calculations, so there is no rate limit downside to setting a higher max_tokens value."
+3. **Check stop_reason.** Every API response must check `response.stop_reason`. If `"max_tokens"`, the output is invalid -- retry with higher max_tokens. If `"refusal"`, the output may not match schema. Only `"end_turn"` guarantees valid structured output.
+4. **Schema simplification for narrative-heavy sections.** Consider splitting the schema: one call for the narrative + citations + redFlags (the creative content), another for the structured data fields (tables, charts, metrics). Reduces schema complexity, gives Claude more token budget for the prose.
+5. **Count optional parameters carefully.** The API enforces a hard limit of **24 optional parameters** across all strict schemas in a request. The current ReportSectionSchema has `tables`, `charts`, `primarySourceInsights`, `crossCuttingFindings`, and `searchesPerformed` as optional. That's 5 optional parameters per schema. With toolbox tools also using strict mode, this adds up fast. Use `required` with empty defaults where possible instead of `optional`.
 
-**Detection:** Build citation validation into the quality pipeline as an automated gate. No section passes without 100% Tier 1 citation resolution. Tier 2 citations get a spot-check rate (verify 3 random external citations per section).
+**Detection:** Automated check: if `narrative.length < 500` after structured output, flag as potential collapse. Compare narrative word counts between two-pass and single-pass approaches in validation runs.
 
-**Phase:** Address in Phase 5A (citation format in report JSON schema) and Phase 5D (critic.js validation). This must be automated — manual citation checking across 40+ references per report is unsustainable.
+**Which migration phase:** Phase 1 (aiResearch.js) for the two-pass pattern architecture. Phase 2 (pipeline migration) for per-agent tuning of max_tokens and schema complexity.
+
+**Confidence:** HIGH -- V2 validation run proved this failure mode. API docs confirm max_tokens truncation breaks schema compliance. Schema complexity limits (24 optional params, "Schema is too complex" 400 error) are documented.
 
 ---
 
-### Pitfall 3: The "Impressive But Wrong" Trap
+### Pitfall 3: Prompt Cache Invalidation Through Accidental Ordering Changes
 
-**What goes wrong:** AI generates fluent, confident, Buffett-style prose that reads beautifully but contains analytical errors that only an expert would catch. Harvard Business School research found that AI-generated investment articles were rated as "impressive" by researchers but inferior to human analysis on deeper scrutiny. The most dangerous outputs aren't obviously wrong — they're subtly, systematically wrong.
+**What goes wrong:** Your prompt caching strategy expects 90% cache hit rates (saving ~$6 per company), but actual cache hits are near 0% because the cache key is invalidated on every request. You're paying the 1.25x cache write premium on every call instead of the 0.1x cache read discount. Cost per company goes UP, not down.
 
-**Why it happens:** LLMs are optimized for fluency, not accuracy. They can write a compelling narrative about why a company has a wide moat while getting the competitive dynamics fundamentally wrong. The Buffett-style tone (conversational, confident, specific numbers) actually makes errors harder to spot because the writing *sounds* authoritative.
+**Why it happens:** Claude's prompt cache computes a prefix hash. The hierarchy is **tools -> system -> messages**, and changes cascade downward. Specific invalidation triggers that are easy to hit accidentally:
+
+1. **Tool definition changes cascade.** Any change to any tool definition invalidates tools + system + messages caches. If your orchestrator dynamically includes/excludes tools per agent (e.g., financial-analyst gets computeMOS but not WebSearch), the tool list changes between agents, invalidating the cache of shared context (curriculum, DataPacket). Solution: Always send the same tool list, even if some agents won't use all tools.
+2. **Dynamic timestamps in system prompts.** If the system prompt includes "Current date: 2026-03-27" or "DataPacket generated at [timestamp]", the cache invalidates every day (or every run). The cache breakpoint must be placed BEFORE any changing content.
+3. **JSON key ordering randomization.** Node.js `JSON.stringify` produces deterministic key order for plain objects, but if you're building tool definitions from Maps or sorting dynamically, key order might change between calls, producing different hashes.
+4. **Image or tool_choice changes.** Adding or removing images anywhere in the prompt, or changing `tool_choice`, invalidates the messages cache.
+5. **The 5-minute TTL trap.** Default cache TTL is 5 minutes. If agents within a pipeline take longer than 5 minutes between cache-sharing requests (e.g., Wave 1 finishes at minute 3, Wave 2 starts at minute 9), the cache expires. Use `"ttl": "1h"` (costs 2x base instead of 1.25x, but still 80% cheaper than cache miss).
+6. **Parallel first requests can't share cache.** Cache entries aren't available until the first response begins. If you fire Wave 1's 3 agents simultaneously and they all share the same curriculum prefix, only the first one creates the cache -- the other two create separate cache entries (3x cache write cost). Subsequent waves benefit, but the first wave pays full price.
 
 **Consequences:**
-- User invests based on a thesis that sounds rock-solid but crumbles under expert questioning
-- Red flags get buried in confident prose ("Operating margins are strong at 15%" when the industry average is 30%)
-- The writing quality creates a false sense of verification — "it's well-written so it must be well-researched"
-- Specific failure modes: wrong comparisons (comparing a REIT's FFO to an industrial's earnings), misapplied benchmarks (applying consumer-discretionary margins to a utility), inverted conclusions (declaring a 2x debt-to-earnings ratio "conservative" when 1x is the industry norm)
+- Cache write costs (1.25x) on every call instead of cache read costs (0.1x)
+- $8-12 cost target becomes $14+ (worse than CC mode)
+- Silent failure -- cache misses don't cause errors, they just cost more. You only notice when checking `response.usage.cache_read_input_tokens === 0`
 
 **Warning signs:**
-- Sections that read smoothly but lack specific negative findings — everything sounds positive
-- Benchmarks stated without industry context ("Gross margin of 25% is healthy" — not for SaaS)
-- Confidence assessments that are uniformly HIGH across all sections (statistically implausible for any company)
-- Narrative that covers every section but doesn't go deep on any — "adequate across the board" syndrome
+- `cache_creation_input_tokens` is high on every request (should be high on first, near-zero on subsequent)
+- `cache_read_input_tokens` is always 0 (should be high after first request)
+- Total API cost exceeding estimates by 2x+
 
 **Prevention:**
-1. **Mandatory red flags**: The architecture already requires every section to identify at least one concern, even for passing sections (KDD #12). Enforce this in the JSON schema — a section without `redFlags` is structurally invalid.
-2. **Industry-aware benchmarks**: The DataPacket includes SIC classification and peer metrics. Agent prompts must specify: "Compare all metrics to industry peers, not absolute thresholds. A 25% gross margin is excellent for grocery but poor for software."
-3. **Adversarial review by Risk Analyst**: The Risk Analyst agent exists specifically to attack the thesis. Its prompt should include: "Your job is to find what's wrong. Assume the other agents are being too optimistic. Challenge every PASS verdict with specific evidence."
-4. **Expert-level questioning in prompts**: Add to agent prompts: "Before concluding, ask yourself: Would a hedge fund PM with 20 years of experience accept this reasoning? What would they challenge?"
-5. **User checkpoint framing**: At each checkpoint, present findings with explicit "things that might be wrong" alongside the analysis, not just a polished summary.
+1. **Stable tool definitions.** Send the exact same tool array (same tools, same order, same definitions) to every agent in a pipeline run. Mark the last tool with `cache_control: { type: "ephemeral", ttl: "1h" }`.
+2. **Static system prompt prefix.** Structure system as two blocks:
+   ```
+   Block 1: [Static curriculum + Rule One fundamentals] ← cache_control breakpoint
+   Block 2: [Dynamic: agent-specific instructions, DataPacket slice, upstream summaries]
+   ```
+   Block 1 is identical across agents sharing the same curriculum -- cache hit. Block 2 varies per agent -- uncached, which is fine.
+3. **Use 1-hour TTL for pipeline-shared content.** Curriculum and DataPacket don't change during a single pipeline run. Use `"ttl": "1h"` on these breakpoints. Cost is 2x base for first write instead of 1.25x, but every subsequent read is 0.1x.
+4. **Warm the cache sequentially before parallel dispatch.** Fire one agent first (e.g., the simplest, fastest one), wait for its response to begin (streaming), then fire the parallel wave. The cache entry from the first agent is now available for all parallel agents.
+5. **Monitor cache metrics after every run.** Log `cache_creation_input_tokens` and `cache_read_input_tokens` from every response. Alert if cache read ratio drops below 50%.
+6. **Minimum token threshold check.** Cache requires minimum 2,048 tokens (Sonnet 4.6) or 4,096 tokens (Opus 4.6). If your curriculum slice is under this threshold for an agent, it won't cache. Bundle curriculum with universal context to exceed the minimum.
 
-**Detection:** The first 5-10 reports are manually evaluated by the user (the eval strategy from KDD #22). The user's Rule One training is the validator. If the user is catching errors that agents missed, the prompt engineering needs tightening.
+**Detection:** Build a `cacheMonitor` utility into the orchestrator that tracks cache hit/miss ratios per pipeline run and logs a warning if hit rate falls below 70%.
 
-**Phase:** Address in Phase 5A (agent prompt design), Phase 5D (quality system), and ongoing through manual evaluation in Phases 5C through 7.
+**Which migration phase:** Phase 1 (aiResearch.js) for cache architecture. Phase 2 for per-agent tuning and monitoring.
+
+**Confidence:** HIGH -- All invalidation rules verified against official Anthropic prompt caching documentation. Pricing model confirmed. TTL behavior and parallel request limitations confirmed.
 
 ---
 
-### Pitfall 4: Inter-Agent Incoherence — "The Left Hand Doesn't Know What the Right Hand Wrote"
+### Pitfall 4: Rate Limiting Kills Parallel Dispatch at Low Tiers
 
-**What goes wrong:** Different agents produce sections that contradict each other because they don't share sufficient context. The Financial Analyst says debt is manageable; the Risk Analyst says debt is a critical concern. The Business Analyst praises the moat; the Competitor Evaluator says the moat is eroding. Industry research confirms this: the MAST study found coordination breakdowns cause 36.9% of all multi-agent failures, and a cybersecurity example showed a threat rated "High" on one page while the same model called the same issue "adequately mitigated" two pages later.
+**What goes wrong:** You implement parallel agent dispatch (the key runtime optimization: 2.5hr -> 30min), fire 5 Sonnet agents simultaneously, and immediately get 429 rate limit errors because your API tier only allows 50 RPM with 30K ITPM.
 
-**Why it happens:** Each of the 9 agents gets fresh context (a design feature for cost control and focus). But "fresh context" means Agent 7 doesn't know what Agent 3 concluded. The DataPacket provides shared data, but agents interpret the same data differently. A Financial Analyst seeing 15% ROE might say "strong returns" while a Management Evaluator seeing the same 15% ROE in the context of 30% historical average says "declining quality." Both are right in their local context, but the reader sees a contradiction.
+**Why it happens:** Rate limits are per-model-family, not per-individual-model. All Sonnet 4.x traffic (Sonnet 4, 4.5, 4.6) shares one pool. All Opus 4.x traffic shares another. The pitch deck pipeline uses both:
+- Sonnet agents: business-analyst, competitor-evaluator, financial-analyst, management-evaluator (4 agents)
+- Opus agents: annual-reader, quarterly-reader, risk-analyst, valuation-specialist, synthesis-writer (5 agents)
 
-**Consequences:**
-- The portfolio manager reads contradictory assessments and loses trust in the entire report
-- The Synthesis Writer has to paper over contradictions, producing a muddled final thesis
-- Section-level verdicts (PASS/FAIL) can conflict with each other and with the overall verdict
-- The Bull/Bear debate in Stage 3 becomes incoherent if the "Bull" agent contradicts its own earlier sections
+At Tier 1 (50 RPM, 30K ITPM for both Sonnet and Opus), firing even 3 agents in parallel with ~50K input tokens each blows the 30K ITPM limit immediately.
 
-**Warning signs:**
-- Same metric described positively in one section and negatively in another
-- Section verdicts that don't add up (6 sections PASS, 2 FAIL, but overall verdict is PASS without explaining away the failures)
-- The Synthesis Writer inventing hedging language ("While there are some concerns...") to smooth over contradictions rather than addressing them
-- Risk section identifies threats that the Valuation section ignores entirely
-
-**Prevention:**
-1. **Section summaries as inter-agent context**: The report JSON schema includes a `summary` field per section ("1-2 sentence summary for downstream agents"). Phase 2 agents must receive Phase 1 summaries. Phase 3 agents must receive Phase 1 + Phase 2 summaries. The Synthesis Writer receives all summaries.
-2. **Shared verdict protocol**: Define explicit rules for how section verdicts combine into stage verdicts. "If any section is FAIL, the stage verdict cannot be PASS — it can only be WATCHLIST or CONDITIONAL PASS. The Synthesis Writer must explicitly address every FAIL section."
-3. **Contradiction detection in `critic.js`**: After all sections are generated, run a coherence check: extract all quantitative claims and verdicts, flag any metric described differently across sections. This is a simple rule-based check, not an AI task.
-4. **Orchestrator as context bridge**: The orchestrator passes not just section summaries but also key metrics interpretations between phases. "Financial Analyst rated ROE as DECLINING from 30% to 15%. Use this interpretation as the starting point."
-
-**Detection:** Read the generated report end-to-end looking specifically for contradictions. The Synthesis Writer section is the canary — if it's full of hedging language, the upstream agents produced incoherent inputs.
-
-**Phase:** Address in Phase 5A (report JSON schema with section summaries), Phase 6 (orchestration of multi-phase Pitch Deck), and Phase 7 (Full Story with inherited context).
-
----
-
-### Pitfall 5: Context Engineering Failure — Too Much or Too Little
-
-**What goes wrong:** Agents get either (a) so much context that they lose focus and key information drowns in noise, or (b) so little context that they hallucinate to fill gaps. Anthropic's own context engineering guidance emphasizes scoping context minimally — every model call sees only what it needs. Industry research confirms: by month 3 of production, teams send 5x the context they planned, with the model spending 70% of tokens reading instead of reasoning.
-
-**Why it happens:** The temptation is to give every agent "everything" — the full DataPacket, all curriculum files, all operating rules, previous sections, peer data, transcripts. But a Valuation Specialist doesn't need the entire 10-K Business Description, and a Business Analyst doesn't need 10 years of cash flow line items. Conversely, stripping context too aggressively means agents lack information they actually need and either skip important analysis or hallucinate to fill the gap.
+At Tier 2 (1,000 RPM, 450K ITPM), parallel dispatch is comfortable for the analysis agents but tight for the PSR phase (5 annual readers + 2 quarterly readers = 7 parallel Sonnet calls with ~100K+ tokens each).
 
 **Consequences:**
-- Overstuffed context: Agent ignores important data because it's buried in 200K tokens of semi-relevant information. "Lost in the middle" problem — models struggle with information in the middle of long contexts.
-- Understuffed context: Agent writes confidently about topics it has no data for, generating plausible but fabricated analysis
-- Cost explosion: Every unnecessary token in context multiplies across 9 agents and 30+ API calls
-- Quality unpredictability: Sometimes the model attends to the right context, sometimes it doesn't — results vary run to run
+- 429 errors cause retries, which cause more 429 errors (amplification spiral)
+- Pipeline hangs or fails entirely
+- Even with exponential backoff, effective parallelism drops to near-sequential
+- PSR phase (biggest token consumer) is the bottleneck
 
 **Warning signs:**
-- Agent outputs that are verbose but shallow — lots of words, little insight (too much context, model is summarizing rather than analyzing)
-- Agent outputs that make specific claims not supported by the DataPacket (too little context)
-- Dramatic quality differences between runs for the same company (context attention is non-deterministic)
-- Token costs significantly exceeding estimates (context bloat)
+- `429 rate_limit_error` in API responses
+- `retry-after` headers with values > 10 seconds
+- Pipeline runtime exceeds 60 minutes (should be 30-40 with proper parallelism)
 
 **Prevention:**
-1. **DataPacket slicing per agent**: The architecture plan already specifies that each agent gets a DataPacket "slice" relevant to its role. The Data Assembler should produce per-role slices, not a monolithic blob. Financial Analyst gets financial statements, growth rates, return metrics, FCF, and debt. Business Analyst gets company info, classification, business description from 10-K. Valuation Specialist gets everything the Financial Analyst gets plus analyst estimates and historical prices.
-2. **Curriculum slicing per agent**: Each agent gets only the curriculum files relevant to its role (already defined in the architecture table). Never load all 8 curriculum files into one agent.
-3. **Context budget tracking**: `contextBudget.js` (Phase 5D) should track input tokens per agent call. Set soft limits per role (e.g., Financial Analyst: 50K input tokens, Primary Source Reader: 200K). Alert when an agent exceeds its budget.
-4. **Stable prefix / variable suffix**: Structure context so system instructions and curriculum are at the top (stable, cacheable) and DataPacket slices and previous section summaries are at the bottom (variable). This enables prompt caching (90% cost reduction on cached prefixes).
+1. **Know your tier.** Check current limits at Claude Console > Settings > Limits. The project needs at minimum Tier 2 (1,000 RPM, 450K ITPM) for meaningful parallelism. Tier 3 (2,000 RPM, 800K ITPM) is comfortable. Tier 1 cannot support parallel dispatch at all -- fall back to sequential.
+2. **Prompt caching dramatically increases effective ITPM.** Cached input tokens do NOT count against ITPM rate limits (for Sonnet 4.x and Opus 4.x). With 80% cache hit rate on a 50K token input, only 10K uncached tokens count. This effectively 5x your ITPM capacity.
+3. **Build a dispatch queue with concurrency limits.** Don't fire all agents at once. Use a semaphore pattern:
+   ```javascript
+   const MAX_CONCURRENT_SONNET = 3;  // Adjust based on tier
+   const MAX_CONCURRENT_OPUS = 2;
+   ```
+   Queue agents and release slots as each completes.
+4. **Implement exponential backoff with jitter.** On 429, read the `retry-after` header and wait that long plus random jitter (0-2 seconds). Never retry immediately.
+5. **Read rate limit headers proactively.** Every response includes `anthropic-ratelimit-requests-remaining` and `anthropic-ratelimit-tokens-remaining`. If remaining is low, throttle dispatch before hitting the limit.
+6. **Stagger PSR readers.** The 7 PSR readers (5 annual + 2 quarterly) are the heaviest token consumers. Dispatch 3 at a time, not all 7.
 
-**Detection:** Compare agent outputs across multiple companies. If a particular agent consistently produces shallow output, it's likely overstuffed. If it consistently invents data, it's understuffed. Token cost monitoring reveals bloat.
+**Detection:** Track 429 error count per pipeline run. If > 0, adjust concurrency limits.
 
-**Phase:** Address in Phase 5A (DataPacket slicing, agent config definitions) and Phase 5D (contextBudget.js).
+**Which migration phase:** Phase 1 (aiResearch.js dispatch queue and rate limit handling). Critical to get right before any pipeline testing.
 
----
-
-### Pitfall 6: Financial Domain Blindness — Wrong Assumptions, Wrong Industry
-
-**What goes wrong:** Agents apply standard financial analysis to companies that require industry-specific treatment. REITs get valued on P/E instead of FFO/AFFO. Banks get analyzed on gross margin instead of net interest margin and efficiency ratio. Insurance companies get FCF analysis when float and combined ratio are what matter. Cyclical businesses get linear growth projections. XBRL data from the three-layer engine is misinterpreted by agents who don't understand the extraction nuances.
-
-**Why it happens:** LLMs have broad knowledge of financial analysis but shallow knowledge of industry-specific methodology. Rule One methodology itself has industry-specific adaptations that aren't in generic financial training data. The existing XBRL engine already handles industry overlays (bank, REIT, insurance), but agents receiving the DataPacket need to know *how* to interpret the overlay-specific fields. Furthermore, XBRL.org research shows that even the best AI models achieve only 17% accuracy when linking extracted numbers to correct US-GAAP taxonomy concepts.
-
-**Consequences:**
-- A REIT analysis that uses P/E ratio instead of FFO yield produces wildly wrong valuation conclusions
-- Bank analysis that ignores NIM, provision for credit losses, and the interest rate cycle misses the most important dynamics
-- Growth projections for cyclical businesses that extrapolate the peak produce dangerously optimistic buy prices
-- XBRL-derived numbers used without understanding the CLAUDE.md caveats (FFO is approximate post-2018, insurance float can't be reconstructed from us-gaap tags, AFFO maintenance capex is hardcoded at 15%)
-
-**Warning signs:**
-- Valuation Specialist using MOS/PBT on a REIT without mentioning FFO/AFFO/NAV
-- Financial Analyst reporting "N/A" for industry-specific fields instead of using the overlay data
-- Growth rates extrapolated linearly for a cyclical business without discussing the cycle
-- DataPacket fields from industry overlays (NIM, FFO, combined ratio) absent from analysis
-
-**Prevention:**
-1. **Industry classifier in DataPacket**: The DataPacket already includes `classification` which maps to `industryClassifier.js` output (bank/reit/insurance/standard). Agent prompts must branch on this: "If classification is REIT, use FFO/AFFO/NAV as primary valuation metrics. P/E is secondary."
-2. **Industry-specific curriculum extensions**: Create brief addenda to curriculum files for non-standard industries: `pitch-deck-IV-reit-addendum.md`, `pitch-deck-IV-bank-addendum.md`. These override generic valuation methodology for those sectors.
-3. **DataPacket caveats section**: Include a `caveats` array in the DataPacket that surfaces known limitations: "FFO is derived, not tagged in XBRL — approximate for post-2018 years", "Insurance float is approximated from balance sheet items", "Maintenance capex hardcoded at 15% — adjust per REIT subtype." Agents must acknowledge and surface caveats in their output.
-4. **Cyclical business detection**: The DataPacket should flag cyclical industries (SIC-based). For cyclical companies, growth rate calculations should use CAGR from "first positive year" as documented in the user's research patterns, and valuation should include cycle-aware sensitivity analysis.
-
-**Detection:** Generate reports for at least one company in each category (standard, REIT, bank, insurance, cyclical) during validation. Compare agent output to what the industry-specific CLAUDE.md documentation says the analysis should look like.
-
-**Phase:** Address in Phase 5A (DataPacket caveats, agent config branching on industry type) and Phase 6 (Pitch Deck valuation section with industry-aware logic).
+**Confidence:** HIGH -- Rate limit tiers verified from official documentation. ITPM cache exemption confirmed. Token bucket algorithm and 429 behavior confirmed.
 
 ---
 
 ## Moderate Pitfalls
 
-Issues that cause quality degradation, user frustration, or cost overruns but don't fundamentally break the product.
+Issues that degrade quality, increase cost, or cause partial failures but don't crash the pipeline.
 
 ---
 
-### Pitfall 7: Cost Explosion — The Token Tax of 9 Agents
+### Pitfall 5: Schema Complexity Limits Break Multi-Tool Agents
 
-**What goes wrong:** The full pipeline targets $8-12 per company, but costs balloon to $20-40+ because: agents use more context than budgeted, the Primary Source Reader processes a 200K+ token 10-K, retry loops on failed generations multiply costs, and Toolbox tool calls add round-trips. Industry research shows production teams routinely send 5x the context they planned within 3 months.
+**What goes wrong:** Your agent request includes 8 Toolbox tools (all `strict: true`) plus the web search tool plus a structured output schema. The API returns a 400 error: "Schema is too complex for compilation."
 
-**Why it happens:** Multi-agent systems have a multiplicative cost structure. Each unnecessary token in shared context (curriculum, operating rules) gets multiplied across every agent. The Primary Source Reader is the biggest wildcard — a full 10-K can be 200K+ tokens, and each earnings transcript adds 15-30K tokens. If agents use Toolbox tools iteratively (calling `computeMOS()` with 10 different FGR values), each tool call is an additional API round-trip.
+**Why it happens:** Structured outputs compile all strict schemas (output format + strict tool input schemas) into a single grammar. The API enforces hard limits:
+- **20 strict tools** per request maximum
+- **24 optional parameters** total across ALL strict schemas combined
+- **16 parameters with union types** total across ALL strict schemas
+- **180-second compilation timeout** for the combined grammar
+
+These limits interact multiplicatively. The ReportSectionSchema alone has 5 optional fields (tables, charts, primarySourceInsights, crossCuttingFindings, searchesPerformed). Each strict tool adds its optional parameters to the running total. Eight tools with 2 optional params each = 16, plus 5 from the output schema = 21. Close to the 24-parameter limit.
+
+**Consequences:**
+- 400 compilation errors on agents with many tools
+- Forced to choose between strict tools and strict output schema
+- Non-strict tools don't guarantee schema compliance on inputs
 
 **Warning signs:**
-- Per-company costs exceeding $15 for a full pipeline
-- Primary Source Reader consuming more than 50% of total pipeline cost
-- Agents making more than 3 Toolbox tool calls per section (diminishing returns)
-- Identical curriculum text loaded into 8+ agents (redundant cost)
+- 400 errors mentioning "Schema is too complex" or compilation timeout
+- Slowness on first request with a new schema (compilation taking > 10 seconds)
 
 **Prevention:**
-1. **Model routing by task complexity**: Use Sonnet for most sections, Opus only for FGR derivation, valuation synthesis, debate, final narrative, and primary source reading (already planned).
-2. **10-K chunking**: Don't feed the entire 10-K to the Primary Source Reader. Extract relevant sections (Business Description, Risk Factors, MD&A, Financial Statements notes) and discard boilerplate (legal disclaimers, exhibit lists).
-3. **Prompt caching**: Structure all agent prompts with stable prefixes (system instructions, curriculum) and variable suffixes (DataPacket, section context). Cached prefixes cost 90% less. With 9 agents sharing similar curriculum, this is a significant saving.
-4. **Tool call budgets**: Set a soft limit of 5 Toolbox tool calls per agent per section. After 5 calls, the agent must proceed with available data. This prevents agents from entering explore-everything loops.
-5. **Token budgets per role**: Track and alert on per-role token consumption. Set initial budgets generously, then tighten based on real data from the first 5-10 reports.
+1. **Mark only the output schema as strict.** Use `strict: true` only on the `output_config.format` JSON schema. Make Toolbox tools non-strict (Claude naturally adheres to simple tool schemas without constrained decoding). Reserve strict enforcement for where schema violations cause real problems -- the final output.
+2. **Make optional fields required with defaults.** Instead of `tables: z.array(TableSchema).optional()`, use `tables: z.array(TableSchema).default([])` and make it required in the JSON schema with a description "Empty array if no tables." This reduces optional parameter count without changing semantics.
+3. **Split complex tools into simpler ones.** Instead of one tool with 8 optional parameters, use 3 tools with 2-3 required parameters each.
 
-**Detection:** Token cost monitoring per agent per section from the first report. Build a cost dashboard before scaling to production.
+**Detection:** Pre-flight schema complexity check: count optional parameters and union types across all strict schemas before sending. Warn if approaching limits.
 
-**Phase:** Phase 5D (contextBudget.js token tracking), ongoing optimization through Phases 6-8.
+**Which migration phase:** Phase 1 (schema design) and Phase 2 (per-agent tool configuration).
+
+**Confidence:** HIGH -- Limits verified from official structured outputs documentation. Interaction between output schema and tool schemas confirmed.
 
 ---
 
-### Pitfall 8: Checkpoint Fatigue — Too Many Interruptions
+### Pitfall 6: Web Search Tool Cost and Token Explosion
 
-**What goes wrong:** The architecture defines 3-4 checkpoints per Pitch Deck and 3 per Full Story. But if each checkpoint requires the user to read, evaluate, respond to questions, provide missing data, and approve before agents continue, the "15-30 minute" Pitch Deck becomes a 2-hour attention marathon. The user abandons the workflow mid-generation because the interruptions feel like busywork rather than value-added review.
+**What goes wrong:** Agents perform 7-10 web searches per section (observed in V3), each search costs $0.01 ($10/1,000 searches), and search result content consumes significant input tokens in subsequent conversation turns. A pipeline with 10 sections averaging 7 searches = 70 searches = $0.70 in search fees. But the real cost is the search results inflating input token counts: each search returns multiple `web_search_result` blocks with `encrypted_content` that count as input tokens in multi-turn conversations.
 
-**Why it happens:** The PM/Analyst model assumes the user wants to review at every phase boundary. But investment analysis has natural stopping points — the user cares most about (1) the overall thesis direction early on, (2) the FGR confirmation, and (3) the final output. Being asked "which market size source do you trust?" when they just want to see the valuation can feel like friction, not collaboration.
+**Why it happens:** In Claude Code, web search results are ephemeral -- the subagent's context is discarded after it returns its output. In direct API calls with multi-turn conversations (the two-pass pattern), web search results from Turn 1 remain in the conversation and are re-sent as input tokens in Turn 2. Search result content tokens accumulate.
+
+**Consequences:**
+- Each web search adds 1,000-5,000 input tokens of result content
+- 7 searches per section = 7,000-35,000 additional input tokens
+- These tokens are billed at full input price in Turn 2 (unless cached)
+- Pipeline cost could increase by $2-4 per company just from search result token inflation
 
 **Warning signs:**
-- User starts clicking "proceed" without reading checkpoint summaries
-- Average time between checkpoint presentation and user response grows (they're context-switching away)
-- User feedback at checkpoints is increasingly minimal ("looks good, proceed")
-- User requests to "just generate the whole thing and let me review at the end"
+- Input token counts on Turn 2 (structured output) are 2-3x higher than expected
+- Per-section costs exceed $1 (should be $0.30-0.60)
+- `usage.input_tokens` growing much larger than the system prompt + DataPacket
 
 **Prevention:**
-1. **Two checkpoint tiers**: Tier 1 (mandatory) = data gaps where agents literally cannot proceed without user input (paywalled data, conflicting sources that require judgment). Tier 2 (optional) = progress updates the user can skip with a single "proceed." Default to Tier 2 unless there's a genuine blocker.
-2. **Batch questions**: Instead of asking one question per checkpoint, batch all questions from all Phase agents into a single checkpoint. "Here are 5 things we need your input on" is better than 5 separate interruptions.
-3. **Auto-proceed with defaults**: For common decisions (which market size source, which growth period to emphasize), agents should propose a default and proceed unless the user objects. "Using IBISWorld TAM of $45B (proceed in 30 seconds unless you override)."
-4. **FGR confirmation is sacred**: The FGR checkpoint is non-negotiable — it drives all 4 valuation methods. Make this the ONE checkpoint that truly blocks and requires active user engagement. Everything else can be review-after-generation.
+1. **Limit web searches per agent.** Use `max_uses: 5` on the web search tool definition. V3 showed 7-9 searches per section but many were redundant. 5 is sufficient for quality research.
+2. **Don't send search results back in Turn 2.** For the two-pass pattern, structure Turn 2 as a NEW conversation (new `messages.create()` call), not a continuation. Pass the prose output from Turn 1 as a user message in Turn 2, NOT the full conversation history with all search result blocks.
+3. **Use the dynamic filtering version** (`web_search_20260209`) on Opus 4.6 and Sonnet 4.6 to reduce irrelevant search result content before it enters context.
+4. **Track per-search costs in the orchestrator.** The `usage.server_tool_use.web_search_requests` field tells you exactly how many searches were executed. Log it.
 
-**Detection:** Track checkpoint response times and response depth. If the user is spending <30 seconds per checkpoint, the checkpoints aren't adding value.
+**Detection:** Monitor `usage.server_tool_use.web_search_requests` and input token counts across turns. Alert if search count exceeds 5 per section or input tokens on Turn 2 exceed 2x the expected DataPacket + curriculum size.
 
-**Phase:** Phase 6 (Pitch Deck checkpoint design) and Phase 7 (Full Story checkpoint design).
+**Which migration phase:** Phase 1 (web search tool configuration) and Phase 2 (per-agent cost monitoring).
+
+**Confidence:** HIGH -- Web search pricing ($10/1,000) and token counting behavior confirmed in official docs. Multi-turn token accumulation is standard API behavior.
 
 ---
 
-### Pitfall 9: State Loss — Generation Progress Evaporates on Crash
+### Pitfall 7: Loss of File System Context (CC Has It, API Does Not)
 
-**What goes wrong:** A Pitch Deck generation is 15-30 minutes and 15+ API calls. If the process crashes after Phase 2 (8 sections complete), all progress is lost and the user must restart from scratch. In CC mode, if the conversation context is lost (timeout, browser crash, context window exceeded), all generated sections vanish.
+**What goes wrong:** Agent prompts reference files, paths, or patterns that worked in Claude Code but don't exist in the API context. CC subagents have access to the filesystem (Read, Write, Bash, Glob, Grep tools). Direct API calls have access to nothing except what you explicitly put in the request.
 
-**Why it happens:** The architecture uses `.thes1s/reports/{TICKER}/progress.json` for state persistence, but the implementation must be rigorous about writing state after every section completion, not just at phase boundaries. In CC mode specifically, generated content exists in the conversation context — if that context is lost before being written to the report data model, the work disappears.
+**Why it happens:** CC subagents can:
+- Read CLAUDE.md for project context
+- Read curriculum files on-demand (`knowledge/research-references/fgr.md`)
+- Read the DataPacket from disk
+- Run engine functions via Bash
+- Search the codebase for patterns
+
+API calls get exactly what you put in `system` and `messages`. If the agent prompt says "Refer to knowledge/research-references/advanced-financial-analysis.md for the ROE/ROIC methodology," the API agent has no way to access that file.
+
+**Consequences:**
+- Agents produce vague analysis because they lack curriculum depth
+- References to file paths in prompts confuse the model (it tries to "remember" content it doesn't have)
+- Quality drops because agents lose the methodological guardrails that curriculum files provide
+- The "context engineering" challenge (right curriculum to the right agent) must be solved entirely in the orchestrator
 
 **Warning signs:**
-- User reports having to restart generation after a crash
-- Partially completed reports in the data model (some sections present, others missing)
-- Duplicate generation costs when the same sections are re-generated
-- User reluctance to start Full Story generation because they fear losing 30 minutes of progress
+- Agent output lacks Rule One methodology specifics (no mention of Big 4, no FGR derivation, generic SWOT instead of PEST)
+- Agent references file paths it can't access
+- Quality regression compared to CC-generated output
 
 **Prevention:**
-1. **Write-after-every-section**: The orchestrator must write each section to `progress.json` immediately upon completion, not in batch at the end. Each section is independently stored and independently regenerable.
-2. **Resume command**: `/generate:resume COST` should pick up where the last run left off, loading all completed sections from `progress.json` and continuing with the next unfinished section.
-3. **Section-level idempotency**: Regenerating a section should produce a new version without destroying the previous one. Keep a version history per section so the user can compare.
-4. **CC mode persistence**: In CC mode, the orchestrator should write sections to disk files (JSON) as they're generated, not just hold them in conversation context. If the conversation dies, the files survive.
+1. **Inline everything.** Every piece of context an agent needs must be inlined into the system prompt or user message. No file references. Read curriculum files at orchestrator startup and concatenate into agent prompts.
+2. **Build a `contextAssembler` utility.** For each agent, read its `config.json` `curriculum` array, load those files, and concatenate them with the universal context and DataPacket slice into a single prompt string. This replaces CC's on-demand file reading.
+3. **Toolbox tools replace Bash.** CC agents call engine functions via Bash (`node -e "..."`). API agents call them via `tool_use`. The `toolbox.js` module must expose every engine function as a tool definition.
+4. **Test prompt completeness.** For each agent, compare the CC skill's effective context (all files it could Read) against the API prompt's actual content. Any missing curriculum or reference material is a quality regression.
 
-**Detection:** Simulate crashes at various points in the pipeline during testing. Verify that resume produces correct output.
+**Detection:** Side-by-side comparison of CC-generated and API-generated output for the same ticker. If API output lacks methodology depth, the context assembly is incomplete.
 
-**Phase:** Phase 5A (progress.json schema with per-section state) and Phase 6 (resume command implementation).
+**Which migration phase:** Phase 1 (contextAssembler utility) and Phase 2 (per-agent context verification).
+
+**Confidence:** HIGH -- This is a fundamental architectural difference between CC and the API. No verification needed -- it's definitionally true.
 
 ---
 
-### Pitfall 10: Shallow Analysis Syndrome — "Good Enough" Output
+### Pitfall 8: Partial Pipeline Failure Without Graceful Degradation
 
-**What goes wrong:** Agents produce analysis that covers every required section but doesn't go deep on any of them. Every section is 200 words of competent but surface-level commentary. The Business Analyst says "the company has a brand moat" without explaining why competitors can't replicate it. The Financial Analyst says "ROE is strong" without explaining the capital structure driving it. The result is a report that technically fills every field in the JSON schema but fails to deliver the depth that is Thes1s's core value proposition.
+**What goes wrong:** One agent in a wave fails (timeout, rate limit, schema too complex, model overloaded), and the pipeline either crashes entirely or produces an incomplete report with no indication of what failed.
 
-**Why it happens:** LLMs default to breadth over depth. Given 10 sections to fill, the model allocates roughly equal attention to each rather than going deep where the analysis warrants it. Additionally, when agents are asked to produce structured JSON output, they focus on filling every required field rather than reasoning deeply about any particular one. The `narrative` field gets a paragraph; the `data` field gets numbers. Neither gets the 3-page deep dive the topic deserves.
+**Why it happens:** `Promise.all()` rejects on the first failure. If you dispatch 3 agents in parallel with `Promise.all()`, one failure kills all three results -- including the two that succeeded.
+
+**Consequences:**
+- Successful agent outputs are lost
+- Pipeline must restart the entire wave (wasting tokens and money)
+- User sees a generic error with no indication which section failed
 
 **Warning signs:**
-- Every section has roughly the same word count (200-300 words)
-- Narrative uses generic phrases: "strong growth trajectory," "solid fundamentals," "competitive position"
-- No section contains a surprising or non-obvious insight
-- The Synthesis Writer's overall narrative reads like a concatenation of section summaries rather than an integrated thesis
+- Pipeline produces 0 sections on runs where most agents succeeded
+- Error messages don't identify which agent/section failed
+- Cost accumulates on retried waves where most work was already done
 
 **Prevention:**
-1. **Depth prompts per section**: Instead of "Analyze free cash flow," prompt with: "Explain why FCF deviated from earnings in each year where the FCF ratio was below 0.8 or above 1.2. What specific capital allocation decisions drove the deviation? How does this compare to the 3 closest peers?" Force agents to explain mechanisms, not just state observations.
-2. **Minimum insight requirements**: Each section must contain at least one non-obvious finding — something that wouldn't be apparent from a 30-second glance at the data. "Revenue grew 18% CAGR" is obvious. "Revenue growth accelerated from 12% to 24% after the acquisition of Mirror in 2020, but organic growth was only 15% — the headline number overstates the organic business strength" is an insight.
-3. **Investigation prompts**: Agent prompts should include: "When you find something unexpected or concerning, use Toolbox tools to investigate further before concluding. Don't just note the anomaly — explain it."
-4. **Word count floors per section**: The Pitch Deck sections should have minimum narrative lengths. Radar: 500 words. FCF Analysis: 800 words. Valuation: 1,200 words. These aren't arbitrary — they reflect the depth required for hedge fund-quality output.
+1. **Use `Promise.allSettled()`, not `Promise.all()`.** `allSettled` returns results for ALL promises, marking each as "fulfilled" or "rejected." Process successful results, retry only the failures.
+2. **Per-agent timeout.** Set per-agent timeout (e.g., 5 minutes for Sonnet, 10 minutes for Opus). Use `AbortController` with `signal` on the fetch call.
+3. **Section-level persistence.** Write each completed section to `progress.json` immediately. On pipeline restart, skip completed sections.
+4. **Three-tier error recovery** (from ARCHITECTURE.md): Retry once with error context -> Model upgrade (Sonnet -> Opus) -> User escalation. Never silently skip a section.
 
-**Detection:** Word count per section and "insight density" (number of non-obvious findings). If every section has exactly the same depth, the analysis is shallow.
+**Detection:** Automated test that simulates one agent failure in a parallel wave and verifies other agents' results are preserved.
 
-**Phase:** Phase 5A (agent prompt design with depth requirements), Phase 5C (first real analysis benchmark), ongoing refinement.
+**Which migration phase:** Phase 1 (error handling in aiResearch.js). Must be robust before Phase 2 pipeline testing.
+
+**Confidence:** HIGH -- Standard JavaScript async pattern. No API-specific verification needed.
 
 ---
 
 ## Minor Pitfalls
 
-Issues that cause friction or minor quality problems but are recoverable.
+Issues that waste time or money but are easily caught and fixed.
 
 ---
 
-### Pitfall 11: JSON Schema Fragility
+### Pitfall 9: Schema Compilation Latency on First Request
 
-**What goes wrong:** Agents produce output that doesn't conform to the report JSON schema — missing required fields, wrong data types, malformed citations arrays, narrative text where structured data is expected. The architecture plan acknowledges this risk (KDD #20, Eng Review Finding #9) but it remains a common failure mode.
+**What goes wrong:** The first API request with a new JSON schema experiences 5-30 seconds of additional latency while the schema compiles to a grammar. If you fire 10 agents in the first wave of a pipeline and each has a slightly different schema, that's 10 independent compilations.
 
-**Prevention:** Use Claude's JSON mode or structured output mode for all agent responses. Define the schema in `agents/` config files. Build schema validation into the orchestrator that rejects non-conforming output and retries with the validation error as feedback.
+**Why it happens:** Structured outputs compile JSON schemas into grammars. The compiled grammar is cached for 24 hours. But the first request with any new or modified schema pays the compilation cost.
 
-**Phase:** Phase 5A (schema definition) and Phase 5D (schema validation in quality pipeline).
+**Prevention:** Use the **same output schema** for all agents (the ReportSectionSchema). Don't create per-section schema variants. One schema, cached once, used by all 10 sections.
 
----
+**Which migration phase:** Phase 1 (schema design).
 
-### Pitfall 12: Toolbox Tool Abuse — Agent Goes Exploring
-
-**What goes wrong:** An agent with access to Toolbox tools enters an exploration loop — calling `getMetric()` for every possible metric, running `sensitivityTable()` with dozens of parameter combinations, reading every filing section. The agent is "investigating" but generating no output, burning tokens and time.
-
-**Prevention:** Tool call budgets per agent (5 calls soft limit). Prompt agents with specific investigation goals: "Use `computeMOS()` to test FGR at your estimated Low and High values, plus the median. Three calls, not thirty."
-
-**Phase:** Phase 5D (tool call tracking in contextBudget.js).
+**Confidence:** HIGH -- Confirmed in official docs. Grammar caching confirmed (24-hour TTL).
 
 ---
 
-### Pitfall 13: Primary Source Reader Bottleneck
+### Pitfall 10: Numerical Constraints Not Enforced by Schema
 
-**What goes wrong:** The Primary Source Reader processes the 10-K, transcripts, and proxy before other agents can start (it runs first by design). If it's slow (200K+ tokens of 10-K processing), the entire pipeline stalls waiting for it. If it produces low-quality summaries, all downstream agents inherit degraded context.
+**What goes wrong:** Your schema includes `z.number().min(1)` for `sectionNumber` or `z.array(z.string()).min(1)` for `redFlags`. You expect the API to enforce the minimums. It doesn't -- only `minItems: 0` and `minItems: 1` are supported for arrays, and numerical constraints (`minimum`, `maximum`) are NOT enforced by constrained decoding.
 
-**Prevention:** Run the Primary Source Reader in parallel with Phase 1 agents (Business Analyst sections that don't depend on 10-K text). Only Phase 2+ agents that need Primary Source Reader output wait for it. Set a 10-K extraction scope — Business Description, Risk Factors, MD&A, and Selected Financial Data — not the entire filing.
+**Why it happens:** The SDK helper (`zodOutputFormat()`) silently removes unsupported constraints and moves them to the field description ("Must be at least 1"). Claude reads the description as guidance, not enforcement. Most of the time it complies, but there's no guarantee.
 
-**Phase:** Phase 6 (Pitch Deck orchestration with Primary Source Reader parallelization).
+**Prevention:**
+1. **Post-response validation with the original Zod schema.** Always `SectionSchema.safeParse(response.parsed_output)` after receiving the API response. The SDK's `.parse()` method does this automatically, but if you're using raw `messages.create()`, you must validate manually.
+2. **Critical constraints need code enforcement.** Don't trust the schema alone for `redFlags.min(1)`. Add a post-validation check: if `redFlags.length === 0`, retry the agent with explicit instruction to include at least one red flag.
+3. **Use the `.parse()` SDK method** which validates against the full Zod schema (including constraints the API doesn't enforce).
 
----
+**Which migration phase:** Phase 1 (validation layer in aiResearch.js).
 
-### Pitfall 14: FGR Derivation Deadlock
-
-**What goes wrong:** The FGR workflow requires 5 inputs (rear view mirror, market relativity, company guidance, sector/industry, analysts) and user confirmation. If the Valuation Specialist can't find company guidance or sector CAGR data, it blocks on a question to the user. The user doesn't have that data readily available. The pipeline stalls at the FGR checkpoint indefinitely.
-
-**Prevention:** The Valuation Specialist should always propose a FGR range using the inputs it can find (historical growth rates, analyst estimates). When company guidance or sector CAGR is unavailable, flag it as "data gap" but proceed with a wider FGR range. The user can narrow the range at the checkpoint rather than needing to provide the missing input from scratch.
-
-**Phase:** Phase 6 (Pitch Deck valuation section) and Phase 7 (Full Story valuation confirmation).
+**Confidence:** HIGH -- Confirmed in official docs: "Numerical constraints (minimum, maximum, multipleOf, etc.) not supported. String constraints (minLength, maxLength) not supported."
 
 ---
 
-### Pitfall 15: Synthesis Writer Produces AI Slop
+### Pitfall 11: `output_format` vs `output_config.format` Migration Confusion
 
-**What goes wrong:** The Synthesis Writer receives all section outputs and produces a polished narrative. But "polished" degrades into corporate-speak: "In conclusion, LULU represents a compelling investment opportunity with a strong competitive moat, talented management, and attractive valuation." This is the exact output style that makes the portfolio manager's eyes glaze over.
+**What goes wrong:** You follow example code from a blog post or earlier documentation that uses `output_format` (the beta parameter). It works during development because Anthropic provides a transition period. Then it breaks without warning when the transition period ends.
 
-**Prevention:** The Buffett writing curriculum (`buffett_writing_principles.md` + Buffett letter examples) must be loaded into the Synthesis Writer's context with explicit anti-patterns: "Never use: 'compelling opportunity,' 'well-positioned,' 'going forward,' 'strong fundamentals.' Write as if explaining to a smart friend why you'd bet $100K of your own money on this company. If you wouldn't bet, say so."
+**Why it happens:** The structured outputs API parameter moved from `output_format` (beta) to `output_config.format` (GA). The SDK helper `zodOutputFormat()` still accepts `output_format` for convenience and translates internally, but direct API calls need the new parameter path.
 
-**Phase:** Phase 5A (Synthesis Writer agent definition with anti-slop constraints).
+**Prevention:** Use `output_config.format` (the GA parameter) everywhere. If copying code from examples or blog posts, verify the parameter name.
+
+**Which migration phase:** Phase 1 (initial API client setup). One-time fix.
+
+**Confidence:** HIGH -- Confirmed in official migration notice: "The output_format parameter has moved to output_config.format, and beta headers are no longer required."
+
+---
+
+### Pitfall 12: DataPacket Path Fabrication Persists After Migration
+
+**What goes wrong:** You migrate to the API with structured outputs, fixing citation format (Issue 1), red flags type (Issue 5), and searchesPerformed format (Issue 3) from the V3 validation. But DataPacket path fabrication (Issue 4) still occurs because structured outputs enforce the SHAPE of citations, not the CONTENT. The agent still writes `DataPacket.fcf.yearly[2025]` instead of the actual path `DataPacket.financials.cashFlow.2025`.
+
+**Why it happens:** Structured outputs guarantee `{ id: number, ref: string, text: string, source: string }`. They cannot guarantee that `ref` contains a valid DataPacket path -- that's a semantic constraint, not a structural one.
+
+**Prevention:**
+1. **DataPacket field path reference in every agent prompt.** Include a "DataPacket Structure Reference" section listing all top-level keys and their sub-keys. This was identified as "still requires prompt-level fixes" in the V3 validation report.
+2. **Post-generation citation validation in critic.js.** For every citation with `source: "DataPacket"`, validate that `ref` resolves to an actual field in the DataPacket. Already planned but must not be dropped during migration.
+3. **Provide field paths alongside data.** When assembling the DataPacket slice for an agent, include a `_fieldPaths` metadata object listing all available paths. Agents can reference this instead of guessing.
+
+**Which migration phase:** Phase 2 (prompt engineering) alongside the pipeline migration. Not blocked by API infrastructure.
+
+**Confidence:** HIGH -- Observed in all 3 validation runs. Structured outputs solve format, not semantics.
 
 ---
 
 ## Phase-Specific Warnings
 
-| Phase | Likely Pitfall | Mitigation | Severity |
-|-------|---------------|------------|----------|
-| 5A (Foundation) | Example contamination leaks into agent definitions | Audit every file reference in agent configs against LULU example paths | Critical |
-| 5A (Foundation) | DataPacket slicing too coarse (every agent gets everything) | Define per-role DataPacket slices in agent config.json from day 1 | Critical |
-| 5A (Foundation) | JSON schema too loose (agents interpret fields differently) | Use strict JSON schema with required fields, enum types, and examples per field | Moderate |
-| 5C (First Analysis) | "Impressive but wrong" — first output looks great but has subtle errors | Compare section-by-section against user's manual LULU analysis. Look for *what's missing*, not just what's present. | Critical |
-| 5D (Quality System) | Citation validation catches format errors but misses semantic errors (correctly formatted citation to wrong data) | Validate citation *values*, not just citation *existence* — resolve the DataPacket field path and compare | Critical |
-| 6 (Pitch Deck) | Inter-agent incoherence across 3 phases of generation | Section summaries passed between phases. Contradiction detection in critic.js. | Critical |
-| 6 (Pitch Deck) | Checkpoint fatigue kills user engagement | Two-tier checkpoints. Batch questions. Auto-proceed with defaults. | Moderate |
-| 6 (Pitch Deck) | Financial domain blindness — REIT/bank analysis uses standard metrics | Industry-type branching in agent prompts based on DataPacket classification | Critical |
-| 7 (Full Story) | Bull/Bear debate becomes theater — agents argue politely without real adversarial challenge | Risk Analyst prompt: "You are paid to find problems. Your credibility depends on finding weaknesses the Bull missed." | Moderate |
-| 7 (Full Story) | State loss during 30-60 minute Full Story generation | Write-after-every-section to progress.json. Resume command. | Moderate |
-| 8 (Polish) | Citation references don't survive formatting for PDF export | Citation IDs must be stable across JSON, working view, and export view | Minor |
-| 8 (Polish) | Version history grows unbounded for iteratively refined reports | Cap at 5 versions per section, with user-initiated snapshots for permanent saves | Minor |
+| Phase | Likely Pitfall | Mitigation |
+|-------|---------------|------------|
+| Phase 1: aiResearch.js | Cache invalidation from dynamic tool lists | Freeze tool array per pipeline run |
+| Phase 1: aiResearch.js | Web search + structured outputs incompatibility | Design two-phase agent call pattern from day one |
+| Phase 1: aiResearch.js | Promise.all crashes on single agent failure | Use Promise.allSettled with per-agent error handling |
+| Phase 1: aiResearch.js | Rate limits at Tier 1 block parallelism | Implement dispatch queue with configurable concurrency |
+| Phase 2: Pipeline migration | Narrative collapse in structured output mode | Preserve two-pass pattern (prose first, JSON second) |
+| Phase 2: Pipeline migration | Missing curriculum in API prompts | Build contextAssembler, compare against CC context |
+| Phase 2: Pipeline migration | DataPacket path fabrication persists | Add field path reference to every agent prompt |
+| Phase 2: Pipeline migration | Schema complexity from strict tools + output | Make tools non-strict, only output schema strict |
+| Phase 3: Validation | Cache hit rate below target | Monitor cache_read_input_tokens in every response |
+| Phase 3: Validation | Cost exceeds $12 target | Track per-agent cost, identify token inflation sources |
+| Phase 3: Validation | Web search cost inflation from multi-turn | Use new conversation for Turn 2, not continuation |
 
 ---
 
-## Anti-Patterns to Avoid
+## Integration Pitfalls: CC to API Behavioral Differences
 
-These are tempting architectural choices that seem reasonable but lead to the pitfalls above.
+These are not bugs in either system -- they're fundamental behavioral differences that will cause quality regressions if not anticipated.
 
-### Anti-Pattern: "Give Every Agent Everything"
-**Temptation:** Load the full DataPacket, all curriculum files, and all previous sections into every agent for maximum context.
-**Reality:** Agents drown in context, costs explode, and output quality decreases because the model can't focus. Use scoped DataPacket slices and role-specific curriculum.
-
-### Anti-Pattern: "One Big Prompt Instead of Specialized Agents"
-**Temptation:** The prototype showed that One Pagers work with a single agent — maybe we can push that further with better prompts?
-**Reality:** The prototype also proved this fails for Pitch Decks. Quality degrades fast. The 9-agent architecture exists because it was empirically validated, not because it's theoretically elegant.
-
-### Anti-Pattern: "Validate After All Sections Are Complete"
-**Temptation:** Run all agents, assemble the full report, then validate.
-**Reality:** A citation error in Section 1 propagates through Sections 2-10 if the Synthesis Writer references it. Validate per-section, not per-report. Catch errors before they compound.
-
-### Anti-Pattern: "Trust the Model to Self-Correct"
-**Temptation:** Add a prompt instruction: "Review your output for errors before finalizing."
-**Reality:** LLMs rarely catch their own systematic errors through self-review alone. The Risk Analyst as an adversarial reviewer is more effective than asking each agent to self-critique. External validation (critic.js, user review) catches what self-review misses.
-
-### Anti-Pattern: "Skip Manual Eval Because It Doesn't Scale"
-**Temptation:** Build automated eval from day 1 so every report gets graded.
-**Reality:** You don't know what "good" looks like yet. The user's manual evaluation of the first 5-10 reports IS the eval spec. Building automated eval before understanding quality criteria means automating the wrong checks. KDD #22 gets this right.
+| CC Behavior | API Behavior | Migration Impact |
+|-------------|-------------|-----------------|
+| Subagent has fresh 1M context | API call has whatever you send | Must manually construct full context per agent |
+| Subagent can Read/Write/Bash | API only has declared tools | All engine access must go through tool_use definitions |
+| Subagent automatically gets CLAUDE.md | API gets nothing automatic | Relevant CLAUDE.md content must be inlined or omitted |
+| Subagent output is natural language text | API output is constrained JSON (with structured outputs) | Two-pass pattern needed for narrative quality |
+| WebSearch results are ephemeral | Web search results persist in conversation | Token accumulation across turns; cost inflation |
+| Errors show in terminal, human retries | Errors must be caught and handled programmatically | Full retry/escalation logic in orchestrator |
+| CC manages conversation state | You manage all state | Progress persistence, checkpoint serialization |
+| CC handles streaming internally | You must implement stream parsing | SSE parsing for progress UI updates |
+| One agent at a time (RAM limit) | True parallelism possible | Need dispatch queue, rate limit management |
+| Cost: $0 (Pro subscription) | Cost: $8-12 per company (target) | Cost monitoring, token budgets, caching optimization |
 
 ---
 
 ## Sources
 
-**Project-specific evidence:**
-- Prototype validation results (2026-03-23): LULU pitch deck example contamination, TSCO quality degradation confirmed in `gstack/plans/gstack-ai-agent-workflow-plan-20260323.md`
-- User feedback on prototype findings: `~/.claude/projects/-Users-kylehoff-Desktop-stock-analyzer/memory/feedback_prototype_findings.md`
-- XBRL engine caveats (FFO, float, maintenance capex): `CLAUDE.md` XBRL Taxonomy Conventions section
-
-**Industry research (MEDIUM confidence — WebSearch verified across multiple sources):**
-- [Multi-agent 17x error trap (Towards Data Science)](https://towardsdatascience.com/why-your-multi-agent-system-is-failing-escaping-the-17x-error-trap-of-the-bag-of-agents/) — Error multiplication in multi-agent systems
-- [Multi-agent workflow failures (GitHub Blog)](https://github.blog/ai-and-ml/generative-ai/multi-agent-workflows-often-fail-heres-how-to-engineer-ones-that-dont/) — Communication and schema failures
-- [Context engineering for agents (Anthropic)](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — Context scoping best practices
-- [MAST study: Why Do Multi-Agent LLM Systems Fail? (arXiv 2503.13657)](https://arxiv.org/html/2503.13657v1) — 1,642 execution traces, 36.9% coordination failures
-- [LLM citation hallucination rates (CoreProse)](https://www.coreprose.com/kb-incidents/why-llms-invent-academic-citations-and-how-to-stop-ghost-references) — 14-95% hallucinated citation rates
-- [XBRL + AI accuracy (XBRL.org)](https://www.xbrl.org/how-well-do-ai-models-like-gpt-4-understand-xbrl-data/) — 17% accuracy on US-GAAP concept linking
-- [AI financial advice quality (HBS Working Knowledge)](https://www.library.hbs.edu/working-knowledge/ai-can-churn-out-financial-advice-but-does-it-help-investors) — AI articles rated inferior to human analysis
-- [AI investment analysis fluency trap (PureMath.ai)](https://www.puremath.ai/post/the-illusion-of-ai-intelligence-why-generalist-llms-struggle-under-expert-scrutiny) — "Impressive but wrong" phenomenon
-- [Multi-agent coordination strategies (Galileo)](https://galileo.ai/blog/multi-agent-coordination-strategies) — Shared context objects for coherence
-- [AI agent cost optimization (Moltbook)](https://moltbook-ai.com/posts/ai-agent-cost-optimization-2026) — 60-80% cost reduction strategies
-- [Token optimization (Redis)](https://redis.io/blog/llm-token-optimization-speed-up-apps/) — Prompt caching and semantic caching
-- [Checkpoint/restore for AI agents (Eunomia)](https://eunomia.dev/blog/2025/05/11/checkpointrestore-systems-evolution-techniques-and-applications-in-ai-agents/) — State persistence patterns
-- [AI agent checkpointing (Zylos Research)](https://zylos.ai/research/2026-03-04-ai-agent-workflow-checkpointing-resumability) — Resumability requirements
+- [Claude API Structured Outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs) -- Schema limitations, complexity limits, feature compatibility (citations incompatibility confirmed), max_tokens truncation behavior. HIGH confidence.
+- [Claude API Prompt Caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) -- Cache key computation, invalidation hierarchy, TTL rules, parallel request limitation, minimum token thresholds, pricing model. HIGH confidence.
+- [Claude API Rate Limits](https://platform.claude.com/docs/en/api/rate-limits) -- Per-tier RPM/ITPM/OTPM limits, cache-aware ITPM, model family sharing, response headers. HIGH confidence.
+- [Claude API Web Search Tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool) -- Tool definition, response structure with URLs, citation format, pricing ($10/1,000 searches), max_uses parameter. HIGH confidence.
+- [Claude API Citations](https://platform.claude.com/docs/en/build-with-claude/citations) -- Citation system architecture, incompatibility with structured outputs. HIGH confidence.
+- [Claude Code Subagents](https://code.claude.com/docs/en/sub-agents) -- CC subagent capabilities (Read/Write/Bash/WebSearch). HIGH confidence.
+- [Thes1s V3 Validation Report](.planning/phases/06.3-pipeline-validation-pt3/V3-VALIDATION-REPORT.md) -- Project-specific: citation format anarchy, web citation laundering, narrative collapse, DataPacket path fabrication, red flags type crash, cost regression. HIGH confidence.
+- [Structured Outputs Blog Post](https://claude.com/blog/structured-outputs-on-the-claude-developer-platform) -- Constrained decoding explanation. MEDIUM confidence.
+- [Claude Code Subagent Best Practices](https://claudefa.st/blog/guide/agents/sub-agent-best-practices) -- CC subagent patterns and migration considerations. MEDIUM confidence.
