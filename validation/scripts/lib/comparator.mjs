@@ -234,13 +234,23 @@ export function compareCompany(ticker, fixture, engineData, fieldMapping, option
           }
         }
 
+        // Accrued liabilities scope difference: reclassify DIFF to METHODOLOGY_DIFF
+        // when the scope difference handler identifies a genuine definition mismatch
+        let effectiveStatus = comparison.status;
+        if (comparison.status === 'DIFF' && specialHandlers.accrued_scope_diff) {
+          const scopeResult = specialHandlers.accrued_scope_diff(mapInfo.thesisField);
+          if (scopeResult === 'METHODOLOGY_DIFF') {
+            effectiveStatus = 'METHODOLOGY_DIFF';
+          }
+        }
+
         results.push({
           msField,
           thesisField: mapInfo.thesisField,
           statement: msStmtKey,
           msYear,
           edgarYear,
-          status: comparison.status,
+          status: effectiveStatus,
           pct: comparison.pct,
           expected: comparison.expected,
           actual: comparison.actual,

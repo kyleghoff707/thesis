@@ -495,6 +495,26 @@ const CASHFLOW_TAXONOMY = [
   { field: '_amort_adjustment', unit: 'USD', tags: [
     'AdjustmentForAmortization',
   ]},
+  // Additional D&A component tags — MS includes these in its broadest D&A figure.
+  // Extracted separately; computeDerivedFields sums them into D&A when they increase
+  // the total beyond the primary D&A tag. Key companies: SFM (ROU ~$146M), NEE (accretion ~$177M),
+  // MSFT (finance lease ~$1.8B), NKE (ROU amort when tagged separately).
+  { field: '_da_rou_amort', unit: 'USD', tags: [
+    'OperatingLeaseRightOfUseAssetAmortizationExpense',
+  ]},
+  { field: '_da_finance_lease_amort', unit: 'USD', tags: [
+    'FinanceLeaseRightOfUseAssetAmortization',
+  ]},
+  { field: '_da_accretion_expense', unit: 'USD', tags: [
+    'AccretionExpense',
+    'AccretionExpenseIncludingAssetRetirementObligations',
+    'AssetRetirementObligationAccretionExpense',
+  ]},
+  { field: '_da_financing_costs_amort', unit: 'USD', tags: [
+    'AmortizationOfFinancingCostsAndDiscounts',
+    'AmortizationOfFinancingCosts',
+    'AmortizationOfDebtDiscountPremium',
+  ]},
   { field: 'stock_based_compensation', unit: 'USD', tags: [
     'ShareBasedCompensation',
     'AllocatedShareBasedCompensationExpense',
@@ -1260,6 +1280,10 @@ function computeDerivedFields(years, income, balance, cashFlow) {
     // D&A enhancement: MS always uses the BROADEST available D&A figure.
     // extractSection uses first-tag-wins, but for some companies (CRM, WFC),
     // a lower-priority tag is broader. Pick the largest across all D&A sources.
+    //
+    // Phase 1: Pick the best single-tag D&A value (existing logic)
+    // Phase 2: Try component sum with lease amort + accretion (Plan 09 addition)
+    //   SFM: ROU amort ~$146M doubles D&A, NEE: accretion ~$177M, MSFT: finance lease ~$1.8B
     {
       const candidates = [
         cf.depreciation_amortization,       // Primary: DDA or D&A (first-tag-wins)
@@ -1273,6 +1297,43 @@ function computeDerivedFields(years, income, balance, cashFlow) {
         const amort = Math.max(cf._amort_adjustment ?? 0, cf.amortization_of_intangibles ?? 0);
         candidates.push(cf.depreciation_only + amort);
       }
+
+      // Phase 2: Extended D&A component summation (Plan 09)
+      // MS includes ROU amortization, finance lease amortization, accretion expense,
+      // and financing cost amortization in its broadest D&A number.
+      //
+      // GUARD against double-counting: Some companies (AMZN, CRM, DAL) already include
+      // lease/accretion items in their primary DDA tag. Only add component extras when
+      // the primary DDA is close to just depreciation_only + amort (i.e., the extras
+      // are genuinely separate line items, not already embedded).
+      //
+      // Heuristic: If DDA > depreciation_only + amort + components, then components
+      // are already included in DDA. Only add when DDA ≈ depreciation_only + amort.
+      const baseDa = candidates.length > 0 ? Math.max(...candidates) : 0;
+      const rouAmort = cf._da_rou_amort ?? 0;
+      const finLeaseAmort = cf._da_finance_lease_amort ?? 0;
+      const accretionExp = cf._da_accretion_expense ?? 0;
+      const financingAmort = cf._da_financing_costs_amort ?? 0;
+      const componentExtras = rouAmort + finLeaseAmort + accretionExp + financingAmort;
+
+      if (componentExtras > 0 && cf.depreciation_only != null) {
+        // Compute what D&A would be if components were separate (not embedded)
+        const amort = Math.max(cf._amort_adjustment ?? 0, cf.amortization_of_intangibles ?? 0);
+        const narrowDa = cf.depreciation_only + amort;
+        // If the primary D&A is within 3% of the narrow sum (dep + amort),
+        // the components are genuinely separate and should be added.
+        // If primary D&A is much larger than narrow sum, components are already embedded.
+        // 3% threshold chosen empirically: SFM (DDA/narrowDa=1.007) passes,
+        // MSFT uses component path (no DDA tag → dep_only + amort wins), NEE similarly.
+        // EW (1.076), AMT, AMZN, EQIX, BOOT all blocked (components already in DDA).
+        if (baseDa <= narrowDa * 1.03) {
+          candidates.push(baseDa + componentExtras);
+        }
+      } else if (componentExtras > 0 && cf.depreciation_only == null) {
+        // No depreciation_only to check against — conservatively don't add components
+        // since we can't verify they're not already in the primary tag
+      }
+
       if (candidates.length > 0) {
         cf.depreciation_amortization = Math.max(...candidates);
       }
@@ -1280,6 +1341,10 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       delete cf._da_alt_da;
       delete cf._da_alt_accretion;
       delete cf._amort_adjustment;
+      delete cf._da_rou_amort;
+      delete cf._da_finance_lease_amort;
+      delete cf._da_accretion_expense;
+      delete cf._da_financing_costs_amort;
     }
 
 

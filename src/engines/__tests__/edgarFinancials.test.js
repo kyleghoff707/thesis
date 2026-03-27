@@ -1575,3 +1575,141 @@ describe('net_change_in_cash derivation (Plan 08)', () => {
     expect(formula).toContain('financing_cf');
   });
 });
+
+// ─── Plan 09: D&A Component Broadening ──────────────────────
+
+describe('Plan 09: D&A component broadening via computeDerivedFields', () => {
+  it('should include ROU amortization in D&A when it increases the total', () => {
+    // SFM scenario: DDA = $140M ≈ depreciation_only = $139M (components are separate)
+    // ROU amort = $134M, finance lease = $1M → sum = $140M + $134M + $1M = $275M
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      depreciation_amortization: 140000000,
+      depreciation_only: 139000000,  // Close to DDA → components are separate
+      _da_rou_amort: 134000000,
+      _da_finance_lease_amort: 1000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // D&A should be sum: 140M + 134M + 1M = 275M
+    expect(cashFlow[2024].depreciation_amortization).toBe(275000000);
+    // Internal fields should be cleaned up
+    expect(cashFlow[2024]._da_rou_amort).toBeUndefined();
+  });
+
+  it('should include accretion expense in D&A when tagged separately', () => {
+    // NEE scenario: D&A ≈ depreciation_only (no amort intangibles in recent years)
+    // DDA = $5.46B, depreciation_only = $5.4B, accretion = $177M
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      depreciation_amortization: 5462000000,
+      depreciation_only: 5400000000,  // Close to DDA → accretion is separate
+      _da_accretion_expense: 177000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(cashFlow[2024].depreciation_amortization).toBe(5639000000);
+    expect(cashFlow[2024]._da_accretion_expense).toBeUndefined();
+  });
+
+  it('should include finance lease amortization in D&A component sum', () => {
+    // MSFT scenario: Depreciation = $15.2B, AmortIntangibles = $4.8B,
+    // FinanceLease = $1.8B → sum = $21.8B
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      depreciation_only: 15200000000,
+      amortization_of_intangibles: 4800000000,
+      _da_finance_lease_amort: 1800000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Component sum: 15.2B + 4.8B (from depreciation_only + amort) + 1.8B (finance lease) = 21.8B
+    expect(cashFlow[2024].depreciation_amortization).toBe(21800000000);
+    expect(cashFlow[2024]._da_finance_lease_amort).toBeUndefined();
+  });
+
+  it('should sum multiple D&A components together', () => {
+    // Company with all D&A components — depreciation_only ≈ DDA means components are separate
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      depreciation_amortization: 100000000,
+      depreciation_only: 98000000,  // Close to DDA → components are separate
+      _da_rou_amort: 50000000,
+      _da_finance_lease_amort: 20000000,
+      _da_accretion_expense: 10000000,
+      _da_financing_costs_amort: 5000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Sum: 100M + 50M + 20M + 10M + 5M = 185M
+    expect(cashFlow[2024].depreciation_amortization).toBe(185000000);
+  });
+
+  it('should NOT add components when primary DDA already includes them', () => {
+    // AMZN scenario: DDA = $52.8B >> depreciation_only ($32B) + amort ($838M) = $32.8B
+    // The gap ($20B) means DDA already includes lease/accretion items
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      depreciation_amortization: 52800000000,
+      depreciation_only: 32000000000,
+      amortization_of_intangibles: 838000000,
+      _da_finance_lease_amort: 3900000000,  // Already embedded in DDA
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Should NOT add finance lease — DDA already includes it
+    // baseDa = max(52.8B, 32B+838M) = 52.8B
+    // narrowDa = 32B + 838M = 32.838B
+    // 52.8B > 32.838B * 1.10 (36.1B) → guard blocks addition
+    expect(cashFlow[2024].depreciation_amortization).toBe(52800000000);
+  });
+
+  it('should preserve existing D&A when no component fields exist', () => {
+    // Normal company: only primary D&A, no component fields
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      depreciation_amortization: 500000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Should remain unchanged
+    expect(cashFlow[2024].depreciation_amortization).toBe(500000000);
+  });
+
+  it('should have new D&A component tags in CASHFLOW_TAXONOMY', () => {
+    const rouField = CASHFLOW_TAXONOMY.find(f => f.field === '_da_rou_amort');
+    expect(rouField).toBeDefined();
+    expect(rouField.tags).toContain('OperatingLeaseRightOfUseAssetAmortizationExpense');
+
+    const finLeaseField = CASHFLOW_TAXONOMY.find(f => f.field === '_da_finance_lease_amort');
+    expect(finLeaseField).toBeDefined();
+    expect(finLeaseField.tags).toContain('FinanceLeaseRightOfUseAssetAmortization');
+
+    const accretionField = CASHFLOW_TAXONOMY.find(f => f.field === '_da_accretion_expense');
+    expect(accretionField).toBeDefined();
+    expect(accretionField.tags).toContain('AccretionExpense');
+    expect(accretionField.tags).toContain('AccretionExpenseIncludingAssetRetirementObligations');
+
+    const financingField = CASHFLOW_TAXONOMY.find(f => f.field === '_da_financing_costs_amort');
+    expect(financingField).toBeDefined();
+    expect(financingField.tags).toContain('AmortizationOfFinancingCosts');
+  });
+});

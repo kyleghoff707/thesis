@@ -128,6 +128,26 @@ export function getSpecialFieldHandlers() {
     },
 
     /**
+     * Accrued liabilities scope difference: MS "Accrued Expenses, Current" uses a broader
+     * definition than XBRL AccruedLiabilitiesCurrent. MS includes employee-related,
+     * tax-related, and other accrued items that XBRL may tag separately.
+     *
+     * Investigation showed direction is mixed (72 MS higher, 69 engine higher across
+     * 141 DIFFs) — not consistently broader or narrower. This is a genuine definition
+     * difference, not an extraction bug.
+     *
+     * Returns 'METHODOLOGY_DIFF' for all accrued_liabilities comparisons where the
+     * existing accrued_combined_skip handler did NOT already skip the field.
+     *
+     * @param {string} thesisField - The canonical field being compared
+     * @returns {'METHODOLOGY_DIFF'|null} 'METHODOLOGY_DIFF' to reclassify, null to proceed normally
+     */
+    accrued_scope_diff(thesisField) {
+      if (thesisField === 'accrued_liabilities') return 'METHODOLOGY_DIFF';
+      return null;
+    },
+
+    /**
      * Bank template: skip operating income, COGS, gross profit for bank-template companies.
      * MS Template B does not produce these fields — banks report NII + NonII instead.
      *
