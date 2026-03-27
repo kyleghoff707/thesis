@@ -467,6 +467,27 @@ for (let i = 0; i < tickers.length; i++) {
       }
     }
 
+    // ─── Post-classification reclassifications ─────────────
+    // PP&E + ROU reclassification: Our engine includes operating lease ROU assets
+    // in PP&E (matching Morningstar). SimFin and mstarpy exclude ROU. FMP includes it.
+    // When our value matches FMP but disagrees with SimFin/mstarpy, it's a
+    // methodology split, not our bug.
+    const METHODOLOGY_OVERRIDE_FIELDS = new Set(['property_plant_equipment']);
+    for (const c of classifications) {
+      if (!METHODOLOGY_OVERRIDE_FIELDS.has(c.field)) continue;
+      if (c.classification !== 'CONSENSUS_DIFF' && c.classification !== 'LIKELY_BUG') continue;
+
+      // Check if FMP agrees with our engine value (within 1%)
+      const fmpValue = c.sources?.fmp;
+      if (fmpValue != null && c.thesisValue != null && c.thesisValue !== 0) {
+        const pctDiff = Math.abs((c.thesisValue - fmpValue) / c.thesisValue);
+        if (pctDiff <= 0.01) {
+          c.classification = 'METHODOLOGY_DIFF';
+          c.rootCause = 'rou_inclusion_methodology_split';
+        }
+      }
+    }
+
     allCompanyResults.push({ ticker, classifications });
 
     const matchCount = classifications.filter(c => c.classification === 'MATCH').length;

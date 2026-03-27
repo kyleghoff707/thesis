@@ -116,6 +116,35 @@ export function getSpecialFieldHandlers() {
     effective_tax_rate_scale(msValue) {
       return msValue * 100;
     },
+
+    /**
+     * Bank template: skip operating income, COGS, gross profit for bank-template companies.
+     * MS Template B does not produce these fields — banks report NII + NonII instead.
+     *
+     * DESIGN NOTE: MS fixtures have NO SIC field (schema: { ticker, source, currency,
+     * fiscalYearEnd, statements }). Using ticker-based lookup instead.
+     * Bank-template tickers identified from MS industry template analysis:
+     * JPM (SIC 6021), WFC (SIC 6022). BRK-B (SIC 6311) is a conglomerate
+     * that uses insurance template — evaluate separately if needed.
+     *
+     * @param {string} ticker - Company ticker
+     * @param {string} thesisField - The canonical field being compared
+     * @returns {'SKIP'|null} 'SKIP' to skip comparison, null to proceed normally
+     */
+    bank_template_skip(ticker, thesisField) {
+      // Tickers using Morningstar Template B (bank).
+      // Add to this set as new bank companies enter the truth set.
+      const BANK_TEMPLATE_TICKERS = new Set(['JPM', 'WFC']);
+
+      if (!BANK_TEMPLATE_TICKERS.has(ticker)) return null;
+
+      const bankNullFields = new Set([
+        'operating_income_loss', 'cost_of_revenue', 'gross_profit',
+        'sga', 'research_and_development',
+      ]);
+      if (bankNullFields.has(thesisField)) return 'SKIP';
+      return null;
+    },
   };
 }
 

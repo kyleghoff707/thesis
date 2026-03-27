@@ -115,6 +115,24 @@ export function compareCompany(ticker, fixture, engineData, fieldMapping, option
 
         // ─── Special field handlers (injected, not hardcoded) ───
 
+        // Bank template: skip fields that MS Template B doesn't produce
+        // (operating income, COGS, gross profit, SGA, R&D)
+        if (specialHandlers.bank_template_skip) {
+          const bankResult = specialHandlers.bank_template_skip(ticker, mapInfo.thesisField);
+          if (bankResult === 'SKIP') {
+            results.push({
+              msField,
+              thesisField: mapInfo.thesisField,
+              statement: msStmtKey,
+              msYear,
+              edgarYear,
+              status: 'SKIP_BANK_TEMPLATE',
+              tolerance: 'informational',
+            });
+            continue;
+          }
+        }
+
         // Intangibles: compute NET from GROSS + AccumAmort
         if (msField === 'Intangibles other than Goodwill' && msValue != null && specialHandlers.intangibles_net) {
           msValue = specialHandlers.intangibles_net(msValue, msStmt[msYear] || {});
