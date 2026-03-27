@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-26T20:30:17.741Z"
+status: Ready to execute
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-03-27T00:12:15.850Z"
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 6
+  total_plans: 9
+  completed_plans: 8
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** 98%+ accuracy match to Morningstar across all US-listed equities, achieved by triangulating XBRL output against FMP, SimFin, and mstarpy — then fixing normalization rules so paid sources are never needed again.
-**Current focus:** Phase 02 — multi-source-triangulation
+**Current focus:** Phase 03 — engine-fixes
 
 ## Current Position
 
-Phase: 3
-Plan: Not started
+Phase: 03 (engine-fixes) — EXECUTING
+Plan: 2 of 4
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Plan: Not started
 | Phase 01-comparison-harness P02 | 21min | 3 tasks | 3 files |
 | Phase 02 P02 | 4min | 2 tasks | 4 files |
 | Phase 02 P01 | 11min | 2 tasks | 10 files |
+| Phase 03 P01 | 6min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Bitmask subset enumeration for cluster finding — O(2^N) but N always 3-5 sources
 - [Phase 02]: [Phase 02-01]: FMP capex sign: -1 per RESEARCH.md (FMP negative -> canonical positive), correcting plan inline analysis
 - [Phase 02]: [Phase 02-01]: Per-source field mappings in _sources section (not inline per-entry) -- 61 FMP + 42 SimFin GENERAL + 19 BANKS + 17 INSURANCE + 37 mstarpy
+- [Phase 03]: Alias map resolves canonical->engine names at lookup time rather than renaming engine fields (50+ UI components depend on engine names)
+- [Phase 03]: Pre-fix baselines force-added to git despite gitignore for regression tracking across sessions
 
 ### Pending Todos
 
@@ -86,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T01:46:52.824Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-03-27T00:12:15.847Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None
