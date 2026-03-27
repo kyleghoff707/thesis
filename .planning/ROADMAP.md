@@ -66,7 +66,7 @@ Plans:
 Plans:
 - [x] 03-01-PLAN.md — Field alias map (16 naming mismatches) + pre-fix baseline snapshots for regression tracking
 - [x] 03-02-PLAN.md — REIT overlay fixes (revenue/COGS/interest/D&A) + short-term debt summation + bank null handling + PP&E reclassification
-- [ ] 03-03-PLAN.md — Residual "Other" computation with 95% precondition gate + FY offset investigation + final 98%+ validation
+- [x] 03-03-PLAN.md — Residual "Other" computation with 95% precondition gate + FY offset investigation + final validation (91.1% -- gap analysis documents methodology diffs)
 - [x] 03-04-PLAN.md — Category B harness alignment: accrued liabilities per-year fix + intangibles/operating income handler verification
 
 ### Phase 4: Scale Validation

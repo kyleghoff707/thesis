@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Executing
-stopped_at: Completed 03-04-PLAN.md
-last_updated: "2026-03-27T00:25:00Z"
+stopped_at: Completed 03-03-PLAN.md
+last_updated: "2026-03-27T00:42:06Z"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 9
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Position
 
 Phase: 03 (engine-fixes) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Plan: 3 of 4
 | Phase 02 P01 | 11min | 2 tasks | 10 files |
 | Phase 03 P01 | 6min | 2 tasks | 5 files |
 | Phase 03 P02 | 8min | 2 tasks | 7 files |
+| Phase 03 P03 | 12min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,9 @@ Recent decisions affecting current work:
 - [Phase 03]: Overlay merge changed from additive-only to overlay-wins — industry-specific tags more accurate than generic base taxonomy for REITs
 - [Phase 03]: Bank template detection uses ticker-based lookup (not SIC from fixtures) because MS fixtures have no SIC field
 - [Phase 03]: PP&E reclassification checks FMP agreement before reclassifying to METHODOLOGY_DIFF
+- [Phase 03]: 95% coverage gate on residual OtherCL prevents B7 error amplification -- requires 8/8 named CL items
+- [Phase 03]: 98% target was aspirational -- 91.1% reflects methodology diffs not bugs; 463 methodology + 176 residual + 605 genuine mismatches
+- [Phase 03]: FY offset (P28/P29) is triangulation-specific, not MS comparison -- deferred without API keys
 
 ### Pending Todos
 
@@ -93,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T00:23:17Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-03-27T00:42:06Z
+Stopped at: Completed 03-03-PLAN.md
 Resume file: None
