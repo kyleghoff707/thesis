@@ -27,6 +27,19 @@ Every design decision about the agent team must pass this test:
 
 If a real hedge fund wouldn't do it that way, don't build it that way.
 
+## Current Milestone: v1.1 API Migration & Pitch Deck Quality
+
+**Goal:** Migrate the Pitch Deck pipeline from Claude Code subagent orchestration to direct Claude API calls, solving compliance issues mechanically through structured outputs while enabling parallel dispatch and prompt caching.
+
+**Target features:**
+- Claude API orchestration layer (aiResearch.js) — shared infrastructure for all stages
+- Structured output enforcement — citation format, red flags, searchesPerformed schema
+- Parallel agent dispatch — 2.5hr → 30-40min runtime
+- Prompt caching — $14 → $8-12 cost per company
+- Web search citation URLs from API tool results
+- DataPacket path reference in agent prompts
+- Validation: SFM + 1 other ticker, 85+ quality score, zero high-severity issues
+
 ## Requirements
 
 ### Validated
@@ -36,22 +49,30 @@ If a real hedge fund wouldn't do it that way, don't build it that way.
 - 8 Toolbox tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit)
 - 173 vitest tests passing
 - Prototype validation: One Pagers work single-agent, Pitch Decks require multi-agent
+- Agent definitions — 9 specialized roles with full curriculum, trained on Rule One methodology
+- DataPacket assembly — all engine output packaged as canonical JSON for agents
+- Report JSON schema — section-level granularity, citations, confidence, verdicts
+- Node.js data bridge — ~500-800 LOC adapter for CC skills and future backend
+- One Pager generation — CC skill orchestration working
+- Pitch Deck generation — CC subagent orchestration working (75/100 quality, 3 validation runs)
+- Quality system — critic.js citation validation, completeness scoring, confidence checks
+- Toolbox tools for agents — interactive data exploration during analysis
+- Primary Source Reader — 10-K text, transcripts, proxy, data verification against DataPacket
+- Delight features — deep-dive, assumption tracker, industry cards
+- PDF export — Thes1s-branded 56-page pitch deck PDF generation
 
 ### Active
 
-- [ ] Agent definitions — 9 specialized roles with full curriculum, trained on Rule One methodology
-- [ ] DataPacket assembly — all engine output packaged as canonical JSON for agents
-- [ ] Report JSON schema — section-level granularity, citations, confidence, verdicts
-- [ ] Node.js data bridge — ~500-800 LOC adapter for CC skills and future backend
-- [ ] One Pager generation — CC skill + UI rendering
-- [ ] Pitch Deck generation — multi-agent orchestration with structured checkpoints
-- [ ] Full Story generation — deepest analysis with Bull/Bear/Judge debate
-- [ ] Quality system — citation validation, completeness scoring, confidence checks
-- [ ] Presentation-ready PDF export — branded, professional, charts + footnoted citations
-- [ ] Toolbox tools for agents — interactive data exploration during analysis
-- [ ] Management Promise Tracker — extract promises from earnings calls, compare to actuals
-- [ ] Primary Source Reader — 10-K text, transcripts, proxy, data verification against DataPacket
-- [ ] Delight features — deep-dive, source preview, Bull/Bear toggle, assumption tracker, industry cards, progress dashboard, version history
+- [ ] Claude API orchestration layer — direct API calls with structured outputs, parallel dispatch, prompt caching
+- [ ] Pitch Deck pipeline migration — from CC subagents to API orchestration
+- [ ] Citation compliance — mechanical enforcement of canonical format via structured outputs
+- [ ] Web search URL verification — actual URLs from API tool results in citations
+- [ ] DataPacket path accuracy — field path reference in agent prompts
+- [ ] Cost optimization — prompt caching to hit $8-12 per company target
+- [ ] Runtime optimization — parallel dispatch to hit 30-40min target
+- [ ] Quality validation — 85+ score on SFM + at least 1 other ticker
+- [ ] Full Story generation — deepest analysis with Bull/Bear/Judge debate (next milestone)
+- [ ] Management Promise Tracker — extract promises from earnings calls, compare to actuals (next milestone)
 
 ### Out of Scope
 
@@ -62,6 +83,8 @@ If a real hedge fund wouldn't do it that way, don't build it that way.
 - Batch processing pipeline — one company at a time
 - Real-time thesis monitoring alerts — manual trigger only
 - Automated eval system — user IS the eval for first 5-10 reports, automated later
+- One Pager API migration — works well enough as CC skill, migrate later if needed
+- In-browser direct API calls (EXPT-06) — Phase 8 Polish, separate from Node.js orchestration
 
 ## Context
 
@@ -70,6 +93,9 @@ Phases 1-4 complete. All data engines, all UI tabs, watchlists, 3-layer XBRL eng
 
 ### Architecture Plan (Source of Truth)
 `gstack/plans/gstack-ai-agent-workflow-plan-20260323.md` — 516-line authoritative plan. Reviewed by CEO review (scope expansion), Eng review (architecture validated + prototype confirmed). Contains: 9 agent roles, 3-layer architecture, stage orchestration, DataPacket + Toolbox tools, quality assurance system, report JSON schema, cost estimates, 22 key design decisions, prototype validation results.
+
+### V3 Pitch Deck Pipeline State (Context for v1.1)
+3 full SFM validation runs completed. V3 quality: 75/100, 10/10 sections with full narratives, 146 citations, 55 red flags, WATCHLIST verdict (correct). Key findings documented in `.planning/phases/06.3-pipeline-validation-pt3/V3-VALIDATION-REPORT.md`. Persistent issues (citation format anarchy, web citation laundering, searchesPerformed chaos, DataPacket path fabrication) are mechanically solved by API structured outputs. Cost regression ($32 with Opus PSR + CC overhead) eliminated by API migration + prompt caching.
 
 ### Rule One Knowledge Base
 `knowledge/` directory contains full Rule One curriculum: stage templates, curriculum files (one-pager.md, pitch-deck-I through IV, story-form-I and II), research references (fgr.md, equity-bond-research.md, rule-one-fundamentals.md, tools-for-analysis.md, advanced-financial-analysis.md), and the user's own manual research examples (LULU, EW, SFM, MU, ODFL).
@@ -135,4 +161,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-24 after initialization*
+*Last updated: 2026-03-27 after milestone v1.1 initialization*
