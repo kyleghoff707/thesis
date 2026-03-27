@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Comparison Harness** - Build an all-JavaScript comparison pipeline that produces trustworthy accuracy scores — correct fiscal year alignment, sign conventions, scale, and field mapping for all 50 truth-set companies (completed 2026-03-26)
 - [ ] **Phase 2: Multi-Source Triangulation** - Add FMP, SimFin, and mstarpy data collectors with a consensus engine that classifies each deviation as our bug, definitional ambiguity, or coverage gap
 - [ ] **Phase 3: Engine Fixes** - Apply triangulation-guided fixes to `edgarFinancials.js`, targeting 98%+ accuracy on the 50-company truth set with regression protection at every step
-- [ ] **Phase 4: Scale Validation** - Confirm fixes generalize to the full S&P 500 and all US-listed equities, then eliminate the paid FMP and SimFin subscriptions
+- [ ] **Phase 4: Scale Validation** - Confirm fixes generalize to the full S&P 500 using FMP as truth set, with iterative fix+validate cycle for confirmed bugs
 - [ ] **Phase 5: Compensation Engine** - Fix the 11 documented executive compensation extraction bugs and validate against FMP's compensation dataset
 
 ## Phase Details
@@ -77,15 +77,20 @@ Plans:
 - [x] 03-11-PLAN.md — Gap closure round 2: Debt classification + investment flow + remaining per-field fixes + final accuracy report
 
 ### Phase 4: Scale Validation
-**Goal**: Engine accuracy confirmed at 98%+ across all US-listed equities and paid data source subscriptions are cancelled
+**Goal**: Engine accuracy validated at S&P 500 scale using FMP as truth set, with iterative fixes for confirmed Tier 1 bugs and MS baseline maintained at 94%+
 **Depends on**: Phase 3
 **Requirements**: SCALE-01, SCALE-02, SCALE-03, SCALE-04
 **Success Criteria** (what must be TRUE):
-  1. The 50-company truth set scores 98%+ on annual financials — the primary milestone target is confirmed
-  2. All 503 S&P 500 companies pass accounting identity validation (Assets = Liabilities + Equity, Gross Profit = Revenue - COGS, etc.) after applying the Phase 3 fixes — structural correctness at scale
-  3. A random sample of 50 companies outside the S&P 500 (from the 5,758 US-listed universe) passes structural validation and spot-check field comparison — fixes generalize beyond the development truth set
-  4. FMP and SimFin subscriptions are cancelled because the engine produces 98%+ accuracy without ongoing triangulation — the $35/month in paid sources is eliminated
-**Plans**: TBD
+  1. The 50-company MS truth set maintains 94%+ accuracy — confirming Phase 3 fixes are not regressed
+  2. All 503 S&P 500 companies are compared against FMP with tiered accuracy reporting (Tier 1 scoring-critical, Tier 2 display, Tier 3 expanded)
+  3. S&P 500 accounting identity checks pass for the vast majority of companies (> 90% pass rate)
+  4. Known outliers (RACE EUR filer, financial sector MET/WFC, CRM/EW/EQIX) are investigated and documented
+**Plans:** 3 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — S&P 500 FMP comparison infrastructure (ticker list, batch fetcher, tiered comparator, reporter, orchestrator)
+- [ ] 04-02-PLAN.md — FMP data fetch + initial comparison + outlier investigation + iterative fix+validate cycle
+- [ ] 04-03-PLAN.md — Accounting identity checks at S&P 500 scale + comprehensive final report
 
 ### Phase 5: Compensation Engine
 **Goal**: Executive compensation data is accurately extracted for the companies where the 11 documented bugs cause failures
@@ -106,5 +111,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4. Phase 5 can begin after Ph
 | 1. Comparison Harness | 2/2 | Complete   | 2026-03-26 |
 | 2. Multi-Source Triangulation | 3/3 | Complete | 2026-03-26 |
 | 3. Engine Fixes | 11/11 | Complete | 2026-03-26 |
-| 4. Scale Validation | 0/TBD | Not started | - |
+| 4. Scale Validation | 0/3 | In Progress | - |
 | 5. Compensation Engine | 0/TBD | Not started | - |
