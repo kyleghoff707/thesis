@@ -26,7 +26,7 @@
 
 - [x] **ENGINE-01**: Named item XBRL tag coverage fixes for top failure categories — intangibles (149 DIFFs), accrued liabilities (143), D&A variants (62), operating income (49)
 - [ ] **ENGINE-02**: Residual "Other" field computation with per-company-year precondition gate — only compute residuals when named item coverage ≥ 95% for that record
-- [ ] **ENGINE-03**: Financial sector overlay validation against truth set — run comparison for bank/REIT/insurance companies (BRK-B, JPM, WFC, MET) and tune overlay fields
+- [x] **ENGINE-03**: Financial sector overlay validation against truth set — run comparison for bank/REIT/insurance companies (BRK-B, JPM, WFC, MET) and tune overlay fields
 - [x] **ENGINE-04**: Regression protection via baseline snapshot diffing — every engine fix verified against full 50-company truth set, report fields gained/lost
 
 ### Scale Validation
@@ -76,7 +76,7 @@
 | TRI-06 | Phase 2 | Pending |
 | ENGINE-01 | Phase 3 | Complete |
 | ENGINE-02 | Phase 3 | Pending |
-| ENGINE-03 | Phase 3 | Pending |
+| ENGINE-03 | Phase 3 | Complete |
 | ENGINE-04 | Phase 3 | Complete |
 | SCALE-01 | Phase 4 | Pending |
 | SCALE-02 | Phase 4 | Pending |

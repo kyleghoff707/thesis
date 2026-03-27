@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-03-27T00:12:15.850Z"
+status: Executing
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-03-27T00:23:17Z"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Position
 
 Phase: 03 (engine-fixes) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Plan: 2 of 4
 | Phase 02 P02 | 4min | 2 tasks | 4 files |
 | Phase 02 P01 | 11min | 2 tasks | 10 files |
 | Phase 03 P01 | 6min | 2 tasks | 5 files |
+| Phase 03 P02 | 8min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,9 @@ Recent decisions affecting current work:
 - [Phase 02]: [Phase 02-01]: Per-source field mappings in _sources section (not inline per-entry) -- 61 FMP + 42 SimFin GENERAL + 19 BANKS + 17 INSURANCE + 37 mstarpy
 - [Phase 03]: Alias map resolves canonical->engine names at lookup time rather than renaming engine fields (50+ UI components depend on engine names)
 - [Phase 03]: Pre-fix baselines force-added to git despite gitignore for regression tracking across sessions
+- [Phase 03]: Overlay merge changed from additive-only to overlay-wins — industry-specific tags more accurate than generic base taxonomy for REITs
+- [Phase 03]: Bank template detection uses ticker-based lookup (not SIC from fixtures) because MS fixtures have no SIC field
+- [Phase 03]: PP&E reclassification checks FMP agreement before reclassifying to METHODOLOGY_DIFF
 
 ### Pending Todos
 
@@ -89,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T00:12:15.847Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-03-27T00:23:17Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None
