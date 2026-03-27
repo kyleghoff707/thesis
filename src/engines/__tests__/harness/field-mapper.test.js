@@ -136,26 +136,48 @@ describe('getSpecialFieldHandlers', () => {
     expect(result).toBe(50000000000);
   });
 
-  // Accrued liabilities handler
-  it('accrued_combined_skip: returns SKIP when company only has combined', () => {
+  // Accrued liabilities handler (per-year logic)
+  it('accrued_combined_skip: returns SKIP when current year has no separate accrued', () => {
     const handlers = getSpecialFieldHandlers();
-    // allYearsData simulates all years having null for separate accrued
     const allYearsData = {
       '2021': { 'Accrued Expenses, Current': null },
-      '2022': { 'Accrued Expenses, Current': null },
+      '2022': { 'Accrued Expenses, Current': 5000000 },
     };
-    const result = handlers.accrued_combined_skip(1000000, allYearsData);
+    // Year 2021 has no separate accrued -> SKIP
+    const result = handlers.accrued_combined_skip(1000000, allYearsData, '2021');
     expect(result).toBe('SKIP');
   });
 
-  it('accrued_combined_skip: returns original when some years have separate accrued', () => {
+  it('accrued_combined_skip: returns original when current year has separate accrued', () => {
     const handlers = getSpecialFieldHandlers();
     const allYearsData = {
-      '2021': { 'Accrued Expenses, Current': 5000000 },
-      '2022': { 'Accrued Expenses, Current': null },
+      '2021': { 'Accrued Expenses, Current': null },
+      '2022': { 'Accrued Expenses, Current': 5000000 },
     };
-    const result = handlers.accrued_combined_skip(1000000, allYearsData);
+    // Year 2022 has separate accrued -> return original
+    const result = handlers.accrued_combined_skip(1000000, allYearsData, '2022');
     expect(result).toBe(1000000);
+  });
+
+  it('accrued_combined_skip: returns SKIP for all years of combined-only company', () => {
+    const handlers = getSpecialFieldHandlers();
+    const allYearsData = {
+      '2021': { 'Payables and Accrued Expenses': 8000000 },
+      '2022': { 'Payables and Accrued Expenses': 9000000 },
+    };
+    // Neither year has separate accrued -> SKIP for both
+    expect(handlers.accrued_combined_skip(1000000, allYearsData, '2021')).toBe('SKIP');
+    expect(handlers.accrued_combined_skip(1000000, allYearsData, '2022')).toBe('SKIP');
+  });
+
+  it('accrued_combined_skip: returns SKIP when year data is missing entirely', () => {
+    const handlers = getSpecialFieldHandlers();
+    const allYearsData = {
+      '2022': { 'Accrued Expenses, Current': 5000000 },
+    };
+    // Year 2021 has no entry at all -> SKIP
+    const result = handlers.accrued_combined_skip(1000000, allYearsData, '2021');
+    expect(result).toBe('SKIP');
   });
 
   // Effective tax rate handler
