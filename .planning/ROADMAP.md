@@ -61,13 +61,16 @@ Plans:
   2. No fix creates a net regression — the regression diff report shows fields gained exceeding fields lost for every applied fix
   3. The residual "Other" field computation is enabled only for company-years where named item coverage reaches the 95% precondition gate — the B7 failure mode (residuals amplifying upstream errors) does not recur
   4. Financial sector companies (BRK-B, JPM, WFC, MET) show improved accuracy after bank/REIT/insurance overlay tuning — the overlay fields are no longer the primary failure cluster for those companies
-**Plans:** 4 plans
+**Plans:** 7 plans
 
 Plans:
 - [x] 03-01-PLAN.md — Field alias map (16 naming mismatches) + pre-fix baseline snapshots for regression tracking
 - [x] 03-02-PLAN.md — REIT overlay fixes (revenue/COGS/interest/D&A) + short-term debt summation + bank null handling + PP&E reclassification
 - [x] 03-03-PLAN.md — Residual "Other" computation with 95% precondition gate + FY offset investigation + final validation (91.1% -- gap analysis documents methodology diffs)
 - [x] 03-04-PLAN.md — Category B harness alignment: accrued liabilities per-year fix + intangibles/operating income handler verification
+- [ ] 03-05-PLAN.md — Gap closure: Residual Other balance sheet fields (OtherNCA, OtherNCL, OtherCA) with 95% coverage gates
+- [ ] 03-06-PLAN.md — Gap closure: Investment flow summation + debt tag coverage improvements
+- [ ] 03-07-PLAN.md — Gap closure: Per-field tag additions (accounts_receivable, deferred_revenue, short_term_investments, minority_interest, common_stock) + final MS comparison
 
 ### Phase 4: Scale Validation
 **Goal**: Engine accuracy confirmed at 98%+ across all US-listed equities and paid data source subscriptions are cancelled
@@ -98,6 +101,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4. Phase 5 can begin after Ph
 |-------|----------------|--------|-----------|
 | 1. Comparison Harness | 2/2 | Complete   | 2026-03-26 |
 | 2. Multi-Source Triangulation | 3/3 | Complete | 2026-03-26 |
-| 3. Engine Fixes | 2/4 | Executing | - |
+| 3. Engine Fixes | 4/7 | Executing | - |
 | 4. Scale Validation | 0/TBD | Not started | - |
 | 5. Compensation Engine | 0/TBD | Not started | - |
