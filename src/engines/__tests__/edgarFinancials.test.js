@@ -634,6 +634,102 @@ describe('Phase 2: derived field detection via pre/post diff', () => {
   });
 });
 
+// ─── Investment flow component summation ─────────────────────────────────────
+
+describe('Investment flow component summation', () => {
+  it('sale_of_investments uses component sum when aggregate is null and AFS + maturity + STI + equity components present', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      sale_of_investments: null,
+      sale_of_investments_afs: 5000000000,
+      sale_of_investments_maturity: 3000000000,
+      sale_of_investments_sti: 1000000000,
+      sale_of_investments_equity: 2000000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // 5B + 3B + 1B + 2B = 11B
+    expect(cashFlow[2024].sale_of_investments).toBe(11000000000);
+  });
+
+  it('sale_of_investments uses component sum when it exceeds aggregate by >5%', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      sale_of_investments: 5000000000,  // partial aggregate
+      sale_of_investments_afs: 5000000000,
+      sale_of_investments_maturity: 3000000000,
+      sale_of_investments_sti: 1000000000,
+      sale_of_investments_equity: 2000000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Component sum 11B > 5B * 1.05 = 5.25B → use component sum
+    expect(cashFlow[2024].sale_of_investments).toBe(11000000000);
+  });
+
+  it('sale_of_investments includes ProceedsFromSaleOfDebtSecurities as aggregate tag', () => {
+    const saleField = CASHFLOW_TAXONOMY.find(f => f.field === 'sale_of_investments');
+    expect(saleField).toBeDefined();
+    expect(saleField.tags).toContain('ProceedsFromSaleOfDebtSecurities');
+  });
+
+  it('purchase_of_investments includes PaymentsToAcquireOtherInvestments as aggregate tag', () => {
+    const purchaseField = CASHFLOW_TAXONOMY.find(f => f.field === 'purchase_of_investments');
+    expect(purchaseField).toBeDefined();
+    expect(purchaseField.tags).toContain('PaymentsToAcquireOtherInvestments');
+  });
+
+  it('purchase_of_investments component sum includes equity investments component', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      purchase_of_investments: null,
+      purchase_of_investments_afs: -4000000000,
+      purchase_of_investments_htm: -2000000000,
+      purchase_of_investments_sti: -1000000000,
+      purchase_of_investments_equity: -3000000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // abs(4B) + abs(2B) + abs(1B) + abs(3B) = 10B → stored as positive or negative per convention
+    // Since purchase_of_investments was null, sign convention defaults to positive componentSum
+    expect(Math.abs(cashFlow[2024].purchase_of_investments)).toBe(10000000000);
+  });
+
+  it('both investment summation paths preserve sign convention', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      sale_of_investments: null,
+      sale_of_investments_afs: 5000000000,
+      sale_of_investments_maturity: 0,
+      sale_of_investments_sti: 0,
+      sale_of_investments_equity: 1000000000,
+      purchase_of_investments: -100,  // existing negative
+      purchase_of_investments_afs: -4000000000,
+      purchase_of_investments_htm: -2000000000,
+      purchase_of_investments_sti: 0,
+      purchase_of_investments_equity: -1000000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Sale should be positive (proceeds)
+    expect(cashFlow[2024].sale_of_investments).toBe(6000000000);
+    // Purchase should be negative (was negative before override)
+    expect(cashFlow[2024].purchase_of_investments).toBe(-7000000000);
+  });
+});
+
 // ─── TTM Q4 Bug: When latest filing is 10-K, TTM should equal annual ────────
 // Bug: findLatestQuarter only looks at 10-Q filings (Q1/Q2/Q3), so when the
 // latest data is a 10-K (Q4/FY), TTM uses stale Q3 data instead of annual values.
