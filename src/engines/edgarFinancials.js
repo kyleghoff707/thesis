@@ -518,6 +518,7 @@ const CASHFLOW_TAXONOMY = [
   { field: 'purchase_of_investments', unit: 'USD', tags: [
     'PaymentsToAcquireInvestments',
     'PaymentsToAcquireMarketableSecurities',
+    'PaymentsToAcquireOtherInvestments',
   ]},
   // Component fields for companies that report AFS/HTM/STI separately (JPM, WFC, MET, AAPL)
   { field: 'purchase_of_investments_afs', unit: 'USD', tags: [
@@ -531,10 +532,16 @@ const CASHFLOW_TAXONOMY = [
   { field: 'purchase_of_investments_sti', unit: 'USD', tags: [
     'PaymentsToAcquireShortTermInvestments',
   ]},
+  { field: 'purchase_of_investments_equity', unit: 'USD', tags: [
+    'PaymentsToAcquireEquityMethodInvestments',
+    'PaymentsToAcquireEquitySecurities',
+  ]},
   // Investment sales: aggregate tag (first-match) then component fields for summation
   { field: 'sale_of_investments', unit: 'USD', tags: [
     'ProceedsFromSaleOfInvestments',
     'ProceedsFromSaleAndMaturityOfMarketableSecurities',
+    'ProceedsFromSaleAndMaturityOfAvailableForSaleSecurities',
+    'ProceedsFromSaleOfDebtSecurities',
   ]},
   // Component fields for companies that report sale + maturity separately
   { field: 'sale_of_investments_afs', unit: 'USD', tags: [
@@ -548,6 +555,10 @@ const CASHFLOW_TAXONOMY = [
   { field: 'sale_of_investments_sti', unit: 'USD', tags: [
     'ProceedsFromSaleOfShortTermInvestments',
     'ProceedsFromSaleAndMaturityOfShortTermInvestments',
+  ]},
+  { field: 'sale_of_investments_equity', unit: 'USD', tags: [
+    'ProceedsFromSaleOfEquitySecurities',
+    'ProceedsFromSaleOfEquityMethodInvestments',
   ]},
   { field: 'purchase_of_business', unit: 'USD', tags: [
     'PaymentsToAcquireBusinessesNetOfCashAcquired',
@@ -818,6 +829,8 @@ function getDerivedFormula(field, inc, bal, cf) {
       if (cf.depreciation_only != null) return 'depreciation_only + amortization_of_intangibles';
       return null;
     case 'free_cash_flow': return 'operating_cash_flow - |capital_expenditures|';
+    case 'sale_of_investments': return 'AFS_proceeds + maturity_proceeds + STI_proceeds + equity_proceeds';
+    case 'purchase_of_investments': return '|AFS_payments| + |HTM_payments| + |STI_payments| + |equity_payments|';
     case 'net_investments': return 'sale_of_investments - |purchase_of_investments|';
     case 'net_debt_issuance': return '(proceeds_lt_debt + proceeds_st_debt) - (repayments_lt_debt + repayments_st_debt)';
     case 'net_common_stock': return 'proceeds_from_stock_issuance - |share_repurchases|';
@@ -1142,7 +1155,8 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       const afs = cf.sale_of_investments_afs;
       const maturity = cf.sale_of_investments_maturity;
       const sti = cf.sale_of_investments_sti;
-      const componentSum = (afs ?? 0) + (maturity ?? 0) + (sti ?? 0);
+      const equity = cf.sale_of_investments_equity;
+      const componentSum = (afs ?? 0) + (maturity ?? 0) + (sti ?? 0) + (equity ?? 0);
       // Use component sum if: (a) aggregate is null, or (b) components sum to more (aggregate is partial)
       if (componentSum > 0 && (cf.sale_of_investments == null || componentSum > cf.sale_of_investments * 1.05)) {
         cf.sale_of_investments = componentSum;
@@ -1154,7 +1168,9 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       const afs = cf.purchase_of_investments_afs;
       const htm = cf.purchase_of_investments_htm;
       const sti = cf.purchase_of_investments_sti;
-      const componentSum = (afs != null ? Math.abs(afs) : 0) + (htm != null ? Math.abs(htm) : 0) + (sti != null ? Math.abs(sti) : 0);
+      const equity = cf.purchase_of_investments_equity;
+      const componentSum = (afs != null ? Math.abs(afs) : 0) + (htm != null ? Math.abs(htm) : 0)
+        + (sti != null ? Math.abs(sti) : 0) + (equity != null ? Math.abs(equity) : 0);
       const currentAbs = cf.purchase_of_investments != null ? Math.abs(cf.purchase_of_investments) : 0;
       // Use component sum if: (a) aggregate is null, or (b) components sum to more
       if (componentSum > 0 && (cf.purchase_of_investments == null || componentSum > currentAbs * 1.05)) {
