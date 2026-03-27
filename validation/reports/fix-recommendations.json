@@ -1,0 +1,127 @@
+{
+  "generatedAt": "2026-03-27T00:35:43.129Z",
+  "summary": {
+    "totalFields": 91703,
+    "consensusDiff": 0,
+    "likelyBug": 0,
+    "methodologyDiff": 0,
+    "coverageGap": 15429,
+    "uniqueCoverage": 76274,
+    "match": 0
+  },
+  "recommendations": [],
+  "byRootCause": {},
+  "regressionDiff": {
+    "previousAccuracy": 91.1,
+    "fieldsGained": [
+      "accrued_liabilities",
+      "net_change_in_cash",
+      "other_noncurrent_assets",
+      "other_noncurrent_liabilities",
+      "property_plant_equipment",
+      "sale_of_investments",
+      "total_lease_liability_noncurrent",
+      "depreciation_amortization",
+      "other_current_liabilities",
+      "ppe_machinery",
+      "long_term_debt",
+      "capital_expenditures_net",
+      "purchase_of_investments",
+      "goodwill",
+      "other_current_assets"
+    ],
+    "fieldsLost": [],
+    "classificationChanges": [
+      {
+        "field": "accrued_liabilities",
+        "baselineStatus": "DIFF",
+        "triangulationClassification": "MATCH",
+        "rootCause": null
+      },
+      {
+        "field": "net_change_in_cash",
+        "baselineStatus": "DIFF",
+        "triangulationClassification": "MATCH",
+        "rootCause": null
+      },
+      {
+        "field": "other_noncurrent_assets",
+        "baselineStatus": "DIFF",
+        "triangulationClassification": "MATCH",
+        "rootCause": null
+      },
+      {
+        "field": "other_noncurrent_liabilities",
+        "baselineStatus": "DIFF",
+        "triangulationClassification": "MATCH",
+        "rootCause": null
+      },
+      {
+        "field": "property_plant_equipment",
+        "baselineStatus": "DIFF",
+        "triangulationClassification": "MATCH",
+        "rootCause": null
+      },
+      {
+        "field": "sale_of_investments",
+        "baselineStatus": "DIFF",
+        "triangulationClassification": "MATCH",
+        "rootCause": null
+      },
+      {
+        "field": "total_lease_liability_noncurrent",
+        "baselineStatus": "DIFF",
+        "triangulationClassification": "MATCH",
+        "rootCause": null
+      },
+      {
+        "field": "depreciation_amortization",
+        "baselineStatus": "DIFF",
+        "triangulationClassification": "MATCH",
+        "rootCause": null
+      },
+      {
+        "field": "other_current_liabilities",
+        "baselineStatus": "DIFF",
+        "triangulationClassification": "MATCH",
+        "rootCause": null
+      },
+      {
+        "field": "ppe_machinery",
+        "baselineStatus": "DIFF",
+        "triangulationClassification": "MATCH",
+        "rootCause": null
+      },
+      {
+        "field": "long_term_debt",
+        "baselineStatus": "DIFF",
+        "triangulationClassification": "MATCH",
+        "rootCause": null
+      },
+      {
+        "field": "capital_expenditures_net",
+        "baselineStatus": "DIFF",
+        "triangulationClassification": "MATCH",
+        "rootCause": null
+      },
+      {
+        "field": "purchase_of_investments",
+        "baselineStatus": "DIFF",
+        "triangulationClassification": "MATCH",
+        "rootCause": null
+      },
+      {
+        "field": "goodwill",
+        "baselineStatus": "DIFF",
+        "triangulationClassification": "MATCH",
+        "rootCause": null
+      },
+      {
+        "field": "other_current_assets",
+        "baselineStatus": "DIFF",
+        "triangulationClassification": "MATCH",
+        "rootCause": null
+      }
+    ]
+  }
+}
