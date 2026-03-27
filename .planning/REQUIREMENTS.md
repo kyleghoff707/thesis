@@ -1,202 +1,108 @@
-# Requirements: Thes1s AI Agent Workflow
+# Requirements: Thes1s v1.1 — API Migration & Pitch Deck Quality
 
-**Defined:** 2026-03-24
+**Defined:** 2026-03-27
 **Core Value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours — delivered in minutes, with zero shortcuts on rigor.
 
-## v1 Requirements
+## v1.1 Requirements
 
-### Agent Infrastructure
+### API Orchestration Layer
 
-- [x] **AGNT-01**: 9 agent role definitions in `agents/` directory — each with prompt.md (system prompt), config.json (curriculum refs, DataPacket slice, Toolbox tools, model), README.md
-- [x] **AGNT-02**: Universal agent context loaded into every AI agent — `rule-one-fundamentals.md`, `tools-for-analysis.md`, 7 Operating Rules
-- [x] **AGNT-03**: Agent curriculum injection at full depth — no compression, no summarization. The depth IS the competitive edge.
-- [x] **AGNT-04**: Example contamination boundary — LULU examples never enter agent context during generation
-- [x] **AGNT-05**: Orchestrator definition — dispatch table, phase definitions, checkpoint rules, section-to-agent mapping
+- [ ] **API-01**: aiResearch.js dispatches agents via direct Claude API calls with structured outputs (output_config.format + zodOutputFormat)
+- [ ] **API-02**: Parallel agent dispatch within phases using Promise.allSettled with configurable concurrency limits
+- [ ] **API-03**: Prompt caching with cache_control breakpoints on shared context (curriculum, DataPacket, PSR findings) — 0.1x read cost on subsequent agents
+- [ ] **API-04**: Web search via server tool (web_search_20250305) with max_uses per agent and URL extraction from tool results
+- [ ] **API-05**: Error handling with retry-then-escalate: rate limit backoff, max_tokens retry, schema errors logged, partial results preserved
+- [ ] **API-06**: Cache monitoring — log cache_read_input_tokens and cache_creation_input_tokens per response, warn if hit rate below 70%
+- [ ] **API-07**: Token budget tracking using actual API response usage fields (input, output, cache read/write, web searches)
 
-### Data Layer
+### Schema Compliance
 
-- [x] **DATA-01**: DataPacket assembly (`dataExport.js`) — all 20+ engine outputs into canonical JSON
-- [x] **DATA-02**: Node.js data bridge (~500-800 LOC) — `import.meta.env` → dotenv, DOMParser → linkedom, Vite proxy → direct fetch, localStorage/IndexedDB → file-based JSON cache
-- [x] **DATA-03**: 12+ Toolbox tools callable by agents — computeMOS, computePBT, computeTenCap, computeEquityBond, sensitivityTable, getMetric, getFinancialLine, computeGrowthRates, comparePeers, readFilingSection, getTranscriptExcerpt
-- [x] **DATA-04**: DataPacket slicing — each agent gets only its relevant data slice, not the full DataPacket. Less context = better output.
+- [ ] **FMT-01**: Replace z.looseObject({}) in ReportSectionSchema with structured output-compatible types (z.string() for data field, explicit types for chart config/data)
+- [ ] **FMT-02**: Add optional url field to CitationSchema for web search URLs
+- [ ] **FMT-03**: Verify ReportSectionSchema produces valid JSON Schema via z.toJSONSchema() — smoke test with live API call before pipeline work
 
-### Report Schema
+### Quality & Compliance Fixes
 
-- [x] **SCHM-01**: Report JSON schema per section — key, title, status, confidence, verdict, verdictRationale, summary, data, narrative, citations, tables, charts, redFlags, primarySourceInsights, generatedAt, modelUsed, tokenCost
-- [x] **SCHM-02**: JSON schema enforcement via Claude structured outputs (constrained decoding, not just prompting)
-- [x] **SCHM-03**: Backward-compatible with existing report data model in localStorage
-- [x] **SCHM-04**: Generation state persistence — `.thes1s/reports/{TICKER}/progress.json` — resume after crash/interruption
+- [ ] **FIX-01**: DataPacket field path reference included in every analysis agent prompt — exact top-level and second-level paths, not guessed
+- [ ] **FIX-02**: Web citation URL enforcement — post-processing enriches citation source fields with actual URLs from web_search_tool_result blocks
+- [ ] **FIX-03**: Citation format mechanically enforced — structured outputs guarantee canonical {id, ref, text, source} format on every section
+- [ ] **FIX-04**: searchesPerformed format mechanically enforced — structured outputs guarantee {query, resultCount, usedInSection} on every section
+- [ ] **FIX-05**: Red flags type mechanically enforced — structured outputs guarantee string array, not object array
 
-### One Pager (Stage 1)
+### Validation
 
-- [x] **ONEP-01**: CC skill `/generate:one-pager` orchestrating data-assembler + financial-analyst + business-analyst + synthesis-writer
-- [ ] **ONEP-02**: `OnePager.jsx` — 6-section renderer with verdict badges
-- [ ] **ONEP-03**: `StatusBadge.jsx` — PASS/FAIL/REVIEW/WATCHLIST badges
-- [ ] **ONEP-04**: `SectionRenderer.jsx` — reusable section display with inline citations `[1]`, `[2]`
-- [ ] **ONEP-05**: Real-time progress dashboard during generation (which agent working, sections complete, ETA)
-- [ ] **ONEP-06**: 80%+ section depth match vs LULU One Pager benchmark (user-verified)
+- [ ] **VAL-01**: SFM pitch deck generated via API pipeline scores 85+ overall quality with zero high-severity issues
+- [ ] **VAL-02**: Second ticker (different sector, chosen at runtime) generates successfully at 85+ quality
+- [ ] **VAL-03**: Pipeline cost per company is $8-12 (verified from API response usage fields)
+- [ ] **VAL-04**: Pipeline runtime is 30-40 minutes wall clock (verified from timestamps)
 
-### Pitch Deck (Stage 2)
-
-- [x] **PTCH-01**: CC skill `/generate:pitch-deck` with 3-phase agent dispatch (parallel Phase 1, sequential Phase 2, context-heavy Phase 3)
-- [x] **PTCH-02**: `PitchDeck.jsx` + 10 section sub-components
-- [x] **PTCH-03**: Structured checkpoints after each phase — findings, data gaps, questions, confidence levels
-- [x] **PTCH-04**: Conversational checkpoint dialogue — PM can ask contextual questions ("show me how you calculated that", "why deeper on A but not B?"), not just approve/redirect. Scoped to section context, not open-ended chat.
-- [x] **PTCH-05**: `SensitivityTable.jsx` — vary FGR/EPS/CapEx% across MOS/PBT/TenCap/EquityBond
-- [x] **PTCH-06**: FGR derivation workflow — 5 inputs (Historical, Market Relativity, Company Guidance, Industry CAGR, Analyst Consensus) with user confirmation
-- [x] **PTCH-07**: Primary Source Reader — 10-K text (business desc, risk factors, MD&A), transcripts (themes, tone, Q&A), proxy (comp, ownership, board), data verification against DataPacket
-- [x] **PTCH-08**: Competitor benchmarking — 15+ peers via peer metrics engine + agent qualitative analysis
-- [x] **PTCH-09**: Market share ceiling analysis — prove growth rate doesn't require unrealistic market dominance
-- [x] **PTCH-10**: Dual Owner Earnings — Rule One method AND Graham method side by side
-- [x] **PTCH-11**: Cyclical business handling — CAGR from "first positive year," multiple capex ratios (through-cycle, expansion-only)
-- [x] **PTCH-12**: Acquisition history tracking — table of all acquisitions with dates, amounts, strategic rationale
-- [x] **PTCH-13**: "Tell me more" deep-dive on any section point (targeted drill-down, not regeneration)
-- [x] **PTCH-14**: Industry context cards — pop-up glossary for industry-specific terms and KPIs
-- [x] **PTCH-15**: Assumption tracker sidebar with confidence levels — central registry, changes cascade through affected sections
-- [ ] **PTCH-16**: Full parity (and deeper) vs LULU Pitch Deck benchmark (user-verified)
+## Carried Forward (Next Milestone)
 
 ### Full Story (Stage 3)
 
-- [ ] **FLST-01**: CC skill `/generate:full-story` with 3-phase dispatch — sequential analysis, structured debate, strategy
-- [ ] **FLST-02**: `FullStory.jsx` + scored checklists (Meaning 15pt, Moat 15pt, Management 13pt = 43 items)
-- [ ] **FLST-03**: Bull/Bear/Judge structured debate — synthesis-writer (bull), risk-analyst (bear), financial-analyst (judge). Scored transcript.
-- [ ] **FLST-04**: `DebateView` component — UI for debate transcript with scored rebuttals
-- [ ] **FLST-05**: Management Promise Tracker — extract forward-looking statements from transcripts, tag with quarter/year, compare to actuals, produce credibility metrics
-- [ ] **FLST-06**: Inversion & Rebuttal — source bear cases with evidence, document rebuttals
-- [ ] **FLST-07**: Quick Bull/Bear narrative toggle — switch between thesis perspectives
-- [ ] **FLST-08**: Trading Strategy + PACE Plan sections
-- [ ] **FLST-09**: Conversational checkpoint dialogue (same as PTCH-04, applied to Full Story checkpoints)
-- [ ] **FLST-10**: Full parity (and deeper) vs LULU Full Story benchmark (user-verified)
-
-### Quality System
-
-- [x] **QUAL-01**: `critic.js` — citation validation (every claim traceable to DataPacket field path, SEC filing, or URL)
-- [x] **QUAL-02**: Completeness scoring — all required fields present per section schema
-- [x] **QUAL-03**: Confidence scoring — HIGH/MEDIUM/LOW based on data completeness and source agreement
-- [x] **QUAL-04**: Multi-source verification — financial metrics need EDGAR + peer, growth projections need CAGR + analyst + industry, moat claims need financial + qualitative evidence
-- [x] **QUAL-05**: Red flags required in every section, even passing ones
-- [x] **QUAL-06**: "Data not available" — honest gaps, never estimated numbers. If not in DataPacket, don't fabricate.
-- [x] **QUAL-07**: Retry-then-escalate failure handling — agent fails → retry once with error context → fail again → escalate to PM
-- [x] **QUAL-08**: `contextBudget.js` — token counting + budget management per agent. Measure actual usage, set budgets based on data.
-
-### Standalone Commands
-
-- [x] **CMD-01**: `/generate:section TICKER stage section#` — regenerate a specific section without re-running entire stage
-- [ ] **CMD-02**: `/debate TICKER` — run inversion debate standalone on any completed pitch deck
-- [ ] **CMD-03**: `/fgr TICKER` — run FGR derivation workflow standalone
+- **FLST-01**: CC skill `/generate:full-story` with 3-phase dispatch
+- **FLST-02**: Scored checklists (Meaning 15pt, Moat 15pt, Management 13pt = 43 items)
+- **FLST-03**: Bull/Bear/Judge structured debate
+- **FLST-04**: DebateView component
+- **FLST-05**: Management Promise Tracker
+- **FLST-06**: Inversion & Rebuttal
+- **FLST-07**: Quick Bull/Bear narrative toggle
+- **FLST-08**: Trading Strategy + PACE Plan
+- **FLST-09**: Conversational checkpoint dialogue
+- **FLST-10**: Full parity vs LULU Full Story benchmark
 
 ### Export & Polish
 
-- [ ] **EXPT-01**: `ExportView.jsx` — branded PDF/print view (Thes1s aesthetic, charts, footnoted citations, executive summary front page)
-- [ ] **EXPT-02**: `ReferenceList.jsx` — citation manager (40+ numbered references per full analysis)
-- [ ] **EXPT-03**: Source preview on citation hover — actual 10-K paragraph or transcript excerpt, not just a link
-- [ ] **EXPT-04**: Working view vs export view — raw checklist (color-coded status) for analysis + polished narrative for presentation
-- [ ] **EXPT-05**: Version history / diff view between iterations
-- [ ] **EXPT-06**: `aiResearch.js` — in-app API-driven generation (commercial path, same schemas/quality as CC skills)
-
-## v2 Requirements (Phase 9+ — Architecture Designed Now)
-
-### Living Intelligence
-
-- **LIVE-01**: Living Thesis Intelligence — re-analysis triggers on new data (quarterly earnings, 10-K filing)
-- **XCOM-01**: Cross-Company Intelligence — knowledge graph across analyses. 50th analysis richer than 1st.
-- **CONV-01**: Conviction Scoring — Bayesian posterior updates, not binary PASS/FAIL
-- **HIST-01**: Historical comparison across reports — diff view of thesis evolution over time
-
-### Platform
-
-- **EVAL-01**: Automated eval system — build after 5-10 manual evals define "good"
-- **STIK-01**: stickeR1 evaluation loop integration
-- **MULT-01**: Multi-user backend, auth, billing
+- **EXPT-01**: Branded PDF export
+- **EXPT-02**: Citation manager (40+ references)
+- **EXPT-03**: Source preview on citation hover
+- **EXPT-04**: Working view vs export view
+- **EXPT-05**: Version history / diff view
+- **EXPT-06**: In-app API-driven generation (commercial path)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Automated buy/sell signals | PM makes decisions, not the tool. Legal liability. |
-| Real-time price alerts / trading | Research tool, not trading platform. stickeR1 handles portfolio. |
-| Batch generation (50 companies) | Rule One is deep, not wide. Quality over quantity. $400-600 per batch. |
-| Social/crowd-sourced research | Independent analysis. Crowded trades reduce returns. |
-| Fine-tuned/custom LLM | Curriculum injection is more flexible. Foundation models improve quarterly. |
-| Alternative data (satellite, sentiment) | Fundamental analysis, not quant trading. |
-| General-purpose stock chat | Structured workflow with scoped checkpoints, not open-ended chat. |
-| Automated portfolio rebalancing | stickeR1's job. Clean separation: Thes1s = research, stickeR1 = portfolio. |
-| Sell-side BUY/HOLD/SELL ratings | Rule One uses PASS/FAIL, not 3-tier. Sell-side ratings have known buy bias. |
+| One Pager API migration | Works well enough as CC skill. Migrate later if needed. |
+| In-browser direct API calls | Phase 8 Polish (EXPT-06). This milestone is Node.js orchestration. |
+| Streaming progress UI | Differentiator, not table stakes. PM can wait 30-40 min. Add later. |
+| Batch API for PSR | Marginal savings (~$0.40) for significant complexity. Revisit if cost target isn't met. |
+| Strict tool_use validation | Tools work fine non-strict. Add if tool call errors become a problem. |
+| Extended thinking | Adds output token cost. Structured output + narrative IS the thinking. |
+| Fast mode (6x pricing) | $80+ per company. Speed is not the bottleneck — quality is. |
+| Multi-turn agent conversations | Single-turn with tools is sufficient. PSR works with pre-processed filing markdown. |
+| Inter-agent real-time communication | Orchestrator handles info flow via phased dispatch. |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AGNT-01 | Phase 5A | Complete |
-| AGNT-02 | Phase 5A | Complete |
-| AGNT-03 | Phase 5A | Complete |
-| AGNT-04 | Phase 5A | Complete |
-| AGNT-05 | Phase 5A | Complete |
-| DATA-01 | Phase 5A | Complete |
-| DATA-02 | Phase 5A | Complete |
-| DATA-03 | Phase 5A | Complete |
-| DATA-04 | Phase 5A | Complete |
-| SCHM-01 | Phase 5A | Complete |
-| SCHM-02 | Phase 5A | Complete |
-| SCHM-03 | Phase 5A | Complete |
-| SCHM-04 | Phase 5A | Complete |
-| ONEP-01 | Phase 5C | Complete |
-| ONEP-02 | Phase 5B | Pending |
-| ONEP-03 | Phase 5B | Pending |
-| ONEP-04 | Phase 5B | Pending |
-| ONEP-05 | Phase 5B | Pending |
-| ONEP-06 | Phase 5C | Pending |
-| PTCH-01 | Phase 6 | Complete |
-| PTCH-02 | Phase 6 | Complete |
-| PTCH-03 | Phase 6 | Complete |
-| PTCH-04 | Phase 6 | Complete |
-| PTCH-05 | Phase 6 | Complete |
-| PTCH-06 | Phase 6 | Complete |
-| PTCH-07 | Phase 6 | Complete |
-| PTCH-08 | Phase 6 | Complete |
-| PTCH-09 | Phase 6 | Complete |
-| PTCH-10 | Phase 6 | Complete |
-| PTCH-11 | Phase 6 | Complete |
-| PTCH-12 | Phase 6 | Complete |
-| PTCH-13 | Phase 6 | Complete |
-| PTCH-14 | Phase 6 | Complete |
-| PTCH-15 | Phase 6 | Complete |
-| PTCH-16 | Phase 6 | Pending |
-| FLST-01 | Phase 7 | Pending |
-| FLST-02 | Phase 7 | Pending |
-| FLST-03 | Phase 7 | Pending |
-| FLST-04 | Phase 7 | Pending |
-| FLST-05 | Phase 7 | Pending |
-| FLST-06 | Phase 7 | Pending |
-| FLST-07 | Phase 7 | Pending |
-| FLST-08 | Phase 7 | Pending |
-| FLST-09 | Phase 7 | Pending |
-| FLST-10 | Phase 7 | Pending |
-| QUAL-01 | Phase 5D | Complete |
-| QUAL-02 | Phase 5D | Complete |
-| QUAL-03 | Phase 5D | Complete |
-| QUAL-04 | Phase 5D | Complete |
-| QUAL-05 | Phase 5D | Complete |
-| QUAL-06 | Phase 5D | Complete |
-| QUAL-07 | Phase 5D | Complete |
-| QUAL-08 | Phase 5D | Complete |
-| CMD-01 | Phase 6 | Complete |
-| CMD-02 | Phase 7 | Pending |
-| CMD-03 | Phase 6 | Pending |
-| EXPT-01 | Phase 8 | Pending |
-| EXPT-02 | Phase 8 | Pending |
-| EXPT-03 | Phase 8 | Pending |
-| EXPT-04 | Phase 8 | Pending |
-| EXPT-05 | Phase 8 | Pending |
-| EXPT-06 | Phase 8 | Pending |
+| API-01 | TBD | Pending |
+| API-02 | TBD | Pending |
+| API-03 | TBD | Pending |
+| API-04 | TBD | Pending |
+| API-05 | TBD | Pending |
+| API-06 | TBD | Pending |
+| API-07 | TBD | Pending |
+| FMT-01 | TBD | Pending |
+| FMT-02 | TBD | Pending |
+| FMT-03 | TBD | Pending |
+| FIX-01 | TBD | Pending |
+| FIX-02 | TBD | Pending |
+| FIX-03 | TBD | Pending |
+| FIX-04 | TBD | Pending |
+| FIX-05 | TBD | Pending |
+| VAL-01 | TBD | Pending |
+| VAL-02 | TBD | Pending |
+| VAL-03 | TBD | Pending |
+| VAL-04 | TBD | Pending |
 
 **Coverage:**
-- v1 requirements: 62 total
-- Mapped to phases: 62
-- Unmapped: 0
+- v1.1 requirements: 19 total
+- Mapped to phases: 0 (pending roadmap)
+- Unmapped: 19
 
 ---
-*Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 — traceability updated with per-requirement phase mappings*
+*Requirements defined: 2026-03-27*
+*Last updated: 2026-03-27 after milestone v1.1 definition*
