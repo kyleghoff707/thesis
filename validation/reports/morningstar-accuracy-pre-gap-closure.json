@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-03-27T01:53:53.203Z",
-  "overallAccuracy": 90.9,
+  "generatedAt": "2026-03-27T01:39:00.639Z",
+  "overallAccuracy": 91,
   "summary": {
-    "totalCompared": 14902,
-    "totalMatch": 13541,
+    "totalCompared": 14841,
+    "totalMatch": 13509,
     "totalClose": 79,
-    "totalDiff": 1282,
-    "totalMissing": 3445,
+    "totalDiff": 1253,
+    "totalMissing": 3506,
     "totalSkipped": 404
   },
   "companies": [
@@ -4550,12 +4550,12 @@
     },
     {
       "ticker": "AMAT",
-      "accuracy": 93.6,
-      "compared": 375,
-      "match": 351,
+      "accuracy": 93.5,
+      "compared": 370,
+      "match": 346,
       "close": 2,
       "diff": 22,
-      "missing": 63,
+      "missing": 68,
       "offset": 0,
       "topFailures": [
         {
@@ -7881,10 +7881,7 @@
           "statement": "balance_sheet",
           "msYear": "2021",
           "edgarYear": 2021,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 9000000,
-          "actual": 9000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -7893,10 +7890,7 @@
           "statement": "balance_sheet",
           "msYear": "2022",
           "edgarYear": 2022,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 8000000,
-          "actual": 8000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -7905,10 +7899,7 @@
           "statement": "balance_sheet",
           "msYear": "2023",
           "edgarYear": 2023,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 8000000,
-          "actual": 8000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -7917,10 +7908,7 @@
           "statement": "balance_sheet",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 8000000,
-          "actual": 8000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -7929,10 +7917,7 @@
           "statement": "balance_sheet",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 8000000,
-          "actual": 8000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -9649,12 +9634,12 @@
     },
     {
       "ticker": "AMT",
-      "accuracy": 83.1,
-      "compared": 350,
-      "match": 291,
+      "accuracy": 86.3,
+      "compared": 335,
+      "match": 289,
       "close": 6,
-      "diff": 53,
-      "missing": 71,
+      "diff": 40,
+      "missing": 86,
       "offset": 0,
       "topFailures": [
         {
@@ -9664,16 +9649,16 @@
           "avgPct": 0.9189
         },
         {
-          "field": "gross_profit",
-          "statement": "income",
+          "field": "accrued_liabilities",
+          "statement": "balance_sheet",
           "failCount": 5,
-          "avgPct": 1.2733
+          "avgPct": 0.5985
         },
         {
-          "field": "depreciation_amortization_is",
-          "statement": "income",
+          "field": "net_change_in_cash",
+          "statement": "cash_flow",
           "failCount": 5,
-          "avgPct": 0.4944
+          "avgPct": 0.6058
         }
       ],
       "results": [
@@ -9743,10 +9728,7 @@
           "statement": "income",
           "msYear": "2021",
           "edgarYear": 2021,
-          "status": "MATCH",
-          "pct": 0.036055182699478,
-          "expected": 2682000000,
-          "actual": 2585300000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -9755,10 +9737,7 @@
           "statement": "income",
           "msYear": "2022",
           "edgarYear": 2022,
-          "status": "DIFF",
-          "pct": 0.2285536353728787,
-          "expected": 2569200000,
-          "actual": 3156400000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -9767,10 +9746,7 @@
           "statement": "income",
           "msYear": "2023",
           "edgarYear": 2023,
-          "status": "DIFF",
-          "pct": 0.24946320515323053,
-          "expected": 2561500000,
-          "actual": 3200500000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -9779,10 +9755,7 @@
           "statement": "income",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "MATCH",
-          "pct": 0.035969546302050966,
-          "expected": 2574400000,
-          "actual": 2481800000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -9791,10 +9764,7 @@
           "statement": "income",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "DIFF",
-          "pct": 0.06331647319966523,
-          "expected": 2748100000,
-          "actual": 2574100000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -9803,10 +9773,7 @@
           "statement": "income",
           "msYear": "2021",
           "edgarYear": 2021,
-          "status": "DIFF",
-          "pct": 1.2798693613387466,
-          "expected": 6674900000,
-          "actual": -1868100000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -9815,10 +9782,7 @@
           "statement": "income",
           "msYear": "2022",
           "edgarYear": 2022,
-          "status": "DIFF",
-          "pct": 1.3252310562166134,
-          "expected": 7076200000,
-          "actual": -2301400000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -9827,10 +9791,7 @@
           "statement": "income",
           "msYear": "2023",
           "edgarYear": 2023,
-          "status": "DIFF",
-          "pct": 1.327996027218919,
-          "expected": 7450700000,
-          "actual": -2443800000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -9839,10 +9800,7 @@
           "statement": "income",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "DIFF",
-          "pct": 1.2260353776083042,
-          "expected": 7552800000,
-          "actual": -1707200000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -9851,10 +9809,7 @@
           "statement": "income",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "DIFF",
-          "pct": 1.2074590008231494,
-          "expected": 7896500000,
-          "actual": -1638200000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -9923,10 +9878,7 @@
           "statement": "income",
           "msYear": "2021",
           "edgarYear": 2021,
-          "status": "DIFF",
-          "pct": 0.5557746720397839,
-          "expected": 2332600000,
-          "actual": 1036200000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -9935,10 +9887,7 @@
           "statement": "income",
           "msYear": "2022",
           "edgarYear": 2022,
-          "status": "DIFF",
-          "pct": 0.5094315776169863,
-          "expected": 3164900000,
-          "actual": 1552600000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -9947,10 +9896,7 @@
           "statement": "income",
           "msYear": "2023",
           "edgarYear": 2023,
-          "status": "DIFF",
-          "pct": 0.48779238518012635,
-          "expected": 2928500000,
-          "actual": 1500000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -9959,10 +9905,7 @@
           "statement": "income",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "DIFF",
-          "pct": 0.45780757097791797,
-          "expected": 2028800000,
-          "actual": 1100000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -9971,10 +9914,7 @@
           "statement": "income",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "DIFF",
-          "pct": 0.46120689655172414,
-          "expected": 2041600000,
-          "actual": 1100000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -40002,12 +39942,12 @@
     },
     {
       "ticker": "CPRT",
-      "accuracy": 94.1,
-      "compared": 287,
-      "match": 270,
+      "accuracy": 94.4,
+      "compared": 285,
+      "match": 269,
       "close": 0,
-      "diff": 17,
-      "missing": 78,
+      "diff": 16,
+      "missing": 80,
       "offset": 0,
       "topFailures": [
         {
@@ -42685,10 +42625,7 @@
           "statement": "balance_sheet",
           "msYear": "2021",
           "edgarYear": 2021,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 24000,
-          "actual": 24000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -42697,10 +42634,7 @@
           "statement": "balance_sheet",
           "msYear": "2022",
           "edgarYear": 2022,
-          "status": "DIFF",
-          "pct": 0.75,
-          "expected": 96000,
-          "actual": 24000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -43673,9 +43607,9 @@
           "msYear": "2022",
           "edgarYear": 2022,
           "status": "MATCH",
-          "pct": 0.006911803150992621,
+          "pct": 0,
           "expected": 374866000,
-          "actual": 377457000,
+          "actual": 374866000,
           "tolerance": "close"
         },
         {
@@ -57050,12 +56984,12 @@
     },
     {
       "ticker": "EQIX",
-      "accuracy": 85.4,
-      "compared": 362,
-      "match": 309,
+      "accuracy": 86.1,
+      "compared": 360,
+      "match": 310,
       "close": 0,
-      "diff": 53,
-      "missing": 79,
+      "diff": 50,
+      "missing": 81,
       "offset": 0,
       "topFailures": [
         {
@@ -57600,10 +57534,7 @@
           "statement": "income",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "DIFF",
-          "pct": 0.0787746170678337,
-          "expected": 457000000,
-          "actual": 493000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -57612,10 +57543,7 @@
           "statement": "income",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "DIFF",
-          "pct": 0.14990512333965844,
-          "expected": 527000000,
-          "actual": 606000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -61368,10 +61296,10 @@
           "statement": "cash_flow",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "DIFF",
-          "pct": 0.18846153846153846,
+          "status": "MATCH",
+          "pct": 0,
           "expected": 520000000,
-          "actual": 618000000,
+          "actual": 520000000,
           "tolerance": "close"
         },
         {
@@ -61381,9 +61309,9 @@
           "msYear": "2025",
           "edgarYear": 2025,
           "status": "MATCH",
-          "pct": 0.030503304524656837,
+          "pct": 0,
           "expected": 1967000000,
-          "actual": 2027000000,
+          "actual": 1967000000,
           "tolerance": "close"
         },
         {
@@ -62137,12 +62065,12 @@
     },
     {
       "ticker": "EW",
-      "accuracy": 81.7,
-      "compared": 218,
-      "match": 178,
+      "accuracy": 82.3,
+      "compared": 215,
+      "match": 177,
       "close": 1,
-      "diff": 39,
-      "missing": 21,
+      "diff": 37,
+      "missing": 24,
       "offset": 0,
       "topFailures": [
         {
@@ -65894,10 +65822,7 @@
           "statement": "cash_flow",
           "msYear": "2023",
           "edgarYear": 2023,
-          "status": "DIFF",
-          "pct": 0.13677004749930147,
-          "expected": 715800000,
-          "actual": 617900000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -65906,10 +65831,7 @@
           "statement": "cash_flow",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "DIFF",
-          "pct": 0.06704757462686567,
-          "expected": 857600000,
-          "actual": 800100000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -65918,10 +65840,7 @@
           "statement": "cash_flow",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "MATCH",
-          "pct": 0.021576734651332478,
-          "expected": 2878100000,
-          "actual": 2816000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -83819,11 +83738,11 @@
     },
     {
       "ticker": "LEN",
-      "accuracy": 86.6,
+      "accuracy": 88.5,
       "compared": 217,
-      "match": 188,
+      "match": 192,
       "close": 3,
-      "diff": 26,
+      "diff": 22,
       "missing": 141,
       "offset": 0,
       "topFailures": [
@@ -83840,10 +83759,10 @@
           "avgPct": 0.6531
         },
         {
-          "field": "purchase_of_investments",
+          "field": "capital_expenditures_net",
           "statement": "cash_flow",
-          "failCount": 5,
-          "avgPct": 39.1341
+          "failCount": 4,
+          "avgPct": 1.3648
         }
       ],
       "results": [
@@ -86952,10 +86871,10 @@
           "statement": "cash_flow",
           "msYear": "2021",
           "edgarYear": 2021,
-          "status": "DIFF",
-          "pct": 2.184898799956305,
+          "status": "MATCH",
+          "pct": 0,
           "expected": 128162000,
-          "actual": 408183000,
+          "actual": 128162000,
           "tolerance": "close"
         },
         {
@@ -86964,10 +86883,10 @@
           "statement": "cash_flow",
           "msYear": "2022",
           "edgarYear": 2022,
-          "status": "DIFF",
-          "pct": 3.7713103477695187,
+          "status": "MATCH",
+          "pct": 0,
           "expected": 93769000,
-          "actual": 447401000,
+          "actual": 93769000,
           "tolerance": "close"
         },
         {
@@ -86976,10 +86895,10 @@
           "statement": "cash_flow",
           "msYear": "2023",
           "edgarYear": 2023,
-          "status": "DIFF",
-          "pct": 24.13025,
+          "status": "MATCH",
+          "pct": 0,
           "expected": 8000000,
-          "actual": 201042000,
+          "actual": 8000000,
           "tolerance": "close"
         },
         {
@@ -86988,10 +86907,10 @@
           "statement": "cash_flow",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "DIFF",
-          "pct": 93.17171940694844,
+          "status": "MATCH",
+          "pct": 0,
           "expected": 4519000,
-          "actual": 425562000,
+          "actual": 4519000,
           "tolerance": "close"
         },
         {
@@ -87000,10 +86919,10 @@
           "statement": "cash_flow",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "DIFF",
-          "pct": 72.41232638888889,
+          "status": "MATCH",
+          "pct": 0,
           "expected": 3456000,
-          "actual": 253713000,
+          "actual": 3456000,
           "tolerance": "close"
         },
         {
@@ -87060,10 +86979,10 @@
           "statement": "cash_flow",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "MATCH",
-          "pct": 0.04068461060381508,
+          "status": "DIFF",
+          "pct": 0.9593153893961849,
           "expected": 104585000,
-          "actual": 100330000,
+          "actual": 4255000,
           "tolerance": "close"
         },
         {
@@ -94316,9 +94235,9 @@
           "msYear": "2021",
           "edgarYear": 2021,
           "status": "DIFF",
-          "pct": 0.21982769976552416,
+          "pct": 0.5204046684406038,
           "expected": 113871000000,
-          "actual": 88839000000,
+          "actual": 54612000000,
           "tolerance": "close"
         },
         {
@@ -94328,9 +94247,9 @@
           "msYear": "2022",
           "edgarYear": 2022,
           "status": "DIFF",
-          "pct": 0.1797598406315712,
+          "pct": 0.37512450658501495,
           "expected": 108428000000,
-          "actual": 88937000000,
+          "actual": 67754000000,
           "tolerance": "close"
         },
         {
@@ -94340,9 +94259,9 @@
           "msYear": "2023",
           "edgarYear": 2023,
           "status": "DIFF",
-          "pct": 0.2270815811606392,
+          "pct": 0.46613488225399496,
           "expected": 76096000000,
-          "actual": 58816000000,
+          "actual": 40625000000,
           "tolerance": "close"
         },
         {
@@ -94352,9 +94271,9 @@
           "msYear": "2024",
           "edgarYear": 2024,
           "status": "DIFF",
-          "pct": 0.20428385546992292,
+          "pct": 0.589773653430945,
           "expected": 69937000000,
-          "actual": 55650000000,
+          "actual": 28690000000,
           "tolerance": "close"
         },
         {
@@ -94364,9 +94283,9 @@
           "msYear": "2025",
           "edgarYear": 2025,
           "status": "DIFF",
-          "pct": 0.24911301624979482,
+          "pct": 0.6249794825822906,
           "expected": 79201000000,
-          "actual": 59471000000,
+          "actual": 29702000000,
           "tolerance": "close"
         },
         {
@@ -95109,11 +95028,11 @@
     {
       "ticker": "META",
       "accuracy": 93.4,
-      "compared": 317,
-      "match": 296,
+      "compared": 316,
+      "match": 295,
       "close": 0,
       "diff": 21,
-      "missing": 93,
+      "missing": 94,
       "offset": 0,
       "topFailures": [
         {
@@ -99087,10 +99006,7 @@
           "statement": "cash_flow",
           "msYear": "2023",
           "edgarYear": 2023,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 6184000000,
-          "actual": 6184000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -99781,12 +99697,12 @@
     },
     {
       "ticker": "MLI",
-      "accuracy": 89.6,
-      "compared": 347,
-      "match": 311,
+      "accuracy": 89.8,
+      "compared": 342,
+      "match": 307,
       "close": 0,
-      "diff": 36,
-      "missing": 66,
+      "diff": 35,
+      "missing": 71,
       "offset": 0,
       "topFailures": [
         {
@@ -103955,10 +103871,7 @@
           "statement": "cash_flow",
           "msYear": "2022",
           "edgarYear": 2022,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 217863000,
-          "actual": 217863000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -103967,10 +103880,7 @@
           "statement": "cash_flow",
           "msYear": "2023",
           "edgarYear": 2023,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 106231000,
-          "actual": 106231000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -104021,10 +103931,7 @@
           "statement": "cash_flow",
           "msYear": "2023",
           "edgarYear": 2023,
-          "status": "DIFF",
-          "pct": 0.7971073881244123,
-          "expected": 273317000,
-          "actual": 55454000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -104033,10 +103940,7 @@
           "statement": "cash_flow",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 98465000,
-          "actual": 98465000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -104045,10 +103949,7 @@
           "statement": "cash_flow",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 88436000,
-          "actual": 88436000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -104571,12 +104472,12 @@
     },
     {
       "ticker": "MNST",
-      "accuracy": 91.1,
-      "compared": 314,
-      "match": 286,
+      "accuracy": 91.3,
+      "compared": 309,
+      "match": 282,
       "close": 0,
-      "diff": 28,
-      "missing": 72,
+      "diff": 27,
+      "missing": 77,
       "offset": 0,
       "topFailures": [
         {
@@ -107353,10 +107254,7 @@
           "statement": "balance_sheet",
           "msYear": "2021",
           "edgarYear": 2021,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 3200000,
-          "actual": 3200000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -107365,10 +107263,7 @@
           "statement": "balance_sheet",
           "msYear": "2022",
           "edgarYear": 2022,
-          "status": "DIFF",
-          "pct": 0.5,
-          "expected": 6418000,
-          "actual": 3209000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -107377,10 +107272,7 @@
           "statement": "balance_sheet",
           "msYear": "2023",
           "edgarYear": 2023,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 5613000,
-          "actual": 5613000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -107389,10 +107281,7 @@
           "statement": "balance_sheet",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 5632000,
-          "actual": 5632000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -107401,10 +107290,7 @@
           "statement": "balance_sheet",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 5665000,
-          "actual": 5665000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -114098,11 +113984,11 @@
     {
       "ticker": "MU",
       "accuracy": 94.4,
-      "compared": 322,
-      "match": 304,
+      "compared": 320,
+      "match": 302,
       "close": 0,
       "diff": 18,
-      "missing": 76,
+      "missing": 78,
       "offset": 0,
       "topFailures": [
         {
@@ -117950,10 +117836,7 @@
           "statement": "cash_flow",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 1794000000,
-          "actual": 1794000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -117962,10 +117845,7 @@
           "statement": "cash_flow",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 1698000000,
-          "actual": 1698000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -123023,11 +122903,11 @@
     },
     {
       "ticker": "NEM",
-      "accuracy": 87.1,
+      "accuracy": 87.9,
       "compared": 356,
-      "match": 310,
+      "match": 313,
       "close": 2,
-      "diff": 44,
+      "diff": 41,
       "missing": 81,
       "offset": 0,
       "topFailures": [
@@ -127254,10 +127134,10 @@
           "statement": "cash_flow",
           "msYear": "2021",
           "edgarYear": 2021,
-          "status": "DIFF",
-          "pct": 1.5423728813559323,
+          "status": "MATCH",
+          "pct": 0,
           "expected": 59000000,
-          "actual": 150000000,
+          "actual": 59000000,
           "tolerance": "close"
         },
         {
@@ -127290,10 +127170,10 @@
           "statement": "cash_flow",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "DIFF",
-          "pct": 0.45454545454545453,
+          "status": "MATCH",
+          "pct": 0,
           "expected": 66000000,
-          "actual": 96000000,
+          "actual": 66000000,
           "tolerance": "close"
         },
         {
@@ -127302,10 +127182,10 @@
           "statement": "cash_flow",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "DIFF",
-          "pct": 3.2142857142857144,
+          "status": "MATCH",
+          "pct": 0,
           "expected": 14000000,
-          "actual": 59000000,
+          "actual": 14000000,
           "tolerance": "close"
         },
         {
@@ -137814,11 +137694,11 @@
     {
       "ticker": "O",
       "accuracy": 89.3,
-      "compared": 234,
-      "match": 209,
+      "compared": 224,
+      "match": 200,
       "close": 1,
-      "diff": 24,
-      "missing": 107,
+      "diff": 23,
+      "missing": 117,
       "offset": 0,
       "topFailures": [
         {
@@ -137828,16 +137708,16 @@
           "avgPct": 40.2761
         },
         {
-          "field": "short_term_debt",
-          "statement": "balance_sheet",
-          "failCount": 5,
-          "avgPct": 13.4394
-        },
-        {
           "field": "long_term_debt",
           "statement": "balance_sheet",
           "failCount": 5,
           "avgPct": 0.9636
+        },
+        {
+          "field": "operating_income_loss",
+          "statement": "income",
+          "failCount": 4,
+          "avgPct": 0.1517
         }
       ],
       "results": [
@@ -137907,10 +137787,7 @@
           "statement": "income",
           "msYear": "2021",
           "edgarYear": 2021,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 133605000,
-          "actual": 133605000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -137919,10 +137796,7 @@
           "statement": "income",
           "msYear": "2022",
           "edgarYear": 2022,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 226330000,
-          "actual": 226330000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -137931,10 +137805,7 @@
           "statement": "income",
           "msYear": "2023",
           "edgarYear": 2023,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 316964000,
-          "actual": 316964000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -137943,10 +137814,7 @@
           "statement": "income",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 377675000,
-          "actual": 377675000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -137955,10 +137823,7 @@
           "statement": "income",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 428800000,
-          "actual": 428800000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -137967,10 +137832,7 @@
           "statement": "income",
           "msYear": "2021",
           "edgarYear": 2021,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 1946858000,
-          "actual": 1946858000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -137979,10 +137841,7 @@
           "statement": "income",
           "msYear": "2022",
           "edgarYear": 2022,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 3117351000,
-          "actual": 3117351000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -137991,10 +137850,7 @@
           "statement": "income",
           "msYear": "2023",
           "edgarYear": 2023,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 3762029000,
-          "actual": 3762029000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -138003,10 +137859,7 @@
           "statement": "income",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 4893467000,
-          "actual": 4893467000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -138015,10 +137868,7 @@
           "statement": "income",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 5320577000,
-          "actual": 5320577000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -139687,9 +139537,9 @@
           "msYear": "2021",
           "edgarYear": 2021,
           "status": "DIFF",
-          "pct": 7.638208274460866,
+          "pct": 0.4189674198904714,
           "expected": 1551376000,
-          "actual": 13401109000,
+          "actual": 901400000,
           "tolerance": "close"
         },
         {
@@ -139699,9 +139549,9 @@
           "msYear": "2022",
           "edgarYear": 2022,
           "status": "DIFF",
-          "pct": 4.489041201301556,
+          "pct": 0.7428399730308094,
           "expected": 2729040000,
-          "actual": 14979813000,
+          "actual": 701800000,
           "tolerance": "close"
         },
         {
@@ -139710,10 +139560,10 @@
           "statement": "balance_sheet",
           "msYear": "2023",
           "edgarYear": 2023,
-          "status": "DIFF",
-          "pct": 24.33617525085362,
+          "status": "MATCH",
+          "pct": 0.000013082327084341763,
           "expected": 764390000,
-          "actual": 19366719000,
+          "actual": 764400000,
           "tolerance": "close"
         },
         {
@@ -139723,9 +139573,9 @@
           "msYear": "2024",
           "edgarYear": 2024,
           "status": "DIFF",
-          "pct": 19.10694734830353,
+          "pct": 0.9404530698521767,
           "expected": 1130201000,
-          "actual": 22724892000,
+          "actual": 67300000,
           "tolerance": "close"
         },
         {
@@ -139735,9 +139585,9 @@
           "msYear": "2025",
           "edgarYear": 2025,
           "status": "DIFF",
-          "pct": 11.626554427319371,
+          "pct": 0.744590083887924,
           "expected": 2023414000,
-          "actual": 25548747000,
+          "actual": 516800000,
           "tolerance": "close"
         },
         {
@@ -141616,12 +141466,12 @@
     },
     {
       "ticker": "ODFL",
-      "accuracy": 95.4,
-      "compared": 280,
-      "match": 267,
+      "accuracy": 95.6,
+      "compared": 275,
+      "match": 263,
       "close": 0,
-      "diff": 13,
-      "missing": 76,
+      "diff": 12,
+      "missing": 81,
       "offset": 0,
       "topFailures": [
         {
@@ -144179,10 +144029,7 @@
           "statement": "balance_sheet",
           "msYear": "2021",
           "edgarYear": 2021,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 11501000,
-          "actual": 11501000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -144191,10 +144038,7 @@
           "statement": "balance_sheet",
           "msYear": "2022",
           "edgarYear": 2022,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 11022000,
-          "actual": 11022000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -144203,10 +144047,7 @@
           "statement": "balance_sheet",
           "msYear": "2023",
           "edgarYear": 2023,
-          "status": "DIFF",
-          "pct": 0.499977056853118,
-          "expected": 21793000,
-          "actual": 10897000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -144215,10 +144056,7 @@
           "statement": "balance_sheet",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 21298000,
-          "actual": 21298000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -144227,10 +144065,7 @@
           "statement": "balance_sheet",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 20856000,
-          "actual": 20856000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -150263,11 +150098,11 @@
     },
     {
       "ticker": "POOL",
-      "accuracy": 94,
+      "accuracy": 94.3,
       "compared": 332,
-      "match": 312,
+      "match": 313,
       "close": 0,
-      "diff": 20,
+      "diff": 19,
       "missing": 60,
       "offset": 0,
       "topFailures": [
@@ -152592,10 +152427,10 @@
           "statement": "balance_sheet",
           "msYear": "2021",
           "edgarYear": 2021,
-          "status": "DIFF",
-          "pct": 11.352570828961175,
+          "status": "MATCH",
+          "pct": 0,
           "expected": 953000,
-          "actual": 11772000,
+          "actual": 953000,
           "tolerance": "close"
         },
         {
@@ -154838,11 +154673,11 @@
     },
     {
       "ticker": "SBUX",
-      "accuracy": 95.2,
+      "accuracy": 94.4,
       "compared": 373,
-      "match": 355,
+      "match": 352,
       "close": 2,
-      "diff": 16,
+      "diff": 19,
       "missing": 77,
       "offset": 0,
       "topFailures": [
@@ -154853,16 +154688,16 @@
           "avgPct": 0.215
         },
         {
+          "field": "sale_of_investments",
+          "statement": "cash_flow",
+          "failCount": 5,
+          "avgPct": 0.8396
+        },
+        {
           "field": "other_current_assets",
           "statement": "balance_sheet",
           "failCount": 4,
           "avgPct": 1
-        },
-        {
-          "field": "net_change_in_cash",
-          "statement": "cash_flow",
-          "failCount": 3,
-          "avgPct": 0.3664
         }
       ],
       "results": [
@@ -159172,9 +159007,9 @@
           "msYear": "2021",
           "edgarYear": 2021,
           "status": "DIFF",
-          "pct": 0.29302230407202784,
+          "pct": 0.7255985267034991,
           "expected": 488700000,
-          "actual": 345500000,
+          "actual": 134100000,
           "tolerance": "close"
         },
         {
@@ -159195,10 +159030,10 @@
           "statement": "cash_flow",
           "msYear": "2023",
           "edgarYear": 2023,
-          "status": "MATCH",
-          "pct": 0.004036164029706167,
+          "status": "DIFF",
+          "pct": 0.9959638359702938,
           "expected": 619400000,
-          "actual": 616900000,
+          "actual": 2500000,
           "tolerance": "close"
         },
         {
@@ -159207,10 +159042,10 @@
           "statement": "cash_flow",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "MATCH",
-          "pct": 0.013230571612074502,
+          "status": "DIFF",
+          "pct": 0.998330122029544,
           "expected": 778500000,
-          "actual": 768200000,
+          "actual": 1300000,
           "tolerance": "close"
         },
         {
@@ -159219,10 +159054,10 @@
           "statement": "cash_flow",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "MATCH",
-          "pct": 0.002799694578773225,
+          "status": "DIFF",
+          "pct": 0.9972003054212267,
           "expected": 392900000,
-          "actual": 391800000,
+          "actual": 1100000,
           "tolerance": "close"
         },
         {
@@ -180608,9 +180443,9 @@
           "msYear": "2021",
           "edgarYear": 2021,
           "status": "DIFF",
-          "pct": 19.41747572815534,
+          "pct": 18.41747572815534,
           "expected": 5665000,
-          "actual": 115665000,
+          "actual": 110000000,
           "tolerance": "close"
         },
         {
@@ -185758,12 +185593,12 @@
     },
     {
       "ticker": "V",
-      "accuracy": 89.4,
-      "compared": 301,
-      "match": 269,
+      "accuracy": 89.5,
+      "compared": 295,
+      "match": 264,
       "close": 0,
-      "diff": 32,
-      "missing": 112,
+      "diff": 31,
+      "missing": 118,
       "offset": 0,
       "topFailures": [
         {
@@ -189608,10 +189443,7 @@
           "statement": "cash_flow",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 68000000,
-          "actual": 68000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -189620,10 +189452,7 @@
           "statement": "cash_flow",
           "msYear": "2021",
           "edgarYear": 2021,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 5701000000,
-          "actual": 5701000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -189632,10 +189461,7 @@
           "statement": "cash_flow",
           "msYear": "2022",
           "edgarYear": 2022,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 4585000000,
-          "actual": 4585000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -189644,10 +189470,7 @@
           "statement": "cash_flow",
           "msYear": "2023",
           "edgarYear": 2023,
-          "status": "DIFF",
-          "pct": 0.1128579449747333,
-          "expected": 3562000000,
-          "actual": 3160000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -189656,10 +189479,7 @@
           "statement": "cash_flow",
           "msYear": "2024",
           "edgarYear": 2024,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 5013000000,
-          "actual": 5013000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -189668,10 +189488,7 @@
           "statement": "cash_flow",
           "msYear": "2025",
           "edgarYear": 2025,
-          "status": "MATCH",
-          "pct": 0,
-          "expected": 3024000000,
-          "actual": 3024000000,
+          "status": "MISSING_FIELD",
           "tolerance": "close"
         },
         {
@@ -214968,9 +214785,9 @@
           "msYear": "2021",
           "edgarYear": 2021,
           "status": "DIFF",
-          "pct": 0.22436592383283002,
+          "pct": 0.3989553951053653,
           "expected": 2409332000,
-          "actual": 1868760000,
+          "actual": 1448116000,
           "tolerance": "close"
         },
         {
@@ -215673,41 +215490,17 @@
       ]
     },
     {
-      "field": "purchase_of_investments (cash_flow)",
-      "totalFailures": 36,
-      "companyCount": 14,
-      "companies": [
-        "CRM",
-        "EQIX",
-        "EW",
-        "GOOGL",
-        "LEN",
-        "MET",
-        "META",
-        "MLI",
-        "NEM",
-        "NVDA",
-        "ODFL",
-        "ULTA",
-        "WFC",
-        "XYZ"
-      ]
-    },
-    {
       "field": "sale_of_investments (cash_flow)",
       "totalFailures": 36,
-      "companyCount": 12,
+      "companyCount": 9,
       "companies": [
         "CRM",
-        "EW",
         "INTU",
         "JPM",
         "LEN",
         "MET",
-        "MLI",
         "MSFT",
         "SBUX",
-        "V",
         "WFC",
         "XYZ"
       ]
@@ -215801,6 +215594,25 @@
         "NEM",
         "TSCO",
         "TXRH"
+      ]
+    },
+    {
+      "field": "purchase_of_investments (cash_flow)",
+      "totalFailures": 27,
+      "companyCount": 12,
+      "companies": [
+        "CRM",
+        "EQIX",
+        "EW",
+        "GOOGL",
+        "MET",
+        "META",
+        "MLI",
+        "NVDA",
+        "ODFL",
+        "ULTA",
+        "WFC",
+        "XYZ"
       ]
     },
     {
