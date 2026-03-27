@@ -864,7 +864,7 @@ function getDerivedFormula(field, inc, bal, cf) {
     case 'net_debt_issuance': return '(proceeds_lt_debt + proceeds_st_debt) - (repayments_lt_debt + repayments_st_debt)';
     case 'net_common_stock': return 'proceeds_from_stock_issuance - |share_repurchases|';
     case 'change_in_working_capital': return 'change_in_receivables + change_in_inventory + change_in_payables + change_in_other_wc';
-    case 'net_change_in_cash': return 'operating_cf + investing_cf + financing_cf + fx_effect';
+    case 'net_change_in_cash': return 'operating_cf + investing_cf + financing_cf';
     case 'capital_expenditures_net': return '-|capital_expenditures| + sale_of_ppe';
     case 'purchase_sale_of_business_net': return 'sale_of_business - |purchase_of_business|';
     case 'net_lt_debt_issuance': return 'proceeds_from_lt_debt - |repayments_of_lt_debt|';
@@ -1360,14 +1360,16 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       }
     }
 
-    // Net change in cash = Op + Inv + Fin + FX
+    // Net change in cash = Op + Inv + Fin (excluding FX effect)
+    // MS "Change in Cash" = Op + Inv + Fin per DataID analysis.
+    // Verified: GOOGL 2021 MS=-5233M = Op(91652)+Inv(-35523)+Fin(-61362).
+    // Engine was adding FX(-287M) -> -5520M. MS excludes FX.
     if (cf.net_change_in_cash == null) {
       const op = cf.net_cash_flow_from_operating_activities;
       const inv = cf.net_cash_flow_from_investing_activities;
       const fin = cf.net_cash_flow_from_financing_activities;
-      const fx = cf.effect_of_exchange_rate ?? 0;
       if (op != null && inv != null && fin != null) {
-        cf.net_change_in_cash = op + inv + fin + fx;
+        cf.net_change_in_cash = op + inv + fin;
       }
     }
 

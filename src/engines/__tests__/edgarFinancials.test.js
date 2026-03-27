@@ -27,7 +27,7 @@ vi.mock('../splits', () => ({
 }));
 
 // Import the taxonomies, computeDerivedFields, and provenance helpers for testing
-const { INCOME_TAXONOMY, BALANCE_TAXONOMY, CASHFLOW_TAXONOMY, computeDerivedFields, computeTTM, extractSection, buildProvenance } = await import('../edgarFinancials');
+const { INCOME_TAXONOMY, BALANCE_TAXONOMY, CASHFLOW_TAXONOMY, computeDerivedFields, computeTTM, extractSection, buildProvenance, getDerivedFormula } = await import('../edgarFinancials');
 const { extractAnnualFact } = await import('../edgar');
 
 describe('Fix 2 (P1b): Cash tag — restricted cash included', () => {
@@ -1525,5 +1525,53 @@ describe('Plan 07: common_stock additional tag', () => {
     const primaryIdx = field.tags.indexOf('CommonStockValue');
     const outstandingIdx = field.tags.indexOf('CommonStockValueOutstanding');
     expect(primaryIdx).toBeLessThan(outstandingIdx);
+  });
+});
+
+// ─── Plan 08: net_change_in_cash excludes FX ─────────────────
+
+describe('net_change_in_cash derivation (Plan 08)', () => {
+  it('excludes FX effect from net_change_in_cash', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      net_cash_flow_from_operating_activities: 91652000000,
+      net_cash_flow_from_investing_activities: -35523000000,
+      net_cash_flow_from_financing_activities: -61362000000,
+      effect_of_exchange_rate: -287000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Should be Op + Inv + Fin WITHOUT FX
+    // 91652 + (-35523) + (-61362) = -5233 (in millions: -5233000000)
+    expect(cashFlow[2024].net_change_in_cash).toBe(-5233000000);
+  });
+
+  it('does not derive when net_change_in_cash already set', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      net_change_in_cash: -999000000,
+      net_cash_flow_from_operating_activities: 91652000000,
+      net_cash_flow_from_investing_activities: -35523000000,
+      net_cash_flow_from_financing_activities: -61362000000,
+      effect_of_exchange_rate: -287000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Should keep the pre-existing value
+    expect(cashFlow[2024].net_change_in_cash).toBe(-999000000);
+  });
+
+  it('getDerivedFormula excludes fx_effect', () => {
+    const formula = getDerivedFormula('net_change_in_cash');
+    expect(formula).not.toContain('fx');
+    expect(formula).toContain('operating_cf');
+    expect(formula).toContain('investing_cf');
+    expect(formula).toContain('financing_cf');
   });
 });

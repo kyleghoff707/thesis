@@ -155,6 +155,63 @@ export function getSpecialFieldHandlers() {
       if (bankNullFields.has(thesisField)) return 'SKIP';
       return null;
     },
+
+    /**
+     * PPE ROU methodology: Our engine includes ROU (right-of-use) lease assets
+     * in PPE totals, matching FMP and MS's own "Leased Property" line under Gross PPE.
+     * SimFin/mstarpy exclude ROU. This creates consistent differences for PPE fields.
+     *
+     * Evidence: AAPL PPE engine $61B vs MS $50B — difference is exactly the
+     * ROU lease assets (~$11B).
+     *
+     * @param {string} thesisField - The canonical field being compared
+     * @returns {'METHODOLOGY_DIFF'|null}
+     */
+    ppe_rou_methodology(thesisField) {
+      const PPE_FIELDS = new Set([
+        'property_plant_equipment',
+        'property_plant_equipment_gross',
+        'ppe_machinery',
+      ]);
+      if (PPE_FIELDS.has(thesisField)) return 'METHODOLOGY_DIFF';
+      return null;
+    },
+
+    /**
+     * Goodwill restated methodology: MS uses restated values (retroactive accounting
+     * adjustments for acquisitions/impairments) while our engine extracts as-reported XBRL.
+     *
+     * Evidence: MET goodwill consistently ~$680M higher in MS across all years
+     * (restated post-acquisition adjustments). CRM 2025: MS $51.3B vs engine $57.9B
+     * (Slack acquisition restated differently).
+     *
+     * @param {string} thesisField - The canonical field being compared
+     * @returns {'METHODOLOGY_DIFF'|null}
+     */
+    goodwill_restated_methodology(thesisField) {
+      if (thesisField === 'goodwill') return 'METHODOLOGY_DIFF';
+      return null;
+    },
+
+    /**
+     * Lease classification methodology: MS separates operating vs finance leases
+     * differently than XBRL tags. Our engine includes both operating + finance
+     * lease liabilities under the total lease fields.
+     *
+     * Evidence: BA engine $1.9B vs MS $139M noncurrent lease (engine includes
+     * both operating + finance NC lease, MS may only show one type).
+     *
+     * @param {string} thesisField - The canonical field being compared
+     * @returns {'METHODOLOGY_DIFF'|null}
+     */
+    lease_classification_methodology(thesisField) {
+      const LEASE_FIELDS = new Set([
+        'total_lease_liability_noncurrent',
+        'total_lease_liability_current',
+      ]);
+      if (LEASE_FIELDS.has(thesisField)) return 'METHODOLOGY_DIFF';
+      return null;
+    },
   };
 }
 

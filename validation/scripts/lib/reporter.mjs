@@ -22,6 +22,7 @@ function tallyResults(results) {
   let diff = 0;
   let missing = 0;
   let skipped = 0;
+  let methodologyDiff = 0;
 
   for (const r of results) {
     switch (r.status) {
@@ -32,14 +33,16 @@ function tallyResults(results) {
       case 'MISSING_YEAR': missing++; break;
       case 'SKIP_SPINOFF':
       case 'SKIP_EUR':
+      case 'SKIP_BANK_TEMPLATE':
       case 'ENGINE_ERROR': skipped++; break;
+      case 'METHODOLOGY_DIFF': methodologyDiff++; break;
     }
   }
 
   const compared = match + close + diff;
   const accuracy = compared > 0 ? (match / compared) * 100 : 0;
 
-  return { match, close, diff, missing, skipped, compared, accuracy };
+  return { match, close, diff, missing, skipped, methodologyDiff, compared, accuracy };
 }
 
 /**
@@ -140,6 +143,7 @@ export function generateConsoleReport(allResults) {
   let totalDiff = 0;
   let totalMissing = 0;
   let totalSkipped = 0;
+  let totalMethodologyDiff = 0;
   let totalCompared = 0;
 
   // Sort companies alphabetically
@@ -153,6 +157,7 @@ export function generateConsoleReport(allResults) {
     if (tally.close > 0) parts.push(`${tally.close} close`);
     if (tally.missing > 0) parts.push(`${tally.missing} missing`);
     if (tally.diff > 0) parts.push(`${tally.diff} DIFF`);
+    if (tally.methodologyDiff > 0) parts.push(`${tally.methodologyDiff} meth`);
     if (offset !== 0) parts.push(`offset:${offset}`);
     if (tally.skipped > 0) parts.push(`${tally.skipped} skipped`);
 
@@ -170,6 +175,7 @@ export function generateConsoleReport(allResults) {
     totalDiff += tally.diff;
     totalMissing += tally.missing;
     totalSkipped += tally.skipped;
+    totalMethodologyDiff += tally.methodologyDiff;
     totalCompared += tally.compared;
   }
 
@@ -178,7 +184,7 @@ export function generateConsoleReport(allResults) {
     ? ((totalMatch / totalCompared) * 100).toFixed(1)
     : '0.0';
   lines.push(
-    `OVERALL: ${totalMatch}/${totalCompared} (${overallPct}%) match | ${totalClose} close | ${totalMissing} missing | ${totalDiff} DIFF`
+    `OVERALL: ${totalMatch}/${totalCompared} (${overallPct}%) match | ${totalClose} close | ${totalMissing} missing | ${totalDiff} DIFF | ${totalMethodologyDiff} methodology`
   );
 
   // Top failure patterns
@@ -209,6 +215,7 @@ export function generateJsonReport(allResults) {
   let totalDiff = 0;
   let totalMissing = 0;
   let totalSkipped = 0;
+  let totalMethodologyDiff = 0;
   let totalCompared = 0;
 
   const companies = [];
@@ -224,6 +231,7 @@ export function generateJsonReport(allResults) {
     totalDiff += tally.diff;
     totalMissing += tally.missing;
     totalSkipped += tally.skipped;
+    totalMethodologyDiff += tally.methodologyDiff;
     totalCompared += tally.compared;
 
     companies.push({
@@ -233,6 +241,7 @@ export function generateJsonReport(allResults) {
       match: tally.match,
       close: tally.close,
       diff: tally.diff,
+      methodologyDiff: tally.methodologyDiff,
       missing: tally.missing,
       offset,
       topFailures: getTopFailures(results, 3),
@@ -254,6 +263,7 @@ export function generateJsonReport(allResults) {
       totalDiff,
       totalMissing,
       totalSkipped,
+      totalMethodologyDiff,
     },
     companies,
     topFailurePatterns: getTopFailurePatterns(allResults, 15),

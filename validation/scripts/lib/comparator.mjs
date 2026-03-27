@@ -208,6 +208,24 @@ export function compareCompany(ticker, fixture, engineData, fieldMapping, option
           mapInfo.tolerance
         );
 
+        // Methodology diff reclassification: if the comparison is DIFF and a
+        // methodology handler recognizes the field, reclassify as METHODOLOGY_DIFF.
+        // Genuine MATCHes are preserved (the methodology difference may cancel out
+        // or be within tolerance for some years).
+        if (comparison.status === 'DIFF') {
+          const methHandlers = [
+            specialHandlers.ppe_rou_methodology,
+            specialHandlers.goodwill_restated_methodology,
+            specialHandlers.lease_classification_methodology,
+          ];
+          for (const handler of methHandlers) {
+            if (handler && handler(mapInfo.thesisField) === 'METHODOLOGY_DIFF') {
+              comparison.status = 'METHODOLOGY_DIFF';
+              break;
+            }
+          }
+        }
+
         // Relax tolerance for financial-sector companies on revenue and debt fields
         let effectiveTolerance = mapInfo.tolerance;
         if (FINANCIAL_SECTOR.has(ticker)) {
