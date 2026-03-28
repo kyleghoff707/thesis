@@ -50,8 +50,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Test scaffold, mock fixture, and contextBudget model ID fix (API-01, API-04, API-05, FIX-02)
-- [ ] 08-02-PLAN.md — aiResearch.js dispatch engine + live integration test (API-01, API-04, API-05, FIX-02)
+- [x] 08-01-PLAN.md — Test scaffold, mock fixture, and contextBudget model ID fix (API-01, API-04, API-05, FIX-02)
+- [x] 08-02-PLAN.md — aiResearch.js dispatch engine + live integration test (API-01, API-04, API-05, FIX-02)
 
 ### Phase 9: Parallel Dispatch & Caching
 **Goal**: Multiple agents run concurrently with shared prompt caching, and every API call's cost is tracked

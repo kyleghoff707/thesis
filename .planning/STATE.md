@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
 status: Ready to plan
-stopped_at: Phase 8 context gathered
-last_updated: "2026-03-28T16:08:57.513Z"
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-03-28T17:15:25.891Z"
 progress:
   total_phases: 5
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 3
+  completed_phases: 2
+  total_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours -- delivered in minutes, with zero shortcuts on rigor.
-**Current focus:** Phase 07 — schema-sdk-foundation
+**Current focus:** Phase 08 — core-agent-dispatch
 
 ## Current Position
 
-Phase: 8
+Phase: 9
 Plan: Not started
 
 ## Performance Metrics
@@ -57,6 +57,11 @@ Recent decisions affecting current work:
 - [Phase 07-schema-sdk-foundation]: critic.js scoreCompleteness handles both string and object data with JSON.parse fallback
 - [Phase 07]: Use claude-sonnet-4-6 (not claude-sonnet-4-20250514) for structured outputs -- older models do not support output_config
 - [Phase 07]: Node.js scripts calling Anthropic SDK must use dotenv directly, not nodeAdapter.js -- its fetch patch strips SDK auth headers
+- [Phase 08-core-agent-dispatch]: DEFAULT_MODEL changed to claude-sonnet-4-6 (older ID does not support output_config structured outputs)
+- [Phase 08-core-agent-dispatch]: computeCost extended with optional cacheReadTokens/cacheWriteTokens for prompt caching cost tracking
+- [Phase 08-core-agent-dispatch]: Web search cost is $0.01 per request, included in buildUsage cost calculation
+- [Phase 08]: Web search enabled for all agents — prompt governs usage, not config
+- [Phase 08]: Space-tolerant domain matching in enrichCitationsWithURLs for fuzzy citation URL enrichment
 
 ### Roadmap Evolution
 
@@ -81,9 +86,11 @@ None yet.
 | 260326-pmc | Create human-readable quality report formatter (qualityFormatter.js) | 2026-03-27 | 0dea04a | [260326-pmc-create-human-readable-quality-report-for](./quick/260326-pmc-create-human-readable-quality-report-for/) |
 | Phase 07-schema-sdk-foundation P01 | 6min | 2 tasks | 4 files |
 | Phase 07 P02 | 19min | 2 tasks | 3 files |
+| Phase 08-core-agent-dispatch P01 | 5min | 3 tasks | 4 files |
+| Phase 08 P02 | 7min | 2 tasks | 4 files |
 
 ## Session Continuity
 
-Last session: 2026-03-28T16:08:57.508Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-core-agent-dispatch/08-CONTEXT.md
+Last session: 2026-03-28T16:57:36.107Z
+Stopped at: Completed 08-02-PLAN.md
+Resume file: None
