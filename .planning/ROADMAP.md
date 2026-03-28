@@ -47,7 +47,11 @@ Plans:
   2. Agent performs web searches during its turn, and the orchestrator extracts actual URLs from `web_search_tool_result` blocks and injects them into citation `source` fields
   3. When an API call fails (rate limit, timeout, max_tokens truncation), the system retries once with context, then escalates -- partial results are never silently lost
   4. The dispatched agent's narrative field contains 800+ words of substantive analysis (not stubs or summaries)
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Test scaffold, mock fixture, and contextBudget model ID fix (API-01, API-04, API-05, FIX-02)
+- [ ] 08-02-PLAN.md — aiResearch.js dispatch engine + live integration test (API-01, API-04, API-05, FIX-02)
 
 ### Phase 9: Parallel Dispatch & Caching
 **Goal**: Multiple agents run concurrently with shared prompt caching, and every API call's cost is tracked
@@ -91,7 +95,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 7. Schema & SDK Foundation | 0/2 | Planning | - |
-| 8. Core Agent Dispatch | 0/TBD | Not started | - |
+| 8. Core Agent Dispatch | 0/2 | Planning | - |
 | 9. Parallel Dispatch & Caching | 0/TBD | Not started | - |
 | 10. Pipeline Integration & Prompt Fixes | 0/TBD | Not started | - |
 | 11. Validation | 0/TBD | Not started | - |
