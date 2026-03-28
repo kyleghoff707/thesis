@@ -1,0 +1,190 @@
+{
+  "successResponse": {
+    "id": "msg_mock_001",
+    "type": "message",
+    "role": "assistant",
+    "model": "claude-sonnet-4-6",
+    "stop_reason": "end_turn",
+    "content": [
+      {
+        "type": "text",
+        "text": "Let me research this company..."
+      },
+      {
+        "type": "server_tool_use",
+        "id": "toolu_mock_1",
+        "name": "web_search",
+        "input": { "query": "SFM Sprouts Farmers Market revenue 2025" }
+      },
+      {
+        "type": "web_search_tool_result",
+        "tool_use_id": "toolu_mock_1",
+        "content": [
+          {
+            "type": "web_search_result",
+            "url": "https://www.reuters.com/markets/companies/SFM/",
+            "title": "Sprouts Farmers Market Inc (SFM) Company Profile",
+            "page_age": "2d"
+          },
+          {
+            "type": "web_search_result",
+            "url": "https://finance.yahoo.com/quote/SFM/",
+            "title": "Sprouts Farmers Market Inc (SFM) Stock Price",
+            "page_age": "1d"
+          },
+          {
+            "type": "web_search_result",
+            "url": "https://www.macrotrends.net/stocks/charts/SFM/sprouts-farmers-market/revenue",
+            "title": "Sprouts Revenue 2015-2025",
+            "page_age": "7d"
+          }
+        ]
+      },
+      {
+        "type": "server_tool_use",
+        "id": "toolu_mock_2",
+        "name": "web_search",
+        "input": { "query": "Sprouts Farmers Market competitive advantages moat" }
+      },
+      {
+        "type": "web_search_tool_result",
+        "tool_use_id": "toolu_mock_2",
+        "content": [
+          {
+            "type": "web_search_result",
+            "url": "https://seekingalpha.com/article/sfm-analysis",
+            "title": "SFM: A Specialty Grocery Moat",
+            "page_age": "14d"
+          },
+          {
+            "type": "web_search_result",
+            "url": "https://www.fool.com/investing/sfm-competitive-position",
+            "title": "Is Sprouts a Buy?",
+            "page_age": "30d"
+          }
+        ]
+      },
+      {
+        "type": "text",
+        "text": "{\"key\":\"radar\",\"title\":\"Radar: Simple and Predictable\"}"
+      }
+    ],
+    "parsed_output": {
+      "key": "radar",
+      "title": "Radar: Simple and Predictable",
+      "sectionNumber": 1,
+      "status": "pass",
+      "confidence": "HIGH",
+      "verdict": "PASS",
+      "verdictRationale": "SFM demonstrates a simple, predictable business model centered on specialty grocery retail with consistent revenue growth and expanding store footprint.",
+      "summary": "Sprouts operates a straightforward specialty grocery model focused on health-conscious consumers with predictable unit economics and steady same-store sales growth.",
+      "data": "{\"ticker\":\"SFM\",\"sector\":\"Consumer Defensive\",\"simpleScore\":8,\"predictableScore\":7}",
+      "narrative": "Sprouts Farmers Market represents a compelling case study in specialty grocery retail simplicity. The company operates a focused business model centered on health-conscious consumers seeking fresh, natural, and organic products at competitive prices. Founded in 2002, SFM has grown to over 430 stores across 23 states, primarily concentrated in the Sun Belt region. The business model is straightforward: smaller-format stores (approximately 28,000 square feet versus 45,000+ for conventional grocers) with a curated product selection emphasizing fresh produce, vitamins, and specialty items. This focused approach enables higher inventory turns and stronger per-square-foot economics compared to conventional grocery competitors.\n\nFrom a predictability standpoint, SFM scores well on several key metrics. Revenue has grown at a compound annual growth rate of approximately 12% over the past five years, driven by a combination of new store openings (30-35 per year) and positive same-store sales growth averaging 3-5% annually. The company's unit economics are well-established, with new stores typically achieving four-wall EBITDA margins of 8-10% within their first year of operation. Gross margins have remained remarkably stable in the 36-38% range, reflecting the company's pricing discipline and product mix consistency.\n\nThe competitive landscape for specialty grocery has evolved, with Whole Foods (now Amazon-owned) as the primary comparable. However, SFM differentiates through its value-oriented positioning within the natural/organic segment, targeting the price-conscious health enthusiast rather than the premium shopper. This positioning has proven resilient through multiple economic cycles. Management has maintained disciplined capital allocation, with capital expenditure as a percentage of revenue consistently in the 4-5% range, primarily directed toward new store development and existing store renovations.\n\nSFM's financial performance demonstrates the hallmarks of a predictable business: consistent top-line growth, stable margins, strong cash flow generation, and a clear path to continued expansion within its addressable market. The company's balance sheet is conservatively managed with manageable debt levels and strong free cash flow conversion. However, investors should note the geographic concentration risk in Sun Belt states and the potential vulnerability of premium-priced products during economic downturns. Despite these concerns, the fundamental simplicity of the buy-groceries-sell-groceries model, combined with SFM's proven execution record, earns a passing grade on the Simple and Predictable evaluation.",
+      "citations": [
+        {
+          "id": 1,
+          "ref": "dataPacket.companyInfo.sector",
+          "text": "Consumer Defensive",
+          "source": "DataPacket"
+        },
+        {
+          "id": 2,
+          "ref": "annual-report-2024",
+          "text": "Revenue grew 12% YoY",
+          "source": "SFM 10-K FY2024"
+        },
+        {
+          "id": 3,
+          "ref": "web-search-1",
+          "text": "SFM reported Q4 revenue of $2.2B",
+          "source": "Reuters",
+          "url": "https://www.reuters.com/markets/companies/SFM/"
+        },
+        {
+          "id": 4,
+          "ref": "web-search-2",
+          "text": "Specialty grocery market growing 8% CAGR",
+          "source": "Seeking Alpha"
+        },
+        {
+          "id": 5,
+          "ref": "web-search-3",
+          "text": "SFM has 430+ stores nationwide",
+          "source": "Motley Fool"
+        }
+      ],
+      "tables": [],
+      "charts": [],
+      "redFlags": [
+        "Geographic concentration in Sun Belt states",
+        "Premium pricing vulnerability in recession"
+      ],
+      "primarySourceInsights": [],
+      "crossCuttingFindings": [],
+      "searchesPerformed": [
+        {
+          "query": "SFM revenue 2025",
+          "resultCount": 3,
+          "usedInSection": true
+        },
+        {
+          "query": "Sprouts competitive advantages moat",
+          "resultCount": 2,
+          "usedInSection": true
+        }
+      ],
+      "modelUsed": "business-analyst",
+      "tokenCost": { "input": 0, "output": 0 }
+    },
+    "usage": {
+      "input_tokens": 45230,
+      "output_tokens": 3842,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "server_tool_use": {
+        "web_search_requests": 2
+      }
+    }
+  },
+  "maxTokensResponse": {
+    "id": "msg_mock_002",
+    "type": "message",
+    "role": "assistant",
+    "model": "claude-sonnet-4-6",
+    "stop_reason": "max_tokens",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"key\":\"radar\",\"title\":\"Radar: Simple and"
+      }
+    ],
+    "parsed_output": null,
+    "usage": {
+      "input_tokens": 45230,
+      "output_tokens": 16384,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "server_tool_use": {
+        "web_search_requests": 0
+      }
+    }
+  },
+  "refusalResponse": {
+    "id": "msg_mock_003",
+    "type": "message",
+    "role": "assistant",
+    "model": "claude-sonnet-4-6",
+    "stop_reason": "refusal",
+    "content": [],
+    "parsed_output": null,
+    "usage": {
+      "input_tokens": 45230,
+      "output_tokens": 100,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "server_tool_use": {
+        "web_search_requests": 0
+      }
+    }
+  }
+}
