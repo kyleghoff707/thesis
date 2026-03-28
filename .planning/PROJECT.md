@@ -161,4 +161,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after milestone v1.1 initialization*
+*Last updated: 2026-03-28 after Phase 7 (Schema & SDK Foundation) complete — ReportSectionSchema works with Claude API structured outputs, SDK upgraded to 0.80.0, live smoke tests pass*
