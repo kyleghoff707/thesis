@@ -32,7 +32,11 @@ Migrate the Pitch Deck pipeline from Claude Code subagent orchestration to direc
   1. `zodOutputFormat(ReportSectionSchema)` produces a valid JSON Schema accepted by the Claude API (no 400 errors on schema compilation)
   2. A single live API call with the adapted schema returns `stop_reason: "end_turn"` and `parsed_output` is populated with valid section data
   3. Citation objects in the parsed output include an optional `url` field available for web search results
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Schema modification + critic backward compatibility (FMT-01, FMT-02)
+- [ ] 07-02-PLAN.md — SDK upgrade + live two-stage smoke test (FMT-03)
 
 ### Phase 8: Core Agent Dispatch
 **Goal**: A single analysis agent produces a complete, quality section via direct Claude API call with web search and structured output
@@ -86,7 +90,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 7. Schema & SDK Foundation | 0/TBD | Not started | - |
+| 7. Schema & SDK Foundation | 0/2 | Planning | - |
 | 8. Core Agent Dispatch | 0/TBD | Not started | - |
 | 9. Parallel Dispatch & Caching | 0/TBD | Not started | - |
 | 10. Pipeline Integration & Prompt Fixes | 0/TBD | Not started | - |
