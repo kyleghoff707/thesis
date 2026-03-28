@@ -209,6 +209,43 @@ describe('QUAL-02: Completeness Scoring', () => {
   });
 });
 
+// ─── FMT-01: scoreCompleteness handles string data field ────────────
+
+describe('FMT-01: scoreCompleteness handles string data field', () => {
+  it('should count keys when data is a valid JSON string', () => {
+    const section = {
+      ...companyInfoSection,
+      data: '{"ticker":"AAPL","price":150,"sector":"Tech"}',
+    };
+    const result = scoreCompleteness(section);
+    expect(result.dataFieldsPopulated).toBe(3);
+  });
+
+  it('should return 0 keys when data is an invalid JSON string', () => {
+    const section = {
+      ...companyInfoSection,
+      data: 'not valid json at all',
+    };
+    const result = scoreCompleteness(section);
+    expect(result.dataFieldsPopulated).toBe(0);
+  });
+
+  it('should return 0 keys when data is null', () => {
+    const section = {
+      ...companyInfoSection,
+      data: null,
+    };
+    const result = scoreCompleteness(section);
+    expect(result.dataFieldsPopulated).toBe(0);
+  });
+
+  it('should still count keys when data is an object (backward compat)', () => {
+    // companyInfoSection.data is an object — existing behavior preserved
+    const result = scoreCompleteness(companyInfoSection);
+    expect(result.dataFieldsPopulated).toBeGreaterThan(0);
+  });
+});
+
 // ─── QUAL-03: Confidence Validation ─────────────────────────────────
 
 describe('QUAL-03: Confidence Validation', () => {
