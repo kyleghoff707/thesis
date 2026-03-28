@@ -14,9 +14,7 @@
         "type": "server_tool_use",
         "id": "toolu_mock_1",
         "name": "web_search",
-        "input": {
-          "query": "SFM Sprouts Farmers Market revenue 2025"
-        }
+        "input": { "query": "SFM Sprouts Farmers Market revenue 2025" }
       },
       {
         "type": "web_search_tool_result",
@@ -46,9 +44,7 @@
         "type": "server_tool_use",
         "id": "toolu_mock_2",
         "name": "web_search",
-        "input": {
-          "query": "Sprouts Farmers Market competitive advantages moat"
-        }
+        "input": { "query": "Sprouts Farmers Market competitive advantages moat" }
       },
       {
         "type": "web_search_tool_result",
@@ -70,7 +66,7 @@
       },
       {
         "type": "text",
-        "text": "{\"key\":\"radar\",\"title\":\"Radar: Simple and Predictable\",\"sectionNumber\":1,\"status\":\"pass\",\"confidence\":\"HIGH\",\"verdict\":\"PASS\",\"verdictRationale\":\"SFM demonstrates a simple, predictable business model...\",\"summary\":\"Sprouts operates a straightforward specialty grocery model...\",\"data\":\"{}\",\"narrative\":\"...\",\"citations\":[],\"redFlags\":[\"Geographic concentration\"],\"modelUsed\":\"business-analyst\",\"tokenCost\":{\"input\":0,\"output\":0}}"
+        "text": "{\"key\":\"radar\",\"title\":\"Radar: Simple and Predictable\"}"
       }
     ],
     "parsed_output": {
@@ -80,10 +76,10 @@
       "status": "pass",
       "confidence": "HIGH",
       "verdict": "PASS",
-      "verdictRationale": "SFM demonstrates a simple, predictable business model with clear unit economics. The company operates specialty grocery stores focused on natural and organic products, generating consistent revenue growth of 8-12% annually over the past five years. The business model is easy to understand: source natural/organic products, sell them at premium prices in attractive store environments, and grow by opening new locations in underserved markets.",
-      "summary": "Sprouts operates a straightforward specialty grocery model focused on natural and organic products with consistent 8-12% annual revenue growth, strong unit economics, and a clear expansion runway.",
+      "verdictRationale": "SFM demonstrates a simple, predictable business model centered on specialty grocery retail with consistent revenue growth and expanding store footprint.",
+      "summary": "Sprouts operates a straightforward specialty grocery model focused on health-conscious consumers with predictable unit economics and steady same-store sales growth.",
       "data": "{\"ticker\":\"SFM\",\"sector\":\"Consumer Defensive\",\"simpleScore\":8,\"predictableScore\":7}",
-      "narrative": "Sprouts Farmers Market represents one of the clearest simple-and-predictable stories in the consumer defensive sector. The business model is elegantly straightforward: operate specialty grocery stores focused on natural and organic products, primarily fresh produce, in a distinctive open-layout format that creates a farmers-market shopping experience.\n\nThe company has demonstrated remarkable predictability in its financial performance. Revenue has grown at a compound annual growth rate of approximately 10% over the past five years, driven by a combination of new store openings (approximately 25-30 per year) and comparable store sales growth averaging 3-5% annually. This dual-engine growth model provides visibility into future performance that few retailers can match.\n\nFrom a unit economics perspective, each new Sprouts store costs approximately $3-4 million to build and generates average annual revenue of $18-20 million within its first two years of operation. This translates to a payback period of approximately 2-3 years, which is exceptional by retail standards. The company's gross margins have remained stable in the 36-38% range, reflecting disciplined pricing and strong supplier relationships.\n\nThe simplicity of the business extends to its competitive positioning. Unlike traditional grocery chains that compete primarily on price, Sprouts competes on product quality, freshness, and the shopping experience. This differentiation allows for premium pricing while maintaining strong customer loyalty. The company's target demographic, health-conscious consumers willing to pay more for natural and organic products, represents a growing and resilient market segment.\n\nManagement has been transparent and consistent in communicating the growth strategy. CEO Jack Sinclair has articulated a clear vision of reaching 1,500+ stores nationally (currently approximately 430), providing a long runway for growth. Store opening cadence has been steady, and the company has demonstrated the ability to enter new markets successfully.\n\nThe predictability of the business is further evidenced by the company's consistent free cash flow generation. Operating cash flow has grown from approximately $350 million in 2020 to over $550 million in the trailing twelve months, supporting both organic growth and share repurchases. Capital expenditure requirements are well understood and primarily consist of new store construction and maintenance capex for existing locations.\n\nKey risks to predictability include potential disruption from online grocery delivery services, though Sprouts' focus on fresh produce provides some natural protection as these items are difficult to commoditize in a delivery model. Additionally, the company's geographic concentration in Sun Belt states creates some vulnerability to regional economic downturns.\n\nOverall, Sprouts Farmers Market scores well on both the simple and predictable dimensions. The business model is easy to understand, the financial performance is consistent and visible, and the growth strategy is clearly articulated and being executed effectively. This is a business that a Rule One investor can follow with confidence.",
+      "narrative": "Sprouts Farmers Market represents a compelling case study in specialty grocery retail simplicity. The company operates a focused business model centered on health-conscious consumers seeking fresh, natural, and organic products at competitive prices. Founded in 2002, SFM has grown to over 430 stores across 23 states, primarily concentrated in the Sun Belt region. The business model is straightforward: smaller-format stores (approximately 28,000 square feet versus 45,000+ for conventional grocers) with a curated product selection emphasizing fresh produce, vitamins, and specialty items. This focused approach enables higher inventory turns and stronger per-square-foot economics compared to conventional grocery competitors.\n\nFrom a predictability standpoint, SFM scores well on several key metrics. Revenue has grown at a compound annual growth rate of approximately 12% over the past five years, driven by a combination of new store openings (30-35 per year) and positive same-store sales growth averaging 3-5% annually. The company's unit economics are well-established, with new stores typically achieving four-wall EBITDA margins of 8-10% within their first year of operation. Gross margins have remained remarkably stable in the 36-38% range, reflecting the company's pricing discipline and product mix consistency.\n\nThe competitive landscape for specialty grocery has evolved, with Whole Foods (now Amazon-owned) as the primary comparable. However, SFM differentiates through its value-oriented positioning within the natural/organic segment, targeting the price-conscious health enthusiast rather than the premium shopper. This positioning has proven resilient through multiple economic cycles. Management has maintained disciplined capital allocation, with capital expenditure as a percentage of revenue consistently in the 4-5% range, primarily directed toward new store development and existing store renovations.\n\nSFM's financial performance demonstrates the hallmarks of a predictable business: consistent top-line growth, stable margins, strong cash flow generation, and a clear path to continued expansion within its addressable market. The company's balance sheet is conservatively managed with manageable debt levels and strong free cash flow conversion. However, investors should note the geographic concentration risk in Sun Belt states and the potential vulnerability of premium-priced products during economic downturns. Despite these concerns, the fundamental simplicity of the buy-groceries-sell-groceries model, combined with SFM's proven execution record, earns a passing grade on the Simple and Predictable evaluation.",
       "citations": [
         {
           "id": 1,
@@ -138,10 +134,7 @@
         }
       ],
       "modelUsed": "business-analyst",
-      "tokenCost": {
-        "input": 0,
-        "output": 0
-      }
+      "tokenCost": { "input": 0, "output": 0 }
     },
     "usage": {
       "input_tokens": 45230,
@@ -162,41 +155,17 @@
     "content": [
       {
         "type": "text",
-        "text": "Let me analyze this company..."
-      },
-      {
-        "type": "server_tool_use",
-        "id": "toolu_mock_3",
-        "name": "web_search",
-        "input": {
-          "query": "SFM Sprouts Farmers Market financials"
-        }
-      },
-      {
-        "type": "web_search_tool_result",
-        "tool_use_id": "toolu_mock_3",
-        "content": [
-          {
-            "type": "web_search_result",
-            "url": "https://finance.yahoo.com/quote/SFM/financials/",
-            "title": "SFM Financials",
-            "page_age": "1d"
-          }
-        ]
-      },
-      {
-        "type": "text",
-        "text": "{\"key\":\"radar\",\"title\":\"Radar: Simple and Predictable\",\"sectionNumber\":1,\"status\":\"pass\",\"confidence\":\"HIGH\",\"verdict\":\"PASS\",\"verdictRationale\":\"SFM demonstrates...\",\"summary\":\"Sprouts operates...\",\"data\":\"{}\",\"narrative\":\"Sprouts is a specialty grocer that"
+        "text": "{\"key\":\"radar\",\"title\":\"Radar: Simple and"
       }
     ],
     "parsed_output": null,
     "usage": {
       "input_tokens": 45230,
-      "output_tokens": 8192,
+      "output_tokens": 16384,
       "cache_creation_input_tokens": 0,
       "cache_read_input_tokens": 0,
       "server_tool_use": {
-        "web_search_requests": 1
+        "web_search_requests": 0
       }
     }
   },
@@ -209,8 +178,8 @@
     "content": [],
     "parsed_output": null,
     "usage": {
-      "input_tokens": 1200,
-      "output_tokens": 50,
+      "input_tokens": 45230,
+      "output_tokens": 100,
       "cache_creation_input_tokens": 0,
       "cache_read_input_tokens": 0,
       "server_tool_use": {
