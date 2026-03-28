@@ -78,31 +78,31 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| API-01 | TBD | Pending |
-| API-02 | TBD | Pending |
-| API-03 | TBD | Pending |
-| API-04 | TBD | Pending |
-| API-05 | TBD | Pending |
-| API-06 | TBD | Pending |
-| API-07 | TBD | Pending |
-| FMT-01 | TBD | Pending |
-| FMT-02 | TBD | Pending |
-| FMT-03 | TBD | Pending |
-| FIX-01 | TBD | Pending |
-| FIX-02 | TBD | Pending |
-| FIX-03 | TBD | Pending |
-| FIX-04 | TBD | Pending |
-| FIX-05 | TBD | Pending |
-| VAL-01 | TBD | Pending |
-| VAL-02 | TBD | Pending |
-| VAL-03 | TBD | Pending |
-| VAL-04 | TBD | Pending |
+| FMT-01 | Phase 7 | Pending |
+| FMT-02 | Phase 7 | Pending |
+| FMT-03 | Phase 7 | Pending |
+| API-01 | Phase 8 | Pending |
+| API-04 | Phase 8 | Pending |
+| API-05 | Phase 8 | Pending |
+| FIX-02 | Phase 8 | Pending |
+| API-02 | Phase 9 | Pending |
+| API-03 | Phase 9 | Pending |
+| API-06 | Phase 9 | Pending |
+| API-07 | Phase 9 | Pending |
+| FIX-01 | Phase 10 | Pending |
+| FIX-03 | Phase 10 | Pending |
+| FIX-04 | Phase 10 | Pending |
+| FIX-05 | Phase 10 | Pending |
+| VAL-01 | Phase 11 | Pending |
+| VAL-02 | Phase 11 | Pending |
+| VAL-03 | Phase 11 | Pending |
+| VAL-04 | Phase 11 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 19 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 19
+- Mapped to phases: 19
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-27*
-*Last updated: 2026-03-27 after milestone v1.1 definition*
+*Last updated: 2026-03-27 after roadmap creation (traceability populated)*

@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: API Migration & Pitch Deck Quality
-status: Defining requirements
-stopped_at: Milestone v1.1 started
+status: Ready to plan Phase 7
+stopped_at: Roadmap created with 5 phases (7-11)
 last_updated: "2026-03-27"
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -19,14 +19,25 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours -- delivered in minutes, with zero shortcuts on rigor.
-**Current focus:** Milestone v1.1 — API Migration & Pitch Deck Quality
+**Current focus:** Milestone v1.1 -- Phase 7: Schema & SDK Foundation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-27 — Milestone v1.1 started
+Phase: 7 of 11 (Schema & SDK Foundation)
+Plan: --
+Status: Ready to plan
+Last activity: 2026-03-27 -- Roadmap created for v1.1 (5 phases, 19 requirements mapped)
+
+Progress: [..........] 0%
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 0 (v1.1)
+- Average duration: --
+- Total execution time: --
+
+*Updated after each plan completion*
 
 ## Accumulated Context
 
@@ -35,28 +46,21 @@ Last activity: 2026-03-27 — Milestone v1.1 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Build order 5A -> 5C -> 5B -> 5D validated by eng review: see AI output before building display
-- 9 agent roles confirmed necessary by prototype (single-agent degrades on Pitch Deck)
-- Node.js data bridge is permanent infrastructure, not a shortcut
-- [Phase 05A]: Node adapter is Node-only module — browser code continues using config.js
-- [Phase 05A]: DataPacket assembly uses Promise.allSettled + safeCall for per-engine error resilience
-- [Phase 05A]: Orchestrator is code-driven (not AI) — dispatch table drives all execution deterministically
-- [Phase 05C]: Custom Node ESM loader bridges Vite-style imports for Node.js execution
-- [Phase 05D]: Quality checks are informational, never blocking — report saves first, quality runs after
-- [Phase 05D]: Retry-then-escalate: 1 retry with error context, then save partial with status failed
-- [Phase 06A]: PSR split: annual-reader (10-K/proxy) + quarterly-reader (10-Q/transcripts) with parallel dispatch
-- [Phase 06A]: Agent prompt layering: base curriculum (One Pager) + additive depth sections (Pitch Deck)
-- [Phase 06.1]: 4-layer search compliance checking in critic.js
-- [Phase 06.2]: Three-tier field classification (critical/important/nice-to-have) gates dispatch on critical gaps only
-- [v1.1 milestone]: Migrate Pitch Deck to Claude API before building Full Story — Full Story inherits API infrastructure
-- [v1.1 milestone]: Node.js API orchestration (not in-browser) — proven pattern, in-browser is Phase 8 Polish
-- [v1.1 milestone]: Pitch Deck only migration — One Pager stays CC skill for now
+- [v1.0]: Node adapter is Node-only module -- browser code continues using config.js
+- [v1.0]: DataPacket assembly uses Promise.allSettled + safeCall for per-engine error resilience
+- [v1.0]: Quality checks are informational, never blocking -- report saves first, quality runs after
+- [v1.0]: Retry-then-escalate: 1 retry with error context, then save partial with status failed
+- [v1.1 milestone]: Migrate Pitch Deck to Claude API before building Full Story -- Full Story inherits API infrastructure
+- [v1.1 milestone]: Node.js API orchestration (not in-browser) -- proven pattern, in-browser is Phase 8 Polish
+- [v1.1 milestone]: Pitch Deck only migration -- One Pager stays CC skill for now
+- [v1.1 research]: Structured outputs + Citations API are mutually exclusive (400 error) -- extract URLs from tool_result blocks
+- [v1.1 research]: Two-pass agent pattern (prose first, structured output second) is mandatory default -- prevents narrative collapse
+- [v1.1 research]: z.looseObject({}) must be replaced before any API dispatch -- additionalProperties: false required
 
 ### Roadmap Evolution
 
-- Phase 06.1 inserted after Phase 06: Pipeline Hardening (URGENT)
-- Phase 06.2 inserted after Phase 06: Data Pipeline Hardening
-- Phase 06.3 (informal): Three SFM validation runs proving quality ceiling at 75/100
+- v1.0 phases (5A-6.3) archived in MILESTONES.md
+- v1.1 roadmap: 5 phases (7-11), 19 requirements
 
 ### Pending Todos
 
@@ -64,10 +68,9 @@ None yet.
 
 ### Blockers/Concerns
 
-- Structured outputs may require Zod schema → JSON Schema conversion for the API
-- Two-pass output pattern may not be needed with structured outputs — needs testing
-- Prompt caching requires specific API parameter configuration (cache_control blocks)
-- WebSearch tool availability on direct API vs Claude Code subagents needs verification
+- z.looseObject({}) to explicit schema conversion: theorized but not tested end-to-end against live messages.parse()
+- API tier level unknown -- affects maximum parallelism in Phase 9. Check Console > Settings > Limits.
+- Two-pass pattern narrative word count vs CC V3: must be measured in Phase 8 smoke test
 
 ### Quick Tasks Completed
 
@@ -79,5 +82,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-27
-Stopped at: Milestone v1.1 started
+Stopped at: Roadmap created for v1.1 -- ready to plan Phase 7
 Resume file: None
