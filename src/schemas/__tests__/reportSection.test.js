@@ -1,15 +1,21 @@
 // Tests for ReportSection, StageReport, DataPacket schemas and JSON Schema generation
 // Covers: schema validation, rejection, toJSONSchema(), backward compat, DataPacket slicing
+// FMT-01/FMT-02: zodOutputFormat compatibility, CitationSchema url field
 
 import { describe, it, expect } from 'vitest';
+import { z } from 'zod';
+import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import {
   ReportSectionSchema,
+  CitationSchema,
+  ChartSchema,
   StageReportSchema,
   getReportSectionJSONSchema,
 } from '../reportSection.js';
 import { DataPacketSchema, sliceDataPacket } from '../dataPacket.js';
 
 // Fixture: a valid report section (COST FCF analysis)
+// data is a JSON string per FMT-01 (agent serializes flexible data as JSON string)
 const validSection = {
   key: 'fcf',
   title: 'Free Cash Flow',
@@ -19,7 +25,7 @@ const validSection = {
   verdict: 'PASS',
   verdictRationale: 'FCF margins expanding with controlled capex',
   summary: 'COST generates $6.2B FCF with stable margins',
-  data: { fcfYearly: [5.1, 5.5, 5.8, 6.2], capexRatio: 0.30 },
+  data: '{"fcfYearly":[5.1,5.5,5.8,6.2],"capexRatio":0.30}',
   narrative: "Costco's free cash flow profile demonstrates...",
   citations: [
     { id: 1, ref: 'DataPacket.fcf.yearly[2024]', text: 'FCF of $6.2B', source: 'DataPacket' },
@@ -62,6 +68,82 @@ describe('ReportSectionSchema', () => {
     expect(jsonSchema.properties.key).toBeDefined();
     expect(jsonSchema.properties.redFlags).toBeDefined();
     expect(jsonSchema.properties.tokenCost).toBeDefined();
+  });
+});
+
+// ─── FMT-01: looseObject replacement ─────────────────────────────────
+
+describe('FMT-01: looseObject replacement', () => {
+  it('Test F1: zodOutputFormat(ReportSectionSchema) schema has data.type === string', () => {
+    const result = zodOutputFormat(ReportSectionSchema);
+    expect(result.type).toBe('json_schema');
+    expect(result.schema.properties.data.type).toBe('string');
+  });
+
+  it('Test F2: zodOutputFormat schema has chart config.type === string', () => {
+    const result = zodOutputFormat(ReportSectionSchema);
+    const chartsItems = result.schema.properties.charts.items;
+    expect(chartsItems.properties.config.type).toBe('string');
+  });
+
+  it('Test F3: zodOutputFormat schema has chart data items as type string', () => {
+    const result = zodOutputFormat(ReportSectionSchema);
+    const chartsItems = result.schema.properties.charts.items;
+    expect(chartsItems.properties.data.items.type).toBe('string');
+  });
+
+  it('Test F5: ReportSectionSchema.safeParse succeeds when data is a JSON string', () => {
+    const section = {
+      ...validSection,
+      data: '{"ticker":"AAPL","price":150}',
+    };
+    const result = ReportSectionSchema.safeParse(section);
+    expect(result.success).toBe(true);
+  });
+
+  it('Test F6: ReportSectionSchema.safeParse succeeds with string chart config and data', () => {
+    const section = {
+      ...validSection,
+      charts: [{
+        type: 'bar',
+        config: '{"xAxis":"year","yAxis":"revenue"}',
+        data: ['{"year":2022,"revenue":100}', '{"year":2023,"revenue":120}'],
+      }],
+    };
+    const result = ReportSectionSchema.safeParse(section);
+    expect(result.success).toBe(true);
+  });
+
+  it('Test F8: No additionalProperties:true in zodOutputFormat output', () => {
+    const result = zodOutputFormat(ReportSectionSchema);
+    const json = JSON.stringify(result);
+    expect(json).not.toContain('"additionalProperties":true');
+  });
+});
+
+// ─── FMT-02: CitationSchema url field ────────────────────────────────
+
+describe('FMT-02: CitationSchema url field', () => {
+  it('Test F4: CitationSchema JSON Schema has url in properties but NOT in required', () => {
+    const jsonSchema = z.toJSONSchema(CitationSchema);
+    expect(jsonSchema.properties.url).toBeDefined();
+    expect(jsonSchema.required).not.toContain('url');
+  });
+
+  it('Test F7: StageReportSchema still accepts looseObject for checkpoints[].userInput', () => {
+    const stageReport = {
+      sections: [validSection],
+      overallVerdict: 'PASS',
+      generatedAt: '2026-03-24T10:00:00Z',
+      totalTokenCost: { input: 28000, output: 4200 },
+      checkpoints: [{
+        phase: 1,
+        status: 'waiting',
+        userInput: { foo: 'bar', nested: { a: 1 } },
+      }],
+    };
+    const result = StageReportSchema.safeParse(stageReport);
+    expect(result.success).toBe(true);
   });
 });
 

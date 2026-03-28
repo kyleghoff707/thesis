@@ -3,9 +3,9 @@
 // These schemas define the contract for all agent-produced report sections.
 // Used by Claude structured outputs (output_config.format) and validation.
 //
-// NOTE: Uses z.looseObject({}) instead of z.record(z.unknown()) for flexible
-// object fields — both accept arbitrary keys, but z.looseObject is compatible
-// with z.toJSONSchema() in Zod v4.
+// NOTE: API-facing schemas use z.string() for flexible object fields (data, config).
+// The agent serializes as JSON strings; the orchestrator JSON.parse()s after extraction.
+// Internal schemas (StageReportSchema) keep z.looseObject({}) — never sent to API.
 
 import { z } from 'zod';
 
@@ -15,6 +15,7 @@ export const CitationSchema = z.object({
   ref: z.string(),      // DataPacket field path or document reference
   text: z.string(),      // The quoted text or value
   source: z.string(),    // "DataPacket", "10-K FY2024 p.34", URL, etc.
+  url: z.string().optional(), // FMT-02: web search URL (optional — only populated for web search results)
 });
 
 // Table — structured data tables within a report section
@@ -28,8 +29,8 @@ export const TableSchema = z.object({
 // Chart — visualization config for PDF rendering
 export const ChartSchema = z.object({
   type: z.string(),
-  config: z.looseObject({}),
-  data: z.array(z.looseObject({})),
+  config: z.string(),              // JSON string — orchestrator parses after extraction
+  data: z.array(z.string()),       // JSON strings — each data point serialized
 });
 
 // ReportSection — a single section of an AI-generated report
@@ -43,7 +44,7 @@ export const ReportSectionSchema = z.object({
   verdict: z.enum(['PASS', 'FAIL', 'WATCHLIST']).nullable(),
   verdictRationale: z.string(),
   summary: z.string(),                                      // 1-2 sentences for downstream agents
-  data: z.looseObject({}),                                  // Section-specific structured data (flexible)
+  data: z.string(),                                          // JSON string — orchestrator parses after extraction (per D-01)
   narrative: z.string(),                                    // Buffett-style prose analysis
   citations: z.array(CitationSchema),
   tables: z.array(TableSchema).optional().default([]),
