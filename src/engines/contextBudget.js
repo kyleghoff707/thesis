@@ -6,12 +6,14 @@
 // Cost calculation uses known Claude model pricing as of March 2026.
 
 // Claude model pricing in dollars per million tokens
+// cacheRead/cacheWrite pricing per Anthropic's prompt caching docs
 export const MODEL_PRICING = {
-  'claude-sonnet-4-20250514': { input: 3.0, output: 15.0 },
-  'claude-opus-4-6': { input: 15.0, output: 75.0 },
+  'claude-sonnet-4-20250514': { input: 3.0, output: 15.0, cacheRead: 0.30, cacheWrite: 3.75 },
+  'claude-sonnet-4-6':        { input: 3.0, output: 15.0, cacheRead: 0.30, cacheWrite: 3.75 },
+  'claude-opus-4-6':          { input: 15.0, output: 75.0, cacheRead: 1.50, cacheWrite: 18.75 },
 };
 
-const DEFAULT_MODEL = 'claude-sonnet-4-20250514';
+const DEFAULT_MODEL = 'claude-sonnet-4-6';
 const CHARS_PER_TOKEN = 4;
 
 // Estimate token count from text or character count
@@ -24,15 +26,20 @@ export function estimateTokens(text) {
 }
 
 // Compute cost for a given token count and model
-// Returns {input, output, total} in dollars
-export function computeCost(inputTokens, outputTokens, model) {
+// Returns {input, output, cacheRead, cacheWrite, total} in dollars
+// Optional cacheReadTokens and cacheWriteTokens for prompt caching costs
+export function computeCost(inputTokens, outputTokens, model, cacheReadTokens = 0, cacheWriteTokens = 0) {
   const pricing = MODEL_PRICING[model] || MODEL_PRICING[DEFAULT_MODEL];
   const inputCost = inputTokens * pricing.input / 1_000_000;
   const outputCost = outputTokens * pricing.output / 1_000_000;
+  const cacheReadCost = cacheReadTokens * (pricing.cacheRead || 0) / 1_000_000;
+  const cacheWriteCost = cacheWriteTokens * (pricing.cacheWrite || 0) / 1_000_000;
   return {
     input: inputCost,
     output: outputCost,
-    total: inputCost + outputCost,
+    cacheRead: cacheReadCost,
+    cacheWrite: cacheWriteCost,
+    total: inputCost + outputCost + cacheReadCost + cacheWriteCost,
   };
 }
 

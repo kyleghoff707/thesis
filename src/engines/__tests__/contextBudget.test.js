@@ -69,6 +69,25 @@ describe('computeCost', () => {
     expect(cost.output).toBe(0);
     expect(cost.total).toBe(0);
   });
+
+  it('should compute cost for claude-sonnet-4-6', () => {
+    // 1M input at $3/M = 3.0, 100K output at $15/M = 1.5
+    const cost = computeCost(1000000, 100000, 'claude-sonnet-4-6');
+    expect(cost.input).toBeCloseTo(3.0, 6);
+    expect(cost.output).toBeCloseTo(1.5, 6);
+    expect(cost.total).toBeCloseTo(4.5, 6);
+  });
+
+  it('should include cache costs when provided', () => {
+    // 1000 input at $3/M = 0.003, 500 output at $15/M = 0.0075
+    // 2000 cacheRead at $0.30/M = 0.0006, 1000 cacheWrite at $3.75/M = 0.00375
+    const cost = computeCost(1000, 500, 'claude-sonnet-4-6', 2000, 1000);
+    expect(cost.input).toBeCloseTo(0.003, 6);
+    expect(cost.output).toBeCloseTo(0.0075, 6);
+    expect(cost.cacheRead).toBeCloseTo(0.0006, 6);
+    expect(cost.cacheWrite).toBeCloseTo(0.00375, 6);
+    expect(cost.total).toBeCloseTo(0.003 + 0.0075 + 0.0006 + 0.00375, 6);
+  });
 });
 
 describe('createBudgetTracker', () => {
@@ -159,6 +178,6 @@ describe('exports', () => {
   it('should export _testExports with CHARS_PER_TOKEN and DEFAULT_MODEL', () => {
     expect(_testExports).toBeDefined();
     expect(_testExports.CHARS_PER_TOKEN).toBe(4);
-    expect(_testExports.DEFAULT_MODEL).toBe('claude-sonnet-4-20250514');
+    expect(_testExports.DEFAULT_MODEL).toBe('claude-sonnet-4-6');
   });
 });
