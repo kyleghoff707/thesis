@@ -16,7 +16,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.78.0",
+    "@anthropic-ai/sdk": "^0.80.0",
     "@xmldom/xmldom": "^0.8.11",
     "cheerio": "^1.2.0",
     "dotenv": "^17.3.1",
