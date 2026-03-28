@@ -328,8 +328,13 @@ function scoreCompleteness(section) {
   const citations = Array.isArray(section.citations) ? section.citations.length : 0;
   const citationScore = Math.min(100, (citations / 5) * 100);
 
-  // Data population
-  const dataKeys = section.data ? Object.keys(section.data).length : 0;
+  // Data population — handles both object (post-orchestrator) and string (raw API output)
+  let dataObj = section.data;
+  if (typeof dataObj === 'string') {
+    try { dataObj = JSON.parse(dataObj); } catch { dataObj = null; }
+  }
+  const dataKeys = dataObj && typeof dataObj === 'object' && !Array.isArray(dataObj)
+    ? Object.keys(dataObj).length : 0;
   const dataScore = Math.min(100, (dataKeys / 3) * 100);
 
   const composite = Math.round(
