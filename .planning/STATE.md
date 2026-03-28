@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
-status: planning
-stopped_at: Phase 7 context gathered
-last_updated: "2026-03-28T00:21:51.373Z"
-last_activity: 2026-03-27 -- Roadmap created for v1.1 (5 phases, 19 requirements mapped)
+status: executing
+stopped_at: Completed 07-02-PLAN.md
+last_updated: "2026-03-28T02:30:11Z"
+last_activity: 2026-03-28 -- Phase 7 Plan 02 complete (SDK upgrade + smoke test)
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 2
+  completed_plans: 2
+  percent: 50
 ---
 
 # Project State
@@ -26,19 +26,19 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 ## Current Position
 
 Phase: 7 of 11 (Schema & SDK Foundation)
-Plan: --
-Status: Ready to plan
-Last activity: 2026-03-27 -- Roadmap created for v1.1 (5 phases, 19 requirements mapped)
+Plan: 2 of 2
+Status: Ready for verification
+Last activity: 2026-03-28 -- Phase 7 Plan 02 complete (SDK upgrade + smoke test)
 
-Progress: [..........] 0%
+Progress: [#####.....] 50%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0 (v1.1)
-- Average duration: --
-- Total execution time: --
+- Total plans completed: 2 (v1.1)
+- Average duration: ~19min
+- Total execution time: ~38min
 
 *Updated after each plan completion*
 
@@ -59,6 +59,8 @@ Recent decisions affecting current work:
 - [v1.1 research]: Structured outputs + Citations API are mutually exclusive (400 error) -- extract URLs from tool_result blocks
 - [v1.1 research]: Two-pass agent pattern (prose first, structured output second) is mandatory default -- prevents narrative collapse
 - [v1.1 research]: z.looseObject({}) must be replaced before any API dispatch -- additionalProperties: false required
+- [Phase 07]: Use claude-sonnet-4-6 (not claude-sonnet-4-20250514) for structured outputs -- older models do not support output_config
+- [Phase 07]: Node.js scripts calling Anthropic SDK must use dotenv directly, not nodeAdapter.js -- its fetch patch strips SDK auth headers
 
 ### Roadmap Evolution
 
@@ -71,9 +73,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- z.looseObject({}) to explicit schema conversion: theorized but not tested end-to-end against live messages.parse()
+- ~~z.looseObject({}) to explicit schema conversion: theorized but not tested end-to-end against live messages.parse()~~ RESOLVED: Verified in Plan 07-02 smoke test — z.string() works perfectly
 - API tier level unknown -- affects maximum parallelism in Phase 9. Check Console > Settings > Limits.
 - Two-pass pattern narrative word count vs CC V3: must be measured in Phase 8 smoke test
+- nodeAdapter.js fetch patch incompatible with Anthropic SDK -- Phase 8 aiResearch.js needs its own env/fetch solution
 
 ### Quick Tasks Completed
 
@@ -84,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T00:21:51.366Z
-Stopped at: Phase 7 context gathered
-Resume file: .planning/phases/07-schema-sdk-foundation/07-CONTEXT.md
+Last session: 2026-03-28T02:30:11Z
+Stopped at: Completed 07-02-PLAN.md
+Resume file: .planning/phases/07-schema-sdk-foundation/07-02-SUMMARY.md
