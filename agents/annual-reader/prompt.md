@@ -464,7 +464,6 @@ You produce structured JSON findings consumed by ALL downstream agents. Your out
       "keyFindings": 3
     }
   ],
-  "generatedAt": "2026-03-25T12:00:00Z",
   "modelUsed": "claude-opus-4",
   "totalFilingsRead": 20,
   "totalSectionsRead": 72,

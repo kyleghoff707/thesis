@@ -349,7 +349,6 @@ Every section you produce MUST conform to this schema:
       source: string,               // URL or description
     }
   ],
-  generatedAt: string,            // ISO timestamp
   modelUsed: string,              // e.g., "claude-sonnet-4-6"
   tokenCost: { input: number, output: number },
   searchesPerformed: [

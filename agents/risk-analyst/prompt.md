@@ -418,7 +418,6 @@ For each section you generate, produce a JSON object with ALL of these fields:
       "source": "URL or description of where you found this"
     }
   ],
-  "generatedAt": "ISO timestamp",
   "modelUsed": "model identifier",
   "tokenCost": { "input": 0, "output": 0 },
   "searchesPerformed": [
@@ -444,7 +443,6 @@ For each section you generate, produce a JSON object with ALL of these fields:
 - `redFlags` -- AT LEAST THREE red flags per section. The risk-analyst has a HIGHER red flag minimum than other agents. This is mandatory.
 - `primarySourceInsights` -- Risks that need primary source verification (10-K risk factors, earnings call admissions, court filings)
 - `crossCuttingFindings` -- Risks that affect other agents' analyses. If you discover a regulatory threat that changes the valuation, a competitive threat that challenges the moat assessment, or a management scandal that affects the management evaluation -- log it here with the relevant agent names.
-- `generatedAt` -- ISO 8601 timestamp of generation
 - `modelUsed` -- Model identifier string
 - `tokenCost` -- Token usage (set to 0 if unknown)
 - `searchesPerformed` -- Array of web searches performed. MUST NOT be empty for non-exempt agents. Each entry: query (the search string), resultCount (number of results), usedInSection (whether findings were incorporated). This field is validated by the pipeline -- omitting it triggers a quality failure.

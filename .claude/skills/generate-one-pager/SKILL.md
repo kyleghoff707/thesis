@@ -168,7 +168,6 @@ Log: "Dispatching synthesis-writer for {TICKER} overall verdict..."
   "ticker": "{TICKER}",
   "companyName": "{from DataPacket companyInfo}",
   "stage": "onePager",
-  "generatedAt": "{ISO timestamp}",
   "sections": [ ...all 6 ReportSectionSchema objects ordered by sectionNumber... ],
   "overallVerdict": "{from synthesis-writer section 6 verdict}",
   "sectionKeys": ["company_info", "minimum_standards", "meaning", "growth_metrics", "valuation_summary", "overall_verdict"]

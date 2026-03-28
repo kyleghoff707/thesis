@@ -19,6 +19,8 @@ const EXTENSIONS = ['.js', '.mjs', '.jsx', '/index.js', '/index.mjs'];
 // This is picked up by the initialize hook
 export async function initialize() {
   // Nothing needed here — env patching happens in load()
+  // For .env.local loading, use: DOTENV_CONFIG_PATH=.env.local node -r dotenv/config
+  // The dotenv preload runs before the loader and populates process.env with VITE_* keys.
 }
 
 export async function resolve(specifier, context, nextResolve) {

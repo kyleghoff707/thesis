@@ -1,6 +1,6 @@
 {
   "role": "annual-reader",
-  "model": "opus",
+  "model": "sonnet",
   "curriculum": [],
   "compressionPolicy": "none",
   "universalContext": true,

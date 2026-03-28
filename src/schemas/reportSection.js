@@ -62,7 +62,6 @@ export const ReportSectionSchema = z.object({
     resultCount: z.number(),                                 // Number of results returned
     usedInSection: z.boolean(),                              // Whether findings were incorporated
   })).optional().default([]),
-  generatedAt: z.string(),                                  // ISO timestamp
   modelUsed: z.string(),                                    // e.g., "claude-sonnet-4-6"
   tokenCost: z.object({ input: z.number(), output: z.number() }),
 });

@@ -229,7 +229,6 @@ Every section you produce MUST conform to this schema:
       source: string,
     }
   ],
-  generatedAt: string,            // ISO timestamp
   modelUsed: string,              // e.g., "claude-opus-4-6"
   tokenCost: { input: number, output: number }
 }

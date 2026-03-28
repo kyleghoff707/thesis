@@ -180,7 +180,7 @@ describe('QUAL-02: Completeness Scoring', () => {
   it('should score a complete section above 80', () => {
     const result = scoreCompleteness(companyInfoSection);
     expect(result.score).toBeGreaterThan(80);
-    expect(result.requiredFieldsTotal).toBe(15);
+    expect(result.requiredFieldsTotal).toBe(14);
   });
 
   it('should penalize missing narrative', () => {
@@ -200,7 +200,7 @@ describe('QUAL-02: Completeness Scoring', () => {
   it('should report correct required fields count', () => {
     const result = scoreCompleteness(companyInfoSection);
     expect(result.requiredFieldsPresent).toBeGreaterThanOrEqual(14);
-    expect(result.requiredFieldsTotal).toBe(15);
+    expect(result.requiredFieldsTotal).toBe(14);
   });
 
   it('should report narrative length', () => {
@@ -514,7 +514,7 @@ describe('validateSection', () => {
     expect(report.score).toBeGreaterThanOrEqual(0);
     expect(report.score).toBeLessThanOrEqual(100);
     expect(report.completeness).toBeDefined();
-    expect(report.completeness.requiredFieldsTotal).toBe(15);
+    expect(report.completeness.requiredFieldsTotal).toBe(14);
     expect(Array.isArray(report.issues)).toBe(true);
     expect(typeof report.passed).toBe('boolean');
     expect(typeof report.checkedAt).toBe('string');

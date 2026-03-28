@@ -214,7 +214,6 @@ After a successful section save:
 2. If the report file exists:
    - Find the section in the `sections` array matching `sectionNumber`
    - Replace it with the new section output
-   - Update the `generatedAt` timestamp
    - Write the updated report back to disk
 
 3. If the report file does NOT exist:

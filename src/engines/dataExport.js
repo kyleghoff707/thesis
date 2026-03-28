@@ -27,6 +27,7 @@ import { fetchBatchQuotes } from './batchQuotes.js';
 import { fetchTranscriptList } from './transcripts.js';
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const IS_NODE = typeof window === 'undefined';
 
 // ─── DataPacket Assembly ────────────────────────────────────────
 
@@ -98,15 +99,18 @@ export async function assembleDataPacket(ticker) {
   }
 
   // ── Step 3: External data (parallel — independent of each other) ──
+  // In Node.js, skip Yahoo-dependent engines entirely — yahoo-finance2 crumb auth
+  // is broken and every call times out at 30s, wasting ~65s per engine (timeout +
+  // retry backoff + retry timeout). Use Finviz/EODHD fallbacks instead.
 
   const step3 = await Promise.allSettled([
     safeCall(() => fetchGurusForTicker(ticker), 'gurus', errors),
     safeCall(() => fetchInsidersForTicker(ticker), 'insiders', errors),
     safeCall(() => fetchCompensation(ticker), 'compensation', errors),
     safeCall(() => fetchPeersByTier('industry', classification), 'peers', errors),
-    safeCall(() => fetchAnalystEstimates(ticker), 'analystEstimates', errors, { retry: true }),
-    safeCall(() => fetchCompanyEvents(ticker), 'events', errors, { retry: true }),
-    safeCall(() => fetchPrices(ticker, '10y'), 'prices', errors, { retry: true }),
+    IS_NODE ? Promise.resolve(null) : safeCall(() => fetchAnalystEstimates(ticker), 'analystEstimates', errors, { retry: true }),
+    IS_NODE ? Promise.resolve(null) : safeCall(() => fetchCompanyEvents(ticker), 'events', errors, { retry: true }),
+    IS_NODE ? Promise.resolve(null) : safeCall(() => fetchPrices(ticker, '10y'), 'prices', errors, { retry: true }),
     safeCall(() => fetchTranscriptList(ticker), 'transcripts', errors, { retry: true }),
     safeCall(() => fetchFilingList(ticker), 'filings', errors),
   ]);
@@ -121,65 +125,38 @@ export async function assembleDataPacket(ticker) {
   const transcriptList = step3[7].value ?? null;
   const filings = step3[8].value ?? null;
 
-  // Price fallback for Node.js (priceStore.js uses IndexedDB which fails in Node)
+  // Yahoo enrichment removed from DataPacket assembly (Phase 6.3 — A1).
+  // Yahoo crumb auth causes 30-60s timeouts in Node.js, blocking the pipeline.
+  // Price fallback uses EODHD (fast, reliable in Node.js).
   let yahooQuoteData = null;
-  if (!prices && typeof window === 'undefined') {
+
+  // EODHD price fallback for Node.js (Phase 6.3 — replaces Yahoo quote)
+  // Alpha Vantage reserved for transcripts only (25 calls/day free tier).
+  if (!prices && IS_NODE) {
     try {
-      const { yahooQuotes } = await import('./nodeYahoo.js');
-      const quotes = await yahooQuotes(ticker);
-      if (quotes && quotes.length > 0) {
-        yahooQuoteData = quotes[0];
-        prices = [{
-          date: new Date().toISOString().split('T')[0],
-          close: yahooQuoteData.price,
-          change: yahooQuoteData.change,
-          changePct: yahooQuoteData.changePct,
-        }];
-      }
-    } catch (e) {
-      errors.push(`priceFallback: ${e.message}`);
-    }
-  }
-
-  // Yahoo assetProfile enrichment for Node.js (description, employees, HQ)
-  // Retries once on timeout since yahoo-finance2 crumb auth can be slow on first call.
-  if (typeof window === 'undefined' && companyInfo) {
-    const MAX_YAHOO_TRIES = 2;
-    for (let attempt = 1; attempt <= MAX_YAHOO_TRIES; attempt++) {
-      try {
-        const { yahooSummary } = await import('./nodeYahoo.js');
-        const summary = await yahooSummary(ticker);
-        const ap = summary?.assetProfile;
-        if (ap) {
-          if (!companyInfo.description && ap.longBusinessSummary) companyInfo.description = ap.longBusinessSummary;
-          if (!companyInfo.employees && ap.fullTimeEmployees) companyInfo.employees = ap.fullTimeEmployees;
-          if (!companyInfo.headquarters && ap.city) companyInfo.headquarters = [ap.city, ap.state, ap.country].filter(Boolean).join(', ');
-          if ((!companyInfo.website || companyInfo.website === '') && ap.website) companyInfo.website = ap.website;
-        }
-        // Wire market cap from quote data
-        if (!companyInfo.marketCap && yahooQuoteData?.marketCap) companyInfo.marketCap = yahooQuoteData.marketCap;
-
-        // analystEstimates from same Yahoo call (Fix 4: bypasses import.meta.env.DEV routing)
-        if (!analystEstimates) {
-          const et = summary?.earningsTrend;
-          const fd = summary?.financialData;
-          const rt = summary?.recommendationTrend;
-          if (et || fd || rt) {
-            analystEstimates = { earningsTrend: et || null, financialData: fd || null, recommendationTrend: rt || null };
+      const eodhKey = process.env.VITE_EODHD_KEY;
+      if (eodhKey) {
+        const url = `https://eodhd.com/api/real-time/${encodeURIComponent(ticker)}.US?api_token=${eodhKey}&fmt=json`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const q = await res.json();
+          if (q?.close) {
+            prices = [{
+              date: new Date(q.timestamp * 1000).toISOString().split('T')[0],
+              close: q.close,
+              change: q.change ?? null,
+              changePct: q.change_p ?? null,
+            }];
           }
         }
-        break; // success — exit retry loop
-      } catch (e) {
-        if (attempt < MAX_YAHOO_TRIES && e.message.includes('timeout')) {
-          // Retry once on timeout — yahoo-finance2 crumb/cookie auth can be slow on first call
-          continue;
-        }
-        errors.push(`yahooEnrichment: ${e.message}`);
       }
+    } catch (e) {
+      errors.push(`eodhPriceFallback: ${e.message}`);
     }
   }
 
-  // Finviz fallback for analystEstimates (per D-08)
+  // Finviz fallback for analystEstimates — always try in Node.js (Yahoo skipped),
+  // also try in browser if Yahoo failed
   if (!analystEstimates) {
     try {
       const finviz = await fetchFinvizData(ticker);
@@ -217,8 +194,9 @@ export async function assembleDataPacket(ticker) {
       errors.push(`peerMetrics: ${err.message}`);
     }
 
+    // Skip Yahoo batch quotes in Node.js — same crumb auth timeout issue
     const peerTickers = peers.map(p => p.ticker).filter(Boolean);
-    if (peerTickers.length > 0) {
+    if (peerTickers.length > 0 && !IS_NODE) {
       try {
         peerQuotes = await fetchBatchQuotes(peerTickers);
       } catch (err) {

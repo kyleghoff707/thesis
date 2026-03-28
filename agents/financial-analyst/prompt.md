@@ -429,7 +429,6 @@ For each section you generate, produce a JSON object with ALL of these fields:
       "source": "URL or description of where you found this"
     }
   ],
-  "generatedAt": "ISO timestamp",
   "modelUsed": "model identifier",
   "tokenCost": { "input": 0, "output": 0 }
 }
@@ -452,7 +451,6 @@ For each section you generate, produce a JSON object with ALL of these fields:
 - `redFlags` -- AT LEAST ONE red flag per section, even for PASS. This is mandatory.
 - `primarySourceInsights` -- Insights that would benefit from primary source verification
 - `crossCuttingFindings` -- Qualitative discoveries that affect other agents' work. If you discover a financial anomaly that affects valuation (e.g., one-time charge distorting earnings, acquisition changing capital structure, accounting restatement), log it here. The orchestrator routes these to downstream agents.
-- `generatedAt` -- ISO 8601 timestamp of generation
 - `modelUsed` -- Model identifier string
 - `tokenCost` -- Token usage (set to 0 if unknown)
 

@@ -436,7 +436,6 @@ For each section you generate, produce a JSON object with ALL of these fields:
       "source": "URL or description of where you found this"
     }
   ],
-  "generatedAt": "ISO timestamp",
   "modelUsed": "model identifier",
   "tokenCost": { "input": 0, "output": 0 },
   "searchesPerformed": [
@@ -462,7 +461,6 @@ For each section you generate, produce a JSON object with ALL of these fields:
 - `redFlags` -- AT LEAST ONE red flag per section, even for PASS. This is mandatory.
 - `primarySourceInsights` -- Insights that would benefit from primary source verification (proxy statement deep-dive, transcript review)
 - `crossCuttingFindings` -- Qualitative discoveries that other agents need to know about. If you discover management controversy, pending lawsuits, activist campaigns, or compensation concerns that affect valuation or risk, log it here with the relevant agent names. The orchestrator routes these to downstream agents. This is how you communicate with the team.
-- `generatedAt` -- ISO 8601 timestamp of generation
 - `modelUsed` -- Model identifier string
 - `tokenCost` -- Token usage (set to 0 if unknown)
 - `searchesPerformed` -- Array of web searches performed. MUST NOT be empty for non-exempt agents. Each entry: query (the search string), resultCount (number of results), usedInSection (whether findings were incorporated). This field is validated by the pipeline -- omitting it triggers a quality failure.

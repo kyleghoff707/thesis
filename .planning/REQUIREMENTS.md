@@ -17,9 +17,9 @@
 
 ### Schema Compliance
 
-- [ ] **FMT-01**: Replace z.looseObject({}) in ReportSectionSchema with structured output-compatible types (z.string() for data field, explicit types for chart config/data)
-- [ ] **FMT-02**: Add optional url field to CitationSchema for web search URLs
-- [ ] **FMT-03**: Verify ReportSectionSchema produces valid JSON Schema via z.toJSONSchema() — smoke test with live API call before pipeline work
+- [x] **FMT-01**: Replace z.looseObject({}) in ReportSectionSchema with structured output-compatible types (z.string() for data field, explicit types for chart config/data)
+- [x] **FMT-02**: Add optional url field to CitationSchema for web search URLs
+- [x] **FMT-03**: Verify ReportSectionSchema produces valid JSON Schema via z.toJSONSchema() — smoke test with live API call before pipeline work
 
 ### Quality & Compliance Fixes
 
@@ -78,9 +78,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FMT-01 | Phase 7 | Pending |
-| FMT-02 | Phase 7 | Pending |
-| FMT-03 | Phase 7 | Pending |
+| FMT-01 | Phase 7 | Complete |
+| FMT-02 | Phase 7 | Complete |
+| FMT-03 | Phase 7 | Complete |
 | API-01 | Phase 8 | Pending |
 | API-04 | Phase 8 | Pending |
 | API-05 | Phase 8 | Pending |

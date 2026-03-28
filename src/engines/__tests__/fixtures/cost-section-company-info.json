@@ -98,7 +98,6 @@
   ],
   "primarySourceInsights": [],
   "crossCuttingFindings": [],
-  "generatedAt": "2026-03-25T00:59:56Z",
   "modelUsed": "claude-sonnet-4-6",
   "tokenCost": {
     "input": 0,

@@ -35,7 +35,7 @@ Migrate the Pitch Deck pipeline from Claude Code subagent orchestration to direc
 **Plans:** 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Schema modification + critic backward compatibility (FMT-01, FMT-02)
+- [x] 07-01-PLAN.md — Schema modification + critic backward compatibility (FMT-01, FMT-02)
 - [ ] 07-02-PLAN.md — SDK upgrade + live two-stage smoke test (FMT-03)
 
 ### Phase 8: Core Agent Dispatch

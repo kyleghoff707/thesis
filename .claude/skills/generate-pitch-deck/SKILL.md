@@ -42,97 +42,47 @@ Setting up Pitch Deck generation for {TICKER}...
 
 Store the one-pager data for later reference -- Phase 3 agents may reference One Pager findings.
 
-**Initialize Generation Status (D-07-a):**
-```bash
-node --import ./scripts/node-esm-loader.js -e "
-import { initGenerationStatus } from './src/engines/progressState.js';
-initGenerationStatus('{TICKER}', 'pitchDeck');
-console.log('Generation status initialized for {TICKER}');
-"
-```
+## Step 2: Prepare All Data (Single Script)
 
-## Step 2: Assemble DataPacket
-
-Run the data assembly script to gather all financial data:
+**⚡ Performance:** ALL data preparation runs in a single Node.js process to avoid Claude Code tool call overhead (~30-45s per bash invocation). This replaces 5 separate steps (guru prefetch, DataPacket assembly, transcripts, filing preprocessing, quality checkpoint) with ONE call that completes in ~12-15 seconds.
 
 ```bash
-node --loader ./scripts/node-esm-loader.js scripts/assemble-data.js {TICKER}
+node --loader ./scripts/node-esm-loader.js scripts/prepare-data.js {TICKER}
 ```
 
-Note: The `--loader` flag is required because engine files use Vite-style extension-less imports and bare JSON imports that Node.js native ESM does not support without a custom resolver.
+The script runs these steps internally:
+1. Gate check (verifies one-pager exists and has a verdict)
+2. Init generation status
+3. Pre-fetch 43 guru 13F portfolios (cached after first run)
+4. Assemble DataPacket (EDGAR, SEC, Finviz — Yahoo skipped in Node.js due to 30s auth timeouts)
+5. Pre-fetch earnings call transcripts (Alpha Vantage)
+6. Pre-process SEC filings to markdown
+7. Data quality checkpoint
 
-Then read the output file: `.thes1s/reports/{TICKER}/data-packet.json`
+**Output:** Human-readable logs to stderr, structured JSON summary to stdout (last line).
 
-If the DataPacket has an `errors` array, log each error but **continue** -- the error-resilient design means partial data is expected and analysts should work with what is available.
+Parse the JSON summary from stdout to get `checkpointVerdict`, `dataPacketFields`, `guruCount`, `transcriptsSaved`, `errors`, and per-step `timings`.
 
-Verify the DataPacket has a `ticker` field and at least `companyInfo` or `financials` populated. If both are null, stop with an error -- there is insufficient data to generate an analysis.
-
-Log:
-```
-Step 2: DataPacket assembled for {TICKER}
-  Company: {companyInfo.name}
-  Financials: {number of years} years
-  Errors: {count or "none"}
-```
-
-## Step 2.1: Pre-Fetch Guru Holdings
-
-Fetch all 43 guru 13F portfolios so the DataPacket `gurus` field is populated. This is a one-time fetch per ticker — results are cached in `.thes1s/cache/` for future runs.
-
-```bash
-node --loader ./scripts/node-esm-loader.js scripts/prefetch-gurus.js {TICKER}
-```
-
-If the guru fetch fails or times out, log the error and **continue** — guru data is useful context for the management-evaluator agent but not required. The agent will use WebSearch to find guru holdings if the DataPacket field is null.
-
-After guru fetch, re-run the DataPacket assembly to pick up the cached guru data:
-
-```bash
-node --loader ./scripts/node-esm-loader.js scripts/assemble-data.js {TICKER}
-```
-
-Log the updated field count to confirm guru data is now included.
-
-## Step 2.5: Pre-Process Filings to Markdown
-
-Convert the most recent 10-K and 10-Q filings to clean markdown BEFORE dispatching PSR agents. This eliminates the need for agents to fetch raw HTML from EDGAR (which wastes 100-200K+ tokens per filing) and provides structured sections they can read directly.
-
-```bash
-node --loader ./scripts/node-esm-loader.js scripts/preprocess-filings.js {TICKER}
-```
-
-The pre-processed filings are now in `.thes1s/reports/{TICKER}/filings-md/`. Each JSON file contains extracted sections as markdown text. 10-K files extract Business, Risk Factors, MD&A, and Financial Statements (4 sections). 10-Q files extract Financial Statements, MD&A, and Risk Factors (3 sections). Filenames use full filing dates (e.g., `10-K-2024-09-15.json`, `10-Q-2024-07-30.json`) to prevent collisions. PSR agents should READ these files instead of fetching raw HTML from EDGAR.
-
-If `filingSections.js` is not yet available (Phase 06.1-02 dependency), skip this step -- PSR agents will fall back to web-fetching filings directly. The pipeline works either way, but pre-processing saves significant tokens.
-
-## Step 2.6: Data Quality Checkpoint
-
-Run the data quality checkpoint to verify DataPacket completeness and filing extraction results before dispatching expensive PSR agents:
-
-```bash
-node --loader ./scripts/node-esm-loader.js scripts/data-quality-checkpoint.js {TICKER}
-```
-
-The script outputs a structured summary to stderr (human-readable table) and JSON to stdout (machine-parseable).
+The pre-processed filings are now in `.thes1s/reports/{TICKER}/filings-md/`. Each JSON file contains extracted sections as markdown text. 10-K files extract Business, Risk Factors, MD&A, and Financial Statements (4 sections). 10-Q files extract Financial Statements, MD&A, and Risk Factors (3 sections). PSR agents should READ these files instead of fetching raw HTML from EDGAR.
 
 **If the script exits with code 1 (BLOCKED):** Critical fields are missing (companyInfo, financials, or filings). Do NOT proceed to Step 3. Instead:
 1. Print the full checkpoint summary for the PM
 2. Ask: "Critical data is missing. Would you like to:
    (a) Provide file paths or paste data to fill gaps
-   (b) Re-run data assembly (scripts/assemble-data.js)
+   (b) Re-run data preparation (scripts/prepare-data.js)
    (c) Abort generation"
 3. If PM provides file paths, read those files and include their content as supplementary context for agents
 4. If PM pastes text, save it to `.thes1s/reports/{TICKER}/pm-supplementary.md` and include in agent context
-5. After gap-fill, re-run the checkpoint to verify
+5. After gap-fill, re-run prepare-data.js to verify
 
-**If the script exits with code 0 (PROCEED):** Print the full summary for the PM. **Do NOT auto-continue.** Even when the verdict is PROCEED, the PM must explicitly approve before agents are dispatched. This is a mandatory gate -- agents are expensive and the PM deserves to see what data they will work with.
+**If the script exits with code 0 (PROCEED):** Print the summary for the PM. **Do NOT auto-continue.** The PM must explicitly approve before agents are dispatched. This is a mandatory gate.
 
 Print the summary, then enter a dialogue:
 
 ```
 Review the data quality summary above. You can:
   - Say "continue" to approve and dispatch PSR agents
-  - Say "re-run assembly" to re-assemble the DataPacket (e.g., after fixing an API key)
+  - Say "re-run" to re-run data preparation (e.g., after fixing an API key)
   - Paste additional data or context to supplement gaps
   - Say "attach /path/to/file.md" to include a file in agent context
   - Ask a question about any field or error
@@ -142,7 +92,7 @@ Your input:
 
 **Handle PM responses:**
 - **"continue":** Save any supplementary context and advance to Step 3.
-- **"re-run assembly":** Re-run `scripts/assemble-data.js {TICKER}`, then re-run the checkpoint. Present the updated summary to PM again.
+- **"re-run":** Re-run `scripts/prepare-data.js {TICKER}`. Present the updated summary to PM again.
 - **Pasted data or "attach" command:** Save to `.thes1s/reports/{TICKER}/pm-supplementary.md` and include in agent context. Acknowledge and re-present the dialogue.
 - **Question:** Answer using the checkpoint data and DataPacket contents.
 
@@ -165,7 +115,7 @@ This step dispatches multiple PSR agents to read SEC filings. These findings bec
 
 A single 10-K with all sections (Business, Risk Factors, MD&A, Financial Statements) is ~290KB (~72K tokens). Cramming multiple 10-Ks into one agent would force skipping sections. Instead:
 
-- **Annual Readers:** One Opus agent per 10-K filing year (e.g., 5 agents for 5 10-Ks)
+- **Annual Readers:** One Sonnet agent per 10-K filing year (e.g., 5 agents for 5 10-Ks)
 - **Quarterly Readers:** Batch 4 10-Qs per agent (~70-100KB each, ~280-400KB total per batch)
 - Each agent receives the **complete filing** -- all sections, no truncation
 
@@ -271,7 +221,20 @@ After all annual readers complete, dispatch quarterly reader agents. Batch up to
 {sections['Risk Factors']}
 ```
 5. Annual reader findings summary (key insights, discrepancies found, management promises)
-6. Task instruction: "Read {TICKER}'s quarterly SEC filings (10-Q) provided below, covering Q{start} through Q{end}. ALL filing sections are included -- read every section thoroughly. For each quarter extract: revenue and earnings trends, management guidance changes, competitive dynamics, forward-looking statements, red flags, and cross-validate quarterly financial data against the DataPacket. Track management promises and their fulfillment across quarters. Return your findings as a structured JSON object matching the quarterly-reader output schema."
+6. **Earnings call transcripts** (Phase 6.3 — D3): Check if pre-fetched transcripts exist at `.thes1s/reports/{TICKER}/transcripts/`. If transcript files exist for quarters in this batch, include each one:
+```
+## Earnings Call Transcript: Q{N} FY{YYYY}
+
+{full transcript text from .thes1s/reports/{TICKER}/transcripts/Q{N}-FY{YYYY}.md}
+```
+If NO transcripts are available (transcriptAvailability.count === 0), include this notice:
+```
+## Earnings Call Transcripts: UNAVAILABLE
+
+No earnings call transcripts were available for {TICKER} from Finnhub or Alpha Vantage.
+Proceed with 10-Q filings only. Flag this as a data gap in your output.
+```
+7. Task instruction: "Read {TICKER}'s quarterly SEC filings (10-Q) provided below, covering Q{start} through Q{end}. ALL filing sections are included -- read every section thoroughly. If earnings call transcripts are provided, cross-reference management commentary from the transcripts against the 10-Q filings. For each quarter extract: revenue and earnings trends, management guidance changes, competitive dynamics, forward-looking statements, red flags, and cross-validate quarterly financial data against the DataPacket. Track management promises and their fulfillment across quarters. Return your findings as a structured JSON object matching the quarterly-reader output schema."
 
 Log:
 ```
@@ -452,7 +415,16 @@ SECTION_EOF
 ```
 3. If no JSON block found, create a minimal section with status "failed" and the agent's response as narrative
 
-4. **Log** results per section: key, verdict, confidence, citation count, red flag count.
+**Narrative Recovery (Phase 6.3 — B3):**
+After extracting section JSON, check each section's `narrative` field length:
+- If `narrative.length < 200`: The agent likely abbreviated the narrative (a known failure mode where models output "See full narrative in agent output" or similar stubs).
+  1. Search the agent's response text ABOVE the JSON block for the Part 1 narrative content (markdown prose with ## headings).
+  2. If substantial prose is found (> 200 chars), inject it into the section JSON's `narrative` field and re-save.
+  3. If no recoverable narrative found, flag the section for retry with this enhanced instruction:
+     "Your previous output had a {length}-char narrative stub. The narrative field MUST contain your FULL analysis (500+ words). Write the complete narrative — do NOT abbreviate, do NOT use placeholder text like 'See full narrative in agent output.' Your narrative IS the analysis."
+  4. Retry once. If the retry also produces a stub narrative, save with a warning and continue.
+
+4. **Log** results per section: key, verdict, confidence, citation count, red flag count, **narrative length**.
 
 5. **Handle failures** with retry-then-escalate (per D-05/D-06). For each section that fails JSON parsing or validation:
 
@@ -645,6 +617,7 @@ Step 7: Phase 2 -- Financial Deep-Dive
 
 Same validation pattern as Phase 1, including:
 - **JSON Output Extraction Fallback (D-02-a):** Check if each output file exists after agent completes. If MISSING, extract JSON from agent response text and write via Bash `cat << 'SECTION_EOF'`.
+- **Narrative Recovery (Phase 6.3 — B3):** Check each section's `narrative` field length. If < 200 chars, search agent response for Part 1 narrative prose and inject it. If no recoverable narrative, retry once with explicit instruction to produce full narrative. Log narrative length for every section.
 - **Retry Logic (D-02-d):** If an agent fails, wait 30 seconds and retry once. If retry fails, save with `status: "failed"` and continue.
 - **searchesPerformed check:** Verify `searchesPerformed` is a non-empty array for risk-analyst, valuation-specialist, management-evaluator, business-analyst, and competitor-evaluator sections. Log a warning if missing or empty -- this is the primary enforcement point for QUAL-07 search compliance.
 
@@ -784,6 +757,7 @@ Step 9: Phase 3 -- Risk & Valuation
 
 Same validation pattern as Phase 1, including:
 - **JSON Output Extraction Fallback (D-02-a):** Check if each output file exists. If MISSING, extract JSON from agent response and write via Bash.
+- **Narrative Recovery (Phase 6.3 — B3):** Check each section's `narrative` field length. If < 200 chars, search agent response for Part 1 narrative prose and inject it. If no recoverable narrative, retry once with explicit instruction to produce full narrative. Log narrative length for every section.
 - **Retry Logic (D-02-d):** If an agent fails, wait 30 seconds and retry once. If retry fails, save with `status: "failed"`.
 - **searchesPerformed check:** Verify `searchesPerformed` is a non-empty array for risk-analyst, valuation-specialist, management-evaluator, business-analyst, and competitor-evaluator sections. Log a warning if missing or empty -- this is the primary enforcement point for QUAL-07 search compliance.
 
@@ -966,7 +940,6 @@ Collect all 10 sections + synthesis + checkpoints + FGR derivation into the fina
   "ticker": "{TICKER}",
   "companyName": "{from DataPacket companyInfo}",
   "stage": "pitchDeck",
-  "generatedAt": "{ISO timestamp}",
   "sections": [
     /* 10 ReportSectionSchema objects ordered by sectionNumber (1-10) */
   ],
@@ -1152,11 +1125,11 @@ node --import ./scripts/node-esm-loader.js -e "
 
   if (annualPSR) {
     const chars = JSON.stringify(annualPSR).length;
-    tracker.record('annual-reader', 'pre-processing', chars * 10, chars, 'claude-opus-4-6');
+    tracker.record('annual-reader', 'pre-processing', chars * 10, chars, 'claude-sonnet-4-6');
   }
   if (quarterlyPSR) {
     const chars = JSON.stringify(quarterlyPSR).length;
-    tracker.record('quarterly-reader', 'pre-processing', chars * 10, chars, 'claude-opus-4-6');
+    tracker.record('quarterly-reader', 'pre-processing', chars * 10, chars, 'claude-sonnet-4-6');
   }
 
   // Record section agent estimates
@@ -1336,7 +1309,7 @@ The PM is the portfolio manager reviewing the analyst team's work. Checkpoints a
 The conversational loop continues until the PM explicitly says "continue". There is no timeout.
 
 ### Agent Model Selection
-- **PSR agents (annual-reader, quarterly-reader):** Opus -- deep comprehension of long documents
+- **PSR agents (annual-reader, quarterly-reader):** Sonnet -- cost-efficient for structured extraction from long documents
 - **Analysis agents (business-analyst, competitor-evaluator, financial-analyst, management-evaluator):** Sonnet -- cost-efficient for structured analysis
 - **Judgment agents (risk-analyst, valuation-specialist):** Opus -- highest reasoning for risk and valuation
 - **Synthesis-writer:** Opus -- cross-section consistency requires deep judgment

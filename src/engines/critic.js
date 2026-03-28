@@ -12,7 +12,7 @@
 const REQUIRED_FIELDS = [
   'key', 'title', 'sectionNumber', 'status', 'confidence',
   'verdict', 'verdictRationale', 'summary', 'data', 'narrative',
-  'citations', 'redFlags', 'generatedAt', 'modelUsed', 'tokenCost',
+  'citations', 'redFlags', 'modelUsed', 'tokenCost',
 ];
 
 // Weighted scoring formula for completeness

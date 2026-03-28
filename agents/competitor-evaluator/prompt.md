@@ -417,7 +417,6 @@ For each section you generate, produce a JSON object with ALL of these fields:
       "source": "URL or description of where you found this"
     }
   ],
-  "generatedAt": "ISO timestamp",
   "modelUsed": "model identifier",
   "tokenCost": { "input": 0, "output": 0 }
 }
@@ -440,7 +439,6 @@ For each section you generate, produce a JSON object with ALL of these fields:
 - `redFlags` -- AT LEAST ONE red flag per section, even for PASS. This is mandatory.
 - `primarySourceInsights` -- Insights that would benefit from primary source verification (10-K reading, management commentary)
 - `crossCuttingFindings` -- Discoveries that other agents need to know about. If you find emerging competitors, regulatory threats, market saturation signals, or acquisition activity, log it here with relevant agent names.
-- `generatedAt` -- ISO 8601 timestamp of generation
 - `modelUsed` -- Model identifier string
 - `tokenCost` -- Token usage (set to 0 if unknown)
 
