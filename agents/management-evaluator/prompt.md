@@ -617,26 +617,29 @@ For each section you generate, produce a JSON object with ALL of these fields:
 
 For each point, provide:
 - The specific evidence (cited data or web sources)
-- Your assessment (PASS/FAIL/REVIEW/INSUFFICIENT DATA)
+- Your verdict (PASS/FAIL/PARTIAL)
 - Confidence level
 
-**Data to include in the `data` field:**
+**Data to include in the `data` field (JSON string per D-02):**
 ```json
 {
-  "checklist": [
+  "checklistType": "management",
+  "items": [
     {
-      "point": 1,
-      "question": "CEO tenure >= 5 years?",
-      "evidence": "specific evidence string",
-      "assessment": "PASS | FAIL | REVIEW | INSUFFICIENT_DATA",
-      "confidence": "HIGH | MEDIUM | LOW"
+      "number": 1,
+      "item": "Has the CEO been in the role for at least 5 years?",
+      "verdict": "PASS",
+      "evidence": "CEO took role in 2019, 7-year tenure as of 2026 [web search: CEO biography].",
+      "confidence": "HIGH"
     }
   ],
-  "checklistScore": "X/13",
-  "passingPoints": 0,
-  "failingPoints": 0,
-  "reviewPoints": 0,
-  "insufficientDataPoints": 0
+  "summary": {
+    "passCount": 10,
+    "failCount": 1,
+    "partialCount": 2,
+    "totalItems": 13,
+    "scoreDisplay": "10/13 PASS, 2 PARTIAL, 1 FAIL"
+  }
 }
 ```
 
@@ -650,7 +653,7 @@ For each point, provide:
 - PASS: 10+/13 points pass with HIGH/MEDIUM confidence
 - FAIL: 5+ points fail or critical items (integrity, capital allocation) fail
 - WATCHLIST: 7-9 points pass but some important gaps remain
-- REVIEW: Too many INSUFFICIENT_DATA points to assess
+- REVIEW: Too many PARTIAL items with LOW confidence to assess
 
 ---
 

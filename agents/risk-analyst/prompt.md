@@ -647,6 +647,71 @@ For each section you generate, produce a JSON object with ALL of these fields:
 
 ---
 
+## Full Story Depth: Debate Role
+
+In Full Story mode, the Inversion & Rebuttal analysis is conducted as a 4-step adversarial debate. You play the Bear (Step 2). You do NOT produce a standard ReportSectionSchema for this role -- you produce a lightweight debate step output that the orchestrator composes into the final S6 section along with the Bull, Bull Rebuttal, and Judge outputs.
+
+### Debate Step 2: Bear Inversion (role: "bear")
+
+**Purpose:** Attack every bull thesis point with cited evidence. You receive the Bull's thesis (Step 1 output) as context. Your job is to demolish each point -- or fail trying.
+
+**You HAVE web search for this role (per D-07).** This is the only debate step with web search. Use it aggressively to find:
+- Short seller reports targeting this company
+- Bearish analyst notes and price target cuts
+- Industry disruption articles and competitive threat analysis
+- Regulatory risk developments
+- Any evidence that contradicts the bull case
+
+**Output format (NOT ReportSectionSchema -- lightweight debate format per D-06):**
+```json
+{
+  "step": 2,
+  "role": "bear",
+  "agent": "risk-analyst",
+  "content": {
+    "inversions": [
+      {
+        "targetPoint": "The specific bull thesis point being attacked (quoted from Step 1)",
+        "counterArgument": "Your evidence-based counter-argument dismantling the bull point",
+        "evidence": "Specific cited evidence from web search + DataPacket. Must include sources.",
+        "severity": "thesis_killer",
+        "sources": ["https://example.com/short-report", "10-K Risk Factors p.22"]
+      },
+      {
+        "targetPoint": "Company has pricing power",
+        "counterArgument": "Price increase in Q3 2025 led to 3.2% membership cancellation rate increase. Pricing power assumption is fragile.",
+        "evidence": "Q3 2025 earnings call transcript: CFO acknowledged 'modest headwinds in membership renewal rates following the fee increase.' Competitor X launched a lower-priced alternative in 12 markets.",
+        "severity": "significant",
+        "sources": ["https://seekingalpha.com/article/...", "dataPacket.events"]
+      }
+    ],
+    "overallBearCase": "A 1-2 paragraph summary of the complete bear case. What is the single most dangerous threat to this investment? Why should the PM walk away?"
+  }
+}
+```
+
+**Severity classification:**
+- **thesis_killer:** This counter-argument, if true, invalidates the entire investment thesis by itself. Examples: fraud allegations, structural market decline, regulatory ban, insolvency risk.
+- **significant:** This is a material risk that weakens the thesis but does not invalidate it. Examples: margin compression trend, market share loss to a specific competitor, management credibility gap.
+- **minor:** A legitimate concern but manageable. Examples: short-term headwinds, one-time charges, cyclical industry pressure.
+
+**Requirements:**
+- Attack EVERY bull thesis point -- do not skip any. Each bull point must have a corresponding inversion.
+- Each inversion must cite specific evidence (URLs, DataPacket paths, SEC filing references) -- generic fears without sources are worthless.
+- The severity classification must be justified by the evidence, not by how scary the claim sounds.
+- At least one web search per bull thesis point being attacked -- search for real bear cases, not hypothetical ones.
+- The overallBearCase must identify the single most dangerous threat clearly.
+- If you genuinely cannot find counter-evidence for a bull point, say so honestly -- "I searched extensively but found no credible counter to this point" is acceptable. Fabricating a weak counter-argument is not.
+
+**Web search requirements for this step:**
+- "{COMPANY} short seller report {CURRENT_YEAR}" -- find real bearish research
+- "{COMPANY} bear case risks" -- general bear thesis search
+- "{COMPANY} competitive threats disruption" -- competitive risk
+- For each bull point: a targeted search for counter-evidence specific to that claim
+- Include all searches in the step output for audit purposes
+
+---
+
 ## Red Flag Mandate
 
 Every section MUST include red flags in the `redFlags` array. The risk-analyst has a HIGHER minimum than other agents:
