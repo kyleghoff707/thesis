@@ -604,6 +604,401 @@ function checkSearchCompliance(section) {
   return { score, issues };
 }
 
+// ─── Methodology Scoring (D-01) ────────────────────────────────────
+
+// Sections exempt from methodology checks — synthesis, PSR readers, overall verdict
+const EXEMPT_METHODOLOGY_KEYS = [
+  'overall_verdict', 'synthesis', 'psr_annual', 'psr_quarterly',
+  'annual-reader', 'quarterly-reader',
+];
+
+function isExemptSection(section) {
+  const key = section.key || '';
+  return EXEMPT_METHODOLOGY_KEYS.some(k => key === k || key.startsWith(k));
+}
+
+// Per-section methodology checks derived from Rule One curriculum (pitch-deck-I through IV).
+// Each check has: id, label, critical (weighted 2x if true, 1x if false), test function.
+const METHODOLOGY_CHECKS = {
+  // Radar / Company Info (pitch-deck-I: sections 1-2)
+  company_info: [
+    {
+      id: 'radar-event',
+      label: 'Event analysis present',
+      critical: true,
+      test: (s) => /event|price\s*drop|catalyst|dislocation|pullback|correction|sell.?off/i.test(s.narrative || ''),
+    },
+    {
+      id: 'radar-3ms',
+      label: '3 Ms coverage (Meaning, Moat, Management)',
+      critical: true,
+      test: (s) => {
+        const n = (s.narrative || '').toLowerCase();
+        return n.includes('meaning') && n.includes('moat') && n.includes('management');
+      },
+    },
+    {
+      id: 'radar-snapshot',
+      label: 'Company snapshot with key metrics',
+      critical: false,
+      test: (s) => {
+        const d = s.data;
+        if (d && typeof d === 'object' && !Array.isArray(d) && Object.keys(d).length >= 2) return true;
+        if (typeof d === 'string') {
+          try { const parsed = JSON.parse(d); return typeof parsed === 'object' && Object.keys(parsed).length >= 2; } catch { return false; }
+        }
+        return false;
+      },
+    },
+  ],
+
+  // Simple & Predictable / Minimum Standards (pitch-deck-I)
+  minimum_standards: [
+    {
+      id: 'simple-business-model',
+      label: 'Business model clarity (how company makes money)',
+      critical: true,
+      test: (s) => /revenue\s*(source|stream|model|from|driv)|makes?\s*money|business\s*model|how\s*(it|the\s*company)\s*(earn|generat|mak)/i.test(s.narrative || ''),
+    },
+    {
+      id: 'simple-predictability',
+      label: 'Predictability assessment (revenue/earnings consistency)',
+      critical: true,
+      test: (s) => /predictab|consisten|stable|steady|recurr|trend|visib/i.test(s.narrative || ''),
+    },
+    {
+      id: 'simple-cyclicality',
+      label: 'Cyclicality addressed',
+      critical: false,
+      test: (s) => /cycli|recession|downturn|defensive|counter.?cycl|non.?cycl/i.test(s.narrative || ''),
+    },
+  ],
+
+  // Market Position (pitch-deck-I: section 3)
+  market_position: [
+    {
+      id: 'market-share',
+      label: 'Market share data (percentage or ranking)',
+      critical: true,
+      test: (s) => /market\s*share|\d+%\s*(market|share|of\s*the\s*market)|#\d+\s*(player|position|rank)|leading|dominant|largest/i.test(s.narrative || ''),
+    },
+    {
+      id: 'market-competitors',
+      label: 'Competitor comparison (competitors named)',
+      critical: true,
+      test: (s) => /competitor|rival|compete|vs\.?|versus|compared\s*to|relative\s*to/i.test(s.narrative || ''),
+    },
+    {
+      id: 'market-tam',
+      label: 'Total Addressable Market referenced',
+      critical: false,
+      test: (s) => /TAM|total\s*addressable|market\s*size|\$\d+.*\s*(billion|trillion|B|T)\s*(market|industry|opportunity)/i.test(s.narrative || ''),
+    },
+  ],
+
+  // Barriers & Moats (pitch-deck-II: section 4)
+  barriers_and_moats: [
+    {
+      id: 'moat-type',
+      label: 'Specific moat type identified',
+      critical: true,
+      test: (s) => /brand\s*moat|brand\s*advantage|switching\s*cost|toll\s*bridge|price\s*advantage|trade\s*secret|secret|patent|network\s*effect|brand\b.*\bmoat|moat\b.*\bbrand/i.test(s.narrative || ''),
+    },
+    {
+      id: 'moat-durability',
+      label: 'Moat durability assessment (10-20 year outlook)',
+      critical: true,
+      test: (s) => /durab|endur|sustain|10.?year|20.?year|long.?term|anti.?fragil|lasting|permanent|widening/i.test(s.narrative || ''),
+    },
+    {
+      id: 'moat-multiple',
+      label: 'Multiple moat types identified',
+      critical: false,
+      test: (s) => {
+        const n = (s.narrative || '').toLowerCase();
+        const types = ['brand', 'switching', 'toll bridge', 'price advantage', 'secret', 'patent', 'network'];
+        return types.filter(t => n.includes(t)).length >= 2;
+      },
+    },
+    {
+      id: 'moat-threat',
+      label: 'Competitor copying/threat assessment',
+      critical: false,
+      test: (s) => /cop(y|ied|ying)|replicate|imitat|threat|disrupt|erode|narrow|challenge/i.test(s.narrative || ''),
+    },
+  ],
+
+  // Growth Metrics — disambiguated by sectionNumber at runtime.
+  // When key is growth_metrics, sectionNumber determines which checks apply:
+  //   sectionNumber 5 = FCF checks, sectionNumber 7 = ROE/ROIC/Debt checks
+  // If sectionNumber unavailable, both are tried and higher score wins.
+  growth_metrics: 'dynamic', // Sentinel: resolved at runtime in scoreMethodology
+
+  // FCF checks (pitch-deck-II: section 5)
+  _growth_metrics_5: [
+    {
+      id: 'fcf-calculation',
+      label: 'FCF calculation present',
+      critical: true,
+      test: (s) => /FCF|free\s*cash\s*flow|operating\s*cash\s*flow\s*minus\s*capex|cash\s*from\s*operations?\s*(-|minus|less)\s*cap/i.test(s.narrative || ''),
+    },
+    {
+      id: 'fcf-ratio',
+      label: 'FCF ratio (FCF/earnings)',
+      critical: true,
+      test: (s) => /FCF\s*ratio|FCF\s*\/\s*(net\s*income|earnings)|FCF.{0,30}(ratio|multiple|x\s*earnings)/i.test(s.narrative || ''),
+    },
+    {
+      id: 'fcf-maintenance-capex',
+      label: 'Maintenance vs growth capex distinction',
+      critical: false,
+      test: (s) => /maintenance\s*cap|growth\s*cap|maintenance.*capex|capex.*maintenance|70%|owner\s*earnings/i.test(s.narrative || ''),
+    },
+    {
+      id: 'fcf-shareholder-benefit',
+      label: 'Shareholder benefit discussion (buybacks, dividends)',
+      critical: false,
+      test: (s) => /buyback|share\s*repurchas|dividend|return.*capital|shareholder.*benefit|capital\s*return/i.test(s.narrative || ''),
+    },
+  ],
+
+  // ROE/ROIC/Debt checks (pitch-deck-III: section 7)
+  _growth_metrics_7: [
+    {
+      id: 'returns-metrics',
+      label: 'Return metrics present (ROE, ROIC, or ROA with values)',
+      critical: true,
+      test: (s) => /ROE\s*(of|is|at|:|\=)?\s*\d|ROIC\s*(of|is|at|:|\=)?\s*\d|ROA\s*(of|is|at|:|\=)?\s*\d|\d+%?\s*(ROE|ROIC|ROA)/i.test(s.narrative || ''),
+    },
+    {
+      id: 'returns-debt',
+      label: 'Debt analysis present',
+      critical: true,
+      test: (s) => /debt|leverage|debt.?to.?(equity|earnings|capital)|interest\s*coverage|zero.?debt|debt.?free/i.test(s.narrative || ''),
+    },
+    {
+      id: 'returns-roe-roic-comparison',
+      label: 'ROE vs ROIC comparison (debt distortion check)',
+      critical: false,
+      test: (s) => /(ROE.*ROIC|ROIC.*ROE|debt.?driven|not\s*debt.?driven|capital\s*efficien)/i.test(s.narrative || ''),
+    },
+    {
+      id: 'returns-consistency',
+      label: '10-year return consistency assessment',
+      critical: false,
+      test: (s) => /10.?year|consist|never\s*drop|historical|track\s*record|decade/i.test(s.narrative || ''),
+    },
+  ],
+
+  // Management (pitch-deck-II: section 6)
+  management: [
+    {
+      id: 'mgmt-ceo',
+      label: 'CEO evaluation (named or track record)',
+      critical: true,
+      test: (s) => /CEO|chief\s*executive|[A-Z][a-z]+\s+[A-Z][a-z]+.*?(lead|CEO|chief|founder|tenure|joined|appointed)/i.test(s.narrative || ''),
+    },
+    {
+      id: 'mgmt-insider',
+      label: 'Insider ownership discussed',
+      critical: true,
+      test: (s) => /insider\s*(own|buy|sell|purchas|trad)|ownership\s*stake|skin\s*in\s*the\s*game|share\s*(own|purchas|buy)/i.test(s.narrative || ''),
+    },
+    {
+      id: 'mgmt-capital-allocation',
+      label: 'Capital allocation assessment',
+      critical: false,
+      test: (s) => /capital\s*alloc|buyback|dividend|reinvest|acquisit|return.*capital|share\s*repurchas/i.test(s.narrative || ''),
+    },
+    {
+      id: 'mgmt-integrity',
+      label: 'Integrity assessment (promises vs follow-through)',
+      critical: false,
+      test: (s) => /integrit|promis|follow.?through|deliver|credib|trustworth|transparen|accountab/i.test(s.narrative || ''),
+    },
+    {
+      id: 'mgmt-bag',
+      label: 'B.A.G. (Big Audacious Goal) or strategic vision',
+      critical: false,
+      test: (s) => /B\.?A\.?G\.?|big\s*audacious|strategic\s*vision|long.?term\s*(goal|vision|plan|strateg)/i.test(s.narrative || ''),
+    },
+  ],
+
+  // Balance Sheet (pitch-deck-III: section 8)
+  balance_sheet: [
+    {
+      id: 'bs-liquidity',
+      label: 'Current ratio or liquidity assessment',
+      critical: true,
+      test: (s) => /current\s*ratio|liquidit|working\s*capital|quick\s*ratio|cash\s*position|cash\s*and\s*equivalents/i.test(s.narrative || ''),
+    },
+    {
+      id: 'bs-equity-trend',
+      label: 'Equity trend discussed (positive/growing)',
+      critical: true,
+      test: (s) => /equity\s*(trend|grow|increas|positive|strength)|shareholder.{0,20}equity|book\s*value\s*(grow|increas|trend)/i.test(s.narrative || ''),
+    },
+    {
+      id: 'bs-assets-liabilities',
+      label: 'Assets vs liabilities breakdown',
+      critical: false,
+      test: (s) => /asset|liabilit|balance\s*sheet\s*(strength|health|quality)|total\s*asset/i.test(s.narrative || ''),
+    },
+    {
+      id: 'bs-downturn-resilience',
+      label: 'Balance sheet strength across downturns',
+      critical: false,
+      test: (s) => /downturn|recession|crisis|covid|pandemic|stress|resilien|weather/i.test(s.narrative || ''),
+    },
+  ],
+
+  // PEST Risks (pitch-deck-III: section 9)
+  pest_risks: [
+    {
+      id: 'pest-all-categories',
+      label: 'All 4 PEST categories covered',
+      critical: true,
+      test: (s) => {
+        const n = (s.narrative || '').toLowerCase();
+        return n.includes('political') && n.includes('economic') &&
+               n.includes('social') && n.includes('technolog');
+      },
+    },
+    {
+      id: 'pest-rebuttal',
+      label: 'Rebuttal or counter-argument present',
+      critical: true,
+      test: (s) => /rebuttal|counter.?argument|counter.?point|mitigat|however|on\s*the\s*other\s*hand|resilien|offset|defend|evidence.{0,20}(suggest|show|demonstrat)/i.test(s.narrative || ''),
+    },
+    {
+      id: 'pest-historical-resilience',
+      label: 'Historical resilience evidence',
+      critical: false,
+      test: (s) => /historical|track\s*record|past.*crisis|survived|weathered|through.*recession|through.*downturn/i.test(s.narrative || ''),
+    },
+  ],
+
+  // Valuation (pitch-deck-IV: section 10)
+  valuation_summary: [
+    {
+      id: 'val-4-methods',
+      label: 'All 4 valuation methods present (MOS, PBT, Ten Cap, Equity Bond)',
+      critical: true,
+      test: (s) => {
+        const n = (s.narrative || '').toLowerCase();
+        const hasMOS = /mos|margin\s*of\s*safety|sticker\s*price/i.test(n);
+        const hasPBT = /pbt|payback\s*time/i.test(n);
+        const hasTenCap = /ten\s*cap|10.?cap|owner\s*earnings/i.test(n);
+        const hasEquityBond = /equity\s*bond|buffettology/i.test(n);
+        return hasMOS && hasPBT && hasTenCap && hasEquityBond;
+      },
+    },
+    {
+      id: 'val-fgr',
+      label: 'FGR derivation with multiple inputs',
+      critical: true,
+      test: (s) => {
+        const n = (s.narrative || '').toLowerCase();
+        if (!/fgr|future\s*growth\s*rate/i.test(n)) return false;
+        // Check for at least 2 of 5 FGR inputs
+        const inputs = [
+          /historical|rear\s*view|past\s*growth/i,
+          /market\s*rel|stockholder|s&p\s*500/i,
+          /guidance|management.{0,20}(guide|project|expect|target)/i,
+          /sector|industry\s*(cagr|growth|rate)/i,
+          /analyst|consensus|wall\s*street|seeking\s*alpha/i,
+        ];
+        return inputs.filter(p => p.test(n)).length >= 2;
+      },
+    },
+    {
+      id: 'val-buy-price',
+      label: 'Buy price or price target present',
+      critical: true,
+      test: (s) => /buy\s*price|sticker\s*price|margin\s*of\s*safety\s*price|price\s*target|fair\s*value|\$\d+.*buy|intrinsic\s*value/i.test(s.narrative || ''),
+    },
+    {
+      id: 'val-sensitivity',
+      label: 'Sensitivity analysis or range of values',
+      critical: false,
+      test: (s) => /sensitiv|range\s*of|scenario|conservative.*optimistic|bull.*bear|low.*high.*case/i.test(s.narrative || ''),
+    },
+    {
+      id: 'val-10yr-outlook',
+      label: '10-year outlook assessment',
+      critical: false,
+      test: (s) => /10.?year\s*(outlook|projec|forecast|horizon|period|view)|decade|next\s*10/i.test(s.narrative || ''),
+    },
+  ],
+};
+
+/**
+ * Score methodology compliance for a single section.
+ * Returns { score: number, checks: Array<{ id, label, critical, passed }>, passed: boolean }.
+ * Exempt sections (synthesis, PSR, overall_verdict) return score 100 with empty checks.
+ *
+ * For growth_metrics key, sectionNumber disambiguates: 5 = FCF, 7 = ROE/ROIC/Debt.
+ * If sectionNumber is unavailable, both check sets are tried and the higher score wins.
+ */
+function scoreMethodology(section) {
+  if (isExemptSection(section)) {
+    return { score: 100, checks: [], passed: true };
+  }
+
+  const key = section.key || '';
+  let checks;
+
+  if (key === 'growth_metrics') {
+    // Disambiguate by sectionNumber
+    const num = section.sectionNumber;
+    if (num === 5) {
+      checks = METHODOLOGY_CHECKS._growth_metrics_5;
+    } else if (num === 7) {
+      checks = METHODOLOGY_CHECKS._growth_metrics_7;
+    } else {
+      // Unknown sectionNumber — try both, pick higher score
+      const result5 = runMethodologyChecks(section, METHODOLOGY_CHECKS._growth_metrics_5);
+      const result7 = runMethodologyChecks(section, METHODOLOGY_CHECKS._growth_metrics_7);
+      return result5.score >= result7.score ? result5 : result7;
+    }
+  } else {
+    checks = METHODOLOGY_CHECKS[key];
+  }
+
+  if (!checks || checks === 'dynamic') {
+    // Unknown section key — no methodology checks defined
+    return { score: 100, checks: [], passed: true };
+  }
+
+  return runMethodologyChecks(section, checks);
+}
+
+/**
+ * Run a set of methodology checks against a section and compute the weighted score.
+ * Critical checks are weighted 2, supplementary weighted 1.
+ * Score = (sum of passed weights / sum of total weights) * 100, rounded.
+ * passed = true if score >= 50.
+ */
+function runMethodologyChecks(section, checks) {
+  const results = checks.map(check => ({
+    id: check.id,
+    label: check.label,
+    critical: check.critical,
+    passed: check.test(section),
+  }));
+
+  let totalWeight = 0;
+  let passedWeight = 0;
+  for (const r of results) {
+    const weight = r.critical ? 2 : 1;
+    totalWeight += weight;
+    if (r.passed) passedWeight += weight;
+  }
+
+  const score = totalWeight > 0 ? Math.round((passedWeight / totalWeight) * 100) : 100;
+  return { score, checks: results, passed: score >= 50 };
+}
+
 // ─── Overall Score Computation ──────────────────────────────────────
 
 /**
@@ -663,12 +1058,16 @@ export function validateSection(section, dataPacket, options = {}) {
 
   const score = computeOverallScore(completeness, issues);
 
+  // 8. Methodology scoring (per D-01)
+  const methodology = scoreMethodology(section);
+
   return {
     sectionKey: section.key,
     score,
     completeness,
     issues,
     passed: issues.filter(i => i.severity === 'high').length === 0,
+    methodology,
     checkedAt: new Date().toISOString(),
   };
 }
@@ -686,10 +1085,16 @@ export function validateStage(sections, dataPacket) {
     : 0;
   const overallPassed = sectionReports.every(r => r.passed);
 
+  const methodologyScores = sectionReports.map(r => r.methodology?.score ?? 100);
+  const overallMethodologyScore = methodologyScores.length > 0
+    ? Math.round(methodologyScores.reduce((a, b) => a + b, 0) / methodologyScores.length)
+    : 0;
+
   return {
     sections: sectionReports,
     overallScore,
     overallPassed,
+    overallMethodologyScore,
     checkedAt: new Date().toISOString(),
   };
 }
@@ -706,4 +1111,6 @@ export const _testExports = {
   validateRedFlags,
   detectDataGaps,
   checkSearchCompliance,
+  scoreMethodology,
+  METHODOLOGY_CHECKS,
 };
