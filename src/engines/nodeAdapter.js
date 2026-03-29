@@ -380,9 +380,14 @@ if (IS_NODE) {
 
     // Standard proxy resolution for SEC/EDGAR/Yahoo URLs
     const resolvedURL = resolveURL(urlStr);
+    // Headers may be a Headers instance (e.g. from Anthropic SDK) — spread
+    // doesn't enumerate Headers entries, so convert to plain object first.
+    const incomingHeaders = opts.headers instanceof Headers
+      ? Object.fromEntries(opts.headers.entries())
+      : (opts.headers || {});
     const headers = {
       'User-Agent': 'Thes1s/1.0 (contact@thes1s.com)',
-      ...opts.headers,
+      ...incomingHeaders,
     };
     return _origFetch(resolvedURL, { ...opts, headers });
   };
