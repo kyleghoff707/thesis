@@ -9,7 +9,7 @@ Requirements for the Full Story (Stage 3) pipeline. Each maps to roadmap phases.
 
 ### CC Orchestration
 
-- [ ] **ORCH-01**: Full Story CC skill orchestrates 6 sections with Pitch Deck findings inherited as context
+- [ ] **ORCH-01**: Full Story CC skill orchestrates 5 sections (S1-S5) with Pitch Deck findings inherited as context (S6 deferred to Phase 14 debate)
 - [x] **ORCH-02**: Dispatch table updated — remove trading_strategy/pace_plan, fix S3 to competitor-evaluator, add 4-step debate
 - [x] **ORCH-03**: Agent prompts updated with Full Story-specific instructions per section assignment
 - [x] **ORCH-04**: Checklist sections produce scored output format (15+15+13 items with pass/fail/evidence per item)

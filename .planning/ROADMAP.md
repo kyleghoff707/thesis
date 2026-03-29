@@ -84,14 +84,14 @@ Plans:
 
 Plans:
 - [x] 12-01-PLAN.md -- Dispatch table + agent configs + checklist/debate schema design
-- [ ] 12-02-PLAN.md -- Agent prompt updates for Full Story sections and debate roles
+- [x] 12-02-PLAN.md -- Agent prompt updates for Full Story sections and debate roles
 
 ### Phase 13: CC Pipeline
-**Goal**: The Full Story generates end-to-end as a CC skill, producing 6 sections that inherit Pitch Deck findings as context
+**Goal**: The Full Story generates end-to-end as a CC skill, producing 5 sections (S1-S5) that inherit Pitch Deck findings as context (S6 debate deferred to Phase 14)
 **Depends on**: Phase 12
 **Requirements**: ORCH-01
 **Success Criteria** (what must be TRUE):
-  1. Running the Full Story CC skill on a ticker with an existing Pitch Deck produces all 6 sections (event analysis, meaning checklist, moat checklist, management checklist, valuation confirmation, inversion and rebuttal) without manual intervention
+  1. Running the Full Story CC skill on a ticker with an existing Pitch Deck produces 5 sections (event analysis, meaning checklist, moat checklist, management checklist, valuation confirmation) without manual intervention -- S6 (inversion and rebuttal) is a placeholder for Phase 14
   2. Each generated section references specific findings from the Pitch Deck (not re-deriving from scratch) -- visible as citations pointing to prior Pitch Deck section data
   3. Checklist sections produce the scored format defined in Phase 12 -- each checklist item has a verdict and evidence, with total scores tallied
 **Plans:** 2 plans
