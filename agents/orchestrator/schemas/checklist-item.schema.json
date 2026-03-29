@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ChecklistSectionData",
+  "description": "Structured data for checklist sections (meaning, moat, management). Serialized as JSON string in ReportSectionSchema.data field.",
+  "type": "object",
+  "required": ["checklistType", "items", "summary"],
+  "properties": {
+    "checklistType": {
+      "type": "string",
+      "enum": ["meaning", "moat", "management"],
+      "description": "Which checklist this is"
+    },
+    "items": {
+      "type": "array",
+      "description": "Individual checklist items with verdicts and evidence",
+      "items": {
+        "type": "object",
+        "required": ["number", "item", "verdict", "evidence", "confidence"],
+        "properties": {
+          "number": {
+            "type": "integer",
+            "description": "Item number (1-15 for meaning/moat, 1-13 for management)"
+          },
+          "item": {
+            "type": "string",
+            "description": "The checklist question or criterion being evaluated"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": ["PASS", "FAIL", "PARTIAL"],
+            "description": "Binary conviction assessment per D-01. PASS = criterion clearly met, FAIL = criterion clearly not met, PARTIAL = evidence is mixed or insufficient"
+          },
+          "evidence": {
+            "type": "string",
+            "description": "1-2 sentence summary of the evidence supporting the verdict. Must cite specific data points or sources."
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["HIGH", "MEDIUM", "LOW"],
+            "description": "Confidence in the verdict based on evidence quality. HIGH = multiple strong sources, MEDIUM = some evidence gaps, LOW = limited data"
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["passCount", "failCount", "partialCount", "totalItems", "scoreDisplay"],
+      "properties": {
+        "passCount": {
+          "type": "integer",
+          "description": "Number of items with PASS verdict"
+        },
+        "failCount": {
+          "type": "integer",
+          "description": "Number of items with FAIL verdict"
+        },
+        "partialCount": {
+          "type": "integer",
+          "description": "Number of items with PARTIAL verdict"
+        },
+        "totalItems": {
+          "type": "integer",
+          "description": "Total number of items (15 for meaning/moat, 13 for management)"
+        },
+        "scoreDisplay": {
+          "type": "string",
+          "description": "Human-readable summary per D-03, e.g. '12/15 PASS, 2 PARTIAL, 1 FAIL'"
+        }
+      }
+    }
+  }
+}
