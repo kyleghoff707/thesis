@@ -94,7 +94,11 @@ Plans:
   1. Running the Full Story CC skill on a ticker with an existing Pitch Deck produces all 6 sections (event analysis, meaning checklist, moat checklist, management checklist, valuation confirmation, inversion and rebuttal) without manual intervention
   2. Each generated section references specific findings from the Pitch Deck (not re-deriving from scratch) -- visible as citations pointing to prior Pitch Deck section data
   3. Checklist sections produce the scored format defined in Phase 12 -- each checklist item has a verdict and evidence, with total scores tallied
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 13-01-PLAN.md -- Fix progressState.js stale section keys + update generate-section skill
+- [ ] 13-02-PLAN.md -- Create generate-full-story CC skill (gate check, PD inheritance, 5-agent dispatch, checkpoint, report assembly)
 
 ### Phase 14: Adversarial Debate
 **Goal**: The inversion and rebuttal section executes a 4-step adversarial debate that stress-tests the investment thesis from both sides
@@ -150,7 +154,7 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 17
 | 10. Pipeline Integration & Prompt Fixes | v1.1 | 3/3 | Complete | 2026-03-29 |
 | 11. Validation | v1.1 | 2/2 | Complete | 2026-03-29 |
 | 12. Full Story Foundation | v1.2 | 1/2 | Complete    | 2026-03-29 |
-| 13. CC Pipeline | v1.2 | 0/? | Not started | - |
+| 13. CC Pipeline | v1.2 | 0/2 | Planned | - |
 | 14. Adversarial Debate | v1.2 | 0/? | Not started | - |
 | 15. Quality System | v1.2 | 0/? | Not started | - |
 | 16. API Migration | v1.2 | 0/? | Not started | - |
