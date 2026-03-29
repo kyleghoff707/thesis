@@ -74,8 +74,8 @@ If a real hedge fund wouldn't do it that way, don't build it that way.
 - [ ] Full Story CC skill — 6-section Stage 3 pipeline with Pitch Deck inheritance
 - [ ] Scored checklists — 43-item checklists (Meaning 15pt, Moat 15pt, Management 13pt) with structured scoring
 - [ ] Adversarial debate — 4-step Bull → Bear → Bull Rebuttal → Judge for inversion & rebuttal
-- [ ] Dispatch table updates — remove trading strategy/PACE, fix S3 ownership to competitor-evaluator
-- [ ] Agent prompt updates — Full Story-specific sections in existing agent prompts
+- [x] Dispatch table updates — remove trading strategy/PACE, fix S3 ownership to competitor-evaluator (Phase 12)
+- [x] Agent prompt updates — Full Story-specific sections in existing agent prompts (Phase 12)
 - [ ] Full Story methodology scoring — curriculum-derived checks in critic.js
 - [ ] API migration — migrate Full Story to Claude API when CC quality ceiling is reached
 - [ ] End-to-end validation — at least 1 ticker through full One Pager → Pitch Deck → Full Story pipeline
@@ -172,4 +172,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 after v1.2 milestone start — Full Story Pipeline*
+*Last updated: 2026-03-29 after Phase 12 complete — Full Story Foundation (dispatch table, schemas, agent prompts)*
