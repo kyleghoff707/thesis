@@ -27,6 +27,24 @@ function buildSectionAssignment(sections) {
   return `Generate sections: ${sections.join(', ')}`;
 }
 
+// Format PSR agent output into a structured findings string for downstream agents (D-02)
+function formatPsrFindings(psrSections) {
+  if (!psrSections || psrSections.length === 0) return '';
+  const parts = [];
+  for (const section of psrSections) {
+    if (!section) continue;
+    const label = section.title || section.key || 'PSR Agent';
+    if (section.narrative) {
+      parts.push(`### ${label}\n\n${section.narrative}`);
+    }
+    if (section.primarySourceInsights && section.primarySourceInsights.length > 0) {
+      parts.push(`**Key Insights:**\n${section.primarySourceInsights.map(i => `- ${i}`).join('\n')}`);
+    }
+  }
+  if (parts.length === 0) return '';
+  return `## Primary Source Reader Findings\n\n${parts.join('\n\n---\n\n')}`;
+}
+
 // Main pipeline entry point
 // stage: 'pitchDeck' | 'onePager' | 'fullStory'
 // options: { onWaveComplete, psrFindings, maxSearches }
@@ -61,6 +79,15 @@ export async function runPipeline(stage, dataPacket, options = {}) {
     cacheMonitor.record(result.usage);
   }
 
+  // Extract PSR findings for downstream agents (D-02)
+  const psrSections = allSections.filter(s =>
+    s && (s.key === 'annual-reader' || s.key === 'quarterly-reader' ||
+          s.title?.includes('Annual') || s.title?.includes('Quarterly'))
+  );
+  const formattedPsrFindings = formatPsrFindings(psrSections);
+  // Use formatted PSR findings if available, otherwise fall back to caller-provided
+  const psrFindingsForAgents = formattedPsrFindings || options.psrFindings || '';
+
   // --- Wave execution (parallel within, sequential between — per D-01) ---
   for (const wave of stageConfig.phases) {
     const waveAgents = wave.agents;
@@ -70,7 +97,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
       waveAgents.map(a => dispatchAgent(a.agent, dataPacket, {
         sectionAssignment: buildSectionAssignment(a.sections),
         priorSections: allSections.slice(),
-        psrFindings: options.psrFindings,
+        psrFindings: psrFindingsForAgents,
         pmFeedback,
         maxSearches: options.maxSearches,
       }))
@@ -128,7 +155,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
     const result = await dispatchAgent(step.agent, dataPacket, {
       sectionAssignment: buildSectionAssignment(step.sections),
       priorSections: allSections.slice(),
-      psrFindings: options.psrFindings,
+      psrFindings: psrFindingsForAgents,
       pmFeedback,
       maxSearches: options.maxSearches,
     });
@@ -156,4 +183,4 @@ export async function runPipeline(stage, dataPacket, options = {}) {
   };
 }
 
-export const _testExports = { loadDispatchTable, buildSectionAssignment };
+export const _testExports = { loadDispatchTable, buildSectionAssignment, formatPsrFindings };

@@ -60,8 +60,10 @@ vi.mock('../aiResearch.js', () => ({
   dispatchAgent: vi.fn(),
 }));
 
-import { runPipeline } from '../pipelineManager.js';
+import { runPipeline, _testExports } from '../pipelineManager.js';
 import { dispatchAgent } from '../aiResearch.js';
+
+const { formatPsrFindings } = _testExports;
 
 // Helper: create a mock dispatchAgent result
 function mockResult(agentRole, sectionNum = 1) {
@@ -398,5 +400,177 @@ describe('pipelineManager — runPipeline', () => {
     const ceError = result.errors.find(e => e.agent === 'competitor-evaluator');
     expect(ceError).toBeDefined();
     expect(ceError.error).toContain('Network timeout');
+  });
+});
+
+// ─── formatPsrFindings ──────────────────────────────────────────
+
+describe('formatPsrFindings', () => {
+  it('extracts narrative and primarySourceInsights from two PSR sections', () => {
+    const sections = [
+      {
+        key: 'annual-reader',
+        title: 'Annual Report Reader',
+        narrative: 'The 10-K reveals strong revenue growth.',
+        primarySourceInsights: ['Revenue grew 12% YoY', 'Gross margin expanded to 38%'],
+      },
+      {
+        key: 'quarterly-reader',
+        title: 'Quarterly Report Reader',
+        narrative: 'Q4 showed acceleration in same-store sales.',
+        primarySourceInsights: ['Same-store sales up 5.2%'],
+      },
+    ];
+    const result = formatPsrFindings(sections);
+    expect(result).toContain('Annual Report Reader');
+    expect(result).toContain('The 10-K reveals strong revenue growth.');
+    expect(result).toContain('Revenue grew 12% YoY');
+    expect(result).toContain('Gross margin expanded to 38%');
+    expect(result).toContain('Quarterly Report Reader');
+    expect(result).toContain('Q4 showed acceleration in same-store sales.');
+    expect(result).toContain('Same-store sales up 5.2%');
+  });
+
+  it('skips null section in array', () => {
+    const sections = [
+      null,
+      {
+        key: 'annual-reader',
+        title: 'Annual Report Reader',
+        narrative: 'Good findings.',
+        primarySourceInsights: ['Insight 1'],
+      },
+    ];
+    const result = formatPsrFindings(sections);
+    expect(result).toContain('Annual Report Reader');
+    expect(result).toContain('Good findings.');
+    expect(result).not.toContain('null');
+  });
+
+  it('returns empty string for empty array', () => {
+    const result = formatPsrFindings([]);
+    expect(result).toBe('');
+  });
+
+  it('includes insights even when narrative is missing', () => {
+    const sections = [
+      {
+        key: 'annual-reader',
+        title: 'Annual Report Reader',
+        primarySourceInsights: ['Key insight from filing'],
+      },
+    ];
+    const result = formatPsrFindings(sections);
+    expect(result).toContain('Key insight from filing');
+    expect(result).toContain('Key Insights');
+  });
+
+  it('output starts with ## Primary Source Reader Findings header', () => {
+    const sections = [
+      {
+        key: 'annual-reader',
+        title: 'Annual Report Reader',
+        narrative: 'Some findings.',
+        primarySourceInsights: [],
+      },
+    ];
+    const result = formatPsrFindings(sections);
+    expect(result.startsWith('## Primary Source Reader Findings')).toBe(true);
+  });
+});
+
+// ─── PSR findings wiring ────────────────────────────────────────
+
+describe('PSR findings wiring', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // PSR agents (annual-reader, quarterly-reader) return sections with narrative + insights
+    dispatchAgent.mockImplementation((agentRole) => {
+      if (agentRole === 'annual-reader') {
+        return Promise.resolve({
+          section: {
+            key: 'annual-reader',
+            title: 'Annual Report Reader',
+            sectionNumber: 98,
+            status: 'pass',
+            confidence: 90,
+            summary: 'Annual analysis',
+            narrative: 'The 10-K reveals strong revenue growth of 12% driven by new store openings.',
+            primarySourceInsights: ['Revenue grew 12%', 'Operating margin improved to 7.5%'],
+            redFlags: [],
+          },
+          usage: { inputTokens: 20000, outputTokens: 3000, cacheRead: 15000, cacheWrite: 5000, webSearches: 0, cost: 0.12 },
+          webSearches: [],
+          model: 'claude-sonnet-4-6',
+          stopReason: 'end_turn',
+          duration: 5000,
+          error: null,
+        });
+      }
+      if (agentRole === 'quarterly-reader') {
+        return Promise.resolve({
+          section: {
+            key: 'quarterly-reader',
+            title: 'Quarterly Report Reader',
+            sectionNumber: 99,
+            status: 'pass',
+            confidence: 85,
+            summary: 'Quarterly analysis',
+            narrative: 'Q4 results show acceleration with same-store sales up 5.2%.',
+            primarySourceInsights: ['Same-store sales up 5.2%', 'Management raised guidance'],
+            redFlags: [],
+          },
+          usage: { inputTokens: 18000, outputTokens: 2500, cacheRead: 14000, cacheWrite: 4000, webSearches: 0, cost: 0.10 },
+          webSearches: [],
+          model: 'claude-sonnet-4-6',
+          stopReason: 'end_turn',
+          duration: 4000,
+          error: null,
+        });
+      }
+      // All other agents return a generic section
+      const sectionNum = agentRole.includes('business') ? 1 :
+        agentRole.includes('competitor') ? 3 :
+        agentRole.includes('financial') ? 5 :
+        agentRole.includes('management') ? 6 :
+        agentRole.includes('risk') ? 9 :
+        agentRole.includes('valuation') ? 10 :
+        agentRole.includes('synthesis') ? 0 : 1;
+      return Promise.resolve({
+        section: { key: `section_${sectionNum}`, title: `Section ${sectionNum}`, sectionNumber: sectionNum, status: 'pass', summary: 'Mock', redFlags: [] },
+        usage: { inputTokens: 20000, outputTokens: 3000, cacheRead: 15000, cacheWrite: 5000, webSearches: 1, cost: 0.12 },
+        webSearches: [],
+        model: 'claude-sonnet-4-6',
+        stopReason: 'end_turn',
+        duration: 5000,
+        error: null,
+      });
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('wave agents receive formatted PSR findings containing PSR narrative text', async () => {
+    await runPipeline('pitchDeck', mockDataPacket);
+
+    const calls = dispatchAgent.mock.calls;
+    // Wave 1 agent (business-analyst) should receive PSR findings
+    const baCall = calls.find(c => c[0] === 'business-analyst');
+    expect(baCall).toBeDefined();
+    expect(baCall[2].psrFindings).toContain('Primary Source Reader Findings');
+    expect(baCall[2].psrFindings).toContain('The 10-K reveals strong revenue growth');
+    expect(baCall[2].psrFindings).toContain('Revenue grew 12%');
+  });
+
+  it('post-processing synthesis agent receives PSR findings', async () => {
+    await runPipeline('pitchDeck', mockDataPacket);
+
+    const calls = dispatchAgent.mock.calls;
+    const synthesisCall = calls.find(c => c[0] === 'synthesis-writer');
+    expect(synthesisCall).toBeDefined();
+    expect(synthesisCall[2].psrFindings).toContain('Primary Source Reader Findings');
+    expect(synthesisCall[2].psrFindings).toContain('Q4 results show acceleration');
   });
 });
