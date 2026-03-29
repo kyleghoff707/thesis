@@ -24,7 +24,7 @@ const MODEL_MAP = {
 
 const PRICING = {
   'claude-sonnet-4-6':   { input: 3.0, output: 15.0, cacheRead: 0.30, cacheWrite: 3.75, webSearch: 0.01 },
-  'claude-opus-4-6':     { input: 15.0, output: 75.0, cacheRead: 1.50, cacheWrite: 18.75, webSearch: 0.01 },
+  'claude-opus-4-6':     { input: 5.0, output: 25.0, cacheRead: 0.50, cacheWrite: 6.25, webSearch: 0.01 },
 };
 
 const AGENTS_DIR = resolve(process.cwd(), 'agents');
@@ -98,7 +98,46 @@ function buildUserMessage(dataSlice, options = {}) {
     parts.push(`## Prior Section Findings\n\n${summaries}`);
   }
 
+  // PM feedback from checkpoint review (D-07)
+  if (options.pmFeedback) {
+    parts.push(`## PM Feedback\n\n${options.pmFeedback}`);
+  }
+
   return parts.join('\n\n---\n\n');
+}
+
+// ─── System message blocks (D-03: prompt caching) ──────────────
+
+// Build system message as array of content blocks with cache_control breakpoints
+// Order: (1) universal context [cached], (2) PSR findings [cached], (3) agent-specific [not cached]
+function buildSystemBlocks(universalContext, psrFindings, agentPrompt, curriculum) {
+  const blocks = [];
+
+  // Breakpoint 1: Universal context (shared by ALL agents -- cacheable)
+  if (universalContext) {
+    blocks.push({
+      type: 'text',
+      text: universalContext,
+      cache_control: { type: 'ephemeral' },
+    });
+  }
+
+  // Breakpoint 2: PSR findings (shared by all analysis agents for same ticker)
+  if (psrFindings) {
+    blocks.push({
+      type: 'text',
+      text: psrFindings,
+      cache_control: { type: 'ephemeral' },
+    });
+  }
+
+  // No breakpoint: Agent-specific content (varies per agent -- not cached cross-agent)
+  const agentContent = [agentPrompt, curriculum].filter(Boolean).join('\n\n---\n\n');
+  if (agentContent) {
+    blocks.push({ type: 'text', text: agentContent });
+  }
+
+  return blocks;
 }
 
 // ─── Web search URL extraction ──────────────────────────────────
@@ -272,12 +311,8 @@ export async function dispatchAgent(agentRole, dataPacket, options = {}) {
     },
   ];
 
-  // 4. Build system message: universal context + prompt + curriculum
-  const systemParts = [];
-  if (universalContext) systemParts.push(universalContext);
-  systemParts.push(prompt);
-  if (curriculum) systemParts.push(curriculum);
-  const systemContent = systemParts.join('\n\n---\n\n');
+  // 4. Build system message: cache-friendly content blocks (per D-03)
+  const systemBlocks = buildSystemBlocks(universalContext, options.psrFindings, prompt, curriculum);
 
   // 5. Build user message
   const userContent = buildUserMessage(dataSlice, options);
@@ -287,7 +322,7 @@ export async function dispatchAgent(agentRole, dataPacket, options = {}) {
     return client.messages.parse({
       model,
       max_tokens: overrides.maxTokens || options.maxTokens || 16384,
-      system: [{ type: 'text', text: systemContent }],
+      system: systemBlocks,
       messages: [{ role: 'user', content: userContent }],
       tools,
       output_config: { format: zodOutputFormat(ReportSectionSchema) },
@@ -364,6 +399,7 @@ export const _testExports = {
   loadAgentPrompt,
   loadCurriculum,
   buildUserMessage,
+  buildSystemBlocks,
   MODEL_MAP,
   PRICING,
 };
