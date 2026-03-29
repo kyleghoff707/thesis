@@ -79,7 +79,12 @@ Plans:
   3. Every section's `searchesPerformed` array contains objects in canonical `{query, resultCount, usedInSection}` format (enforced by structured output)
   4. Every section's `redFlags` is a string array (not object array) -- enforced by structured output schema
   5. All 10 sections + synthesis complete in a single pipeline run with no manual intervention
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [x] 10-01-PLAN.md — Field path generator + PSR findings formatter (FIX-01)
+- [x] 10-02-PLAN.md — Dispatch table split + prompt audit (FIX-03, FIX-04, FIX-05)
+- [x] 10-03-PLAN.md — Pipeline runner + live validation (FIX-01, FIX-03, FIX-04, FIX-05)
 
 ### Phase 11: Validation
 **Goal**: The pipeline produces hedge-fund-quality Pitch Decks that meet cost and runtime targets on multiple tickers
@@ -90,7 +95,11 @@ Plans:
   2. A second ticker from a different sector generates successfully and scores 85+ quality
   3. Total pipeline cost per company is $8-12 as reported by the budget tracker (using actual API response usage fields)
   4. Total pipeline wall-clock runtime is 30-40 minutes (from dispatch start to synthesis complete)
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — Methodology scoring in critic.js (VAL-01)
+- [ ] 11-02-PLAN.md — Second ticker pipeline run + validation (VAL-02, VAL-03, VAL-04)
 
 ## Progress
 
@@ -102,5 +111,5 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 | 7. Schema & SDK Foundation | 0/2 | Planning | - |
 | 8. Core Agent Dispatch | 0/2 | Planning | - |
 | 9. Parallel Dispatch & Caching | 0/3 | Planned | - |
-| 10. Pipeline Integration & Prompt Fixes | 0/3 | Complete    | 2026-03-29 |
-| 11. Validation | 0/TBD | Not started | - |
+| 10. Pipeline Integration & Prompt Fixes | 3/3 | Complete    | 2026-03-29 |
+| 11. Validation | 0/2 | Planned | - |
