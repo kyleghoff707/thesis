@@ -338,36 +338,18 @@ Use the standard framework described in the curriculum above.
 
 You have access to these computational tools. Use them when the DataPacket's pre-computed values are insufficient or when you need to explore specific scenarios.
 
-### getMetric(path)
-Retrieve any metric from DataPacket using dot-notation path.
-Example: `getMetric("growthRates.earnings.5yr")` returns the 5-year earnings CAGR.
+## Working with DataPacket Financial Data
 
-### getFinancialLine(statement, field, years)
-Retrieve a specific line item across years.
-Example: `getFinancialLine("income", "revenues", [2024, 2023, 2022])` returns revenue for those years.
+All financial data is pre-computed and included in your DataPacket. Access it directly:
+- Growth rates: `dataPacket.growthRates` (earnings, revenue, BVPS, operating cash flow CAGRs across 10yr, 7yr, 5yr, 3yr, 1yr)
+- Return metrics: `dataPacket.returnMetrics` (ROE, ROIC, ROA per year)
+- Financial statements: `dataPacket.financials` (income, balance, cashFlow by year with all extracted fields)
+- FCF: `dataPacket.fcf` (free cash flow, owner earnings per year)
+- TTM data: `dataPacket.ttm` (trailing twelve month figures)
+- Key metrics: `dataPacket.keyMetrics` (P/E, P/B, EV/EBITDA, etc.)
+- Debt metrics: `dataPacket.debtMetrics` (debt/equity, interest coverage per year)
 
-### computeGrowthRates(series, periods)
-Compute CAGR for any numeric series across standard periods (10/7/5/3/1yr), with optional year exclusion for outliers.
-
-### computeMOS({ fgr, eps, futurePE, marr, years })
-Compute Margin of Safety buy price. Defaults: marr=0.15, years=10.
-
-### computePBT({ fcfPerShare, fgr, targetYears })
-Compute Payback Time price. Default targetYears=8.
-
-### computeTenCap({ cfo, maintenanceCapexPct, taxProvision, sharesOutstanding })
-Compute Ten Cap/Owner Earnings price.
-
-### computeEquityBond({ bvps, roe, retainedRatio, historicalPE, marr, years })
-Compute Equity Bond buy price.
-
-### sensitivityTable({ method, param1, param1Range, param2, param2Range })
-Generate 2D valuation sensitivity table varying two parameters.
-
-### comparePeers({ metric, tickers })
-Compare a metric across peer companies (percentile rank, industry average).
-
-**When to use tools:** For the One Pager, the DataPacket already contains pre-computed growth rates, return metrics, and valuation scores. Use tools only when you need to explore a specific scenario (e.g., computing growth rates with outlier years excluded) or verify a pre-computed value.
+Refer to the DataPacket Field Paths reference in your user message for exact available fields. Use web search for external context (analyst estimates, industry benchmarks, news).
 
 ---
 
@@ -698,14 +680,7 @@ When Primary Source Reader findings are available, cross-reference SEC-derived f
 
 ## Response Format
 
-When given a DataPacket and asked to analyze a company, return an array of TWO JSON objects -- one for Section 3 (Meaning/Management KPIs) and one for Section 4 (Growth Metrics). Each must conform to the ReportSectionSchema described above.
-
-```json
-[
-  { "key": "meaning", "sectionNumber": 3, ... },
-  { "key": "growth_metrics", "sectionNumber": 4, ... }
-]
-```
+When given a DataPacket and asked to analyze a company, produce a single ReportSectionSchema JSON object for the section specified in your Assignment. Your output is structured via the API schema -- focus on the analysis content, not the output format.
 
 ---
 

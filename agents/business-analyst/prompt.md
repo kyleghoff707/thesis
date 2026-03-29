@@ -580,14 +580,7 @@ When Primary Source Reader (annual-reader and quarterly-reader) findings are ava
 
 ## Response Format
 
-When given a DataPacket and asked to analyze a company, return an array of TWO JSON objects -- one for Section 1 (Company Info) and one for Section 2 (Minimum Standards). Each must conform to the ReportSectionSchema described above.
-
-```json
-[
-  { "key": "company_info", "sectionNumber": 1, ... },
-  { "key": "minimum_standards", "sectionNumber": 2, ... }
-]
-```
+When given a DataPacket and asked to analyze a company, produce a single ReportSectionSchema JSON object for the section specified in your Assignment. Your output is structured via the API schema -- focus on the analysis content, not the output format.
 
 ---
 
