@@ -62,7 +62,12 @@ Plans:
   2. `cache_read_input_tokens` is greater than zero on the second and subsequent agents in a wave (shared curriculum and DataPacket are being cached)
   3. Cache monitor logs hit rate per pipeline run and warns if below 70%
   4. After a pipeline run, the budget tracker reports per-agent and total cost broken down by input tokens, output tokens, cache reads, cache writes, and web searches
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Cache monitor + budget tracker rewrite + Opus pricing fix (API-06, API-07)
+- [ ] 09-02-PLAN.md — Cache-enabled dispatch with cache_control breakpoints + Opus pricing fix (API-03)
+- [ ] 09-03-PLAN.md — Pipeline manager with wave-based parallel dispatch (API-02, API-06, API-07)
 
 ### Phase 10: Pipeline Integration & Prompt Fixes
 **Goal**: The full 10-section Pitch Deck generates end-to-end via API with mechanical compliance on every section
@@ -96,6 +101,6 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 |-------|----------------|--------|-----------|
 | 7. Schema & SDK Foundation | 0/2 | Planning | - |
 | 8. Core Agent Dispatch | 0/2 | Planning | - |
-| 9. Parallel Dispatch & Caching | 0/TBD | Not started | - |
+| 9. Parallel Dispatch & Caching | 0/3 | Planned | - |
 | 10. Pipeline Integration & Prompt Fixes | 0/TBD | Not started | - |
 | 11. Validation | 0/TBD | Not started | - |
