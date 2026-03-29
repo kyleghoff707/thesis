@@ -14,6 +14,8 @@ import '../src/engines/nodeAdapter.js';
 import { assembleDataPacket } from '../src/engines/dataExport.js';
 import { runPipeline } from '../src/engines/pipelineManager.js';
 import { formatBudgetReport } from '../src/engines/contextBudget.js';
+import { fetchFilingMarkdown } from '../src/engines/filingMarkdown.js';
+import { extractAllSections } from '../src/engines/filingSections.js';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
@@ -50,21 +52,59 @@ async function main() {
   }
   console.log('');
 
+  // Step 1b: Pre-process filings (fetch 10-K/10-Q content for PSR agents)
+  const filings = dataPacket.filings || [];
+  const annuals = filings.filter(f => f.form === '10-K').slice(0, 5);
+  const quarterlies = filings.filter(f => f.form === '10-Q').slice(0, 4);
+  const filingsToProcess = [...annuals, ...quarterlies];
+
+  if (filingsToProcess.length > 0 && dataPacket.companyInfo?.cik) {
+    console.log(`Pre-processing ${annuals.length} 10-Ks + ${quarterlies.length} 10-Qs...`);
+    const startFilings = Date.now();
+    const filingContent = {};
+
+    for (const f of filingsToProcess) {
+      try {
+        const result = await fetchFilingMarkdown({
+          cik: dataPacket.companyInfo.cik,
+          accessionNumber: f.accessionNumber,
+          primaryDocument: f.primaryDocument,
+        });
+        if (result?.markdown) {
+          const sections = extractAllSections(result.markdown, f.form);
+          const sectionCount = Object.keys(sections).length;
+          const key = `${f.form}-${f.filingDate}`;
+          filingContent[key] = { form: f.form, date: f.filingDate, sections, fullLength: result.markdown.length };
+          console.log(`  ${f.form} ${f.filingDate}: ${sectionCount} sections (${(result.markdown.length / 1024).toFixed(0)}KB)`);
+        }
+      } catch (err) {
+        console.warn(`  ${f.form} ${f.filingDate}: failed — ${err.message}`);
+      }
+    }
+
+    const filingTime = ((Date.now() - startFilings) / 1000).toFixed(1);
+    const processedCount = Object.keys(filingContent).length;
+    console.log(`Filing pre-processing: ${processedCount}/${filingsToProcess.length} in ${filingTime}s\n`);
+
+    if (processedCount > 0) {
+      dataPacket.filingContent = filingContent;
+    }
+  }
+
   // Step 2: Run pipeline
   console.log(`Running ${stage} pipeline...\n`);
   const startPipeline = Date.now();
 
   const onWaveComplete = async (waveNumber, results, budgetSummary, cacheSummary) => {
-    const sectionCount = results.filter(r => r.status === 'fulfilled' && r.value).length;
-    const failCount = results.filter(r => r.status === 'rejected').length;
+    // results is an array of section objects (not Promise.allSettled wrappers)
+    const sectionCount = results.filter(r => r != null).length;
     console.log(`--- Wave ${waveNumber} complete ---`);
     console.log(`  Sections produced: ${sectionCount}`);
-    if (failCount > 0) console.log(`  Failures: ${failCount}`);
     if (budgetSummary) {
       console.log(`  Running cost: $${budgetSummary.totals?.cost?.toFixed(4) || '?'}`);
     }
     if (cacheSummary) {
-      console.log(`  Cache hits: ${cacheSummary.hits || 0} | misses: ${cacheSummary.misses || 0}`);
+      console.log(`  Cache: ${cacheSummary.hitRatePct || '?'} hit rate (${cacheSummary.totalRead || 0} read / ${cacheSummary.totalWrite || 0} write tokens)`);
     }
     console.log('');
     return null; // No PM feedback in automated mode

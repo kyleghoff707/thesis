@@ -8,7 +8,7 @@
     "knowledge/research-references/rule-one-fundamentals.md",
     "knowledge/research-references/tools-for-analysis.md"
   ],
-  "dataPacketSlice": ["companyInfo", "classification", "financials", "ttm", "filings", "transcripts"],
+  "dataPacketSlice": ["companyInfo", "classification", "financials", "ttm", "filings", "filingContent", "transcripts"],
   "tools": ["readFilingSection", "getTranscriptExcerpt"],
   "exampleContamination": {
     "exclude": [
