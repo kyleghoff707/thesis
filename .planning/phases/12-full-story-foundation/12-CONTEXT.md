@@ -25,9 +25,9 @@ Scope: ORCH-02 (dispatch table), ORCH-03 (agent prompts), ORCH-04 (checklist for
 - **D-05:** The dispatch table tells the agent which stage it's running, so the agent reads only the relevant prompt section. No separate prompt files.
 
 ### Debate Schema
-- **D-06:** All 4 debate steps (Bull, Bear, Bull Rebuttal, Judge) produce full ReportSectionSchema output. Each step has its own narrative, citations, web searches, and red flags.
-- **D-07:** All 4 debate agents have web search enabled. The Bear agent is expected to perform the most web searching (short-seller theses, negative analyst coverage). The Bull Rebuttal can web search to counter bear claims. Quality over cost savings on the most critical section.
-- **D-08:** The 4 debate outputs are composed into the final S6 (inversion_rebuttal) section. All 4 perspectives are fully visible in the report — the user reads the Bull case, Bear case, Bull rebuttal, and Judge verdict.
+- **D-06:** All 4 debate steps use a lightweight format (not full ReportSectionSchema). Each step produces structured thesis points / inversions / rebuttals / scores — no unnecessary fields like charts, tables, or searchesPerformed on intermediate steps.
+- **D-07:** Only the Bear agent has web search enabled for the debate. The Bear researches short-seller theses, negative analyst coverage, and bear cases. Bull, Bull Rebuttal, and Judge work with existing findings from prior sections. Bear's web search citations flow into the final S6 section.
+- **D-08:** The 4 lightweight debate outputs are composed into the final S6 (inversion_rebuttal) ReportSectionSchema section. All 4 perspectives are fully visible in the report — the user reads the Bull case, Bear case, Bull rebuttal, and Judge verdict.
 - **D-09:** Debate steps execute strictly sequentially — each step receives the prior step's full output as context. Bull → Bear → Bull Rebuttal → Judge.
 
 ### Dispatch Table Updates
@@ -43,6 +43,7 @@ Scope: ORCH-02 (dispatch table), ORCH-03 (agent prompts), ORCH-04 (checklist for
 
 ### Claude's Discretion
 - Exact JSON structure of checklist items within the `data` field (field names, nesting)
+- Lightweight debate step schema design (fields for thesis points, inversions, rebuttals, scores)
 - How to encode the 4 debate steps within the dispatch table JSON structure
 - How prior Pitch Deck section data is formatted when passed to Full Story agents as context
 
