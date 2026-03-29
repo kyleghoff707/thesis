@@ -63,7 +63,7 @@ Plans:
 - Integer phases (12, 13, 14, 15, 16, 17): Planned milestone work
 - Decimal phases (12.1, 12.2): Urgent insertions if needed (marked with INSERTED)
 
-- [ ] **Phase 12: Full Story Foundation** - Dispatch table updates, agent prompt additions, and checklist scoring format design
+- [x] **Phase 12: Full Story Foundation** - Dispatch table updates, agent prompt additions, and checklist scoring format design (completed 2026-03-29)
 - [ ] **Phase 13: CC Pipeline** - Full Story CC skill orchestrates 6 sections with Pitch Deck inheritance
 - [ ] **Phase 14: Adversarial Debate** - 4-step sequential debate (Bull/Bear/Rebuttal/Judge) with cited evidence
 - [ ] **Phase 15: Quality System** - Full Story methodology checks in critic.js with dual scoring
@@ -80,10 +80,10 @@ Plans:
   1. Dispatch table includes all Full Story sections with correct agent assignments -- trading_strategy and pace_plan are removed, S3 ownership uses competitor-evaluator, and the 4-step debate sequence is defined
   2. Each agent prompt file contains Full Story-specific instructions for its assigned sections (financial-analyst for event analysis, business-analyst for meaning checklist, etc.)
   3. Checklist output format is designed and documented -- each of 43 items (Meaning 15, Moat 15, Management 13) has a structured schema with item name, pass/fail/partial verdict, evidence text, and confidence score
-**Plans:** 0/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 12-01-PLAN.md -- Dispatch table + agent configs + checklist/debate schema design
+- [x] 12-01-PLAN.md -- Dispatch table + agent configs + checklist/debate schema design
 - [ ] 12-02-PLAN.md -- Agent prompt updates for Full Story sections and debate roles
 
 ### Phase 13: CC Pipeline
@@ -149,7 +149,7 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 17
 | 9. Parallel Dispatch & Caching | v1.1 | 3/3 | Complete | 2026-03-29 |
 | 10. Pipeline Integration & Prompt Fixes | v1.1 | 3/3 | Complete | 2026-03-29 |
 | 11. Validation | v1.1 | 2/2 | Complete | 2026-03-29 |
-| 12. Full Story Foundation | v1.2 | 0/2 | Planned    |  |
+| 12. Full Story Foundation | v1.2 | 1/2 | Complete    | 2026-03-29 |
 | 13. CC Pipeline | v1.2 | 0/? | Not started | - |
 | 14. Adversarial Debate | v1.2 | 0/? | Not started | - |
 | 15. Quality System | v1.2 | 0/? | Not started | - |
