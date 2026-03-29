@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
-status: planning
-stopped_at: Phase 12 context gathered
-last_updated: "2026-03-29T22:21:40.856Z"
-last_activity: 2026-03-29 — Roadmap created for v1.2 Full Story Pipeline
+status: Ready to execute
+stopped_at: Completed 12-01-PLAN.md
+last_updated: "2026-03-29T22:55:46.846Z"
 progress:
   total_phases: 11
   completed_phases: 5
-  total_plans: 12
+  total_plans: 14
   completed_plans: 15
-  percent: 0
 ---
 
 # Project State
@@ -21,16 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours -- delivered in minutes, with zero shortcuts on rigor.
-**Current focus:** Phase 12 — Full Story Foundation (dispatch table, agent prompts, checklist format)
+**Current focus:** Phase 12 — full-story-foundation
 
 ## Current Position
 
-Phase: 12 — first of 6 in v1.2 (Full Story Foundation)
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-03-29 — Roadmap created for v1.2 Full Story Pipeline
-
-Progress: [░░░░░░░░░░] 0%
+Phase: 12 (full-story-foundation) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -51,6 +45,7 @@ Progress: [░░░░░░░░░░] 0%
 | 11. Validation | 1 | 8min | 8min |
 
 *Updated after each plan completion*
+| Phase 12 P01 | 3min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -64,6 +59,8 @@ Recent decisions affecting current work:
 - [v1.1]: DataPacket is primary data source for all agents -- tools are supplementary
 - [v1.1]: Methodology checks use regex on narrative text -- medium depth
 - [v1.1]: Critical methodology checks weighted 2x, supplementary 1x; passed threshold >= 50
+- [Phase 12]: Full Story has 6 sections (removed S7 trading_strategy and S8 pace_plan)
+- [Phase 12]: S3 moat_checklist assigned to competitor-evaluator; 4-step debate with only bear having web search
 
 ### Roadmap Evolution
 
@@ -89,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T22:21:40.848Z
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-full-story-foundation/12-CONTEXT.md
+Last session: 2026-03-29T22:55:46.843Z
+Stopped at: Completed 12-01-PLAN.md
+Resume file: None

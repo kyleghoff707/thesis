@@ -80,7 +80,7 @@ Plans:
   1. Dispatch table includes all Full Story sections with correct agent assignments -- trading_strategy and pace_plan are removed, S3 ownership uses competitor-evaluator, and the 4-step debate sequence is defined
   2. Each agent prompt file contains Full Story-specific instructions for its assigned sections (financial-analyst for event analysis, business-analyst for meaning checklist, etc.)
   3. Checklist output format is designed and documented -- each of 43 items (Meaning 15, Moat 15, Management 13) has a structured schema with item name, pass/fail/partial verdict, evidence text, and confidence score
-**Plans:** 2 plans
+**Plans:** 0/2 plans executed
 
 Plans:
 - [ ] 12-01-PLAN.md -- Dispatch table + agent configs + checklist/debate schema design
@@ -149,7 +149,7 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 17
 | 9. Parallel Dispatch & Caching | v1.1 | 3/3 | Complete | 2026-03-29 |
 | 10. Pipeline Integration & Prompt Fixes | v1.1 | 3/3 | Complete | 2026-03-29 |
 | 11. Validation | v1.1 | 2/2 | Complete | 2026-03-29 |
-| 12. Full Story Foundation | v1.2 | 0/2 | In progress | - |
+| 12. Full Story Foundation | v1.2 | 0/2 | Planned    |  |
 | 13. CC Pipeline | v1.2 | 0/? | Not started | - |
 | 14. Adversarial Debate | v1.2 | 0/? | Not started | - |
 | 15. Quality System | v1.2 | 0/? | Not started | - |

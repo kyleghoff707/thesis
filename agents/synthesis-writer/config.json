@@ -2,7 +2,7 @@
   "role": "synthesis-writer",
   "model": "opus",
   "curriculum": [
-    "knowledge/research-references/buffett_letters_claude_training_set/"
+    "knowledge/research-references/buffett-writing-style-guide.md"
   ],
   "compressionPolicy": "none",
   "universalContext": true,
