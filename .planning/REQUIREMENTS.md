@@ -7,13 +7,13 @@
 
 ### API Orchestration Layer
 
-- [ ] **API-01**: aiResearch.js dispatches agents via direct Claude API calls with structured outputs (output_config.format + zodOutputFormat)
-- [ ] **API-02**: Parallel agent dispatch within phases using Promise.allSettled with configurable concurrency limits
-- [ ] **API-03**: Prompt caching with cache_control breakpoints on shared context (curriculum, DataPacket, PSR findings) — 0.1x read cost on subsequent agents
-- [ ] **API-04**: Web search via server tool (web_search_20250305) with max_uses per agent and URL extraction from tool results
-- [ ] **API-05**: Error handling with retry-then-escalate: rate limit backoff, max_tokens retry, schema errors logged, partial results preserved
-- [ ] **API-06**: Cache monitoring — log cache_read_input_tokens and cache_creation_input_tokens per response, warn if hit rate below 70%
-- [ ] **API-07**: Token budget tracking using actual API response usage fields (input, output, cache read/write, web searches)
+- [x] **API-01**: aiResearch.js dispatches agents via direct Claude API calls with structured outputs (output_config.format + zodOutputFormat)
+- [x] **API-02**: Parallel agent dispatch within phases using Promise.allSettled with configurable concurrency limits
+- [x] **API-03**: Prompt caching with cache_control breakpoints on shared context (curriculum, DataPacket, PSR findings) — 0.1x read cost on subsequent agents
+- [x] **API-04**: Web search via server tool (web_search_20250305) with max_uses per agent and URL extraction from tool results
+- [x] **API-05**: Error handling with retry-then-escalate: rate limit backoff, max_tokens retry, schema errors logged, partial results preserved
+- [x] **API-06**: Cache monitoring — log cache_read_input_tokens and cache_creation_input_tokens per response, warn if hit rate below 70%
+- [x] **API-07**: Token budget tracking using actual API response usage fields (input, output, cache read/write, web searches)
 
 ### Schema Compliance
 
@@ -24,7 +24,7 @@
 ### Quality & Compliance Fixes
 
 - [ ] **FIX-01**: DataPacket field path reference included in every analysis agent prompt — exact top-level and second-level paths, not guessed
-- [ ] **FIX-02**: Web citation URL enforcement — post-processing enriches citation source fields with actual URLs from web_search_tool_result blocks
+- [x] **FIX-02**: Web citation URL enforcement — post-processing enriches citation source fields with actual URLs from web_search_tool_result blocks
 - [ ] **FIX-03**: Citation format mechanically enforced — structured outputs guarantee canonical {id, ref, text, source} format on every section
 - [ ] **FIX-04**: searchesPerformed format mechanically enforced — structured outputs guarantee {query, resultCount, usedInSection} on every section
 - [ ] **FIX-05**: Red flags type mechanically enforced — structured outputs guarantee string array, not object array
@@ -81,14 +81,14 @@
 | FMT-01 | Phase 7 | Complete |
 | FMT-02 | Phase 7 | Complete |
 | FMT-03 | Phase 7 | Complete |
-| API-01 | Phase 8 | Pending |
-| API-04 | Phase 8 | Pending |
-| API-05 | Phase 8 | Pending |
-| FIX-02 | Phase 8 | Pending |
-| API-02 | Phase 9 | Pending |
-| API-03 | Phase 9 | Pending |
-| API-06 | Phase 9 | Pending |
-| API-07 | Phase 9 | Pending |
+| API-01 | Phase 8 | Complete |
+| API-04 | Phase 8 | Complete |
+| API-05 | Phase 8 | Complete |
+| FIX-02 | Phase 8 | Complete |
+| API-02 | Phase 9 | Complete |
+| API-03 | Phase 9 | Complete |
+| API-06 | Phase 9 | Complete |
+| API-07 | Phase 9 | Complete |
 | FIX-01 | Phase 10 | Pending |
 | FIX-03 | Phase 10 | Pending |
 | FIX-04 | Phase 10 | Pending |

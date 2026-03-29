@@ -65,8 +65,8 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Cache monitor + budget tracker rewrite + Opus pricing fix (API-06, API-07)
-- [ ] 09-02-PLAN.md — Cache-enabled dispatch with cache_control breakpoints + Opus pricing fix (API-03)
+- [x] 09-01-PLAN.md — Cache monitor + budget tracker rewrite + Opus pricing fix (API-06, API-07)
+- [x] 09-02-PLAN.md — Cache-enabled dispatch with cache_control breakpoints + Opus pricing fix (API-03)
 - [ ] 09-03-PLAN.md — Pipeline manager with wave-based parallel dispatch (API-02, API-06, API-07)
 
 ### Phase 10: Pipeline Integration & Prompt Fixes

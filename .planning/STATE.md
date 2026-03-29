@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
 status: Ready to plan
-stopped_at: Phase 9 context gathered
-last_updated: "2026-03-29T01:21:56.159Z"
+stopped_at: Completed 09-03-PLAN.md
+last_updated: "2026-03-29T02:52:05.611Z"
 progress:
   total_phases: 5
-  completed_phases: 2
-  total_plans: 4
-  completed_plans: 5
+  completed_phases: 3
+  total_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours -- delivered in minutes, with zero shortcuts on rigor.
-**Current focus:** Phase 08 — core-agent-dispatch
+**Current focus:** Phase 09 — parallel-dispatch-caching
 
 ## Current Position
 
-Phase: 9
+Phase: 10
 Plan: Not started
 
 ## Performance Metrics
@@ -62,6 +62,14 @@ Recent decisions affecting current work:
 - [Phase 08-core-agent-dispatch]: Web search cost is $0.01 per request, included in buildUsage cost calculation
 - [Phase 08]: Web search enabled for all agents — prompt governs usage, not config
 - [Phase 08]: Space-tolerant domain matching in enrichCitationsWithURLs for fuzzy citation URL enrichment
+- [Phase 09]: cache_control: ephemeral on universal context and PSR findings blocks -- agent-specific content never cached cross-agent
+- [Phase 09]: Opus 4.6 pricing corrected to $5/$25 input/output (was 3x overstated at $15/$75)
+- [Phase 09]: PM feedback appended to user message (not system message) to avoid breaking cache prefix
+- [Phase 09]: Budget tracker records actual API usage fields (not character-based estimates) -- estimateTokens/computeCost retained for backward compat
+- [Phase 09]: Opus 4.6 pricing fixed to $5/$25 in both contextBudget.js and aiResearch.js PRICING constants
+- [Phase 09]: cacheMonitor.js created as dependency — Plan 01 not yet merged to worktree
+- [Phase 09]: contextBudget.js record() updated from char-based to usage-object for pipeline integration
+- [Phase 09]: Pipeline manager is deterministic code, not AI — reads dispatch-table.json at runtime (per D-08)
 
 ### Roadmap Evolution
 
@@ -88,9 +96,12 @@ None yet.
 | Phase 07 P02 | 19min | 2 tasks | 3 files |
 | Phase 08-core-agent-dispatch P01 | 5min | 3 tasks | 4 files |
 | Phase 08 P02 | 7min | 2 tasks | 4 files |
+| Phase 09 P02 | 3min | 1 tasks | 2 files |
+| Phase 09 P01 | 5min | 2 tasks | 6 files |
+| Phase 09 P03 | 5min | 1 tasks | 5 files |
 
 ## Session Continuity
 
-Last session: 2026-03-29T01:21:56.150Z
-Stopped at: Phase 9 context gathered
-Resume file: .planning/phases/09-parallel-dispatch-caching/09-CONTEXT.md
+Last session: 2026-03-29T02:27:03.588Z
+Stopped at: Completed 09-03-PLAN.md
+Resume file: None
