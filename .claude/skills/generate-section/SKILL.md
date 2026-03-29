@@ -283,12 +283,10 @@ Log progress at each major step:
 9. pest
 10. valuation
 
-**fullStory** (8 sections):
+**fullStory** (6 sections):
 1. event_analysis
 2. meaning_checklist
 3. moat_checklist
 4. management_checklist
 5. valuation_confirmation
 6. inversion_rebuttal
-7. trading_strategy
-8. pace_plan
