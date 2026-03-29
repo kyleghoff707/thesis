@@ -600,3 +600,79 @@ Include a `searchesPerformed` array in your JSON output listing every search you
   { "query": "Costco competitive advantages moat", "resultCount": 8, "usedInSection": true }
 ]
 ```
+
+---
+
+## Full Story Depth
+
+### Full Story Section 2: Meaning Checklist (key: "meaning_checklist")
+
+**Purpose:** Apply the 15-point Meaning checklist from the Rule One Story Form methodology. This is a conviction-level assessment -- each item gets a definitive verdict with cited evidence. The PM reads this checklist to gauge whether the business truly has meaning.
+
+**This section builds on Pitch Deck findings.** Your Pitch Deck sections (Radar, Simple & Predictable) already established the business model understanding. The Full Story Meaning Checklist deepens that analysis with a structured, point-by-point conviction assessment. Reference specific findings from the Pitch Deck -- do not re-derive from scratch.
+
+**The 15 Meaning Assessment Items:**
+1. Can you describe the business model in one paragraph?
+2. Do you understand how the company generates revenue?
+3. Are revenue sources diversified or concentrated?
+4. Is the customer base growing?
+5. Does the value proposition resonate with you personally?
+6. Is this within your circle of competence?
+7. Would you buy the ENTIRE company if you could afford it?
+8. Is the product/service essential or discretionary?
+9. Does the company solve a durable problem?
+10. Has the problem they solve changed over time?
+11. Are industry KPIs trending favorably?
+12. Are company-specific KPIs trending favorably?
+13. Does the company have competitive advantages vs peers?
+14. Will this company be bigger and better in 10 years?
+15. Can you explain why to a 12-year-old?
+
+**Data to include in the `data` field (JSON string per D-02):**
+```json
+{
+  "checklistType": "meaning",
+  "items": [
+    {
+      "number": 1,
+      "item": "Can you describe the business model in one paragraph?",
+      "verdict": "PASS",
+      "evidence": "Company operates a membership-only warehouse club model generating $254B revenue through 876 locations worldwide [dataPacket.companyInfo.description].",
+      "confidence": "HIGH"
+    }
+  ],
+  "summary": {
+    "passCount": 12,
+    "failCount": 1,
+    "partialCount": 2,
+    "totalItems": 15,
+    "scoreDisplay": "12/15 PASS, 2 PARTIAL, 1 FAIL"
+  }
+}
+```
+
+**Verdict values:** PASS (criterion clearly met with evidence), FAIL (criterion clearly not met), PARTIAL (evidence is mixed, insufficient, or the answer is nuanced). Per D-01, these are binary conviction assessments matching Rule One methodology.
+
+**KPI Deep Dive (Items 11-12):** This is where the Full Story goes deeper than the Pitch Deck. You must:
+- Identify 3-5 industry-specific KPIs via web research ("What are KPIs in {INDUSTRY}?")
+- Identify 3-5 company-specific KPIs via web research and SEC filings ("What KPIs do analysts use for {COMPANY}?")
+- Compare KPIs against competitors from the DataPacket peers
+- Evaluate trend consistency over 3-5 years
+- Cite sources for each KPI finding
+
+**Items 5-7 (Personal Assessment):** These items inherently require personal judgment. Provide your best assessment based on the business analysis, but mark confidence as MEDIUM and note in evidence that these benefit from PM (portfolio manager) input.
+
+**Narrative requirements:**
+- Walk through each of the 15 items with specific evidence
+- Reference Pitch Deck findings (Radar section, Simple & Predictable assessment) rather than repeating the analysis
+- The KPI deep dive (items 11-12) should be 2-3 paragraphs covering industry and company-specific metrics
+- Conclude with an overall meaning conviction statement
+- The narrative field gets the prose analysis; the data field gets the structured checklist
+
+**Verdict logic:**
+- PASS: 12+ items PASS, no FAIL on critical items (1, 2, 9, 14), KPIs trending favorably
+- FAIL: 5+ items FAIL, or any critical item (1, 2, 9, 14) is FAIL
+- WATCHLIST: 8-11 items PASS, some PARTIALs on important items
+- REVIEW: Too many items have PARTIAL with LOW confidence to assess
+
+**Red flag examples:** "Revenue concentration in a single segment exceeds 80%", "Industry KPIs trending negatively despite company-level stability", "Problem solved appears to be shifting due to technological change", "Circle of competence is marginal -- complexity higher than Pitch Deck suggested"

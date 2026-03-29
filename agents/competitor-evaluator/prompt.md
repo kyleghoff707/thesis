@@ -663,3 +663,89 @@ Include a `searchesPerformed` array in your JSON output listing every search you
   { "query": "grocery retail market size TAM 2026", "resultCount": 10, "usedInSection": true }
 ]
 ```
+
+---
+
+## Full Story Depth
+
+### Full Story Section 3: Moat Checklist (key: "moat_checklist")
+
+**Purpose:** Apply the 15-point Moat checklist from the Rule One Story Form methodology. This is the definitive moat assessment -- deepening your Pitch Deck Barriers & Moats analysis into a structured conviction checklist. Per D-11, you own this section because you have the deepest competitive landscape context from your Pitch Deck work.
+
+**This section builds on Pitch Deck findings.** Your Pitch Deck Section 3 (Market Position) and Section 4 (Barriers & Moats) already established competitive positioning and moat types. The Full Story Moat Checklist stress-tests each aspect of moat durability with a point-by-point assessment. Reference your prior findings directly.
+
+**The 15 Moat Assessment Items:**
+1. Can you identify the primary moat type?
+2. Is there a secondary moat type?
+3. Has the moat strengthened or weakened over 10 years?
+4. Can a well-funded competitor replicate the moat?
+5. Does the company have pricing power?
+6. Have margins been stable during inflationary periods?
+7. Are barriers to entry high?
+8. Is market share growing?
+9. Do return metrics (ROE/ROIC) exceed competitors?
+10. Is the moat recognized by industry analysts?
+11. Does field research confirm the moat?
+12. Is customer loyalty evidence-based?
+13. Are switching costs meaningful for customers?
+14. Does the moat apply across economic cycles?
+15. Is the moat sustainable for the next decade?
+
+**Data to include in the `data` field (JSON string per D-02):**
+```json
+{
+  "checklistType": "moat",
+  "items": [
+    {
+      "number": 1,
+      "item": "Can you identify the primary moat type?",
+      "verdict": "PASS",
+      "evidence": "Primary moat is Toll Bridge -- membership model creates recurring revenue with 92.9% renewal rate [web search: COST membership renewal rate 2026].",
+      "confidence": "HIGH"
+    }
+  ],
+  "summary": {
+    "passCount": 13,
+    "failCount": 0,
+    "partialCount": 2,
+    "totalItems": 15,
+    "scoreDisplay": "13/15 PASS, 2 PARTIAL, 0 FAIL"
+  }
+}
+```
+
+**Verdict values:** PASS (criterion clearly met with evidence), FAIL (criterion clearly not met), PARTIAL (evidence is mixed or insufficient).
+
+**Field Research (Item 11):** This is where the Full Story goes deeper than the Pitch Deck. You must:
+- Research customer experience indicators (NPS scores, customer satisfaction surveys, review aggregators)
+- Research supplier relationships (does the company have preferred supplier status? exclusive agreements?)
+- Research brand perception trends (brand value rankings, reputation indices)
+- Assess whether real-world indicators confirm the financial data's moat signal
+- If field research data is limited, mark as PARTIAL with LOW confidence -- do not fabricate
+
+**Pricing Power Assessment (Items 5-6):** Specifically research:
+- "Has {COMPANY} raised prices in the past? How did it affect growth and revenue?"
+- "How does inflation affect {COMPANY} and {INDUSTRY}?"
+- Compare margin stability during inflationary periods (2021-2023) against peers
+- Cite specific instances of price increases and customer response
+
+**Anti-Fragility Check (Item 14):** Research how the company performed through:
+- 2008-2009 financial crisis
+- 2020 COVID disruption
+- 2022-2023 inflation/rate hiking cycle
+- Did the moat strengthen, maintain, or weaken through each crisis?
+
+**Narrative requirements:**
+- Walk through each of the 15 items with specific evidence
+- Cross-reference with peer metrics from your Pitch Deck sections (ROE/ROIC vs competitors, market share data)
+- The pricing power and field research sections should be 2-3 paragraphs each
+- Answer the critical question explicitly: "If this moat is real, why haven't competitors eroded it?"
+- Conclude with a moat durability timeline: how many years before the moat is at risk?
+
+**Verdict logic:**
+- PASS: 12+ items PASS, primary moat type clearly identified, anti-fragile, moat timeline > 10 years
+- FAIL: 5+ items FAIL, or items 4, 5, 8, 15 (competitive replicability, pricing power, market share, sustainability) FAIL
+- WATCHLIST: 8-11 items PASS, some moat elements weakening but still intact
+- REVIEW: Insufficient evidence to assess moat durability -- need more data
+
+**Red flag examples:** "Moat narrowing -- ROIC premium vs peers declined from 8% to 3% over 5 years", "Pricing power untested during high inflation -- no recent price increase data", "Market share flat while smaller competitor grew 25% annually", "Switching costs decreasing due to technology standardization", "Field research shows brand perception declining among younger demographics"
