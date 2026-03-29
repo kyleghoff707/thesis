@@ -92,9 +92,10 @@ export function formatQualityReport(qualityJson, options = {}) {
 
   // Header
   const status = qualityJson.overallPassed ? 'PASS' : 'FAIL';
+  const methScore = qualityJson.overallMethodologyScore != null ? `${qualityJson.overallMethodologyScore}/100` : '--';
   lines.push(`# Quality Report: ${title}`);
   lines.push('');
-  lines.push(`**Score: ${qualityJson.overallScore}/100** | **Status: ${status}** | **Generated: ${fmtDate(qualityJson.checkedAt)}**`);
+  lines.push(`**Score: ${qualityJson.overallScore}/100** | **Methodology: ${methScore}** | **Status: ${status}** | **Generated: ${fmtDate(qualityJson.checkedAt)}**`);
   lines.push('');
   lines.push('---');
   lines.push('');
@@ -102,13 +103,14 @@ export function formatQualityReport(qualityJson, options = {}) {
   // Section Breakdown Table
   lines.push('## Section Breakdown');
   lines.push('');
-  lines.push('| # | Section | Score | Completeness | Pass | High | Med | Low |');
-  lines.push('|---|---------|-------|-------------|------|------|-----|-----|');
+  lines.push('| # | Section | Score | Meth | Completeness | Pass | High | Med | Low |');
+  lines.push('|---|---------|-------|------|-------------|------|------|-----|-----|');
   sections.forEach((s, idx) => {
     const { high, med, low } = issueCounts(s.issues || []);
     const comp = s.completeness?.score != null ? `${s.completeness.score}%` : '--';
+    const meth = s.methodology?.score != null ? String(s.methodology.score) : '--';
     const pass = s.passed ? 'Yes' : 'No';
-    lines.push(`| ${idx + 1} | ${labelFor(s.sectionKey)} | ${s.score} | ${comp} | ${pass} | ${high} | ${med} | ${low} |`);
+    lines.push(`| ${idx + 1} | ${labelFor(s.sectionKey)} | ${s.score} | ${meth} | ${comp} | ${pass} | ${high} | ${med} | ${low} |`);
   });
   lines.push('');
   lines.push('---');
@@ -132,6 +134,35 @@ export function formatQualityReport(qualityJson, options = {}) {
       const highIssues = (s.issues || []).filter(i => i.severity === 'high');
       for (const issue of highIssues) {
         lines.push(`- [${issue.type}] ${issue.message}`);
+      }
+      lines.push('');
+    });
+  }
+
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+
+  // Methodology Gaps
+  lines.push('## Methodology Gaps');
+  lines.push('');
+  lines.push('> Rule One curriculum compliance per section. Critical checks are weighted 2x.');
+  lines.push('');
+
+  const methGapSections = sections.filter(s =>
+    s.methodology?.score != null && s.methodology.score < 100
+  );
+
+  if (methGapSections.length === 0) {
+    lines.push('All sections pass methodology checks.');
+  } else {
+    methGapSections.forEach((s) => {
+      lines.push(`**${labelFor(s.sectionKey)}** (methodology: ${s.methodology.score}/100)`);
+      const checks = s.methodology.checks || [];
+      for (const check of checks) {
+        const status = check.passed ? 'PASS' : 'FAIL';
+        const weight = check.critical ? 'critical' : 'supplementary';
+        lines.push(`- [${status}] [${weight}] ${check.label}`);
       }
       lines.push('');
     });
@@ -166,14 +197,12 @@ export function formatQualityReport(qualityJson, options = {}) {
   lines.push('---');
   lines.push('');
 
-  // Methodology
-  lines.push('## Methodology');
+  // Scoring Methodology
+  lines.push('## Scoring Methodology');
   lines.push('');
-  lines.push('Quality scores are computed by the Thes1s critic engine (`src/engines/critic.js`). Scoring weights:');
-  lines.push('- 40% required field presence');
-  lines.push('- 25% narrative depth');
-  lines.push('- 20% citation quality');
-  lines.push('- 15% data field population');
+  lines.push('**Mechanical score** (existing): 40% required fields, 25% narrative depth, 20% citations, 15% data population. Penalties for high/medium/low issues.');
+  lines.push('');
+  lines.push('**Methodology score** (new): Checks Rule One curriculum compliance per section. Critical elements weighted 2x. Score = passed weight / total weight * 100.');
   lines.push('');
   lines.push('Issue types: `citation` (source quality), `search_compliance` (web research requirements), `confidence` (claim-source alignment).');
   lines.push('Severity levels: `high` (must fix), `medium` (should fix), `low` (nice to fix).');
