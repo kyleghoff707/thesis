@@ -13,7 +13,7 @@ const REPORTS_DIR = join(THES1S_DIR, 'reports');
 const SECTION_KEYS = {
   onePager: ['company_info', 'minimum_standards', 'meaning', 'growth_metrics', 'valuation_summary', 'overall_verdict'],
   pitchDeck: ['radar', 'simple_predictable', 'market_position', 'barriers_moats', 'fcf', 'management', 'roe_roic_debt', 'balance_sheet', 'pest', 'valuation'],
-  fullStory: ['event_analysis', 'meaning_checklist', 'moat_checklist', 'management_checklist', 'valuation_confirmation', 'inversion_rebuttal', 'trading_strategy', 'pace_plan'],
+  fullStory: ['event_analysis', 'meaning_checklist', 'moat_checklist', 'management_checklist', 'valuation_confirmation', 'inversion_rebuttal'],
 };
 
 // Valid state machine transitions

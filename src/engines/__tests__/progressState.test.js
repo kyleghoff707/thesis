@@ -62,12 +62,18 @@ describe('progressState', () => {
       expect(sectionKeys).toContain('overall_verdict');
     });
 
-    it('should include all 8 fullStory section keys', () => {
+    it('should include all 6 fullStory section keys', () => {
       const progress = createProgress(TEST_TICKER, 'fullStory');
       const sectionKeys = Object.keys(progress.sections);
-      expect(sectionKeys.length).toBe(8);
+      expect(sectionKeys.length).toBe(6);
       expect(sectionKeys).toContain('event_analysis');
-      expect(sectionKeys).toContain('pace_plan');
+      expect(sectionKeys).toContain('meaning_checklist');
+      expect(sectionKeys).toContain('moat_checklist');
+      expect(sectionKeys).toContain('management_checklist');
+      expect(sectionKeys).toContain('valuation_confirmation');
+      expect(sectionKeys).toContain('inversion_rebuttal');
+      expect(sectionKeys).not.toContain('trading_strategy');
+      expect(sectionKeys).not.toContain('pace_plan');
     });
   });
 
