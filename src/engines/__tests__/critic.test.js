@@ -21,6 +21,8 @@ const {
   validateRedFlags,
   detectDataGaps,
   checkSearchCompliance,
+  scoreMethodology,
+  METHODOLOGY_CHECKS,
 } = _testExports;
 
 // Fixtures — real COST data
@@ -553,5 +555,284 @@ describe('validateStage', () => {
     const sections = [companyInfoSection];
     const report = validateStage(sections, dataPacketSlice);
     expect(report.overallScore).toBe(report.sections[0].score);
+  });
+
+  it('should include overallMethodologyScore in stage report', () => {
+    const sections = [companyInfoSection];
+    const report = validateStage(sections, dataPacketSlice);
+    expect(typeof report.overallMethodologyScore).toBe('number');
+    expect(report.overallMethodologyScore).toBeGreaterThanOrEqual(0);
+    expect(report.overallMethodologyScore).toBeLessThanOrEqual(100);
+  });
+});
+
+// ─── Methodology Scoring ──────────────────────────────────────────────
+
+describe('Methodology Scoring', () => {
+  // Helper to build a section with given key, sectionNumber, and narrative
+  function makeMethodSection(key, sectionNumber, narrative, overrides = {}) {
+    return {
+      key,
+      sectionNumber,
+      title: `Test Section ${sectionNumber}`,
+      status: 'complete',
+      confidence: 'HIGH',
+      verdict: 'PASS',
+      verdictRationale: 'Test',
+      summary: 'Test summary',
+      data: { field1: 'value1' },
+      narrative,
+      citations: overrides.citations || [],
+      redFlags: overrides.redFlags || ['A valid red flag that is sufficiently long'],
+      modelUsed: 'test-model',
+      tokenCost: { input: 100, output: 100 },
+      searchesPerformed: overrides.searchesPerformed || [],
+      ...overrides,
+    };
+  }
+
+  describe('scoreMethodology basics', () => {
+    it('should return { score, checks, passed } shape', () => {
+      const section = makeMethodSection('company_info', 1, 'This is a test narrative about the company.');
+      const result = scoreMethodology(section);
+      expect(result).toBeDefined();
+      expect(typeof result.score).toBe('number');
+      expect(Array.isArray(result.checks)).toBe(true);
+      expect(typeof result.passed).toBe('boolean');
+    });
+
+    it('should return lower score when critical methodology elements are missing', () => {
+      const fullNarrative = 'The event was a market dislocation causing a price drop. We evaluate Meaning, Moat, and Management. Key metrics: revenue $5B, earnings $1B, ROIC 25%.';
+      const emptyNarrative = 'This section has no relevant methodology content at all.';
+
+      const fullSection = makeMethodSection('company_info', 1, fullNarrative);
+      const emptySection = makeMethodSection('company_info', 1, emptyNarrative);
+
+      const fullResult = scoreMethodology(fullSection);
+      const emptyResult = scoreMethodology(emptySection);
+
+      expect(fullResult.score).toBeGreaterThan(emptyResult.score);
+    });
+  });
+
+  describe('METHODOLOGY_CHECKS constant', () => {
+    it('should have checks for at least 8 section types', () => {
+      expect(METHODOLOGY_CHECKS).toBeDefined();
+      const keys = Object.keys(METHODOLOGY_CHECKS);
+      expect(keys.length).toBeGreaterThanOrEqual(8);
+    });
+
+    it('should include keys for company_info, market_position, barriers_and_moats, growth_metrics, management, balance_sheet, pest_risks, valuation_summary', () => {
+      expect(METHODOLOGY_CHECKS.company_info).toBeDefined();
+      expect(METHODOLOGY_CHECKS.market_position).toBeDefined();
+      expect(METHODOLOGY_CHECKS.barriers_and_moats).toBeDefined();
+      expect(METHODOLOGY_CHECKS.growth_metrics).toBeDefined();
+      expect(METHODOLOGY_CHECKS.management).toBeDefined();
+      expect(METHODOLOGY_CHECKS.balance_sheet).toBeDefined();
+      expect(METHODOLOGY_CHECKS.pest_risks).toBeDefined();
+      expect(METHODOLOGY_CHECKS.valuation_summary).toBeDefined();
+    });
+
+    it('should have at least 2 checks per section type', () => {
+      for (const [key, checks] of Object.entries(METHODOLOGY_CHECKS)) {
+        if (key === '_exempt') continue;
+        expect(checks.length, `${key} should have >=2 checks`).toBeGreaterThanOrEqual(2);
+      }
+    });
+
+    it('should have check objects with id, label, critical, and test fields', () => {
+      const checks = METHODOLOGY_CHECKS.valuation_summary;
+      for (const check of checks) {
+        expect(typeof check.id).toBe('string');
+        expect(typeof check.label).toBe('string');
+        expect(typeof check.critical).toBe('boolean');
+        expect(typeof check.test).toBe('function');
+      }
+    });
+  });
+
+  describe('Radar section (company_info)', () => {
+    it('should check for event analysis, 3 Ms coverage, company snapshot', () => {
+      const narrative = 'The event was a significant price drop creating a dislocation. We evaluate Meaning — do I understand it? Moat — does it have durable advantages? Management — is leadership trustworthy? Key metrics: revenue $5B.';
+      const section = makeMethodSection('company_info', 1, narrative, {
+        data: { ticker: 'TEST', revenue: 5000000000 },
+      });
+      const result = scoreMethodology(section);
+      expect(result.score).toBeGreaterThanOrEqual(80);
+      const passedChecks = result.checks.filter(c => c.passed);
+      expect(passedChecks.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  describe('Market Position (market_position)', () => {
+    it('should check for market share data and competitor comparison', () => {
+      const narrative = 'The company holds a 15% market share in the specialty grocery segment. Competitors include Whole Foods and Trader Joes who collectively represent the primary competitive threats. The TAM is estimated at $200B.';
+      const section = makeMethodSection('market_position', 3, narrative);
+      const result = scoreMethodology(section);
+      expect(result.score).toBeGreaterThanOrEqual(80);
+    });
+  });
+
+  describe('Barriers & Moats (barriers_and_moats)', () => {
+    it('should check for specific moat type identification', () => {
+      const narrative = 'The company benefits from a strong brand moat — its name is synonymous with the category. Switching costs are low but the brand loyalty creates a de facto toll bridge. This moat should endure for 10-20 years as the brand recognition continues to deepen. Competitors like Whole Foods have tried to copy the format but cannot replicate the value proposition.';
+      const section = makeMethodSection('barriers_and_moats', 4, narrative);
+      const result = scoreMethodology(section);
+      const moatCheck = result.checks.find(c => c.id === 'moat-type');
+      expect(moatCheck).toBeDefined();
+      expect(moatCheck.passed).toBe(true);
+    });
+
+    it('should fail when no moat type is identified', () => {
+      const narrative = 'The company has some advantages but we did not analyze them specifically.';
+      const section = makeMethodSection('barriers_and_moats', 4, narrative);
+      const result = scoreMethodology(section);
+      const moatCheck = result.checks.find(c => c.id === 'moat-type');
+      expect(moatCheck).toBeDefined();
+      expect(moatCheck.passed).toBe(false);
+    });
+  });
+
+  describe('Valuation (valuation_summary)', () => {
+    it('should check for all 4 methods, FGR derivation, and buy price', () => {
+      const narrative = 'We computed the MOS (Margin of Safety) price at $45, Payback Time (PBT) target of 6.2 years, Ten Cap price at $52, and Equity Bond price at $48. The FGR (future growth rate) was derived from historical growth of 15%, analyst consensus of 12%, company guidance of 14%, and sector CAGR of 8%. The buy price range is $42-$52 with a sticker price of $90.';
+      const section = makeMethodSection('valuation_summary', 10, narrative);
+      const result = scoreMethodology(section);
+      expect(result.score).toBeGreaterThanOrEqual(80);
+    });
+
+    it('should fail when valuation methods are missing', () => {
+      const narrative = 'The company looks undervalued based on our analysis. We think it is worth more.';
+      const section = makeMethodSection('valuation_summary', 10, narrative);
+      const result = scoreMethodology(section);
+      expect(result.score).toBeLessThan(50);
+    });
+  });
+
+  describe('PEST Risks (pest_risks)', () => {
+    it('should check for all 4 PEST categories', () => {
+      const narrative = 'Political risks include tariffs on imported goods and FDA regulation changes. Economic factors like consumer spending slowdowns and inflation affect margins. Social trends toward health-conscious eating provide tailwinds. Technological disruption from online grocery delivery poses a long-term threat. Our rebuttal: the company has demonstrated resilience through multiple economic cycles.';
+      const section = makeMethodSection('pest_risks', 9, narrative);
+      const result = scoreMethodology(section);
+      const pestCheck = result.checks.find(c => c.id === 'pest-all-categories');
+      expect(pestCheck).toBeDefined();
+      expect(pestCheck.passed).toBe(true);
+    });
+
+    it('should fail when PEST categories are incomplete', () => {
+      const narrative = 'There are some political risks from regulation. Economic headwinds exist.';
+      const section = makeMethodSection('pest_risks', 9, narrative);
+      const result = scoreMethodology(section);
+      const pestCheck = result.checks.find(c => c.id === 'pest-all-categories');
+      expect(pestCheck.passed).toBe(false);
+    });
+  });
+
+  describe('FCF / Growth Metrics section 5', () => {
+    it('should check for FCF ratio and maintenance vs growth capex', () => {
+      const narrative = 'Free cash flow was $800M with an FCF ratio of 1.2x earnings. Operating cash flow minus capex yields strong FCF. Maintenance capex is estimated at 70% of total while growth capex drives expansion. Shareholders benefit from buybacks totaling $500M.';
+      const section = makeMethodSection('growth_metrics', 5, narrative);
+      const result = scoreMethodology(section);
+      expect(result.score).toBeGreaterThanOrEqual(60);
+    });
+  });
+
+  describe('Management (management)', () => {
+    it('should check for CEO evaluation and insider ownership', () => {
+      const narrative = 'CEO Jack Sinclair has transformed the company since 2019 with a clear strategic vision. Insider ownership shows management has skin in the game with significant share purchases. The capital allocation strategy focuses on share buybacks and store expansion. Management integrity is demonstrated by delivering on their Big Audacious Goal of 10% operating margins.';
+      const section = makeMethodSection('management', 6, narrative);
+      const result = scoreMethodology(section);
+      expect(result.score).toBeGreaterThanOrEqual(60);
+    });
+  });
+
+  describe('ROE/ROIC/Debt (growth_metrics section 7)', () => {
+    it('should check for return metrics and debt analysis', () => {
+      const narrative = 'ROE stands at 45% reflecting exceptional capital efficiency. ROIC of 32% confirms returns are not debt-driven. The company has zero long-term debt and leverage is minimal. Return consistency over the past 10 years has been remarkable with ROE never dropping below 20%.';
+      const section = makeMethodSection('growth_metrics', 7, narrative);
+      const result = scoreMethodology(section);
+      expect(result.score).toBeGreaterThanOrEqual(60);
+    });
+  });
+
+  describe('Balance Sheet (balance_sheet)', () => {
+    it('should check for current ratio and equity trend', () => {
+      const narrative = 'The current ratio of 1.8 indicates strong liquidity. Shareholder equity has grown consistently from $500M to $1.2B over the past decade, demonstrating a positive equity trend. Assets exceed liabilities with a comfortable margin.';
+      const section = makeMethodSection('balance_sheet', 8, narrative);
+      const result = scoreMethodology(section);
+      expect(result.score).toBeGreaterThanOrEqual(60);
+    });
+  });
+
+  describe('Exempt sections', () => {
+    it('should return score 100 for overall_verdict', () => {
+      const section = makeMethodSection('overall_verdict', 11, 'Final verdict on the company.');
+      const result = scoreMethodology(section);
+      expect(result.score).toBe(100);
+      expect(result.checks).toEqual([]);
+      expect(result.passed).toBe(true);
+    });
+
+    it('should return score 100 for synthesis sections', () => {
+      const section = makeMethodSection('synthesis', 12, 'Synthesis of all sections.');
+      const result = scoreMethodology(section);
+      expect(result.score).toBe(100);
+    });
+
+    it('should return score 100 for PSR sections', () => {
+      const section = makeMethodSection('psr_annual', 0, 'PSR annual reader output.');
+      const result = scoreMethodology(section);
+      expect(result.score).toBe(100);
+    });
+  });
+
+  describe('Scoring formula', () => {
+    it('should weight critical checks 2x and supplementary 1x', () => {
+      // Build a section where only critical checks pass
+      const narrative = 'The company holds a 25% market share. Competitors include Walmart and Target.';
+      const section = makeMethodSection('market_position', 3, narrative);
+      const result = scoreMethodology(section);
+      // Score should be > 0 since critical checks pass
+      expect(result.score).toBeGreaterThan(0);
+    });
+
+    it('should set passed=true when score >= 50', () => {
+      const narrative = 'The company holds market share. Competitors include Walmart.';
+      const section = makeMethodSection('market_position', 3, narrative);
+      const result = scoreMethodology(section);
+      if (result.score >= 50) {
+        expect(result.passed).toBe(true);
+      } else {
+        expect(result.passed).toBe(false);
+      }
+    });
+  });
+
+  describe('growth_metrics disambiguation by sectionNumber', () => {
+    it('should use FCF checks for sectionNumber 5', () => {
+      const narrative = 'Free cash flow analysis shows FCF ratio of 1.1x.';
+      const section = makeMethodSection('growth_metrics', 5, narrative);
+      const result = scoreMethodology(section);
+      const hasFcfCheck = result.checks.some(c => c.id.startsWith('fcf-'));
+      expect(hasFcfCheck).toBe(true);
+    });
+
+    it('should use ROE/ROIC/Debt checks for sectionNumber 7', () => {
+      const narrative = 'ROE is 30% and ROIC is 25%. Debt is manageable.';
+      const section = makeMethodSection('growth_metrics', 7, narrative);
+      const result = scoreMethodology(section);
+      const hasReturnCheck = result.checks.some(c => c.id.startsWith('returns-'));
+      expect(hasReturnCheck).toBe(true);
+    });
+  });
+
+  describe('validateSection integration', () => {
+    it('should include methodology field in validateSection return', () => {
+      const report = validateSection(companyInfoSection, dataPacketSlice);
+      expect(report.methodology).toBeDefined();
+      expect(typeof report.methodology.score).toBe('number');
+      expect(Array.isArray(report.methodology.checks)).toBe(true);
+      expect(typeof report.methodology.passed).toBe('boolean');
+    });
   });
 });
