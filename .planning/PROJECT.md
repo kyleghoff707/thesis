@@ -27,18 +27,19 @@ Every design decision about the agent team must pass this test:
 
 If a real hedge fund wouldn't do it that way, don't build it that way.
 
-## Current Milestone: v1.1 API Migration & Pitch Deck Quality
+## Current Milestone: v1.2 Full Story Pipeline
 
-**Goal:** Migrate the Pitch Deck pipeline from Claude Code subagent orchestration to direct Claude API calls, solving compliance issues mechanically through structured outputs while enabling parallel dispatch and prompt caching.
+**Goal:** Build the Full Story (Stage 3) pipeline end-to-end — first in Claude Code, then validated with quality scoring, then migrated to API. Same proven playbook as Pitch Deck (v1.0 CC → v1.1 API).
 
 **Target features:**
-- Claude API orchestration layer (aiResearch.js) — shared infrastructure for all stages
-- Structured output enforcement — citation format, red flags, searchesPerformed schema
-- Parallel agent dispatch — 2.5hr → 30-40min runtime
-- Prompt caching — $14 → $8-12 cost per company
-- Web search citation URLs from API tool results
-- DataPacket path reference in agent prompts
-- Validation: SFM + 1 other ticker, 85+ quality score, zero high-severity issues
+- Full Story CC skill orchestration — 6 sections inheriting Pitch Deck findings
+- 43-item scored checklists (Meaning 15pt, Moat 15pt, Management 13pt)
+- 4-step adversarial debate (Bull → Bear → Bull Rebuttal → Judge)
+- Pitch Deck inheritance — prior findings flow as context to Full Story agents
+- Full Story methodology checks in critic.js
+- Dispatch table + agent prompt updates for Full Story sections
+- API migration when CC quality ceiling is reached
+- Validation: quality scoring, at least 1 ticker end-to-end
 
 ## Requirements
 
@@ -60,19 +61,24 @@ If a real hedge fund wouldn't do it that way, don't build it that way.
 - Primary Source Reader — 10-K text, transcripts, proxy, data verification against DataPacket
 - Delight features — deep-dive, assumption tracker, industry cards
 - PDF export — Thes1s-branded 56-page pitch deck PDF generation
+- Claude API orchestration layer — aiResearch.js dispatch engine with structured outputs (v1.1)
+- Parallel agent dispatch — wave-based pipeline manager with budget tracking (v1.1)
+- Prompt caching — 3-block system message structure with cache_control breakpoints (v1.1)
+- Dual quality scoring — 94 mechanical / 93 methodology on SFM (v1.1)
+- Web search citation URLs — extracted from API tool_result blocks (v1.1)
+- DataPacket field path reference — prevents fabricated paths in citations (v1.1)
+- Buffett writing style guide — distilled from 6 shareholder letters, replaces raw 130K token letters (v1.2 prep)
 
 ### Active
 
-- [ ] Claude API orchestration layer — direct API calls with structured outputs, parallel dispatch, prompt caching
-- [ ] Pitch Deck pipeline migration — from CC subagents to API orchestration
-- [ ] Citation compliance — mechanical enforcement of canonical format via structured outputs
-- [ ] Web search URL verification — actual URLs from API tool results in citations
-- [ ] DataPacket path accuracy — field path reference in agent prompts
-- [ ] Cost optimization — prompt caching to hit $8-12 per company target
-- [ ] Runtime optimization — parallel dispatch to hit 30-40min target
-- [ ] Quality validation — 85+ score on SFM + at least 1 other ticker
-- [ ] Full Story generation — deepest analysis with Bull/Bear/Judge debate (next milestone)
-- [ ] Management Promise Tracker — extract promises from earnings calls, compare to actuals (next milestone)
+- [ ] Full Story CC skill — 6-section Stage 3 pipeline with Pitch Deck inheritance
+- [ ] Scored checklists — 43-item checklists (Meaning 15pt, Moat 15pt, Management 13pt) with structured scoring
+- [ ] Adversarial debate — 4-step Bull → Bear → Bull Rebuttal → Judge for inversion & rebuttal
+- [ ] Dispatch table updates — remove trading strategy/PACE, fix S3 ownership to competitor-evaluator
+- [ ] Agent prompt updates — Full Story-specific sections in existing agent prompts
+- [ ] Full Story methodology scoring — curriculum-derived checks in critic.js
+- [ ] API migration — migrate Full Story to Claude API when CC quality ceiling is reached
+- [ ] End-to-end validation — at least 1 ticker through full One Pager → Pitch Deck → Full Story pipeline
 
 ### Out of Scope
 
@@ -83,8 +89,13 @@ If a real hedge fund wouldn't do it that way, don't build it that way.
 - Batch processing pipeline — one company at a time
 - Real-time thesis monitoring alerts — manual trigger only
 - Automated eval system — user IS the eval for first 5-10 reports, automated later
+- One Pager simplification — v1.3, easier to simplify after complex is built
 - One Pager API migration — works well enough as CC skill, migrate later if needed
-- In-browser direct API calls (EXPT-06) — Phase 8 Polish, separate from Node.js orchestration
+- In-browser direct API calls — Polish phase, separate from Node.js orchestration
+- Trading strategy / PACE plan — human judgment, not AI work
+- UI integration — all 3 stages displayed in app — v1.3+
+- Full Story PDF export — v1.3+
+- Management Promise Tracker — extract promises from earnings calls — future milestone
 
 ## Context
 
@@ -94,8 +105,8 @@ Phases 1-4 complete. All data engines, all UI tabs, watchlists, 3-layer XBRL eng
 ### Architecture Plan (Source of Truth)
 `gstack/plans/gstack-ai-agent-workflow-plan-20260323.md` — 516-line authoritative plan. Reviewed by CEO review (scope expansion), Eng review (architecture validated + prototype confirmed). Contains: 9 agent roles, 3-layer architecture, stage orchestration, DataPacket + Toolbox tools, quality assurance system, report JSON schema, cost estimates, 22 key design decisions, prototype validation results.
 
-### V3 Pitch Deck Pipeline State (Context for v1.1)
-3 full SFM validation runs completed. V3 quality: 75/100, 10/10 sections with full narratives, 146 citations, 55 red flags, WATCHLIST verdict (correct). Key findings documented in `.planning/phases/06.3-pipeline-validation-pt3/V3-VALIDATION-REPORT.md`. Persistent issues (citation format anarchy, web citation laundering, searchesPerformed chaos, DataPacket path fabrication) are mechanically solved by API structured outputs. Cost regression ($32 with Opus PSR + CC overhead) eliminated by API migration + prompt caching.
+### v1.1 Pitch Deck Pipeline Results (Foundation for v1.2)
+API migration complete. SFM V4: $8.53/company, 19min runtime, 94 mechanical / 93 methodology quality. All compliance issues from CC V3 (75/100) mechanically solved by structured outputs. 14 plans across 5 phases (7-11). Infrastructure proven and ready for Full Story reuse: aiResearch.js dispatch, pipelineManager.js waves, critic.js dual scoring, contextBudget.js tracking.
 
 ### Rule One Knowledge Base
 `knowledge/` directory contains full Rule One curriculum: stage templates, curriculum files (one-pager.md, pitch-deck-I through IV, story-form-I and II), research references (fgr.md, equity-bond-research.md, rule-one-fundamentals.md, tools-for-analysis.md, advanced-financial-analysis.md), and the user's own manual research examples (LULU, EW, SFM, MU, ODFL).
@@ -161,4 +172,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after Phase 7 (Schema & SDK Foundation) complete — ReportSectionSchema works with Claude API structured outputs, SDK upgraded to 0.80.0, live smoke tests pass*
+*Last updated: 2026-03-29 after v1.2 milestone start — Full Story Pipeline*

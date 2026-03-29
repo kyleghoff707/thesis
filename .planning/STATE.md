@@ -1,30 +1,32 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: milestone
-status: Milestone complete
-stopped_at: Completed 11-01-PLAN.md
-last_updated: "2026-03-29T20:40:18.796Z"
+milestone: v1.2
+milestone_name: Full Story Pipeline
+status: Defining requirements
+stopped_at: null
+last_updated: "2026-03-29T22:00:00.000Z"
 progress:
-  total_phases: 5
-  completed_phases: 4
-  total_plans: 12
-  completed_plans: 14
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-27)
+See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours -- delivered in minutes, with zero shortcuts on rigor.
-**Current focus:** Phase 11 — validation
+**Current focus:** Defining requirements for v1.2 Full Story Pipeline
 
 ## Current Position
 
-Phase: 11
-Plan: Not started
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-29 — Milestone v1.2 started
 
 ## Performance Metrics
 
