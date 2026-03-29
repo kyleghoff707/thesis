@@ -1,8 +1,9 @@
 // Context Budget — Token estimation and cost tracking for AI agent dispatch
-// Measures character-based token estimates and aggregates per-agent costs.
+// Records actual API usage fields per agent and aggregates costs.
 // This is measurement infrastructure, not enforcement — it never blocks execution.
 //
-// Token estimation uses chars/4 approximation (Claude averages ~4 chars per token).
+// estimateTokens() uses chars/4 approximation for pre-flight estimation.
+// createBudgetTracker() records actual usage from API response (not character estimates).
 // Cost calculation uses known Claude model pricing as of March 2026.
 
 // Claude model pricing in dollars per million tokens
@@ -10,7 +11,7 @@
 export const MODEL_PRICING = {
   'claude-sonnet-4-20250514': { input: 3.0, output: 15.0, cacheRead: 0.30, cacheWrite: 3.75 },
   'claude-sonnet-4-6':        { input: 3.0, output: 15.0, cacheRead: 0.30, cacheWrite: 3.75 },
-  'claude-opus-4-6':          { input: 15.0, output: 75.0, cacheRead: 1.50, cacheWrite: 18.75 },
+  'claude-opus-4-6':          { input: 5.0, output: 25.0, cacheRead: 0.50, cacheWrite: 6.25 },
 };
 
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
@@ -44,48 +45,36 @@ export function computeCost(inputTokens, outputTokens, model, cacheReadTokens = 
 }
 
 // Factory: create a budget tracker that records per-agent entries
-// record() accepts raw character counts (strings or numbers) and converts to tokens
-// getSummary() aggregates all entries into totals and estimated cost
+// record() accepts an agent role string and the actual usage object from API response
+// getSummary() aggregates all entries into totals
 export function createBudgetTracker() {
   const entries = [];
 
   return {
-    record(agentRole, sectionKey, inputText, outputText, model) {
-      const inputTokens = estimateTokens(inputText);
-      const outputTokens = estimateTokens(outputText);
-      const cost = computeCost(inputTokens, outputTokens, model);
+    record(agentRole, usage) {
       entries.push({
         agentRole,
-        sectionKey,
-        model,
-        inputTokens,
-        outputTokens,
-        cost,
+        inputTokens: usage.inputTokens || 0,
+        outputTokens: usage.outputTokens || 0,
+        cacheRead: usage.cacheRead || 0,
+        cacheWrite: usage.cacheWrite || 0,
+        webSearches: usage.webSearches || 0,
+        cost: usage.cost || 0,
+        timestamp: Date.now(),
       });
     },
 
     getSummary() {
-      let totalInput = 0;
-      let totalOutput = 0;
-      let totalCostInput = 0;
-      let totalCostOutput = 0;
+      const totals = entries.reduce((acc, e) => ({
+        inputTokens: acc.inputTokens + e.inputTokens,
+        outputTokens: acc.outputTokens + e.outputTokens,
+        cacheRead: acc.cacheRead + e.cacheRead,
+        cacheWrite: acc.cacheWrite + e.cacheWrite,
+        webSearches: acc.webSearches + e.webSearches,
+        cost: acc.cost + e.cost,
+      }), { inputTokens: 0, outputTokens: 0, cacheRead: 0, cacheWrite: 0, webSearches: 0, cost: 0 });
 
-      for (const entry of entries) {
-        totalInput += entry.inputTokens;
-        totalOutput += entry.outputTokens;
-        totalCostInput += entry.cost.input;
-        totalCostOutput += entry.cost.output;
-      }
-
-      return {
-        entries: entries.slice(),
-        totals: { input: totalInput, output: totalOutput },
-        estimatedCost: {
-          input: totalCostInput,
-          output: totalCostOutput,
-          total: totalCostInput + totalCostOutput,
-        },
-      };
+      return { entries: entries.slice(), totals };
     },
   };
 }
@@ -95,15 +84,17 @@ export function formatBudgetReport(summary) {
   const lines = ['=== Token Budget Report ===', ''];
 
   for (const entry of summary.entries) {
-    lines.push(`Agent: ${entry.agentRole} (${entry.sectionKey})`);
-    lines.push(`  Input: ~${entry.inputTokens.toLocaleString()} tokens | Output: ~${entry.outputTokens.toLocaleString()} tokens`);
-    lines.push(`  Estimated cost: $${entry.cost.total.toFixed(4)}`);
+    lines.push(`Agent: ${entry.agentRole}`);
+    lines.push(`  Input: ${entry.inputTokens.toLocaleString()} tokens | Output: ${entry.outputTokens.toLocaleString()} tokens`);
+    lines.push(`  Cache read: ${entry.cacheRead.toLocaleString()} tokens | Cache write: ${entry.cacheWrite.toLocaleString()} tokens`);
+    lines.push(`  Web searches: ${entry.webSearches} | Cost: $${entry.cost.toFixed(4)}`);
     lines.push('');
   }
 
   lines.push('---');
-  lines.push(`Total: ~${summary.totals.input.toLocaleString()} input | ~${summary.totals.output.toLocaleString()} output`);
-  lines.push(`Estimated cost: $${summary.estimatedCost.total.toFixed(4)}`);
+  lines.push(`Total input: ${summary.totals.inputTokens.toLocaleString()} | Total output: ${summary.totals.outputTokens.toLocaleString()}`);
+  lines.push(`Total cache read: ${summary.totals.cacheRead.toLocaleString()} | Total cache write: ${summary.totals.cacheWrite.toLocaleString()}`);
+  lines.push(`Total web searches: ${summary.totals.webSearches} | Total cost: $${summary.totals.cost.toFixed(4)}`);
 
   return lines.join('\n');
 }

@@ -24,7 +24,7 @@ const MODEL_MAP = {
 
 const PRICING = {
   'claude-sonnet-4-6':   { input: 3.0, output: 15.0, cacheRead: 0.30, cacheWrite: 3.75, webSearch: 0.01 },
-  'claude-opus-4-6':     { input: 15.0, output: 75.0, cacheRead: 1.50, cacheWrite: 18.75, webSearch: 0.01 },
+  'claude-opus-4-6':     { input: 5.0, output: 25.0, cacheRead: 0.50, cacheWrite: 6.25, webSearch: 0.01 },
 };
 
 const AGENTS_DIR = resolve(process.cwd(), 'agents');

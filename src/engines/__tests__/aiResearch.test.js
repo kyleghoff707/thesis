@@ -186,8 +186,8 @@ describe('buildUsage', () => {
     const usage = buildUsage(mockResponses.successResponse.usage, 'claude-opus-4-6');
     expect(usage.inputTokens).toBe(45230);
     expect(usage.outputTokens).toBe(3842);
-    // cost = 45230*15/1e6 + 3842*75/1e6 + 2*0.01 = 0.67845 + 0.28815 + 0.02 = 0.9866
-    expect(usage.cost).toBeCloseTo(0.9866, 2);
+    // cost = 45230*5/1e6 + 3842*25/1e6 + 2*0.01 = 0.22615 + 0.09605 + 0.02 = 0.3422
+    expect(usage.cost).toBeCloseTo(0.3422, 2);
   });
 
   it('handles missing usage fields gracefully', () => {
@@ -417,7 +417,7 @@ describe('constants', () => {
     expect(PRICING['claude-opus-4-6']).toBeDefined();
     expect(PRICING['claude-sonnet-4-6'].input).toBe(3.0);
     expect(PRICING['claude-sonnet-4-6'].output).toBe(15.0);
-    expect(PRICING['claude-opus-4-6'].input).toBe(15.0);
-    expect(PRICING['claude-opus-4-6'].output).toBe(75.0);
+    expect(PRICING['claude-opus-4-6'].input).toBe(5.0);
+    expect(PRICING['claude-opus-4-6'].output).toBe(25.0);
   });
 });

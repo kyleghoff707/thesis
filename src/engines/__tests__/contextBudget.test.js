@@ -1,5 +1,5 @@
 // Context Budget — Token estimation and cost tracking tests
-// Validates character-based token estimation and per-agent cost aggregation
+// Validates actual-usage budget tracking and corrected Opus 4.6 pricing
 
 import { describe, it, expect } from 'vitest';
 import {
@@ -47,12 +47,12 @@ describe('computeCost', () => {
     expect(cost.total).toBeCloseTo(0.0105, 6);
   });
 
-  it('should compute Opus pricing', () => {
-    // 1000 input at $15/M = 0.015, 500 output at $75/M = 0.0375
+  it('should compute Opus pricing at corrected $5/$25 rates', () => {
+    // 1000 input at $5/M = 0.005, 500 output at $25/M = 0.0125
     const cost = computeCost(1000, 500, 'claude-opus-4-6');
-    expect(cost.input).toBeCloseTo(0.015, 6);
-    expect(cost.output).toBeCloseTo(0.0375, 6);
-    expect(cost.total).toBeCloseTo(0.0525, 6);
+    expect(cost.input).toBeCloseTo(0.005, 6);
+    expect(cost.output).toBeCloseTo(0.0125, 6);
+    expect(cost.total).toBeCloseTo(0.0175, 6);
   });
 
   it('should fallback to Sonnet for unknown model', () => {
@@ -88,91 +88,172 @@ describe('computeCost', () => {
     expect(cost.cacheWrite).toBeCloseTo(0.00375, 6);
     expect(cost.total).toBeCloseTo(0.003 + 0.0075 + 0.0006 + 0.00375, 6);
   });
+
+  it('should compute Opus cache costs at corrected rates', () => {
+    // 1000 cacheRead at $0.50/M = 0.0005, 1000 cacheWrite at $6.25/M = 0.00625
+    const cost = computeCost(0, 0, 'claude-opus-4-6', 1000, 1000);
+    expect(cost.cacheRead).toBeCloseTo(0.0005, 6);
+    expect(cost.cacheWrite).toBeCloseTo(0.00625, 6);
+  });
 });
 
-describe('createBudgetTracker', () => {
-  it('should record and retrieve entries', () => {
+describe('createBudgetTracker (actual usage)', () => {
+  it('should accept 2-param record(agentRole, usage) signature', () => {
     const tracker = createBudgetTracker();
-    tracker.record('financial-analyst', 'meaning', 50000, 8000, 'claude-sonnet-4-20250514');
+    tracker.record('financial-analyst', {
+      inputTokens: 45000,
+      outputTokens: 3800,
+      cacheRead: 20000,
+      cacheWrite: 5000,
+      webSearches: 2,
+      cost: 0.42,
+    });
     const summary = tracker.getSummary();
     expect(summary.entries).toHaveLength(1);
     expect(summary.entries[0].agentRole).toBe('financial-analyst');
-    expect(summary.entries[0].sectionKey).toBe('meaning');
   });
 
-  it('should aggregate totals across entries', () => {
+  it('should accept full usage object shape', () => {
     const tracker = createBudgetTracker();
-    tracker.record('financial-analyst', 'meaning', 50000, 8000, 'claude-sonnet-4-20250514');
-    tracker.record('business-analyst', 'company_info', 30000, 5000, 'claude-sonnet-4-20250514');
-    tracker.record('risk-analyst', 'minimum_standards', 20000, 3000, 'claude-sonnet-4-20250514');
+    const usage = {
+      inputTokens: 45000,
+      outputTokens: 3800,
+      cacheRead: 20000,
+      cacheWrite: 5000,
+      webSearches: 2,
+      cost: 0.42,
+    };
+    tracker.record('business-analyst', usage);
     const summary = tracker.getSummary();
-    // 50000+30000+20000 chars = 100000 chars -> estimateTokens(100000) = 25000
-    // 8000+5000+3000 chars = 16000 chars -> estimateTokens(16000) = 4000
-    expect(summary.totals.input).toBe(25000);
-    expect(summary.totals.output).toBe(4000);
+    const entry = summary.entries[0];
+    expect(entry.inputTokens).toBe(45000);
+    expect(entry.outputTokens).toBe(3800);
+    expect(entry.cacheRead).toBe(20000);
+    expect(entry.cacheWrite).toBe(5000);
+    expect(entry.webSearches).toBe(2);
+    expect(entry.cost).toBe(0.42);
   });
 
-  it('should compute estimated cost for all entries', () => {
+  it('should return totals with all numeric fields from getSummary()', () => {
     const tracker = createBudgetTracker();
-    // 3 Sonnet entries
-    tracker.record('financial-analyst', 'meaning', 40000, 8000, 'claude-sonnet-4-20250514');
-    tracker.record('business-analyst', 'company_info', 40000, 8000, 'claude-sonnet-4-20250514');
-    tracker.record('risk-analyst', 'minimum_standards', 40000, 8000, 'claude-sonnet-4-20250514');
-    // 1 Opus entry
-    tracker.record('synthesis-writer', 'overall_verdict', 40000, 8000, 'claude-opus-4-6');
+    tracker.record('financial-analyst', {
+      inputTokens: 10000, outputTokens: 1000,
+      cacheRead: 5000, cacheWrite: 2000,
+      webSearches: 1, cost: 0.10,
+    });
+    tracker.record('risk-analyst', {
+      inputTokens: 8000, outputTokens: 800,
+      cacheRead: 4000, cacheWrite: 0,
+      webSearches: 3, cost: 0.08,
+    });
     const summary = tracker.getSummary();
+    expect(summary.totals.inputTokens).toBe(18000);
+    expect(summary.totals.outputTokens).toBe(1800);
+    expect(summary.totals.cacheRead).toBe(9000);
+    expect(summary.totals.cacheWrite).toBe(2000);
+    expect(summary.totals.webSearches).toBe(4);
+    expect(summary.totals.cost).toBeCloseTo(0.18, 4);
+  });
 
-    // Each entry: 40000 chars / 4 = 10000 input tokens, 8000 chars / 4 = 2000 output tokens
-    // Sonnet per entry: 10000*3/1M + 2000*15/1M = 0.03 + 0.03 = 0.06
-    // 3 Sonnet entries: 0.18
-    // Opus entry: 10000*15/1M + 2000*75/1M = 0.15 + 0.15 = 0.30
-    // Total: 0.18 + 0.30 = 0.48
-    expect(summary.estimatedCost.total).toBeCloseTo(0.48, 4);
+  it('should include timestamp in each entry', () => {
+    const tracker = createBudgetTracker();
+    const before = Date.now();
+    tracker.record('financial-analyst', {
+      inputTokens: 10000, outputTokens: 1000,
+      cacheRead: 0, cacheWrite: 0,
+      webSearches: 0, cost: 0.05,
+    });
+    const after = Date.now();
+    const entry = tracker.getSummary().entries[0];
+    expect(entry.timestamp).toBeGreaterThanOrEqual(before);
+    expect(entry.timestamp).toBeLessThanOrEqual(after);
+  });
+
+  it('should aggregate totals across multiple agents', () => {
+    const tracker = createBudgetTracker();
+    tracker.record('agent-a', { inputTokens: 100, outputTokens: 10, cacheRead: 50, cacheWrite: 20, webSearches: 1, cost: 0.01 });
+    tracker.record('agent-b', { inputTokens: 200, outputTokens: 20, cacheRead: 100, cacheWrite: 40, webSearches: 2, cost: 0.02 });
+    tracker.record('agent-c', { inputTokens: 300, outputTokens: 30, cacheRead: 150, cacheWrite: 60, webSearches: 0, cost: 0.03 });
+    const summary = tracker.getSummary();
+    expect(summary.totals.inputTokens).toBe(600);
+    expect(summary.totals.outputTokens).toBe(60);
+    expect(summary.totals.cacheRead).toBe(300);
+    expect(summary.totals.cacheWrite).toBe(120);
+    expect(summary.totals.webSearches).toBe(3);
+    expect(summary.totals.cost).toBeCloseTo(0.06, 4);
+  });
+
+  it('should handle usage with missing fields (default to 0)', () => {
+    const tracker = createBudgetTracker();
+    tracker.record('minimal-agent', {});
+    const summary = tracker.getSummary();
+    expect(summary.entries[0].inputTokens).toBe(0);
+    expect(summary.entries[0].outputTokens).toBe(0);
+    expect(summary.entries[0].cacheRead).toBe(0);
+    expect(summary.entries[0].cacheWrite).toBe(0);
+    expect(summary.entries[0].webSearches).toBe(0);
+    expect(summary.entries[0].cost).toBe(0);
   });
 
   it('should return empty summary when no entries', () => {
     const tracker = createBudgetTracker();
     const summary = tracker.getSummary();
     expect(summary.entries).toHaveLength(0);
-    expect(summary.totals.input).toBe(0);
-    expect(summary.totals.output).toBe(0);
-    expect(summary.estimatedCost.total).toBe(0);
+    expect(summary.totals.inputTokens).toBe(0);
+    expect(summary.totals.outputTokens).toBe(0);
+    expect(summary.totals.cost).toBe(0);
   });
 });
 
-describe('formatBudgetReport', () => {
-  it('should format summary as human-readable string', () => {
+describe('formatBudgetReport (actual usage)', () => {
+  it('should include cache read/write token counts and web search counts', () => {
     const tracker = createBudgetTracker();
-    tracker.record('financial-analyst', 'meaning', 50000, 8000, 'claude-sonnet-4-20250514');
+    tracker.record('financial-analyst', {
+      inputTokens: 45000, outputTokens: 3800,
+      cacheRead: 20000, cacheWrite: 5000,
+      webSearches: 2, cost: 0.42,
+    });
     const summary = tracker.getSummary();
     const report = formatBudgetReport(summary);
     expect(report).toContain('Token Budget Report');
     expect(report).toContain('financial-analyst');
-    expect(report).toContain('meaning');
+    expect(report).toContain('Cache read');
+    expect(report).toContain('Cache write');
+    expect(report).toContain('Web searches');
     expect(report).toContain('$');
   });
 
-  it('should show per-agent breakdown', () => {
+  it('should show totals with all fields', () => {
     const tracker = createBudgetTracker();
-    tracker.record('financial-analyst', 'meaning', 40000, 8000, 'claude-sonnet-4-20250514');
-    tracker.record('business-analyst', 'company_info', 30000, 5000, 'claude-sonnet-4-20250514');
+    tracker.record('agent-a', { inputTokens: 10000, outputTokens: 1000, cacheRead: 5000, cacheWrite: 2000, webSearches: 1, cost: 0.10 });
+    tracker.record('agent-b', { inputTokens: 8000, outputTokens: 800, cacheRead: 4000, cacheWrite: 0, webSearches: 3, cost: 0.08 });
     const summary = tracker.getSummary();
     const report = formatBudgetReport(summary);
-    // Each agent on its own line
-    expect(report).toContain('financial-analyst');
-    expect(report).toContain('business-analyst');
-    expect(report).toContain('meaning');
-    expect(report).toContain('company_info');
+    expect(report).toContain('Total input');
+    expect(report).toContain('Total output');
+    expect(report).toContain('Total cache read');
+    expect(report).toContain('Total cache write');
+    expect(report).toContain('Total web searches');
+    expect(report).toContain('Total cost');
   });
 });
 
 describe('exports', () => {
-  it('should export MODEL_PRICING with Sonnet and Opus', () => {
+  it('should export MODEL_PRICING with corrected Opus pricing ($5/$25)', () => {
     expect(MODEL_PRICING).toBeDefined();
     expect(MODEL_PRICING['claude-sonnet-4-20250514']).toBeDefined();
     expect(MODEL_PRICING['claude-opus-4-6']).toBeDefined();
     expect(MODEL_PRICING['claude-sonnet-4-20250514'].input).toBe(3.0);
-    expect(MODEL_PRICING['claude-opus-4-6'].input).toBe(15.0);
+    // Corrected Opus pricing: $5/$25 (not $15/$75)
+    expect(MODEL_PRICING['claude-opus-4-6'].input).toBe(5.0);
+    expect(MODEL_PRICING['claude-opus-4-6'].output).toBe(25.0);
+    expect(MODEL_PRICING['claude-opus-4-6'].cacheRead).toBe(0.50);
+    expect(MODEL_PRICING['claude-opus-4-6'].cacheWrite).toBe(6.25);
+  });
+
+  it('should export estimateTokens and computeCost for backward compatibility', () => {
+    expect(typeof estimateTokens).toBe('function');
+    expect(typeof computeCost).toBe('function');
   });
 
   it('should export _testExports with CHARS_PER_TOKEN and DEFAULT_MODEL', () => {
