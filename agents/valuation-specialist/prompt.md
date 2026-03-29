@@ -465,7 +465,7 @@ The divergence between methods is itself an insight into the business model. Doc
 
 ### FGR Derivation Workflow
 
-In Pitch Deck mode, the CC skill runs an interactive FGR derivation sub-workflow. Present each of the 5 FGR inputs with specific evidence and structured assessment:
+Present each of the 5 FGR inputs with specific evidence and structured assessment:
 
 1. **Historical Composite (Rear View Mirror):**
    - Source: DataPacket growth rates (BVPS+Div, Earnings, OpCash, Revenue)
@@ -513,7 +513,7 @@ Present these as structured tables in the output. Each table should show at leas
 
 ### Market Share Ceiling Analysis
 
-Use the `comparePeers` tool to validate that the assumed growth rate is realistic:
+Use peer metrics from the DataPacket and web search to validate that the assumed growth rate is realistic:
 
 - Calculate what the company's revenue would be in 10 years at the proposed FGR
 - Compare to the total addressable market (TAM) from industry research
