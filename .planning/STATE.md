@@ -1,15 +1,17 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.2
-milestone_name: Full Story Pipeline
-status: Roadmap created
-stopped_at: null
-last_updated: "2026-03-29T23:00:00.000Z"
+milestone_name: milestone
+status: planning
+stopped_at: Phase 12 context gathered
+last_updated: "2026-03-29T22:21:40.856Z"
+last_activity: 2026-03-29 — Roadmap created for v1.2 Full Story Pipeline
 progress:
-  total_phases: 6
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 11
+  completed_phases: 5
+  total_plans: 12
+  completed_plans: 15
+  percent: 0
 ---
 
 # Project State
@@ -33,6 +35,7 @@ Progress: [░░░░░░░░░░] 0%
 ## Performance Metrics
 
 **Velocity (v1.1):**
+
 - Total plans completed: 14
 - Average duration: ~12 min
 - Total execution time: ~2.8 hours
@@ -86,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T23:00:00.000Z
-Stopped at: Roadmap created for v1.2 Full Story Pipeline
-Resume file: None
+Last session: 2026-03-29T22:21:40.848Z
+Stopped at: Phase 12 context gathered
+Resume file: .planning/phases/12-full-story-foundation/12-CONTEXT.md
