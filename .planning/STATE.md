@@ -19,20 +19,24 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours -- delivered in minutes, with zero shortcuts on rigor.
-**Current focus:** Phase 10 — pipeline-integration-prompt-fixes
+**Current focus:** Phase 11 — validation
 
 ## Current Position
 
 Phase: 11
-Plan: Not started
+Plan: 2 of 2
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0 (v1.1)
-- Average duration: --
-- Total execution time: --
+- Total plans completed: 1 (v1.1)
+- Average duration: 8min
+- Total execution time: 8min
+
+| Phase | Plan | Duration | Tasks | Files |
+|-------|------|----------|-------|-------|
+| 11-validation | 01 | 8min | 2 | 4 |
 
 *Updated after each plan completion*
 
@@ -74,6 +78,9 @@ Recent decisions affecting current work:
 - [Phase 10]: PSR findings extraction filters by section key or title match with formatted-then-caller-provided fallback chain
 - [Phase 10]: One dispatch = one section = one ReportSectionSchema object -- no multi-section returns
 - [Phase 10]: DataPacket is primary data source for all agents -- tools are supplementary
+- [Phase 11]: Methodology checks use regex on narrative text -- medium depth, not prose quality
+- [Phase 11]: growth_metrics key disambiguated by sectionNumber (5=FCF, 7=ROE/ROIC/Debt)
+- [Phase 11]: Critical methodology checks weighted 2x, supplementary 1x; passed threshold >= 50
 
 ### Roadmap Evolution
 
@@ -108,6 +115,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T20:09:58.993Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-validation/11-CONTEXT.md
+Last session: 2026-03-29T20:31:34Z
+Stopped at: Completed 11-01-PLAN.md
+Resume file: .planning/phases/11-validation/11-01-SUMMARY.md
