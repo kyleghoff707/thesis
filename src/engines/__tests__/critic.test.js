@@ -97,6 +97,26 @@ describe('QUAL-01: Citation Validation', () => {
       expect(result.found).toBe(true);
       expect(result.value).toBe(88);
     });
+
+    it('should resolve array bracket notation', () => {
+      const dp = { gurus: { holdings: [{ guru: { name: 'Warren Buffett' } }] } };
+      const result = resolveDataPath(dp, 'gurus.holdings[0].guru.name');
+      expect(result.found).toBe(true);
+      expect(result.value).toBe('Warren Buffett');
+    });
+
+    it('should resolve nested array bracket notation', () => {
+      const dp = { insiders: { recentTransactions: [{ ownerName: 'CEO' }, { ownerName: 'CFO' }] } };
+      const result = resolveDataPath(dp, 'insiders.recentTransactions[1].ownerName');
+      expect(result.found).toBe(true);
+      expect(result.value).toBe('CFO');
+    });
+
+    it('should return not found for out-of-bounds array index', () => {
+      const dp = { items: [{ name: 'first' }] };
+      const result = resolveDataPath(dp, 'items[5].name');
+      expect(result.found).toBe(false);
+    });
   });
 
   describe('matchNumericValue', () => {

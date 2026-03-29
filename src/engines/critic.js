@@ -77,7 +77,18 @@ function classifyCitation(citation) {
  */
 function resolveDataPath(dataPacket, dotPath) {
   if (!dataPacket || !dotPath) return { found: false, value: undefined };
-  const parts = dotPath.split('.');
+  // Split on dots, then handle bracket notation within each part
+  // e.g., "gurus.holdings[0].guru.name" → ["gurus", "holdings", "0", "guru", "name"]
+  const parts = [];
+  for (const segment of dotPath.split('.')) {
+    const bracketMatch = segment.match(/^([^[]+)\[(\d+)\]$/);
+    if (bracketMatch) {
+      parts.push(bracketMatch[1]); // property name
+      parts.push(bracketMatch[2]); // array index (as string — works for obj[key] access)
+    } else {
+      parts.push(segment);
+    }
+  }
   let current = dataPacket;
   for (const part of parts) {
     if (current == null || typeof current !== 'object') {

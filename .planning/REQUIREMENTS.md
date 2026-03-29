@@ -23,15 +23,15 @@
 
 ### Quality & Compliance Fixes
 
-- [ ] **FIX-01**: DataPacket field path reference included in every analysis agent prompt — exact top-level and second-level paths, not guessed
+- [x] **FIX-01**: DataPacket field path reference included in every analysis agent prompt — exact top-level and second-level paths, not guessed
 - [x] **FIX-02**: Web citation URL enforcement — post-processing enriches citation source fields with actual URLs from web_search_tool_result blocks
-- [ ] **FIX-03**: Citation format mechanically enforced — structured outputs guarantee canonical {id, ref, text, source} format on every section
-- [ ] **FIX-04**: searchesPerformed format mechanically enforced — structured outputs guarantee {query, resultCount, usedInSection} on every section
-- [ ] **FIX-05**: Red flags type mechanically enforced — structured outputs guarantee string array, not object array
+- [x] **FIX-03**: Citation format mechanically enforced — structured outputs guarantee canonical {id, ref, text, source} format on every section
+- [x] **FIX-04**: searchesPerformed format mechanically enforced — structured outputs guarantee {query, resultCount, usedInSection} on every section
+- [x] **FIX-05**: Red flags type mechanically enforced — structured outputs guarantee string array, not object array
 
 ### Validation
 
-- [ ] **VAL-01**: SFM pitch deck generated via API pipeline scores 85+ overall quality with zero high-severity issues
+- [x] **VAL-01**: SFM pitch deck generated via API pipeline scores 85+ overall quality with zero high-severity issues
 - [ ] **VAL-02**: Second ticker (different sector, chosen at runtime) generates successfully at 85+ quality
 - [ ] **VAL-03**: Pipeline cost per company is $8-12 (verified from API response usage fields)
 - [ ] **VAL-04**: Pipeline runtime is 30-40 minutes wall clock (verified from timestamps)
@@ -89,11 +89,11 @@
 | API-03 | Phase 9 | Complete |
 | API-06 | Phase 9 | Complete |
 | API-07 | Phase 9 | Complete |
-| FIX-01 | Phase 10 | Pending |
-| FIX-03 | Phase 10 | Pending |
-| FIX-04 | Phase 10 | Pending |
-| FIX-05 | Phase 10 | Pending |
-| VAL-01 | Phase 11 | Pending |
+| FIX-01 | Phase 10 | Complete |
+| FIX-03 | Phase 10 | Complete |
+| FIX-04 | Phase 10 | Complete |
+| FIX-05 | Phase 10 | Complete |
+| VAL-01 | Phase 11 | Complete |
 | VAL-02 | Phase 11 | Pending |
 | VAL-03 | Phase 11 | Pending |
 | VAL-04 | Phase 11 | Pending |
