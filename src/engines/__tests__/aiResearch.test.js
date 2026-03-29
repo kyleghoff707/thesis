@@ -70,6 +70,7 @@ const {
   loadCurriculum,
   buildUserMessage,
   buildSystemBlocks,
+  generateFieldPathBlock,
   MODEL_MAP,
   PRICING,
 } = _testExports;
@@ -245,6 +246,71 @@ describe('sliceDataPacket', () => {
   });
 });
 
+// ─── generateFieldPathBlock ─────────────────────────────────────
+
+describe('generateFieldPathBlock', () => {
+  it('produces string containing top-level key paths for simple object', () => {
+    const result = generateFieldPathBlock({ ticker: 'SFM', companyInfo: { name: 'Sprouts', sector: 'Consumer' } });
+    expect(result).toContain('dataPacket.ticker');
+    expect(result).toContain('dataPacket.companyInfo');
+    expect(result).toContain('.name');
+    expect(result).toContain('.sector');
+  });
+
+  it('shows null for null field values', () => {
+    const result = generateFieldPathBlock({ ticker: 'SFM', emptyField: null });
+    expect(result).toContain('dataPacket.emptyField');
+    expect(result).toContain('null');
+  });
+
+  it('shows array[N] for array field values with correct length', () => {
+    const result = generateFieldPathBlock({ ticker: 'SFM', items: [1, 2, 3] });
+    expect(result).toContain('dataPacket.items');
+    expect(result).toContain('array[3]');
+  });
+
+  it('shows {N fields} count and second-level keys for nested objects', () => {
+    const result = generateFieldPathBlock({
+      ticker: 'SFM',
+      financials: { revenue: 7400000000, netIncome: 500000000, grossMargin: 0.38 },
+    });
+    expect(result).toContain('dataPacket.financials');
+    expect(result).toContain('{3 fields}');
+    expect(result).toContain('.revenue');
+    expect(result).toContain('.netIncome');
+    expect(result).toContain('.grossMargin');
+  });
+
+  it('truncates second-level keys at 20 and shows "...and N more fields"', () => {
+    const bigObject = {};
+    for (let i = 0; i < 25; i++) {
+      bigObject[`field${i}`] = i;
+    }
+    const result = generateFieldPathBlock({ ticker: 'SFM', data: bigObject });
+    expect(result).toContain('{25 fields}');
+    expect(result).toContain('.field0');
+    expect(result).toContain('.field19');
+    expect(result).toContain('...and 5 more fields');
+    expect(result).not.toContain('.field20');
+  });
+
+  it('shows {0 fields} for empty object', () => {
+    const result = generateFieldPathBlock({ ticker: 'SFM', empty: {} });
+    expect(result).toContain('dataPacket.empty');
+    expect(result).toContain('{0 fields}');
+  });
+
+  it('starts with ## DataPacket Field Paths header', () => {
+    const result = generateFieldPathBlock({ ticker: 'SFM' });
+    expect(result.startsWith('## DataPacket Field Paths')).toBe(true);
+  });
+
+  it('contains ONLY valid ref paths instruction text', () => {
+    const result = generateFieldPathBlock({ ticker: 'SFM' });
+    expect(result).toContain('ONLY valid');
+  });
+});
+
 // ─── buildUserMessage ───────────────────────────────────────────
 
 describe('buildUserMessage', () => {
@@ -286,6 +352,20 @@ describe('buildUserMessage', () => {
   it('omits PM Feedback section when pmFeedback is not provided', () => {
     const msg = buildUserMessage({ ticker: 'SFM' }, {});
     expect(msg).not.toContain('## PM Feedback');
+  });
+
+  it('includes DataPacket Field Paths BEFORE DataPacket JSON section', () => {
+    const msg = buildUserMessage({ ticker: 'SFM', companyInfo: { name: 'Sprouts' } }, {});
+    const fieldPathsIdx = msg.indexOf('## DataPacket Field Paths');
+    const dataPacketIdx = msg.indexOf('## DataPacket\n');
+    expect(fieldPathsIdx).toBeGreaterThanOrEqual(0);
+    expect(dataPacketIdx).toBeGreaterThanOrEqual(0);
+    expect(fieldPathsIdx).toBeLessThan(dataPacketIdx);
+  });
+
+  it('field path block contains ONLY valid ref paths instruction text', () => {
+    const msg = buildUserMessage({ ticker: 'SFM', companyInfo: { name: 'Sprouts' } }, {});
+    expect(msg).toContain('ONLY valid');
   });
 });
 

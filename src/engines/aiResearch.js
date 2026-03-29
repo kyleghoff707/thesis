@@ -78,9 +78,54 @@ function sliceDataPacket(dataPacket, sliceKeys) {
   return slice;
 }
 
+// Generate a field path reference block for the DataPacket slice (FIX-01)
+// Walks top-level + second-level keys so agents know which `ref` paths are valid.
+function generateFieldPathBlock(dataSlice) {
+  const lines = [
+    '## DataPacket Field Paths',
+    '',
+    'These are the ONLY valid `ref` paths for DataPacket citations. Do NOT fabricate paths that do not appear below.',
+    '',
+  ];
+
+  for (const [key, value] of Object.entries(dataSlice)) {
+    if (value === null) {
+      lines.push(`- \`dataPacket.${key}\`: null`);
+    } else if (Array.isArray(value)) {
+      lines.push(`- \`dataPacket.${key}\`: array[${value.length}]`);
+    } else if (typeof value === 'object') {
+      const subKeys = Object.keys(value);
+      lines.push(`- \`dataPacket.${key}\`: {${subKeys.length} fields}`);
+      const displayed = subKeys.slice(0, 20);
+      for (const sk of displayed) {
+        const sv = value[sk];
+        if (sv === null) {
+          lines.push(`  - \`.${sk}\`: null`);
+        } else if (Array.isArray(sv)) {
+          lines.push(`  - \`.${sk}\`: array[${sv.length}]`);
+        } else if (typeof sv === 'object') {
+          lines.push(`  - \`.${sk}\`: {${Object.keys(sv).length} fields}`);
+        } else {
+          lines.push(`  - \`.${sk}\`: ${typeof sv}`);
+        }
+      }
+      if (subKeys.length > 20) {
+        lines.push(`  - ...and ${subKeys.length - 20} more fields`);
+      }
+    } else {
+      lines.push(`- \`dataPacket.${key}\`: ${typeof value}`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
 // Build the user message from DataPacket slice and options
 function buildUserMessage(dataSlice, options = {}) {
   const parts = [];
+
+  // Field path reference block (FIX-01) — BEFORE the DataPacket JSON
+  parts.push(generateFieldPathBlock(dataSlice));
 
   // DataPacket slice in JSON code fence
   parts.push(`## DataPacket\n\n\`\`\`json\n${JSON.stringify(dataSlice, null, 2)}\n\`\`\``);
@@ -400,6 +445,7 @@ export const _testExports = {
   loadCurriculum,
   buildUserMessage,
   buildSystemBlocks,
+  generateFieldPathBlock,
   MODEL_MAP,
   PRICING,
 };
