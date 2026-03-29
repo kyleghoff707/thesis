@@ -1,108 +1,99 @@
-# Requirements: Thes1s v1.1 — API Migration & Pitch Deck Quality
+# Requirements: Thes1s v1.2 — Full Story Pipeline
 
-**Defined:** 2026-03-27
+**Defined:** 2026-03-29
 **Core Value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours — delivered in minutes, with zero shortcuts on rigor.
 
-## v1.1 Requirements
+## v1.2 Requirements
 
-### API Orchestration Layer
+Requirements for the Full Story (Stage 3) pipeline. Each maps to roadmap phases.
 
-- [x] **API-01**: aiResearch.js dispatches agents via direct Claude API calls with structured outputs (output_config.format + zodOutputFormat)
-- [x] **API-02**: Parallel agent dispatch within phases using Promise.allSettled with configurable concurrency limits
-- [x] **API-03**: Prompt caching with cache_control breakpoints on shared context (curriculum, DataPacket, PSR findings) — 0.1x read cost on subsequent agents
-- [x] **API-04**: Web search via server tool (web_search_20250305) with max_uses per agent and URL extraction from tool results
-- [x] **API-05**: Error handling with retry-then-escalate: rate limit backoff, max_tokens retry, schema errors logged, partial results preserved
-- [x] **API-06**: Cache monitoring — log cache_read_input_tokens and cache_creation_input_tokens per response, warn if hit rate below 70%
-- [x] **API-07**: Token budget tracking using actual API response usage fields (input, output, cache read/write, web searches)
+### CC Orchestration
 
-### Schema Compliance
+- [ ] **ORCH-01**: Full Story CC skill orchestrates 6 sections with Pitch Deck findings inherited as context
+- [ ] **ORCH-02**: Dispatch table updated — remove trading_strategy/pace_plan, fix S3 to competitor-evaluator, add 4-step debate
+- [ ] **ORCH-03**: Agent prompts updated with Full Story-specific instructions per section assignment
+- [ ] **ORCH-04**: Checklist sections produce scored output format (15+15+13 items with pass/fail/evidence per item)
 
-- [x] **FMT-01**: Replace z.looseObject({}) in ReportSectionSchema with structured output-compatible types (z.string() for data field, explicit types for chart config/data)
-- [x] **FMT-02**: Add optional url field to CitationSchema for web search URLs
-- [x] **FMT-03**: Verify ReportSectionSchema produces valid JSON Schema via z.toJSONSchema() — smoke test with live API call before pipeline work
+### Adversarial Debate
 
-### Quality & Compliance Fixes
+- [ ] **DEBATE-01**: 4-step debate executes sequentially — Bull thesis → Bear inversion → Bull rebuttal → Judge scoring
+- [ ] **DEBATE-02**: Every bear inversion includes evidence-backed counter-argument (web search + DataPacket citations)
+- [ ] **DEBATE-03**: Bull rebuttal responds to each bear point with cited evidence; weak rebuttals acknowledged honestly
+- [ ] **DEBATE-04**: Judge scores each exchange (Strong/Weak/Unresolved) and produces overall summary with unresolved risk count
 
-- [x] **FIX-01**: DataPacket field path reference included in every analysis agent prompt — exact top-level and second-level paths, not guessed
-- [x] **FIX-02**: Web citation URL enforcement — post-processing enriches citation source fields with actual URLs from web_search_tool_result blocks
-- [x] **FIX-03**: Citation format mechanically enforced — structured outputs guarantee canonical {id, ref, text, source} format on every section
-- [x] **FIX-04**: searchesPerformed format mechanically enforced — structured outputs guarantee {query, resultCount, usedInSection} on every section
-- [x] **FIX-05**: Red flags type mechanically enforced — structured outputs guarantee string array, not object array
+### Quality & Validation
 
-### Validation
+- [ ] **QUAL-01**: critic.js includes Full Story methodology checks derived from story-form-I.md and story-form-II.md curriculum
+- [ ] **QUAL-02**: At least 1 ticker runs end-to-end through One Pager → Pitch Deck → Full Story with passing quality scores
+- [ ] **QUAL-03**: Full Story sections produce dual quality scores (mechanical + methodology) matching Pitch Deck scoring pattern
 
-- [x] **VAL-01**: SFM pitch deck generated via API pipeline scores 85+ overall quality with zero high-severity issues
-- [ ] **VAL-02**: Second ticker (different sector, chosen at runtime) generates successfully at 85+ quality
-- [ ] **VAL-03**: Pipeline cost per company is $8-12 (verified from API response usage fields)
-- [ ] **VAL-04**: Pipeline runtime is 30-40 minutes wall clock (verified from timestamps)
+### API Migration
 
-## Carried Forward (Next Milestone)
+- [ ] **API-01**: Full Story pipeline migrated from CC to Claude API dispatch using existing aiResearch.js infrastructure
+- [ ] **API-02**: Structured output enforcement for all Full Story sections including debate and checklist formats
+- [ ] **API-03**: Cost per Full Story and full pipeline (OP+PD+FS) benchmarked against target ceiling
 
-### Full Story (Stage 3)
+## Future Requirements
 
-- **FLST-01**: CC skill `/generate:full-story` with 3-phase dispatch
-- **FLST-02**: Scored checklists (Meaning 15pt, Moat 15pt, Management 13pt = 43 items)
-- **FLST-03**: Bull/Bear/Judge structured debate
-- **FLST-04**: DebateView component
-- **FLST-05**: Management Promise Tracker
-- **FLST-06**: Inversion & Rebuttal
-- **FLST-07**: Quick Bull/Bear narrative toggle
-- **FLST-08**: Trading Strategy + PACE Plan
-- **FLST-09**: Conversational checkpoint dialogue
-- **FLST-10**: Full parity vs LULU Full Story benchmark
+Deferred to subsequent milestones. Tracked but not in current roadmap.
 
-### Export & Polish
+### One Pager Simplification (v1.3)
 
-- **EXPT-01**: Branded PDF export
-- **EXPT-02**: Citation manager (40+ references)
-- **EXPT-03**: Source preview on citation hover
-- **EXPT-04**: Working view vs export view
-- **EXPT-05**: Version history / diff view
-- **EXPT-06**: In-app API-driven generation (commercial path)
+- **SIMPLE-01**: One Pager reduced to single-agent, single-page output
+- **SIMPLE-02**: One Pager migrated from CC skill to API dispatch
+
+### UI Integration (v1.3+)
+
+- **UI-01**: All 3 stages (OP, PD, FS) triggerable from Tauri app UI
+- **UI-02**: Real-time progress dashboard during pipeline execution
+- **UI-03**: DeepDivePanel, IndustryCard, AssumptionTracker display components
+
+### Export & Polish (v1.3+)
+
+- **EXPORT-01**: Full Story PDF export with Thes1s branding
+- **EXPORT-02**: Working view vs clean export view toggle
+- **EXPORT-03**: Reference/citation system with numbered refs
 
 ## Out of Scope
 
+Explicitly excluded. Documented to prevent scope creep.
+
 | Feature | Reason |
 |---------|--------|
-| One Pager API migration | Works well enough as CC skill. Migrate later if needed. |
-| In-browser direct API calls | Phase 8 Polish (EXPT-06). This milestone is Node.js orchestration. |
-| Streaming progress UI | Differentiator, not table stakes. PM can wait 30-40 min. Add later. |
-| Batch API for PSR | Marginal savings (~$0.40) for significant complexity. Revisit if cost target isn't met. |
-| Strict tool_use validation | Tools work fine non-strict. Add if tool call errors become a problem. |
-| Extended thinking | Adds output token cost. Structured output + narrative IS the thinking. |
-| Fast mode (6x pricing) | $80+ per company. Speed is not the bottleneck — quality is. |
-| Multi-turn agent conversations | Single-turn with tools is sufficient. PSR works with pre-processed filing markdown. |
-| Inter-agent real-time communication | Orchestrator handles info flow via phased dispatch. |
+| Trading strategy / PACE plan | Human judgment — PM defines investment tactics, not AI |
+| Server infrastructure | Local desktop app, no backend needed |
+| Multi-user / team features | Single-user first |
+| Automated eval system | PM is the eval for first 5-10 reports |
+| Management Promise Tracker | Separate feature, future milestone |
+| Batch processing | One company at a time |
+| In-browser API calls | Separate from Node.js orchestration |
 
 ## Traceability
 
+Which phases cover which requirements. Updated during roadmap creation.
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FMT-01 | Phase 7 | Complete |
-| FMT-02 | Phase 7 | Complete |
-| FMT-03 | Phase 7 | Complete |
-| API-01 | Phase 8 | Complete |
-| API-04 | Phase 8 | Complete |
-| API-05 | Phase 8 | Complete |
-| FIX-02 | Phase 8 | Complete |
-| API-02 | Phase 9 | Complete |
-| API-03 | Phase 9 | Complete |
-| API-06 | Phase 9 | Complete |
-| API-07 | Phase 9 | Complete |
-| FIX-01 | Phase 10 | Complete |
-| FIX-03 | Phase 10 | Complete |
-| FIX-04 | Phase 10 | Complete |
-| FIX-05 | Phase 10 | Complete |
-| VAL-01 | Phase 11 | Complete |
-| VAL-02 | Phase 11 | Pending |
-| VAL-03 | Phase 11 | Pending |
-| VAL-04 | Phase 11 | Pending |
+| ORCH-01 | — | Pending |
+| ORCH-02 | — | Pending |
+| ORCH-03 | — | Pending |
+| ORCH-04 | — | Pending |
+| DEBATE-01 | — | Pending |
+| DEBATE-02 | — | Pending |
+| DEBATE-03 | — | Pending |
+| DEBATE-04 | — | Pending |
+| QUAL-01 | — | Pending |
+| QUAL-02 | — | Pending |
+| QUAL-03 | — | Pending |
+| API-01 | — | Pending |
+| API-02 | — | Pending |
+| API-03 | — | Pending |
 
 **Coverage:**
-- v1.1 requirements: 19 total
-- Mapped to phases: 19
-- Unmapped: 0
+- v1.2 requirements: 14 total
+- Mapped to phases: 0
+- Unmapped: 14
 
 ---
-*Requirements defined: 2026-03-27*
-*Last updated: 2026-03-27 after roadmap creation (traceability populated)*
+*Requirements defined: 2026-03-29*
+*Last updated: 2026-03-29 after initial definition*
