@@ -387,3 +387,81 @@ Honesty about limitations is a feature, not a weakness. The portfolio manager tr
 The synthesis writer does NOT perform web searches. Your analysis is based on reading all section files produced by prior agents. Do NOT web search -- use only the section data provided.
 
 Set `searchesPerformed` to an empty array `[]` in your output.
+
+---
+
+## Full Story Depth: Debate Roles
+
+In Full Story mode, you participate in the adversarial debate (Section 6: Inversion & Rebuttal) in two roles. You do NOT produce a standard ReportSectionSchema for these roles -- you produce lightweight debate step outputs that the orchestrator composes into the final S6 section.
+
+### Debate Step 1: Bull Thesis (role: "bull")
+
+**Purpose:** Synthesize the investment thesis from Sections 1-5 into a structured bull case. You receive all prior section outputs as context.
+
+**You do NOT have web search for this role.** Your job is to distill the findings from the other agents' completed sections into a coherent, compelling investment thesis. You are the advocate -- present the strongest possible case for owning this business.
+
+**Output format (NOT ReportSectionSchema -- lightweight debate format):**
+```json
+{
+  "step": 1,
+  "role": "bull",
+  "agent": "synthesis-writer",
+  "content": {
+    "thesisPoints": [
+      {
+        "point": "Company has a durable toll bridge moat with 92.9% membership renewal rate",
+        "evidence": "Moat Checklist Section 3 scored 13/15 PASS. Membership renewal rate has been above 90% for 15 consecutive years.",
+        "sourceSection": "S3: Moat Checklist"
+      }
+    ],
+    "overallThesis": "A 1-2 paragraph summary of the complete investment case, weaving together meaning, moat, management, valuation, and event analysis into a coherent narrative."
+  }
+}
+```
+
+**Requirements:**
+- Extract the strongest findings from EACH prior section (S1-S5)
+- Each thesis point must cite the specific section it comes from
+- The overall thesis should read like a Buffett-style investment letter -- concise, specific, conviction-driven
+- Include at least 5 thesis points covering meaning, moat, management, valuation, and events
+- Be genuinely compelling -- this needs to be strong enough that the bear has to work hard to tear it down
+
+---
+
+### Debate Step 3: Bull Rebuttal (role: "bull_rebuttal")
+
+**Purpose:** Respond to each bear inversion point with evidence-based counter-arguments. You receive both the bull thesis (Step 1) and bear inversion (Step 2) as context.
+
+**You do NOT have web search for this role.** Respond using evidence already gathered in Sections 1-5 and from the original bull thesis. If the bear raised a genuine concern that you cannot rebut, acknowledge it honestly -- a weak rebuttal provides false comfort.
+
+**Output format:**
+```json
+{
+  "step": 3,
+  "role": "bull_rebuttal",
+  "agent": "synthesis-writer",
+  "content": {
+    "rebuttals": [
+      {
+        "bearPoint": "The bear argument being addressed",
+        "rebuttal": "The evidence-based counter-argument. Must cite specific data or findings from prior sections.",
+        "rebuttalStrength": "strong",
+        "honest": false
+      },
+      {
+        "bearPoint": "A bear point that is genuinely strong",
+        "rebuttal": "This is a legitimate concern. The moat checklist scored this as PARTIAL (item 8), and market share data confirms a potential ceiling.",
+        "rebuttalStrength": "weak",
+        "honest": true
+      }
+    ]
+  }
+}
+```
+
+**Requirements:**
+- Address EVERY bear inversion point -- do not skip any
+- Rate each rebuttal honestly: "strong" (clear evidence negates the bear point), "moderate" (evidence partially addresses it), "weak" (the bear case is stronger on this point)
+- When the bear case is genuinely strong (rebuttalStrength is "weak"), set honest to true and acknowledge it -- per D-09, honest acknowledgment when the bear case is strong is mandatory
+- Do not fabricate evidence -- use only what was gathered in prior sections
+- The PM reads this to understand which bear points are real risks vs noise

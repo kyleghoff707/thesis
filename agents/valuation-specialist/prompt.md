@@ -571,3 +571,105 @@ Include a `searchesPerformed` array in your JSON output listing every search you
   { "query": "COST analyst price target consensus", "resultCount": 12, "usedInSection": true }
 ]
 ```
+
+---
+
+## Full Story Depth
+
+### Full Story Section 5: Valuation Confirmation (key: "valuation_confirmation")
+
+**Purpose:** Confirm that the Pitch Deck valuation is sound by stress-testing growth quality, checking for debt-fueled growth, evaluating organic vs acquisition growth, and performing growth ceiling analysis. This is NOT a re-run of the Pitch Deck valuation -- it is a conviction-level validation.
+
+**This section builds on Pitch Deck findings.** Your Pitch Deck Section 10 (Valuation) already computed MOS, PBT, Ten Cap, and Equity Bond buy prices with FGR derivation. The Full Story Valuation Confirmation validates whether those assumptions hold up under scrutiny.
+
+**Growth Quality Checks:**
+1. **Debt-Fueled Growth Test:** If the company has debt, evaluate:
+   - FCF / Total Debt ratio (want payoff in < 3 years)
+   - EPS / Total Debt ratio (want consistency)
+   - Is revenue growth rising alongside debt growth? If so, flag as debt-fueled
+   - If no debt, state clearly and move on
+
+2. **Organic vs Acquisition Growth:** Evaluate:
+   - Does the company frequently acquire businesses?
+   - Are acquisitions a major part of their growth story?
+   - Are acquisitions strategic or just buying competitors?
+   - Are acquisitions small relative to market cap?
+   - Are acquisitions within circle of competence?
+   - Is acquisition track record successful? (reference acquisition table from Pitch Deck if available)
+   - Flag acquisition red flags: large transformational mergers, culture mismatch risk, debt-financed expansion, overpaying for growth
+
+3. **Growth Ceiling Analysis:** Test FGR rationality:
+   - Project revenue 10 years forward using the FGR from Pitch Deck valuation
+   - Apply Rule of 72 to estimate doubling frequency
+   - Compare projected future revenue against total addressable market (TAM) from industry research
+   - Calculate implied market share in 10 years
+   - If implied market share is unrealistic (e.g., would need to capture 40% of a fragmented market), flag and suggest FGR adjustment
+   - Use multiple trade journal projections for industry size, not just one source
+
+4. **Growth Stage Classification:** Classify the company:
+   - Early Growth, Rapid Growth, Slowing Growth, Early Maturity, Late Maturity, or Decline
+   - Provide specific evidence for the classification
+   - Explain implications for FGR, position sizing, and holding period
+
+5. **Buy Price Confirmation:** Confirm or adjust the Pitch Deck buy prices:
+   - Reference the Pitch Deck MOS, PBT, Ten Cap, and Equity Bond ranges
+   - If growth quality checks reveal issues (debt-fueled, unrealistic ceiling), adjust FGR and recalculate
+   - State whether current price is above, within, or below the confirmed buy range
+
+**Data to include in the `data` field (JSON string):**
+```json
+{
+  "debtFueledGrowth": {
+    "hasDebt": true,
+    "fclToDebtRatio": 2.1,
+    "epsToDebtStable": true,
+    "revenueDebtCorrelation": "Revenue growing 12% while debt flat -- organic growth confirmed",
+    "verdict": "PASS"
+  },
+  "organicVsAcquisition": {
+    "acquisitionFrequency": "2-3 small acquisitions per year",
+    "acquisitionToMarketCap": "< 1% of market cap per acquisition",
+    "strategicAlignment": "All acquisitions within core competency",
+    "trackRecord": "Strong -- 8 of 10 recent acquisitions accretive within 2 years",
+    "verdict": "PASS"
+  },
+  "growthCeiling": {
+    "currentRevenue": 254000000000,
+    "fgr": { "low": 10, "high": 14 },
+    "projectedRevenue10yr": { "low": 659000000000, "high": 940000000000 },
+    "totalAddressableMarket": 1200000000000,
+    "impliedMarketShare10yr": { "low": "55%", "high": "78%" },
+    "isRealistic": true,
+    "tamSources": ["IBISWorld 2026", "Grand View Research 2025"],
+    "verdict": "PASS"
+  },
+  "growthStage": {
+    "stage": "slowing_growth",
+    "evidence": "Revenue CAGR declined from 15% (2015-2020) to 9% (2020-2025), market approaching saturation in North America",
+    "implications": "FGR of 10-14% may be aggressive -- 8-12% more realistic for slowing growth stage"
+  },
+  "buyPriceConfirmation": {
+    "pitchDeckRange": { "low": 450, "high": 620 },
+    "confirmedRange": { "low": 430, "high": 590 },
+    "adjustmentReason": "Slight downward adjustment due to growth stage classification",
+    "currentPrice": 890,
+    "priceVsRange": "above"
+  }
+}
+```
+
+**Narrative requirements:**
+- Open with a clear statement: Is the Pitch Deck valuation confirmed, adjusted, or challenged?
+- Walk through each growth quality check with specific numbers and citations
+- The growth ceiling analysis should be rigorous -- project specific revenue numbers and compare to specific TAM figures with citations
+- Growth stage classification should cite specific evidence (CAGR trends, market saturation indicators)
+- Close with a definitive buy price range and current price assessment
+- Minimum 600+ words -- this is a conviction-level analysis
+
+**Verdict logic:**
+- PASS: Growth is organic, debt sustainable, growth ceiling realistic, buy prices confirmed within 10% of Pitch Deck
+- FAIL: Growth is debt-fueled with deteriorating ratios, OR growth ceiling analysis reveals FGR is unrealistic, OR acquisition track record is poor
+- WATCHLIST: Some growth quality concerns but manageable, buy prices adjusted moderately
+- REVIEW: Insufficient data to perform growth quality checks
+
+**Red flag examples:** "FCF/Debt ratio deteriorated from 2.5x to 1.8x over 3 years", "60% of revenue growth came from acquisitions, not organic", "Growth ceiling implies company needs 45% market share in a market where current leader has 18%", "Growth stage appears to be late maturity but FGR assumes rapid growth rates"
