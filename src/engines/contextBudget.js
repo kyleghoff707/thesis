@@ -44,46 +44,52 @@ export function computeCost(inputTokens, outputTokens, model, cacheReadTokens = 
 }
 
 // Factory: create a budget tracker that records per-agent entries
-// record() accepts raw character counts (strings or numbers) and converts to tokens
-// getSummary() aggregates all entries into totals and estimated cost
+// record() accepts an agentRole string and a usage object from dispatchAgent
+// Usage shape: { inputTokens, outputTokens, cacheRead, cacheWrite, webSearches, cost }
+// getSummary() aggregates all entries into totals
 export function createBudgetTracker() {
   const entries = [];
 
   return {
-    record(agentRole, sectionKey, inputText, outputText, model) {
-      const inputTokens = estimateTokens(inputText);
-      const outputTokens = estimateTokens(outputText);
-      const cost = computeCost(inputTokens, outputTokens, model);
+    record(agentRole, usage) {
+      if (!usage) return;
       entries.push({
         agentRole,
-        sectionKey,
-        model,
-        inputTokens,
-        outputTokens,
-        cost,
+        inputTokens: usage.inputTokens || 0,
+        outputTokens: usage.outputTokens || 0,
+        cacheRead: usage.cacheRead || 0,
+        cacheWrite: usage.cacheWrite || 0,
+        webSearches: usage.webSearches || 0,
+        cost: usage.cost || 0,
       });
     },
 
     getSummary() {
       let totalInput = 0;
       let totalOutput = 0;
-      let totalCostInput = 0;
-      let totalCostOutput = 0;
+      let totalCacheRead = 0;
+      let totalCacheWrite = 0;
+      let totalWebSearches = 0;
+      let totalCost = 0;
 
       for (const entry of entries) {
         totalInput += entry.inputTokens;
         totalOutput += entry.outputTokens;
-        totalCostInput += entry.cost.input;
-        totalCostOutput += entry.cost.output;
+        totalCacheRead += entry.cacheRead;
+        totalCacheWrite += entry.cacheWrite;
+        totalWebSearches += entry.webSearches;
+        totalCost += entry.cost;
       }
 
       return {
         entries: entries.slice(),
-        totals: { input: totalInput, output: totalOutput },
-        estimatedCost: {
-          input: totalCostInput,
-          output: totalCostOutput,
-          total: totalCostInput + totalCostOutput,
+        totals: {
+          inputTokens: totalInput,
+          outputTokens: totalOutput,
+          cacheRead: totalCacheRead,
+          cacheWrite: totalCacheWrite,
+          webSearches: totalWebSearches,
+          cost: totalCost,
         },
       };
     },
@@ -95,15 +101,18 @@ export function formatBudgetReport(summary) {
   const lines = ['=== Token Budget Report ===', ''];
 
   for (const entry of summary.entries) {
-    lines.push(`Agent: ${entry.agentRole} (${entry.sectionKey})`);
+    lines.push(`Agent: ${entry.agentRole}`);
     lines.push(`  Input: ~${entry.inputTokens.toLocaleString()} tokens | Output: ~${entry.outputTokens.toLocaleString()} tokens`);
-    lines.push(`  Estimated cost: $${entry.cost.total.toFixed(4)}`);
+    lines.push(`  Cache: read=${entry.cacheRead.toLocaleString()} write=${entry.cacheWrite.toLocaleString()}`);
+    lines.push(`  Cost: $${entry.cost.toFixed(4)}`);
     lines.push('');
   }
 
   lines.push('---');
-  lines.push(`Total: ~${summary.totals.input.toLocaleString()} input | ~${summary.totals.output.toLocaleString()} output`);
-  lines.push(`Estimated cost: $${summary.estimatedCost.total.toFixed(4)}`);
+  lines.push(`Total: ~${summary.totals.inputTokens.toLocaleString()} input | ~${summary.totals.outputTokens.toLocaleString()} output`);
+  lines.push(`Cache: read=${summary.totals.cacheRead.toLocaleString()} | write=${summary.totals.cacheWrite.toLocaleString()}`);
+  lines.push(`Web searches: ${summary.totals.webSearches}`);
+  lines.push(`Total cost: $${summary.totals.cost.toFixed(4)}`);
 
   return lines.join('\n');
 }
