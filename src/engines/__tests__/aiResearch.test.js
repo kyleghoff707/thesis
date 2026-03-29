@@ -69,6 +69,7 @@ const {
   loadAgentPrompt,
   loadCurriculum,
   buildUserMessage,
+  buildSystemBlocks,
   MODEL_MAP,
   PRICING,
 } = _testExports;
@@ -186,8 +187,8 @@ describe('buildUsage', () => {
     const usage = buildUsage(mockResponses.successResponse.usage, 'claude-opus-4-6');
     expect(usage.inputTokens).toBe(45230);
     expect(usage.outputTokens).toBe(3842);
-    // cost = 45230*15/1e6 + 3842*75/1e6 + 2*0.01 = 0.67845 + 0.28815 + 0.02 = 0.9866
-    expect(usage.cost).toBeCloseTo(0.9866, 2);
+    // cost = 45230*5/1e6 + 3842*25/1e6 + 2*0.01 = 0.22615 + 0.09605 + 0.02 = 0.3422
+    expect(usage.cost).toBeCloseTo(0.3422, 2);
   });
 
   it('handles missing usage fields gracefully', () => {
@@ -275,6 +276,17 @@ describe('buildUserMessage', () => {
     expect(msg).not.toContain('## Assignment');
     expect(msg).not.toContain('## Prior Section Findings');
   });
+
+  it('includes PM Feedback section when pmFeedback is provided', () => {
+    const msg = buildUserMessage({ ticker: 'SFM' }, { pmFeedback: 'Dig deeper into competitive moat' });
+    expect(msg).toContain('## PM Feedback');
+    expect(msg).toContain('Dig deeper into competitive moat');
+  });
+
+  it('omits PM Feedback section when pmFeedback is not provided', () => {
+    const msg = buildUserMessage({ ticker: 'SFM' }, {});
+    expect(msg).not.toContain('## PM Feedback');
+  });
 });
 
 // ─── dispatchAgent ──────────────────────────────────────────────
@@ -330,6 +342,31 @@ describe('dispatchAgent', () => {
     // Citation 1 (source "DataPacket") should NOT get a URL
     const citation1 = result.section.citations.find(c => c.id === 1);
     expect(citation1.url).toBeUndefined();
+  });
+
+  it('passes system blocks array (not single-string block) to client.messages.parse', async () => {
+    const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
+    await dispatchAgent('business-analyst', dataPacket);
+
+    const callArgs = __mockParse.mock.calls[0][0];
+    expect(Array.isArray(callArgs.system)).toBe(true);
+    // Should have at least 1 block (agent-specific); no single-string pattern
+    expect(callArgs.system.length).toBeGreaterThanOrEqual(1);
+    // Each block should be an object with type: 'text'
+    for (const block of callArgs.system) {
+      expect(block.type).toBe('text');
+      expect(typeof block.text).toBe('string');
+    }
+  });
+
+  it('includes psrFindings as cache_control block when provided', async () => {
+    const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
+    await dispatchAgent('business-analyst', dataPacket, { psrFindings: 'PSR analysis results here' });
+
+    const callArgs = __mockParse.mock.calls[0][0];
+    const psrBlock = callArgs.system.find(b => b.text === 'PSR analysis results here');
+    expect(psrBlock).toBeDefined();
+    expect(psrBlock.cache_control).toEqual({ type: 'ephemeral' });
   });
 
   it('overwrites tokenCost and modelUsed from actual API response', async () => {
@@ -404,6 +441,80 @@ describe('dispatchWithRetry', () => {
   });
 });
 
+// ─── buildSystemBlocks ─────────────────────────────────────────
+
+describe('buildSystemBlocks', () => {
+  it('returns array with cached universal context and uncached agent-specific block', () => {
+    const blocks = buildSystemBlocks('Universal context here', null, 'Agent prompt', null);
+    expect(blocks).toHaveLength(2);
+    expect(blocks[0].type).toBe('text');
+    expect(blocks[0].text).toBe('Universal context here');
+    expect(blocks[0].cache_control).toEqual({ type: 'ephemeral' });
+    expect(blocks[1].type).toBe('text');
+    expect(blocks[1].text).toBe('Agent prompt');
+    expect(blocks[1]).not.toHaveProperty('cache_control');
+  });
+
+  it('returns 3 blocks with universal, PSR findings, and agent-specific when all provided', () => {
+    const blocks = buildSystemBlocks('Universal', 'PSR findings data', 'Prompt', 'Curriculum');
+    expect(blocks).toHaveLength(3);
+    // Block 1: universal context — cached
+    expect(blocks[0].text).toBe('Universal');
+    expect(blocks[0].cache_control).toEqual({ type: 'ephemeral' });
+    // Block 2: PSR findings — cached
+    expect(blocks[1].text).toBe('PSR findings data');
+    expect(blocks[1].cache_control).toEqual({ type: 'ephemeral' });
+    // Block 3: agent-specific — NOT cached
+    expect(blocks[2].text).toContain('Prompt');
+    expect(blocks[2].text).toContain('Curriculum');
+    expect(blocks[2]).not.toHaveProperty('cache_control');
+  });
+
+  it('omits universal context block when not provided', () => {
+    const blocks = buildSystemBlocks('', null, 'Agent prompt', 'Curriculum');
+    // Should only have agent-specific block (no universal, no PSR)
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].text).toContain('Agent prompt');
+    expect(blocks[0]).not.toHaveProperty('cache_control');
+  });
+
+  it('omits PSR findings block when not provided', () => {
+    const blocks = buildSystemBlocks('Universal', null, 'Agent prompt', null);
+    expect(blocks).toHaveLength(2);
+    expect(blocks[0].text).toBe('Universal');
+    expect(blocks[0].cache_control).toEqual({ type: 'ephemeral' });
+    expect(blocks[1].text).toBe('Agent prompt');
+    expect(blocks[1]).not.toHaveProperty('cache_control');
+  });
+
+  it('joins prompt and curriculum with separator in agent-specific block', () => {
+    const blocks = buildSystemBlocks('Universal', null, 'My prompt', 'My curriculum');
+    expect(blocks).toHaveLength(2);
+    expect(blocks[1].text).toBe('My prompt\n\n---\n\nMy curriculum');
+  });
+
+  it('last block never has cache_control property', () => {
+    // With all blocks
+    const blocks1 = buildSystemBlocks('Univ', 'PSR', 'Prompt', 'Curr');
+    expect(blocks1[blocks1.length - 1]).not.toHaveProperty('cache_control');
+
+    // With only agent-specific
+    const blocks2 = buildSystemBlocks('', null, 'Prompt', null);
+    expect(blocks2[blocks2.length - 1]).not.toHaveProperty('cache_control');
+
+    // With universal + agent-specific
+    const blocks3 = buildSystemBlocks('Univ', null, 'Prompt', null);
+    expect(blocks3[blocks3.length - 1]).not.toHaveProperty('cache_control');
+  });
+
+  it('handles empty strings and null for curriculum', () => {
+    const blocks = buildSystemBlocks('Universal', 'PSR', 'Prompt', '');
+    expect(blocks).toHaveLength(3);
+    // Agent-specific block should be just the prompt (no separator for empty curriculum)
+    expect(blocks[2].text).toBe('Prompt');
+  });
+});
+
 // ─── MODEL_MAP and PRICING ─────────────────────────────────────
 
 describe('constants', () => {
@@ -417,7 +528,7 @@ describe('constants', () => {
     expect(PRICING['claude-opus-4-6']).toBeDefined();
     expect(PRICING['claude-sonnet-4-6'].input).toBe(3.0);
     expect(PRICING['claude-sonnet-4-6'].output).toBe(15.0);
-    expect(PRICING['claude-opus-4-6'].input).toBe(15.0);
-    expect(PRICING['claude-opus-4-6'].output).toBe(75.0);
+    expect(PRICING['claude-opus-4-6'].input).toBe(5.0);
+    expect(PRICING['claude-opus-4-6'].output).toBe(25.0);
   });
 });
