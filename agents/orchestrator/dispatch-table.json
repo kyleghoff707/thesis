@@ -84,11 +84,11 @@
         "phase": 1,
         "description": "Deep analysis with scored checklists",
         "agents": [
-          { "agent": "risk-analyst", "sections": [1], "parallel": false, "note": "Event Analysis — sequential" },
-          { "agent": "business-analyst", "sections": [2], "parallel": false, "note": "Meaning — 15pt checklist" },
-          { "agent": "business-analyst", "sections": [3], "parallel": false, "note": "Moat — 15pt checklist, can be parallel with 2" },
-          { "agent": "management-evaluator", "sections": [4], "parallel": false, "note": "Management — 13pt checklist" },
-          { "agent": "valuation-specialist", "sections": [5], "parallel": false, "note": "Valuation Confirmation" }
+          { "agent": "risk-analyst", "sections": [1], "parallel": true, "note": "Event Analysis" },
+          { "agent": "business-analyst", "sections": [2], "parallel": true, "note": "Meaning — 15pt checklist" },
+          { "agent": "competitor-evaluator", "sections": [3], "parallel": true, "note": "Moat — 15pt checklist" },
+          { "agent": "management-evaluator", "sections": [4], "parallel": true, "note": "Management — 13pt checklist" },
+          { "agent": "valuation-specialist", "sections": [5], "parallel": true, "note": "Valuation Confirmation" }
         ],
         "checkpoint": {
           "after": true,
@@ -97,30 +97,48 @@
       },
       {
         "phase": 2,
-        "description": "THE DEBATE — adversarial analysis",
-        "agents": [
-          { "agent": "synthesis-writer", "role": "bull", "sections": [6], "note": "Summarizes thesis from Sections 1-5" },
-          { "agent": "risk-analyst", "role": "bear", "sections": [6], "note": "Attacks every bull point with evidence" },
-          { "agent": "financial-analyst", "role": "judge", "sections": [6], "note": "Scores each rebuttal, flags gaps" }
-        ],
+        "description": "THE DEBATE — 4-step adversarial analysis",
         "isDebate": true,
-        "checkpoint": {
-          "after": true,
-          "presents": ["debateTranscript", "scoredRebuttals"]
-        }
-      },
-      {
-        "phase": 3,
-        "description": "Strategy and conclusion",
-        "agents": [
-          { "agent": "valuation-specialist", "sections": [7], "parallel": true, "note": "Trading Strategy" },
-          { "agent": "synthesis-writer", "sections": [8], "parallel": true, "note": "PACE Plan" }
-        ]
+        "sequential": true,
+        "steps": [
+          {
+            "step": 1,
+            "role": "bull",
+            "agent": "synthesis-writer",
+            "description": "Summarize investment thesis from Sections 1-5",
+            "webSearch": false,
+            "receivesContext": ["sections_1_through_5"]
+          },
+          {
+            "step": 2,
+            "role": "bear",
+            "agent": "risk-analyst",
+            "description": "Attack every bull point with cited evidence",
+            "webSearch": true,
+            "receivesContext": ["bull_output"]
+          },
+          {
+            "step": 3,
+            "role": "bull_rebuttal",
+            "agent": "synthesis-writer",
+            "description": "Respond to each bear point with evidence or honest acknowledgment",
+            "webSearch": false,
+            "receivesContext": ["bull_output", "bear_output"]
+          },
+          {
+            "step": 4,
+            "role": "judge",
+            "agent": "financial-analyst",
+            "description": "Score each exchange, produce structured verdict",
+            "webSearch": false,
+            "receivesContext": ["bull_output", "bear_output", "bull_rebuttal_output"]
+          }
+        ],
+        "outputSection": 6,
+        "outputKey": "inversion_rebuttal",
+        "note": "Per D-07: Only bear has web search. Per D-08: All 4 outputs compose into final S6 ReportSectionSchema. Per D-09: Strictly sequential."
       }
     ],
-    "postProcessing": [
-      { "step": "final-assembly", "description": "Overall thesis verdict from all sections" }
-    ],
-    "sectionKeys": ["event_analysis", "meaning_checklist", "moat_checklist", "management_checklist", "valuation_confirmation", "inversion_rebuttal", "trading_strategy", "pace_plan"]
+    "sectionKeys": ["event_analysis", "meaning_checklist", "moat_checklist", "management_checklist", "valuation_confirmation", "inversion_rebuttal"]
   }
 }

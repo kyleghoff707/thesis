@@ -27,6 +27,6 @@
   "sections": {
     "onePager": [5],
     "pitchDeck": [10],
-    "fullStory": [5, 7]
+    "fullStory": [5]
   }
 }
