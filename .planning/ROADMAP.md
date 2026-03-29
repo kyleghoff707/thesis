@@ -19,7 +19,7 @@ Migrate the Pitch Deck pipeline from Claude Code subagent orchestration to direc
 - [ ] **Phase 7: Schema & SDK Foundation** - Fix structured output schema compatibility and verify end-to-end with live API
 - [ ] **Phase 8: Core Agent Dispatch** - Single agent dispatches via Claude API with web search, structured output, and error handling
 - [ ] **Phase 9: Parallel Dispatch & Caching** - Multi-agent parallelism with prompt caching and budget tracking
-- [ ] **Phase 10: Pipeline Integration & Prompt Fixes** - Full 10-section Pitch Deck pipeline with mechanical compliance enforcement
+- [x] **Phase 10: Pipeline Integration & Prompt Fixes** - Full 10-section Pitch Deck pipeline with mechanical compliance enforcement (completed 2026-03-29)
 - [ ] **Phase 11: Validation** - Prove pipeline quality, cost, and runtime on real tickers
 
 ## Phase Details
@@ -102,5 +102,5 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 | 7. Schema & SDK Foundation | 0/2 | Planning | - |
 | 8. Core Agent Dispatch | 0/2 | Planning | - |
 | 9. Parallel Dispatch & Caching | 0/3 | Planned | - |
-| 10. Pipeline Integration & Prompt Fixes | 0/TBD | Not started | - |
+| 10. Pipeline Integration & Prompt Fixes | 0/3 | Complete    | 2026-03-29 |
 | 11. Validation | 0/TBD | Not started | - |

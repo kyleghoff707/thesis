@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
 status: Ready to plan
-stopped_at: Phase 10 planned
-last_updated: "2026-03-29T04:38:22.276Z"
+stopped_at: Completed 10-02-PLAN.md
+last_updated: "2026-03-29T16:31:41.945Z"
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 11
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours -- delivered in minutes, with zero shortcuts on rigor.
-**Current focus:** Phase 09 — parallel-dispatch-caching
+**Current focus:** Phase 10 — pipeline-integration-prompt-fixes
 
 ## Current Position
 
-Phase: 10
+Phase: 11
 Plan: Not started
 
 ## Performance Metrics
@@ -70,6 +70,10 @@ Recent decisions affecting current work:
 - [Phase 09]: cacheMonitor.js created as dependency — Plan 01 not yet merged to worktree
 - [Phase 09]: contextBudget.js record() updated from char-based to usage-object for pipeline integration
 - [Phase 09]: Pipeline manager is deterministic code, not AI — reads dispatch-table.json at runtime (per D-08)
+- [Phase 10]: Field path block uses 2-level depth with 20-key cap to avoid token bloat
+- [Phase 10]: PSR findings extraction filters by section key or title match with formatted-then-caller-provided fallback chain
+- [Phase 10]: One dispatch = one section = one ReportSectionSchema object -- no multi-section returns
+- [Phase 10]: DataPacket is primary data source for all agents -- tools are supplementary
 
 ### Roadmap Evolution
 
@@ -99,9 +103,11 @@ None yet.
 | Phase 09 P02 | 3min | 1 tasks | 2 files |
 | Phase 09 P01 | 5min | 2 tasks | 6 files |
 | Phase 09 P03 | 5min | 1 tasks | 5 files |
+| Phase 10 P01 | 4min | 2 tasks | 4 files |
+| Phase 10 P02 | 4min | 3 tasks | 7 files |
 
 ## Session Continuity
 
-Last session: 2026-03-29T04:38:22.272Z
-Stopped at: Phase 10 planned
-Resume file: .planning/phases/10-pipeline-integration-prompt-fixes/10-01-PLAN.md
+Last session: 2026-03-29T04:57:17.011Z
+Stopped at: Completed 10-02-PLAN.md
+Resume file: None
