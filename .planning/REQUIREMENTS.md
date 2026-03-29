@@ -74,26 +74,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ORCH-01 | — | Pending |
-| ORCH-02 | — | Pending |
-| ORCH-03 | — | Pending |
-| ORCH-04 | — | Pending |
-| DEBATE-01 | — | Pending |
-| DEBATE-02 | — | Pending |
-| DEBATE-03 | — | Pending |
-| DEBATE-04 | — | Pending |
-| QUAL-01 | — | Pending |
-| QUAL-02 | — | Pending |
-| QUAL-03 | — | Pending |
-| API-01 | — | Pending |
-| API-02 | — | Pending |
-| API-03 | — | Pending |
+| ORCH-01 | Phase 13 | Pending |
+| ORCH-02 | Phase 12 | Pending |
+| ORCH-03 | Phase 12 | Pending |
+| ORCH-04 | Phase 12 | Pending |
+| DEBATE-01 | Phase 14 | Pending |
+| DEBATE-02 | Phase 14 | Pending |
+| DEBATE-03 | Phase 14 | Pending |
+| DEBATE-04 | Phase 14 | Pending |
+| QUAL-01 | Phase 15 | Pending |
+| QUAL-02 | Phase 17 | Pending |
+| QUAL-03 | Phase 15 | Pending |
+| API-01 | Phase 16 | Pending |
+| API-02 | Phase 16 | Pending |
+| API-03 | Phase 16 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14
+- Mapped to phases: 14
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-29*
-*Last updated: 2026-03-29 after initial definition*
+*Last updated: 2026-03-29 after roadmap creation*
