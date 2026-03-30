@@ -44,8 +44,8 @@ const SECTION_DATA_DOMAINS = {
  * @returns {'datapacket' | 'sec_filing' | 'web_url' | 'untraceable'}
  */
 function classifyCitation(citation) {
-  const source = (citation.source || '').toLowerCase();
-  const ref = (citation.ref || '').toLowerCase();
+  const source = String(citation.source || '').toLowerCase();
+  const ref = String(citation.ref || '').toLowerCase();
 
   // DataPacket/Computed/Toolbox citations
   if (source === 'datapacket' || source === 'computed' ||
@@ -449,7 +449,9 @@ function validateRedFlags(redFlags) {
   }
 
   for (let i = 0; i < redFlags.length; i++) {
-    const flag = redFlags[i];
+    // Handle both string and object red flag formats
+    const raw = redFlags[i];
+    const flag = typeof raw === 'string' ? raw : (raw && typeof raw === 'object' ? (raw.flag || raw.text || JSON.stringify(raw)) : String(raw));
     // Generic flags: under 20 chars or vague phrases
     if (flag.length < 20) {
       issues.push({

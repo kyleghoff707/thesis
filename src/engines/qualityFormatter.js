@@ -17,6 +17,13 @@ const SECTION_LABELS = {
   meaning_management: 'Meaning & Management',
   growth: 'Growth Metrics',
   summary: 'Summary',
+  // Full Story section labels
+  event_analysis: 'Event Analysis',
+  meaning_checklist: 'Meaning Checklist (15pt)',
+  moat_checklist: 'Moat Checklist (15pt)',
+  management_checklist: 'Management Checklist (13pt)',
+  valuation_confirmation: 'Valuation Confirmation',
+  inversion_rebuttal: 'Inversion & Rebuttal (Debate)',
 };
 
 function labelFor(key) {
@@ -36,6 +43,7 @@ function fmtDate(iso) {
 function stageTitle(stage) {
   if (stage === 'pitch-deck') return 'Pitch Deck';
   if (stage === 'one-pager') return 'One Pager';
+  if (stage === 'fullStory' || stage === 'full-story') return 'Full Story';
   return stage || 'Report';
 }
 
@@ -200,7 +208,7 @@ export function formatQualityReport(qualityJson, options = {}) {
   // Scoring Methodology
   lines.push('## Scoring Methodology');
   lines.push('');
-  lines.push('**Mechanical score** (existing): 40% required fields, 25% narrative depth, 20% citations, 15% data population. Penalties for high/medium/low issues.');
+  lines.push('**Mechanical score**: 40% required fields, 25% narrative depth, 20% citations, 15% data population. Checklist sections use adjusted weights (15% narrative, 25% data). Penalties for high/medium/low issues.');
   lines.push('');
   lines.push('**Methodology score** (new): Checks Rule One curriculum compliance per section. Critical elements weighted 2x. Score = passed weight / total weight * 100.');
   lines.push('');
