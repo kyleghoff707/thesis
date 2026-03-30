@@ -158,7 +158,7 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 17
 | 11. Validation | v1.1 | 2/2 | Complete | 2026-03-29 |
 | 12. Full Story Foundation | v1.2 | 1/2 | Complete    | 2026-03-29 |
 | 13. CC Pipeline | v1.2 | 1/2 | Complete    | 2026-03-30 |
-| 14. Adversarial Debate | v1.2 | 1/1 | Complete   | 2026-03-30 |
+| 14. Adversarial Debate | v1.2 | 1/1 | Complete    | 2026-03-30 |
 | 15. Quality System | v1.2 | 0/? | Not started | - |
 | 16. API Migration | v1.2 | 0/? | Not started | - |
 | 17. End-to-End Validation | v1.2 | 0/? | Not started | - |
