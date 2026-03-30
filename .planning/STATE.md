@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
-status: Ready to execute
-stopped_at: Completed 13-01-PLAN.md
-last_updated: "2026-03-29T23:57:38.310Z"
+status: Phase complete — ready for verification
+stopped_at: Completed quick-60 fix generate-full-story SKILL.md report template
+last_updated: "2026-03-30T01:13:54.378Z"
 progress:
   total_phases: 11
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 16
-  completed_plans: 17
+  completed_plans: 19
 ---
 
 # Project State
@@ -48,6 +48,7 @@ Plan: 2 of 2
 | Phase 12 P01 | 3min | 2 tasks | 8 files |
 | Phase 12 P02 | 6min | 3 tasks | 7 files |
 | Phase 13-cc-pipeline P01 | 4min | 2 tasks | 3 files |
+| Phase 13-cc-pipeline P02 | 5min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,7 @@ Recent decisions affecting current work:
 - [Phase 12]: S3 moat_checklist assigned to competitor-evaluator; 4-step debate with only bear having web search
 - [Phase 12]: All 3 checklist sections use identical unified schema from checklist-item.schema.json
 - [Phase 12]: Bear is only debate role with web search; old ME verdicts REVIEW/INSUFFICIENT_DATA mapped to PARTIAL
+- [Phase 13-cc-pipeline]: Support both pitch-deck.json and pipeline-output.json in gate check for practical testing
 
 ### Roadmap Evolution
 
@@ -87,9 +89,10 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | (inherited from v1.1 -- see MILESTONES.md for complete history) |
+| 260329-p60 | Fix generate-full-story SKILL.md report assembly field names | 2026-03-30 | 14edad6 | [260329-p60](./quick/260329-p60-fix-generate-full-story-skill-md-report-/) |
 
 ## Session Continuity
 
-Last session: 2026-03-29T23:57:38.306Z
-Stopped at: Completed 13-01-PLAN.md
+Last session: 2026-03-30T01:13:54.369Z
+Stopped at: Completed quick-60 fix generate-full-story SKILL.md report template
 Resume file: None
