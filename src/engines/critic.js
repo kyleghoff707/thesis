@@ -348,11 +348,17 @@ function scoreCompleteness(section) {
     ? Object.keys(dataObj).length : 0;
   const dataScore = Math.min(100, (dataKeys / 3) * 100);
 
+  // Section-type-aware weights per D-03: checklist sections swap narrativeDepth and dataPopulation
+  const CHECKLIST_KEYS = ['meaning_checklist', 'moat_checklist', 'management_checklist'];
+  const weights = CHECKLIST_KEYS.includes(section.key || '')
+    ? { requiredFields: 40, narrativeDepth: 15, citationDensity: 20, dataPopulation: 25 }
+    : QUALITY_WEIGHTS;
+
   const composite = Math.round(
-    requiredScore * (QUALITY_WEIGHTS.requiredFields / 100) +
-    narrativeScore * (QUALITY_WEIGHTS.narrativeDepth / 100) +
-    citationScore * (QUALITY_WEIGHTS.citationDensity / 100) +
-    dataScore * (QUALITY_WEIGHTS.dataPopulation / 100)
+    requiredScore * (weights.requiredFields / 100) +
+    narrativeScore * (weights.narrativeDepth / 100) +
+    citationScore * (weights.citationDensity / 100) +
+    dataScore * (weights.dataPopulation / 100)
   );
 
   return {
@@ -613,6 +619,85 @@ function checkSearchCompliance(section) {
   const score = Math.max(0, 100 - highCount * 30 - medCount * 15 - lowCount * 5);
 
   return { score, issues };
+}
+
+// ─── Full Story Helpers ────────────────────────────────────────────
+
+/**
+ * Normalize non-standard verdicts to standard ones per D-06.
+ * CONTEXT -> PARTIAL, WATCHLIST -> PARTIAL.
+ * PASS, FAIL, PARTIAL returned unchanged (case-insensitive, returns uppercase).
+ * @param {string|null|undefined} verdict
+ * @returns {string|null}
+ */
+function normalizeVerdict(verdict) {
+  if (verdict == null) return null;
+  const v = String(verdict).toUpperCase();
+  if (v === 'CONTEXT' || v === 'WATCHLIST') return 'PARTIAL';
+  if (v === 'PASS' || v === 'FAIL' || v === 'PARTIAL') return v;
+  return v; // return as-is for other unknown verdicts
+}
+
+/**
+ * Extract checklist items from section.data with polymorphic field fallback per D-02.
+ * Handles both Meaning format {id, question, verdict, confidence, evidence}
+ * and Moat/Management format {number, item, verdict, evidence, confidence}.
+ * @param {object} section - Full section object
+ * @returns {{ items: Array, summary: object|null }}
+ */
+function parseChecklistData(section) {
+  let data = section.data;
+  if (typeof data === 'string') {
+    try { data = JSON.parse(data); } catch { return { items: [], summary: null }; }
+  }
+  if (!data || typeof data !== 'object') return { items: [], summary: null };
+
+  const items = Array.isArray(data.items) ? data.items : [];
+  return {
+    items: items.map(item => ({
+      id: item.id || item.number,
+      question: item.question || item.item,
+      verdict: normalizeVerdict(item.verdict),
+      rawVerdict: item.verdict,
+      evidence: item.evidence || '',
+      confidence: item.confidence || null,
+    })),
+    summary: data.summary || null,
+  };
+}
+
+/**
+ * Extract debate structure from section.data.
+ * @param {object} section - Full section object
+ * @returns {object|null} - Parsed data with debateStructure and judgeOverallVerdict, or null
+ */
+function parseDebateData(section) {
+  let data = section.data;
+  if (typeof data === 'string') {
+    try { data = JSON.parse(data); } catch { return null; }
+  }
+  if (!data || typeof data !== 'object') return null;
+  return data;
+}
+
+/**
+ * Flag non-standard verdicts as low-severity informational issues per D-06.
+ * @param {Array} items - Array of normalized checklist items (from parseChecklistData)
+ * @returns {Array} - Array of issue objects
+ */
+function flagNonStandardVerdicts(items) {
+  const issues = [];
+  for (const item of items) {
+    if (item.rawVerdict && !['PASS', 'FAIL', 'PARTIAL'].includes(String(item.rawVerdict).toUpperCase())) {
+      issues.push({
+        type: 'methodology',
+        severity: 'low',
+        message: `Non-standard verdict "${item.rawVerdict}" on item ${item.id} -- mapped to PARTIAL`,
+        field: `data.items[${item.id}]`,
+      });
+    }
+  }
+  return issues;
 }
 
 // ─── Methodology Scoring (D-01) ────────────────────────────────────
@@ -941,6 +1026,332 @@ const METHODOLOGY_CHECKS = {
       test: (s) => /10.?year\s*(outlook|projec|forecast|horizon|period|view)|decade|next\s*10/i.test(s.narrative || ''),
     },
   ],
+
+  // ─── Full Story Section Checks (story-form-I.md & story-form-II.md) ───
+
+  // S1: Event Analysis (5 checks)
+  event_analysis: [
+    {
+      id: 'event-root-cause',
+      label: 'Root cause of event identified',
+      critical: true,
+      test: (s) => /root\s*cause|caused\s*(the|by|a)|what\s*caused|trigger(ed|ing)?|precipitat/i.test(s.narrative || ''),
+    },
+    {
+      id: 'event-historical',
+      label: 'Historical precedent comparison',
+      critical: true,
+      test: (s) => /historical|precedent|prior\s*(event|instance|occurrence)|in\s*\d{4}.*similar|previously/i.test(s.narrative || ''),
+    },
+    {
+      id: 'event-recovery',
+      label: 'Recovery timeline estimate',
+      critical: false,
+      test: (s) => /recover|rebound|timeline|month|quarter|year.*return|bounce\s*back|time\s*to\s*recover/i.test(s.narrative || ''),
+    },
+    {
+      id: 'event-debt',
+      label: 'Debt implications during recovery',
+      critical: false,
+      test: (s) => /debt|leverage|interest\s*(coverage|expense)|balance\s*sheet.*stress|liabilit/i.test(s.narrative || ''),
+    },
+    {
+      id: 'event-analyst',
+      label: 'Analyst sentiment context',
+      critical: false,
+      test: (s) => /analyst|consensus|wall\s*street|street\s*estimate|price\s*target|rating|upgrade|downgrade/i.test(s.narrative || ''),
+    },
+  ],
+
+  // S2: Meaning Checklist (5 checks)
+  meaning_checklist: [
+    {
+      id: 'meaning-item-count',
+      label: 'All 15 items present in data',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.length >= 15;
+      },
+    },
+    {
+      id: 'meaning-all-verdicts',
+      label: 'Every item has a verdict',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.length > 0 && items.every(i => i.verdict != null && i.verdict !== '');
+      },
+    },
+    {
+      id: 'meaning-evidence-present',
+      label: 'Every item has evidence > 10 chars',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.length > 0 && items.every(i => (i.evidence || '').length > 10);
+      },
+    },
+    {
+      id: 'meaning-radar-items',
+      label: 'Radar items (1-3) have non-PARTIAL verdicts',
+      critical: false,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        const first3 = items.filter(i => i.id >= 1 && i.id <= 3);
+        if (first3.length < 2) return false;
+        return first3.filter(i => i.verdict === 'PASS' || i.verdict === 'FAIL').length >= 2;
+      },
+    },
+    {
+      id: 'meaning-kpi-numeric',
+      label: 'At least one item cites specific numbers',
+      critical: false,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.some(i => /\d+(\.\d+)?%|\$\d+/.test(i.evidence || ''));
+      },
+    },
+  ],
+
+  // S3: Moat Checklist (6 checks)
+  moat_checklist: [
+    {
+      id: 'moat-item-count',
+      label: 'All 15 items present in data',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.length >= 15;
+      },
+    },
+    {
+      id: 'moat-all-verdicts',
+      label: 'Every item has a verdict',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.length > 0 && items.every(i => i.verdict != null && i.verdict !== '');
+      },
+    },
+    {
+      id: 'moat-evidence-present',
+      label: 'Every item has evidence > 10 chars',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.length > 0 && items.every(i => (i.evidence || '').length > 10);
+      },
+    },
+    {
+      id: 'moat-type-identified',
+      label: 'Specific moat type identified in evidence',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.some(i => /brand|switching\s*cost|toll\s*bridge|price\s*advantage|trade\s*secret|patent|network\s*effect/i.test(i.evidence || ''));
+      },
+    },
+    {
+      id: 'moat-durability',
+      label: '10+ year moat durability assessment',
+      critical: false,
+      test: (s) => /10.?year|20.?year|decade|long.?term|durab|sustain|endur/i.test(s.narrative || ''),
+    },
+    {
+      id: 'moat-replicability',
+      label: 'Replicability/barriers addressed',
+      critical: false,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        const evidenceMatch = items.some(i => /replic|barrier|difficult\s*to\s*copy|not\s*easily\s*(cop|replac|imitat)|entry\s*barrier/i.test(i.evidence || ''));
+        return evidenceMatch;
+      },
+    },
+  ],
+
+  // S4: Management Checklist (6 checks)
+  management_checklist: [
+    {
+      id: 'mgmt-item-count',
+      label: 'All 13 items present in data',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.length >= 13;
+      },
+    },
+    {
+      id: 'mgmt-all-verdicts',
+      label: 'Every item has a verdict (after normalization)',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.length > 0 && items.every(i => i.verdict != null && i.verdict !== '');
+      },
+    },
+    {
+      id: 'mgmt-evidence-present',
+      label: 'Every item has evidence > 10 chars',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.length > 0 && items.every(i => (i.evidence || '').length > 10);
+      },
+    },
+    {
+      id: 'mgmt-financial-numeric',
+      label: 'At least 3 items cite actual financial numbers',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        const numericItems = items.filter(i =>
+          /\d+(\.\d+)?(%|\s*(million|billion|M|B))|\$\d+|ROE|ROIC|ROA/i.test(i.evidence || '')
+        );
+        return numericItems.length >= 3;
+      },
+    },
+    {
+      id: 'mgmt-ceo-named',
+      label: 'CEO name appears in narrative or evidence',
+      critical: false,
+      test: (s) => {
+        const narrative = s.narrative || '';
+        const { items } = parseChecklistData(s);
+        const allText = narrative + ' ' + items.map(i => i.evidence || '').join(' ');
+        return /[A-Z][a-z]+\s+[A-Z][a-z]+/.test(allText);
+      },
+    },
+    {
+      id: 'mgmt-insider-pct',
+      label: 'Insider ownership discussed',
+      critical: false,
+      test: (s) => {
+        const narrative = s.narrative || '';
+        const { items } = parseChecklistData(s);
+        const allText = narrative + ' ' + items.map(i => i.evidence || '').join(' ');
+        return /insider\s*(own|hold|stak)|%.*insider|insider.*%|ownership\s*percentage/i.test(allText);
+      },
+    },
+  ],
+
+  // S5: Valuation Confirmation (5 checks)
+  valuation_confirmation: [
+    {
+      id: 'val-growth-quality',
+      label: 'Debt-fueled growth check present',
+      critical: true,
+      test: (s) => /debt.?fuel|organic\s*growth|acqui.*growth|revenue.*growth.*debt|leverage.*growth|growth.*not.*debt/i.test(s.narrative || ''),
+    },
+    {
+      id: 'val-fgr-rationality',
+      label: 'FGR rationality test',
+      critical: true,
+      test: (s) => /FGR|future\s*growth\s*rate|rule\s*of\s*72|market\s*share\s*ceiling|growth\s*rate.*rational|sanity\s*check/i.test(s.narrative || ''),
+    },
+    {
+      id: 'val-sensitivity',
+      label: 'Sensitivity analysis or range of values',
+      critical: true,
+      test: (s) => /sensitiv|range|scenario|bear\s*case|bull\s*case|conservative|optimistic|if\s*growth/i.test(s.narrative || ''),
+    },
+    {
+      id: 'val-multiple-methods',
+      label: '2+ valuation methods referenced',
+      critical: false,
+      test: (s) => {
+        const n = (s.narrative || '').toLowerCase();
+        const methods = [
+          /mos|margin\s*of\s*safety/i,
+          /pbt|payback\s*time/i,
+          /ten\s*cap|10.?cap|owner\s*earn/i,
+          /equity\s*bond|buffettology/i,
+        ];
+        return methods.filter(m => m.test(n)).length >= 2;
+      },
+    },
+    {
+      id: 'val-red-flags',
+      label: 'Acquisition/merger red flags addressed',
+      critical: false,
+      test: (s) => /acqui|merger|M&A|roll.?up|serial\s*acquir|goodwill|integration\s*risk/i.test(s.narrative || ''),
+    },
+  ],
+
+  // S6: Inversion & Rebuttal / Adversarial Debate (6 checks)
+  inversion_rebuttal: [
+    {
+      id: 'debate-bull-count',
+      label: '>= 5 bull thesis points',
+      critical: true,
+      test: (s) => {
+        const data = parseDebateData(s);
+        if (data && data.debateStructure && data.debateStructure.totalExchanges >= 5) return true;
+        // Fallback: count bull patterns in narrative
+        const matches = (s.narrative || '').match(/bull\s*(thesis|point|case)|strength|investment\s*case|bull\s*#?\d/gi);
+        return (matches || []).length >= 5;
+      },
+    },
+    {
+      id: 'debate-bear-coverage',
+      label: 'Bear inversion count >= bull point count',
+      critical: true,
+      test: (s) => {
+        const data = parseDebateData(s);
+        if (data && data.debateStructure) {
+          // Each exchange IS a bear inversion; need >= 5 total
+          return data.debateStructure.totalExchanges >= 5;
+        }
+        // Fallback: count bear patterns in narrative
+        const matches = (s.narrative || '').match(/bear\s*(inversion|point|argument|case)|invert|counter.?argument/gi);
+        return (matches || []).length >= 5;
+      },
+    },
+    {
+      id: 'debate-bear-citations',
+      label: 'Web citations present (>= 3 URLs)',
+      critical: true,
+      test: (s) => {
+        const citations = s.citations || [];
+        let webCount = 0;
+        for (const c of citations) {
+          if (typeof c === 'string') {
+            if (/https?:\/\//.test(c)) webCount++;
+          } else if (c && typeof c === 'object') {
+            if ((c.source && /https?:\/\//.test(c.source)) || (c.url && /https?:\/\//.test(c.url))) webCount++;
+          }
+        }
+        return webCount >= 3;
+      },
+    },
+    {
+      id: 'debate-rebuttal-coverage',
+      label: 'Bull rebuts all bear points',
+      critical: true,
+      test: (s) => {
+        const narrative = s.narrative || '';
+        const hasRebuttalLang = /rebut|counter|respond|address|acknowledg/i.test(narrative);
+        if (!hasRebuttalLang) return false;
+        const data = parseDebateData(s);
+        if (data && data.debateStructure) return true;
+        // Fallback: multiple rebuttal instances
+        const matches = narrative.match(/rebut|counter|respond|address|acknowledg/gi);
+        return (matches || []).length >= 3;
+      },
+    },
+    {
+      id: 'debate-thesis-killer',
+      label: 'At least 1 severe/thesis-killer risk',
+      critical: false,
+      test: (s) => /thesis.?killer|severe|critical\s*risk|deal.?breaker|red\s*flag.*severe|fatal|unresolved.*severe/i.test(s.narrative || ''),
+    },
+    {
+      id: 'debate-honesty',
+      label: 'At least 1 honest/weak rebuttal acknowledged',
+      critical: false,
+      test: (s) => /weak\s*rebut|honest|acknowledg.*weak|concede|cannot\s*(fully\s*)?rebut|bear\s*(has|makes)\s*a\s*(valid|strong)\s*point|unable\s*to\s*(fully\s*)?counter/i.test(s.narrative || ''),
+    },
+  ],
 };
 
 /**
@@ -1124,4 +1535,8 @@ export const _testExports = {
   checkSearchCompliance,
   scoreMethodology,
   METHODOLOGY_CHECKS,
+  parseChecklistData,
+  normalizeVerdict,
+  parseDebateData,
+  flagNonStandardVerdicts,
 };
