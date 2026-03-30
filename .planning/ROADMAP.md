@@ -66,7 +66,7 @@ Plans:
 - [x] **Phase 12: Full Story Foundation** - Dispatch table updates, agent prompt additions, and checklist scoring format design (completed 2026-03-29)
 - [x] **Phase 13: CC Pipeline** - Full Story CC skill orchestrates 6 sections with Pitch Deck inheritance (completed 2026-03-30)
 - [x] **Phase 14: Adversarial Debate** - 4-step sequential debate (Bull/Bear/Rebuttal/Judge) with cited evidence (completed 2026-03-30)
-- [ ] **Phase 15: Quality System** - Full Story methodology checks in critic.js with dual scoring
+- [x] **Phase 15: Quality System** - Full Story methodology checks in critic.js with dual scoring (completed 2026-03-30)
 - [ ] **Phase 16: API Migration** - Migrate Full Story from CC to Claude API dispatch with structured outputs
 - [ ] **Phase 17: End-to-End Validation** - Complete pipeline validation (OP + PD + FS) on a real ticker
 
@@ -122,7 +122,7 @@ Plans:
   1. critic.js includes Full Story methodology checks derived from story-form-I.md and story-form-II.md -- covering event analysis depth, checklist completeness, valuation confirmation rigor, and debate quality
   2. Full Story sections produce dual quality scores (mechanical + methodology) in the same format as Pitch Deck scoring -- scores are comparable across stages
   3. Running the quality scorer on a generated Full Story produces actionable feedback identifying specific methodology gaps (not just pass/fail)
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 15-01-PLAN.md -- 33 methodology checks + helpers + completeness weight adjustment + formatter labels + CLI support
@@ -163,6 +163,6 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 17
 | 12. Full Story Foundation | v1.2 | 1/2 | Complete    | 2026-03-29 |
 | 13. CC Pipeline | v1.2 | 1/2 | Complete    | 2026-03-30 |
 | 14. Adversarial Debate | v1.2 | 1/1 | Complete    | 2026-03-30 |
-| 15. Quality System | v1.2 | 1/2 | In Progress|  |
+| 15. Quality System | v1.2 | 1/2 | Complete    | 2026-03-30 |
 | 16. API Migration | v1.2 | 0/? | Not started | - |
 | 17. End-to-End Validation | v1.2 | 0/? | Not started | - |
