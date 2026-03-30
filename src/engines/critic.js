@@ -44,8 +44,15 @@ const SECTION_DATA_DOMAINS = {
  * @returns {'datapacket' | 'sec_filing' | 'web_url' | 'untraceable'}
  */
 function classifyCitation(citation) {
-  const source = (citation.source || '').toLowerCase();
-  const ref = (citation.ref || '').toLowerCase();
+  // Handle string citations (e.g., "[1] description — url")
+  if (typeof citation === 'string') {
+    if (/https?:\/\//.test(citation)) return 'web_url';
+    if (/SEC|EDGAR|10-[KQ]|8-K/i.test(citation)) return 'sec_filing';
+    if (/DataPacket|Computed|Rule One Toolbox/i.test(citation)) return 'datapacket';
+    return 'untraceable';
+  }
+  const source = String(citation.source || '').toLowerCase();
+  const ref = String(citation.ref || '').toLowerCase();
 
   // DataPacket/Computed/Toolbox citations
   if (source === 'datapacket' || source === 'computed' ||
@@ -187,6 +194,18 @@ function validateCitations(citations, dataPacket) {
   if (!Array.isArray(citations)) return issues;
 
   for (const citation of citations) {
+    // Handle string citations (e.g., "[1] description — url")
+    if (typeof citation === 'string') {
+      // String citations are always non-canonical
+      issues.push({
+        type: 'citation',
+        severity: 'low',
+        message: `Citation is a plain string instead of object format`,
+        field: 'citation[]',
+      });
+      continue;
+    }
+
     // Check for non-canonical format
     const isCanonical = CANONICAL_CITATION_FIELDS.every(f => citation[f] !== undefined);
     if (!isCanonical) {
@@ -348,11 +367,17 @@ function scoreCompleteness(section) {
     ? Object.keys(dataObj).length : 0;
   const dataScore = Math.min(100, (dataKeys / 3) * 100);
 
+  // Checklist sections favor data population over narrative depth
+  const CHECKLIST_KEYS = ['meaning_checklist', 'moat_checklist', 'management_checklist'];
+  const weights = CHECKLIST_KEYS.includes(section.key)
+    ? { requiredFields: 40, narrativeDepth: 15, citationDensity: 20, dataPopulation: 25 }
+    : QUALITY_WEIGHTS;
+
   const composite = Math.round(
-    requiredScore * (QUALITY_WEIGHTS.requiredFields / 100) +
-    narrativeScore * (QUALITY_WEIGHTS.narrativeDepth / 100) +
-    citationScore * (QUALITY_WEIGHTS.citationDensity / 100) +
-    dataScore * (QUALITY_WEIGHTS.dataPopulation / 100)
+    requiredScore * (weights.requiredFields / 100) +
+    narrativeScore * (weights.narrativeDepth / 100) +
+    citationScore * (weights.citationDensity / 100) +
+    dataScore * (weights.dataPopulation / 100)
   );
 
   return {
@@ -443,7 +468,8 @@ function validateRedFlags(redFlags) {
   }
 
   for (let i = 0; i < redFlags.length; i++) {
-    const flag = redFlags[i];
+    // Handle both string and object red flags ({severity, flag} or {flag, description})
+    const flag = typeof redFlags[i] === 'string' ? redFlags[i] : (redFlags[i]?.flag || redFlags[i]?.description || '');
     // Generic flags: under 20 chars or vague phrases
     if (flag.length < 20) {
       issues.push({
@@ -613,6 +639,88 @@ function checkSearchCompliance(section) {
   const score = Math.max(0, 100 - highCount * 30 - medCount * 15 - lowCount * 5);
 
   return { score, issues };
+}
+
+// ─── Full Story Helpers ────────────────────────────────────────────
+
+/**
+ * Normalize a verdict string to one of PASS, FAIL, PARTIAL, or null.
+ * Non-standard verdicts CONTEXT and WATCHLIST map to PARTIAL per D-06.
+ * @param {string|null|undefined} verdict
+ * @returns {'PASS'|'FAIL'|'PARTIAL'|null}
+ */
+function normalizeVerdict(verdict) {
+  if (verdict == null) return null;
+  const upper = String(verdict).toUpperCase().trim();
+  if (upper === 'PASS') return 'PASS';
+  if (upper === 'FAIL') return 'FAIL';
+  if (upper === 'PARTIAL') return 'PARTIAL';
+  if (upper === 'CONTEXT' || upper === 'WATCHLIST') return 'PARTIAL';
+  return null;
+}
+
+/**
+ * Parse checklist data from a section, handling polymorphic field names.
+ * Meaning format uses {id, question}, Moat/Management format uses {number, item}.
+ * @param {object} section - Report section object
+ * @returns {{ items: Array<{id, question, verdict, rawVerdict, evidence, confidence}>, summary: object|null }}
+ */
+function parseChecklistData(section) {
+  let dataObj = section.data;
+  if (typeof dataObj === 'string') {
+    try { dataObj = JSON.parse(dataObj); } catch { return { items: [], summary: null }; }
+  }
+  if (!dataObj || typeof dataObj !== 'object') return { items: [], summary: null };
+
+  const rawItems = dataObj.items;
+  if (!Array.isArray(rawItems)) return { items: [], summary: dataObj.summary || null };
+
+  const items = rawItems.map(item => ({
+    id: item.id || item.number,
+    question: item.question || item.item,
+    verdict: normalizeVerdict(item.verdict),
+    rawVerdict: item.verdict,
+    evidence: item.evidence || '',
+    confidence: item.confidence || null,
+  }));
+
+  return { items, summary: dataObj.summary || null };
+}
+
+/**
+ * Parse debate structure from an inversion_rebuttal section.
+ * @param {object} section - Report section object
+ * @returns {{ debateStructure: object, judgeOverallVerdict: object }|null}
+ */
+function parseDebateData(section) {
+  let dataObj = section.data;
+  if (typeof dataObj === 'string') {
+    try { dataObj = JSON.parse(dataObj); } catch { return null; }
+  }
+  if (!dataObj || typeof dataObj !== 'object') return null;
+  return dataObj;
+}
+
+/**
+ * Flag non-standard verdicts (not PASS/FAIL/PARTIAL) as low-severity issues.
+ * @param {Array} items - Parsed checklist items with rawVerdict
+ * @returns {Array} - Array of issue objects
+ */
+function flagNonStandardVerdicts(items) {
+  const issues = [];
+  const standard = ['PASS', 'FAIL', 'PARTIAL'];
+  for (const item of items) {
+    const raw = item.rawVerdict;
+    if (raw != null && !standard.includes(String(raw).toUpperCase().trim())) {
+      issues.push({
+        type: 'methodology',
+        severity: 'low',
+        message: `Non-standard verdict "${raw}" on item ${item.id} -- mapped to PARTIAL`,
+        field: `data.items[${item.id}]`,
+      });
+    }
+  }
+  return issues;
 }
 
 // ─── Methodology Scoring (D-01) ────────────────────────────────────
@@ -941,6 +1049,311 @@ const METHODOLOGY_CHECKS = {
       test: (s) => /10.?year\s*(outlook|projec|forecast|horizon|period|view)|decade|next\s*10/i.test(s.narrative || ''),
     },
   ],
+
+  // ─── Full Story Methodology Checks (story-form-I, II) ────────────
+
+  // Event Analysis (Full Story S1)
+  event_analysis: [
+    {
+      id: 'event-root-cause',
+      label: 'Root cause analysis present',
+      critical: true,
+      test: (s) => /root\s*cause|caused\s*(the|by|a)|what\s*caused|trigger(ed|ing)?|precipitat/i.test(s.narrative || ''),
+    },
+    {
+      id: 'event-historical',
+      label: 'Historical precedent referenced',
+      critical: true,
+      test: (s) => /historical|precedent|prior\s*(event|instance|occurrence)|in\s*\d{4}.*similar|previously/i.test(s.narrative || ''),
+    },
+    {
+      id: 'event-recovery',
+      label: 'Recovery timeline discussed',
+      critical: false,
+      test: (s) => /recover|rebound|timeline|month|quarter|year.*return|bounce\s*back|time\s*to\s*recover/i.test(s.narrative || ''),
+    },
+    {
+      id: 'event-debt',
+      label: 'Debt implications assessed',
+      critical: false,
+      test: (s) => /debt|leverage|interest\s*(coverage|expense)|balance\s*sheet.*stress|liabilit/i.test(s.narrative || ''),
+    },
+    {
+      id: 'event-analyst',
+      label: 'Analyst sentiment referenced',
+      critical: false,
+      test: (s) => /analyst|consensus|wall\s*street|street\s*estimate|price\s*target|rating|upgrade|downgrade/i.test(s.narrative || ''),
+    },
+  ],
+
+  // Meaning Checklist (Full Story S2)
+  meaning_checklist: [
+    {
+      id: 'meaning-item-count',
+      label: 'All 15 Meaning checklist items present',
+      critical: true,
+      test: (s) => parseChecklistData(s).items.length >= 15,
+    },
+    {
+      id: 'meaning-all-verdicts',
+      label: 'All items have verdicts',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.length > 0 && items.every(i => i.verdict != null && i.verdict !== '');
+      },
+    },
+    {
+      id: 'meaning-evidence-present',
+      label: 'All items have substantive evidence (>10 chars)',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.length > 0 && items.every(i => (i.evidence || '').length > 10);
+      },
+    },
+    {
+      id: 'meaning-radar-items',
+      label: 'First 3 items have definitive verdicts (not PARTIAL)',
+      critical: false,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        if (items.length < 3) return false;
+        const first3 = items.slice(0, 3);
+        return first3.filter(i => i.verdict === 'PASS' || i.verdict === 'FAIL').length >= 2;
+      },
+    },
+    {
+      id: 'meaning-kpi-numeric',
+      label: 'At least one item cites numeric evidence',
+      critical: false,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.some(i => /\d+(\.\d+)?%|\$\d+/.test(i.evidence || ''));
+      },
+    },
+  ],
+
+  // Moat Checklist (Full Story S3)
+  moat_checklist: [
+    {
+      id: 'moat-item-count',
+      label: 'All 15 Moat checklist items present',
+      critical: true,
+      test: (s) => parseChecklistData(s).items.length >= 15,
+    },
+    {
+      id: 'moat-all-verdicts',
+      label: 'All items have verdicts',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.length > 0 && items.every(i => i.verdict != null && i.verdict !== '');
+      },
+    },
+    {
+      id: 'moat-evidence-present',
+      label: 'All items have substantive evidence (>10 chars)',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.length > 0 && items.every(i => (i.evidence || '').length > 10);
+      },
+    },
+    {
+      id: 'moat-type-identified',
+      label: 'Specific moat type identified in evidence',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.some(i => /brand|switching\s*cost|toll\s*bridge|price\s*advantage|trade\s*secret|patent|network\s*effect/i.test(i.evidence || ''));
+      },
+    },
+    {
+      id: 'moat-durability',
+      label: 'Moat durability assessed (10+ year outlook)',
+      critical: false,
+      test: (s) => /10.?year|20.?year|decade|long.?term|durab|sustain|endur/i.test(s.narrative || ''),
+    },
+    {
+      id: 'moat-replicability',
+      label: 'Replicability or barrier to entry addressed',
+      critical: false,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.some(i => /replic|barrier|difficult\s*to\s*copy|not\s*easily\s*(cop|replac|imitat)|entry\s*barrier/i.test(i.evidence || ''));
+      },
+    },
+  ],
+
+  // Management Checklist (Full Story S4)
+  management_checklist: [
+    {
+      id: 'mgmt-item-count',
+      label: 'All 13 Management checklist items present',
+      critical: true,
+      test: (s) => parseChecklistData(s).items.length >= 13,
+    },
+    {
+      id: 'mgmt-all-verdicts',
+      label: 'All items have verdicts (after normalization)',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.length > 0 && items.every(i => i.verdict != null && i.verdict !== '');
+      },
+    },
+    {
+      id: 'mgmt-evidence-present',
+      label: 'All items have substantive evidence (>10 chars)',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        return items.length > 0 && items.every(i => (i.evidence || '').length > 10);
+      },
+    },
+    {
+      id: 'mgmt-financial-numeric',
+      label: 'At least 3 items cite financial numbers',
+      critical: true,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        const numericItems = items.filter(i => /\d+(\.\d+)?(%|\s*(million|billion|M|B))|\$\d+|ROE|ROIC|ROA/i.test(i.evidence || ''));
+        return numericItems.length >= 3;
+      },
+    },
+    {
+      id: 'mgmt-ceo-named',
+      label: 'CEO or executive named',
+      critical: false,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        const namePattern = /[A-Z][a-z]+\s+[A-Z][a-z]+/;
+        if (namePattern.test(s.narrative || '')) return true;
+        return items.some(i => namePattern.test(i.evidence || ''));
+      },
+    },
+    {
+      id: 'mgmt-insider-pct',
+      label: 'Insider ownership discussed',
+      critical: false,
+      test: (s) => {
+        const { items } = parseChecklistData(s);
+        const pattern = /insider\s*(own|hold|stak)|%.*insider|insider.*%|ownership\s*percentage/i;
+        if (pattern.test(s.narrative || '')) return true;
+        return items.some(i => pattern.test(i.evidence || ''));
+      },
+    },
+  ],
+
+  // Valuation Confirmation (Full Story S5)
+  valuation_confirmation: [
+    {
+      id: 'val-growth-quality',
+      label: 'Growth quality assessed (debt-fueled vs organic)',
+      critical: true,
+      test: (s) => /debt.?fuel|organic\s*growth|acqui.*growth|revenue.*growth.*debt|leverage.*growth|growth.*not.*debt/i.test(s.narrative || ''),
+    },
+    {
+      id: 'val-fgr-rationality',
+      label: 'FGR rationality check',
+      critical: true,
+      test: (s) => /FGR|future\s*growth\s*rate|rule\s*of\s*72|market\s*share\s*ceiling|growth\s*rate.*rational|sanity\s*check/i.test(s.narrative || ''),
+    },
+    {
+      id: 'val-sensitivity',
+      label: 'Sensitivity or range analysis present',
+      critical: true,
+      test: (s) => /sensitiv|range|scenario|bear\s*case|bull\s*case|conservative|optimistic|if\s*growth/i.test(s.narrative || ''),
+    },
+    {
+      id: 'val-multiple-methods',
+      label: 'Multiple valuation methods referenced',
+      critical: false,
+      test: (s) => {
+        const n = (s.narrative || '').toLowerCase();
+        const methods = [
+          /mos|margin\s*of\s*safety/i,
+          /pbt|payback\s*time/i,
+          /ten\s*cap|owner\s*earn/i,
+          /equity\s*bond/i,
+        ];
+        return methods.filter(p => p.test(n)).length >= 2;
+      },
+    },
+    {
+      id: 'val-red-flags',
+      label: 'Acquisition or growth red flags assessed',
+      critical: false,
+      test: (s) => /acqui|merger|M&A|roll.?up|serial\s*acquir|goodwill|integration\s*risk/i.test(s.narrative || ''),
+    },
+  ],
+
+  // Inversion & Rebuttal / Debate (Full Story S6)
+  inversion_rebuttal: [
+    {
+      id: 'debate-bull-count',
+      label: 'At least 5 bull thesis points',
+      critical: true,
+      test: (s) => {
+        const debate = parseDebateData(s);
+        if (debate?.debateStructure?.totalExchanges >= 5) return true;
+        // Fallback: count bull patterns in narrative
+        const matches = (s.narrative || '').match(/bull\s*(thesis|point|case)|strength|investment\s*case|bull\s*#?\d/gi);
+        return (matches || []).length >= 5;
+      },
+    },
+    {
+      id: 'debate-bear-coverage',
+      label: 'Bear inversion count matches bull count',
+      critical: true,
+      test: (s) => {
+        const debate = parseDebateData(s);
+        if (debate?.debateStructure?.totalExchanges >= 5) return true;
+        // Fallback: count bear patterns in narrative
+        const matches = (s.narrative || '').match(/bear\s*(thesis|point|case|inversion)|risk|concern|threat|bear\s*#?\d/gi);
+        return (matches || []).length >= 5;
+      },
+    },
+    {
+      id: 'debate-bear-citations',
+      label: 'Web citations present (at least 3)',
+      critical: true,
+      test: (s) => {
+        const citations = s.citations || [];
+        const webCitations = citations.filter(c => {
+          if (typeof c === 'string') return /https?:\/\//.test(c);
+          return /https?:\/\//.test(c.source || '') || /https?:\/\//.test(c.url || '');
+        });
+        return webCitations.length >= 3;
+      },
+    },
+    {
+      id: 'debate-rebuttal-coverage',
+      label: 'Rebuttals address bear points',
+      critical: true,
+      test: (s) => {
+        const n = s.narrative || '';
+        if (!/rebut|counter|respond|address|acknowledg/i.test(n)) return false;
+        const debate = parseDebateData(s);
+        if (debate?.debateStructure) return true;
+        const rebuttalMatches = (n.match(/rebut|counter|respond|address|acknowledg/gi) || []).length;
+        return rebuttalMatches >= 3;
+      },
+    },
+    {
+      id: 'debate-thesis-killer',
+      label: 'At least 1 thesis-killer or severe risk identified',
+      critical: false,
+      test: (s) => /thesis.?killer|severe|critical\s*risk|deal.?breaker|red\s*flag.*severe|fatal|unresolved.*severe/i.test(s.narrative || ''),
+    },
+    {
+      id: 'debate-honesty',
+      label: 'Honest or weak rebuttal acknowledged',
+      critical: false,
+      test: (s) => /weak\s*rebut|honest|acknowledg.*weak|concede|cannot\s*(fully\s*)?rebut|bear\s*(has|makes)\s*a\s*(valid|strong)\s*point|unable\s*to\s*(fully\s*)?counter/i.test(s.narrative || ''),
+    },
+  ],
 };
 
 /**
@@ -1124,4 +1537,8 @@ export const _testExports = {
   checkSearchCompliance,
   scoreMethodology,
   METHODOLOGY_CHECKS,
+  parseChecklistData,
+  normalizeVerdict,
+  parseDebateData,
+  flagNonStandardVerdicts,
 };

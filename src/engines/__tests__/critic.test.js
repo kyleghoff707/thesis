@@ -23,11 +23,23 @@ const {
   checkSearchCompliance,
   scoreMethodology,
   METHODOLOGY_CHECKS,
+  parseChecklistData,
+  normalizeVerdict,
+  parseDebateData,
+  flagNonStandardVerdicts,
 } = _testExports;
 
 // Fixtures — real COST data
 import companyInfoSection from './fixtures/cost-section-company-info.json' with { type: 'json' };
 import dataPacketSlice from './fixtures/cost-data-packet-slice.json' with { type: 'json' };
+
+// Fixtures — real SFM Full Story data
+import eventAnalysisSection from './fixtures/sfm-fullstory-event-analysis.json' with { type: 'json' };
+import meaningChecklistSection from './fixtures/sfm-fullstory-meaning-checklist.json' with { type: 'json' };
+import moatChecklistSection from './fixtures/sfm-fullstory-moat-checklist.json' with { type: 'json' };
+import managementChecklistSection from './fixtures/sfm-fullstory-management-checklist.json' with { type: 'json' };
+import valuationConfirmationSection from './fixtures/sfm-fullstory-valuation-confirmation.json' with { type: 'json' };
+import inversionRebuttalSection from './fixtures/sfm-fullstory-inversion-rebuttal.json' with { type: 'json' };
 
 // ─── QUAL-01: Citation Validation ─────────────────────────────────────
 
@@ -854,5 +866,537 @@ describe('Methodology Scoring', () => {
       expect(Array.isArray(report.methodology.checks)).toBe(true);
       expect(typeof report.methodology.passed).toBe('boolean');
     });
+  });
+});
+
+// ─── Full Story Helper Tests ──────────────────────────────────────────
+
+describe('normalizeVerdict', () => {
+  it('should return PASS for "PASS"', () => {
+    expect(normalizeVerdict('PASS')).toBe('PASS');
+  });
+
+  it('should return FAIL for "FAIL"', () => {
+    expect(normalizeVerdict('FAIL')).toBe('FAIL');
+  });
+
+  it('should return PARTIAL for "PARTIAL"', () => {
+    expect(normalizeVerdict('PARTIAL')).toBe('PARTIAL');
+  });
+
+  it('should map CONTEXT to PARTIAL', () => {
+    expect(normalizeVerdict('CONTEXT')).toBe('PARTIAL');
+  });
+
+  it('should map WATCHLIST to PARTIAL', () => {
+    expect(normalizeVerdict('WATCHLIST')).toBe('PARTIAL');
+  });
+
+  it('should handle case-insensitive input', () => {
+    expect(normalizeVerdict('pass')).toBe('PASS');
+    expect(normalizeVerdict('Fail')).toBe('FAIL');
+    expect(normalizeVerdict('partial')).toBe('PARTIAL');
+    expect(normalizeVerdict('context')).toBe('PARTIAL');
+    expect(normalizeVerdict('watchlist')).toBe('PARTIAL');
+  });
+
+  it('should return null for null', () => {
+    expect(normalizeVerdict(null)).toBe(null);
+  });
+
+  it('should return null for undefined', () => {
+    expect(normalizeVerdict(undefined)).toBe(null);
+  });
+
+  it('should return null for unknown verdicts', () => {
+    expect(normalizeVerdict('UNKNOWN')).toBe(null);
+    expect(normalizeVerdict('MAYBE')).toBe(null);
+  });
+});
+
+describe('parseChecklistData', () => {
+  it('should parse Meaning format (id/question) from S2 fixture', () => {
+    const result = parseChecklistData(meaningChecklistSection);
+    expect(result.items.length).toBe(15);
+    expect(result.items[0].id).toBe(1);
+    expect(typeof result.items[0].question).toBe('string');
+    expect(result.items[0].question.length).toBeGreaterThan(0);
+  });
+
+  it('should parse Moat format (number/item) from S3 fixture', () => {
+    const result = parseChecklistData(moatChecklistSection);
+    expect(result.items.length).toBe(15);
+    expect(result.items[0].id).toBe(1);
+    expect(typeof result.items[0].question).toBe('string');
+    expect(result.items[0].question.length).toBeGreaterThan(0);
+  });
+
+  it('should parse Management (S4) with non-standard verdicts normalized', () => {
+    const result = parseChecklistData(managementChecklistSection);
+    expect(result.items.length).toBe(13);
+    // Items 10 and 12 have CONTEXT and WATCHLIST verdicts
+    const item10 = result.items.find(i => i.id === 10);
+    const item12 = result.items.find(i => i.id === 12);
+    expect(item10.verdict).toBe('PARTIAL');
+    expect(item10.rawVerdict).toBe('CONTEXT');
+    expect(item12.verdict).toBe('PARTIAL');
+    expect(item12.rawVerdict).toBe('WATCHLIST');
+  });
+
+  it('should return empty items for section with null data', () => {
+    const result = parseChecklistData({ data: null });
+    expect(result.items).toEqual([]);
+    expect(result.summary).toBe(null);
+  });
+
+  it('should return empty items for section with invalid JSON string data', () => {
+    const result = parseChecklistData({ data: 'invalid json' });
+    expect(result.items).toEqual([]);
+    expect(result.summary).toBe(null);
+  });
+
+  it('should preserve evidence and confidence fields', () => {
+    const result = parseChecklistData(meaningChecklistSection);
+    expect(result.items[0].evidence.length).toBeGreaterThan(10);
+    expect(result.items[0].confidence).toBe('HIGH');
+  });
+
+  it('should extract summary when present', () => {
+    const result = parseChecklistData(meaningChecklistSection);
+    expect(result.summary).not.toBe(null);
+    expect(result.summary.passCount).toBe(15);
+  });
+});
+
+describe('parseDebateData', () => {
+  it('should parse S6 fixture with debateStructure', () => {
+    const result = parseDebateData(inversionRebuttalSection);
+    expect(result).not.toBe(null);
+    expect(result.debateStructure).toBeDefined();
+    expect(result.debateStructure.totalExchanges).toBe(9);
+  });
+
+  it('should return null for section with null data', () => {
+    const result = parseDebateData({ data: null });
+    expect(result).toBe(null);
+  });
+
+  it('should return null for section with invalid JSON data', () => {
+    const result = parseDebateData({ data: 'not json' });
+    expect(result).toBe(null);
+  });
+
+  it('should include judgeOverallVerdict when present', () => {
+    const result = parseDebateData(inversionRebuttalSection);
+    expect(result.judgeOverallVerdict).toBeDefined();
+    expect(result.judgeOverallVerdict.direction).toBeDefined();
+  });
+});
+
+describe('flagNonStandardVerdicts', () => {
+  it('should flag CONTEXT and WATCHLIST in S4 parsed items', () => {
+    const { items } = parseChecklistData(managementChecklistSection);
+    const issues = flagNonStandardVerdicts(items);
+    expect(issues.length).toBe(2);
+    expect(issues.every(i => i.severity === 'low')).toBe(true);
+    const messages = issues.map(i => i.message);
+    expect(messages.some(m => m.includes('CONTEXT'))).toBe(true);
+    expect(messages.some(m => m.includes('WATCHLIST'))).toBe(true);
+  });
+
+  it('should produce no issues for S2 items (all standard verdicts)', () => {
+    const { items } = parseChecklistData(meaningChecklistSection);
+    const issues = flagNonStandardVerdicts(items);
+    expect(issues.length).toBe(0);
+  });
+
+  it('should produce no issues for empty items array', () => {
+    expect(flagNonStandardVerdicts([]).length).toBe(0);
+  });
+});
+
+// ─── Full Story Methodology Checks ──────────────────────────────────
+
+describe('Full Story Methodology Checks', () => {
+  describe('event_analysis', () => {
+    it('should return score > 0 with 5 checks on SFM fixture', () => {
+      const result = scoreMethodology(eventAnalysisSection);
+      expect(result.score).toBeGreaterThan(0);
+      expect(result.checks.length).toBe(5);
+    });
+
+    it('should fail event-root-cause on SFM data (narrative lacks explicit root cause language)', () => {
+      const result = scoreMethodology(eventAnalysisSection);
+      const check = result.checks.find(c => c.id === 'event-root-cause');
+      expect(check).toBeDefined();
+      // SFM event analysis discusses events but doesn't use "root cause" or "caused by" phrasing
+      expect(check.passed).toBe(false);
+    });
+
+    it('should fail event-historical on SFM data (no historical precedent language)', () => {
+      const result = scoreMethodology(eventAnalysisSection);
+      const check = result.checks.find(c => c.id === 'event-historical');
+      expect(check).toBeDefined();
+      // SFM event analysis is forward-looking, lacks "historical" or "precedent" references
+      expect(check.passed).toBe(false);
+    });
+
+    it('should pass event-root-cause when narrative has root cause language', () => {
+      const withRootCause = { ...eventAnalysisSection, narrative: 'The root cause of the price drop was disappointing Q3 guidance.' };
+      const result = scoreMethodology(withRootCause);
+      const check = result.checks.find(c => c.id === 'event-root-cause');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should pass event-historical when narrative has precedent language', () => {
+      const withHistory = { ...eventAnalysisSection, narrative: 'Historical precedent suggests recovery within 6-12 months based on prior instances.' };
+      const result = scoreMethodology(withHistory);
+      const check = result.checks.find(c => c.id === 'event-historical');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should pass event-analyst on SFM data', () => {
+      const result = scoreMethodology(eventAnalysisSection);
+      const check = result.checks.find(c => c.id === 'event-analyst');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should fail most checks on empty narrative section', () => {
+      const emptySection = { ...eventAnalysisSection, narrative: '', data: null };
+      const result = scoreMethodology(emptySection);
+      expect(result.score).toBeLessThan(50);
+      const failedCritical = result.checks.filter(c => c.critical && !c.passed);
+      expect(failedCritical.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  describe('meaning_checklist', () => {
+    it('should return score > 0 with 5 checks on SFM fixture', () => {
+      const result = scoreMethodology(meaningChecklistSection);
+      expect(result.score).toBeGreaterThan(0);
+      expect(result.checks.length).toBe(5);
+    });
+
+    it('should pass meaning-item-count (15 items)', () => {
+      const result = scoreMethodology(meaningChecklistSection);
+      const check = result.checks.find(c => c.id === 'meaning-item-count');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should pass meaning-all-verdicts (all items have verdicts)', () => {
+      const result = scoreMethodology(meaningChecklistSection);
+      const check = result.checks.find(c => c.id === 'meaning-all-verdicts');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should pass meaning-evidence-present (evidence > 10 chars)', () => {
+      const result = scoreMethodology(meaningChecklistSection);
+      const check = result.checks.find(c => c.id === 'meaning-evidence-present');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should pass meaning-kpi-numeric (numeric evidence)', () => {
+      const result = scoreMethodology(meaningChecklistSection);
+      const check = result.checks.find(c => c.id === 'meaning-kpi-numeric');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should fail meaning-item-count when only 10 items', () => {
+      const data = JSON.parse(meaningChecklistSection.data);
+      data.items = data.items.slice(0, 10);
+      const sparseSection = { ...meaningChecklistSection, data: JSON.stringify(data) };
+      const result = scoreMethodology(sparseSection);
+      const check = result.checks.find(c => c.id === 'meaning-item-count');
+      expect(check.passed).toBe(false);
+    });
+  });
+
+  describe('moat_checklist', () => {
+    it('should return score > 0 with 6 checks on SFM fixture', () => {
+      const result = scoreMethodology(moatChecklistSection);
+      expect(result.score).toBeGreaterThan(0);
+      expect(result.checks.length).toBe(6);
+    });
+
+    it('should pass moat-type-identified on SFM data (brand moat)', () => {
+      const result = scoreMethodology(moatChecklistSection);
+      const check = result.checks.find(c => c.id === 'moat-type-identified');
+      expect(check).toBeDefined();
+      expect(check.passed).toBe(true);
+    });
+
+    it('should fail moat-type-identified when no moat type language', () => {
+      const data = JSON.parse(moatChecklistSection.data);
+      // Replace all evidence with generic text
+      data.items = data.items.map(i => ({ ...i, evidence: 'The company has advantages.' }));
+      const stripped = { ...moatChecklistSection, data: JSON.stringify(data) };
+      const result = scoreMethodology(stripped);
+      const check = result.checks.find(c => c.id === 'moat-type-identified');
+      expect(check.passed).toBe(false);
+    });
+
+    it('should pass moat-durability on SFM data', () => {
+      const result = scoreMethodology(moatChecklistSection);
+      const check = result.checks.find(c => c.id === 'moat-durability');
+      expect(check.passed).toBe(true);
+    });
+  });
+
+  describe('management_checklist', () => {
+    it('should return score > 0 with 6 checks on SFM fixture', () => {
+      const result = scoreMethodology(managementChecklistSection);
+      expect(result.score).toBeGreaterThan(0);
+      expect(result.checks.length).toBe(6);
+    });
+
+    it('should pass mgmt-item-count (13 items)', () => {
+      const result = scoreMethodology(managementChecklistSection);
+      const check = result.checks.find(c => c.id === 'mgmt-item-count');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should pass mgmt-all-verdicts (CONTEXT/WATCHLIST normalize to PARTIAL)', () => {
+      const result = scoreMethodology(managementChecklistSection);
+      const check = result.checks.find(c => c.id === 'mgmt-all-verdicts');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should pass mgmt-financial-numeric (ROE, ROIC, % in evidence)', () => {
+      const result = scoreMethodology(managementChecklistSection);
+      const check = result.checks.find(c => c.id === 'mgmt-financial-numeric');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should pass mgmt-ceo-named on SFM data', () => {
+      const result = scoreMethodology(managementChecklistSection);
+      const check = result.checks.find(c => c.id === 'mgmt-ceo-named');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should produce non-standard verdict issues via flagNonStandardVerdicts', () => {
+      const { items } = parseChecklistData(managementChecklistSection);
+      const issues = flagNonStandardVerdicts(items);
+      expect(issues.length).toBe(2);
+      expect(issues[0].severity).toBe('low');
+    });
+  });
+
+  describe('valuation_confirmation', () => {
+    it('should return score > 0 with 5 checks on SFM fixture', () => {
+      const result = scoreMethodology(valuationConfirmationSection);
+      expect(result.score).toBeGreaterThan(0);
+      expect(result.checks.length).toBe(5);
+    });
+
+    it('should pass val-fgr-rationality on SFM data', () => {
+      const result = scoreMethodology(valuationConfirmationSection);
+      const check = result.checks.find(c => c.id === 'val-fgr-rationality');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should pass val-sensitivity on SFM data', () => {
+      const result = scoreMethodology(valuationConfirmationSection);
+      const check = result.checks.find(c => c.id === 'val-sensitivity');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should pass val-growth-quality on SFM data', () => {
+      const result = scoreMethodology(valuationConfirmationSection);
+      const check = result.checks.find(c => c.id === 'val-growth-quality');
+      expect(check.passed).toBe(true);
+    });
+  });
+
+  describe('inversion_rebuttal', () => {
+    it('should return score > 0 with 6 checks on SFM fixture', () => {
+      const result = scoreMethodology(inversionRebuttalSection);
+      expect(result.score).toBeGreaterThan(0);
+      expect(result.checks.length).toBe(6);
+    });
+
+    it('should pass debate-bull-count (9 exchanges >= 5)', () => {
+      const result = scoreMethodology(inversionRebuttalSection);
+      const check = result.checks.find(c => c.id === 'debate-bull-count');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should pass debate-bear-coverage (9 exchanges >= 5)', () => {
+      const result = scoreMethodology(inversionRebuttalSection);
+      const check = result.checks.find(c => c.id === 'debate-bear-coverage');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should pass debate-bear-citations (35 citations with web URLs)', () => {
+      const result = scoreMethodology(inversionRebuttalSection);
+      const check = result.checks.find(c => c.id === 'debate-bear-citations');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should pass debate-rebuttal-coverage on SFM data', () => {
+      const result = scoreMethodology(inversionRebuttalSection);
+      const check = result.checks.find(c => c.id === 'debate-rebuttal-coverage');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should pass debate-honesty on SFM data', () => {
+      const result = scoreMethodology(inversionRebuttalSection);
+      const check = result.checks.find(c => c.id === 'debate-honesty');
+      expect(check.passed).toBe(true);
+    });
+
+    it('should fail debate-thesis-killer on SFM data (no severe/fatal language)', () => {
+      const result = scoreMethodology(inversionRebuttalSection);
+      const check = result.checks.find(c => c.id === 'debate-thesis-killer');
+      expect(check.passed).toBe(false);
+    });
+  });
+});
+
+// ─── Full Story Completeness Weight Adjustment ──────────────────────
+
+describe('Full Story Completeness Weight Adjustment', () => {
+  it('should use adjusted weights for checklist sections', () => {
+    // Meaning checklist uses adjusted weights (narrativeDepth: 15, dataPopulation: 25)
+    const checklistResult = scoreCompleteness(meaningChecklistSection);
+    expect(checklistResult.score).toBeGreaterThan(0);
+    expect(checklistResult.score).toBeLessThanOrEqual(100);
+  });
+
+  it('should use default weights for event_analysis section', () => {
+    const standardResult = scoreCompleteness(eventAnalysisSection);
+    expect(standardResult.score).toBeGreaterThan(0);
+  });
+
+  it('should score checklist section differently from same-content standard section', () => {
+    // Build two identical mock sections differing only by key
+    // Checklist section: lower narrative weight, higher data weight
+    // The checklist section with rich data but short narrative should score higher
+    const base = {
+      key: 'test_standard',
+      title: 'Test',
+      sectionNumber: 1,
+      status: 'complete',
+      confidence: 'HIGH',
+      verdict: 'PASS',
+      verdictRationale: 'Test rationale',
+      summary: 'Test summary',
+      data: '{"item1":"val1","item2":"val2","item3":"val3","item4":"val4","item5":"val5"}',
+      narrative: 'Short narrative.',
+      citations: [{ id: 1, source: 'Test' }],
+      redFlags: ['Red flag for testing that is long enough'],
+      modelUsed: 'test',
+      tokenCost: { input: 100, output: 100 },
+    };
+
+    const standardSection = { ...base, key: 'test_standard' };
+    const checklistSection = { ...base, key: 'meaning_checklist' };
+
+    const standardScore = scoreCompleteness(standardSection);
+    const checklistScore = scoreCompleteness(checklistSection);
+
+    // With rich data (5 keys) and short narrative, checklist weight adjustment
+    // should produce a different score because it shifts weight from narrative to data
+    expect(checklistScore.score).not.toBe(standardScore.score);
+  });
+});
+
+// ─── Full Story validateStage Integration ───────────────────────────
+
+describe('Full Story validateStage integration', () => {
+  it('should return overallMethodologyScore for 6 Full Story sections', () => {
+    const sections = [
+      eventAnalysisSection,
+      meaningChecklistSection,
+      moatChecklistSection,
+      managementChecklistSection,
+      valuationConfirmationSection,
+      inversionRebuttalSection,
+    ];
+    const report = validateStage(sections, {});
+    expect(typeof report.overallMethodologyScore).toBe('number');
+    expect(report.overallMethodologyScore).toBeGreaterThanOrEqual(0);
+    expect(report.overallMethodologyScore).toBeLessThanOrEqual(100);
+  });
+
+  it('should return sections array with 6 entries', () => {
+    const sections = [
+      eventAnalysisSection,
+      meaningChecklistSection,
+      moatChecklistSection,
+      managementChecklistSection,
+      valuationConfirmationSection,
+      inversionRebuttalSection,
+    ];
+    const report = validateStage(sections, {});
+    expect(report.sections).toHaveLength(6);
+  });
+
+  it('should include methodology score for each section', () => {
+    const sections = [
+      eventAnalysisSection,
+      meaningChecklistSection,
+      moatChecklistSection,
+      managementChecklistSection,
+      valuationConfirmationSection,
+      inversionRebuttalSection,
+    ];
+    const report = validateStage(sections, {});
+    for (const section of report.sections) {
+      expect(typeof section.methodology.score).toBe('number');
+      expect(section.methodology.score).toBeGreaterThanOrEqual(0);
+      expect(section.methodology.score).toBeLessThanOrEqual(100);
+    }
+  });
+
+  it('should have correct check count per section type', () => {
+    const sections = [
+      eventAnalysisSection,
+      meaningChecklistSection,
+      moatChecklistSection,
+      managementChecklistSection,
+      valuationConfirmationSection,
+      inversionRebuttalSection,
+    ];
+    const report = validateStage(sections, {});
+
+    const checkCounts = {};
+    for (const s of report.sections) {
+      checkCounts[s.sectionKey] = s.methodology.checks.length;
+    }
+    expect(checkCounts.event_analysis).toBe(5);
+    expect(checkCounts.meaning_checklist).toBe(5);
+    expect(checkCounts.moat_checklist).toBe(6);
+    expect(checkCounts.management_checklist).toBe(6);
+    expect(checkCounts.valuation_confirmation).toBe(5);
+    expect(checkCounts.inversion_rebuttal).toBe(6);
+  });
+
+  it('should return overallPassed as boolean', () => {
+    const sections = [
+      eventAnalysisSection,
+      meaningChecklistSection,
+      moatChecklistSection,
+      managementChecklistSection,
+      valuationConfirmationSection,
+      inversionRebuttalSection,
+    ];
+    const report = validateStage(sections, {});
+    expect(typeof report.overallPassed).toBe('boolean');
+  });
+
+  it('should not produce trivially 100% methodology scores (discriminating)', () => {
+    const sections = [
+      eventAnalysisSection,
+      meaningChecklistSection,
+      moatChecklistSection,
+      managementChecklistSection,
+      valuationConfirmationSection,
+      inversionRebuttalSection,
+    ];
+    const report = validateStage(sections, {});
+    // At least one section should have methodology score < 100
+    // (debate-thesis-killer fails on SFM, so inversion_rebuttal < 100)
+    const hasNonPerfect = report.sections.some(s => s.methodology.score < 100);
+    expect(hasNonPerfect).toBe(true);
   });
 });
