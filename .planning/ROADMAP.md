@@ -122,10 +122,10 @@ Plans:
   1. critic.js includes Full Story methodology checks derived from story-form-I.md and story-form-II.md -- covering event analysis depth, checklist completeness, valuation confirmation rigor, and debate quality
   2. Full Story sections produce dual quality scores (mechanical + methodology) in the same format as Pitch Deck scoring -- scores are comparable across stages
   3. Running the quality scorer on a generated Full Story produces actionable feedback identifying specific methodology gaps (not just pass/fail)
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 15-01-PLAN.md -- 33 methodology checks + helpers + completeness weight adjustment + formatter labels + CLI support
+- [x] 15-01-PLAN.md -- 33 methodology checks + helpers + completeness weight adjustment + formatter labels + CLI support
 - [ ] 15-02-PLAN.md -- Test fixtures from SFM data + comprehensive unit tests + smoke validation
 
 ### Phase 16: API Migration
@@ -163,6 +163,6 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 17
 | 12. Full Story Foundation | v1.2 | 1/2 | Complete    | 2026-03-29 |
 | 13. CC Pipeline | v1.2 | 1/2 | Complete    | 2026-03-30 |
 | 14. Adversarial Debate | v1.2 | 1/1 | Complete    | 2026-03-30 |
-| 15. Quality System | v1.2 | 0/2 | Not started | - |
+| 15. Quality System | v1.2 | 1/2 | In Progress|  |
 | 16. API Migration | v1.2 | 0/? | Not started | - |
 | 17. End-to-End Validation | v1.2 | 0/? | Not started | - |

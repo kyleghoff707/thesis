@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 15 context gathered
-last_updated: "2026-03-30T04:46:07.980Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 15-02-PLAN.md
+last_updated: "2026-03-30T05:29:51.802Z"
 progress:
   total_phases: 11
   completed_phases: 8
-  total_plans: 17
-  completed_plans: 20
+  total_plans: 19
+  completed_plans: 21
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours -- delivered in minutes, with zero shortcuts on rigor.
-**Current focus:** Phase 14 — adversarial-debate
+**Current focus:** Phase 15 — quality-system
 
 ## Current Position
 
-Phase: 15
-Plan: Not started
+Phase: 15 (quality-system) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -49,6 +49,8 @@ Plan: Not started
 | Phase 12 P02 | 6min | 3 tasks | 7 files |
 | Phase 13-cc-pipeline P01 | 4min | 2 tasks | 3 files |
 | Phase 13-cc-pipeline P02 | 5min | 1 tasks | 1 files |
+| Phase 15 P01 | 6min | 2 tasks | 3 files |
+| Phase 15-quality-system P02 | 9min | 1 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -67,6 +69,9 @@ Recent decisions affecting current work:
 - [Phase 12]: All 3 checklist sections use identical unified schema from checklist-item.schema.json
 - [Phase 12]: Bear is only debate role with web search; old ME verdicts REVIEW/INSUFFICIENT_DATA mapped to PARTIAL
 - [Phase 13-cc-pipeline]: Support both pitch-deck.json and pipeline-output.json in gate check for practical testing
+- [Phase 15]: Checklist completeness weights swap narrativeDepth and dataPopulation only (25<->15), total stays 100
+- [Phase 15]: Non-standard verdicts (CONTEXT, WATCHLIST) mapped to PARTIAL for scoring
+- [Phase 15-quality-system]: Agent output polymorphism (string citations, int refs, object redFlags) handled in critic.js for robust real-data scoring
 
 ### Roadmap Evolution
 
@@ -93,6 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T04:46:07.972Z
-Stopped at: Phase 15 context gathered
-Resume file: .planning/phases/15-quality-system/15-CONTEXT.md
+Last session: 2026-03-30T05:29:51.799Z
+Stopped at: Completed 15-02-PLAN.md
+Resume file: None
