@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 Generate the Full Story (Stage 3) deep analysis for **$0**, building on existing Pitch Deck findings.
 
-This skill orchestrates 5 specialist agents to produce scored checklists and deep-dive analyses that test investment conviction. Each agent inherits relevant Pitch Deck findings as context -- they build on prior work, not from scratch. S6 (inversion_rebuttal) is deferred to Phase 14's adversarial debate.
+This skill orchestrates 5 specialist agents to produce scored checklists and deep-dive analyses that test investment conviction, then runs a 5-step adversarial debate (Bull, Bear, Bull Rebuttal, Judge, Composition) to produce S6 (inversion_rebuttal). Each agent inherits relevant Pitch Deck findings as context -- they build on prior work, not from scratch.
 
 ---
 
@@ -620,14 +620,335 @@ Step 7: Report assembled
   Output: .thes1s/reports/{TICKER}/full-story.md
 ```
 
-## Step 8: Phase 2 -- THE DEBATE (Phase 14)
+## Step 8: Phase 2 -- THE DEBATE (5 sequential agent calls)
 
-> This section is not yet implemented. Phase 14 will add the 4-step adversarial
-> debate (Bull -> Bear -> Bull Rebuttal -> Judge) that produces S6 (inversion_rebuttal).
-> Until then, S6 is omitted from the Full Story output.
-> The checkpoint after the debate will be added as Step 9.
-> See agents/orchestrator/dispatch-table.json fullStory.phases[1] for the debate structure.
-> See agents/orchestrator/schemas/debate-step.schema.json for the output format.
+The adversarial debate stress-tests the investment thesis by having Bull, Bear, Bull Rebuttal, and Judge agents argue over the S1-S5 findings. A 5th composition call assembles the dual-view S6 narrative. Each step receives prior step outputs as context -- strictly sequential, no parallelism.
+
+File layout for intermediate outputs:
+- `.thes1s/reports/{TICKER}/sections/debate-step-1.json` (Bull thesis)
+- `.thes1s/reports/{TICKER}/sections/debate-step-2.json` (Bear inversion)
+- `.thes1s/reports/{TICKER}/sections/debate-step-3.json` (Bull rebuttal)
+- `.thes1s/reports/{TICKER}/sections/debate-step-4.json` (Judge verdict)
+- `.thes1s/reports/{TICKER}/sections/fullStory-S6-inversion_rebuttal.json` (Final composed S6)
+
+**Resume detection:** If `debate-step-4.json` AND `fullStory-S6-inversion_rebuttal.json` already exist in `.thes1s/reports/{TICKER}/sections/`, skip Steps 8a-8e and go directly to Step 9 (checkpoint). This supports the "stop" command at the debate checkpoint -- the PM can resume without re-running the debate.
+
+```
+Step 8: THE DEBATE -- 5 sequential agent calls...
+```
+
+### Step 8a: Bull Thesis (synthesis-writer)
+
+Read the synthesis-writer agent configuration:
+1. `agents/synthesis-writer/config.json` -- model (opus), curriculum, universalContext settings
+2. `agents/synthesis-writer/prompt.md` -- full agent prompt (includes "Debate Step 1: Bull Thesis" instructions)
+3. Each curriculum file: `knowledge/research-references/buffett-writing-style-guide.md`
+4. Universal context files: `knowledge/research-references/rule-one-fundamentals.md` and `knowledge/research-references/tools-for-analysis.md`
+
+Read all 5 completed section outputs for context:
+- `.thes1s/reports/{TICKER}/sections/fullStory-S1-event_analysis.json`
+- `.thes1s/reports/{TICKER}/sections/fullStory-S2-meaning_checklist.json`
+- `.thes1s/reports/{TICKER}/sections/fullStory-S3-moat_checklist.json`
+- `.thes1s/reports/{TICKER}/sections/fullStory-S4-management_checklist.json`
+- `.thes1s/reports/{TICKER}/sections/fullStory-S5-valuation_confirmation.json`
+
+Build the bull dispatch prompt (concatenate in this order):
+1. Agent prompt.md content
+2. Curriculum files
+3. Universal context files
+4. All 5 section outputs as structured context:
+   ```
+   ## Prior Full Story Sections (S1-S5) -- YOUR SOURCE MATERIAL
+
+   For each section, present: key, verdict, confidence, summary, redFlags, and narrative (first 2000 chars).
+   These are the findings you must synthesize into the strongest possible bull case.
+   ```
+5. Debate step schema definition (BullThesis variant from `agents/orchestrator/schemas/debate-step.schema.json`)
+6. Task instruction: "You are the BULL in the adversarial debate for {TICKER}. Synthesize the strongest possible investment case from the S1-S5 findings above. Each thesis point MUST cite the specific section it comes from. Include at least 5 thesis points covering meaning, moat, management, valuation, and events. Output a JSON object with step=1, role='bull', agent='synthesis-writer', and content matching BullThesis format."
+
+Note: synthesis-writer has NO DataPacket slice (empty array in config) -- it works from section outputs only. No web search.
+
+Dispatch via Agent tool.
+
+After completion:
+1. Extract JSON from response (look for ```json block or raw JSON object)
+2. Validate required fields: step=1, role="bull", agent="synthesis-writer", content.thesisPoints (array with >= 5 items), content.overallThesis (string)
+3. Verify each thesis point has: point, evidence, sourceSection
+4. Save to `.thes1s/reports/{TICKER}/sections/debate-step-1.json`
+
+Log:
+```
+Step 8a: Bull Thesis complete
+  Thesis points: {count} (minimum 5 required)
+  Source sections cited: {unique sourceSection values}
+```
+
+### Step 8b: Bear Inversion (risk-analyst) [WEB SEARCH ENABLED]
+
+Read debate-step-1.json:
+- Read `.thes1s/reports/{TICKER}/sections/debate-step-1.json`
+- Extract the thesisPoints array -- these are the specific targets the Bear will attack
+
+Read the risk-analyst agent configuration:
+1. `agents/risk-analyst/config.json` -- model (opus), curriculum, dataPacketSlice, universalContext settings
+2. `agents/risk-analyst/prompt.md` -- full agent prompt (includes "Debate Step 2: Bear Inversion" instructions)
+3. Each curriculum file: `knowledge/stage-2-pitch-deck/pitch-deck-III.md`, `knowledge/stage-3-full-story/story-form-II.md`, `knowledge/research-references/advanced-financial-analysis.md`, `knowledge/research-references/fgr.md`
+4. Universal context files: `knowledge/research-references/rule-one-fundamentals.md` and `knowledge/research-references/tools-for-analysis.md`
+
+Slice the DataPacket for risk-analyst: companyInfo, events, analystEstimates, classification (plus always-include: ticker, caveats).
+
+Build the bear dispatch prompt (concatenate in this order):
+1. Agent prompt.md content
+2. Sliced DataPacket as fenced JSON code block labeled "DataPacket"
+3. Curriculum files
+4. Universal context files
+5. Bull thesis context:
+   ```
+   ## Bull Thesis (Step 1 Output -- YOUR TARGET)
+
+   The synthesis-writer produced the following bull case for {TICKER}.
+   Your job is to demolish every point with cited evidence.
+   Add 1-2 NEW attack vectors the bull conveniently omitted (per D-04).
+
+   {Full JSON content of debate-step-1.json}
+   ```
+6. Debate step schema definition (BearInversion variant from `agents/orchestrator/schemas/debate-step.schema.json`)
+7. Task instruction: "You are the BEAR in the adversarial debate for {TICKER}. You are an activist short seller playing to WIN. Attack every bull thesis point with web-searched, cited evidence. Add 1-2 new attack vectors the bull conveniently omitted. You MUST perform at least 1 web search per bull thesis point PLUS 1-2 broad searches ('{TICKER} short seller thesis', '{TICKER} SEC investigation'). Minimum 7 web searches total. Output a JSON object with step=2, role='bear', agent='risk-analyst', and content matching BearInversion format. Every inversion MUST have a non-empty sources array with full URLs."
+
+Note: The risk-analyst inherits WebSearch and WebFetch tools in CC subagent context.
+
+Dispatch via Agent tool.
+
+After completion:
+1. Extract JSON from response
+2. Validate required fields: step=2, role="bear", agent="risk-analyst", content.inversions (array, non-empty), content.overallBearCase (string)
+3. Verify each inversion has: targetPoint, counterArgument, evidence, severity (one of thesis_killer/significant/minor), sources (array with >= 1 URL)
+4. Count total unique URLs across all inversions -- if < 5, log a WARNING: "Bear cited fewer than 5 unique URLs -- debate quality may be compromised"
+5. Save to `.thes1s/reports/{TICKER}/sections/debate-step-2.json`
+
+Log:
+```
+Step 8b: Bear Inversion complete
+  Inversions: {count} (attacking {bull_point_count} bull points + {new_count} new vectors)
+  Thesis killers: {count matching severity=thesis_killer}
+  Sources cited: {total unique URLs across all inversions}
+```
+
+### Step 8c: Bull Rebuttal (synthesis-writer)
+
+Read debate-step-1.json and debate-step-2.json from disk.
+
+Read the synthesis-writer agent configuration (same as Step 8a):
+1. `agents/synthesis-writer/config.json`
+2. `agents/synthesis-writer/prompt.md`
+3. Curriculum files: `knowledge/research-references/buffett-writing-style-guide.md`
+4. Universal context files: `knowledge/research-references/rule-one-fundamentals.md` and `knowledge/research-references/tools-for-analysis.md`
+
+Read all 5 S1-S5 section outputs for evidence (same files as Step 8a -- the bull_rebuttal needs this to find counter-evidence).
+
+Build the bull rebuttal dispatch prompt (concatenate in this order):
+1. Agent prompt.md content
+2. Curriculum files
+3. Universal context files
+4. S1-S5 section summaries (for each: key, verdict, summary, red flags -- NOT full narratives to manage context size):
+   ```
+   ## Prior Full Story Sections (S1-S5) -- EVIDENCE SOURCE
+
+   For each section, present: key, verdict, summary, and redFlags only.
+   Use these findings to build evidence-based rebuttals.
+   ```
+5. Prior debate context:
+   ```
+   ## Prior Debate Steps
+
+   ### Step 1: Bull Thesis
+   {Full JSON content of debate-step-1.json}
+
+   ### Step 2: Bear Inversion
+   {Full JSON content of debate-step-2.json}
+   ```
+6. Debate step schema definition (BullRebuttal variant from `agents/orchestrator/schemas/debate-step.schema.json`)
+7. Task instruction: "You are the BULL REBUTTAL in the adversarial debate for {TICKER}. Address EVERY bear inversion point -- do not skip any. Rate each rebuttal honestly: strong (clear evidence negates the bear), moderate (partially addresses it), weak (bear case is stronger). When the bear case is genuinely strong, set honest=true and acknowledge it. Do not fabricate evidence -- use only S1-S5 findings. Output a JSON object with step=3, role='bull_rebuttal', agent='synthesis-writer', and content matching BullRebuttal format."
+
+No web search. No DataPacket.
+
+Dispatch via Agent tool.
+
+After completion:
+1. Extract JSON from response
+2. Validate required fields: step=3, role="bull_rebuttal", agent="synthesis-writer", content.rebuttals (array, length >= number of bear inversions)
+3. Verify each rebuttal has: bearPoint, rebuttal, rebuttalStrength (one of strong/moderate/weak), honest (boolean)
+4. Save to `.thes1s/reports/{TICKER}/sections/debate-step-3.json`
+
+Log:
+```
+Step 8c: Bull Rebuttal complete
+  Rebuttals: {count} (vs {bear_inversion_count} bear points)
+  Strength distribution: {strong_count} strong, {moderate_count} moderate, {weak_count} weak
+  Honest acknowledgments: {count where honest=true}
+```
+
+### Step 8d: Judge Verdict (financial-analyst)
+
+Read debate-step-1.json, debate-step-2.json, and debate-step-3.json from disk.
+
+Read the financial-analyst agent configuration:
+1. `agents/financial-analyst/config.json` -- model (sonnet), curriculum, dataPacketSlice, universalContext settings
+2. `agents/financial-analyst/prompt.md` -- full agent prompt (includes "Debate Step 4: Judge Verdict" instructions)
+3. Each curriculum file: `knowledge/research-references/advanced-financial-analysis.md`, `knowledge/research-references/fgr.md`, `knowledge/research-references/capex-cash-flow-explained.md`
+4. Universal context files: `knowledge/research-references/rule-one-fundamentals.md` and `knowledge/research-references/tools-for-analysis.md`
+
+Slice the DataPacket for financial-analyst: financials, ttm, growthRates, returnMetrics, debtMetrics, fcf, keyMetrics (plus always-include: ticker, companyInfo, classification, caveats).
+
+Build the judge dispatch prompt (concatenate in this order):
+1. Agent prompt.md content
+2. Sliced DataPacket as fenced JSON code block labeled "DataPacket"
+3. Curriculum files
+4. Universal context files
+5. S1-S5 section summaries (key, verdict, summary -- brief, for reference only)
+6. All 3 prior debate step outputs:
+   ```
+   ## The Debate (Steps 1-3 -- YOUR EVIDENCE TO EVALUATE)
+
+   ### Step 1: Bull Thesis
+   {Full JSON content of debate-step-1.json}
+
+   ### Step 2: Bear Inversion
+   {Full JSON content of debate-step-2.json}
+
+   ### Step 3: Bull Rebuttal
+   {Full JSON content of debate-step-3.json}
+   ```
+7. Debate step schema definition (JudgeVerdict variant from `agents/orchestrator/schemas/debate-step.schema.json`)
+8. Task instruction: "You are the JUDGE in the adversarial debate for {TICKER}. Score EVERY exchange between bull and bear. For each exchange, assess bullStrength and bearStrength (strong/moderate/weak) and produce a verdict (Strong Bull / Strong Bear / Unresolved) with reasoning citing specific evidence each side presented. Produce an overallVerdict with direction (Bull/Bear/Mixed), unresolvedCount, summary, and investmentImplication. Be genuinely neutral -- if the bear has stronger evidence, say so. Output a JSON object with step=4, role='judge', agent='financial-analyst', and content matching JudgeVerdict format."
+
+No web search.
+
+Dispatch via Agent tool.
+
+After completion:
+1. Extract JSON from response
+2. Validate required fields: step=4, role="judge", agent="financial-analyst", content.exchanges (array, non-empty), content.overallVerdict (object with direction, unresolvedCount, summary, investmentImplication)
+3. Verify each exchange has: topic, bullStrength, bearStrength, verdict (one of "Strong Bull"/"Strong Bear"/"Unresolved"), reasoning
+4. Save to `.thes1s/reports/{TICKER}/sections/debate-step-4.json`
+
+Log:
+```
+Step 8d: Judge Verdict complete
+  Exchanges scored: {count}
+  Verdicts: {Strong Bull count} Strong Bull, {Strong Bear count} Strong Bear, {Unresolved count} Unresolved
+  Overall direction: {direction}
+  Unresolved risks: {unresolvedCount}
+```
+
+### Step 8e: Composition (synthesis-writer)
+
+Read all 4 debate step files from disk:
+- `.thes1s/reports/{TICKER}/sections/debate-step-1.json` (Bull)
+- `.thes1s/reports/{TICKER}/sections/debate-step-2.json` (Bear)
+- `.thes1s/reports/{TICKER}/sections/debate-step-3.json` (Bull Rebuttal)
+- `.thes1s/reports/{TICKER}/sections/debate-step-4.json` (Judge)
+
+Read S1-S5 section summaries for reference (key + verdict + summary only -- context management).
+
+Read the synthesis-writer agent configuration (same as Steps 8a/8c):
+1. `agents/synthesis-writer/config.json`
+2. `agents/synthesis-writer/prompt.md`
+3. Curriculum files: `knowledge/research-references/buffett-writing-style-guide.md`
+4. Universal context files: `knowledge/research-references/rule-one-fundamentals.md` and `knowledge/research-references/tools-for-analysis.md`
+
+Build the composition dispatch prompt (concatenate in this order):
+1. Agent prompt.md content
+2. Curriculum files
+3. Universal context files
+4. S1-S5 brief summaries (key + verdict + summary only -- context management)
+5. All 4 debate step outputs in full:
+   ```
+   ## Complete Debate Record (Steps 1-4)
+
+   ### Step 1: Bull Thesis
+   {Full JSON content of debate-step-1.json}
+
+   ### Step 2: Bear Inversion
+   {Full JSON content of debate-step-2.json}
+
+   ### Step 3: Bull Rebuttal
+   {Full JSON content of debate-step-3.json}
+
+   ### Step 4: Judge Verdict
+   {Full JSON content of debate-step-4.json}
+   ```
+6. ReportSectionSchema definition from `src/schemas/reportSection.js`
+7. Composition task instruction:
+   ```
+   ## Composition Task
+
+   You are composing the final Inversion & Rebuttal section (S6) of the Full Story for {TICKER}.
+
+   Produce a ReportSectionSchema JSON object with:
+   - key: "inversion_rebuttal"
+   - sectionNumber: 6
+   - title: "Inversion & Rebuttal"
+   - verdict: derive from Judge's overallVerdict.direction (Bull -> "PASS", Bear -> "FAIL", Mixed -> "WATCHLIST")
+   - verdictRationale: condensed from judge.overallVerdict.summary
+   - confidence: derive from unresolvedCount (0-1 -> "HIGH", 2-3 -> "MEDIUM", 4+ -> "LOW")
+   - summary: 1-2 sentence summary of debate outcome
+   - redFlags: extract from bear inversions with severity=thesis_killer or significant
+   - citations: merge ALL bear source URLs (FULL clickable URLs) + DataPacket references from all steps
+
+   The narrative MUST use a DUAL-VIEW format:
+
+   ### View 1: Verdict Summary Table (TOP of narrative)
+   Create a markdown table: | # | Topic | Verdict | Bull Strength | Bear Strength |
+   Populate from Judge's exchanges array. Below the table add:
+   - **Overall Direction:** {from judge.overallVerdict.direction}
+   - **Unresolved Risks:** {from judge.overallVerdict.unresolvedCount}
+   - **Investment Implication:** {from judge.overallVerdict.investmentImplication}
+
+   ### View 2: Exchange Detail (BELOW the table)
+   For each exchange (match by position -- exchange #1 = bull point #1 = bear inversion #1, etc.):
+   1. **Bull:** thesis point with evidence and source section
+   2. **Bear:** counter-argument with ALL URLs from the bear's sources array as CLICKABLE LINKS -- never drop a URL
+   3. **Bull Rebuttal:** rebuttal text with strength rating. If honest=true, note: "The bull acknowledges this bear point as stronger."
+   4. **Judge Verdict:** verdict and reasoning
+
+   Bear's extra attack vectors (1-2 new vectors per D-04) appear at the end with no corresponding original bull point -- just Bear + Rebuttal + Judge for those.
+
+   Output ONLY the JSON object, no surrounding text.
+   ```
+
+Dispatch via Agent tool.
+
+After completion:
+1. Extract JSON from response
+2. Validate ReportSectionSchema fields: key="inversion_rebuttal", sectionNumber=6, title, verdict (PASS/FAIL/WATCHLIST), confidence, summary, narrative (>= 500 chars), citations (array), redFlags (array)
+3. Count URLs in narrative -- compare against total URLs in debate-step-2.json sources arrays. If narrative URL count < 50% of bear source URLs, log WARNING: "Composition may have dropped bear citations -- verify S6 narrative"
+4. Save to `.thes1s/reports/{TICKER}/sections/fullStory-S6-inversion_rebuttal.json`
+5. If validation fails, retry once with error details. If retry also fails, save with status="failed" and continue.
+
+Log:
+```
+Step 8e: S6 Composition complete
+  Verdict: {verdict} | Confidence: {confidence}
+  Narrative: {length} chars (dual-view format)
+  Citations: {count} sources
+  Red Flags: {count} items
+
+Step 8: DEBATE COMPLETE
+  Total debate calls: 5
+  Bull points: {count} | Bear inversions: {count} | Rebuttals: {count}
+  Judge: {direction} ({unresolvedCount} unresolved)
+  S6 verdict: {verdict}
+```
+
+### Debate Error Handling
+
+If any debate step fails (JSON parsing or validation) after 1 retry:
+- Save with step number, role, and error details to the expected file path
+- Print WARNING but continue to next step
+- If step 1 (bull) fails, the debate cannot proceed -- print error and leave S6 as placeholder
+- If step 2-4 fail, downstream steps that depend on the failed step also cannot proceed
+- If step 5 (composition) fails, the 4 debate step files are still saved -- PM can re-run composition at checkpoint
 
 ---
 
@@ -665,15 +986,18 @@ Step 3: Preparing Pitch Deck inheritance...
 Step 4: Preparing DataPacket slices...
 Step 5: Dispatching 5 agents sequentially...
 Step 6: CHECKPOINT -- Full Story Deep Analysis Review
-Step 7: Assembling final report...
+Step 7: Assembling partial report (5/6 sections)...
+Step 8: THE DEBATE -- 5 sequential agent calls...
+Step 9: DEBATE CHECKPOINT -- Review debate results
+Step 10: Final assembly update (6/6 sections, overall verdict)
 ```
 
 ### Section Keys Reference
 
-**fullStory** (6 sections -- 5 generated in Phase 13, 1 deferred to Phase 14):
+**fullStory** (6 sections):
 1. event_analysis (risk-analyst)
 2. meaning_checklist (business-analyst) -- 15-item scored checklist
 3. moat_checklist (competitor-evaluator) -- 15-item scored checklist
 4. management_checklist (management-evaluator) -- 13-item scored checklist
 5. valuation_confirmation (valuation-specialist)
-6. inversion_rebuttal (Phase 14 debate -- synthesis-writer + risk-analyst + financial-analyst)
+6. inversion_rebuttal (debate: synthesis-writer bull/rebuttal/composition + risk-analyst bear + financial-analyst judge)
