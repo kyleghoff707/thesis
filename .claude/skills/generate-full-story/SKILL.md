@@ -950,6 +950,203 @@ If any debate step fails (JSON parsing or validation) after 1 retry:
 - If step 2-4 fail, downstream steps that depend on the failed step also cannot proceed
 - If step 5 (composition) fails, the 4 debate step files are still saved -- PM can re-run composition at checkpoint
 
+## Step 9: Debate Checkpoint -- Review Debate Results
+
+Read the Judge verdict from `.thes1s/reports/{TICKER}/sections/debate-step-4.json` and the composed S6 from `.thes1s/reports/{TICKER}/sections/fullStory-S6-inversion_rebuttal.json`.
+
+Print the checkpoint display:
+
+```
+================================================================
+  DEBATE CHECKPOINT: Inversion & Rebuttal (S6)
+================================================================
+
+Overall Verdict: {overallVerdict.direction} ({overallVerdict.unresolvedCount} unresolved risks)
+Investment Implication: {overallVerdict.investmentImplication}
+
+--- Exchange Summary ---
+
+  #1 {exchanges[0].topic}: {exchanges[0].verdict}
+  #2 {exchanges[1].topic}: {exchanges[1].verdict}
+  ... (one line per exchange)
+
+--- S6 Section ---
+  Verdict: {S6 verdict} | Confidence: {S6 confidence}
+  Narrative: {S6 narrative length} chars
+
+================================================================
+
+Review the debate results. You can:
+  - Type an exchange number (e.g., "3") to see the full exchange detail
+  - Say "re-run from bull" to restart the entire debate (5 agent calls)
+  - Say "re-run from bear" to re-run bear + rebuttal + judge + composition (4 calls)
+  - Say "re-run from rebuttal" to re-run rebuttal + judge + composition (3 calls)
+  - Say "re-run judge" to re-run judge + composition (2 calls)
+  - Say "re-run composition" to re-run just the composition (1 call)
+  - Add guidance: "re-run from bear: focus on tariff risk and supply chain"
+  - Add a file: "re-run from bear with file: ~/Desktop/short-report.pdf"
+  - Say "continue" to accept and assemble the final report
+  - Say "stop" to pause (all debate step files are already saved)
+
+Your input:
+```
+
+### PM Dialogue Loop
+
+Enter a dialogue loop. Handle PM responses:
+
+**Exchange drill-down (number, e.g., "1", "3", "exchange 2"):**
+
+Read the corresponding exchange from debate-step-4.json (Judge's exchanges array). Also read the matching entries from debate-step-1.json (bull thesis point), debate-step-2.json (bear inversion), and debate-step-3.json (bull rebuttal) -- matching by position index. Display the full exchange detail:
+
+```
+--- Exchange {N}: {topic} ---
+
+BULL: {thesisPoints[N-1].point}
+Evidence: {thesisPoints[N-1].evidence}
+Source: {thesisPoints[N-1].sourceSection}
+
+BEAR: {inversions[N-1].counterArgument}
+Evidence: {inversions[N-1].evidence}
+Severity: {inversions[N-1].severity}
+Sources: {inversions[N-1].sources joined with newlines}
+
+BULL REBUTTAL: {rebuttals[N-1].rebuttal}
+Strength: {rebuttals[N-1].rebuttalStrength}
+{If rebuttals[N-1].honest == true: "** Bull acknowledges bear is stronger on this point **"}
+
+JUDGE: {exchanges[N-1].verdict}
+Bull strength: {exchanges[N-1].bullStrength} | Bear strength: {exchanges[N-1].bearStrength}
+Reasoning: {exchanges[N-1].reasoning}
+```
+
+Note: Bear's extra attack vectors (those beyond the original bull thesis points) will have index > bull thesis points count. For these, show "BULL: (none -- bear-initiated attack vector)" instead of the bull thesis point.
+
+After displaying, return to the dialogue prompt.
+
+**Re-run from step ("re-run from {step}" with optional guidance and file):**
+
+Parse the PM's request:
+1. Extract target step name: "bull" -> step 1, "bear" -> step 2, "rebuttal" -> step 3, "judge" -> step 4, "composition" -> step 5
+2. Extract optional guidance text: anything after ":" that is not "with file:"
+   Example: "re-run from bear: focus on regulatory risk" -> guidance = "focus on regulatory risk"
+3. Extract optional file path: text after "with file:"
+   Example: "re-run from bear with file: ~/Desktop/short-report.pdf" -> filePath = "~/Desktop/short-report.pdf"
+
+If a file path was provided:
+- Read the file content using the Read tool
+- Store as pmSourceMaterial for injection into the targeted step's prompt
+
+Determine the execution range: from target step through step 5 (composition). Re-run cascade table:
+
+| Re-run from     | Steps executed | Agent calls |
+|-----------------|----------------|-------------|
+| bull (1)        | 1, 2, 3, 4, 5 | 5 calls     |
+| bear (2)        | 2, 3, 4, 5    | 4 calls     |
+| rebuttal (3)    | 3, 4, 5       | 3 calls     |
+| judge (4)       | 4, 5          | 2 calls     |
+| composition (5) | 5              | 1 call      |
+
+For each step in the execution range:
+- Read the agent config for this step's agent (same configs as Step 8)
+- Build the prompt following the same pattern as the corresponding Step 8 sub-step above
+- For prior debate steps that are NOT in the re-run range, read their existing files from disk (they are preserved from the previous run)
+- For the TARGETED step only (the one the PM named): inject PM guidance and file content into the prompt:
+
+  ```
+  ## PM RE-RUN GUIDANCE
+
+  The Portfolio Manager has requested this debate step be re-run with the following direction:
+
+  {PM guidance text}
+
+  ## PM-PROVIDED SOURCE MATERIAL
+
+  {File contents read from the provided path}
+
+  Incorporate this guidance and source material into your analysis. The PM has
+  specifically chosen to provide this -- it overrides your default research scope
+  for this step.
+  ```
+
+- Dispatch the agent
+- Validate output (same validation as Step 8)
+- Save to debate-step-{N}.json (OVERWRITES the previous run's file)
+- Log progress for each re-run step
+
+After all steps in the re-run range complete:
+- Re-display the debate checkpoint with updated results (re-read all debate step files from disk)
+- Return to the dialogue prompt
+
+**"continue":**
+
+Exit the dialogue loop, advance to Step 10 (final assembly update).
+
+**"stop":**
+
+Print "Debate paused. All step files saved. Resume with /generate:full-story {TICKER}" and stop execution.
+
+When the skill is re-invoked, existing debate step files are detected at the top of Step 8 (resume detection) and execution skips directly to Step 9 (this checkpoint).
+
+## Step 10: Final Report Assembly Update
+
+After the PM says "continue" at the debate checkpoint. This step updates the existing full-story.json and full-story.md to include S6 and mark the report as complete. It does NOT rebuild from scratch.
+
+1. Read `fullStory-S6-inversion_rebuttal.json` from `.thes1s/reports/{TICKER}/sections/fullStory-S6-inversion_rebuttal.json`.
+
+2. Read `full-story.json` from `.thes1s/reports/{TICKER}/full-story.json`.
+
+3. Insert S6 into the sections array (append as the 6th element).
+
+4. Update fields:
+   - `status`: "partial" -> "complete"
+   - `completedSections`: 5 -> 6
+   - Remove `pendingPhase` field
+   - Set `overallVerdict` based on Judge's verdict logic:
+     - **PASS**: overallVerdict.direction is "Bull" AND unresolvedCount <= 2 AND no thesis_killer bear points survived with Strong Bear verdict
+     - **FAIL**: overallVerdict.direction is "Bear" OR unresolvedCount >= 4 OR any thesis_killer survived as Strong Bear
+     - **WATCHLIST**: overallVerdict.direction is "Bull" or "Mixed" with unresolvedCount == 3
+
+5. Write updated `full-story.json`.
+
+6. Read `full-story.md` from `.thes1s/reports/{TICKER}/full-story.md`.
+
+7. Replace the S6 placeholder text:
+   ```
+   ## Section 6: Inversion & Rebuttal
+
+   > S6 Inversion & Rebuttal will be added in Phase 14 (adversarial debate).
+   > See agents/orchestrator/dispatch-table.json fullStory.phases[1] for the debate structure.
+   ```
+   With the actual S6 content:
+   ```
+   ## Section 6: Inversion & Rebuttal
+   **Verdict:** {verdict} | **Confidence:** {confidence}
+
+   {S6 narrative -- the full dual-view format with verdict table + exchange detail}
+
+   **Red Flags:**
+   {for each redFlag, apply Red Flag Formatting rules from Step 7}
+
+   **Citations:**
+   {for each citation, apply Citation Formatting rules from Step 7}
+   ```
+
+8. Update the header line from "PARTIAL (5/6 sections)" to "COMPLETE (6/6 sections)".
+
+9. Add an overall verdict line after the header: "**Overall Verdict:** {overallVerdict}"
+
+10. Write updated `full-story.md`.
+
+Log:
+```
+Step 10: Final report assembly updated
+  Status: complete (6/6 sections)
+  Overall Verdict: {overallVerdict}
+  Output: .thes1s/reports/{TICKER}/full-story.json
+  Output: .thes1s/reports/{TICKER}/full-story.md
+```
+
 ---
 
 ## Constraints
