@@ -109,7 +109,10 @@ Plans:
   2. Bear inversion points include web search citations and DataPacket references as evidence (not unsupported assertions)
   3. Bull rebuttal addresses each bear point individually, with cited counter-evidence where available and honest acknowledgment where the bear case is strong
   4. Judge produces a structured verdict for each exchange (Strong Bull / Strong Bear / Unresolved) plus an overall summary with total unresolved risk count
-**Plans**: TBD
+**Plans:** 1 plan
+
+Plans:
+- [ ] 14-01-PLAN.md -- Debate orchestration (Steps 8-10), checkpoint with re-run cascade, final assembly update
 
 ### Phase 15: Quality System
 **Goal**: critic.js scores Full Story sections with methodology checks derived from the Rule One Stage 3 curriculum, matching the dual-scoring pattern proven on Pitch Decks
@@ -155,7 +158,7 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 17
 | 11. Validation | v1.1 | 2/2 | Complete | 2026-03-29 |
 | 12. Full Story Foundation | v1.2 | 1/2 | Complete    | 2026-03-29 |
 | 13. CC Pipeline | v1.2 | 1/2 | Complete    | 2026-03-30 |
-| 14. Adversarial Debate | v1.2 | 0/? | Not started | - |
+| 14. Adversarial Debate | v1.2 | 0/1 | Planned | - |
 | 15. Quality System | v1.2 | 0/? | Not started | - |
 | 16. API Migration | v1.2 | 0/? | Not started | - |
 | 17. End-to-End Validation | v1.2 | 0/? | Not started | - |
