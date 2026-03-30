@@ -71,7 +71,7 @@ If a real hedge fund wouldn't do it that way, don't build it that way.
 
 ### Active
 
-- [ ] Full Story CC skill — 6-section Stage 3 pipeline with Pitch Deck inheritance
+- [x] Full Story CC skill — 5-section Stage 3 pipeline with Pitch Deck inheritance (Phase 13)
 - [ ] Scored checklists — 43-item checklists (Meaning 15pt, Moat 15pt, Management 13pt) with structured scoring
 - [ ] Adversarial debate — 4-step Bull → Bear → Bull Rebuttal → Judge for inversion & rebuttal
 - [x] Dispatch table updates — remove trading strategy/PACE, fix S3 ownership to competitor-evaluator (Phase 12)
@@ -172,4 +172,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 after Phase 12 complete — Full Story Foundation (dispatch table, schemas, agent prompts)*
+*Last updated: 2026-03-30 after Phase 13 complete — CC Pipeline (Full Story skill, 5-section generation, PD inheritance)*
