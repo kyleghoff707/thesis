@@ -440,6 +440,68 @@ Note: `overallVerdict` is null because the Full Story verdict requires the compl
 
 **Write human-readable markdown** to `.thes1s/reports/{TICKER}/full-story.md`:
 
+Build the markdown report by iterating over all 5 section JSON objects. Apply the following
+defensive formatting rules for every field that varies across agents.
+
+**Section Title Resolution (handles title vs sectionTitle vs missing):**
+
+For each section, resolve its display title using this fallback chain:
+```
+displayTitle = section.title
+               || section.sectionTitle (strip any leading "Section N: " prefix if present)
+               || derive from sectionKey:
+                    event_analysis -> "Event Analysis"
+                    meaning_checklist -> "Meaning Checklist"
+                    moat_checklist -> "Moat Checklist"
+                    management_checklist -> "Management Checklist"
+                    valuation_confirmation -> "Valuation Confirmation"
+```
+Then render: `## Section {N}: {displayTitle}`
+
+**Citation Formatting (handles 4 observed variants):**
+
+For each citation in a section's `citations` array, detect the format and render:
+
+1. If citation is a **plain string**: output the string as-is (it already contains numbering)
+2. If citation is an **object with `ref` and `text` fields** (canonical schema):
+   output: `{id}. {ref}: {text} ({source})`
+3. If citation is an **object with `source` and `detail` fields but NO `ref`**:
+   output: `{id}. {source}: {detail}`
+4. If citation is an **object with `title` and `detail` fields**:
+   output: `{id}. {title} -- {detail} ({url || source})`
+5. **Fallback** for any other object shape:
+   output: `{id || index+1}. {first-string-valued-field}: {second-string-valued-field}`
+
+Never output raw `[object Object]` or fields that resolve to `undefined`.
+
+**Checklist Item Formatting (handles 2 observed naming conventions):**
+
+Parse `section.data` as JSON. For each item in `data.items`:
+```
+itemNumber = item.number || item.id || (index + 1)
+itemText   = item.item || item.question || "--"
+evidence   = item.evidence (truncate to 120 chars + "..." if longer)
+```
+Render as table row: `| {itemNumber} | {itemText} | {item.verdict} | {evidence} | {item.confidence} |`
+
+**Red Flag Formatting (handles string and object variants):**
+
+For each entry in a section's `redFlags` array:
+
+1. If the entry is a **plain string**: output `- {string}`
+2. If the entry is an **object**:
+   ```
+   flag     = entry.flag || entry.finding || entry.description || JSON.stringify(entry)
+   severity = entry.severity ? " [{severity}]" : ""
+   ```
+   output: `- {flag}{severity}`
+
+Never output `- [object Object]`.
+
+---
+
+**Assembled report structure** (apply the defensive rules above to every section):
+
 ```markdown
 # Full Story: {companyName} ({TICKER})
 
@@ -457,55 +519,86 @@ Note: `overallVerdict` is null because the Full Story verdict requires the compl
 
 ---
 
-## Section 1: Event Analysis
+## Section 1: {displayTitle resolved via fallback chain}
 **Verdict:** {verdict} | **Confidence:** {confidence}
 
 {narrative}
 
 **Red Flags:**
-{redFlags as bullet list}
+{for each redFlag, apply Red Flag Formatting rules above}
 
 **Citations:**
-{citations as numbered list}
+{for each citation, apply Citation Formatting rules above}
 
 ---
 
-## Section 2: Meaning Checklist
+## Section 2: {displayTitle resolved via fallback chain}
 **Verdict:** {verdict} | **Confidence:** {confidence}
-**Score:** {scoreDisplay}
+**Score:** {scoreDisplay from parsed data.summary.scoreDisplay}
 
 {narrative}
 
 ### Checklist Items
 | # | Item | Verdict | Evidence | Confidence |
 |---|------|---------|----------|------------|
-{each checklist item as a table row, parsed from data field}
+{for each item in parsed data.items, apply Checklist Item Formatting rules above}
 
 **Red Flags:**
-{redFlags as bullet list}
+{for each redFlag, apply Red Flag Formatting rules above}
+
+**Citations:**
+{for each citation, apply Citation Formatting rules above}
 
 ---
 
-## Section 3: Moat Checklist
-{same format as Section 2}
+## Section 3: {displayTitle resolved via fallback chain}
+**Verdict:** {verdict} | **Confidence:** {confidence}
+**Score:** {scoreDisplay from parsed data.summary.scoreDisplay}
+
+{narrative}
+
+### Checklist Items
+| # | Item | Verdict | Evidence | Confidence |
+|---|------|---------|----------|------------|
+{for each item in parsed data.items, apply Checklist Item Formatting rules above}
+
+**Red Flags:**
+{for each redFlag, apply Red Flag Formatting rules above}
+
+**Citations:**
+{for each citation, apply Citation Formatting rules above}
 
 ---
 
-## Section 4: Management Checklist
-{same format as Section 2}
+## Section 4: {displayTitle resolved via fallback chain}
+**Verdict:** {verdict} | **Confidence:** {confidence}
+**Score:** {scoreDisplay from parsed data.summary.scoreDisplay}
+
+{narrative}
+
+### Checklist Items
+| # | Item | Verdict | Evidence | Confidence |
+|---|------|---------|----------|------------|
+{for each item in parsed data.items, apply Checklist Item Formatting rules above}
+
+**Red Flags:**
+{for each redFlag, apply Red Flag Formatting rules above}
+
+**Citations:**
+{for each citation, apply Citation Formatting rules above}
 
 ---
 
-## Section 5: Valuation Confirmation
+## Section 5: {displayTitle resolved via fallback chain}
 **Verdict:** {verdict} | **Confidence:** {confidence}
 
 {narrative}
 
 **Red Flags:**
-{redFlags as bullet list}
+{for each redFlag, apply Red Flag Formatting rules above}
 
 **Citations:**
-{citations as numbered list}
+{for each citation, apply Citation Formatting rules above}
 
 ---
 
