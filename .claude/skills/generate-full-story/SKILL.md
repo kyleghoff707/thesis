@@ -1,6 +1,6 @@
 # ~~~~
 name: generate-full-story
-description: Generate a 5-section Rule One Full Story (Stage 3) deep analysis for a given stock ticker, building on Pitch Deck findings with scored checklists
+description: Generate a 6-section Rule One Full Story (Stage 3) deep analysis for a given stock ticker, building on Pitch Deck findings with scored checklists and adversarial debate
 argument-hint: TICKER
 disable-model-invocation: true
 ~~~~
@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 Generate the Full Story (Stage 3) deep analysis for **$0**, building on existing Pitch Deck findings.
 
-This skill orchestrates 5 specialist agents to produce scored checklists and deep-dive analyses that test investment conviction, then runs a 5-step adversarial debate (Bull, Bear, Bull Rebuttal, Judge, Composition) to produce S6 (inversion_rebuttal). Each agent inherits relevant Pitch Deck findings as context -- they build on prior work, not from scratch.
+This skill orchestrates 5 specialist agents to produce 5 scored checklists and deep-dive analyses (S1-S5), then runs a 5-step adversarial debate (Bull, Bear, Bull Rebuttal, Judge, Composition) to produce S6 (Inversion & Rebuttal) — 6 sections total. Each agent inherits relevant Pitch Deck findings as context -- they build on prior work, not from scratch.
 
 ---
 
