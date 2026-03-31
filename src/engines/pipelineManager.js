@@ -8,6 +8,7 @@ import { resolve } from 'path';
 import { dispatchAgent } from './aiResearch.js';
 import { createCacheMonitor } from './cacheMonitor.js';
 import { createBudgetTracker, formatBudgetReport } from './contextBudget.js';
+import { DEBATE_SCHEMAS } from '../schemas/debateStep.js';
 
 const AGENTS_DIR = resolve(process.cwd(), 'agents');
 
@@ -45,11 +46,41 @@ function formatPsrFindings(psrSections) {
   return `## Primary Source Reader Findings\n\n${parts.join('\n\n---\n\n')}`;
 }
 
+// Build debate context string from receivesContext spec in dispatch-table.json
+// Maps context keys to actual content from prior debate steps and allSections
+function buildDebateContext(receivesContext, debateOutputs, allSections) {
+  if (!receivesContext || receivesContext.length === 0) return '';
+
+  const parts = [];
+  for (const ctx of receivesContext) {
+    if (ctx === 'sections_1_through_5') {
+      // Build summary from S1-S5 for bull thesis
+      const s1to5 = allSections.filter(s => s && s.sectionNumber >= 1 && s.sectionNumber <= 5);
+      const summaries = s1to5.map(s => {
+        const label = s.title || s.key || `Section ${s.sectionNumber}`;
+        const status = s.verdict || s.status || 'pending';
+        const narrative = s.narrative ? s.narrative.substring(0, 2000) : '';
+        const flags = s.redFlags?.length > 0 ? `\nRed flags: ${s.redFlags.map(r => typeof r === 'string' ? r : r.flag || r.description || JSON.stringify(r)).join('; ')}` : '';
+        return `### ${label} (${status})\n${s.summary || ''}\n${narrative}${flags}`;
+      });
+      parts.push(`## Sections 1-5 Summary\n\n${summaries.join('\n\n')}`);
+    } else if (ctx === 'bull_output' && debateOutputs.bull) {
+      parts.push(`## Bull Thesis (Step 1)\n\n\`\`\`json\n${JSON.stringify(debateOutputs.bull, null, 2)}\n\`\`\``);
+    } else if (ctx === 'bear_output' && debateOutputs.bear) {
+      parts.push(`## Bear Inversion (Step 2)\n\n\`\`\`json\n${JSON.stringify(debateOutputs.bear, null, 2)}\n\`\`\``);
+    } else if (ctx === 'bull_rebuttal_output' && debateOutputs.bull_rebuttal) {
+      parts.push(`## Bull Rebuttal (Step 3)\n\n\`\`\`json\n${JSON.stringify(debateOutputs.bull_rebuttal, null, 2)}\n\`\`\``);
+    }
+  }
+
+  return parts.join('\n\n---\n\n');
+}
+
 // Main pipeline entry point
 // stage: 'pitchDeck' | 'onePager' | 'fullStory'
 // options: { onWaveComplete, psrFindings, maxSearches }
 // onWaveComplete: async (waveNumber, results, budgetSummary, cacheSummary) => feedback string or null
-// Returns: { sections, budget, cacheStats, errors }
+// Returns: { sections, budget, cacheStats, errors, debateOutputs }
 export async function runPipeline(stage, dataPacket, options = {}) {
   const stageConfig = loadDispatchTable(stage);
   const budget = createBudgetTracker();
@@ -57,6 +88,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
   const allSections = [];
   const errors = [];
   let pmFeedback = null;
+  let allDebateOutputs = null;
 
   // --- Pre-processing (sequential — PSR agents) ---
   // Skip data-assembly step (handled externally via assembleDataPacket)
@@ -90,6 +122,92 @@ export async function runPipeline(stage, dataPacket, options = {}) {
 
   // --- Wave execution (parallel within, sequential between — per D-01) ---
   for (const wave of stageConfig.phases) {
+    // --- Debate branch: sequential dispatch with context routing ---
+    if (wave.isDebate) {
+      const debateOutputs = {};
+
+      for (const step of wave.steps) {
+        const debateContext = buildDebateContext(step.receivesContext, debateOutputs, allSections);
+        const stepSchema = DEBATE_SCHEMAS[step.role];
+        const maxSearches = step.webSearch ? (options.maxSearches || 5) : 0;
+
+        try {
+          const result = await dispatchAgent(step.agent, dataPacket, {
+            schema: stepSchema,
+            debateContext,
+            debateRole: step.role,
+            maxSearches,
+            sectionAssignment: `Debate step ${step.step}: ${step.role} — ${step.description || ''}`,
+            priorSections: allSections.slice(),
+            psrFindings: psrFindingsForAgents,
+            pmFeedback,
+            maxTokens: step.role === 'judge' ? 4096 : 8192,
+          });
+
+          if (result.error) {
+            errors.push({ agent: step.agent, step: `debate-${step.role}`, error: result.error });
+            console.warn(`Debate step ${step.step} (${step.role}) failed: ${result.error}`);
+          } else {
+            debateOutputs[step.role] = result.section;
+          }
+
+          budget.record(`${step.agent}:${step.role}`, result.usage);
+          cacheMonitor.record(result.usage);
+        } catch (err) {
+          errors.push({ agent: step.agent, step: `debate-${step.role}`, error: err.message || 'Unknown error' });
+          console.warn(`Debate step ${step.step} (${step.role}) threw: ${err.message}`);
+        }
+      }
+
+      // 5th call: synthesis-writer composes S6 ReportSectionSchema
+      try {
+        const allDebateJSON = Object.entries(debateOutputs)
+          .map(([role, output]) => `## ${role}\n\n\`\`\`json\n${JSON.stringify(output, null, 2)}\n\`\`\``)
+          .join('\n\n---\n\n');
+
+        const synthesisResult = await dispatchAgent('synthesis-writer', dataPacket, {
+          debateContext: allDebateJSON,
+          sectionAssignment: `Compose Section ${wave.outputSection}: Inversion & Rebuttal from debate outputs. Key: ${wave.outputKey}. Include ALL bear source URLs as clickable links in the narrative. Never drop a URL.`,
+          priorSections: allSections.slice(),
+          psrFindings: psrFindingsForAgents,
+          pmFeedback,
+          maxTokens: 16384,
+          maxSearches: 0,
+        });
+
+        if (synthesisResult.error) {
+          errors.push({ agent: 'synthesis-writer', step: 'debate-composition', error: synthesisResult.error });
+        } else {
+          allSections.push(synthesisResult.section);
+        }
+
+        budget.record('synthesis-writer:composition', synthesisResult.usage);
+        cacheMonitor.record(synthesisResult.usage);
+      } catch (err) {
+        errors.push({ agent: 'synthesis-writer', step: 'debate-composition', error: err.message || 'Unknown error' });
+      }
+
+      // Store debate outputs for callers
+      allDebateOutputs = debateOutputs;
+
+      // Checkpoint after debate
+      if (wave.checkpoint?.after && options.onWaveComplete) {
+        const cacheSummary = cacheMonitor.getSummary();
+        const feedback = await options.onWaveComplete(
+          wave.phase,
+          Object.values(debateOutputs),
+          budget.getSummary(),
+          cacheSummary
+        );
+        if (feedback && typeof feedback === 'string') {
+          pmFeedback = feedback;
+        }
+      }
+
+      continue; // Skip parallel dispatch below
+    }
+
+    // --- Standard parallel wave dispatch ---
     const waveAgents = wave.agents;
 
     // Dispatch all agents in this wave simultaneously via Promise.allSettled
@@ -180,7 +298,8 @@ export async function runPipeline(stage, dataPacket, options = {}) {
     budget: budget.getSummary(),
     cacheStats: finalCacheStats,
     errors,
+    debateOutputs: allDebateOutputs,  // null for pitchDeck, populated for fullStory
   };
 }
 
-export const _testExports = { loadDispatchTable, buildSectionAssignment, formatPsrFindings };
+export const _testExports = { loadDispatchTable, buildSectionAssignment, formatPsrFindings, buildDebateContext };
