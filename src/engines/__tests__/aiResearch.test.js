@@ -595,6 +595,136 @@ describe('buildSystemBlocks', () => {
   });
 });
 
+// ─── Schema parameter (D-05) ──────────────────────────────────
+
+describe('schema parameter', () => {
+  beforeEach(() => {
+    __mockParse.mockReset();
+    __mockParse.mockResolvedValue(mockResponses.successResponse);
+  });
+
+  it('uses options.schema when provided instead of ReportSectionSchema', async () => {
+    const { zodOutputFormat } = await import('@anthropic-ai/sdk/helpers/zod');
+    zodOutputFormat.mockClear();
+
+    const customSchema = { _custom: true };
+    const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
+    await dispatchAgent('business-analyst', dataPacket, { schema: customSchema });
+
+    // zodOutputFormat should be called with the custom schema, not ReportSectionSchema
+    expect(zodOutputFormat).toHaveBeenCalledWith(customSchema);
+  });
+
+  it('defaults to ReportSectionSchema when options.schema is not provided', async () => {
+    const { zodOutputFormat } = await import('@anthropic-ai/sdk/helpers/zod');
+    zodOutputFormat.mockClear();
+
+    const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
+    await dispatchAgent('business-analyst', dataPacket);
+
+    // zodOutputFormat should be called with the mocked ReportSectionSchema (empty object)
+    const { ReportSectionSchema: MockRSS } = await import('../../schemas/reportSection.js');
+    expect(zodOutputFormat).toHaveBeenCalledWith(MockRSS);
+  });
+
+  it('skips data JSON.parse and citation enrichment when custom schema is provided', async () => {
+    // Mock response with debate-like parsed_output (no data/citations/tokenCost fields)
+    const debateResponse = {
+      ...mockResponses.successResponse,
+      parsed_output: {
+        step: 1,
+        role: 'bull',
+        agent: 'synthesis-writer',
+        content: { thesisPoints: [], overallThesis: 'Bull thesis' },
+      },
+    };
+    __mockParse.mockResolvedValue(debateResponse);
+
+    const customSchema = { _debate: true };
+    const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
+    const result = await dispatchAgent('business-analyst', dataPacket, { schema: customSchema });
+
+    // Section should be the debate output unchanged (no data parse, no tokenCost overwrite)
+    expect(result.section.step).toBe(1);
+    expect(result.section.role).toBe('bull');
+    expect(result.section.tokenCost).toBeUndefined(); // not overwritten
+    expect(result.section.modelUsed).toBeUndefined(); // not overwritten
+  });
+});
+
+// ─── Web search gating (D-03) ─────────────────────────────────
+
+describe('web search gating', () => {
+  beforeEach(() => {
+    __mockParse.mockReset();
+    __mockParse.mockResolvedValue(mockResponses.successResponse);
+  });
+
+  it('sends empty tools array when maxSearches === 0', async () => {
+    const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
+    await dispatchAgent('business-analyst', dataPacket, { maxSearches: 0 });
+
+    const callArgs = __mockParse.mock.calls[0][0];
+    expect(callArgs.tools).toEqual([]);
+  });
+
+  it('sends web search tool when maxSearches is not 0', async () => {
+    const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
+    await dispatchAgent('business-analyst', dataPacket, { maxSearches: 3 });
+
+    const callArgs = __mockParse.mock.calls[0][0];
+    expect(callArgs.tools).toHaveLength(1);
+    expect(callArgs.tools[0].type).toBe('web_search_20250305');
+    expect(callArgs.tools[0].max_uses).toBe(3);
+  });
+
+  it('sends web search tool with default max_uses when maxSearches is not specified', async () => {
+    const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
+    await dispatchAgent('business-analyst', dataPacket);
+
+    const callArgs = __mockParse.mock.calls[0][0];
+    expect(callArgs.tools).toHaveLength(1);
+    expect(callArgs.tools[0].max_uses).toBe(5);
+  });
+});
+
+// ─── Debate context in user message ───────────────────────────
+
+describe('debate context in buildUserMessage', () => {
+  it('includes debate context section when debateContext is provided', () => {
+    const msg = buildUserMessage({ ticker: 'SFM' }, {
+      debateContext: 'Step 1 bull thesis output goes here',
+    });
+    expect(msg).toContain('## Debate Context');
+    expect(msg).toContain('Step 1 bull thesis output goes here');
+  });
+
+  it('includes debate role section when debateRole is provided', () => {
+    const msg = buildUserMessage({ ticker: 'SFM' }, {
+      debateRole: 'bear',
+    });
+    expect(msg).toContain('## Debate Role');
+    expect(msg).toContain('You are acting as the **bear** in this debate.');
+  });
+
+  it('omits debate context and role when not provided', () => {
+    const msg = buildUserMessage({ ticker: 'SFM' }, {});
+    expect(msg).not.toContain('## Debate Context');
+    expect(msg).not.toContain('## Debate Role');
+  });
+
+  it('includes both debate context and role when both provided', () => {
+    const msg = buildUserMessage({ ticker: 'SFM' }, {
+      debateContext: 'Prior debate steps...',
+      debateRole: 'bull_rebuttal',
+    });
+    expect(msg).toContain('## Debate Context');
+    expect(msg).toContain('Prior debate steps...');
+    expect(msg).toContain('## Debate Role');
+    expect(msg).toContain('**bull_rebuttal**');
+  });
+});
+
 // ─── MODEL_MAP and PRICING ─────────────────────────────────────
 
 describe('constants', () => {

@@ -148,6 +148,16 @@ function buildUserMessage(dataSlice, options = {}) {
     parts.push(`## PM Feedback\n\n${options.pmFeedback}`);
   }
 
+  // Debate context — prior debate steps for sequential debate flow
+  if (options.debateContext) {
+    parts.push(`## Debate Context\n\n${options.debateContext}`);
+  }
+
+  // Debate role identifier
+  if (options.debateRole) {
+    parts.push(`## Debate Role\n\nYou are acting as the **${options.debateRole}** in this debate.`);
+  }
+
   return parts.join('\n\n---\n\n');
 }
 
@@ -347,8 +357,9 @@ export async function dispatchAgent(agentRole, dataPacket, options = {}) {
   // 2. Resolve model via MODEL_MAP (default to sonnet)
   const model = MODEL_MAP[config.model] || MODEL_MAP.sonnet;
 
-  // 3. Build tools array — web search enabled for all agents
-  const tools = [
+  // 3. Build tools array — web search gated by maxSearches (D-03)
+  // When maxSearches === 0, tools array is empty (tool absent entirely)
+  const effectiveTools = (options.maxSearches === 0) ? [] : [
     {
       type: 'web_search_20250305',
       name: 'web_search',
@@ -363,14 +374,17 @@ export async function dispatchAgent(agentRole, dataPacket, options = {}) {
   const userContent = buildUserMessage(dataSlice, options);
 
   // 6. Define callFn for API dispatch
+  // Schema parameter (D-05): use options.schema when provided, else ReportSectionSchema
+  const schema = options.schema || ReportSectionSchema;
+
   const callFn = (overrides = {}) => {
     return client.messages.parse({
       model,
       max_tokens: overrides.maxTokens || options.maxTokens || 16384,
       system: systemBlocks,
       messages: [{ role: 'user', content: userContent }],
-      tools,
-      output_config: { format: zodOutputFormat(ReportSectionSchema) },
+      tools: effectiveTools,
+      output_config: { format: zodOutputFormat(schema) },
     });
   };
 
@@ -393,32 +407,39 @@ export async function dispatchAgent(agentRole, dataPacket, options = {}) {
   // 9. Process parsed_output
   const section = retryResult.result;
 
-  // Parse data field from JSON string to object (D-06)
-  if (section && typeof section.data === 'string') {
-    try {
-      section.data = JSON.parse(section.data);
-    } catch (e) {
-      console.warn(`${agentRole}: data field JSON.parse failed: ${e.message}`);
-      // Keep as string — critic.js handles both
-    }
-  }
+  // Determine if output is a ReportSection (has data/citations/tokenCost fields)
+  // Non-ReportSection outputs (e.g., DebateStepSchema) skip data parsing, citation
+  // enrichment, and tokenCost/modelUsed overwriting
+  const isReportSection = !options.schema || options.schema === ReportSectionSchema;
 
   // Extract web search URLs from response content blocks
   const webSearches = extractWebSearchURLs(retryResult.response);
 
-  // Enrich citations with web search URLs (FIX-02)
-  if (section) {
-    enrichCitationsWithURLs(section, webSearches);
-  }
+  if (isReportSection) {
+    // Parse data field from JSON string to object (D-06)
+    if (section && typeof section.data === 'string') {
+      try {
+        section.data = JSON.parse(section.data);
+      } catch (e) {
+        console.warn(`${agentRole}: data field JSON.parse failed: ${e.message}`);
+        // Keep as string — critic.js handles both
+      }
+    }
 
-  // Overwrite agent-reported tokenCost and modelUsed with actual API values
-  if (section) {
-    const usage = retryResult.response.usage || {};
-    section.tokenCost = {
-      input: usage.input_tokens || 0,
-      output: usage.output_tokens || 0,
-    };
-    section.modelUsed = model;
+    // Enrich citations with web search URLs (FIX-02)
+    if (section) {
+      enrichCitationsWithURLs(section, webSearches);
+    }
+
+    // Overwrite agent-reported tokenCost and modelUsed with actual API values
+    if (section) {
+      const usage = retryResult.response.usage || {};
+      section.tokenCost = {
+        input: usage.input_tokens || 0,
+        output: usage.output_tokens || 0,
+      };
+      section.modelUsed = model;
+    }
   }
 
   // 10. Return rich result object
