@@ -3,9 +3,10 @@ import { readFileSync } from 'fs';
 import mockResponses from './fixtures/mock-api-response.json';
 
 // Hoist the mock function so vi.mock factory can reference it
-const { __mockParse } = vi.hoisted(() => {
+const { __mockParse, __mockCreate } = vi.hoisted(() => {
   const __mockParse = vi.fn();
-  return { __mockParse };
+  const __mockCreate = vi.fn();
+  return { __mockParse, __mockCreate };
 });
 
 // Mock the Anthropic SDK before importing aiResearch
@@ -13,7 +14,7 @@ vi.mock('@anthropic-ai/sdk', () => {
   return {
     default: class MockAnthropic {
       constructor() {
-        this.messages = { parse: __mockParse };
+        this.messages = { parse: __mockParse, create: __mockCreate };
       }
     },
   };
@@ -374,6 +375,9 @@ describe('buildUserMessage', () => {
 describe('dispatchAgent', () => {
   beforeEach(() => {
     __mockParse.mockReset();
+    __mockCreate.mockReset();
+    // Default calls have tools → create path
+    __mockCreate.mockResolvedValue(mockResponses.successResponse);
     __mockParse.mockResolvedValue(mockResponses.successResponse);
   });
 
@@ -424,11 +428,12 @@ describe('dispatchAgent', () => {
     expect(citation1.url).toBeUndefined();
   });
 
-  it('passes system blocks array (not single-string block) to client.messages.parse', async () => {
+  it('passes system blocks array (not single-string block) to API call', async () => {
     const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
     await dispatchAgent('business-analyst', dataPacket);
 
-    const callArgs = __mockParse.mock.calls[0][0];
+    // Default call has tools → uses create
+    const callArgs = __mockCreate.mock.calls[0][0];
     expect(Array.isArray(callArgs.system)).toBe(true);
     // Should have at least 1 block (agent-specific); no single-string pattern
     expect(callArgs.system.length).toBeGreaterThanOrEqual(1);
@@ -443,7 +448,7 @@ describe('dispatchAgent', () => {
     const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
     await dispatchAgent('business-analyst', dataPacket, { psrFindings: 'PSR analysis results here' });
 
-    const callArgs = __mockParse.mock.calls[0][0];
+    const callArgs = __mockCreate.mock.calls[0][0];
     const psrBlock = callArgs.system.find(b => b.text === 'PSR analysis results here');
     expect(psrBlock).toBeDefined();
     expect(psrBlock.cache_control).toEqual({ type: 'ephemeral' });
@@ -464,11 +469,12 @@ describe('dispatchAgent', () => {
 describe('dispatchWithRetry', () => {
   beforeEach(() => {
     __mockParse.mockReset();
+    __mockCreate.mockReset();
   });
 
   it('retries on max_tokens and succeeds on second attempt', async () => {
-    // First call returns max_tokens, second returns end_turn
-    __mockParse
+    // Default call has tools → uses create
+    __mockCreate
       .mockResolvedValueOnce(mockResponses.maxTokensResponse)
       .mockResolvedValueOnce(mockResponses.successResponse);
 
@@ -477,11 +483,11 @@ describe('dispatchWithRetry', () => {
 
     expect(result.error).toBeNull();
     expect(result.section).not.toBeNull();
-    expect(__mockParse).toHaveBeenCalledTimes(2);
+    expect(__mockCreate).toHaveBeenCalledTimes(2);
   });
 
   it('returns error on refusal', async () => {
-    __mockParse.mockResolvedValue(mockResponses.refusalResponse);
+    __mockCreate.mockResolvedValue(mockResponses.refusalResponse);
 
     const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
     const result = await dispatchAgent('business-analyst', dataPacket);
@@ -495,7 +501,7 @@ describe('dispatchWithRetry', () => {
     rateLimitError.status = 429;
     rateLimitError.headers = { 'retry-after': '1' };
 
-    __mockParse
+    __mockCreate
       .mockRejectedValueOnce(rateLimitError)
       .mockResolvedValueOnce(mockResponses.successResponse);
 
@@ -510,14 +516,14 @@ describe('dispatchWithRetry', () => {
     const badRequestError = new Error('schema error');
     badRequestError.status = 400;
 
-    __mockParse.mockRejectedValue(badRequestError);
+    __mockCreate.mockRejectedValue(badRequestError);
 
     const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
     const result = await dispatchAgent('business-analyst', dataPacket);
 
     expect(result.section).toBeNull();
     expect(result.error).toContain('400');
-    expect(__mockParse).toHaveBeenCalledTimes(1);
+    expect(__mockCreate).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -600,7 +606,9 @@ describe('buildSystemBlocks', () => {
 describe('schema parameter', () => {
   beforeEach(() => {
     __mockParse.mockReset();
+    __mockCreate.mockReset();
     __mockParse.mockResolvedValue(mockResponses.successResponse);
+    __mockCreate.mockResolvedValue(mockResponses.successResponse);
   });
 
   it('uses options.schema when provided instead of ReportSectionSchema', async () => {
@@ -609,7 +617,8 @@ describe('schema parameter', () => {
 
     const customSchema = { _custom: true };
     const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
-    await dispatchAgent('business-analyst', dataPacket, { schema: customSchema });
+    // maxSearches: 0 → no tools → structured output path (parse)
+    await dispatchAgent('business-analyst', dataPacket, { schema: customSchema, maxSearches: 0 });
 
     // zodOutputFormat should be called with the custom schema, not ReportSectionSchema
     expect(zodOutputFormat).toHaveBeenCalledWith(customSchema);
@@ -620,7 +629,8 @@ describe('schema parameter', () => {
     zodOutputFormat.mockClear();
 
     const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
-    await dispatchAgent('business-analyst', dataPacket);
+    // maxSearches: 0 → no tools → structured output path (parse)
+    await dispatchAgent('business-analyst', dataPacket, { maxSearches: 0 });
 
     // zodOutputFormat should be called with the mocked ReportSectionSchema (empty object)
     const { ReportSectionSchema: MockRSS } = await import('../../schemas/reportSection.js');
@@ -642,7 +652,8 @@ describe('schema parameter', () => {
 
     const customSchema = { _debate: true };
     const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
-    const result = await dispatchAgent('business-analyst', dataPacket, { schema: customSchema });
+    // maxSearches: 0 → structured output path; debate steps always have maxSearches: 0
+    const result = await dispatchAgent('business-analyst', dataPacket, { schema: customSchema, maxSearches: 0 });
 
     // Section should be the debate output unchanged (no data parse, no tokenCost overwrite)
     expect(result.section.step).toBe(1);
@@ -657,32 +668,38 @@ describe('schema parameter', () => {
 describe('web search gating', () => {
   beforeEach(() => {
     __mockParse.mockReset();
+    __mockCreate.mockReset();
     __mockParse.mockResolvedValue(mockResponses.successResponse);
+    __mockCreate.mockResolvedValue(mockResponses.successResponse);
   });
 
-  it('sends empty tools array when maxSearches === 0', async () => {
+  it('uses parse with output_config when maxSearches === 0 (no tools)', async () => {
     const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
     await dispatchAgent('business-analyst', dataPacket, { maxSearches: 0 });
 
+    // No tools → parse path with output_config
     const callArgs = __mockParse.mock.calls[0][0];
     expect(callArgs.tools).toEqual([]);
+    expect(callArgs.output_config).toBeDefined();
   });
 
-  it('sends web search tool when maxSearches is not 0', async () => {
+  it('uses create without output_config when tools are present', async () => {
     const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
     await dispatchAgent('business-analyst', dataPacket, { maxSearches: 3 });
 
-    const callArgs = __mockParse.mock.calls[0][0];
+    // Tools present → create path without output_config
+    const callArgs = __mockCreate.mock.calls[0][0];
     expect(callArgs.tools).toHaveLength(1);
     expect(callArgs.tools[0].type).toBe('web_search_20250305');
     expect(callArgs.tools[0].max_uses).toBe(3);
+    expect(callArgs.output_config).toBeUndefined();
   });
 
   it('sends web search tool with default max_uses when maxSearches is not specified', async () => {
     const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
     await dispatchAgent('business-analyst', dataPacket);
 
-    const callArgs = __mockParse.mock.calls[0][0];
+    const callArgs = __mockCreate.mock.calls[0][0];
     expect(callArgs.tools).toHaveLength(1);
     expect(callArgs.tools[0].max_uses).toBe(5);
   });

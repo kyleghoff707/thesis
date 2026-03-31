@@ -277,8 +277,39 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // ─── Retry logic ────────────────────────────────────────────────
 
+// Extract parsed result from response — handles both structured output and manual JSON parsing
+function extractResult(response, schema) {
+  // Structured output path: parsed_output is set by messages.parse()
+  if (response.parsed_output) return response.parsed_output;
+
+  // Manual path: extract JSON from text content blocks (used when tools are present)
+  const textBlocks = (response.content || []).filter(b => b.type === 'text');
+  if (textBlocks.length === 0) return null;
+
+  const text = textBlocks.map(b => b.text).join('').trim();
+  if (!text) return null;
+
+  // Find JSON object in the response text (may have leading/trailing text)
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) return null;
+
+  try {
+    const parsed = JSON.parse(jsonMatch[0]);
+    // Validate against schema if provided
+    if (schema) {
+      const result = schema.safeParse(parsed);
+      if (result.success) return result.data;
+      // Schema validation failed — return raw parsed JSON anyway (best effort)
+      return parsed;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
 // Wraps an API call with retry-then-escalate error handling (API-05)
-async function dispatchWithRetry(callFn, agentRole) {
+async function dispatchWithRetry(callFn, agentRole, schema) {
   try {
     const response = await callFn();
 
@@ -294,7 +325,7 @@ async function dispatchWithRetry(callFn, agentRole) {
           response: retryResponse,
         };
       }
-      return { result: retryResponse.parsed_output, error: null, response: retryResponse };
+      return { result: extractResult(retryResponse, schema), error: null, response: retryResponse };
     }
 
     if (response.stop_reason === 'refusal') {
@@ -305,13 +336,17 @@ async function dispatchWithRetry(callFn, agentRole) {
       };
     }
 
+    // Extract result from response
+    const result = extractResult(response, schema);
+
     // end_turn — check for near-empty responses (transient model failures)
-    if (!response.parsed_output && (response.usage?.output_tokens || 0) < 100) {
+    if (!result && (response.usage?.output_tokens || 0) < 100) {
       console.warn(`${agentRole}: near-empty response (${response.usage?.output_tokens} tokens), retrying once`);
       try {
         const retryResponse = await callFn();
-        if (retryResponse.parsed_output) {
-          return { result: retryResponse.parsed_output, error: null, response: retryResponse };
+        const retryResult = extractResult(retryResponse, schema);
+        if (retryResult) {
+          return { result: retryResult, error: null, response: retryResponse };
         }
       } catch (retryErr) {
         console.warn(`${agentRole}: retry also failed: ${retryErr.message}`);
@@ -319,7 +354,7 @@ async function dispatchWithRetry(callFn, agentRole) {
       // Fall through with original response — null guard in dispatchAgent will catch it
     }
 
-    return { result: response.parsed_output, error: null, response };
+    return { result, error: null, response };
 
   } catch (err) {
     // Rate limit (429)
@@ -393,19 +428,32 @@ export async function dispatchAgent(agentRole, dataPacket, options = {}) {
   // Schema parameter (D-05): use options.schema when provided, else ReportSectionSchema
   const schema = options.schema || ReportSectionSchema;
 
+  // Opus 4.6 bug: output_config + tools together produces empty responses for some prompts.
+  // When tools are present, skip output_config and parse JSON manually from response text.
+  const useStructuredOutput = effectiveTools.length === 0;
+
   const callFn = (overrides = {}) => {
-    return client.messages.parse({
+    const params = {
       model,
       max_tokens: overrides.maxTokens || options.maxTokens || 16384,
       system: systemBlocks,
       messages: [{ role: 'user', content: userContent }],
-      tools: effectiveTools,
-      output_config: { format: zodOutputFormat(schema) },
-    });
+    };
+
+    if (useStructuredOutput) {
+      // No tools — safe to use structured output enforcement
+      params.tools = [];
+      params.output_config = { format: zodOutputFormat(schema) };
+      return client.messages.parse(params);
+    } else {
+      // Tools present — use create() without output_config, parse JSON manually
+      params.tools = effectiveTools;
+      return client.messages.create(params);
+    }
   };
 
   // 7. Dispatch with retry handling
-  const retryResult = await dispatchWithRetry(callFn, agentRole);
+  const retryResult = await dispatchWithRetry(callFn, agentRole, schema);
 
   // 8. Handle error case
   if (retryResult.error) {
