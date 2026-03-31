@@ -218,7 +218,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
           priorSections: allSections.slice(),
           psrFindings: psrFindingsForAgents,
           pmFeedback,
-          maxSearches: options.maxSearches,
+          maxSearches: a.webSearch === false ? 0 : options.maxSearches,
         }))
       );
 

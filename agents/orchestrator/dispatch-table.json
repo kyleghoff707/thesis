@@ -88,7 +88,7 @@
           { "agent": "business-analyst", "sections": [2], "parallel": true, "note": "Meaning — 15pt checklist" },
           { "agent": "competitor-evaluator", "sections": [3], "parallel": true, "note": "Moat — 15pt checklist" },
           { "agent": "management-evaluator", "sections": [4], "parallel": true, "note": "Management — 13pt checklist" },
-          { "agent": "valuation-specialist", "sections": [5], "parallel": true, "note": "Valuation Confirmation" }
+          { "agent": "valuation-specialist", "sections": [5], "parallel": true, "note": "Valuation Confirmation", "webSearch": false }
         ],
         "checkpoint": {
           "after": true,

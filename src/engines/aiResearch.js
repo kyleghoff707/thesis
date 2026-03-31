@@ -427,15 +427,18 @@ export async function dispatchAgent(agentRole, dataPacket, options = {}) {
   // return an error instead of silently propagating null section
   if (!section) {
     const outputTokens = retryResult.response?.usage?.output_tokens || 0;
-    // Diagnostic: log raw response content to understand why parsing failed
-    const rawContent = retryResult.response?.content;
-    if (rawContent) {
-      console.warn(`${agentRole}: parsed_output is null. Raw content (${outputTokens} tokens):`);
-      for (const block of rawContent) {
-        if (block.type === 'text') console.warn(`  text: ${block.text?.substring(0, 500)}`);
-        else console.warn(`  ${block.type}: ${JSON.stringify(block).substring(0, 200)}`);
-      }
-    }
+    // Diagnostic: dump full response structure to understand parsing failure
+    const resp = retryResult.response;
+    console.warn(`${agentRole}: parsed_output is null (${outputTokens} output tokens)`);
+    console.warn(`  stop_reason: ${resp?.stop_reason}`);
+    console.warn(`  content length: ${resp?.content?.length}`);
+    console.warn(`  content: ${JSON.stringify(resp?.content)?.substring(0, 500)}`);
+    console.warn(`  response keys: ${resp ? Object.keys(resp).join(', ') : 'null'}`);
+    // Check for output field (structured output may use different field)
+    if (resp?.output) console.warn(`  output: ${JSON.stringify(resp.output)?.substring(0, 500)}`);
+    if (resp?.parsed_output !== undefined) console.warn(`  parsed_output: ${JSON.stringify(resp.parsed_output)?.substring(0, 200)}`);
+    // Check the raw HTTP response body if available
+    if (resp?._raw) console.warn(`  _raw keys: ${Object.keys(resp._raw).join(', ')}`);
     return {
       section: null,
       usage: buildUsage(retryResult.response?.usage || {}, model),
