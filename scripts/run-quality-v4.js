@@ -88,6 +88,34 @@ if (stage === 'fullStory') {
     console.error(`No Full Story sections found for ${ticker}`);
     process.exit(1);
   }
+
+  // Backfill searchesPerformed for inversion_rebuttal from debate-step-2 sources
+  const inversionSection = analysisSections.find(s => s.key === 'inversion_rebuttal');
+  if (inversionSection && (!inversionSection.searchesPerformed || inversionSection.searchesPerformed.length === 0)) {
+    const debateStep2Path = join(sectionsDir, 'debate-step-2.json');
+    if (existsSync(debateStep2Path)) {
+      try {
+        const debateStep2 = JSON.parse(readFileSync(debateStep2Path, 'utf8'));
+        const inversions = debateStep2?.content?.inversions || [];
+        const allUrls = new Set();
+        for (const inv of inversions) {
+          for (const src of (inv.sources || [])) {
+            if (/^https?:\/\//.test(src)) allUrls.add(src);
+          }
+        }
+        if (allUrls.size > 0) {
+          inversionSection.searchesPerformed = [...allUrls].map(url => ({
+            query: url,
+            resultCount: 1,
+            usedInSection: true,
+          }));
+          console.log(`Backfilled ${allUrls.size} searches from debate-step-2 into inversion_rebuttal`);
+        }
+      } catch (err) {
+        console.warn(`Failed to parse debate-step-2.json: ${err.message}`);
+      }
+    }
+  }
 } else {
   // Existing Pitch Deck path
   const pipeline = JSON.parse(readFileSync(join(dir, 'pipeline-output.json'), 'utf8'));

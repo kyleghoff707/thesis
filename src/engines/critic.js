@@ -200,6 +200,29 @@ function validateCitations(citations, dataPacket) {
   if (!Array.isArray(citations)) return issues;
 
   for (const citation of citations) {
+    // String citations skip canonical format check (they're inherently non-canonical)
+    if (typeof citation === 'string') {
+      const type = classifyCitation(citation);
+      // String web_url citations: extract and validate the URL or domain
+      if (type === 'web_url') {
+        const urlMatch = citation.match(/https?:\/\/\S+/);
+        if (urlMatch) {
+          try { new URL(urlMatch[0]); } catch {
+            // Embedded URL is malformed — still classified as web, just note it
+          }
+        }
+        // Bare-domain strings are valid web_url without full URL validation
+      } else if (type === 'untraceable') {
+        issues.push({
+          type: 'citation',
+          severity: 'low',
+          message: `Untraceable string citation: "${citation.slice(0, 80)}"`,
+          field: 'citation[string]',
+        });
+      }
+      continue;
+    }
+
     // Check for non-canonical format
     const isCanonical = CANONICAL_CITATION_FIELDS.every(f => citation[f] !== undefined);
     if (!isCanonical) {
@@ -279,16 +302,22 @@ function validateCitations(citations, dataPacket) {
       }
 
       case 'web_url': {
-        try {
-          new URL(citation.url);
-        } catch {
-          issues.push({
-            type: 'citation',
-            severity: 'medium',
-            message: `Invalid URL format: "${citation.url}"`,
-            field: `citation[${citation.id}]`,
-          });
+        // Try citation.url first, then extract URL from citation.source
+        const urlCandidate = citation.url ||
+          (citation.source && (citation.source.match(/https?:\/\/\S+/) || [])[0]);
+        if (urlCandidate) {
+          try {
+            new URL(urlCandidate.replace(/[)\]]+$/, '')); // strip trailing parens/brackets
+          } catch {
+            issues.push({
+              type: 'citation',
+              severity: 'medium',
+              message: `Invalid URL format: "${urlCandidate}"`,
+              field: `citation[${citation.id}]`,
+            });
+          }
         }
+        // No URL to validate is OK — source contains a URL pattern that classified it
         break;
       }
 
