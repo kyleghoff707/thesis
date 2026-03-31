@@ -95,9 +95,10 @@ None yet.
 |---|-------------|------|--------|-----------|
 | (inherited from v1.1 -- see MILESTONES.md for complete history) |
 | 260329-p60 | Fix generate-full-story SKILL.md report assembly field names | 2026-03-30 | 14edad6 | [260329-p60](./quick/260329-p60-fix-generate-full-story-skill-md-report-/) |
+| 260330-qnl | Fix remaining mechanical quality score gaps (citation classification + S6 backfill) | 2026-03-31 | a0f967d, 3ac760d | [260330-qnl](./quick/260330-qnl-fix-remaining-mechanical-quality-score-g/) |
 
 ## Session Continuity
 
-Last session: 2026-03-30T05:29:51.799Z
-Stopped at: Completed 15-02-PLAN.md
+Last session: 2026-03-31T02:19:53Z
+Stopped at: Completed 260330-qnl quick task
 Resume file: None
