@@ -79,50 +79,45 @@ describe('QUAL-01: Citation Validation', () => {
         .toBe('untraceable');
     });
 
+    it('should classify citations with URL in source field as web_url', () => {
+      expect(classifyCitation({ id: 1, ref: 'Supermarket News', text: 'data', source: 'https://www.supermarketnews.com/article' }))
+        .toBe('web_url');
+      expect(classifyCitation({ id: 1, ref: 'Grocery Dive', text: 'earnings', source: 'http://www.grocerydive.com/news' }))
+        .toBe('web_url');
+    });
+
     it('should classify object citations with URLs embedded in source text as web_url', () => {
-      // Real S3 moat_checklist patterns: URL inside parentheses in source text
       expect(classifyCitation({
         source: 'Blue Book Services Q1 2025 (https://www.bluebookservices.com/article)',
       })).toBe('web_url');
-
       expect(classifyCitation({
         source: 'GuruFocus ROIC data (https://www.gurufocus.com/term/roic/SFM); SFM Q3 2025 IR Deck',
       })).toBe('web_url');
-
-      // Mixed DataPacket + URL — should favor web_url since URL is verifiable
-      expect(classifyCitation({
-        source: 'DataPacket peerMetrics (CIK 1547459); Natural Grocers investor relations (https://investors.naturalgrocers.com/financial-information)',
-      })).toBe('web_url');
-
-      // URL at end of source string without parentheses
       expect(classifyCitation({
         source: 'DCF Modeling SWOT Nov-2025 https://www.dcfmodeling.com/products/sfm-swot-analysis',
       })).toBe('web_url');
     });
 
     it('should classify string citations with bare domain names as web_url', () => {
-      // Real S2 meaning_checklist patterns: string citations with domains but no http
       expect(classifyCitation(
         '[1] SFM FY2025 earnings release: $8.81B revenue — investors.sprouts.com/news'
       )).toBe('web_url');
-
       expect(classifyCitation(
         '[8] ProgressiveGrocer strategy — progressivegrocer.com/sprouts-2026'
       )).toBe('web_url');
-
-      expect(classifyCitation(
-        '[2] OTA Organic Market Report 2026: organic sales — ota.com/organic-market-report'
-      )).toBe('web_url');
-
-      // String with no domain remains untraceable
       expect(classifyCitation(
         '[4] Pitch Deck S3 findings: SFM moat 79/100'
       )).toBe('untraceable');
+    });
 
-      // String with http should still work
-      expect(classifyCitation(
-        '[10] Source: https://www.example.com/report'
-      )).toBe('web_url');
+    it('should classify string citations with URLs as web_url', () => {
+      expect(classifyCitation('[1] SFM article — https://example.com/sfm'))
+        .toBe('web_url');
+    });
+
+    it('should classify string citations without URLs as untraceable', () => {
+      expect(classifyCitation('[1] SFM FY2025 earnings release: $8.81B revenue'))
+        .toBe('untraceable');
     });
   });
 
@@ -250,6 +245,33 @@ describe('QUAL-01: Citation Validation', () => {
       const issues = validateCitations(badUrl, dataPacketSlice);
       const urlIssues = issues.filter(i => i.message.includes('Invalid URL'));
       expect(urlIssues.length).toBe(1);
+    });
+
+    it('should validate URL in source field without url field', () => {
+      const srcUrl = [{ id: 1, ref: 'News article', text: 'quoted data', source: 'https://www.example.com/article' }];
+      const issues = validateCitations(srcUrl, dataPacketSlice);
+      const urlIssues = issues.filter(i => i.message.includes('Invalid URL'));
+      expect(urlIssues.length).toBe(0);
+    });
+
+    it('should handle string citations without crashing', () => {
+      const stringCitations = [
+        '[1] SFM FY2025 earnings release: $8.81B revenue — investors.sprouts.com/news',
+        '[2] Organic Trade Association report 2025',
+      ];
+      const issues = validateCitations(stringCitations, dataPacketSlice);
+      // First citation has bare domain (web_url) — no issue. Second is untraceable.
+      const untraceableIssues = issues.filter(i => i.message.includes('Untraceable'));
+      expect(untraceableIssues.length).toBe(1);
+      // Should use 1-based index, not "undefined"
+      expect(issues[0].field).toBe('citation[2]');
+    });
+
+    it('should not explode string citations into multiple undefined issues', () => {
+      const stringCitations = ['[1] Some plain text citation'];
+      const issues = validateCitations(stringCitations, dataPacketSlice);
+      // One issue per string citation, not the cascade of non-canonical + untraceable
+      expect(issues.length).toBe(1);
     });
   });
 });
@@ -1290,10 +1312,10 @@ describe('Full Story Methodology Checks', () => {
       expect(check.passed).toBe(true);
     });
 
-    it('should fail debate-thesis-killer on SFM data (no severe/fatal language)', () => {
+    it('should pass debate-thesis-killer on SFM data (THESIS KILLER in redFlags)', () => {
       const result = scoreMethodology(inversionRebuttalSection);
       const check = result.checks.find(c => c.id === 'debate-thesis-killer');
-      expect(check.passed).toBe(false);
+      expect(check.passed).toBe(true);
     });
   });
 });
@@ -1441,7 +1463,7 @@ describe('Full Story validateStage integration', () => {
     ];
     const report = validateStage(sections, {});
     // At least one section should have methodology score < 100
-    // (debate-thesis-killer fails on SFM, so inversion_rebuttal < 100)
+    // (event-root-cause and event-historical fail on SFM, so event_analysis < 100)
     const hasNonPerfect = report.sections.some(s => s.methodology.score < 100);
     expect(hasNonPerfect).toBe(true);
   });

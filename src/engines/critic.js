@@ -44,7 +44,7 @@ const SECTION_DATA_DOMAINS = {
  * @returns {'datapacket' | 'sec_filing' | 'web_url' | 'untraceable'}
  */
 function classifyCitation(citation) {
-  // Handle string citations (e.g., Full Story checklist string refs)
+  // Handle string citations (some agents produce plain strings instead of objects)
   if (typeof citation === 'string') {
     if (/https?:\/\//.test(citation)) return 'web_url';
     // Bare domain detection: domain.tld anywhere in string (no http prefix needed)
@@ -67,8 +67,11 @@ function classifyCitation(citation) {
     return 'sec_filing';
   }
 
-  // Web URL citations (url field is non-empty and looks like a URL)
+  // Web URL citations — check both dedicated url field and source field
   if (citation.url && /^https?:\/\//.test(citation.url)) {
+    return 'web_url';
+  }
+  if (/^https?:\/\//.test(citation.source || '')) {
     return 'web_url';
   }
 
@@ -199,7 +202,9 @@ function validateCitations(citations, dataPacket) {
   const issues = [];
   if (!Array.isArray(citations)) return issues;
 
-  for (const citation of citations) {
+  for (let idx = 0; idx < citations.length; idx++) {
+    const citation = citations[idx];
+
     // String citations skip canonical format check (they're inherently non-canonical)
     if (typeof citation === 'string') {
       const type = classifyCitation(citation);
@@ -211,13 +216,12 @@ function validateCitations(citations, dataPacket) {
             // Embedded URL is malformed — still classified as web, just note it
           }
         }
-        // Bare-domain strings are valid web_url without full URL validation
       } else if (type === 'untraceable') {
         issues.push({
           type: 'citation',
           severity: 'low',
-          message: `Untraceable string citation: "${citation.slice(0, 80)}"`,
-          field: 'citation[string]',
+          message: `Untraceable citation: "${citation.slice(0, 80)}${citation.length > 80 ? '...' : ''}"`,
+          field: `citation[${idx + 1}]`,
         });
       }
       continue;
@@ -1387,7 +1391,19 @@ const METHODOLOGY_CHECKS = {
       id: 'debate-thesis-killer',
       label: 'At least 1 severe/thesis-killer risk',
       critical: false,
-      test: (s) => /thesis.?killer|severe|critical\s*risk|deal.?breaker|red\s*flag.*severe|fatal|unresolved.*severe/i.test(s.narrative || ''),
+      test: (s) => {
+        const pat = /thesis.?killer|severe|critical\s*risk|deal.?breaker|red\s*flag.*severe|fatal|unresolved.*severe/i;
+        // Check narrative
+        if (pat.test(s.narrative || '')) return true;
+        // Check redFlags array (agent may put "THESIS KILLER: ..." labels there)
+        if (Array.isArray(s.redFlags) && s.redFlags.some((rf) => pat.test(typeof rf === 'string' ? rf : rf.text || ''))) return true;
+        // Check structured data for severity: "thesis_killer" from debate steps
+        try {
+          const d = typeof s.data === 'string' ? JSON.parse(s.data) : s.data;
+          if (d?.inversions?.some((inv) => /thesis.?killer/i.test(inv.severity || ''))) return true;
+        } catch (_) { /* data parse failure is not a check failure */ }
+        return false;
+      },
     },
     {
       id: 'debate-honesty',

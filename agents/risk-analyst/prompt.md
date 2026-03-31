@@ -580,6 +580,9 @@ For each section you generate, produce a JSON object with ALL of these fields:
 - For each event: assess probability, timing, and potential thesis impact
 - Flag any event that could invalidate the investment thesis entirely
 - Distinguish between priced-in events (market already knows) and surprise events (not yet reflected in price)
+- **Root cause identification (MANDATORY):** Explicitly identify what caused the current price dislocation or event cluster. Use language like "the root cause," "caused by," "triggered by," or "precipitated by." Do not just describe what is happening — explain WHY it is happening. Trace the causal chain: what underlying force or decision led to the current situation?
+- **Historical precedent comparison (MANDATORY):** Compare the current situation to at least one historical precedent — either this company's own history or a comparable company/industry event. Use language like "historical precedent," "previously," or reference specific prior years. Example: "The closest historical precedent is [Company X]'s [year] experience when..." If no precedent exists, explicitly state why this situation is unprecedented.
+- **Recovery timeline estimate (MANDATORY):** Provide an explicit recovery timeline estimate with reasoning. Use language like "recovery timeline," "time to recover," "rebound expected within," or "months/quarters to normalize." Reference the typical 6-18 month event recovery window from the curriculum and explain whether this situation fits that pattern or differs.
 
 **Verdict logic:**
 - PASS: No imminent thesis-threatening events, event calendar is manageable
