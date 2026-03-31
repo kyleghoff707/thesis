@@ -137,10 +137,13 @@ function buildUserMessage(dataSlice, options = {}) {
 
   // Prior section context (for dependent agents)
   if (options.priorSections && options.priorSections.length > 0) {
-    const summaries = options.priorSections.map(s =>
-      `### ${s.title} (${s.status})\n${s.summary}\nRed flags: ${s.redFlags.join('; ')}`
-    ).join('\n\n');
-    parts.push(`## Prior Section Findings\n\n${summaries}`);
+    const validSections = options.priorSections.filter(s => s && s.title);
+    if (validSections.length > 0) {
+      const summaries = validSections.map(s =>
+        `### ${s.title} (${s.status})\n${s.summary}\nRed flags: ${(s.redFlags || []).join('; ')}`
+      ).join('\n\n');
+      parts.push(`## Prior Section Findings\n\n${summaries}`);
+    }
   }
 
   // PM feedback from checkpoint review (D-07)
@@ -406,6 +409,21 @@ export async function dispatchAgent(agentRole, dataPacket, options = {}) {
 
   // 9. Process parsed_output
   const section = retryResult.result;
+
+  // Guard: if parsed_output is null (schema validation failed or model returned minimal tokens),
+  // return an error instead of silently propagating null section
+  if (!section) {
+    const outputTokens = retryResult.response?.usage?.output_tokens || 0;
+    return {
+      section: null,
+      usage: buildUsage(retryResult.response?.usage || {}, model),
+      webSearches: [],
+      model,
+      stopReason: retryResult.response?.stop_reason || 'unknown',
+      duration: Date.now() - startTime,
+      error: `Structured output parsing failed (${outputTokens} output tokens, stop_reason: ${retryResult.response?.stop_reason || 'unknown'})`,
+    };
+  }
 
   // Determine if output is a ReportSection (has data/citations/tokenCost fields)
   // Non-ReportSection outputs (e.g., DebateStepSchema) skip data parsing, citation

@@ -23,9 +23,10 @@ function loadDispatchTable(stage) {
 }
 
 // Build section assignment string from section numbers array
-function buildSectionAssignment(sections) {
+function buildSectionAssignment(sections, stage) {
   if (!sections || sections.length === 0) return undefined;
-  return `Generate sections: ${sections.join(', ')}`;
+  const stageLabel = stage === 'fullStory' ? 'Full Story' : stage === 'pitchDeck' ? 'Pitch Deck' : stage;
+  return `Stage: ${stageLabel}. Generate ${stageLabel} sections: ${sections.join(', ')}`;
 }
 
 // Format PSR agent output into a structured findings string for downstream agents (D-02)
@@ -213,7 +214,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
       // Dispatch all agents in this wave simultaneously via Promise.allSettled
       const results = await Promise.allSettled(
         waveAgents.map(a => dispatchAgent(a.agent, dataPacket, {
-          sectionAssignment: buildSectionAssignment(a.sections),
+          sectionAssignment: buildSectionAssignment(a.sections, stage),
           priorSections: allSections.slice(),
           psrFindings: psrFindingsForAgents,
           pmFeedback,
@@ -229,7 +230,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
           const r = results[i].value;
           if (r.error) {
             errors.push({ agent: agentName, wave: wave.phase, error: r.error });
-          } else {
+          } else if (r.section) {
             allSections.push(r.section);
             waveResults.push(r);
           }
@@ -268,11 +269,11 @@ export async function runPipeline(stage, dataPacket, options = {}) {
   }
 
   // --- Post-processing (synthesis) ---
-  for (const step of stageConfig.postProcessing) {
+  for (const step of stageConfig.postProcessing || []) {
     if (!step.agent) continue;
 
     const result = await dispatchAgent(step.agent, dataPacket, {
-      sectionAssignment: buildSectionAssignment(step.sections),
+      sectionAssignment: buildSectionAssignment(step.sections, stage),
       priorSections: allSections.slice(),
       psrFindings: psrFindingsForAgents,
       pmFeedback,

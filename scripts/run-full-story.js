@@ -171,6 +171,7 @@ async function main() {
 
   if (result.sections?.length > 0) {
     for (const section of result.sections) {
+      if (!section) continue;
       const sNum = section.sectionNumber || '?';
       const sKey = section.key || sectionKeyMap[sNum - 1] || `unknown`;
       const sectionPath = join(sectionsDir, `fullStory-S${sNum}-${sKey}.json`);
@@ -208,6 +209,7 @@ async function main() {
   if (result.sections?.length > 0) {
     console.log('Sections:');
     for (const section of result.sections) {
+      if (!section) continue;
       const citations = section.citations?.length || 0;
       const redFlags = section.redFlags?.length || 0;
       const searches = section.searchesPerformed?.length || 0;
