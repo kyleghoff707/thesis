@@ -305,7 +305,20 @@ async function dispatchWithRetry(callFn, agentRole) {
       };
     }
 
-    // end_turn — success
+    // end_turn — check for near-empty responses (transient model failures)
+    if (!response.parsed_output && (response.usage?.output_tokens || 0) < 100) {
+      console.warn(`${agentRole}: near-empty response (${response.usage?.output_tokens} tokens), retrying once`);
+      try {
+        const retryResponse = await callFn();
+        if (retryResponse.parsed_output) {
+          return { result: retryResponse.parsed_output, error: null, response: retryResponse };
+        }
+      } catch (retryErr) {
+        console.warn(`${agentRole}: retry also failed: ${retryErr.message}`);
+      }
+      // Fall through with original response — null guard in dispatchAgent will catch it
+    }
+
     return { result: response.parsed_output, error: null, response };
 
   } catch (err) {
@@ -414,6 +427,15 @@ export async function dispatchAgent(agentRole, dataPacket, options = {}) {
   // return an error instead of silently propagating null section
   if (!section) {
     const outputTokens = retryResult.response?.usage?.output_tokens || 0;
+    // Diagnostic: log raw response content to understand why parsing failed
+    const rawContent = retryResult.response?.content;
+    if (rawContent) {
+      console.warn(`${agentRole}: parsed_output is null. Raw content (${outputTokens} tokens):`);
+      for (const block of rawContent) {
+        if (block.type === 'text') console.warn(`  text: ${block.text?.substring(0, 500)}`);
+        else console.warn(`  ${block.type}: ${JSON.stringify(block).substring(0, 200)}`);
+      }
+    }
     return {
       section: null,
       usage: buildUsage(retryResult.response?.usage || {}, model),
