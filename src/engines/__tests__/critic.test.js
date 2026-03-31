@@ -78,6 +78,52 @@ describe('QUAL-01: Citation Validation', () => {
       expect(classifyCitation({ source: 'Yahoo Finance' }))
         .toBe('untraceable');
     });
+
+    it('should classify object citations with URLs embedded in source text as web_url', () => {
+      // Real S3 moat_checklist patterns: URL inside parentheses in source text
+      expect(classifyCitation({
+        source: 'Blue Book Services Q1 2025 (https://www.bluebookservices.com/article)',
+      })).toBe('web_url');
+
+      expect(classifyCitation({
+        source: 'GuruFocus ROIC data (https://www.gurufocus.com/term/roic/SFM); SFM Q3 2025 IR Deck',
+      })).toBe('web_url');
+
+      // Mixed DataPacket + URL — should favor web_url since URL is verifiable
+      expect(classifyCitation({
+        source: 'DataPacket peerMetrics (CIK 1547459); Natural Grocers investor relations (https://investors.naturalgrocers.com/financial-information)',
+      })).toBe('web_url');
+
+      // URL at end of source string without parentheses
+      expect(classifyCitation({
+        source: 'DCF Modeling SWOT Nov-2025 https://www.dcfmodeling.com/products/sfm-swot-analysis',
+      })).toBe('web_url');
+    });
+
+    it('should classify string citations with bare domain names as web_url', () => {
+      // Real S2 meaning_checklist patterns: string citations with domains but no http
+      expect(classifyCitation(
+        '[1] SFM FY2025 earnings release: $8.81B revenue — investors.sprouts.com/news'
+      )).toBe('web_url');
+
+      expect(classifyCitation(
+        '[8] ProgressiveGrocer strategy — progressivegrocer.com/sprouts-2026'
+      )).toBe('web_url');
+
+      expect(classifyCitation(
+        '[2] OTA Organic Market Report 2026: organic sales — ota.com/organic-market-report'
+      )).toBe('web_url');
+
+      // String with no domain remains untraceable
+      expect(classifyCitation(
+        '[4] Pitch Deck S3 findings: SFM moat 79/100'
+      )).toBe('untraceable');
+
+      // String with http should still work
+      expect(classifyCitation(
+        '[10] Source: https://www.example.com/report'
+      )).toBe('web_url');
+    });
   });
 
   describe('resolveDataPath', () => {

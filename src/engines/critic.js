@@ -44,6 +44,14 @@ const SECTION_DATA_DOMAINS = {
  * @returns {'datapacket' | 'sec_filing' | 'web_url' | 'untraceable'}
  */
 function classifyCitation(citation) {
+  // Handle string citations (e.g., Full Story checklist string refs)
+  if (typeof citation === 'string') {
+    if (/https?:\/\//.test(citation)) return 'web_url';
+    // Bare domain detection: domain.tld anywhere in string (no http prefix needed)
+    if (/\b[a-z0-9]([a-z0-9-]*[a-z0-9])?\.(com|org|net|gov|io|co)\b/i.test(citation)) return 'web_url';
+    return 'untraceable';
+  }
+
   const source = String(citation.source || '').toLowerCase();
   const ref = String(citation.ref || '').toLowerCase();
 
@@ -61,6 +69,11 @@ function classifyCitation(citation) {
 
   // Web URL citations (url field is non-empty and looks like a URL)
   if (citation.url && /^https?:\/\//.test(citation.url)) {
+    return 'web_url';
+  }
+
+  // Embedded URL anywhere in source text (e.g., "GuruFocus data (https://...)")
+  if (/https?:\/\//.test(citation.source || '')) {
     return 'web_url';
   }
 
