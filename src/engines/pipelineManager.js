@@ -8,6 +8,7 @@ import { resolve } from 'path';
 import { dispatchAgent } from './aiResearch.js';
 import { createCacheMonitor } from './cacheMonitor.js';
 import { createBudgetTracker, formatBudgetReport } from './contextBudget.js';
+import { DEBATE_SCHEMAS } from '../schemas/debateStep.js';
 
 const AGENTS_DIR = resolve(process.cwd(), 'agents');
 
@@ -43,6 +44,37 @@ function formatPsrFindings(psrSections) {
   }
   if (parts.length === 0) return '';
   return `## Primary Source Reader Findings\n\n${parts.join('\n\n---\n\n')}`;
+}
+
+// Build debate context string from receivesContext array, debate outputs, and prior sections
+// Maps receivesContext strings from dispatch-table.json to actual content
+function buildDebateContext(receivesContext, debateOutputs, allSections) {
+  if (!receivesContext || receivesContext.length === 0) return '';
+
+  const parts = [];
+  for (const ctx of receivesContext) {
+    if (ctx === 'sections_1_through_5') {
+      // Build summary from allSections with sectionNumber 1-5
+      const s1to5 = allSections.filter(s => s && s.sectionNumber >= 1 && s.sectionNumber <= 5);
+      const summaries = s1to5.map(s => {
+        const label = s.verdict || s.status || '';
+        const redFlags = (s.redFlags && s.redFlags.length > 0) ? `Red flags: ${s.redFlags.join('; ')}` : '';
+        // Truncate narrative to 2000 chars to manage token budget (per RESEARCH Pitfall 1)
+        const narrative = s.narrative ? s.narrative.slice(0, 2000) : '';
+        const narrativeBlock = narrative ? `\n${narrative}` : '';
+        return `### ${s.title} (${label})\n${s.summary}${narrativeBlock}\n${redFlags}`;
+      }).join('\n\n');
+      parts.push(summaries);
+    } else if (ctx === 'bull_output' && debateOutputs.bull) {
+      parts.push(`## Bull Thesis (Step 1)\n\n\`\`\`json\n${JSON.stringify(debateOutputs.bull, null, 2)}\n\`\`\``);
+    } else if (ctx === 'bear_output' && debateOutputs.bear) {
+      parts.push(`## Bear Inversion (Step 2)\n\n\`\`\`json\n${JSON.stringify(debateOutputs.bear, null, 2)}\n\`\`\``);
+    } else if (ctx === 'bull_rebuttal_output' && debateOutputs.bull_rebuttal) {
+      parts.push(`## Bull Rebuttal (Step 3)\n\n\`\`\`json\n${JSON.stringify(debateOutputs.bull_rebuttal, null, 2)}\n\`\`\``);
+    }
+  }
+
+  return parts.join('\n\n---\n\n');
 }
 
 // Main pipeline entry point
@@ -90,60 +122,144 @@ export async function runPipeline(stage, dataPacket, options = {}) {
 
   // --- Wave execution (parallel within, sequential between — per D-01) ---
   for (const wave of stageConfig.phases) {
-    const waveAgents = wave.agents;
 
-    // Dispatch all agents in this wave simultaneously via Promise.allSettled
-    const results = await Promise.allSettled(
-      waveAgents.map(a => dispatchAgent(a.agent, dataPacket, {
-        sectionAssignment: buildSectionAssignment(a.sections),
-        priorSections: allSections.slice(),
-        psrFindings: psrFindingsForAgents,
-        pmFeedback,
-        maxSearches: options.maxSearches,
-      }))
-    );
+    if (wave.isDebate) {
+      // --- Sequential debate dispatch (per D-01, D-02) ---
+      const debateOutputs = {};
 
-    // Process results from this wave
-    const waveResults = [];
-    for (let i = 0; i < results.length; i++) {
-      const agentName = waveAgents[i].agent;
-      if (results[i].status === 'fulfilled') {
-        const r = results[i].value;
-        if (r.error) {
-          errors.push({ agent: agentName, wave: wave.phase, error: r.error });
-        } else {
-          allSections.push(r.section);
-          waveResults.push(r);
+      for (const step of wave.steps) {
+        const debateContext = buildDebateContext(step.receivesContext, debateOutputs, allSections);
+        const stepSchema = DEBATE_SCHEMAS[step.role];
+        const maxSearches = step.webSearch ? (options.maxSearches || 5) : 0;
+
+        try {
+          const result = await dispatchAgent(step.agent, dataPacket, {
+            schema: stepSchema,
+            debateContext,
+            debateRole: step.role,
+            maxSearches,
+            sectionAssignment: `Debate step ${step.step}: ${step.role} — ${step.description || ''}`,
+            priorSections: allSections.slice(),
+            psrFindings: psrFindingsForAgents,
+            pmFeedback,
+            maxTokens: step.role === 'judge' ? 4096 : 8192,
+          });
+
+          if (result.error) {
+            errors.push({ agent: step.agent, step: `debate-${step.role}`, error: result.error });
+            console.warn(`Debate step ${step.step} (${step.role}) failed: ${result.error}`);
+          } else {
+            debateOutputs[step.role] = result.section;
+          }
+
+          budget.record(`${step.agent}:${step.role}`, result.usage);
+          cacheMonitor.record(result.usage);
+        } catch (err) {
+          errors.push({ agent: step.agent, step: `debate-${step.role}`, error: err.message || 'Unknown error' });
+          console.warn(`Debate step ${step.step} (${step.role}) threw: ${err.message}`);
         }
-        budget.record(agentName, r.usage);
-        cacheMonitor.record(r.usage);
-      } else {
-        // Promise itself rejected (unexpected — network error, etc.)
-        errors.push({
-          agent: agentName,
-          wave: wave.phase,
-          error: results[i].reason?.message || 'Unknown error',
-        });
       }
-    }
 
-    // Cache threshold warning
-    const cacheSummary = cacheMonitor.getSummary();
-    if (cacheSummary.belowThreshold) {
-      console.warn(`Cache hit rate ${cacheSummary.hitRatePct} is below 70% threshold after wave ${wave.phase}`);
-    }
+      // 5th call: synthesis-writer composes S6 ReportSectionSchema (per D-04, D-05)
+      try {
+        const allDebateJSON = Object.entries(debateOutputs)
+          .map(([role, output]) => `## ${role}\n\n\`\`\`json\n${JSON.stringify(output, null, 2)}\n\`\`\``)
+          .join('\n\n---\n\n');
 
-    // Checkpoint callback (per D-06, D-07)
-    if (wave.checkpoint?.after && options.onWaveComplete) {
-      const feedback = await options.onWaveComplete(
-        wave.phase,
-        waveResults.map(r => r.section),
-        budget.getSummary(),
-        cacheSummary
+        const synthesisResult = await dispatchAgent('synthesis-writer', dataPacket, {
+          // No schema override — defaults to ReportSectionSchema
+          debateContext: allDebateJSON,
+          sectionAssignment: `Compose Section ${wave.outputSection}: Inversion & Rebuttal from debate outputs. Key: ${wave.outputKey}. Include ALL bear source URLs as clickable links in the narrative. Never drop a URL.`,
+          priorSections: allSections.slice(),
+          psrFindings: psrFindingsForAgents,
+          pmFeedback,
+          maxTokens: 16384,
+          maxSearches: 0,
+        });
+
+        if (synthesisResult.error) {
+          errors.push({ agent: 'synthesis-writer', step: 'debate-composition', error: synthesisResult.error });
+        } else {
+          allSections.push(synthesisResult.section);
+        }
+
+        budget.record('synthesis-writer:composition', synthesisResult.usage);
+        cacheMonitor.record(synthesisResult.usage);
+      } catch (err) {
+        errors.push({ agent: 'synthesis-writer', step: 'debate-composition', error: err.message || 'Unknown error' });
+      }
+
+      // Checkpoint after debate (per D-06, D-07 from Pitch Deck)
+      if (wave.checkpoint?.after && options.onWaveComplete) {
+        const cacheSummary = cacheMonitor.getSummary();
+        const feedback = await options.onWaveComplete(
+          wave.phase,
+          Object.values(debateOutputs),
+          budget.getSummary(),
+          cacheSummary
+        );
+        if (feedback && typeof feedback === 'string') {
+          pmFeedback = feedback;
+        }
+      }
+
+    } else {
+      // --- Parallel wave dispatch (existing pattern, unchanged) ---
+      const waveAgents = wave.agents;
+
+      // Dispatch all agents in this wave simultaneously via Promise.allSettled
+      const results = await Promise.allSettled(
+        waveAgents.map(a => dispatchAgent(a.agent, dataPacket, {
+          sectionAssignment: buildSectionAssignment(a.sections),
+          priorSections: allSections.slice(),
+          psrFindings: psrFindingsForAgents,
+          pmFeedback,
+          maxSearches: options.maxSearches,
+        }))
       );
-      // PM feedback folded into next wave context (per D-07)
-      if (feedback && typeof feedback === 'string') {
-        pmFeedback = feedback;
+
+      // Process results from this wave
+      const waveResults = [];
+      for (let i = 0; i < results.length; i++) {
+        const agentName = waveAgents[i].agent;
+        if (results[i].status === 'fulfilled') {
+          const r = results[i].value;
+          if (r.error) {
+            errors.push({ agent: agentName, wave: wave.phase, error: r.error });
+          } else {
+            allSections.push(r.section);
+            waveResults.push(r);
+          }
+          budget.record(agentName, r.usage);
+          cacheMonitor.record(r.usage);
+        } else {
+          // Promise itself rejected (unexpected — network error, etc.)
+          errors.push({
+            agent: agentName,
+            wave: wave.phase,
+            error: results[i].reason?.message || 'Unknown error',
+          });
+        }
+      }
+
+      // Cache threshold warning
+      const cacheSummary = cacheMonitor.getSummary();
+      if (cacheSummary.belowThreshold) {
+        console.warn(`Cache hit rate ${cacheSummary.hitRatePct} is below 70% threshold after wave ${wave.phase}`);
+      }
+
+      // Checkpoint callback (per D-06, D-07)
+      if (wave.checkpoint?.after && options.onWaveComplete) {
+        const feedback = await options.onWaveComplete(
+          wave.phase,
+          waveResults.map(r => r.section),
+          budget.getSummary(),
+          cacheSummary
+        );
+        // PM feedback folded into next wave context (per D-07)
+        if (feedback && typeof feedback === 'string') {
+          pmFeedback = feedback;
+        }
       }
     }
   }
@@ -183,4 +299,4 @@ export async function runPipeline(stage, dataPacket, options = {}) {
   };
 }
 
-export const _testExports = { loadDispatchTable, buildSectionAssignment, formatPsrFindings };
+export const _testExports = { loadDispatchTable, buildSectionAssignment, formatPsrFindings, buildDebateContext };
