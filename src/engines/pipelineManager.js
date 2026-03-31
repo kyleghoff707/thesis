@@ -89,6 +89,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
   const allSections = [];
   const errors = [];
   let pmFeedback = null;
+  let allDebateOutputs = null;
 
   // --- Pre-processing (sequential — PSR agents) ---
   // Skip data-assembly step (handled externally via assembleDataPacket)
@@ -203,6 +204,8 @@ export async function runPipeline(stage, dataPacket, options = {}) {
         }
       }
 
+      allDebateOutputs = debateOutputs;
+
     } else {
       // --- Parallel wave dispatch (existing pattern, unchanged) ---
       const waveAgents = wave.agents;
@@ -296,6 +299,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
     budget: budget.getSummary(),
     cacheStats: finalCacheStats,
     errors,
+    debateOutputs: allDebateOutputs,
   };
 }
 
