@@ -102,6 +102,7 @@ None yet.
 | (inherited from v1.1 -- see MILESTONES.md for complete history) |
 | 260329-p60 | Fix generate-full-story SKILL.md report assembly field names | 2026-03-30 | 14edad6 | [260329-p60](./quick/260329-p60-fix-generate-full-story-skill-md-report-/) |
 | 260330-qnl | Fix remaining mechanical quality score gaps (citation classification + S6 backfill) | 2026-03-31 | a0f967d, 3ac760d | [260330-qnl](./quick/260330-qnl-fix-remaining-mechanical-quality-score-g/) |
+| 260330-u2o | Fix valuation-specialist empty response for Full Story S5 | 2026-03-31 | aaeefa0 | [260330-u2o](./quick/260330-u2o-fix-valuation-specialist-empty-response-/) |
 
 ## Session Continuity
 
