@@ -227,8 +227,10 @@ function validateCitations(citations, dataPacket) {
       continue;
     }
 
-    // Check for non-canonical format
-    const isCanonical = CANONICAL_CITATION_FIELDS.every(f => citation[f] !== undefined);
+    // Check for non-canonical format — accept common aliases (detail→text, note→text)
+    const hasText = citation.text !== undefined || citation.detail !== undefined || citation.note !== undefined;
+    const hasRef = citation.ref !== undefined || citation.type !== undefined;
+    const isCanonical = citation.id !== undefined && hasRef && hasText && citation.source !== undefined;
     if (!isCanonical) {
       issues.push({
         type: 'citation',
@@ -243,7 +245,7 @@ function validateCitations(citations, dataPacket) {
     switch (type) {
       case 'datapacket': {
         const ref = citation.ref || '';
-        const text = citation.text || citation.note || '';
+        const text = citation.text || citation.detail || citation.note || '';
 
         // Check if ref is a DataPacket dot-path
         if (ref.startsWith('dataPacket.') || ref.startsWith('DataPacket.')) {
