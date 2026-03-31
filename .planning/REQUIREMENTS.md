@@ -29,8 +29,8 @@ Requirements for the Full Story (Stage 3) pipeline. Each maps to roadmap phases.
 
 ### API Migration
 
-- [ ] **API-01**: Full Story pipeline migrated from CC to Claude API dispatch using existing aiResearch.js infrastructure
-- [ ] **API-02**: Structured output enforcement for all Full Story sections including debate and checklist formats
+- [x] **API-01**: Full Story pipeline migrated from CC to Claude API dispatch using existing aiResearch.js infrastructure
+- [x] **API-02**: Structured output enforcement for all Full Story sections including debate and checklist formats
 - [ ] **API-03**: Cost per Full Story and full pipeline (OP+PD+FS) benchmarked against target ceiling
 
 ## Future Requirements
@@ -85,8 +85,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUAL-01 | Phase 15 | Complete |
 | QUAL-02 | Phase 17 | Pending |
 | QUAL-03 | Phase 15 | Complete |
-| API-01 | Phase 16 | Pending |
-| API-02 | Phase 16 | Pending |
+| API-01 | Phase 16 | Complete |
+| API-02 | Phase 16 | Complete |
 | API-03 | Phase 16 | Pending |
 
 **Coverage:**

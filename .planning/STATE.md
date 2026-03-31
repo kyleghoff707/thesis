@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 16 context gathered
-last_updated: "2026-03-31T02:48:33.674Z"
+status: Ready to execute
+stopped_at: Completed 16-02-PLAN.md
+last_updated: "2026-03-31T03:29:27.614Z"
 progress:
   total_phases: 11
   completed_phases: 9
-  total_plans: 19
-  completed_plans: 22
+  total_plans: 22
+  completed_plans: 23
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours -- delivered in minutes, with zero shortcuts on rigor.
-**Current focus:** Phase 15 — quality-system
+**Current focus:** Phase 16 — api-migration
 
 ## Current Position
 
-Phase: 16
-Plan: 03 (Task 2 checkpoint pending — human-verify)
+Phase: 16 (api-migration) — EXECUTING
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -51,7 +51,8 @@ Plan: 03 (Task 2 checkpoint pending — human-verify)
 | Phase 13-cc-pipeline P02 | 5min | 1 tasks | 1 files |
 | Phase 15 P01 | 6min | 2 tasks | 3 files |
 | Phase 15-quality-system P02 | 9min | 1 tasks | 8 files |
-| Phase 16-api-migration P03 | 4min | 1 tasks | 3 files |
+| Phase 16-api-migration P01 | 6min | 2 tasks | 4 files |
+| Phase 16-api-migration P02 | 6min | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,10 @@ Recent decisions affecting current work:
 - [Phase 15]: Checklist completeness weights swap narrativeDepth and dataPopulation only (25<->15), total stays 100
 - [Phase 15]: Non-standard verdicts (CONTEXT, WATCHLIST) mapped to PARTIAL for scoring
 - [Phase 15-quality-system]: Agent output polymorphism (string citations, int refs, object redFlags) handled in critic.js for robust real-data scoring
+- [Phase 16-api-migration]: 4 separate Zod schemas per debate role (not discriminated union) for cleaner zodOutputFormat enforcement
+- [Phase 16-api-migration]: isReportSection guard skips data JSON.parse, citation enrichment, and tokenCost overwriting for non-ReportSection outputs
+- [Phase 16-api-migration]: Debate outputs stored in debateOutputs object keyed by role for named context routing
+- [Phase 16-api-migration]: buildDebateContext truncates section narratives to 2000 chars for token budget management
 
 ### Roadmap Evolution
 
@@ -100,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T03:37:20Z
-Stopped at: Phase 16 Plan 03 Task 2 checkpoint (human-verify)
-Resume file: .planning/phases/16-api-migration/16-03-PLAN.md
+Last session: 2026-03-31T03:29:27.611Z
+Stopped at: Completed 16-02-PLAN.md
+Resume file: None
