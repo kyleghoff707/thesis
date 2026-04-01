@@ -1,7 +1,8 @@
 {
   "onePager": {
     "mode": "single-call",
-    "description": "One Pager uses a single Sonnet call via onePagerGenerator.js — no multi-agent dispatch",
+    "generator": "onePagerGenerator",
+    "description": "One Pager uses a single Sonnet call via onePagerGenerator.js — routed through pipelineManager for budget/cache tracking",
     "sectionKeys": ["company_info", "minimum_standards", "meaning", "growth_metrics", "valuation_summary", "overall_verdict"]
   },
   "pitchDeck": {

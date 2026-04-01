@@ -6,6 +6,7 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { dispatchAgent } from './aiResearch.js';
+import { generateOnePager } from './onePagerGenerator.js';
 import { createCacheMonitor } from './cacheMonitor.js';
 import { createBudgetTracker, formatBudgetReport } from './contextBudget.js';
 import { DEBATE_SCHEMAS } from '../schemas/debateStep.js';
@@ -87,8 +88,33 @@ export async function runPipeline(stage, dataPacket, options = {}) {
   const stageConfig = loadDispatchTable(stage);
   const budget = createBudgetTracker();
   const cacheMonitor = createCacheMonitor();
-  const allSections = [];
   const errors = [];
+
+  // --- Single-call mode (One Pager — no multi-agent orchestration) ---
+  if (stageConfig.mode === 'single-call') {
+    const result = await generateOnePager(dataPacket);
+
+    if (result.error) {
+      errors.push({ agent: 'onePagerGenerator', step: 'single-call', error: result.error });
+    }
+
+    // Record usage in budget tracker and cache monitor
+    if (result.usage) {
+      budget.record('onePagerGenerator', result.usage);
+      cacheMonitor.record(result.usage);
+    }
+
+    return {
+      sections: result.output?.sections || [],
+      budget: budget.getSummary(),
+      cacheStats: cacheMonitor.getSummary(),
+      errors,
+      // Attach full output for caller to use (output path, overallVerdict, etc.)
+      singleCallOutput: result.output,
+    };
+  }
+
+  const allSections = [];
   let pmFeedback = null;
   let allDebateOutputs = null;
 
