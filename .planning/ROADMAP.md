@@ -67,7 +67,7 @@ Plans:
 - [x] **Phase 13: CC Pipeline** - Full Story CC skill orchestrates 6 sections with Pitch Deck inheritance (completed 2026-03-30)
 - [x] **Phase 14: Adversarial Debate** - 4-step sequential debate (Bull/Bear/Rebuttal/Judge) with cited evidence (completed 2026-03-30)
 - [x] **Phase 15: Quality System** - Full Story methodology checks in critic.js with dual scoring (completed 2026-03-30)
-- [ ] **Phase 16: API Migration** - Migrate Full Story from CC to Claude API dispatch with structured outputs
+- [x] **Phase 16: API Migration** - Migrate Full Story from CC to Claude API dispatch with structured outputs (completed 2026-04-01)
 - [ ] **Phase 17: End-to-End Validation** - Complete pipeline validation (OP + PD + FS) on a real ticker
 
 ## Phase Details
@@ -136,12 +136,12 @@ Plans:
   1. All Full Story sections dispatch through aiResearch.js using the same pattern as Pitch Deck -- including wave-based parallelism for independent sections and sequential execution for the debate
   2. Structured output schemas enforce canonical formats for standard sections, checklist sections (43-item scored format), and debate sections (4-step exchange with judge verdict) -- no post-hoc parsing required
   3. Cost per Full Story is benchmarked and combined pipeline cost (OP + PD + FS) is measured against the $15 revised ceiling, with per-section cost breakdown from the budget tracker
-**Plans:** 1/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 16-01-PLAN.md -- DebateStepSchema Zod definitions + dispatchAgent schema parameter + web search gating
-- [ ] 16-02-PLAN.md -- Debate branch in pipelineManager (sequential dispatch, context routing, synthesis composition)
-- [ ] 16-03-PLAN.md -- Full Story runner script + SFM quality parity validation + cost benchmark
+- [x] 16-02-PLAN.md -- Debate branch in pipelineManager (sequential dispatch, context routing, synthesis composition)
+- [x] 16-03-PLAN.md -- Full Story runner script + SFM quality parity validation + cost benchmark
 
 ### Phase 17: End-to-End Validation
 **Goal**: At least 1 ticker runs through the complete 3-stage pipeline (One Pager to Pitch Deck to Full Story) with passing quality scores at every stage
@@ -169,5 +169,5 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 17
 | 13. CC Pipeline | v1.2 | 1/2 | Complete    | 2026-03-30 |
 | 14. Adversarial Debate | v1.2 | 1/1 | Complete    | 2026-03-30 |
 | 15. Quality System | v1.2 | 1/2 | Complete    | 2026-03-30 |
-| 16. API Migration | v1.2 | 1/3 | In Progress|  |
+| 16. API Migration | v1.2 | 3/3 | Complete    | 2026-04-01 |
 | 17. End-to-End Validation | v1.2 | 0/? | Not started | - |
