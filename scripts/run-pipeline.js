@@ -16,6 +16,7 @@ import { runPipeline } from '../src/engines/pipelineManager.js';
 import { formatBudgetReport } from '../src/engines/contextBudget.js';
 import { fetchFilingMarkdown } from '../src/engines/filingMarkdown.js';
 import { extractAllSections } from '../src/engines/filingSections.js';
+import { generateOnePager } from '../src/engines/onePagerGenerator.js';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
@@ -51,6 +52,42 @@ async function main() {
     }
   }
   console.log('');
+
+  // --- One Pager shortcut: single call, no pipeline orchestration ---
+  if (stage === 'onePager') {
+    console.log('Generating One Pager (single call)...\n');
+    const startOP = Date.now();
+    const result = await generateOnePager(dataPacket);
+    const opTime = ((Date.now() - startOP) / 1000).toFixed(1);
+
+    if (result.error) {
+      console.error(`One Pager generation failed: ${result.error}`);
+      process.exit(1);
+    }
+
+    console.log(`\n=== One Pager Results ===\n`);
+    console.log(`Time: ${opTime}s`);
+    console.log(`Sections: ${result.output.sections.length}`);
+    console.log(`Overall Verdict: ${result.output.overallVerdict}`);
+    console.log(`Cost: $${result.usage.cost.toFixed(4)}`);
+    console.log(`Tokens: ${result.usage.inputTokens} in / ${result.usage.outputTokens} out`);
+    console.log('');
+
+    // Per-section summary
+    for (const section of result.output.sections) {
+      console.log(`  [${section.sectionNumber}] ${section.key} — ${section.verdict} (${section.confidence})`);
+      console.log(`      ${section.redFlags.length} red flag(s), ${section.citations.length} citation(s)`);
+    }
+    console.log('');
+
+    // Write output
+    const outputDir = join(process.cwd(), '.thes1s', 'reports', ticker);
+    mkdirSync(outputDir, { recursive: true });
+    const outputPath = join(outputDir, 'one-pager.json');
+    writeFileSync(outputPath, JSON.stringify(result.output, null, 2));
+    console.log(`Output written to ${outputPath}`);
+    process.exit(0);
+  }
 
   // Step 1b: Pre-process filings (fetch 10-K/10-Q content for PSR agents)
   const filings = dataPacket.filings || [];
@@ -176,7 +213,7 @@ async function main() {
   console.log(`Output written to ${outputPath}`);
 
   // Exit code
-  const expectedSections = stage === 'pitchDeck' ? 11 : stage === 'onePager' ? 6 : 9;
+  const expectedSections = stage === 'pitchDeck' ? 11 : 6; // fullStory = 6 (onePager exits early above)
   const produced = result.sections?.length || 0;
   if (produced >= expectedSections) {
     console.log(`\nAll ${produced} sections produced. Pipeline complete.`);

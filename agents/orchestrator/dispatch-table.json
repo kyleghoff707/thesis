@@ -1,25 +1,7 @@
 {
   "onePager": {
-    "preProcessing": [
-      { "step": "data-assembly", "agent": "data-assembler", "parallel": false }
-    ],
-    "phases": [
-      {
-        "phase": 1,
-        "description": "Core analysis",
-        "agents": [
-          { "agent": "financial-analyst", "sections": [3], "parallel": true },
-          { "agent": "financial-analyst", "sections": [4], "parallel": true },
-          { "agent": "business-analyst", "sections": [1], "parallel": true },
-          { "agent": "business-analyst", "sections": [2], "parallel": true },
-          { "agent": "valuation-specialist", "sections": [5], "parallel": true }
-        ]
-      }
-    ],
-    "postProcessing": [
-      { "step": "synthesis", "agent": "synthesis-writer", "sections": [6], "dependsOn": "all-phases" }
-    ],
-    "checkpoints": [],
+    "mode": "single-call",
+    "description": "One Pager uses a single Sonnet call via onePagerGenerator.js — no multi-agent dispatch",
     "sectionKeys": ["company_info", "minimum_standards", "meaning", "growth_metrics", "valuation_summary", "overall_verdict"]
   },
   "pitchDeck": {
