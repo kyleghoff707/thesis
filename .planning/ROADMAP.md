@@ -68,6 +68,7 @@ Plans:
 - [x] **Phase 14: Adversarial Debate** - 4-step sequential debate (Bull/Bear/Rebuttal/Judge) with cited evidence (completed 2026-03-30)
 - [x] **Phase 15: Quality System** - Full Story methodology checks in critic.js with dual scoring (completed 2026-03-30)
 - [x] **Phase 16: API Migration** - Migrate Full Story from CC to Claude API dispatch with structured outputs (completed 2026-04-01)
+- [ ] **Phase 16.1: Simplify One Pager Pipeline** - Replace multi-agent one pager with single Sonnet call (INSERTED)
 - [ ] **Phase 17: End-to-End Validation** - Complete pipeline validation (OP + PD + FS) on a real ticker
 
 ## Phase Details
@@ -143,6 +144,17 @@ Plans:
 - [x] 16-02-PLAN.md -- Debate branch in pipelineManager (sequential dispatch, context routing, synthesis composition)
 - [x] 16-03-PLAN.md -- Full Story runner script + SFM quality parity validation + cost benchmark
 
+### Phase 16.1: Simplify One Pager Pipeline (INSERTED)
+
+**Goal:** Replace the multi-agent One Pager pipeline (4 agents, 6 sections, wave-based dispatch) with a single Claude Sonnet API call that produces a concise screening document in under 3 minutes
+**Requirements**: N/A (inserted phase -- urgent simplification)
+**Depends on:** Phase 16
+**Plans:** 2 plans
+
+Plans:
+- [ ] 16.1-01-PLAN.md -- OnePager output schema + single-call generator + run-pipeline.js shortcut + dispatch-table simplification
+- [ ] 16.1-02-PLAN.md -- Live ticker validation + CC skill simplification + user quality checkpoint
+
 ### Phase 17: End-to-End Validation
 **Goal**: At least 1 ticker runs through the complete 3-stage pipeline (One Pager to Pitch Deck to Full Story) with passing quality scores at every stage
 **Depends on**: Phase 16
@@ -156,7 +168,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 17
+Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 16.1 -> 17
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -170,4 +182,5 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 17
 | 14. Adversarial Debate | v1.2 | 1/1 | Complete    | 2026-03-30 |
 | 15. Quality System | v1.2 | 1/2 | Complete    | 2026-03-30 |
 | 16. API Migration | v1.2 | 3/3 | Complete    | 2026-04-01 |
+| 16.1. Simplify One Pager | v1.2 | 0/2 | Not started | - |
 | 17. End-to-End Validation | v1.2 | 0/? | Not started | - |
