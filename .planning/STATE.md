@@ -87,6 +87,7 @@ Recent decisions affecting current work:
 - v1.1 phases (7-11) archived in ROADMAP.md details section
 - v1.2 roadmap: 6 phases (12-17), 14 requirements
 - Phase 16.1 inserted after Phase 16: Simplify One Pager Pipeline (URGENT)
+- Phase 16.2 inserted after Phase 16.1: One Pager API Migration (URGENT)
 
 ### Pending Todos
 
