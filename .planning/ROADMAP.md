@@ -174,7 +174,11 @@ Plans:
   1. A single ticker completes the full pipeline (One Pager generation, Pitch Deck generation, Full Story generation) in one session with no manual data entry or intervention between stages
   2. Each stage's output passes quality scoring -- One Pager passes, Pitch Deck scores 85+ (mechanical + methodology), Full Story scores comparably
   3. The Full Story output demonstrates clear inheritance from the Pitch Deck -- checklist items reference Pitch Deck findings, valuation confirmation uses the same assumptions, debate addresses the same thesis
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 17-01-PLAN.md -- Pipeline chaining (--stage all) with gate checks and inline quality scoring
+- [ ] 17-02-PLAN.md -- MNST end-to-end pipeline run + quality validation + PM checkpoint
 
 ## Progress
 
@@ -195,4 +199,4 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 16.1 -> 16.2 -> 1
 | 16. API Migration | v1.2 | 3/3 | Complete    | 2026-04-01 |
 | 16.1. Simplify One Pager | v1.2 | 2/2 | Complete    | 2026-04-01 |
 | 16.2. One Pager API Migration | v1.2 | 0/1 | Complete    | 2026-04-01 |
-| 17. End-to-End Validation | v1.2 | 0/? | Not started | - |
+| 17. End-to-End Validation | v1.2 | 0/2 | Not started | - |
