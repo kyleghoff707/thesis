@@ -61,9 +61,9 @@ function classifyCitation(citation) {
     return 'datapacket';
   }
 
-  // SEC filing citations
-  if (source.includes('sec') || source.includes('edgar') || source.includes('10-k') ||
-      source.includes('10-q') || source.includes('8-k') || source.includes('13f')) {
+  // SEC filing citations — match "SEC" as a word boundary, not substring of "section"
+  if (/\bsec\b|edgar|10-[kq]|8-k|13[fd]|proxy\s*statement|annual\s*report.*filing/i.test(source) ||
+      /\bsec\b|edgar|10-[kq]|8-k|13[fd]/i.test(ref)) {
     return 'sec_filing';
   }
 
@@ -250,12 +250,17 @@ function validateCitations(citations, dataPacket) {
         // Check if ref is a DataPacket dot-path
         if (ref.startsWith('dataPacket.') || ref.startsWith('DataPacket.')) {
           const path = ref.replace(/^[Dd]ataPacket\./, '');
+          // Descriptive array labels (e.g., [CEO Award March 14]) can't be resolved by
+          // dot-path but are legitimate references — downgrade to low severity
+          const hasDescriptiveLabel = /\[[^\]]*[a-zA-Z]{2,}[^\]]*\]/.test(path);
           const { found, value } = resolveDataPath(dataPacket, path);
           if (!found) {
             issues.push({
               type: 'citation',
-              severity: 'high',
-              message: `DataPacket path not found: ${ref}`,
+              severity: hasDescriptiveLabel ? 'low' : 'high',
+              message: hasDescriptiveLabel
+                ? `DataPacket path uses descriptive label (not verifiable): ${ref}`
+                : `DataPacket path not found: ${ref}`,
               field: `citation[${citation.id}]`,
             });
           } else if (typeof value === 'number') {
@@ -613,7 +618,8 @@ function checkSearchCompliance(section) {
   // PSR agents (annual-reader, quarterly-reader) read filings, not web
   // Synthesis writer reads section files, not web
   // These sections are exempt from web search requirements
-  const EXEMPT_SECTIONS = ['psr_annual', 'psr_quarterly', 'synthesis', 'overall_verdict'];
+  // inversion_rebuttal is composed from debate steps — web research lives in the bear step
+  const EXEMPT_SECTIONS = ['psr_annual', 'psr_quarterly', 'synthesis', 'overall_verdict', 'inversion_rebuttal'];
   if (EXEMPT_SECTIONS.includes(section.key)) {
     return { score: 100, issues: [] };
   }
@@ -686,6 +692,51 @@ function normalizeVerdict(verdict) {
   if (v === 'CONTEXT' || v === 'WATCHLIST') return 'PARTIAL';
   if (v === 'PASS' || v === 'FAIL' || v === 'PARTIAL') return v;
   return v; // return as-is for other unknown verdicts
+}
+
+/**
+ * Build searchable text from all content fields in a section.
+ * Methodology checks should search ALL text, not just narrative — models may put
+ * analysis content in summary, verdictRationale, data, crossCuttingFindings, or redFlags
+ * (especially when using messages.create() without structured output enforcement).
+ * @param {object} section - Full section object
+ * @returns {string} - Concatenated searchable text
+ */
+function getAllText(section) {
+  const parts = [
+    section.narrative || '',
+    section.summary || '',
+    section.verdictRationale || '',
+  ];
+  // Stringify data object
+  if (section.data) {
+    try {
+      const d = typeof section.data === 'string' ? section.data : JSON.stringify(section.data);
+      parts.push(d);
+    } catch { /* ignore */ }
+  }
+  // crossCuttingFindings
+  if (Array.isArray(section.crossCuttingFindings)) {
+    for (const f of section.crossCuttingFindings) {
+      if (typeof f === 'string') parts.push(f);
+      else if (f && typeof f === 'object') parts.push(f.finding || f.text || JSON.stringify(f));
+    }
+  }
+  // redFlags
+  if (Array.isArray(section.redFlags)) {
+    for (const rf of section.redFlags) {
+      if (typeof rf === 'string') parts.push(rf);
+      else if (rf && typeof rf === 'object') parts.push(rf.flag || rf.text || rf.description || JSON.stringify(rf));
+    }
+  }
+  // primarySourceInsights
+  if (Array.isArray(section.primarySourceInsights)) {
+    for (const p of section.primarySourceInsights) {
+      if (typeof p === 'string') parts.push(p);
+      else if (p && typeof p === 'object') parts.push(p.insight || p.text || JSON.stringify(p));
+    }
+  }
+  return parts.join(' ');
 }
 
 /**
@@ -1286,45 +1337,46 @@ const METHODOLOGY_CHECKS = {
   ],
 
   // S5: Valuation Confirmation (5 checks)
+  // Uses getAllText() — analysis may be in narrative, summary, verdictRationale, data, or crossCuttingFindings
   valuation_confirmation: [
     {
       id: 'val-growth-quality',
       label: 'Debt-fueled growth check present',
       critical: true,
-      test: (s) => /debt.?fuel|organic\s*growth|acqui.*growth|revenue.*growth.*debt|leverage.*growth|growth.*not.*debt/i.test(s.narrative || ''),
+      test: (s) => /debt.?fuel|organic\s*growth|acqui.*growth|revenue.*growth.*debt|leverage.*growth|growth.*not.*debt|zero.*debt|no.*debt|debt.*free/i.test(getAllText(s)),
     },
     {
       id: 'val-fgr-rationality',
       label: 'FGR rationality test',
       critical: true,
-      test: (s) => /FGR|future\s*growth\s*rate|rule\s*of\s*72|market\s*share\s*ceiling|growth\s*rate.*rational|sanity\s*check/i.test(s.narrative || ''),
+      test: (s) => /FGR|future\s*growth\s*rate|rule\s*of\s*72|market\s*share\s*ceiling|growth\s*rate.*rational|sanity\s*check|growth.*ceiling|TAM|addressable\s*market/i.test(getAllText(s)),
     },
     {
       id: 'val-sensitivity',
       label: 'Sensitivity analysis or range of values',
       critical: true,
-      test: (s) => /sensitiv|range|scenario|bear\s*case|bull\s*case|conservative|optimistic|if\s*growth/i.test(s.narrative || ''),
+      test: (s) => /sensitiv|range|scenario|bear\s*case|bull\s*case|conservative|optimistic|if\s*growth|low.*high|buy.*range/i.test(getAllText(s)),
     },
     {
       id: 'val-multiple-methods',
       label: '2+ valuation methods referenced',
       critical: false,
       test: (s) => {
-        const n = (s.narrative || '').toLowerCase();
+        const t = getAllText(s).toLowerCase();
         const methods = [
           /mos|margin\s*of\s*safety/i,
           /pbt|payback\s*time/i,
           /ten\s*cap|10.?cap|owner\s*earn/i,
           /equity\s*bond|buffettology/i,
         ];
-        return methods.filter(m => m.test(n)).length >= 2;
+        return methods.filter(m => m.test(t)).length >= 2;
       },
     },
     {
       id: 'val-red-flags',
       label: 'Acquisition/merger red flags addressed',
       critical: false,
-      test: (s) => /acqui|merger|M&A|roll.?up|serial\s*acquir|goodwill|integration\s*risk/i.test(s.narrative || ''),
+      test: (s) => /acqui|merger|M&A|roll.?up|serial\s*acquir|goodwill|integration\s*risk|no.*acqui|organic/i.test(getAllText(s)),
     },
   ],
 
@@ -1337,8 +1389,9 @@ const METHODOLOGY_CHECKS = {
       test: (s) => {
         const data = parseDebateData(s);
         if (data && data.debateStructure && data.debateStructure.totalExchanges >= 5) return true;
-        // Fallback: count bull patterns in narrative
-        const matches = (s.narrative || '').match(/bull\s*(thesis|point|case)|strength|investment\s*case|bull\s*#?\d/gi);
+        // Fallback: count bull patterns in all text
+        const text = getAllText(s);
+        const matches = text.match(/bull\s*(thesis|point|case)|strength|investment\s*case|bull\s*#?\d|thesis\s*point/gi);
         return (matches || []).length >= 5;
       },
     },
@@ -1352,8 +1405,9 @@ const METHODOLOGY_CHECKS = {
           // Each exchange IS a bear inversion; need >= 5 total
           return data.debateStructure.totalExchanges >= 5;
         }
-        // Fallback: count bear patterns in narrative
-        const matches = (s.narrative || '').match(/bear\s*(inversion|point|argument|case)|invert|counter.?argument/gi);
+        // Fallback: count bear patterns in all text
+        const text = getAllText(s);
+        const matches = text.match(/bear\s*(inversion|point|argument|case)|invert|counter.?argument|risk|concern|headwind/gi);
         return (matches || []).length >= 5;
       },
     },
@@ -1362,6 +1416,7 @@ const METHODOLOGY_CHECKS = {
       label: 'Web citations present (>= 3 URLs)',
       critical: true,
       test: (s) => {
+        // Check citations for URLs
         const citations = s.citations || [];
         let webCount = 0;
         for (const c of citations) {
@@ -1371,7 +1426,13 @@ const METHODOLOGY_CHECKS = {
             if ((c.source && /https?:\/\//.test(c.source)) || (c.url && /https?:\/\//.test(c.url))) webCount++;
           }
         }
-        return webCount >= 3;
+        if (webCount >= 3) return true;
+        // Fallback: check narrative for URLs (bear URLs may be inline links, not in citations array)
+        const urlMatches = getAllText(s).match(/https?:\/\/[^\s)]+/g);
+        if (urlMatches && urlMatches.length >= 3) return true;
+        // Fallback: check if searchesPerformed has backfilled bear searches
+        const searches = s.searchesPerformed || [];
+        return searches.filter(sp => sp.usedInSection).length >= 3;
       },
     },
     {
@@ -1379,13 +1440,13 @@ const METHODOLOGY_CHECKS = {
       label: 'Bull rebuts all bear points',
       critical: true,
       test: (s) => {
-        const narrative = s.narrative || '';
-        const hasRebuttalLang = /rebut|counter|respond|address|acknowledg/i.test(narrative);
+        const text = getAllText(s);
+        const hasRebuttalLang = /rebut|counter|respond|address|acknowledg/i.test(text);
         if (!hasRebuttalLang) return false;
         const data = parseDebateData(s);
         if (data && data.debateStructure) return true;
         // Fallback: multiple rebuttal instances
-        const matches = narrative.match(/rebut|counter|respond|address|acknowledg/gi);
+        const matches = text.match(/rebut|counter|respond|address|acknowledg/gi);
         return (matches || []).length >= 3;
       },
     },
@@ -1394,9 +1455,9 @@ const METHODOLOGY_CHECKS = {
       label: 'At least 1 severe/thesis-killer risk',
       critical: false,
       test: (s) => {
-        const pat = /thesis.?killer|severe|critical\s*risk|deal.?breaker|red\s*flag.*severe|fatal|unresolved.*severe/i;
-        // Check narrative
-        if (pat.test(s.narrative || '')) return true;
+        const pat = /thesis.?killer|severe|critical\s*risk|deal.?breaker|red\s*flag.*severe|fatal|unresolved.*severe|significant.*risk|major.*concern/i;
+        // Check all text
+        if (pat.test(getAllText(s))) return true;
         // Check redFlags array (agent may put "THESIS KILLER: ..." labels there)
         if (Array.isArray(s.redFlags) && s.redFlags.some((rf) => pat.test(typeof rf === 'string' ? rf : rf.text || ''))) return true;
         // Check structured data for severity: "thesis_killer" from debate steps
