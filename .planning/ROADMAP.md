@@ -69,7 +69,7 @@ Plans:
 - [x] **Phase 15: Quality System** - Full Story methodology checks in critic.js with dual scoring (completed 2026-03-30)
 - [x] **Phase 16: API Migration** - Migrate Full Story from CC to Claude API dispatch with structured outputs (completed 2026-04-01)
 - [x] **Phase 16.1: Simplify One Pager Pipeline** - Replace multi-agent one pager with single Sonnet call (INSERTED) (completed 2026-04-01)
-- [ ] **Phase 16.2: One Pager API Migration** - Migrate One Pager from CC skill to Claude API dispatch (INSERTED)
+- [x] **Phase 16.2: One Pager API Migration** - Migrate One Pager from CC skill to Claude API dispatch (INSERTED) (completed 2026-04-01)
 - [ ] **Phase 17: End-to-End Validation** - Complete pipeline validation (OP + PD + FS) on a real ticker
 
 ## Phase Details
@@ -161,7 +161,7 @@ Plans:
 **Goal:** Wire the One Pager generator through pipelineManager.js so all 3 stages use the same execution infrastructure with budget tracking and cache monitoring
 **Requirements**: N/A (inserted phase -- completing API migration across all 3 stages)
 **Depends on:** Phase 16.1 (simplified single-call generator)
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 16.2-01-PLAN.md -- Single-call dispatch mode in pipelineManager + unified run-pipeline.js + CC skill update
@@ -194,5 +194,5 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 16.1 -> 16.2 -> 1
 | 15. Quality System | v1.2 | 1/2 | Complete    | 2026-03-30 |
 | 16. API Migration | v1.2 | 3/3 | Complete    | 2026-04-01 |
 | 16.1. Simplify One Pager | v1.2 | 2/2 | Complete    | 2026-04-01 |
-| 16.2. One Pager API Migration | v1.2 | 0/1 | In progress | - |
+| 16.2. One Pager API Migration | v1.2 | 0/1 | Complete    | 2026-04-01 |
 | 17. End-to-End Validation | v1.2 | 0/? | Not started | - |
