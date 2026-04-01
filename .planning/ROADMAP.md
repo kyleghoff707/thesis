@@ -158,13 +158,13 @@ Plans:
 
 ### Phase 16.2: One Pager API Migration (INSERTED)
 
-**Goal:** Migrate the One Pager from CC skill execution to Claude API dispatch using the same aiResearch.js infrastructure proven on Pitch Deck and Full Story
+**Goal:** Wire the One Pager generator through pipelineManager.js so all 3 stages use the same execution infrastructure with budget tracking and cache monitoring
 **Requirements**: N/A (inserted phase -- completing API migration across all 3 stages)
 **Depends on:** Phase 16.1 (simplified single-call generator)
-**Plans:** 0 plans
+**Plans:** 1 plan
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 16.2 to break down)
+- [ ] 16.2-01-PLAN.md -- Single-call dispatch mode in pipelineManager + unified run-pipeline.js + CC skill update
 
 ### Phase 17: End-to-End Validation
 **Goal**: At least 1 ticker runs through the complete 3-stage pipeline (One Pager to Pitch Deck to Full Story) with passing quality scores at every stage
@@ -194,4 +194,5 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 16.1 -> 16.2 -> 1
 | 15. Quality System | v1.2 | 1/2 | Complete    | 2026-03-30 |
 | 16. API Migration | v1.2 | 3/3 | Complete    | 2026-04-01 |
 | 16.1. Simplify One Pager | v1.2 | 2/2 | Complete    | 2026-04-01 |
+| 16.2. One Pager API Migration | v1.2 | 0/1 | In progress | - |
 | 17. End-to-End Validation | v1.2 | 0/? | Not started | - |
