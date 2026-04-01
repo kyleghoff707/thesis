@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
 status: Ready to plan
-stopped_at: Completed 16-02-PLAN.md
-last_updated: "2026-04-01T13:37:02.734Z"
+stopped_at: Completed 16.1-01-PLAN.md
+last_updated: "2026-04-01T14:32:45.515Z"
 progress:
-  total_phases: 11
-  completed_phases: 10
-  total_plans: 22
-  completed_plans: 25
+  total_phases: 12
+  completed_phases: 11
+  total_plans: 24
+  completed_plans: 27
 ---
 
 # Project State
@@ -19,7 +19,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours -- delivered in minutes, with zero shortcuts on rigor.
-**Current focus:** Phase 16 — api-migration
+**Current focus:** Phase 16.1 — simplify-one-pager-pipeline
 
 ## Current Position
 
@@ -53,6 +53,7 @@ Plan: Not started
 | Phase 15-quality-system P02 | 9min | 1 tasks | 8 files |
 | Phase 16-api-migration P01 | 6min | 2 tasks | 4 files |
 | Phase 16-api-migration P02 | 6min | 1 tasks | 3 files |
+| Phase 16.1 P01 | 2min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -78,12 +79,14 @@ Recent decisions affecting current work:
 - [Phase 16-api-migration]: isReportSection guard skips data JSON.parse, citation enrichment, and tokenCost overwriting for non-ReportSection outputs
 - [Phase 16-api-migration]: Debate outputs stored in debateOutputs object keyed by role for named context routing
 - [Phase 16-api-migration]: buildDebateContext truncates section narratives to 2000 chars for token budget management
+- [Phase 16.1]: Single Sonnet call replaces 6-agent One Pager pipeline for screening stage
 
 ### Roadmap Evolution
 
 - v1.0 phases (5A-6.3) archived in MILESTONES.md
 - v1.1 phases (7-11) archived in ROADMAP.md details section
 - v1.2 roadmap: 6 phases (12-17), 14 requirements
+- Phase 16.1 inserted after Phase 16: Simplify One Pager Pipeline (URGENT)
 
 ### Pending Todos
 
@@ -107,6 +110,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T03:29:27.611Z
-Stopped at: Completed 16-02-PLAN.md
+Last session: 2026-04-01T14:16:02.958Z
+Stopped at: Completed 16.1-01-PLAN.md
 Resume file: None
