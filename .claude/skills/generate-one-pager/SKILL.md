@@ -23,7 +23,7 @@ Run the single-call generator via CLI:
 node --loader ./scripts/node-esm-loader.js scripts/run-pipeline.js {TICKER} onePager
 ```
 
-This assembles the DataPacket (financial data, company info, growth rates, valuation) and generates the complete One Pager in a single Claude Sonnet API call. Output is written to `.thes1s/reports/{TICKER}/one-pager.json`.
+This assembles the DataPacket (financial data, company info, growth rates, valuation) and runs the One Pager through the standard pipeline infrastructure with budget tracking and cache monitoring. The One Pager uses a single Claude Sonnet API call internally. Output is written to `.thes1s/reports/{TICKER}/one-pager.json`.
 
 **Monitor CLI output for:**
 - DataPacket assembly time and field count
