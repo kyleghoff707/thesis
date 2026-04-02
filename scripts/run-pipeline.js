@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 // CLI entry point: Run the full AI agent pipeline for a given ticker
-// Usage: node --loader ./scripts/node-esm-loader.js scripts/run-pipeline.js [TICKER]
+// Usage: node --loader ./scripts/node-esm-loader.js scripts/run-pipeline.js [TICKER] [STAGE]
+//        node --loader ./scripts/node-esm-loader.js scripts/run-pipeline.js MNST --stage all
 //
 // Assembles a DataPacket, runs the pipeline for any stage (onePager, pitchDeck, fullStory)
 // via pipelineManager.js, logs wave-by-wave progress, and writes output to
 // .thes1s/reports/{TICKER}/pipeline-output.json
+//
+// When --stage all: chains One Pager -> Pitch Deck -> Full Story with automatic
+// gate checks between stages. Stops on first gate failure.
 //
 // Prerequisites:
 //   - .env.local with VITE_CLAUDE_KEY
@@ -17,19 +21,45 @@ import { runPipeline } from '../src/engines/pipelineManager.js';
 import { formatBudgetReport } from '../src/engines/contextBudget.js';
 import { fetchFilingMarkdown } from '../src/engines/filingMarkdown.js';
 import { extractAllSections } from '../src/engines/filingSections.js';
-import { mkdirSync, writeFileSync } from 'fs';
+import { validateStage } from '../src/engines/critic.js';
+import { formatQualityReport } from '../src/engines/qualityFormatter.js';
+import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
-const ticker = (process.argv[2] || 'SFM').toUpperCase();
-const stage = process.argv[3] || 'pitchDeck';
+// Argument parsing — supports both old and new syntax:
+//   node run-pipeline.js MNST pitchDeck          (backward compat: positional)
+//   node run-pipeline.js MNST --stage all         (new: --stage flag)
+//   node run-pipeline.js MNST --stage pitchDeck   (new: --stage flag for single stage)
+const args = process.argv.slice(2);
+let ticker = 'SFM';
+let stage = 'pitchDeck';
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--stage' && args[i + 1]) {
+    stage = args[i + 1];
+    i++;
+  } else if (!args[i].startsWith('--')) {
+    if (i === 0) ticker = args[i].toUpperCase();
+    else stage = args[i]; // backward compat: positional stage
+  }
+}
 
-async function main() {
-  console.log(`\n=== Thes1s Pipeline Runner ===`);
-  console.log(`Ticker: ${ticker}`);
-  console.log(`Stage: ${stage}`);
-  console.log(`Started: ${new Date().toISOString()}\n`);
+// Shared wave progress callback
+const onWaveComplete = async (waveNumber, results, budgetSummary, cacheSummary) => {
+  const sectionCount = results.filter(r => r != null).length;
+  console.log(`--- Wave ${waveNumber} complete ---`);
+  console.log(`  Sections produced: ${sectionCount}`);
+  if (budgetSummary) {
+    console.log(`  Running cost: $${budgetSummary.totals?.cost?.toFixed(4) || '?'}`);
+  }
+  if (cacheSummary) {
+    console.log(`  Cache: ${cacheSummary.hitRatePct || '?'} hit rate (${cacheSummary.totalRead || 0} read / ${cacheSummary.totalWrite || 0} write tokens)`);
+  }
+  console.log('');
+  return null; // No PM feedback in automated mode
+};
 
-  // Step 1: Assemble DataPacket
+// Shared DataPacket assembly + filing pre-processing
+async function assembleAndPreprocess() {
   console.log('Assembling DataPacket...');
   const startAssembly = Date.now();
   let dataPacket;
@@ -53,7 +83,7 @@ async function main() {
   }
   console.log('');
 
-  // Step 1b: Pre-process filings (fetch 10-K/10-Q content for PSR agents)
+  // Pre-process filings (fetch 10-K/10-Q content for PSR agents)
   const filings = dataPacket.filings || [];
   const annuals = filings.filter(f => f.form === '10-K').slice(0, 5);
   const quarterlies = filings.filter(f => f.form === '10-Q').slice(0, 4);
@@ -79,7 +109,7 @@ async function main() {
           console.log(`  ${f.form} ${f.filingDate}: ${sectionCount} sections (${(result.markdown.length / 1024).toFixed(0)}KB)`);
         }
       } catch (err) {
-        console.warn(`  ${f.form} ${f.filingDate}: failed — ${err.message}`);
+        console.warn(`  ${f.form} ${f.filingDate}: failed - ${err.message}`);
       }
     }
 
@@ -92,24 +122,21 @@ async function main() {
     }
   }
 
-  // Step 2: Run pipeline
+  return { dataPacket, assemblyTime };
+}
+
+// Single-stage mode (backward-compatible with original main())
+async function main() {
+  console.log(`\n=== Thes1s Pipeline Runner ===`);
+  console.log(`Ticker: ${ticker}`);
+  console.log(`Stage: ${stage}`);
+  console.log(`Started: ${new Date().toISOString()}\n`);
+
+  const { dataPacket, assemblyTime } = await assembleAndPreprocess();
+
+  // Run pipeline
   console.log(`Running ${stage} pipeline...\n`);
   const startPipeline = Date.now();
-
-  const onWaveComplete = async (waveNumber, results, budgetSummary, cacheSummary) => {
-    // results is an array of section objects (not Promise.allSettled wrappers)
-    const sectionCount = results.filter(r => r != null).length;
-    console.log(`--- Wave ${waveNumber} complete ---`);
-    console.log(`  Sections produced: ${sectionCount}`);
-    if (budgetSummary) {
-      console.log(`  Running cost: $${budgetSummary.totals?.cost?.toFixed(4) || '?'}`);
-    }
-    if (cacheSummary) {
-      console.log(`  Cache: ${cacheSummary.hitRatePct || '?'} hit rate (${cacheSummary.totalRead || 0} read / ${cacheSummary.totalWrite || 0} write tokens)`);
-    }
-    console.log('');
-    return null; // No PM feedback in automated mode
-  };
 
   let result;
   try {
@@ -121,7 +148,7 @@ async function main() {
   }
   const pipelineTime = ((Date.now() - startPipeline) / 1000).toFixed(1);
 
-  // Step 3: Report results
+  // Report results
   console.log('\n=== Pipeline Results ===\n');
   console.log(`Total time: ${pipelineTime}s`);
   console.log(`Sections produced: ${result.sections?.length || 0}`);
@@ -157,7 +184,7 @@ async function main() {
     console.log('');
   }
 
-  // Step 4: Write output
+  // Write output
   const outputDir = join(process.cwd(), '.thes1s', 'reports', ticker);
   mkdirSync(outputDir, { recursive: true });
   const outputPath = join(outputDir, 'pipeline-output.json');
@@ -200,8 +227,272 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('Unexpected error:', err.message);
-  console.error(err.stack);
-  process.exit(1);
-});
+// Full 3-stage chaining mode (--stage all)
+// Chains: One Pager -> Pitch Deck -> Full Story
+// Gate checks between stages; stops on first failure
+async function runAllStages() {
+  const startTotal = Date.now();
+
+  console.log(`\n${'='.repeat(60)}`);
+  console.log(`  Thes1s Full Pipeline — ${ticker}`);
+  console.log(`  Stages: One Pager -> Pitch Deck -> Full Story`);
+  console.log(`  Started: ${new Date().toISOString()}`);
+  console.log(`${'='.repeat(60)}\n`);
+
+  const outputDir = join(process.cwd(), '.thes1s', 'reports', ticker);
+  mkdirSync(outputDir, { recursive: true });
+  const qualityDir = join(outputDir, 'quality');
+  mkdirSync(qualityDir, { recursive: true });
+  const sectionsDir = join(outputDir, 'sections');
+  mkdirSync(sectionsDir, { recursive: true });
+
+  // Step 1: Assemble DataPacket once (shared across all stages)
+  const { dataPacket } = await assembleAndPreprocess();
+
+  // ================================================================
+  // STAGE 1: ONE PAGER
+  // ================================================================
+  console.log('\n' + '='.repeat(60));
+  console.log('STAGE 1: ONE PAGER');
+  console.log('='.repeat(60) + '\n');
+
+  const opStart = Date.now();
+  let opResult;
+  try {
+    opResult = await runPipeline('onePager', dataPacket, { onWaveComplete });
+  } catch (err) {
+    console.error('One Pager pipeline failed:', err.message);
+    console.error(err.stack);
+    process.exit(1);
+  }
+  const opTime = ((Date.now() - opStart) / 1000).toFixed(1);
+  console.log(`One Pager completed in ${opTime}s`);
+
+  // Write one-pager output files
+  const opOutput = {
+    ticker,
+    stage: 'onePager',
+    completedAt: new Date().toISOString(),
+    pipelineTimeSeconds: parseFloat(opTime),
+    sections: opResult.sections,
+    budget: opResult.budget,
+    cacheStats: opResult.cacheStats,
+    errors: opResult.errors,
+  };
+  writeFileSync(join(outputDir, 'pipeline-output-op.json'), JSON.stringify(opOutput, null, 2));
+  if (opResult.singleCallOutput) {
+    writeFileSync(join(outputDir, 'one-pager.json'), JSON.stringify(opResult.singleCallOutput, null, 2));
+  }
+
+  // Gate check: OP verdict (per D-04)
+  const opVerdict = opResult.singleCallOutput?.overallVerdict;
+  console.log(`\nOne Pager verdict: ${opVerdict}`);
+  if (opVerdict !== 'PASS') {
+    console.error(`\nGATE FAILED: One Pager verdict is ${opVerdict}, not PASS. Pipeline stopped.`);
+    console.error(`Review: ${join(outputDir, 'one-pager.json')}`);
+    process.exit(1);
+  }
+  console.log('Gate PASSED — advancing to Pitch Deck\n');
+
+  // ================================================================
+  // STAGE 2: PITCH DECK
+  // ================================================================
+  console.log('='.repeat(60));
+  console.log('STAGE 2: PITCH DECK');
+  console.log('='.repeat(60) + '\n');
+
+  const pdStart = Date.now();
+  let pdResult;
+  try {
+    pdResult = await runPipeline('pitchDeck', dataPacket, { onWaveComplete });
+  } catch (err) {
+    console.error('Pitch Deck pipeline failed:', err.message);
+    console.error(err.stack);
+    process.exit(1);
+  }
+  const pdTime = ((Date.now() - pdStart) / 1000).toFixed(1);
+  console.log(`Pitch Deck completed in ${pdTime}s`);
+
+  // Write pipeline-output.json (PD canonical name)
+  writeFileSync(join(outputDir, 'pipeline-output.json'), JSON.stringify({
+    ticker,
+    stage: 'pitchDeck',
+    completedAt: new Date().toISOString(),
+    pipelineTimeSeconds: parseFloat(pdTime),
+    sectionCount: pdResult.sections?.length || 0,
+    errorCount: pdResult.errors?.length || 0,
+    sections: pdResult.sections,
+    budget: pdResult.budget,
+    cacheStats: pdResult.cacheStats,
+    errors: pdResult.errors,
+  }, null, 2));
+
+  // Gate check: PD quality score (per D-04, D-05, D-07)
+  console.log('\nRunning Pitch Deck quality scoring...');
+  const pdQuality = validateStage(pdResult.sections, dataPacket);
+  writeFileSync(join(qualityDir, 'pitch-deck-v4.quality.json'), JSON.stringify(pdQuality, null, 2));
+  const pdQualityMd = formatQualityReport(pdQuality, { ticker, stage: 'pitchDeck' });
+  writeFileSync(join(qualityDir, 'pitch-deck-v4.quality.md'), pdQualityMd);
+
+  console.log(`Pitch Deck mechanical score: ${pdQuality.overallScore}`);
+  console.log(`Pitch Deck methodology score: ${pdQuality.overallMethodologyScore}`);
+
+  if (pdQuality.overallScore < 85 || pdQuality.overallMethodologyScore < 85) {
+    console.error(`\nGATE FAILED: Pitch Deck scores below 85 threshold.`);
+    console.error(`  Mechanical: ${pdQuality.overallScore} (need 85+)`);
+    console.error(`  Methodology: ${pdQuality.overallMethodologyScore} (need 85+)`);
+    console.error(`Quality report: ${join(qualityDir, 'pitch-deck-v4.quality.md')}`);
+    process.exit(1);
+  }
+  console.log('Gate PASSED — advancing to Full Story\n');
+
+  // ================================================================
+  // STAGE 3: FULL STORY
+  // ================================================================
+  console.log('='.repeat(60));
+  console.log('STAGE 3: FULL STORY');
+  console.log('='.repeat(60) + '\n');
+
+  // Inject PD sections into dataPacket for Full Story inheritance (per run-full-story.js line 71)
+  dataPacket.pitchDeckSections = pdResult.sections || [];
+  console.log(`Injected ${dataPacket.pitchDeckSections.length} Pitch Deck sections into DataPacket\n`);
+
+  const fsStart = Date.now();
+  let fsResult;
+  try {
+    fsResult = await runPipeline('fullStory', dataPacket, { onWaveComplete, maxSearches: 7 });
+  } catch (err) {
+    console.error('Full Story pipeline failed:', err.message);
+    console.error(err.stack);
+    process.exit(1);
+  }
+  const fsTime = ((Date.now() - fsStart) / 1000).toFixed(1);
+  console.log(`Full Story completed in ${fsTime}s`);
+
+  // Save debate step outputs individually (per run-full-story.js lines 149-159)
+  if (fsResult.debateOutputs) {
+    console.log('\nSaving debate step outputs...');
+    for (const [role, output] of Object.entries(fsResult.debateOutputs)) {
+      const stepNum = { bull: 1, bear: 2, bull_rebuttal: 3, judge: 4 }[role];
+      if (stepNum && output) {
+        writeFileSync(join(sectionsDir, `debate-step-${stepNum}.json`), JSON.stringify(output, null, 2));
+        console.log(`  Saved debate-step-${stepNum}.json (${role})`);
+      }
+    }
+  }
+
+  // Save section outputs individually (per run-full-story.js lines 162-181)
+  const sectionKeyMap = [
+    'event_analysis',
+    'meaning_checklist',
+    'moat_checklist',
+    'management_checklist',
+    'valuation_confirmation',
+    'inversion_rebuttal',
+  ];
+  if (fsResult.sections?.length > 0) {
+    console.log('\nSaving section outputs...');
+    for (const section of fsResult.sections) {
+      if (!section) continue;
+      const sNum = section.sectionNumber || '?';
+      const sKey = section.key || sectionKeyMap[sNum - 1] || 'unknown';
+      writeFileSync(join(sectionsDir, `fullStory-S${sNum}-${sKey}.json`), JSON.stringify(section, null, 2));
+      console.log(`  Saved fullStory-S${sNum}-${sKey}.json`);
+    }
+  }
+
+  // Write full-story-api.json (FS canonical name)
+  writeFileSync(join(outputDir, 'full-story-api.json'), JSON.stringify({
+    ticker,
+    stage: 'fullStory',
+    completedAt: new Date().toISOString(),
+    pipelineTimeSeconds: parseFloat(fsTime),
+    sectionCount: fsResult.sections?.length || 0,
+    errorCount: fsResult.errors?.length || 0,
+    sections: fsResult.sections,
+    budget: fsResult.budget,
+    cacheStats: fsResult.cacheStats,
+    errors: fsResult.errors,
+    debateOutputs: fsResult.debateOutputs,
+  }, null, 2));
+
+  // Gate check: FS quality score (per D-05)
+  console.log('\nRunning Full Story quality scoring...');
+  const fsQuality = validateStage(fsResult.sections, dataPacket);
+  writeFileSync(join(qualityDir, 'full-story-v4.quality.json'), JSON.stringify(fsQuality, null, 2));
+  const fsQualityMd = formatQualityReport(fsQuality, { ticker, stage: 'fullStory' });
+  writeFileSync(join(qualityDir, 'full-story-v4.quality.md'), fsQualityMd);
+
+  console.log(`Full Story mechanical score: ${fsQuality.overallScore}`);
+  console.log(`Full Story methodology score: ${fsQuality.overallMethodologyScore}`);
+
+  // ================================================================
+  // COMBINED RESULTS
+  // ================================================================
+  const totalTime = ((Date.now() - startTotal) / 1000).toFixed(1);
+  const opCost = opResult.budget?.totals?.cost || 0;
+  const pdCost = pdResult.budget?.totals?.cost || 0;
+  const fsCost = fsResult.budget?.totals?.cost || 0;
+  const totalCost = opCost + pdCost + fsCost;
+
+  console.log('\n' + '='.repeat(60));
+  console.log('PIPELINE COMPLETE — ALL 3 STAGES');
+  console.log('='.repeat(60));
+  console.log(`\nTotal time: ${totalTime}s`);
+  console.log(`\nCost breakdown (per D-11):`);
+  console.log(`  One Pager:   $${opCost.toFixed(4)}`);
+  console.log(`  Pitch Deck:  $${pdCost.toFixed(4)}`);
+  console.log(`  Full Story:  $${fsCost.toFixed(4)}`);
+  console.log(`  TOTAL:       $${totalCost.toFixed(4)}`);
+  console.log(`  Ceiling:     $15.00`);
+  console.log(`  Status:      ${totalCost <= 15.0 ? 'WITHIN ceiling' : 'EXCEEDS ceiling'}`);
+  console.log(`\nQuality scores:`);
+  console.log(`  One Pager:   ${opVerdict}`);
+  console.log(`  Pitch Deck:  ${pdQuality.overallScore} mechanical / ${pdQuality.overallMethodologyScore} methodology`);
+  console.log(`  Full Story:  ${fsQuality.overallScore} mechanical / ${fsQuality.overallMethodologyScore} methodology`);
+
+  // Write combined budget report
+  writeFileSync(join(outputDir, 'budget.json'), JSON.stringify({
+    ticker,
+    completedAt: new Date().toISOString(),
+    totalTimeSeconds: parseFloat(totalTime),
+    totalCost,
+    costCeiling: 15.0,
+    withinCeiling: totalCost <= 15.0,
+    stages: {
+      onePager: { cost: opCost, time: parseFloat(opTime), sections: opResult.sections?.length || 0, verdict: opVerdict },
+      pitchDeck: { cost: pdCost, time: parseFloat(pdTime), sections: pdResult.sections?.length || 0, mechanical: pdQuality.overallScore, methodology: pdQuality.overallMethodologyScore },
+      fullStory: { cost: fsCost, time: parseFloat(fsTime), sections: fsResult.sections?.length || 0, mechanical: fsQuality.overallScore, methodology: fsQuality.overallMethodologyScore },
+    },
+  }, null, 2));
+  console.log(`\nBudget report: ${join(outputDir, 'budget.json')}`);
+
+  // Final pass/fail
+  const fsPass = fsQuality.overallScore >= 85 && fsQuality.overallMethodologyScore >= 85;
+  if (!fsPass) {
+    console.error(`\nFull Story scores below 85 threshold — review quality report.`);
+    console.error(`Quality report: ${join(qualityDir, 'full-story-v4.quality.md')}`);
+    process.exit(1);
+  }
+  if (totalCost > 15.0) {
+    console.warn(`\nWARNING: Total cost $${totalCost.toFixed(4)} exceeds $15.00 ceiling.`);
+  }
+
+  console.log(`\nAll stages passed. Output: .thes1s/reports/${ticker}/`);
+  process.exit(0);
+}
+
+// Route execution based on stage
+if (stage === 'all') {
+  runAllStages().catch((err) => {
+    console.error('Pipeline error:', err.message);
+    console.error(err.stack);
+    process.exit(1);
+  });
+} else {
+  main().catch((err) => {
+    console.error('Unexpected error:', err.message);
+    console.error(err.stack);
+    process.exit(1);
+  });
+}
