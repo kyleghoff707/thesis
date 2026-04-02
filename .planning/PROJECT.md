@@ -27,6 +27,20 @@ Every design decision about the agent team must pass this test:
 
 If a real hedge fund wouldn't do it that way, don't build it that way.
 
+## Current Milestone: v1.3 Report Stage UI
+
+**Goal:** Build the in-app presentation layer for viewing, navigating, and interacting with AI-generated research reports across all three stages (One Pager, Pitch Deck, Full Story).
+
+**Target features:**
+- One Pager display — 6-section renderer with verdict badges, confidence indicators, citations, red flag callouts, approval gate
+- Pitch Deck display — 10-section renderer with two-column layout, sticky nav, phase progress indicator, sensitivity tables, scroll spy
+- Full Story display — 6 sections with Pitch Deck inheritance, scored checklists (43 items), adversarial debate rendering (Bull/Bear/Judge)
+- Shared components — SectionRenderer, StatusBadge, VerdictBadge, ConfidenceBadge, CitationTooltip, RedFlagCallout, ReferenceList
+- Stage gating — OP approval → PD unlock → PD approval → FS unlock
+- Real-time generation progress — sections fade in as agents complete, progress bar, agent status indicators
+- Delight features — "Tell me more" deep-dive panel, assumption tracker sidebar, industry context cards, Bull/Bear narrative toggle
+- Report navigation — ReportsList for discovering and navigating between reports
+
 ## Current State
 
 **v1.2 Full Story Pipeline — SHIPPED 2026-04-02**
@@ -83,7 +97,7 @@ The complete 3-stage pipeline is operational: One Pager (filter) → Pitch Deck 
 
 ### Active
 
-(None — next milestone requirements TBD via `/gsd:new-milestone`)
+(Requirements TBD — defining via milestone v1.3 workflow)
 
 ### Out of Scope
 
@@ -95,7 +109,7 @@ The complete 3-stage pipeline is operational: One Pager (filter) → Pitch Deck 
 - Real-time thesis monitoring alerts — manual trigger only
 - Automated eval system — user IS the eval for first 5-10 reports, automated later
 - Trading strategy / PACE plan — human judgment, not AI work
-- UI integration — all 3 stages displayed in app — v1.3+
+- ~~UI integration — all 3 stages displayed in app~~ — NOW v1.3
 - In-browser direct API calls — Polish phase, separate from Node.js orchestration
 - Management Promise Tracker — extract promises from earnings calls — future milestone
 
@@ -177,4 +191,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-02 after v1.2 milestone — Full Story Pipeline shipped*
+*Last updated: 2026-04-01 — v1.3 Report Stage UI milestone started*
