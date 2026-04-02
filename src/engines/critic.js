@@ -95,14 +95,28 @@ function resolveDataPath(dataPacket, dotPath) {
   if (!dataPacket || !dotPath) return { found: false, value: undefined };
   // Split on dots, then handle bracket notation within each part
   // e.g., "gurus.holdings[0].guru.name" → ["gurus", "holdings", "0", "guru", "name"]
+  // Also handles string keys: "compensation['2023'].total" → ["compensation", "2023", "total"]
   const parts = [];
   for (const segment of dotPath.split('.')) {
-    const bracketMatch = segment.match(/^([^[]+)\[(\d+)\]$/);
-    if (bracketMatch) {
-      parts.push(bracketMatch[1]); // property name
-      parts.push(bracketMatch[2]); // array index (as string — works for obj[key] access)
-    } else {
-      parts.push(segment);
+    // Handle chained brackets: e.g., "executives[1]" or "compensation['2023']"
+    // Split segment into prefix and bracket parts
+    let remaining = segment;
+    let firstPart = true;
+    while (remaining) {
+      // Match: optional-prefix[key] where key is digits or 'string' or "string"
+      const m = remaining.match(/^([^[]*)\[(?:(\d+)|'([^']*)'|"([^"]*)")\](.*)$/);
+      if (m) {
+        const prefix = m[1];
+        const key = m[2] ?? m[3] ?? m[4]; // numeric index, single-quoted, or double-quoted
+        if (prefix) parts.push(prefix);
+        parts.push(key);
+        remaining = m[5]; // rest after closing bracket
+        firstPart = false;
+      } else {
+        // No bracket notation — push as-is
+        if (remaining) parts.push(remaining);
+        break;
+      }
     }
   }
   let current = dataPacket;
