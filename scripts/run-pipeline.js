@@ -26,6 +26,45 @@ import { formatQualityReport } from '../src/engines/qualityFormatter.js';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
+// Canonical section fields (19 fields) — ensures consistent shape across all tickers
+const CANONICAL_SECTION_FIELDS = {
+  key: null,
+  title: null,
+  sectionNumber: null,
+  status: 'complete',
+  confidence: null,
+  verdict: null,
+  verdictRationale: null,
+  summary: null,
+  data: {},
+  narrative: null,
+  citations: [],
+  tables: [],
+  charts: [],
+  redFlags: [],
+  primarySourceInsights: [],
+  crossCuttingFindings: [],
+  searchesPerformed: [],
+  modelUsed: null,
+  tokenCost: null,
+};
+
+// Normalize a section object: fill missing fields with defaults, remove unexpected fields
+function normalizeSection(section) {
+  if (!section) return null;
+  const normalized = {};
+  for (const [field, defaultVal] of Object.entries(CANONICAL_SECTION_FIELDS)) {
+    normalized[field] = section[field] !== undefined ? section[field] : defaultVal;
+  }
+  return normalized;
+}
+
+// Normalize all sections in a pipeline result
+function normalizeSections(sections) {
+  if (!Array.isArray(sections)) return [];
+  return sections.map(normalizeSection).filter(Boolean);
+}
+
 // Argument parsing — supports both old and new syntax:
 //   node run-pipeline.js MNST pitchDeck          (backward compat: positional)
 //   node run-pipeline.js MNST --stage all         (new: --stage flag)
@@ -148,6 +187,11 @@ async function main() {
   }
   const pipelineTime = ((Date.now() - startPipeline) / 1000).toFixed(1);
 
+  // Normalize section schemas for consistency across tickers (per D-07)
+  if (result.sections) {
+    result.sections = normalizeSections(result.sections);
+  }
+
   // Report results
   console.log('\n=== Pipeline Results ===\n');
   console.log(`Total time: ${pipelineTime}s`);
@@ -202,6 +246,24 @@ async function main() {
     errors: result.errors,
   }, null, 2));
   console.log(`Output written to ${outputPath}`);
+
+  // For pitchDeck: also write pitch-deck.json (canonical name for Vite middleware)
+  if (stage === 'pitchDeck') {
+    const pdOutputPath = join(outputDir, 'pitch-deck.json');
+    writeFileSync(pdOutputPath, JSON.stringify({
+      ticker,
+      stage,
+      completedAt: new Date().toISOString(),
+      pipelineTimeSeconds: parseFloat(pipelineTime),
+      sectionCount: result.sections?.length || 0,
+      errorCount: result.errors?.length || 0,
+      sections: result.sections,
+      budget: result.budget,
+      cacheStats: result.cacheStats,
+      errors: result.errors,
+    }, null, 2));
+    console.log(`Pitch Deck output written to ${pdOutputPath}`);
+  }
 
   // For onePager: write backward-compatible one-pager.json alongside pipeline-output.json
   if (stage === 'onePager' && result.singleCallOutput) {
@@ -268,6 +330,11 @@ async function runAllStages() {
   const opTime = ((Date.now() - opStart) / 1000).toFixed(1);
   console.log(`One Pager completed in ${opTime}s`);
 
+  // Normalize OP sections (per D-07)
+  if (opResult.sections) {
+    opResult.sections = normalizeSections(opResult.sections);
+  }
+
   // Write one-pager output files
   const opOutput = {
     ticker,
@@ -313,6 +380,11 @@ async function runAllStages() {
   const pdTime = ((Date.now() - pdStart) / 1000).toFixed(1);
   console.log(`Pitch Deck completed in ${pdTime}s`);
 
+  // Normalize PD sections (per D-07)
+  if (pdResult.sections) {
+    pdResult.sections = normalizeSections(pdResult.sections);
+  }
+
   // Write pipeline-output.json (PD canonical name)
   writeFileSync(join(outputDir, 'pipeline-output.json'), JSON.stringify({
     ticker,
@@ -326,6 +398,21 @@ async function runAllStages() {
     cacheStats: pdResult.cacheStats,
     errors: pdResult.errors,
   }, null, 2));
+
+  // Also write pitch-deck.json (canonical name for Vite middleware)
+  writeFileSync(join(outputDir, 'pitch-deck.json'), JSON.stringify({
+    ticker,
+    stage: 'pitchDeck',
+    completedAt: new Date().toISOString(),
+    pipelineTimeSeconds: parseFloat(pdTime),
+    sectionCount: pdResult.sections?.length || 0,
+    errorCount: pdResult.errors?.length || 0,
+    sections: pdResult.sections,
+    budget: pdResult.budget,
+    cacheStats: pdResult.cacheStats,
+    errors: pdResult.errors,
+  }, null, 2));
+  console.log(`Pitch Deck canonical output written to ${join(outputDir, 'pitch-deck.json')}`);
 
   // Gate check: PD quality score (per D-04, D-05, D-07)
   console.log('\nRunning Pitch Deck quality scoring...');
@@ -368,6 +455,11 @@ async function runAllStages() {
   }
   const fsTime = ((Date.now() - fsStart) / 1000).toFixed(1);
   console.log(`Full Story completed in ${fsTime}s`);
+
+  // Normalize FS sections (per D-07)
+  if (fsResult.sections) {
+    fsResult.sections = normalizeSections(fsResult.sections);
+  }
 
   // Save debate step outputs individually (per run-full-story.js lines 149-159)
   if (fsResult.debateOutputs) {
