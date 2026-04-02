@@ -362,6 +362,11 @@ def add_body_paragraphs(doc, text):
         if not para_text:
             continue
 
+        # Standalone bold paragraphs are sub-headers (e.g. "**Capital Allocation**")
+        if para_text.startswith('**') and para_text.endswith('**') and len(para_text) < 120:
+            add_section_heading(doc, para_text[2:-2], level=3)
+            continue
+
         p = doc.add_paragraph()
 
         # Parse markdown bold (**text**) into runs

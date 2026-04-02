@@ -37,7 +37,10 @@ def _render_narrative(pdf, narrative):
         para = para.strip()
         if not para:
             continue
-        if para.endswith(':') or (len(para) < 120 and '\u2014' in para):
+        # Bold markdown sub-headers: **Title Text**
+        if para.startswith('**') and para.endswith('**') and len(para) < 120:
+            pdf.add_section_header(para[2:-2], level=3)
+        elif para.endswith(':') or (len(para) < 120 and '\u2014' in para):
             pdf.add_section_header(para.rstrip(':'), level=3)
         else:
             pdf.add_body_text(para)
