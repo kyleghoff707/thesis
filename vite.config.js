@@ -495,6 +495,7 @@ function thes1sReportsPlugin() {
           const fileMap = {
             'one-pager': 'one-pager.json',
             'pitch-deck': 'pitch-deck.json',
+            'full-story': 'full-story-api.json',
             'progress': 'progress.json',
             'generation-status': 'generation-status.json',
           };

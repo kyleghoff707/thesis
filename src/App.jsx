@@ -17,15 +17,8 @@ import CompAudit from './components/CompAudit';
 import Settings from './components/Settings';
 import OnePager from './components/OnePager';
 import PitchDeck from './components/PitchDeck';
+import FullStory from './components/FullStory';
 import ReportsList from './components/ReportsList';
-
-function StagePlaceholder({ label }) {
-  return (
-    <div style={{ opacity: 0.5, fontSize: 13 }}>
-      {label} — coming in a later phase.
-    </div>
-  );
-}
 
 // Redirect /research to last-viewed report if one exists
 function ResearchRedirect({ reports }) {
@@ -58,7 +51,7 @@ export default function App() {
         <Route path="/research/:id/toolbox" element={<ToolboxRedirect />} />
         <Route path="/research/:id/one-pager" element={<OnePager getReport={getReport} updateReport={updateReport} />} />
         <Route path="/research/:id/pitch-deck" element={<PitchDeck getReport={getReport} updateReport={updateReport} />} />
-        <Route path="/research/:id/full-story" element={<StagePlaceholder label="Full Story" />} />
+        <Route path="/research/:id/full-story" element={<FullStory getReport={getReport} />} />
         <Route path="/reports" element={<ReportsList reports={reports} getReport={getReport} createReport={createReport} />} />
         <Route path="/gurus" element={<Gurus />} />
         <Route path="/gurus/:cik" element={<GuruPortfolio />} />
