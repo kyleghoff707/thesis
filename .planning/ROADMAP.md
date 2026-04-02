@@ -40,7 +40,7 @@ v1.3 builds the in-app presentation layer for viewing, navigating, and interacti
 Plans:
 - [ ] 18-01-PLAN.md — Fix PitchDeck section key mismatches, overall_verdict hero, Full Story Vite route + minimal viewer
 - [ ] 18-02-PLAN.md — Migrate report storage from localStorage to IndexedDB with auto-migration
-- [ ] 18-03-PLAN.md — Normalize cross-ticker schema differences in pipeline output + retroactive fix script
+- [x] 18-03-PLAN.md — Normalize cross-ticker schema differences in pipeline output + retroactive fix script
 
 ### Phase 19: Shared Report Infrastructure
 **Goal**: Users see consistent formatting, smooth navigation, and properly rendered markdown across all report stages
@@ -134,7 +134,7 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 18. Critical Bug Fixes & Storage Migration | 0/3 | Not started | - |
+| 18. Critical Bug Fixes & Storage Migration | 1/3 | In Progress|  |
 | 19. Shared Report Infrastructure | 0/3 | Not started | - |
 | 20. Full Story Core Viewer | 0/2 | Not started | - |
 | 21. Checklist & Debate Renderers | 0/3 | Not started | - |
