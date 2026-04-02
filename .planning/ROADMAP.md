@@ -186,10 +186,10 @@ Plans:
 **Goal:** Generic, ticker-agnostic PDF and Word document export generators for all 3 pipeline stages (One Pager, Pitch Deck, Full Story) with strategic visuals (charts, scorecards, gauges), validated with MNST output
 **Requirements**: QUAL-02 (supports end-to-end validation deliverables)
 **Depends on:** Phase 17
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 
 Plans:
-- [ ] 17.1-01-PLAN.md -- Shared infrastructure (report_data_reader.py, section_renderers.py, thes1s_pdf.py, chart_image_generator.py)
+- [x] 17.1-01-PLAN.md -- Shared infrastructure (report_data_reader.py, section_renderers.py, thes1s_pdf.py, chart_image_generator.py)
 - [ ] 17.1-02-PLAN.md -- All 3 PDF generators (One Pager + Pitch Deck + Full Story) with native fpdf2 charts
 - [ ] 17.1-03-PLAN.md -- Word document infrastructure (docx_helpers.py) + all 3 Word generators with embedded matplotlib chart images
 - [ ] 17.1-04-PLAN.md -- MNST validation run (all 6 exports) + PM visual quality checkpoint
@@ -214,4 +214,4 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 16.1 -> 16.2 -> 1
 | 16.1. Simplify One Pager | v1.2 | 2/2 | Complete    | 2026-04-01 |
 | 16.2. One Pager API Migration | v1.2 | 0/1 | Complete    | 2026-04-01 |
 | 17. End-to-End Validation | v1.2 | 0/2 | Planned    |  |
-| 17.1. Report Export Generators | v1.2 | 0/4 | Planned    |  |
+| 17.1. Report Export Generators | v1.2 | 1/4 | In Progress|  |

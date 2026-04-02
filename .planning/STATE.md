@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 17 context gathered
-last_updated: "2026-04-01T17:41:29.635Z"
+status: Ready to execute
+stopped_at: Completed 17.1-02-PLAN.md
+last_updated: "2026-04-02T03:21:53.247Z"
 progress:
-  total_phases: 13
+  total_phases: 14
   completed_phases: 12
-  total_plans: 25
-  completed_plans: 28
+  total_plans: 31
+  completed_plans: 30
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours -- delivered in minutes, with zero shortcuts on rigor.
-**Current focus:** Phase 16.2 — one-pager-api-migration
+**Current focus:** Phase 17.1 — report-export-generators-pdf-word
 
 ## Current Position
 
-Phase: 17
-Plan: Not started
+Phase: 17.1 (report-export-generators-pdf-word) — EXECUTING
+Plan: 4 of 4
 
 ## Performance Metrics
 
@@ -55,6 +55,10 @@ Plan: Not started
 | Phase 16-api-migration P02 | 6min | 1 tasks | 3 files |
 | Phase 16.1 P01 | 2min | 2 tasks | 4 files |
 | Phase 16.2 P01 | 3min | 2 tasks | 4 files |
+| Phase 17 P01 | 2min | 1 tasks | 1 files |
+| Phase 17.1 P01 | 7min | 2 tasks | 4 files |
+| Phase 17.1 P03 | 6min | 2 tasks | 4 files |
+| Phase 17.1 P02 | 9min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -82,6 +86,11 @@ Recent decisions affecting current work:
 - [Phase 16-api-migration]: buildDebateContext truncates section narratives to 2000 chars for token budget management
 - [Phase 16.1]: Single Sonnet call replaces 6-agent One Pager pipeline for screening stage
 - [Phase 16.2]: Single-call dispatch branch in pipelineManager.js routes mode: single-call stages through their generator with budget/cache tracking
+- [Phase 17]: Gate thresholds: OP requires PASS verdict, PD/FS require 85+ on both mechanical and methodology scores
+- [Phase 17.1]: ReportData sorts financial years ascending; chart images use matplotlib Agg backend at 150 DPI
+- [Phase 17.1]: Embedded matplotlib chart images in Word docs (not text-only) per PM visual design philosophy
+- [Phase 17.1]: Shared docx_helpers.py module pattern mirrors thes1s_pdf.py extraction for PDFs
+- [Phase 17.1]: Created Plan 01 infrastructure inline during parallel execution since dependent files did not yet exist
 
 ### Roadmap Evolution
 
@@ -90,6 +99,7 @@ Recent decisions affecting current work:
 - v1.2 roadmap: 6 phases (12-17), 14 requirements
 - Phase 16.1 inserted after Phase 16: Simplify One Pager Pipeline (URGENT)
 - Phase 16.2 inserted after Phase 16.1: One Pager API Migration (URGENT)
+- Phase 17.1 inserted after Phase 17: Report Export Generators (PDF + Word) (URGENT)
 
 ### Pending Todos
 
@@ -113,6 +123,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T17:41:29.621Z
-Stopped at: Phase 17 context gathered
-Resume file: .planning/phases/17-end-to-end-validation/17-CONTEXT.md
+Last session: 2026-04-02T03:21:53.244Z
+Stopped at: Completed 17.1-02-PLAN.md
+Resume file: None

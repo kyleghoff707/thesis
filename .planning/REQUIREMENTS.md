@@ -24,7 +24,7 @@ Requirements for the Full Story (Stage 3) pipeline. Each maps to roadmap phases.
 ### Quality & Validation
 
 - [x] **QUAL-01**: critic.js includes Full Story methodology checks derived from story-form-I.md and story-form-II.md curriculum
-- [ ] **QUAL-02**: At least 1 ticker runs end-to-end through One Pager → Pitch Deck → Full Story with passing quality scores
+- [x] **QUAL-02**: At least 1 ticker runs end-to-end through One Pager → Pitch Deck → Full Story with passing quality scores
 - [x] **QUAL-03**: Full Story sections produce dual quality scores (mechanical + methodology) matching Pitch Deck scoring pattern
 
 ### API Migration
@@ -83,7 +83,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DEBATE-03 | Phase 14 | Pending |
 | DEBATE-04 | Phase 14 | Pending |
 | QUAL-01 | Phase 15 | Complete |
-| QUAL-02 | Phase 17 | Pending |
+| QUAL-02 | Phase 17 | Complete |
 | QUAL-03 | Phase 15 | Complete |
 | API-01 | Phase 16 | Complete |
 | API-02 | Phase 16 | Complete |
