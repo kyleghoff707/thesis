@@ -35,12 +35,12 @@ v1.3 builds the in-app presentation layer for viewing, navigating, and interacti
   2. User can store reports for 20+ companies without silent save failures or storage quota errors
   3. User can navigate to a Full Story report URL and see content (not a 404 or blank page)
   4. User views reports for MNST, SFM, MSFT, and POOL and sees consistent section data without missing fields or key mismatches
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 18-01: Fix PitchDeck section key mismatches and Full Story Vite middleware route
-- [ ] 18-02: Migrate report storage from localStorage to IndexedDB
-- [ ] 18-03: Normalize cross-ticker schema differences in pipeline output
+- [ ] 18-01-PLAN.md — Fix PitchDeck section key mismatches, overall_verdict hero, Full Story Vite route + minimal viewer
+- [ ] 18-02-PLAN.md — Migrate report storage from localStorage to IndexedDB with auto-migration
+- [ ] 18-03-PLAN.md — Normalize cross-ticker schema differences in pipeline output + retroactive fix script
 
 ### Phase 19: Shared Report Infrastructure
 **Goal**: Users see consistent formatting, smooth navigation, and properly rendered markdown across all report stages
