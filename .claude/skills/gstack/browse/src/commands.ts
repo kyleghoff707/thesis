@@ -15,6 +15,7 @@ export const READ_COMMANDS = new Set([
   'js', 'eval', 'css', 'attrs',
   'console', 'network', 'cookies', 'storage', 'perf',
   'dialog', 'is',
+  'inspect',
 ]);
 
 export const WRITE_COMMANDS = new Set([
@@ -22,6 +23,7 @@ export const WRITE_COMMANDS = new Set([
   'click', 'fill', 'select', 'hover', 'type', 'press', 'scroll', 'wait',
   'viewport', 'cookie', 'cookie-import', 'cookie-import-browser', 'header', 'useragent',
   'upload', 'dialog-accept', 'dialog-dismiss',
+  'style', 'cleanup', 'prettyscreenshot',
 ]);
 
 export const META_COMMANDS = new Set([
@@ -31,9 +33,29 @@ export const META_COMMANDS = new Set([
   'chain', 'diff',
   'url', 'snapshot',
   'handoff', 'resume',
+  'connect', 'disconnect', 'focus',
+  'inbox',
+  'watch',
+  'state',
+  'frame',
 ]);
 
 export const ALL_COMMANDS = new Set([...READ_COMMANDS, ...WRITE_COMMANDS, ...META_COMMANDS]);
+
+/** Commands that return untrusted third-party page content */
+export const PAGE_CONTENT_COMMANDS = new Set([
+  'text', 'html', 'links', 'forms', 'accessibility',
+  'console', 'dialog',
+]);
+
+/** Wrap output from untrusted-content commands with trust boundary markers */
+export function wrapUntrustedContent(result: string, url: string): string {
+  // Sanitize URL: remove newlines to prevent marker injection via history.pushState
+  const safeUrl = url.replace(/[\n\r]/g, '').slice(0, 200);
+  // Escape marker strings in content to prevent boundary escape attacks
+  const safeResult = result.replace(/--- (BEGIN|END) UNTRUSTED EXTERNAL CONTENT/g, '--- $1 UNTRUSTED EXTERNAL C\u200BONTENT');
+  return `--- BEGIN UNTRUSTED EXTERNAL CONTENT (source: ${safeUrl}) ---\n${safeResult}\n--- END UNTRUSTED EXTERNAL CONTENT ---`;
+}
 
 export const COMMAND_DESCRIPTIONS: Record<string, { category: string; description: string; usage?: string }> = {
   // Navigation
@@ -73,7 +95,7 @@ export const COMMAND_DESCRIPTIONS: Record<string, { category: string; descriptio
   'viewport':{ category: 'Interaction', description: 'Set viewport size', usage: 'viewport <WxH>' },
   'cookie':  { category: 'Interaction', description: 'Set cookie on current page domain', usage: 'cookie <name>=<value>' },
   'cookie-import': { category: 'Interaction', description: 'Import cookies from JSON file', usage: 'cookie-import <json>' },
-  'cookie-import-browser': { category: 'Interaction', description: 'Import cookies from Comet, Chrome, Arc, Brave, or Edge (opens picker, or use --domain for direct import)', usage: 'cookie-import-browser [browser] [--domain d]' },
+  'cookie-import-browser': { category: 'Interaction', description: 'Import cookies from installed Chromium browsers (opens picker, or use --domain for direct import)', usage: 'cookie-import-browser [browser] [--domain d]' },
   'header':  { category: 'Interaction', description: 'Set custom request header (colon-separated, sensitive values auto-redacted)', usage: 'header <name>:<value>' },
   'useragent': { category: 'Interaction', description: 'Set user agent', usage: 'useragent <string>' },
   'dialog-accept': { category: 'Interaction', description: 'Auto-accept next alert/confirm/prompt. Optional text is sent as the prompt response', usage: 'dialog-accept [text]' },
@@ -98,6 +120,23 @@ export const COMMAND_DESCRIPTIONS: Record<string, { category: string; descriptio
   // Handoff
   'handoff': { category: 'Server', description: 'Open visible Chrome at current page for user takeover', usage: 'handoff [message]' },
   'resume':  { category: 'Server', description: 'Re-snapshot after user takeover, return control to AI', usage: 'resume' },
+  // Headed mode
+  'connect': { category: 'Server', description: 'Launch headed Chromium with Chrome extension', usage: 'connect' },
+  'disconnect': { category: 'Server', description: 'Disconnect headed browser, return to headless mode' },
+  'focus':   { category: 'Server', description: 'Bring headed browser window to foreground (macOS)', usage: 'focus [@ref]' },
+  // Inbox
+  'inbox':   { category: 'Meta', description: 'List messages from sidebar scout inbox', usage: 'inbox [--clear]' },
+  // Watch
+  'watch':   { category: 'Meta', description: 'Passive observation — periodic snapshots while user browses', usage: 'watch [stop]' },
+  // State
+  'state':   { category: 'Server', description: 'Save/load browser state (cookies + URLs)', usage: 'state save|load <name>' },
+  // Frame
+  'frame':   { category: 'Meta', description: 'Switch to iframe context (or main to return)', usage: 'frame <sel|@ref|--name n|--url pattern|main>' },
+  // CSS Inspector
+  'inspect': { category: 'Inspection', description: 'Deep CSS inspection via CDP — full rule cascade, box model, computed styles', usage: 'inspect [selector] [--all] [--history]' },
+  'style':   { category: 'Interaction', description: 'Modify CSS property on element (with undo support)', usage: 'style <sel> <prop> <value> | style --undo [N]' },
+  'cleanup': { category: 'Interaction', description: 'Remove page clutter (ads, cookie banners, sticky elements, social widgets)', usage: 'cleanup [--ads] [--cookies] [--sticky] [--social] [--all]' },
+  'prettyscreenshot': { category: 'Visual', description: 'Clean screenshot with optional cleanup, scroll positioning, and element hiding', usage: 'prettyscreenshot [--scroll-to sel|text] [--cleanup] [--hide sel...] [--width px] [path]' },
 };
 
 // Load-time validation: descriptions must cover exactly the command sets

@@ -5,7 +5,7 @@ description: |
   force-push, git reset --hard, kubectl delete, and similar destructive operations.
   User can override each warning. Use when touching prod, debugging live systems,
   or working in a shared environment. Use when asked to "be careful", "safety mode",
-  "prod mode", or "careful mode".
+  "prod mode", or "careful mode". (gstack)
 ---
 <!-- AUTO-GENERATED from SKILL.md.tmpl — do not edit directly -->
 <!-- Regenerate: bun run gen:skill-docs -->
