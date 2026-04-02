@@ -27,19 +27,21 @@ Every design decision about the agent team must pass this test:
 
 If a real hedge fund wouldn't do it that way, don't build it that way.
 
-## Current Milestone: v1.2 Full Story Pipeline
+## Current State
 
-**Goal:** Build the Full Story (Stage 3) pipeline end-to-end — first in Claude Code, then validated with quality scoring, then migrated to API. Same proven playbook as Pitch Deck (v1.0 CC → v1.1 API).
+**v1.2 Full Story Pipeline — SHIPPED 2026-04-02**
 
-**Target features:**
-- Full Story CC skill orchestration — 6 sections inheriting Pitch Deck findings
-- 43-item scored checklists (Meaning 15pt, Moat 15pt, Management 13pt)
-- 4-step adversarial debate (Bull → Bear → Bull Rebuttal → Judge)
-- Pitch Deck inheritance — prior findings flow as context to Full Story agents
-- Full Story methodology checks in critic.js
-- Dispatch table + agent prompt updates for Full Story sections
-- API migration when CC quality ceiling is reached
-- Validation: quality scoring, at least 1 ticker end-to-end
+The complete 3-stage pipeline is operational: One Pager (filter) → Pitch Deck (research) → Full Story (conviction). All stages run via Claude API dispatch with structured outputs, quality scoring, and budget tracking. MNST validated end-to-end with passing quality gates.
+
+**What shipped in v1.2:**
+- Full Story pipeline — 6 sections with Pitch Deck inheritance, scored checklists (43 items), adversarial debate
+- 4-step adversarial debate (Bull → Bear → Bull Rebuttal → Judge) with web search and cited evidence
+- Full Story methodology scoring — 33 checks in critic.js with dual mechanical/methodology scoring
+- Full Story API migration — Zod structured outputs, debate context routing, web search gating
+- Simplified One Pager — single Sonnet call ($0.32/run, 2.5min) replacing 6-agent pipeline
+- End-to-end pipeline chaining (`--stage all`) with quality gate checks between stages
+- 6 report export generators — 3 PDF + 3 Word with Thes1s branding, embedded charts, checklist tables, debate rendering
+- Pipeline cost: ~$15 for full OP+PD+FS run on MNST
 
 ## Requirements
 
@@ -68,17 +70,20 @@ If a real hedge fund wouldn't do it that way, don't build it that way.
 - Web search citation URLs — extracted from API tool_result blocks (v1.1)
 - DataPacket field path reference — prevents fabricated paths in citations (v1.1)
 - Buffett writing style guide — distilled from 6 shareholder letters, replaces raw 130K token letters (v1.2 prep)
+- Full Story CC skill — 6-section pipeline with Pitch Deck inheritance — v1.2
+- Scored checklists — 43-item checklists (Meaning 15pt, Moat 15pt, Management 13pt) — v1.2
+- Adversarial debate — 4-step Bull → Bear → Bull Rebuttal → Judge with web search — v1.2
+- Dispatch table + agent prompts — Full Story sections, 4-step debate — v1.2
+- Full Story methodology scoring — 33 curriculum-derived checks in critic.js — v1.2
+- Full Story API migration — Zod structured outputs, debate context routing — v1.2
+- End-to-end validation — MNST through full OP → PD → FS with passing quality scores — v1.2
+- One Pager simplification — single Sonnet call, $0.32/run — v1.2
+- One Pager API migration — routed through pipelineManager.js — v1.2
+- Report export generators — 3 PDF + 3 Word with Thes1s branding and charts — v1.2
 
 ### Active
 
-- [x] Full Story CC skill — 5-section Stage 3 pipeline with Pitch Deck inheritance (Phase 13)
-- [ ] Scored checklists — 43-item checklists (Meaning 15pt, Moat 15pt, Management 13pt) with structured scoring
-- [ ] Adversarial debate — 4-step Bull → Bear → Bull Rebuttal → Judge for inversion & rebuttal
-- [x] Dispatch table updates — remove trading strategy/PACE, fix S3 ownership to competitor-evaluator (Phase 12)
-- [x] Agent prompt updates — Full Story-specific sections in existing agent prompts (Phase 12)
-- [ ] Full Story methodology scoring — curriculum-derived checks in critic.js
-- [ ] API migration — migrate Full Story to Claude API when CC quality ceiling is reached
-- [ ] End-to-end validation — at least 1 ticker through full One Pager → Pitch Deck → Full Story pipeline
+(None — next milestone requirements TBD via `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -89,12 +94,9 @@ If a real hedge fund wouldn't do it that way, don't build it that way.
 - Batch processing pipeline — one company at a time
 - Real-time thesis monitoring alerts — manual trigger only
 - Automated eval system — user IS the eval for first 5-10 reports, automated later
-- One Pager simplification — v1.3, easier to simplify after complex is built
-- One Pager API migration — works well enough as CC skill, migrate later if needed
-- In-browser direct API calls — Polish phase, separate from Node.js orchestration
 - Trading strategy / PACE plan — human judgment, not AI work
 - UI integration — all 3 stages displayed in app — v1.3+
-- Full Story PDF export — v1.3+
+- In-browser direct API calls — Polish phase, separate from Node.js orchestration
 - Management Promise Tracker — extract promises from earnings calls — future milestone
 
 ## Context
@@ -105,8 +107,11 @@ Phases 1-4 complete. All data engines, all UI tabs, watchlists, 3-layer XBRL eng
 ### Architecture Plan (Source of Truth)
 `gstack/plans/gstack-ai-agent-workflow-plan-20260323.md` — 516-line authoritative plan. Reviewed by CEO review (scope expansion), Eng review (architecture validated + prototype confirmed). Contains: 9 agent roles, 3-layer architecture, stage orchestration, DataPacket + Toolbox tools, quality assurance system, report JSON schema, cost estimates, 22 key design decisions, prototype validation results.
 
-### v1.1 Pitch Deck Pipeline Results (Foundation for v1.2)
-API migration complete. SFM V4: $8.53/company, 19min runtime, 94 mechanical / 93 methodology quality. All compliance issues from CC V3 (75/100) mechanically solved by structured outputs. 14 plans across 5 phases (7-11). Infrastructure proven and ready for Full Story reuse: aiResearch.js dispatch, pipelineManager.js waves, critic.js dual scoring, contextBudget.js tracking.
+### v1.1 Pitch Deck Pipeline Results
+API migration complete. SFM V4: $8.53/company, 94 mechanical / 93 methodology quality. Infrastructure proven: aiResearch.js, pipelineManager.js, critic.js, contextBudget.js.
+
+### v1.2 Full Story Pipeline Results
+Full Story API migration complete. MNST end-to-end: ~$15 for OP+PD+FS, passing quality gates at every stage. 6 report export generators (3 PDF + 3 Word) with Thes1s branding. One Pager simplified from 6-agent to single Sonnet call ($0.32). 9 phases, 19 plans, 88 commits across 4 days.
 
 ### Rule One Knowledge Base
 `knowledge/` directory contains full Rule One curriculum: stage templates, curriculum files (one-pager.md, pitch-deck-I through IV, story-form-I and II), research references (fgr.md, equity-bond-research.md, rule-one-fundamentals.md, tools-for-analysis.md, advanced-financial-analysis.md), and the user's own manual research examples (LULU, EW, SFM, MU, ODFL).
@@ -172,4 +177,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-30 after Phase 15 complete — Quality System (33 methodology checks, dual scoring, Full Story coverage)*
+*Last updated: 2026-04-02 after v1.2 milestone — Full Story Pipeline shipped*
