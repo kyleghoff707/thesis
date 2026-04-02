@@ -12,7 +12,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **FIX-01**: User can view Pitch Deck sections correctly after pipeline run (fix section key mismatch — 5 of 10 keys don't match pipeline output)
 - [x] **FIX-02**: User can store reports for 20+ companies without hitting browser storage limits (migrate report storage from localStorage to IndexedDB)
 - [x] **FIX-03**: User can load Full Story reports in the app (add Full Story route to Vite middleware)
-- [ ] **FIX-04**: User can view reports for any ticker with consistent section data (normalize cross-ticker schema differences in pipeline output)
+- [x] **FIX-04**: User can view reports for any ticker with consistent section data (normalize cross-ticker schema differences in pipeline output)
 
 ### Shared Infrastructure
 
@@ -78,7 +78,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FIX-01 | Phase 18 | Complete |
 | FIX-02 | Phase 18 | Complete |
 | FIX-03 | Phase 18 | Complete |
-| FIX-04 | Phase 18 | Pending |
+| FIX-04 | Phase 18 | Complete |
 | INFRA-01 | Phase 19 | Pending |
 | INFRA-02 | Phase 19 | Pending |
 | INFRA-03 | Phase 19 | Pending |
