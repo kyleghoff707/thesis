@@ -14,14 +14,13 @@ import { computeReturnMetrics, computeDebtMetrics } from './returnMetrics.js';
 import { computeFreeCashFlow } from './freeCashFlow.js';
 import { computeKeyMetrics } from './keyMetrics.js';
 import { computeMoatScore, computeManagementScore, computeRuleOneScore } from './ruleOneScore.js';
-import { findGurusOwning, loadCachedPortfolios } from './gurus.js';
+import { findGurusOwning, loadCachedPortfolios, fetchAllGuruHoldings } from './gurus.js';
 import { fetchInsiderTransactions, computeInsiderSummary } from './insiders.js';
 import { fetchCompensation } from './compensation.js';
 import { fetchPeersByTier } from './peers.js';
 import { fetchPeerFrameData, computePeerMetrics, computePeerScores } from './peerMetrics.js';
 import { fetchAnalystEstimates } from './analystEstimates.js';
 import { fetchFinvizData } from './finviz.js';
-import { fetchCompanyEvents } from './companyEvents.js';
 import { fetchPrices, latestPrice } from './prices.js';
 import { fetchBatchQuotes } from './batchQuotes.js';
 import { fetchTranscriptList } from './transcripts.js';
@@ -109,7 +108,6 @@ export async function assembleDataPacket(ticker) {
     safeCall(() => fetchCompensation(ticker), 'compensation', errors),
     safeCall(() => fetchPeersByTier('industry', classification), 'peers', errors),
     IS_NODE ? Promise.resolve(null) : safeCall(() => fetchAnalystEstimates(ticker), 'analystEstimates', errors, { retry: true }),
-    IS_NODE ? Promise.resolve(null) : safeCall(() => fetchCompanyEvents(ticker), 'events', errors, { retry: true }),
     IS_NODE ? Promise.resolve(null) : safeCall(() => fetchPrices(ticker, '10y'), 'prices', errors, { retry: true }),
     safeCall(() => fetchTranscriptList(ticker), 'transcripts', errors, { retry: true }),
     safeCall(() => fetchFilingList(ticker), 'filings', errors),
@@ -120,10 +118,9 @@ export async function assembleDataPacket(ticker) {
   const compensation = step3[2].value ?? null;
   const peers = step3[3].value ?? null;
   let analystEstimates = step3[4].value ?? null;
-  const events = step3[5].value ?? null;
-  let prices = step3[6].value ?? null;
-  const transcriptList = step3[7].value ?? null;
-  const filings = step3[8].value ?? null;
+  let prices = step3[5].value ?? null;
+  const transcriptList = step3[6].value ?? null;
+  const filings = step3[7].value ?? null;
 
   // Yahoo enrichment removed from DataPacket assembly (Phase 6.3 — A1).
   // Yahoo crumb auth causes 30-60s timeouts in Node.js, blocking the pipeline.
@@ -284,7 +281,7 @@ export async function assembleDataPacket(ticker) {
     companyInfo,
     classification,
     currentPrice,
-    financials: statements ? { years: statements.years, income: statements.income, balance: statements.balance, cashFlow: statements.cashFlow } : null,
+    financials: statements ? trimFinancials(statements, 10) : null,
     ttm,
     growthRates,
     returnMetrics: returnMetrics || null,
@@ -302,7 +299,6 @@ export async function assembleDataPacket(ticker) {
     peers,
     peerMetrics: peerMetrics || null,
     analystEstimates,
-    events,
     prices: prices ? { data: prices, currentPrice } : null,
     transcriptAvailability,
     filings,
@@ -310,6 +306,18 @@ export async function assembleDataPacket(ticker) {
     errors: errors.length > 0 ? errors : undefined,
     assembledAt: new Date().toISOString(),
   };
+}
+
+// ─── Helper: Trim financials to N most recent years ────────────
+
+function trimFinancials(statements, maxYears) {
+  const years = statements.years.slice(0, maxYears);
+  const pick = (obj) => {
+    const out = {};
+    for (const y of years) { if (obj[y] !== undefined) out[y] = obj[y]; }
+    return out;
+  };
+  return { years, income: pick(statements.income), balance: pick(statements.balance), cashFlow: pick(statements.cashFlow) };
 }
 
 // ─── Helper: Safe engine call ───────────────────────────────────
@@ -336,8 +344,12 @@ async function safeCall(fn, label, errors, { retry = false, backoffMs = 5000 } =
 // ─── Helper: Fetch gurus holding a ticker ───────────────────────
 
 async function fetchGurusForTicker(ticker) {
-  const portfolios = await loadCachedPortfolios();
-  if (!portfolios || Object.keys(portfolios).length === 0) return null;
+  let portfolios = await loadCachedPortfolios();
+  // If cache is empty or expired, fetch all 43 guru portfolios from SEC
+  if (!portfolios || portfolios.filter(Boolean).length === 0) {
+    portfolios = await fetchAllGuruHoldings();
+  }
+  if (!portfolios || portfolios.filter(Boolean).length === 0) return null;
   const holding = findGurusOwning(portfolios, ticker);
   return holding && holding.length > 0
     ? { count: holding.length, holdings: holding }

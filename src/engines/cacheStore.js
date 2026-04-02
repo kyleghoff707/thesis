@@ -86,14 +86,17 @@ export async function idbBulkGet(store, keys) {
   const db = await getDB();
   if (!db) return [];
   try {
-    const tx = db.transaction(store, 'readonly');
+    const tx = db.transaction(store, 'readwrite');
     const s = tx.objectStore(store);
     const results = [];
     const now = Date.now();
     for (const key of keys) {
       const record = await s.get(key);
-      if (record && now < record.expiresAt) {
+      if (!record) continue;
+      if (now < record.expiresAt) {
         results.push({ key: record.key, data: record.data, fetchedAt: record.fetchedAt });
+      } else {
+        s.delete(key);
       }
     }
     return results;

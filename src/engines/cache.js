@@ -17,6 +17,7 @@ const TTL = {
   transcript: 315_360_000_000,        // 10 years (transcripts are immutable once published)
   analyst: 6 * 60 * 60 * 1000,        // 6 hours
   events: 6 * 60 * 60 * 1000,         // 6 hours
+  guru: 90 * 24 * 60 * 60 * 1000,    // 90 days (13F filings update quarterly)
 };
 
 // --- Key routing: which keys go to IndexedDB vs localStorage ---

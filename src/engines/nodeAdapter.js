@@ -11,7 +11,7 @@
 
 import dotenv from 'dotenv';
 import { resolve, join } from 'path';
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
+import { mkdirSync, readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
 import { parseHTML } from 'linkedom';
 import { DOMParser as XmlDOMParser } from '@xmldom/xmldom';
 
@@ -170,7 +170,10 @@ export function cacheGet(key) {
   if (!existsSync(path)) return null;
   try {
     const data = JSON.parse(readFileSync(path, 'utf8'));
-    if (data.expiresAt && Date.now() > data.expiresAt) return null;
+    if (data.expiresAt && Date.now() > data.expiresAt) {
+      try { unlinkSync(path); } catch {}
+      return null;
+    }
     return data.value;
   } catch {
     return null;

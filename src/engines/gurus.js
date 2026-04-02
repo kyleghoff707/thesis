@@ -93,7 +93,7 @@ async function getRecent13Fs(cik, count = 2) {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`EDGAR submissions error: ${res.status}`);
     data = await res.json();
-    cacheSet(subsCacheKey, data, 'financials');
+    cacheSet(subsCacheKey, data, 'guru');
   }
 
   const filings = data.filings?.recent;
@@ -374,7 +374,7 @@ async function fetchSingleFiling(cik, filingMeta) {
   const { holdings, totalValue } = enrichHoldings(aggregated);
 
   const result = { filing: filingMeta, holdings, totalValue, positionCount: holdings.length };
-  cacheSet(cacheKey, result, 'financials');
+  cacheSet(cacheKey, result, 'guru');
   return result;
 }
 
@@ -576,7 +576,7 @@ export async function fetchGuruWithChanges(guru) {
     // Self-heal: resolve tickers if cached data lacks them
     if (cached.holdings?.some(h => !h.ticker && h.cusip)) {
       cached.holdings = await resolveTickersForHoldings(cached.holdings);
-      cacheSet(actCacheKey, cached, 'financials');
+      cacheSet(actCacheKey, cached, 'guru');
     }
     return cached;
   }
@@ -588,13 +588,13 @@ export async function fetchGuruWithChanges(guru) {
     // Resolve tickers before caching
     activity.holdings = await resolveTickersForHoldings(activity.holdings);
 
-    cacheSet(actCacheKey, activity, 'financials');
+    cacheSet(actCacheKey, activity, 'guru');
     // Also write old-format cache so Stock Lookup / loadCachedPortfolios still works
     cacheSet(`guru:${guru.cik}`, {
       guru, filing: activity.filing,
       holdings: activity.holdings, totalValue: activity.totalValue,
       positionCount: activity.positionCount,
-    }, 'financials');
+    }, 'guru');
   }
 
   return activity;
@@ -612,7 +612,7 @@ export async function fetchAllWithChanges(onProgress) {
       // Self-heal: resolve tickers if cached data lacks them
       if (cached.holdings?.some(h => !h.ticker && h.cusip)) {
         cached.holdings = await resolveTickersForHoldings(cached.holdings);
-        cacheSet(`guru-activity:${GURU_CACHE_V}:${guru.cik}`, cached, 'financials');
+        cacheSet(`guru-activity:${GURU_CACHE_V}:${guru.cik}`, cached, 'guru');
       }
       results.push(cached);
       if (onProgress) onProgress(i + 1, GURUS.length, guru.name);
@@ -699,7 +699,7 @@ export async function fetchPortfolioValueHistory(guru, maxQuarters = 20) {
     if (history.length < filingMetas.length) await sleep(100);
   }
 
-  cacheSet(cacheKey, history, 'financials');
+  cacheSet(cacheKey, history, 'guru');
   return history;
 }
 
@@ -724,7 +724,7 @@ export async function fetchGuruHoldings(guru) {
     positionCount: filingResult.positionCount,
   };
 
-  cacheSet(cacheKey, result, 'financials');
+  cacheSet(cacheKey, result, 'guru');
   return result;
 }
 
@@ -772,7 +772,7 @@ export async function loadCachedPortfolios() {
   for (const p of portfolios) {
     if (p?.holdings?.some(h => !h.ticker && h.cusip)) {
       p.holdings = await resolveTickersForHoldings(p.holdings);
-      if (p.guru) cacheSet(`guru:${p.guru.cik}`, p, 'financials');
+      if (p.guru) cacheSet(`guru:${p.guru.cik}`, p, 'guru');
     }
   }
   return portfolios;
@@ -788,7 +788,7 @@ export async function loadCachedActivities() {
   for (const a of activities) {
     if (a?.holdings?.some(h => !h.ticker && h.cusip)) {
       a.holdings = await resolveTickersForHoldings(a.holdings);
-      if (a.guru) cacheSet(`guru-activity:${GURU_CACHE_V}:${a.guru.cik}`, a, 'financials');
+      if (a.guru) cacheSet(`guru-activity:${GURU_CACHE_V}:${a.guru.cik}`, a, 'guru');
     }
   }
   return activities;
