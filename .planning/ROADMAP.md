@@ -17,7 +17,7 @@ v1.3 builds the in-app presentation layer for viewing, navigating, and interacti
 - Integer phases (18, 19, 20...): Planned milestone work
 - Decimal phases (18.1, 18.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 18: Critical Bug Fixes & Storage Migration** - Fix broken PitchDeck rendering, add Full Story route, migrate report storage to IndexedDB, normalize cross-ticker schema differences
+- [x] **Phase 18: Critical Bug Fixes & Storage Migration** - Fix broken PitchDeck rendering, add Full Story route, migrate report storage to IndexedDB, normalize cross-ticker schema differences (completed 2026-04-02)
 - [ ] **Phase 19: Shared Report Infrastructure** - Extract shared utilities, scroll spy hook, markdown renderer, and stage navigation bar to prevent triplication when FullStory is added
 - [ ] **Phase 20: Full Story Core Viewer** - Build FullStory.jsx shell with gate check, hero header, section rendering, quality scores, and approval bar
 - [ ] **Phase 21: Checklist & Debate Renderers** - Build ChecklistRenderer for scored checklists and DebateRenderer for adversarial debate with step-specific sub-components
@@ -134,7 +134,7 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 18. Critical Bug Fixes & Storage Migration | 3/3 | In Progress|  |
+| 18. Critical Bug Fixes & Storage Migration | 3/3 | Complete    | 2026-04-02 |
 | 19. Shared Report Infrastructure | 0/3 | Not started | - |
 | 20. Full Story Core Viewer | 0/2 | Not started | - |
 | 21. Checklist & Debate Renderers | 0/3 | Not started | - |
