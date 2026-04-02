@@ -1,955 +1,571 @@
-# Architecture Patterns: Claude API Migration
+# Architecture Patterns: Report Stage UI Integration
 
-**Domain:** AI orchestration layer for multi-agent investment research pipeline
-**Researched:** 2026-03-27
-**Confidence:** HIGH (official docs verified, existing codebase analyzed, 3 validation runs studied)
+**Domain:** In-app display layer for AI-generated research reports (One Pager, Pitch Deck, Full Story)
+**Researched:** 2026-04-01
+**Confidence:** HIGH (existing codebase fully analyzed, pipeline outputs inspected, component patterns verified)
 
 ## Executive Summary
 
-This document defines the architecture for migrating Thes1s's Pitch Deck pipeline from Claude Code subagent orchestration to direct Claude API calls via a new `aiResearch.js` engine. The migration solves 6 persistent issues (citation format, red flags, searchesPerformed, narrative collapse, cost, runtime) while preserving the existing state machine, data assembly pipeline, quality validation, and file-based section output pattern.
+This document defines how the report stage viewers integrate with the existing Thes1s desktop app architecture. The existing codebase already has substantial infrastructure in place: OnePager.jsx (557 lines, fully functional), PitchDeck.jsx (~1100 lines, fully functional with delight features), SectionRenderer.jsx (594 lines), and 6 shared badge/callout/citation components. The FullStory viewer and several integration improvements are the primary remaining work.
 
-**Key architectural finding:** Structured outputs and the Citations API feature are incompatible (returns 400 error). Web search tool_use results provide URLs directly in the response, which agents must manually map into the structured `citations` array. This two-phase approach (web search for investigation, structured output for response format) is the correct pattern.
+**Key finding: The architecture is further along than the milestone context suggests.** OnePager and PitchDeck are not "planned" -- they are shipped and working. The real work for v1.3 is: (1) FullStory.jsx with debate rendering and scored checklists, (2) section key normalization between pipeline output and components, (3) the `/api/thes1s/reports` endpoint extension for full-story.json, and (4) ReportsList enhancements to show all three stages.
 
-**Key schema finding:** `additionalProperties` must be `false` for all objects in structured outputs. The current `z.looseObject({})` usage (in `data`, `config`, `userInput` fields) must be replaced with explicit typed objects or `z.record(z.string(), z.unknown())` patterns that the SDK can transform.
-
----
-
-## Recommended Architecture
-
-### Component Map
-
-```
-                    EXISTING (unchanged)                          NEW (aiResearch.js)
-                    ====================                          ===================
-
-scripts/prepare-data.js                                    src/engines/aiResearch.js
-     |                                                          |
-     v                                                          v
-dataExport.js -----> DataPacket.json                     dispatchAgent()
-                          |                                     |
-                          |    +------> buildMessages()  -------+
-                          |    |             |
-                          |    |             v
-                          +----+    Claude Messages API
-                                    (output_config.format +
-                                     web_search tool)
-                                            |
-                                            v
-                                    Section JSON output
-                                            |
-                                            v
-progressState.js <---- updateProgress() <---+
-     |                                      |
-     v                                      v
-.thes1s/reports/   <---- saveSectionOutput() + critic.js
-{TICKER}/sections/
-```
-
-### Component Boundaries
-
-| Component | Responsibility | Status | Communicates With |
-|-----------|---------------|--------|-------------------|
-| `scripts/prepare-data.js` | DataPacket assembly, filing preprocessing, transcript fetch | Existing, unchanged | `dataExport.js`, filesystem |
-| `src/engines/dataExport.js` | Aggregate 20+ engine outputs into canonical JSON | Existing, unchanged | All data engines |
-| `src/engines/aiResearch.js` | **NEW** -- API client, prompt builder, parallel dispatch, caching orchestration | New file | Claude API, progressState, critic, filesystem |
-| `src/schemas/reportSection.js` | Report section Zod schema + JSON Schema export | Existing, **modified** -- looseObject to strict objects | aiResearch.js, critic.js |
-| `src/engines/progressState.js` | State machine, section status, generation-status.json | Existing, unchanged | aiResearch.js (consumer) |
-| `src/engines/critic.js` | Post-generation quality validation | Existing, unchanged | aiResearch.js (consumer) |
-| `agents/*/config.json` | Agent role definitions (model, curriculum, slices, tools) | Existing, unchanged | aiResearch.js (reads at dispatch time) |
-| `agents/*/prompt.md` | Agent system prompts | Existing, **modified** -- DataPacket path reference added | aiResearch.js (reads at dispatch time) |
-| `.claude/skills/generate-pitch-deck/SKILL.md` | CC orchestration skill | Existing, **deprecated** -- replaced by aiResearch.js | N/A after migration |
+**Critical data mismatch discovered:** The PitchDeck component's `SECTION_DEFS` uses different keys than the pipeline output. For example, the component expects `simple_predictable` but the pipeline writes `simple_and_predictable`. There are 5 such mismatches across 10 sections. This must be resolved before any further PD work.
 
 ---
 
-## Data Flow: Complete Pipeline
+## Current State Inventory
 
-### Phase 0: Data Assembly (unchanged)
+### What Already Exists (Shipped)
 
-```
-User triggers generation
-    |
-    v
-scripts/prepare-data.js {TICKER}
-    |
-    +--> Gate check (one-pager exists with verdict)
-    +--> Guru prefetch (43 portfolios, cached)
-    +--> DataPacket assembly (dataExport.js)
-    +--> Transcript fetch (Alpha Vantage)
-    +--> Filing preprocessing (10-K/10-Q to markdown)
-    +--> Data quality checkpoint
-    |
-    v
-.thes1s/reports/{TICKER}/data-packet.json    (~50K tokens)
-.thes1s/reports/{TICKER}/filings-md/*.json   (~290KB per 10-K)
-.thes1s/reports/{TICKER}/transcripts/*.md    (~30K tokens each)
-```
+| Component | LOC | Status | What It Does |
+|-----------|-----|--------|-------------|
+| `OnePager.jsx` | 557 | **Working** | Hero header, sticky nav, 6 sections via SectionRenderer, IntersectionObserver scroll spy, progress polling, approval bar, citation reference list |
+| `PitchDeck.jsx` | ~1100 | **Working** | 10-section two-column layout, phase progress indicator (3 phases), generation status panel, checkpoint display, delight features (DeepDive, AssumptionTracker, IndustryCard) |
+| `SectionRenderer.jsx` | 594 | **Working** | Universal section display: header with number/title/verdict/confidence badges, summary callout, verdict rationale with inline citations, narrative with markdown parsing, data grid with smart formatting and grouping, tables, cross-cutting findings, red flags, per-section citations |
+| `VerdictBadge.jsx` | 68 | **Working** | PASS/FAIL/WATCHLIST/REVIEW pill badges with icons |
+| `ConfidenceBadge.jsx` | 32 | **Working** | HIGH/MEDIUM/LOW confidence indicators |
+| `RedFlagCallout.jsx` | 61 | **Working** | Yellow warning box with flag list |
+| `CitationTooltip.jsx` | 135 | **Working** | Inline [N] citation references with hover tooltips, source type detection (thes1s/sec/web), `renderTextWithCitations` utility |
+| `SensitivityTable.jsx` | 161 | **Working** | Color-coded valuation matrix with intersection highlighting |
+| `DeepDivePanel.jsx` | 179 | **Working** | Right-side slide-out panel (440px), loading state, Escape/click-outside close |
+| `AssumptionTracker.jsx` | 223 | **Working** | Right-side panel (360px) listing assumptions with confidence bars |
+| `IndustryCard.jsx` | 124 | **Working** | Absolute-positioned popover glossary for industry terms |
+| `ReportsList.jsx` | 193 | **Working** | Lists tickers with generated reports, auto-creates research entries, navigates to one-pager |
+| `useOnePager.js` | 99 | **Working** | Fetch + poll hook for one-pager.json and progress.json |
+| `usePitchDeck.js` | 126 | **Working** | Fetch + poll hook for pitch-deck.json, progress.json, and generation-status.json |
 
-### Phase 1: Primary Source Reading
+### What Needs to Be Built
 
-```
-aiResearch.js reads:
-    agents/annual-reader/config.json + prompt.md
-    agents/quarterly-reader/config.json + prompt.md
-    |
-    v
-buildPSRMessages() constructs messages for each filing year
-    |
-    +--> Annual readers: 1 API call per 10-K (5 calls, PARALLEL)
-    |    Each gets: system prompt + universal context + DataPacket slice + filing text
-    |    output_config: { format: { type: "json_schema", schema: AnnualReaderSchema } }
-    |
-    +--> Quarterly readers: 1 API call per batch of 4 10-Qs (2 calls, PARALLEL)
-    |    Each gets: system prompt + universal context + DataPacket slice + 10-Q text + transcripts
-    |    output_config: { format: { type: "json_schema", schema: QuarterlyReaderSchema } }
-    |
-    v
-Merge into psrFindings (annualInsights + quarterlyInsights + discrepancies)
-Save to .thes1s/reports/{TICKER}/sections/annual-reader-insights.json
-Save to .thes1s/reports/{TICKER}/sections/quarterly-reader-insights.json
-```
+| Component | Why | Complexity |
+|-----------|-----|------------|
+| `FullStory.jsx` | Stage 3 viewer -- 6 sections + debate rendering + scored checklists | High |
+| `fullStory/DebateRenderer.jsx` | 4-step adversarial debate display (Bull/Bear/Rebuttal/Judge) | Medium |
+| `fullStory/ChecklistRenderer.jsx` | Scored checklist display (15+15+13 items with verdicts) | Medium |
+| `useFullStory.js` | Fetch + poll hook for full-story-api.json | Low (clone usePitchDeck pattern) |
+| Vite middleware extension | Add `full-story` to `thes1sReportsPlugin` fileMap | Trivial |
 
-### Phase 2-4: Analysis Phases (3 phases, 10 sections)
+### What Needs to Be Modified
 
-```
-aiResearch.js reads:
-    agents/{role}/config.json + prompt.md + curriculum files
-    |
-    v
-buildAnalysisMessages() constructs messages per agent:
-    system: [
-        { text: agent prompt.md,      cache_control: { type: "ephemeral" } },  // BP 1
-        { text: curriculum content,    cache_control: { type: "ephemeral" } },  // BP 2
-    ]
-    tools: [
-        { type: "web_search_20250305", name: "web_search", max_uses: 10 },
-    ]
-    messages: [
-        { role: "user", content: [
-            { text: DataPacket slice,  cache_control: { type: "ephemeral" } },  // BP 3
-            { text: PSR findings },
-            { text: prior phase context },
-            { text: task instruction },
-        ]},
-    ]
-    output_config: {
-        format: { type: "json_schema", schema: ReportSectionJSONSchema }
-    }
-    |
-    v
-Claude API: web search (server-executed) --> structured JSON response
-    |
-    v
-Parse response.content[0].text as JSON (guaranteed valid by structured outputs)
-Extract web search URLs from response.content (server_tool_use + web_search_tool_result)
-Post-process: inject web URLs into citation source fields
-    |
-    v
-saveSectionOutput() --> .thes1s/reports/{TICKER}/sections/{key}.json
-validateSection() --> quality report
-advanceState() --> progress.json + generation-status.json
-```
-
-### Phase 5: Synthesis
-
-```
-aiResearch.js reads all completed sections
-    |
-    v
-buildSynthesisMessages():
-    system: synthesis-writer prompt.md + Buffett curriculum
-    messages: all 10 section summaries + verdicts + red flags
-    output_config: { format: { type: "json_schema", schema: SynthesisSchema } }
-    |
-    v
-Save executive summary + overall verdict
-Run validateStage() for aggregate quality report
-```
+| Component | Change | Why |
+|-----------|--------|-----|
+| `PitchDeck.jsx` SECTION_DEFS | Normalize keys to match pipeline output | 5 key mismatches prevent section rendering |
+| `ReportsList.jsx` | Show all 3 stages per ticker, stage badges, navigate to correct stage | Currently only shows One Pager |
+| `App.jsx` route for full-story | Replace StagePlaceholder with FullStory component | Currently a placeholder |
+| `vite.config.js` thes1sReportsPlugin | Add `full-story` file type mapping | API endpoint doesn't serve full-story.json |
 
 ---
 
-## Parallel Dispatch Strategy
+## Data Flow: Pipeline Output to Display
 
-### Dependency Graph
+### Flow Diagram
 
 ```
-PSR Phase (all parallel):
-    annual-reader-fy2020 --|
-    annual-reader-fy2021 --|
-    annual-reader-fy2022 --|----> merge psrFindings
-    annual-reader-fy2023 --|
-    annual-reader-fy2024 --|
-    quarterly-reader-b1  --|
-    quarterly-reader-b2  --|
+Pipeline (CLI)                    File System              Vite Middleware           React App
+==============                    ===========              ==============           =========
 
-Phase 1 (parallel, needs PSR):
-    business-analyst [S1, S2] --|
-    competitor-evaluator [S3]  --|----> Checkpoint 1
-
-Phase 2 (mixed dependencies):
-    competitor-evaluator [S4]  ----> needs S3 (Phase 1)
-         |
-         v (after S4 completes)
-    financial-analyst [S5, S7, S8] --|
-    management-evaluator [S6]       --|----> Checkpoint 2
-
-Phase 3 (parallel, needs all prior):
-    risk-analyst [S9]          --|
-    valuation-specialist [S10] --|----> Checkpoint 3
-
-Synthesis (sequential, needs all):
-    synthesis-writer --|----> Quality Check --> COMPLETE
+scripts/pipeline/                 .thes1s/reports/         /api/thes1s/             Components
+  pipelineManager.js  ──write──>  MNST/                   reports/                 
+  onePagerPipeline.js             ├── one-pager.json  ──>  /MNST/one-pager  ──>    useOnePager ──> OnePager.jsx
+  pitchDeckPipeline.js            ├── pitch-deck.json ──>  /MNST/pitch-deck ──>    usePitchDeck ──> PitchDeck.jsx
+  fullStoryPipeline.js            ├── full-story-api.json  /MNST/full-story ──>    useFullStory ──> FullStory.jsx
+                                  ├── progress.json   ──>  /MNST/progress   ──>    (all hooks poll)
+                                  ├── generation-status.json /MNST/generation-status (PD/FS only)
+                                  ├── budget.json
+                                  ├── data-packet.json
+                                  ├── quality/
+                                  │   ├── pitch-deck-v4.quality.json
+                                  │   └── full-story-v4.quality.json
+                                  └── sections/
+                                      ├── fullStory-S1-event_analysis.json
+                                      └── debate-step-{1-4}.json
 ```
 
-### Implementation Pattern
+### Data Flow Steps
 
-```javascript
-// aiResearch.js -- parallel dispatch with dependency awareness
+1. **Pipeline writes JSON files** to `.thes1s/reports/{TICKER}/`. Each stage has a consolidated output file (`one-pager.json`, `pitch-deck.json`, `full-story-api.json`) plus a `progress.json` for real-time status.
 
-async function runPhase(ticker, phaseNum, agentTasks, context) {
-  const { independent, dependent } = classifyTasks(agentTasks);
+2. **Vite dev middleware** (`thes1sReportsPlugin` in `vite.config.js`) serves these files over HTTP at `/api/thes1s/reports/{TICKER}/{file-type}`. This is a simple file-read proxy -- no transformation, no caching.
 
-  // Run independent tasks in parallel
-  const independentResults = await Promise.allSettled(
-    independent.map(task => dispatchAgent(ticker, task, context))
-  );
+3. **React hooks** (`useOnePager`, `usePitchDeck`, `useFullStory`) fetch the report JSON and progress JSON on mount. If `progress.state !== 'COMPLETE'`, they poll every 2 seconds.
 
-  // Merge independent results into context
-  const updatedContext = mergeResults(context, independentResults);
+4. **React components** receive the report data and render sections via `SectionRenderer`. Each section is a card with header, badges, summary, narrative, data grid, tables, and citations.
 
-  // Run dependent tasks sequentially (or in parallel if they share deps)
-  const dependentResults = [];
-  for (const task of dependent) {
-    const result = await dispatchAgent(ticker, task, updatedContext);
-    dependentResults.push(result);
-    // Update context for next dependent task
-    Object.assign(updatedContext, extractContext(result));
-  }
+### No WebSocket, No File Watcher
 
-  return [...independentResults, ...dependentResults];
+The current architecture uses **polling** (2-second intervals via `setTimeout`). This is the correct pattern for this app because:
+
+- Pipeline runs are triggered externally (CLI), not from the browser
+- Polling is simple, reliable, and works identically in Vite dev and Tauri production
+- A full pipeline run takes 5-15 minutes -- 2-second polling is negligible overhead
+- No need for WebSocket server or file watcher complexity
+
+### No In-App Generation Trigger
+
+Generation is triggered from Claude Code CLI (`/generate:one-pager TICKER`), not from the browser UI. The app is a **viewer** for pipeline output, not a pipeline launcher. The empty states correctly tell users to run the CLI command.
+
+Future milestone consideration: An in-app "Generate" button could invoke the pipeline via Tauri IPC (Rust shell exec), but this is out of scope for v1.3.
+
+---
+
+## Report JSON Schema (Canonical)
+
+All three stages share a common section schema. The differences are in the top-level metadata and stage-specific content.
+
+### Common Section Schema
+
+```typescript
+interface Section {
+  key: string;                    // e.g., 'company_info', 'radar', 'event_analysis'
+  title: string;                  // Human-readable title
+  sectionNumber: number;          // 1-indexed position
+  status: string;                 // 'complete' | 'failed'
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  verdict: 'PASS' | 'FAIL' | 'WATCHLIST' | 'REVIEW';
+  verdictRationale: string;       // Primary prose explaining the verdict
+  summary: string;                // Bullet or short-form summary for callout box
+  data: Record<string, any>;      // Structured KV pairs (smart-formatted by SectionRenderer)
+  narrative: string;              // Extended markdown narrative
+  citations: Citation[];          // Array of citation objects
+  tables: Table[];                // Array of table objects (title, headers, rows)
+  charts: any[];                  // Chart data (not yet rendered)
+  redFlags: string[];             // Warning items
+  primarySourceInsights: any;     // Insights from 10-K/transcript reading
+  crossCuttingFindings: Finding[];// Cross-section findings with severity
+  searchesPerformed: string[];    // Web searches the agent ran
+  modelUsed: string;              // e.g., 'claude-sonnet-4-20250514'
+  tokenCost: { input: number, output: number };
+}
+
+interface Citation {
+  id: number;                     // 1-indexed reference number
+  source: string;                 // Source description
+  text: string;                   // Citation content
+  url?: string;                   // Web URL if applicable
+  note?: string;                  // Additional context
+  title?: string;                 // Alternative to text
+}
+
+interface Table {
+  title?: string;
+  headers?: string[];
+  rows: (string | number | null)[][];
+}
+
+interface Finding {
+  finding: string;
+  source?: string;
+  severity: 'high' | 'medium' | 'low';
 }
 ```
 
-### Expected Runtime
+### Stage-Specific Top-Level Schema
 
-| Phase | Current (CC sequential) | API (parallel) | Bottleneck |
-|-------|------------------------|----------------|------------|
-| PSR (7 agents) | ~35-40 min | **~8-10 min** | Longest 10-K read |
-| Phase 1 (2 agents) | ~10 min | **~5 min** | business-analyst (2 sections) |
-| Phase 2 (3 agents) | ~15 min | **~8 min** | S4 dependency, then parallel |
-| Phase 3 (2 agents) | ~10 min | **~5 min** | Parallel |
-| Synthesis | ~3 min | **~3 min** | Sequential (single agent) |
-| **Total** | **~2.5 hr** | **~30-35 min** | -- |
-
----
-
-## Prompt Caching Strategy
-
-### Cache Breakpoint Placement (4 max per request)
-
-The Claude API allows 4 explicit cache breakpoints per request. With 10 analysis agents sharing significant context, the caching strategy is critical for cost reduction.
-
-**Breakpoint allocation per agent call:**
-
-| Breakpoint | Content | Tokens | Cache Behavior |
-|------------|---------|--------|----------------|
-| BP 1 | System prompt (agent prompt.md) | ~2-4K | Unique per agent role, cached across sections by same agent |
-| BP 2 | Curriculum + Universal context | ~8-15K | Shared across agents with same curriculum, cached |
-| BP 3 | DataPacket slice + PSR findings | ~30-60K | Shared across phase, cached within 5-min window |
-| BP 4 | (reserved for automatic caching) | -- | SDK auto-places on last cacheable block |
-
-**Cache reuse patterns:**
-
-```
-Agent                  BP1 (prompt)    BP2 (curriculum)    BP3 (data)
-------                 -----------     ----------------    ----------
-business-analyst S1    WRITE           WRITE               WRITE
-business-analyst S2    READ (same)     READ (same)         READ (same)
-competitor-eval S3     WRITE           WRITE (diff)        READ (data)
-competitor-eval S4     READ (same)     READ (same)         READ (data)
-financial-analyst S5   WRITE           WRITE (diff)        READ (data)
-financial-analyst S7   READ (same)     READ (same)         READ (data)
-financial-analyst S8   READ (same)     READ (same)         READ (data)
-management-eval S6     WRITE           WRITE (diff)        READ (data)
-risk-analyst S9        WRITE           WRITE (diff)        READ (data)
-valuation-spec S10     WRITE           WRITE (diff)        READ (data)
-```
-
-**Key constraint:** Parallel dispatch means agents in the same phase fire within seconds of each other. Cache writes from the first agent of a role must complete before reads from the second can benefit. Within a phase, agents of the SAME role sharing curriculum will get cache hits on BP1 and BP2. The DataPacket (BP3) benefits ALL agents within the 5-minute TTL window.
-
-### Important: Cache Breakpoint Ordering
-
-Cache breakpoints must follow the hierarchy: tools -> system -> messages. Content is cached as a PREFIX -- everything from the start of the array up to and including the breakpoint. If you put a breakpoint on a system message, everything before it (including tools) is part of the cached prefix.
-
-**Implication for aiResearch.js:** The web search tool definition should appear BEFORE system messages in the call, and the system messages should have the first breakpoints. This way the tool definition + system prompt + curriculum are all part of the cached prefix.
-
-### Cost Estimate
-
-| Component | Tokens | First Agent | Subsequent Agents |
-|-----------|--------|-------------|-------------------|
-| Curriculum (per unique set) | ~10K | $0.03 write (1.25x) | $0.003 read (0.1x) |
-| DataPacket + PSR | ~50K | $0.15 write | $0.015 read |
-| Agent prompt | ~3K | $0.009 write | $0.0009 read |
-| Web search | ~5 searches/agent | $0.05/agent | $0.05/agent |
-| Output tokens | ~2K/section | $0.03/section | $0.03/section |
-
-**Estimated total per company (Pitch Deck):**
-- Cache writes (first of each type): ~$0.70
-- Cache reads (subsequent): ~$0.35
-- Uncached input (task instructions, phase context): ~$0.50
-- Output tokens (10 sections + synthesis): ~$0.40
-- Web search (50 searches at $0.01/search): ~$0.50
-- PSR (7 agents, Sonnet): ~$3.00
-- Opus agents (risk-analyst, valuation-specialist, synthesis-writer): ~$4.00
-- **Total: ~$8-10 per company** (down from $32 V3 / $14 original target)
-
----
-
-## Structured Outputs Integration
-
-### Schema Modification Required
-
-**Problem:** The Claude API requires `additionalProperties: false` on all objects in structured output schemas. The current `z.looseObject({})` in ReportSectionSchema generates `additionalProperties: true`.
-
-**Fields affected:**
-1. `data` in ReportSectionSchema -- section-specific structured data
-2. `config` in ChartSchema
-3. `data` items in ChartSchema
-4. `userInput` in checkpoint objects (ProgressSchema, StageReportSchema)
-
-**Solution options:**
-
-```javascript
-// BEFORE (incompatible with structured outputs):
-data: z.looseObject({}),
-
-// OPTION A: string-serialized JSON (simplest, guaranteed compliant)
-data: z.string(),  // Agent outputs JSON.stringify(data), orchestrator parses
-
-// OPTION B: record type (flexible, SDK *may* transform)
-data: z.record(z.string(), z.unknown()),
-
-// OPTION C: explicit typed objects per section (most constrained, best quality)
-// Requires a schema variant per section key -- more work but best structured output quality
-```
-
-**Recommendation:** Option A (`z.string()`) for the `data` field. The `data` field contains arbitrary section-specific content (moat types, growth tables, valuation ranges) that varies wildly across sections. Making it a string that contains serialized JSON is the simplest path. The orchestrator parses it after extraction. The `zodOutputFormat()` helper in the Anthropic SDK automatically transforms schemas with unsupported features, but `looseObject` semantics may not survive transformation cleanly -- testing needed.
-
-For `ChartSchema.config` and `ChartSchema.data`: these are optional fields rarely used. Change to `z.string()` or remove from the structured output schema entirely (charts are a PDF concern, not an AI output concern).
-
-### Schema Complexity Limits
-
-The structured output system has hard limits:
-- Max 20 strict tools per request
-- Max 24 optional parameters across all schemas
-- No recursive schemas
-- `additionalProperties` must be `false`
-
-The current ReportSectionSchema has ~8 optional fields (`tables`, `charts`, `primarySourceInsights`, `crossCuttingFindings`, `searchesPerformed`, plus optionals within nested objects). This is within the 24-parameter limit, but barely. Count carefully before adding more optional fields.
-
-**Optional parameter budget:**
-
-| Field | Status | Counts |
-|-------|--------|--------|
-| `tables` | optional | 1 |
-| `charts` | optional | 1 |
-| `primarySourceInsights` | optional | 1 |
-| `crossCuttingFindings` | optional | 1 |
-| `searchesPerformed` | optional | 1 |
-| `TableSchema.source` | optional | 1 |
-| `CitationSchema.url` | optional (new) | 1 |
-| `crossCuttingFindings[].source` nested | required (0) | 0 |
-| **Total** | | **7 of 24** |
-
-Room to grow, but be mindful.
-
-### Two-Pass Output Pattern Assessment
-
-V3 used a two-pass pattern (prose first, then JSON) to prevent narrative collapse. With structured outputs, the model is constrained to produce valid JSON matching the schema. The question is whether the `narrative` string field will still get abbreviated.
-
-**Assessment:** Structured outputs guarantee the SCHEMA is valid, but do NOT guarantee field LENGTH. The model could still output a short narrative string and satisfy the schema. However, the constraint that `redFlags` is `z.array(z.string()).min(1)` will be enforced mechanically (min items of 1 is supported).
-
-**Recommendation:** Keep narrative length validation in the orchestrator (post-hoc check). If `narrative.length < 500`, retry once with explicit instruction. This is cheap insurance. The two-pass pattern itself (write prose first, then JSON) is NOT needed with structured outputs because the model writes directly into the schema. But the post-hoc length check is still needed.
-
----
-
-## Web Search + Citation Architecture
-
-### The Incompatibility
-
-**Citations API and Structured Outputs are incompatible.** The Citations feature requires interleaving citation blocks with text output, which conflicts with strict JSON schema constraints. Enabling both returns a 400 error.
-
-This means we cannot use the built-in Citations feature. Instead, we use the web search tool and manually extract URLs from the response.
-
-### Web Search URL Flow
-
-When an agent uses the web search tool, the response contains `web_search_tool_result` blocks with URLs. The structured JSON output is in a separate `text` content block.
-
-**Response structure with web search + structured output:**
-
-```json
+**One Pager** (`one-pager.json`):
+```typescript
 {
-  "content": [
-    {
-      "type": "text",
-      "text": "I'll research SFM's competitive position."
-    },
-    {
-      "type": "server_tool_use",
-      "id": "srvtoolu_abc",
-      "name": "web_search",
-      "input": { "query": "Sprouts Farmers Market competitive analysis 2026" }
-    },
-    {
-      "type": "web_search_tool_result",
-      "tool_use_id": "srvtoolu_abc",
-      "content": [
-        {
-          "type": "web_search_result",
-          "url": "https://www.grocerydive.com/news/sprouts-2026-growth/",
-          "title": "Sprouts 2026 Growth Strategy",
-          "encrypted_content": "...",
-          "page_age": "March 15, 2026"
-        }
-      ]
-    },
-    {
-      "type": "text",
-      "text": "{\"key\":\"market_position\",\"citations\":[{\"id\":1,\"ref\":\"...\",\"text\":\"...\",\"source\":\"Grocery Dive\"}]}"
-    }
-  ]
+  ticker: string;
+  companyName: string;
+  stage: 'one-pager';
+  generatedAt: string;           // ISO timestamp
+  sections: Section[];           // 6 sections
+  overallVerdict: string;        // 'PASS' | 'FAIL' | 'WATCHLIST'
+  sectionKeys: string[];         // Ordered keys for nav
 }
 ```
 
-**Post-processing in aiResearch.js:**
-
-```javascript
-function extractWebSearchURLs(response) {
-  const urls = [];
-  for (const block of response.content) {
-    if (block.type === 'web_search_tool_result' && Array.isArray(block.content)) {
-      for (const result of block.content) {
-        if (result.type === 'web_search_result') {
-          urls.push({
-            url: result.url,
-            title: result.title,
-            pageAge: result.page_age,
-          });
-        }
-      }
-    }
-  }
-  return urls;
-}
-
-function enrichCitationsWithURLs(section, webSearchURLs) {
-  for (const citation of section.citations) {
-    if (!citation.url && citation.source) {
-      // Match citation source to web search URL by domain or title substring
-      const match = webSearchURLs.find(ws => {
-        const domain = new URL(ws.url).hostname.replace('www.', '');
-        const sourceLower = citation.source.toLowerCase();
-        return sourceLower.includes(domain) ||
-               sourceLower.includes(ws.title.toLowerCase().substring(0, 20));
-      });
-      if (match) {
-        citation.url = match.url;
-      }
-    }
-  }
+**Pitch Deck** (`pitch-deck.json`):
+```typescript
+{
+  ticker: string;
+  stage: 'pitch-deck';
+  completedAt: string;
+  pipelineTimeSeconds: number;
+  sectionCount: number;
+  errorCount: number;
+  sections: Section[];           // 10 sections
+  budget: Budget;                // Cost tracking
+  cacheStats: any;
+  errors: any[];
+  // NOTE: No companyName, no overallVerdict at top level
+  // NOTE: No assumptions at top level (delight feature can't populate)
 }
 ```
 
-**Citation schema extension:**
-
-```javascript
-export const CitationSchema = z.object({
-  id: z.number(),
-  ref: z.string(),
-  text: z.string(),
-  source: z.string(),
-  url: z.string().optional(),  // NEW: populated from web search results
-});
-```
-
-**Agent prompt instruction (add to all analysis agent prompt.md files):**
-
-```
-CITATION REQUIREMENTS:
-When citing web search results, you MUST include the full URL in the "source" field.
-Format: "https://example.com/article -- Article Title (2026)"
-The URL is available in the search result returned to you. Do NOT paraphrase or
-abbreviate URLs. The source field must contain the https:// URL for web citations.
-
-For DataPacket citations, use the exact field path from the DataPacket Reference below.
-```
-
-### Web Search Pricing
-
-$10 per 1,000 searches. With ~5 searches per analysis agent and 7 analysis agents (excluding PSR and synthesis), that is ~35-50 searches per pipeline = ~$0.35-0.50 per company. Acceptable.
-
----
-
-## State Machine Changes
-
-### Current State Machine (preserved)
-
-```
-IDLE --> DATA_ASSEMBLY --> PRIMARY_SOURCE_READING --> WAVE_1_RUNNING --> CHECKPOINT_1
---> WAVE_2_RUNNING --> CHECKPOINT_2 --> WAVE_3_RUNNING --> CHECKPOINT_3
---> SYNTHESIS --> QUALITY_CHECK --> COMPLETE
-```
-
-**No changes to the state machine.** The states, transitions, and validation logic in `progressState.js` remain exactly as-is. The only difference is WHO drives the transitions:
-
-| Transition Driver | Current (CC) | New (API) |
-|-------------------|-------------|-----------|
-| State advances | SKILL.md bash commands | aiResearch.js function calls |
-| Section start/complete | SKILL.md bash commands | aiResearch.js function calls |
-| Phase status updates | SKILL.md bash commands | aiResearch.js function calls |
-| generation-status.json | progressState.js | progressState.js (unchanged) |
-| Section output files | SKILL.md `cat << EOF` | aiResearch.js `saveSectionOutput()` |
-
-### Checkpoint Handling Change
-
-**Current (CC):** Checkpoints are conversational dialogue loops in SKILL.md. The PM types "continue" or asks questions, and the CC skill dispatches follow-up agents.
-
-**New (API):** Checkpoints become function return values from aiResearch.js. The orchestrator:
-1. Advances state to `CHECKPOINT_N`
-2. Returns a checkpoint summary object to the caller
-3. The caller (CC skill wrapper or future UI) presents the checkpoint to the PM
-4. PM input flows back into aiResearch.js via `resumeFromCheckpoint(ticker, phaseNum, pmInput)`
-
-```javascript
-// aiResearch.js checkpoint interface
-
-export async function runPitchDeck(ticker, options = {}) {
-  // Phase 0: Data assembly (external -- prepare-data.js already ran)
-  const dataPacket = readDataPacket(ticker);
-
-  // PSR Phase
-  advanceState(ticker, 'PRIMARY_SOURCE_READING');
-  const psrFindings = await runPSRPhase(ticker, dataPacket);
-
-  // Phase 1
-  advanceState(ticker, 'WAVE_1_RUNNING');
-  const phase1Results = await runPhase(ticker, 1, PHASE_1_TASKS, {
-    dataPacket, psrFindings
-  });
-  advanceState(ticker, 'CHECKPOINT_1');
-
-  // Return checkpoint -- caller must resume
-  return {
-    type: 'checkpoint',
-    phase: 1,
-    sections: phase1Results,
-    // Caller invokes resumePhase2(ticker, pmInput) to continue
-  };
+**Full Story** (`full-story-api.json`):
+```typescript
+{
+  ticker: string;
+  stage: 'full-story';
+  completedAt: string;
+  pipelineTimeSeconds: number;
+  sectionCount: number;
+  errorCount: number;
+  sections: Section[];           // 6 sections (with checklist data in .data)
+  budget: Budget;
+  cacheStats: any;
+  errors: any[];
+  debateOutputs: {
+    bull: DebateStep;            // { step, role, agent, content: { thesisPoints, overallThesis } }
+    bear: DebateStep;            // { step, role, agent, content: { inversions, overallBearCase } }
+    bull_rebuttal: DebateStep;   // { step, role, agent, content: { rebuttals } }
+    judge: DebateStep;           // { step, role, agent, content: { exchanges, overallVerdict } }
+  }
 }
 
-export async function resumeFromCheckpoint(ticker, phaseNum, pmInput) {
-  const context = loadPhaseContext(ticker, phaseNum);
-  if (pmInput.supplementaryContext) {
-    context.supplementary = pmInput.supplementaryContext;
-  }
-  if (pmInput.rerunSections) {
-    // Re-dispatch specific sections with additional guidance
-    for (const { key, guidance } of pmInput.rerunSections) {
-      await rerunSection(ticker, key, guidance, context);
-    }
-  }
-
-  // Continue to next phase
-  const nextPhase = phaseNum + 1;
-  advanceState(ticker, `WAVE_${nextPhase}_RUNNING`);
-  // ... dispatch next phase agents
+// Checklist section .data shape:
+{
+  checklistType: string;          // 'meaning' | 'moat' | 'management'
+  items: ChecklistItem[];         // 13-15 items
+  summary: string;
 }
-```
 
-This decouples the PM interaction from the orchestration logic. The CC skill becomes a thin wrapper that calls `runPitchDeck()` and handles PM dialogue. The future browser UI calls the same functions.
-
----
-
-## aiResearch.js Architecture
-
-### Why a New File (Not Extending Existing Patterns)
-
-`aiResearch.js` is a NEW engine file, not an extension of any existing file. Rationale:
-
-1. **dataExport.js** is pure data assembly -- no AI, no API calls, no state management. Adding API orchestration would violate its single responsibility.
-2. **The CC SKILL.md** contains orchestration logic embedded in procedural markdown. That logic needs to become JavaScript functions with proper error handling, retry, and parallel dispatch.
-3. **progressState.js** is a state persistence layer. The orchestration logic that DRIVES state transitions is a separate concern.
-4. **No existing engine** does what aiResearch.js needs to do: manage Claude API sessions, build prompts from agent configs, handle caching, dispatch in parallel, process tool results, and coordinate checkpoints.
-
-### Module Structure
-
-```javascript
-// src/engines/aiResearch.js -- ~600-800 LOC
-
-// --- Imports ---
-import Anthropic from '@anthropic-ai/sdk';
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
-import { z } from 'zod';
-import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
-import { ReportSectionSchema } from '../schemas/reportSection.js';
-import { validateSection, validateStage } from './critic.js';
-import {
-  advanceState, createProgress, saveSectionOutput, readSectionOutput,
-  startSection, completeSection, updateGenerationStatus,
-  updatePhaseStatus, saveBudgetReport,
-} from './progressState.js';
-
-// --- Configuration ---
-const ANTHROPIC_API_KEY = process.env.VITE_CLAUDE_KEY;
-const MODELS = { sonnet: 'claude-sonnet-4-6', opus: 'claude-opus-4-6' };
-const MAX_SEARCH_USES = 10;
-const AGENTS_DIR = join(process.cwd(), 'agents');
-const REPORTS_DIR = join(process.cwd(), '.thes1s', 'reports');
-
-// --- Core Functions (exported) ---
-export async function dispatchAgent(ticker, agentConfig, context);
-export async function runPSRPhase(ticker, dataPacket);
-export async function runPhase(ticker, phaseNum, tasks, context);
-export async function runSynthesis(ticker, sectionOutputs, dataPacket);
-export async function runPitchDeck(ticker, options);
-export async function resumeFromCheckpoint(ticker, phaseNum, pmInput);
-
-// --- Prompt Builders (internal) ---
-function buildSystemMessages(agentDir, config);
-function buildUserMessages(config, dataPacket, psrFindings, priorContext, taskInstruction);
-function sliceDataPacket(dataPacket, sliceKeys);
-function loadCurriculum(config);
-function formatPriorPhaseContext(completedSections);
-
-// --- Response Processing (internal) ---
-function extractStructuredOutput(response);
-function extractWebSearchURLs(response);
-function enrichCitationsWithURLs(section, webSearchURLs);
-function computeTokenCost(response);
-
-// --- Retry and Error Handling (internal) ---
-async function dispatchWithRetry(client, params, maxRetries);
-function handleRateLimit(error);
-function handleMaxTokens(response, params);
-```
-
-### Key Function: dispatchAgent
-
-```javascript
-async function dispatchAgent(ticker, task, context) {
-  const { agentDir, sectionKeys, taskInstruction } = task;
-  const configPath = join(AGENTS_DIR, agentDir, 'config.json');
-  const config = JSON.parse(readFileSync(configPath, 'utf8'));
-
-  // Mark sections as running
-  for (const key of sectionKeys) {
-    startSection(ticker, key, config.role);
-  }
-
-  // Build messages with cache breakpoints
-  const systemMessages = buildSystemMessages(agentDir, config);
-  const userMessages = buildUserMessages(
-    config, context.dataPacket, context.psrFindings,
-    context.priorSections, taskInstruction
-  );
-
-  // Determine tools (analysis agents get web search; PSR and synthesis do not)
-  const tools = [];
-  if (agentNeedsWebSearch(config)) {
-    tools.push({
-      type: 'web_search_20250305',
-      name: 'web_search',
-      max_uses: MAX_SEARCH_USES,
-    });
-  }
-
-  // Determine output schema
-  const outputSchema = sectionKeys.length === 1
-    ? ReportSectionSchema
-    : z.array(ReportSectionSchema);
-
-  // Build API params
-  const params = {
-    model: MODELS[config.model] || MODELS.sonnet,
-    max_tokens: 8192,
-    system: systemMessages,
-    messages: [{ role: 'user', content: userMessages }],
-    output_config: { format: zodOutputFormat(outputSchema) },
-  };
-  if (tools.length > 0) params.tools = tools;
-
-  // Dispatch with retry
-  const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
-  const response = await dispatchWithRetry(client, params, 1);
-
-  // Extract structured output (last text block contains JSON)
-  const sectionJSON = extractStructuredOutput(response);
-  const webURLs = extractWebSearchURLs(response);
-  const sections = Array.isArray(sectionJSON) ? sectionJSON : [sectionJSON];
-
-  // Enrich and save
-  const tokenCost = computeTokenCost(response);
-  for (const section of sections) {
-    enrichCitationsWithURLs(section, webURLs);
-    section.modelUsed = params.model;
-    section.tokenCost = tokenCost;
-
-    // Narrative length check (post-hoc quality gate)
-    if (section.narrative && section.narrative.length < 500) {
-      console.warn(`Short narrative for ${section.key}: ${section.narrative.length} chars`);
-      // Could retry here with explicit length instruction
-    }
-
-    saveSectionOutput(ticker, section.key, section);
-    const quality = validateSection(section, context.dataPacket);
-    completeSection(ticker, section.key);
-  }
-
-  return sections;
+interface ChecklistItem {
+  number: number;
+  item: string;                   // The checklist question
+  verdict: 'PASS' | 'FAIL' | 'PARTIAL';
+  evidence: string;               // Supporting evidence
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 ```
 
 ---
 
-## Integration Points: New vs Modified vs Unchanged
+## Critical Data Mismatches to Resolve
 
-### New Components
+### PitchDeck Section Key Mismatch
 
-| Component | Purpose | LOC Estimate | Dependencies |
-|-----------|---------|-------------|--------------|
-| `src/engines/aiResearch.js` | API orchestration, parallel dispatch, prompt building, caching | ~600-800 | @anthropic-ai/sdk, progressState, critic, reportSection |
+The `SECTION_DEFS` in PitchDeck.jsx uses keys that don't match the pipeline output:
 
-### Modified Components
+| PitchDeck.jsx SECTION_DEFS | Pipeline Output (pitch-deck.json) | Fix |
+|----------------------------|-----------------------------------|-----|
+| `simple_predictable` | `simple_and_predictable` | Update SECTION_DEFS |
+| `barriers_moats` | `barriers_and_moats` | Update SECTION_DEFS |
+| `roe_roic_debt` | *(missing from pipeline)* | Pipeline has no separate section -- merged into others |
+| `pest` | `pest_risks` | Update SECTION_DEFS |
+| `valuation` | `valuation_summary` | Update SECTION_DEFS |
+| *(no equivalent)* | `overall_verdict` | Add to SECTION_DEFS |
 
-| Component | Change | Scope | Risk |
-|-----------|--------|-------|------|
-| `src/schemas/reportSection.js` | Replace `z.looseObject({})` with structured output-compatible types; add optional `url` to CitationSchema | ~8 lines | LOW -- test with `z.toJSONSchema()` first |
-| `agents/*/prompt.md` (7 analysis agents) | Add DataPacket field path reference section + citation URL instructions | ~20 lines each | LOW -- additive only |
-| `package.json` | Update `@anthropic-ai/sdk` from 0.78.0 to 0.80.0+ | 1 line | LOW |
+**Consequence of current state:** PitchDeck.jsx renders only 5 of 10 sections (radar, market_position, fcf, management, balance_sheet). The other 5 show as "Pending..." because `sectionMap[def.key]` returns `undefined` for the mismatched keys.
 
-### Unchanged Components
+**Fix:** Update `SECTION_DEFS` to match pipeline output keys. The pipeline is the source of truth -- the component adapts to it, not the other way around.
 
-| Component | Why Unchanged |
-|-----------|--------------|
-| `src/engines/dataExport.js` | Data assembly is orthogonal to API orchestration |
-| `src/engines/critic.js` | Quality validation logic is API-agnostic |
-| `src/engines/progressState.js` | State machine and persistence are API-agnostic |
-| `src/schemas/progress.js` | Progress schema unchanged |
-| `agents/*/config.json` | Agent configs consumed as-is by aiResearch.js |
-| `agents/orchestrator/dispatch-table.json` | Phase structure consumed as-is |
-| `agents/orchestrator/config.json` | Section mapping consumed as-is |
-| `scripts/prepare-data.js` | Data prep runs before API orchestration |
-| `.thes1s/reports/{TICKER}/` | File structure preserved exactly |
+### PitchDeck Missing Top-Level Fields
+
+The pitch-deck.json has no `companyName` or `overallVerdict` at the top level (unlike one-pager.json which has both). The PitchDeck component accesses `pitchDeckData?.overallVerdict` and `pitchDeckData?.companyName` -- both return `undefined`.
+
+**Fix options:**
+1. Add these fields to the pipeline output (preferred -- all stages should have consistent top-level metadata)
+2. Fall back to the `overall_verdict` section's verdict in the component
+3. Pull `companyName` from the report object (already done as fallback)
+
+### Full Story File Type Not in Vite Middleware
+
+The `thes1sReportsPlugin` in vite.config.js has a `fileMap` that maps URL file types to filesystem filenames:
+
+```javascript
+const fileMap = {
+  'one-pager': 'one-pager.json',
+  'pitch-deck': 'pitch-deck.json',
+  'progress': 'progress.json',
+  'generation-status': 'generation-status.json',
+};
+```
+
+`full-story` is not mapped. The fix is trivial: add `'full-story': 'full-story-api.json'` to this map.
 
 ---
 
-## Build Order (Dependency-Aware)
+## Component Architecture
 
-### Phase 1: Schema + SDK Foundation (0 dependencies)
+### Routing Structure
 
-1. **Update `@anthropic-ai/sdk`** to 0.80.0+ (needed for `zodOutputFormat`)
-2. **Modify `reportSection.js`** -- replace `z.looseObject({})`, add `url` to CitationSchema
-3. **Verify** `z.toJSONSchema(ReportSectionSchema)` produces valid structured output schema (run a test)
-4. **Smoke test** with a single Claude API call using the new schema + `output_config.format`
+Current routing in App.jsx:
 
-### Phase 2: Core Dispatch (depends on Phase 1)
+```
+/research                          → ResearchRedirect (→ last report or empty)
+/research/:id                      → Toolbox (8 data tabs)
+/research/:id/one-pager            → OnePager
+/research/:id/pitch-deck           → PitchDeck
+/research/:id/full-story           → StagePlaceholder (→ FullStory)
+/reports                           → ReportsList
+```
 
-5. **Create `aiResearch.js`** -- API client initialization, `dispatchAgent()`, response processing
-6. **Implement prompt builders** -- `buildSystemMessages()`, `buildUserMessages()`, `sliceDataPacket()`
-7. **Implement response processors** -- `extractStructuredOutput()`, `extractWebSearchURLs()`, `enrichCitationsWithURLs()`
-8. **Test** single agent dispatch (business-analyst for radar section) end-to-end
+This routing is correct and requires minimal changes. The `/research/:id/full-story` route just needs the placeholder replaced with the real `FullStory` component.
 
-### Phase 3: Parallel + State (depends on Phase 2)
+**Navigation flow:**
+1. User lands on `/reports` (Reports tab in top nav) and sees all generated reports
+2. Click a report → navigates to `/research/:id/one-pager` (or appropriate stage)
+3. From any stage view, the user can navigate between stages
+4. The `/research/:id` route (Toolbox) is the data exploration view -- independent of report stages
 
-9. **Implement `runPhase()`** -- parallel dispatch with `Promise.allSettled`, dependency classification
-10. **Implement `runPSRPhase()`** -- annual + quarterly reader parallel dispatch and merge
-11. **Wire state machine** -- `advanceState()`, `startSection()`, `completeSection()` calls throughout
-12. **Test** full Phase 1 dispatch (business-analyst + competitor-evaluator parallel)
+**Key insight:** Report stages and Toolbox tabs are separate concerns. The Toolbox shows raw data. Report stages show AI-generated analysis. They're accessed via different routes, not different tabs within the same container.
 
-### Phase 4: Full Pipeline + Checkpoints (depends on Phase 3)
+### Report Stage Navigation (New Component Needed)
 
-13. **Implement `runPitchDeck()`** -- full pipeline entry point with checkpoint returns
-14. **Implement `resumeFromCheckpoint()`** -- resume from PM input
-15. **Implement `runSynthesis()`** -- synthesis-writer dispatch using all completed sections
-16. **Add DataPacket path reference** to all 7 analysis agent prompt.md files
-17. **Add citation URL instructions** to all 7 analysis agent prompt.md files
+There is no in-app way to navigate between stages for the same ticker. Once viewing a One Pager, the user has no UI to get to the Pitch Deck (other than manually editing the URL).
 
-### Phase 5: Validation (depends on Phase 4)
+**Recommendation: StageNavBar component**
 
-18. **Run SFM** -- full pipeline, compare quality to V3 baseline (75/100)
-19. **Run second ticker** -- generalization test (different sector)
-20. **Cost audit** -- verify $8-12 target from usage response fields
-21. **Runtime audit** -- verify 30-40 min target
-22. **Quality audit** -- verify 85+ score, zero high-severity citation/format issues
+A sub-nav bar below the main Layout header that appears on all `/research/:id/*` routes. Shows:
+- Stage tabs: One Pager | Pitch Deck | Full Story
+- Stage status: approval badge, lock icon for gated stages
+- Toolbox link (back to data view)
+
+This should be a new shared component rendered within `OnePager`, `PitchDeck`, and `FullStory` (or via a wrapper route layout).
+
+### Component Hierarchy
+
+```
+App.jsx
+├── Layout.jsx (52px top nav)
+│   ├── /research/:id/one-pager → OnePager.jsx
+│   │   ├── StageNavBar (new)
+│   │   ├── ReportHero (shared pattern, currently inline)
+│   │   ├── ProgressBar (shared pattern, currently inline)
+│   │   ├── StickyNav (shared pattern, currently inline)
+│   │   └── SectionRenderer.jsx (6x)
+│   │       ├── VerdictBadge.jsx
+│   │       ├── ConfidenceBadge.jsx
+│   │       ├── CitationTooltip.jsx
+│   │       └── RedFlagCallout.jsx
+│   │
+│   ├── /research/:id/pitch-deck → PitchDeck.jsx
+│   │   ├── StageNavBar (new)
+│   │   ├── ReportHero
+│   │   ├── PhaseProgressIndicator
+│   │   ├── GenerationStatusPanel
+│   │   ├── StickyNav + SectionRenderer (10x)
+│   │   ├── DeepDivePanel.jsx
+│   │   ├── AssumptionTracker.jsx
+│   │   └── IndustryCard.jsx
+│   │
+│   ├── /research/:id/full-story → FullStory.jsx (new)
+│   │   ├── StageNavBar (new)
+│   │   ├── ReportHero
+│   │   ├── StickyNav + SectionRenderer (6x)
+│   │   │   ├── ChecklistRenderer.jsx (new, for 3 checklist sections)
+│   │   │   └── Standard SectionRenderer (for other 3 sections)
+│   │   ├── DebateRenderer.jsx (new)
+│   │   └── ApprovalBar
+│   │
+│   └── /reports → ReportsList.jsx
+```
+
+### Shared Patterns vs Duplication
+
+OnePager and PitchDeck have significant code duplication:
+- `formatTitle()` -- identical in both
+- `formatRelativeTime()` -- identical in both
+- `stateToLabel()` -- identical in both
+- `Spinner` component -- identical in both
+- `injectSpinnerStyle()` -- identical in both
+- `verdictDotColor()` -- identical in both
+- Approval bar JSX -- very similar in both
+- Sticky nav JSX -- very similar in both
+- Progress bar JSX -- very similar in both
+
+**Recommendation: Extract shared utilities, but don't over-abstract.**
+
+Extract to `src/utils/reportHelpers.js`:
+- `formatTitle()`
+- `formatRelativeTime()`
+- `stateToLabel()`
+- `verdictDotColor()`
+- `computeSectionStatuses()`
+- `computePercentage()`
+
+Extract to shared components:
+- `Spinner.jsx` (already tiny)
+- `StageNavBar.jsx` (new)
+
+Do NOT extract ReportHero, StickyNav, ProgressBar, or ApprovalBar into shared components. These have subtle per-stage differences (PD has phase progress, OP has different hero layout, FS needs debate verdict in hero). Premature abstraction creates rigid constraints that fight the stage-specific needs.
+
+---
+
+## FullStory.jsx Architecture
+
+### Section Definitions
+
+Based on the actual `full-story-api.json` output:
+
+```javascript
+const SECTION_DEFS = [
+  { key: 'event_analysis', label: 'Event Analysis' },
+  { key: 'meaning_checklist', label: 'Meaning Checklist', isChecklist: true },
+  { key: 'moat_checklist', label: 'Moat Checklist', isChecklist: true },
+  { key: 'management_checklist', label: 'Management Checklist', isChecklist: true },
+  { key: 'valuation_confirmation', label: 'Valuation Confirmation' },
+  { key: 'inversion_rebuttal', label: 'Inversion & Rebuttal' },
+];
+```
+
+### Checklist Rendering
+
+Three of the six sections contain scored checklists (Meaning 15pt, Moat 15pt, Management 13pt). Each checklist item has `{ number, item, verdict, evidence, confidence }`.
+
+The checklist data lives in `section.data.items[]` -- not in `section.tables`. SectionRenderer's data grid format (`key: value` pairs) is wrong for this. A dedicated `ChecklistRenderer` is needed.
+
+**ChecklistRenderer design:**
+- Each item is a row: number | question text | verdict badge | confidence badge
+- Expand/collapse for evidence text
+- Score summary: X/Y PASS, Z PARTIAL, W FAIL
+- Color-coded verdict dots in the sticky nav
+
+### Debate Rendering
+
+The adversarial debate is a top-level field (`debateOutputs`), not a section. It has 4 steps:
+
+1. **Bull** (`thesisPoints[]` + `overallThesis`) -- Each point has `{ point, evidence }`
+2. **Bear** (`inversions[]` + `overallBearCase`) -- Each inversion is a counter-argument
+3. **Bull Rebuttal** (`rebuttals[]`) -- Point-by-point responses to bear case
+4. **Judge** (`exchanges[]` + `overallVerdict`) -- Topic-by-topic ruling with `{ topic, bullStrength, bearStrength, verdict, reasoning }`
+
+**DebateRenderer design:**
+- Tab or toggle view: Bull | Bear | Rebuttal | Judge
+- Exchange-based view: Show each topic with Bull/Bear/Judge side by side
+- Judge verdict banner: direction (Bull/Bear), unresolvedCount, summary
+- Color coding: Bull arguments in green accent, Bear in red, Judge in neutral
+
+**Placement:** After all 6 sections, before the approval bar. The debate is the culminating analysis that informs the final verdict.
+
+### Gate Logic
+
+FullStory requires PitchDeck approval. The gate check follows the same pattern as PitchDeck (which gates on OnePager):
+
+```javascript
+const pitchDeckApproved = report?.stageApprovals?.pitchDeck === 'approved';
+if (!pitchDeckApproved && !fullStoryData && !progress) {
+  return <GateLockMessage />;
+}
+```
 
 ---
 
 ## Patterns to Follow
 
-### Pattern 1: Agent Config-Driven Dispatch
+### Pattern 1: Hook-Mediated Data Flow (Existing)
+**What:** Hooks fetch data and manage polling; components are pure renderers.
+**When:** Always -- every data-fetching component follows this.
+**Example:** `useOnePager(ticker)` returns `{ report, progress, loading, error }`.
 
-**What:** Every aspect of agent dispatch (model, curriculum, DataPacket slice, web search eligibility) is read from `agents/*/config.json` at runtime. Zero agent knowledge is hardcoded in `aiResearch.js`.
+### Pattern 2: File-Based Report Serving (Existing)
+**What:** Pipeline writes JSON to `.thes1s/reports/`, Vite middleware serves it, hooks fetch via `/api/thes1s/reports/`.
+**When:** All report data.
+**Why:** No WebSocket, no file watcher, no complex state sync. Pipeline writes files, app reads them. Polling bridges the gap during generation.
 
-**Why:** The config files are the single source of truth for agent behavior. Adding a new agent or changing a curriculum file requires zero code changes in the orchestrator.
+### Pattern 3: SectionRenderer for Standard Sections (Existing)
+**What:** A single renderer handles header, badges, summary, narrative, data, tables, citations, red flags.
+**When:** Any section that fits the standard schema.
+**Caveat for FullStory:** Checklist sections need a custom renderer because their `data.items[]` structure doesn't fit the KV-pair data grid.
 
-**Example:**
-```javascript
-const config = JSON.parse(readFileSync(join(AGENTS_DIR, agentDir, 'config.json'), 'utf8'));
-const model = MODELS[config.model] || MODELS.sonnet;
-const curriculum = config.curriculum.map(f => readFileSync(join(process.cwd(), f), 'utf8'));
-const slicedData = sliceDataPacket(dataPacket, config.dataPacketSlice);
-const needsSearch = !['annual-reader', 'quarterly-reader', 'synthesis-writer'].includes(config.role);
-```
+### Pattern 4: IntersectionObserver Scroll Spy (Existing)
+**What:** `IntersectionObserver` with threshold 0.3 and rootMargin '-80px 0px -60% 0px' tracks which section is in view, updates sticky nav active state.
+**When:** All stage viewers with sticky nav.
+**Reuse:** Same observer config for FullStory.
 
-### Pattern 2: Structured Output + Post-Processing
+### Pattern 5: Inline Styles via C Palette (Existing)
+**What:** All styling through inline styles reading from the mutable `C` theme object.
+**When:** Always. No CSS files, no CSS-in-JS.
+**Pattern:** `style={{ color: C.text, background: C.bgCard, border: '1px solid ' + C.border }}`
 
-**What:** Use `output_config.format` for schema enforcement, then post-process the parsed JSON to enrich with data the model could not produce (web URLs from tool results, token costs from usage, model name from params).
-
-**Why:** Structured outputs guarantee the skeleton is correct. Post-processing fills in metadata that comes from the response object, not the model's generation.
-
-### Pattern 3: Cache-Aligned Message Construction
-
-**What:** Build messages so that shared content (curriculum, DataPacket) appears early in the message array with `cache_control` breakpoints, and task-specific content (instructions, phase context) appears after.
-
-**Why:** Cache breakpoints cache everything from the start of the message up to the breakpoint. Shared content cached early means subsequent agents pay 0.1x for the same tokens.
-
-**Example:**
-```javascript
-function buildSystemMessages(agentDir, config) {
-  const promptText = readFileSync(join(AGENTS_DIR, agentDir, 'prompt.md'), 'utf8');
-  const curriculumText = loadCurriculum(config);
-  const universalText = config.universalContext
-    ? config.universalContextFiles.map(f => readFileSync(join(process.cwd(), f), 'utf8')).join('\n\n')
-    : '';
-
-  return [
-    {
-      type: 'text',
-      text: promptText + '\n\n' + universalText,
-      cache_control: { type: 'ephemeral' },
-    },
-    {
-      type: 'text',
-      text: curriculumText,
-      cache_control: { type: 'ephemeral' },
-    },
-  ];
-}
-```
+### Pattern 6: Progressive Rendering During Generation (Existing)
+**What:** Sections fade in as they complete. Pending sections show skeleton placeholders. Running sections show spinner with agent name.
+**When:** Any stage viewer that supports real-time generation progress.
 
 ---
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Hardcoded Agent Logic
+### Anti-Pattern 1: Over-Abstracting Stage Components
+**What:** Creating a `StageViewer` base component that all three stages extend.
+**Why bad:** Each stage has distinct layout needs -- OP is simple, PD has phases and delight panels, FS has checklists and debates. A generic base creates constraint wars.
+**Instead:** Share utilities and small leaf components. Keep stage containers independent.
 
-**What:** Putting agent-specific behavior (which sections, which model, which curriculum) directly in `aiResearch.js`.
+### Anti-Pattern 2: Storing Report Data in useResearch/localStorage
+**What:** Putting the full report JSON into the `stock-analyzer-reports` localStorage entry.
+**Why bad:** Report JSON is large (pitch-deck.json is 414KB, full-story-api.json is 326KB). localStorage has a ~5MB limit. Two full reports would exhaust it.
+**Instead:** Reports stay in `.thes1s/reports/` on the file system, served via the Vite middleware. The `useResearch` hook stores only metadata (stage, approvals, notes).
 
-**Why bad:** Every new agent or config change requires editing the orchestrator.
+### Anti-Pattern 3: Transforming Pipeline Output in the Component
+**What:** Writing complex data transformation logic inside the React component to reshape pipeline JSON.
+**Why bad:** Makes components harder to test and debug. Couples rendering to data format.
+**Instead:** Accept the pipeline output as-is. If the schema needs transformation, do it in the hook or a dedicated adapter function.
 
-**Instead:** Read everything from `agents/*/config.json` and `agents/orchestrator/dispatch-table.json`. The only hardcoded knowledge should be the dispatch table structure.
-
-### Anti-Pattern 2: Fire-and-Forget Parallel Dispatch
-
-**What:** Dispatching all 10 agents in parallel regardless of dependencies.
-
-**Why bad:** Phase 2's `barriers_moats` (S4) depends on Phase 1's `market_position` (S3). Phase 3 agents need all prior context. Ignoring dependencies produces inferior analysis because agents lack context.
-
-**Instead:** Respect the dependency graph. Parallelize within phases, sequence between phases.
-
-### Anti-Pattern 3: Relying on Structured Outputs for Content Quality
-
-**What:** Assuming structured outputs solve all quality issues.
-
-**Why bad:** Structured outputs guarantee SCHEMA compliance, not CONTENT quality. A model can produce valid JSON with a 10-word narrative.
-
-**Instead:** Structured outputs for format enforcement + `critic.js` for content validation. Both necessary, neither sufficient alone.
-
-### Anti-Pattern 4: Single Client Instance with Concurrent Calls
-
-**What:** Creating one `Anthropic()` client and reusing it for all parallel calls.
-
-**Why bad:** Potential connection pooling issues or request interleaving. The SDK may not handle concurrent requests correctly with a shared instance.
-
-**Instead:** Either create a client per call (cheap -- it is just a config wrapper) or verify the SDK supports concurrent usage. Start with one-client-per-call for safety, optimize later if needed.
-
-### Anti-Pattern 5: Ignoring Grammar Compilation Latency
-
-**What:** Not accounting for the ~2-5 second grammar compilation on the first use of a schema.
-
-**Why bad:** The first agent call with a new schema will be slower. If you time your pipeline without accounting for this, the first run will always seem slow.
-
-**Instead:** Accept the first-request latency. The grammar is cached for 24 hours after that. Could warm the cache with a lightweight call at pipeline start.
+### Anti-Pattern 4: Building a WebSocket Server for Real-Time Updates
+**What:** Adding a WebSocket server to push generation progress.
+**Why bad:** Adds infrastructure complexity to a desktop app that has no server. The polling pattern works and matches the existing OnePager/PitchDeck hooks.
+**Instead:** Poll every 2 seconds. It's proven, simple, and consistent.
 
 ---
 
-## Error Handling Architecture
+## Suggested Build Order
 
-### Retry Strategy
+Dependencies flow downward -- each phase builds on the previous.
 
-```
-API call fails
-    |
-    +-- 429 (Rate Limit) --> wait retry-after header value --> retry (max 3)
-    +-- 500/502/503 (Server Error) --> wait 30s --> retry once
-    +-- 400 (Bad Request) --> log error, do NOT retry (schema issue)
-    +-- stop_reason: "max_tokens" --> retry with max_tokens * 1.5 (up to 16K)
-    +-- stop_reason: "refusal" --> log, mark section as failed, continue
-    +-- Network error --> wait 10s --> retry once
-    |
-    v
-If all retries exhausted:
-    save section with status: "failed" + error message
-    continue pipeline (partial results better than no results)
-    PM sees failure at checkpoint
-```
+### Phase 1: Foundation Fixes (Day 1)
 
-### Graceful Degradation
+**Why first:** These are bugs/mismatches that affect existing functionality. Fix them before building new things.
 
-- If a single agent fails, other agents in the phase continue
-- Failed sections get `status: "failed"` in progress.json
-- The PM sees which sections failed at the checkpoint
-- The PM can trigger `re-run section X` through the checkpoint interface
-- The synthesis-writer works with whatever sections completed successfully
+1. **Fix PitchDeck SECTION_DEFS** -- Update all 5 mismatched section keys to match pipeline output. Verify all 10 sections render.
+2. **Add `full-story` to Vite middleware** -- One line: `'full-story': 'full-story-api.json'` in the `fileMap`.
+3. **Add `companyName` and `overallVerdict` to PD/FS pipeline output** -- Or add fallback logic in components. Decide which approach.
 
-### Token Budget Management
+### Phase 2: Shared Infrastructure (Day 1-2)
 
-Each API call returns usage data:
-```javascript
-function computeTokenCost(response) {
-  const usage = response.usage;
-  return {
-    input: usage.input_tokens + (usage.cache_read_input_tokens || 0) + (usage.cache_creation_input_tokens || 0),
-    output: usage.output_tokens,
-    cacheRead: usage.cache_read_input_tokens || 0,
-    cacheWrite: usage.cache_creation_input_tokens || 0,
-    webSearches: usage.server_tool_use?.web_search_requests || 0,
-  };
-}
-```
+**Why second:** FullStory needs these, and extracting them now prevents more duplication.
 
-Accumulate per-pipeline costs in `budget.json` (already exists via `saveBudgetReport()`).
+4. **Extract `src/utils/reportHelpers.js`** -- Move duplicated pure functions from OnePager and PitchDeck.
+5. **Create `StageNavBar.jsx`** -- Sub-navigation between stages. Renders on all stage routes.
+6. **Create `useFullStory.js`** -- Clone `usePitchDeck.js` pattern, adjust endpoint to `full-story`.
+
+### Phase 3: FullStory Core (Day 2-3)
+
+**Why third:** Build the main component with standard section rendering first, add specialized renderers next.
+
+7. **Create `FullStory.jsx`** -- 6 sections, gate check on PD approval, hero header, sticky nav, approval bar. Use SectionRenderer for all sections initially.
+8. **Wire into `App.jsx`** -- Replace StagePlaceholder with FullStory component. Import useFullStory.
+
+### Phase 4: Specialized Renderers (Day 3-4)
+
+**Why fourth:** These are the FullStory-specific features that differentiate it from OP/PD.
+
+9. **Create `fullStory/ChecklistRenderer.jsx`** -- Scored checklist display with expand/collapse, verdict counts, per-item evidence.
+10. **Create `fullStory/DebateRenderer.jsx`** -- 4-step debate with exchange-based view, Bull/Bear/Judge color coding, verdict banner.
+11. **Integrate into FullStory.jsx** -- Replace SectionRenderer with ChecklistRenderer for the 3 checklist sections. Add DebateRenderer after sections.
+
+### Phase 5: ReportsList Enhancement (Day 4)
+
+**Why last:** This is the discovery/navigation layer. It should reflect the complete set of available stages.
+
+12. **Enhance ReportsList.jsx** -- Show all 3 stages per ticker (not just One Pager). Stage badges showing completion status. Navigate to the latest available stage. Show quality scores if available.
+13. **Stage navigation from within reports** -- Add StageNavBar to OnePager, PitchDeck, and FullStory so users can move between stages.
+
+### Phase 6: Polish (Day 4-5)
+
+14. **PitchDeck assumption tracker data** -- Pipeline doesn't populate `assumptions` at top level. Either add to pipeline or derive from section data.
+15. **FullStory delight features** -- Deep-dive panel reuse, assumption tracker for FS, debate narrative toggle.
+16. **Test with all 4 pipeline outputs** -- MNST, SFM, POOL, MSFT -- verify all stages render correctly.
 
 ---
 
 ## Scalability Considerations
 
-| Concern | Current (1 company) | Future (batch) | Notes |
-|---------|---------------------|-----------------|-------|
-| API rate limits | ~15 calls/pipeline | Queue system needed | Rate limits are per-org |
-| Prompt caching | 5-min TTL sufficient | 1-hour TTL for batches | `ttl: "1h"` at 2x write cost |
-| Concurrent pipelines | Not supported | Promise queue needed | One company at a time per PROJECT.md |
-| Cost tracking | Per-pipeline budget.json | Aggregate reporting | budget.json per ticker already exists |
-| Error recovery | Retry + manual re-run | Automated retry queue | Current approach sufficient for v1.1 |
+| Concern | Current (4 reports) | At 50 reports | At 200 reports |
+|---------|---------------------|---------------|----------------|
+| Report listing | Scan .thes1s/reports/ dirs | Same (synchronous fs.readdirSync) | Consider caching dir listing |
+| JSON load time | Instant (~400KB) | Same per report | Same -- only loads one at a time |
+| localStorage | Metadata only (~2KB/report) | ~100KB total | ~400KB -- well within 5MB limit |
+| File system | 17 files per full run | ~850 files | ~3400 files in .thes1s/reports/ |
+
+The architecture scales fine to hundreds of reports. The only concern at very high counts is the ReportsList directory scan, which could be optimized with a manifest file.
 
 ---
 
 ## Sources
 
-- [Structured outputs - Claude API Docs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs) -- GA, `output_config.format`, JSON Schema limitations, feature compatibility (HIGH confidence)
-- [Prompt caching - Claude API Docs](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) -- `cache_control`, 4 breakpoints max, TTL pricing, minimum token counts (HIGH confidence)
-- [Web search tool - Claude API Docs](https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool) -- `web_search_20250305`, response structure with URLs, $10/1000 searches (HIGH confidence)
-- [Citations - Claude API Docs](https://platform.claude.com/docs/en/build-with-claude/citations) -- Incompatible with structured outputs, 400 error when combined (HIGH confidence)
-- [@anthropic-ai/sdk npm](https://www.npmjs.com/package/@anthropic-ai/sdk) -- v0.80.0 latest, `zodOutputFormat` helper available in `helpers/zod` (HIGH confidence)
-- V3 Validation Report (`.planning/phases/06.3-pipeline-validation-pt3/V3-VALIDATION-REPORT.md`) -- 6 persistent issues, quality baseline 75/100 (HIGH confidence)
-- Existing codebase analysis: `agents/*/config.json`, `src/schemas/reportSection.js`, `src/engines/progressState.js`, `src/engines/critic.js`, `src/engines/dataExport.js`, `.claude/skills/generate-pitch-deck/SKILL.md` (HIGH confidence)
+- **Codebase analysis:** Direct inspection of all listed source files in the stock-analyzer repository
+- **Pipeline output inspection:** MNST full-story-api.json, pitch-deck.json, one-pager.json structures verified
+- **Existing component patterns:** OnePager.jsx, PitchDeck.jsx, SectionRenderer.jsx analyzed for reusable patterns
+- **React Router DOM 7.x:** Route structure verified in App.jsx
+- **Vite dev middleware:** thes1sReportsPlugin plugin code analyzed in vite.config.js

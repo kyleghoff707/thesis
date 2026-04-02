@@ -1,250 +1,269 @@
-# Research Summary: Claude API Migration (Thes1s v1.1)
+# Project Research Summary
 
-**Project:** Thes1s v1.1 — Pitch Deck Pipeline API Migration
-**Synthesized:** 2026-03-27
-**Research files:** STACK.md, FEATURES.md, ARCHITECTURE.md, PITFALLS.md
-**Overall confidence:** HIGH
-
----
+**Project:** Thes1s v1.3 — Report Stage UI
+**Domain:** AI-generated investment research report viewer (multi-stage, interactive, desktop)
+**Researched:** 2026-04-01
+**Confidence:** HIGH
 
 ## Executive Summary
 
-Thes1s v1.1 migrates its Pitch Deck pipeline from Claude Code subagent orchestration to direct Claude API calls via a new `aiResearch.js` engine. The research confirms this is viable with zero new dependencies: the existing `@anthropic-ai/sdk` (minor upgrade to `^0.80.0`), `zod@4.3.6`, and native `Promise.allSettled` cover every capability needed. The SDK's `messages.parse()` + `zodOutputFormat()` + `cache_control` + `web_search_20250305` server tool replace the CC orchestration layer entirely. The projected cost is $7.30 per company run (down from ~$32 true V3 cost) at 30-35 minutes wall clock (down from 2.5 hours sequential). The cost reduction comes primarily from eliminating CC overhead ($20/run), with prompt caching contributing an additional ~$2-3 savings.
+Thes1s v1.3 is not a greenfield project — it is a completion effort on a substantially built report viewing system. OnePager.jsx (557 lines), PitchDeck.jsx (~1100 lines), SectionRenderer.jsx (594 lines), and 6 shared badge/panel/citation components are already production-ready. The remaining work is well-scoped: FullStory.jsx with debate rendering and scored checklists, stage gating wiring, a section-key mismatch fix in PitchDeck, and navigation improvements. No new dependencies are required. Every interaction pattern needed — scroll spy, citation tooltips, slide-out panels, collapsible sections, polling progress hooks — is already built and working.
 
-The research surfaced two architectural constraints that must be designed in from day one: (1) structured outputs and the Claude Citations API are mutually exclusive (returns 400 error) — web search URLs must be extracted from `server_tool_use` blocks in the orchestrator and injected into citation fields post-generation; (2) structured outputs require all JSON schema objects to have `additionalProperties: false`, meaning the current `z.looseObject({})` fields in `ReportSectionSchema` must be replaced with explicit typed fields before any API dispatch works. Both constraints have clear, well-documented solutions.
+The recommended approach is to build in strict dependency order: fix existing bugs first (PitchDeck section key mismatches, missing Vite middleware entry for full-story), then extract shared utilities (reportHelpers.js, useScrollSpy hook, Spinner component), then build the FullStory viewer with its two novel sub-components (ChecklistRenderer and DebateRenderer), and finally enhance the ReportsList navigation layer. This order avoids building new features on top of broken foundations and prevents duplication of patterns that are about to be extracted.
 
-Three V3 validation failures are mechanically solved by this migration: citation format anarchy, red flags type crash, and `searchesPerformed` format chaos all disappear with constrained JSON decoding. Two remaining issues (DataPacket path fabrication, narrative collapse) require prompt-level solutions independent of the API migration but must be included in the implementation plan. The two-pass agent call pattern (free-form prose turn → structured output turn as a new conversation) is the proven fix for narrative collapse and must be the default dispatch pattern, not an optimization.
-
----
+The three critical risks are: (1) localStorage quota exhaustion — report JSON files are large (414KB for pitch deck alone), requiring report content to move to IndexedDB before any UI stores report data; (2) the mutable C theme object causing stale inline styles in memoized or portal components, requiring per-component discipline rather than a one-time fix; and (3) the adversarial debate having no rendering precedent in the codebase, requiring 4 step-specific sub-components rather than one generic renderer. A moderate but high-impact risk — the custom markdown parser covers only 3 patterns while agent narratives use ~10 — should be resolved early by adopting react-markdown or extending the parser before any stage viewer is considered complete.
 
 ## Key Findings
 
-### From STACK.md
+### Recommended Stack
 
-**Core technologies (all existing, one minor upgrade):**
+No new dependencies are required for v1.3. The existing stack (React 19.2, Vite 7, Tauri 2, Recharts, inline styles via mutable C palette) fully covers every feature in scope. The research explicitly evaluated and rejected component libraries (Radix, Headless UI), animation libraries (Framer Motion), CSS frameworks (Tailwind), state managers (Zustand), tooltip libraries (Tippy.js, Floating UI), and virtual scrolling (react-window). All are unnecessary given existing patterns.
 
-| Technology | Version | Role |
-|------------|---------|------|
-| `@anthropic-ai/sdk` | `^0.80.0` (upgrade from 0.78.0) | API client — `messages.parse()`, `zodOutputFormat()`, `cache_control` types, web search types |
-| `zod` | 4.3.6 (unchanged) | Schema definition — `zodOutputFormat()` uses `z.toJSONSchema()` internally |
-| `Promise.allSettled` | Native Node.js | Parallel dispatch — already proven pattern in `dataExport.js` |
+The one exception worth deciding: `react-markdown` (~12KB gzipped) would replace the custom `parseMarkdown()` in SectionRenderer, which only handles headings, bold, and bullet lists — but agent narratives contain numbered lists, blockquotes, inline links, nested bullets, and code spans that the parser drops silently. PITFALLS.md recommends adopting it in the shared components phase. If the zero-new-deps principle is firm, the custom parser must be extended to cover all ~10 patterns. The decision must be made before Phase 2 starts.
 
-Critical: Use `output_config.format` (GA parameter path), not the old beta `output_format`. SDK handles translation internally but direct API calls require the new path.
+**Core technologies (no changes):**
+- React 19.2.0: UI framework, functional components + hooks — already installed
+- react-router-dom 7.13.1: Route-based stage navigation — already installed
+- Vite 7.3.1 + custom middleware: Serves report JSON from .thes1s/reports/ filesystem — already configured
+- idb 8.0.3: IndexedDB for report content storage (must replace localStorage approach) — already installed
+- Recharts 3.8.0: Charts in report sections — already installed
 
-**Prompt caching economics:**
-- Cache write: 1.25x base (5-min TTL) or 2x base (1-hr TTL)
-- Cache reads: always 0.1x base
-- Minimum cacheable: 2,048 tokens (Sonnet 4.6), 4,096 tokens (Opus 4.6)
-- Maximum 4 cache breakpoints per request
+**Code-level improvements (no npm installs):**
+- Extract `useScrollSpy(sectionKeys)` hook with debounce — shared across OP/PD/FS
+- Extract `reportHelpers.js` — formatTitle, formatRelativeTime, stateToLabel, verdictDotColor
+- Extract `Spinner.jsx` shared component
+- Add `PARTIAL` verdict to VerdictBadge
+- Build `DebateRenderer.jsx` with 4 step-specific sub-components
 
-**Web search cost:** $0.01 per search. 50 searches across a full pitch deck = $0.50. Negligible against token costs.
+### Expected Features
 
-**No new dependencies needed.** Only `contextBudget.js` pricing constants need updating for cache-aware cost tracking.
+The feature landscape is divided between already-shipped items and remaining builds. The table stakes list is 15/20 complete.
 
-### From FEATURES.md
+**Must have — already done:**
+- Section-by-section rendering with verdict/confidence badges (SectionRenderer)
+- Sticky sidebar navigation with scroll-spy (OnePager, PitchDeck)
+- Inline citation markers with hover tooltips (CitationTooltip)
+- Consolidated reference list per report (OnePager)
+- Real-time generation progress with per-section status (useOnePager, usePitchDeck)
+- Red flag callouts per section (RedFlagCallout)
+- Dark/light theme support across all existing components
 
-**Must-have features (migration fails without these):**
+**Must have — not yet built:**
+- Full Story viewer (FullStory.jsx) — only stage without a display component
+- Scored checklist rendering: Meaning 15pt, Moat 15pt, Management 13pt (ChecklistRenderer)
+- Adversarial debate rendering: Bull/Bear/Rebuttal/Judge 4-step exchange (DebateRenderer)
+- PitchDeck approval gate wiring (approval bar exists, gate logic not wired to FullStory)
+- Stage navigation between OP/PD/FS (StageNavBar component)
+- ReportsList showing all 3 stages per ticker
 
-1. **Structured JSON outputs** — Mechanically solves 4/6 V3 persistent issues. Requires `ReportSectionSchema` adaptation: all `z.looseObject({})` fields replaced. Use `client.messages.parse()` with `zodOutputFormat(ReportSectionSchema)`.
-2. **Parallel agent dispatch** — Runtime 2.5hr → 30-35min. `Promise.allSettled` with 5 dependency-aware phases. Not optional — sequential execution defeats the cost model.
-3. **Prompt caching** — Cost ~$14 uncached agents → ~$8-9 cached. Shared curriculum + DataPacket + PSR findings (~58K tokens) repeated across 7+ agents. Target 80%+ cache hit rate.
-4. **Web search tool** — `web_search_20250305` server tool with `max_uses` per agent. Solves citation URL laundering (V3 Issue 2). Extract URLs from `response.content` tool_result blocks in orchestrator.
-5. **Error handling + retry** — `Promise.allSettled` for partial recovery. Exponential backoff reading `retry-after` header. Per-agent timeouts via `AbortController`. Three-tier recovery: retry → model upgrade → user escalation.
-6. **DataPacket path reference** — Include `_fieldPaths` metadata block in every agent's context. Prevents DataPacket citation fabrication (V3 Issue 4) which structured outputs cannot fix (they enforce shape, not semantics).
-7. **Token budget tracking** — Update `contextBudget.js` with cache-aware pricing. Track `cache_read_input_tokens` and `cache_creation_input_tokens` per response.
+**Should have (differentiators — shell built, not wired):**
+- "Tell me more" deep-dive panel (DeepDivePanel.jsx built, needs content integration)
+- Assumption tracker sidebar (AssumptionTracker.jsx built, needs data wiring from report JSON)
+- Industry glossary popups (IndustryCard.jsx built, needs glossary data + term detection)
+- Sensitivity table in Valuation section (SensitivityTable.jsx built, needs data wiring)
+- Real-time progress dashboard generalized for all three stages (GenerationStatusPanel in PD, needs extraction)
 
-**Should-have (better than CC, defer post-v1.1):**
-- Streaming progress UI — 30-min black box becomes real-time agent status
-- Dynamic web search filtering (`web_search_20260209`) — reduces irrelevant token consumption from broad queries
-- 1-hour cache TTL — for iterative PM re-runs within a session; break-even after 2 reads
+**Defer (v2+):**
+- Bull/Bear narrative toggle (expensive if dual-generation; cheap "filter view" variant is V1 candidate)
+- On-demand "Tell me more" via live Claude API calls (pre-computed deep-dives recommended for V1)
+- Editable assumption tracker with re-scoring
+- Version diff view between report iterations
+- Keyboard navigation between sections (J/K keys)
+- Tauri production report serving (currently dev-only via Vite middleware)
 
-**Explicitly NOT building:**
-- Claude Citations feature (incompatible with structured outputs — 400 error)
-- Multi-turn agent conversations (adds latency and cost without quality gain)
-- Extended thinking (narrative field IS the thinking; extra output tokens not justified)
-- Batch API for PSR (marginal $0.40 saving with significant async complexity)
-- Fast mode for Opus 4.6 ($30/$150 per MTok — $80+ per company, never)
+**Anti-features (never build):**
+- Inline editing of report content (destroys audit trail and citation reliability)
+- Token-by-token streaming text rendering (pipeline produces complete JSON objects, not streams)
+- Multi-tab simultaneous report viewing
+- Drag-and-drop section reordering (violates curriculum sequence)
 
-### From ARCHITECTURE.md
+### Architecture Approach
 
-**Single new file:** `src/engines/aiResearch.js` — the complete orchestration layer. All other files are unchanged or minimally modified.
+The architecture follows strict separation between pipeline (CLI) and viewer (browser): the pipeline writes JSON files to `.thes1s/reports/{TICKER}/`, Vite middleware serves them at `/api/thes1s/reports/`, React hooks poll for progress and fetch completed reports, and stage viewer components render via SectionRenderer and stage-specific sub-components. No WebSocket, no file watcher, no global state library. Routing places data exploration (Toolbox) at `/research/:id` and report stages at `/research/:id/one-pager|pitch-deck|full-story` as sibling routes.
 
-**Modified files:**
-- `src/schemas/reportSection.js` — Replace all `z.looseObject({})` fields with explicit typed objects or `z.record(z.string(), z.unknown())`
-- `agents/*/prompt.md` — Add DataPacket field path reference block to each agent system prompt
+Two structural fixes are needed immediately: (1) five section key mismatches in PitchDeck's SECTION_DEFS prevent 5 of 10 sections from rendering — the component expects `simple_predictable` but the pipeline outputs `simple_and_predictable`, and similar mismatches for `barriers_moats`, `pest`, `valuation`, and `roe_roic_debt`; (2) the Vite middleware `fileMap` has no entry for `full-story-api.json`, so the full-story API endpoint returns 404. Both are small fixes but block all downstream work.
 
-**Deprecated:** `.claude/skills/generate-pitch-deck/SKILL.md` — replaced by `aiResearch.js`
+**Major components to build or modify:**
+1. `FullStory.jsx` — Stage 3 viewer: 6 sections, gate check on PD approval, hero header, scroll spy, approval bar; coordinates ChecklistRenderer and DebateRenderer
+2. `fullStory/ChecklistRenderer.jsx` — Scored checklists (15+15+13 items) with verdict counts, expand/collapse evidence, color-coded item borders; handles `section.data.items[]` which SectionRenderer's KV grid cannot
+3. `fullStory/DebateRenderer.jsx` — 4-step adversarial debate with BullThesisCard, BearInversionCard, BullRebuttalCard, JudgeVerdictCard sub-components; includes verdict summary table at top
+4. `StageNavBar.jsx` — Sub-nav shared across all three stage routes: stage tabs with lock icons, approval badges, link back to Toolbox data view
+5. `useFullStory.js` — Polling hook for full-story-api.json (clone of usePitchDeck pattern, trivial)
+6. `reportHelpers.js` — Extracted shared utilities removing duplication between OP/PD/FS components
 
-**Parallel dispatch dependency graph:**
-```
-PSR (7 agents, all parallel) → ~8-10 min
-Phase 1 (business-analyst S1+S2, competitor-evaluator S3, parallel) → ~5 min
-Phase 2 (competitor-evaluator S4 sequential → financial-analyst S5/S7/S8 + management-evaluator S6 parallel) → ~8 min
-Phase 3 (risk-analyst S9 + valuation-specialist S10, parallel) → ~5 min
-Synthesis (synthesis-writer, sequential) → ~3 min
-Total: ~30-35 min
-```
+### Critical Pitfalls
 
-**Cache breakpoint layout (4 max per request):**
-1. Tool definitions (web_search + custom tools) — BP 1, freeze array per pipeline run
-2. Agent system prompt + curriculum — BP 2, static prefix only
-3. Shared DataPacket slice + PSR findings — BP 3, identical across agents
-4. Per-agent task instruction — NOT cached (varies per section)
+1. **localStorage quota exhaustion** — Report JSON is large: OP 21KB–157KB, PD 414KB–544KB, FS 325KB per company. At 6-7 companies, the 5MB localStorage limit (2.5MB on macOS WebKit/Tauri) is exhausted. The existing `evictCaches()` fallback only removes `sa-cache:*` entries which have already migrated to IndexedDB, so on exhaustion there is nothing left to evict and saves fail silently. Report content must move to IndexedDB via existing cacheStore.js before any UI stores report data. Only lightweight metadata (ticker, stage, verdicts, timestamps, approvals) stays in localStorage. This must be resolved in Phase 1.
 
-**Two-pass agent call pattern (mandatory, not optional):**
-- Turn 1: Agent uses web search and custom tools, produces free-form prose (no structured output constraint on this turn)
-- Turn 2: NEW conversation, Turn 1 prose passed as context, structured output schema applied
-- Prevents the V2 narrative collapse failure (6/10 sections produced stubs). Must be the default pattern, not a fallback.
+2. **Mutable theme object causes stale inline styles** — The C palette is mutated in place via `Object.assign(C, source)`; React cannot detect the mutation. Portal components (DeepDivePanel, AssumptionTracker) and any memoized section cards will display wrong colors after a theme toggle. Prevention requires per-component discipline: never cache C values in refs or closures; always read `C.*` directly at render time; force portal re-renders by reading `isDark` from a hook. This is an ongoing discipline, not a one-time fix.
 
-### From PITFALLS.md
+3. **Adversarial debate has no rendering precedent** — The 4 debate steps have fundamentally different data shapes (thesisPoints, inversions, rebuttals, exchanges). A single generic renderer becomes a maze of conditionals. The correct approach: 4 step-specific components (BullThesisCard, BearInversionCard, BullRebuttalCard, JudgeVerdictCard) wrapped in a DebateRenderer container. Build Judge first — it is the most complex visual challenge (per-exchange bull/bear strength comparison + overall verdict direction banner).
 
-**Top 5 pitfalls and prevention:**
+4. **Custom markdown parser covers only 3 patterns** — Agent narratives use headings, numbered lists, blockquotes, inline links, code spans, and nested bullets. The existing `parseMarkdown()` drops all of these as flat paragraph text. The Phase 05B notes called this "unreadable text blobs." Decide at Phase 2: adopt react-markdown or extend the custom parser. Either choice is valid, but the decision cannot be deferred.
 
-1. **Structured outputs + Citations are mutually exclusive (Critical)** — API returns 400 when combining `output_config.format` with `citations: true`. Prevention: extract web URLs from `server_tool_use` blocks programmatically in the orchestrator; inject into citation fields before saving sections. Never attempt to enable both.
-
-2. **Narrative collapse under schema constraints (Critical)** — JSON schema forces Claude to compress narrative fields to fit the output budget. Prevention: two-pass pattern (prose first as Turn 1, then structured output as new Turn 2 conversation). Set `max_tokens: 16384` per agent. Check `response.stop_reason === "end_turn"` — only this guarantees valid complete JSON. `"max_tokens"` means truncated invalid output.
-
-3. **Cache invalidation from accidental ordering changes (Critical)** — Dynamic tool arrays, timestamps in prompts, or JSON key order variation invalidates the prefix hash and kills cache hits silently. Prevention: freeze tool array per pipeline run; static system prompt prefix with cache breakpoint placed before any dynamic content; use 1-hour TTL (`ttl: "1h"`) for curriculum and DataPacket. Monitor `cache_read_input_tokens` — if 0, cache is broken.
-
-4. **Rate limiting kills parallelism at low API tiers (Critical)** — Tier 1 (30K ITPM) cannot support even 3 parallel 50K-token agents. Tier 2 (450K ITPM) is minimum for meaningful parallelism. Note: cached tokens do NOT count against ITPM, so 80% cache hit rate effectively 5x the ITPM capacity. Prevention: build dispatch queue with configurable concurrency; implement exponential backoff reading `retry-after` header; check Console > Settings > Limits before tuning concurrency.
-
-5. **Loss of filesystem context when leaving CC (Moderate)** — CC subagents can Read/Write/Bash; API agents cannot access any file. Every curriculum, Rule One methodology reference, and engine function must be inlined or exposed as a tool. Prevention: build `contextAssembler` utility that reads each agent's `config.json` curriculum array and concatenates files at orchestrator startup.
-
-**Additional moderate pitfalls to track:**
-- Schema complexity limits: 20 strict tools max, 24 optional parameters total across all strict schemas combined. Make Toolbox tool schemas non-strict; only `output_config.format` strict.
-- Web search token explosion in multi-turn: search results persist in conversation and inflate Turn 2 input tokens. Use a NEW conversation for Turn 2, not a continuation of Turn 1.
-- DataPacket path fabrication persists after migration: structured outputs enforce shape, not semantics. Add `_fieldPaths` metadata and validate citation `ref` fields in `critic.js`.
-- Schema compilation latency: first request with a new schema pays compile cost. Use the same `ReportSectionSchema` for all agents — one schema compiled once.
-
----
+5. **PitchDeck SECTION_DEFS key mismatches (5 of 10)** — `simple_predictable` vs `simple_and_predictable`, `barriers_moats` vs `barriers_and_moats`, `roe_roic_debt` vs no equivalent (merged into other sections by pipeline), `pest` vs `pest_risks`, `valuation` vs `valuation_summary`. This is a P0 bug that causes half the PD sections to show "Pending..." despite being fully generated. Fix before anything else.
 
 ## Implications for Roadmap
 
-### Suggested Phase Structure (3 phases)
+Based on research, the build must follow strict dependency order: foundations before features, bugs fixed before new components, shared utilities extracted before all three stage viewers duplicate them.
 
-**Phase 1 — Foundation: `aiResearch.js` Architecture**
+### Phase 1: Critical Bug Fixes and Storage Architecture
 
-Rationale: Every subsequent piece of work depends on getting the API client, two-pass dispatch pattern, schema adaptation, and error handling correct. The two architectural constraints (no Citations API, mandatory two-pass pattern) shape all agent calls. Must be established and validated with a single agent before any pipeline migration begins.
+**Rationale:** The PitchDeck key mismatch (5/10 sections broken) and missing full-story Vite middleware entry block all downstream work. The localStorage quota risk must be resolved before any UI stores report content, or data loss becomes inevitable at 6+ companies. Fix foundations before building anything new.
 
-Delivers:
-- `src/engines/aiResearch.js` skeleton — API client, `dispatchAgent()`, two-pass `buildMessages()`, `Promise.allSettled` dispatch, retry/backoff, per-agent `AbortController` timeouts
-- `ReportSectionSchema` adaptation — replace all `z.looseObject({})` fields; verify `zodOutputFormat` works end-to-end against live API
-- Cache breakpoint layout — stable tool array, static system prefix, BP placement verified via `cache_read_input_tokens`
-- `contextAssembler` utility — reads each agent's `config.json` curriculum array, concatenates files at startup
-- `cacheMonitor` — logs `cache_read_input_tokens` per response, warns if hit rate below 70%
-- `contextBudget.js` pricing constants updated for Sonnet 4.6, Opus 4.6, cache write/read rates
-- Single-agent smoke test: one agent (Financial Analyst), valid structured output, `stop_reason === "end_turn"`, narrative word count measured
+**Delivers:** PitchDeck renders all 10 sections correctly. Full Story API endpoint is live (`'full-story': 'full-story-api.json'` in Vite fileMap). Report content storage migrated to IndexedDB with only metadata in localStorage. No risk of silent data loss at scale.
 
-Features covered: Structured JSON outputs, error handling + retry, token budget tracking
-Pitfalls to avoid: Pitfall 1 (Citations incompatibility), Pitfall 2 (narrative collapse — two-pass pattern), Pitfall 3 (cache invalidation), Pitfall 5 (schema complexity limits), Pitfall 7 (filesystem context loss), Pitfall 8 (partial pipeline failure)
-Research flag: No additional research needed. All behaviors verified in official docs and local tests.
+**Addresses:** PitchDeck section rendering (table stakes — PARTIAL), localStorage quota exhaustion (Critical Pitfall 1), full-story API prerequisite
+
+**Avoids:** Building FullStory on top of a broken PitchDeck. Exhausting storage at 6 companies.
+
+**Research flag:** Standard patterns — IndexedDB via cacheStore.js already exists, key renames are trivial. No research phase needed.
 
 ---
 
-**Phase 2 — Pipeline Migration: Replace CC Skills with API Dispatch**
+### Phase 2: Shared Infrastructure Extraction
 
-Rationale: Once the dispatch infrastructure is solid, migrate each agent from CC skill invocation to API call in dependency order. Start with PSR phase (highest token cost, clearest caching ROI), then analysis phases, then synthesis. Validate each agent's output quality individually before moving to the next.
+**Rationale:** OnePager and PitchDeck have 6+ identical functions (formatTitle, formatRelativeTime, stateToLabel, Spinner, injectSpinnerStyle, verdictDotColor) plus near-identical approval bar, sticky nav, and progress bar JSX. Adding FullStory on top creates a third copy of every bug. Extract shared utilities while there are only two components to align.
 
-Delivers:
-- PSR phase migration (annual-reader + quarterly-reader) — parallel 7-agent dispatch
-- Analysis phases 1-3 migration — phased parallel dispatch per dependency graph
-- Synthesis phase migration — single-agent sequential
-- Per-agent `max_uses` tuning for web search (business-analyst: 8, competitor-evaluator: 8, management-evaluator: 8, risk-analyst: 10, financial-analyst: 4, valuation-specialist: 5, synthesis-writer: 0)
-- `agents/*/prompt.md` updates — DataPacket field path reference block added to each agent
-- URL extraction from web search `tool_result` blocks → citation `source` field injection post-processing
-- Section-level persistence to `progress.json` immediately on completion; pipeline restart skips completed sections
-- Per-agent quality comparison: CC-generated vs API-generated output for same ticker
+**Delivers:** `reportHelpers.js` module, shared `Spinner.jsx`, `useScrollSpy(sectionKeys)` hook with 50ms debounce, `StageNavBar.jsx` sub-navigation component, CSS animation keyframe singleton. Decision and implementation: react-markdown adoption OR custom parser extension. `useFullStory.js` hook (clone of usePitchDeck pattern).
 
-Features covered: Parallel agent dispatch, web search tool, prompt caching (full implementation)
-Pitfalls to avoid: Pitfall 4 (rate limiting — dispatch queue tuning), Pitfall 6 (web search token explosion — new conversation for Turn 2), Pitfall 12 (DataPacket path fabrication — `_fieldPaths` metadata)
-Research flag: Light internal validation only — no external research needed. Per-agent output comparison drives any prompt tuning.
+**Addresses:** Duplicated helpers (Minor Pitfall 10), animation keyframe duplication (Minor Pitfall 12), scroll spy flicker (Moderate Pitfall 6), route navigation confusion (Moderate Pitfall 9), markdown rendering gap (Moderate Pitfall 5)
+
+**Avoids:** Three-way duplication when FullStory is added. Building FullStory with a scroll spy that flickers. Shipping "unreadable text blobs" in report narratives.
+
+**Research flag:** No research phase needed. If react-markdown is adopted, 30-minute spike to verify `components` prop works with inline C palette styles.
 
 ---
 
-**Phase 3 — Validation and Cost Optimization**
+### Phase 3: FullStory Core Viewer
 
-Rationale: Full pipeline run against known tickers. Measure actual cost and cache hit rate vs projections. Tune based on results, not assumptions.
+**Rationale:** FullStory is the only stage with no display component. Until it exists, Full Story pipeline output is JSON files no one can read in-app. Build the shell first (gate check, hero, sticky nav, sections via SectionRenderer, approval bar), then specialize.
 
-Delivers:
-- Full pipeline run for SFM + one additional ticker (non-LULU for generation, LULU for evaluation only)
-- Cost breakdown per phase vs $7.30 projection; flag if any phase exceeds target
-- Cache hit rate report — target 80%+ on shared curriculum + DataPacket
-- Narrative word count comparison — API two-pass vs CC V3 baseline; target 800+ words
-- Quality score comparison — target equal to or better than V3 (75+ aggregate)
-- 1-hour cache TTL upgrade if PM iterates on sections (enabled after confirming break-even)
-- `web_search_20260209` upgrade evaluation if token waste from search results observed
+**Delivers:** `FullStory.jsx` with gate check on PD approval, hero header, sticky nav, 6 sections rendered via SectionRenderer (functional but not specialized for checklists yet), approval bar. `App.jsx` route wired, replacing StagePlaceholder. Empty state handles loading flash correctly (`!loading` guard).
 
-Features covered: Cost optimization, streaming progress UI (if 30-min wait unacceptable in practice), dynamic web search filtering
-Research flag: No new research needed — results from Phase 2 runs drive all decisions.
+**Addresses:** Full Story display (table stakes — NOT BUILT), FS stage gating, loading flash bug (Minor Pitfall 13)
+
+**Avoids:** Building checklist/debate renderers before the container component exists to host them.
+
+**Research flag:** Standard patterns. FullStory JSON schema fully documented in ARCHITECTURE.md. No research needed.
 
 ---
 
-### Implementation Order Within Phase 1
+### Phase 4: Specialized Renderers (ChecklistRenderer + DebateRenderer)
 
-1. SDK upgrade and import validation (`npm install @anthropic-ai/sdk@latest`)
-2. `ReportSectionSchema` adaptation — replace `z.looseObject({})`, verify `zodOutputFormat` accepts result
-3. Single-agent smoke test against live API — confirm `stop_reason === "end_turn"` and `parsed_output` populated
-4. Two-pass pattern implementation — measure narrative word count vs single-pass
-5. Cache breakpoint layout — verify `cache_read_input_tokens > 0` on second request to same agent
-6. `contextAssembler` utility implementation
-7. Dispatch queue with configurable concurrency and retry logic
-8. `cacheMonitor` + `contextBudget.js` pricing updates
+**Rationale:** These are the novel rendering challenges that differentiate Full Story. ChecklistRenderer handles `section.data.items[]` — a structured checklist format that SectionRenderer's KV-pair data grid cannot render correctly. DebateRenderer handles the 4-step adversarial exchange — the crown jewel of Full Story output that must not be a text wall.
+
+**Delivers:** `fullStory/ChecklistRenderer.jsx` — scored checklist display: item rows with verdict badges, aggregate score header (X/Y PASS, Z PARTIAL, W FAIL), expand/collapse evidence, color-coded left borders (red = FAIL, yellow = PARTIAL, green = PASS). `fullStory/DebateRenderer.jsx` — verdict summary table + exchange accordion: BullThesisCard, BearInversionCard (severity badges), BullRebuttalCard (strength + honest flag), JudgeVerdictCard (direction banner); integrated into FullStory.jsx replacing SectionRenderer for checklist sections.
+
+**Addresses:** Scored checklist rendering (table stakes — NOT BUILT), adversarial debate rendering (table stakes — NOT BUILT), checklist zero-column table edge case (Minor Pitfall 11), debate rendering complexity (Critical Pitfall 3)
+
+**Avoids:** Generic debate renderer with conditionals for 4 incompatible schemas. Modifying SectionRenderer for one-off use cases.
+
+**Research flag:** No research phase needed. All data schemas are fully documented (ARCHITECTURE.md lines 218-230, PITFALLS.md Pitfall 3 analysis). Build Judge card first — it has the most complex visual scoring requirements and sets the pattern.
+
+---
+
+### Phase 5: Navigation and ReportsList Polish
+
+**Rationale:** The discovery and navigation layer should reflect all three stages. Currently ReportsList only surfaces One Pager routes. Users have no in-app way to navigate between stages. This phase completes the navigation model across the entire reporting workflow.
+
+**Delivers:** ReportsList.jsx updated to show all 3 stages per ticker (OP/PD/FS status badges, stage completion indicators, quality scores if available, navigation to correct stage). StageNavBar integrated into OnePager, PitchDeck, FullStory. PitchDeck approval bar wired to FullStory gate. Route top-nav highlighting fixed (Reports tab active on /reports, Research active on /research/:id routes). Loading flash guard added where missing.
+
+**Addresses:** Report navigation for all stages (table stakes — PARTIAL), PD approval gate (table stakes — PARTIAL), route fragmentation (Moderate Pitfall 9), loading flash (Minor Pitfall 13)
+
+**Avoids:** Users stranded in One Pager with no in-app path to Pitch Deck or Full Story.
+
+**Research flag:** Standard React Router patterns. StageNavBar design is specified in ARCHITECTURE.md.
 
 ---
 
-## Research Flags
+### Phase 6: Delight Feature Wiring
 
-| Phase | Needs Research? | Rationale |
-|-------|----------------|-----------|
-| Phase 1 | No | All API behaviors verified against official docs; `zodOutputFormat` + `ReportSectionSchema` compatibility confirmed in local tests |
-| Phase 2 | Light | Per-agent quality comparison (CC vs API output) required before each agent migration — internal validation, not external research |
-| Phase 3 | No | Driven entirely by measured results from Phase 2; no unknowns requiring pre-research |
+**Rationale:** Three delight feature shells are built but contain no data (DeepDivePanel, AssumptionTracker, IndustryCard). This phase connects them to report JSON and builds the missing glossary data source.
 
-One open question not yet resolved in research: the exact behavior of `web_search_20260209` (dynamic filtering with code execution) on Sonnet 4.6 was confirmed as supported but not tested. Evaluate in Phase 3 with a single-agent test before enabling broadly.
+**Delivers:** AssumptionTracker wired to `assumptions` array from report JSON. IndustryCard backed by static glossary JSON (~100 financial terms) with term detection added to narrative rendering. DeepDivePanel populated with pre-computed deep-dive content from pipeline. Citation tooltip viewport boundary detection (prevents clipping at edges). Sensitivity table wired to PD valuation section data. Polling interval tuned to 3-5 seconds with COMPLETE guard to prevent poll chatter. Tauri production gap documented as known limitation.
+
+**Addresses:** Assumption tracker (differentiator), industry glossary (differentiator), citation clipping (Moderate Pitfall 4), poll chatter (Moderate Pitfall 8), data formatting inconsistency (Moderate Pitfall 7), Tauri production gap documented (Minor Pitfall 14)
+
+**Avoids:** On-demand live Claude API calls for deep-dive in V1 (expensive, adds latency; pre-computed is sufficient). Delight features that exist as dead UI with no data.
+
+**Research flag:** Glossary data source decision needed at Phase 6 start (static JSON vs DataPacket extraction, 30-minute decision). Deep-dive content strategy must be confirmed (pre-computed recommended).
 
 ---
+
+### Phase Ordering Rationale
+
+- Phase 1 first because PitchDeck has a P0 bug (5/10 sections broken) and localStorage exhaustion causes silent data loss — both are worse to fix later.
+- Phase 2 before Phase 3 because extracting shared utilities while there are 2 components is far cheaper than extracting from 3. Adding FullStory to a duplicated codebase means 9 copies of the same helpers.
+- Phase 3 before Phase 4 because the FullStory shell container must exist before specialized renderers can be integrated and tested.
+- Phase 4 before Phase 5 because navigation polish only matters when all three stages have working viewers to navigate between.
+- Phase 6 last because delight features enhance a functional product — they are not blocking for core report consumption.
+
+### Research Flags
+
+Phases with standard patterns (no research-phase needed):
+- **Phase 1:** Key renames and IndexedDB storage follow existing cacheStore.js conventions exactly.
+- **Phase 2:** Extraction refactors are well-understood. react-markdown adoption needs a 30-minute spike at most.
+- **Phase 3:** JSON schema fully documented, hook is a clone, gate logic follows existing PD-gates-OP pattern.
+- **Phase 4:** Data schemas fully documented. Debate decomposition strategy documented. No unknowns.
+- **Phase 5:** Standard React Router + component integration. StageNavBar design specified.
+
+Phases with decisions needed (not a research phase, but a deliberate choice before building):
+- **Phase 2:** react-markdown vs custom parser extension — must decide before Phase 2 starts.
+- **Phase 6:** Glossary data source (static JSON vs DataPacket extraction) and deep-dive content strategy (pre-computed vs live API) — both 30-minute decisions, not research phases.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | SDK capabilities verified against official docs and confirmed via local `node -e` tests. `zodOutputFormat` + `ReportSectionSchema` compatibility verified locally. |
-| Features | HIGH | Feature prioritization grounded in V3 validation failure analysis — not speculative. All prioritized features are GA-documented. |
-| Architecture | HIGH | Component boundaries match existing codebase structure. Data flow builds directly on `dataExport.js` and agent directory layout. Two-pass pattern proven necessary in V2 vs V3 comparison. |
-| Pitfalls | HIGH | Critical pitfalls verified against official Anthropic docs. Moderate pitfalls verified across 3 previous validation runs. No speculative risks. |
+| Stack | HIGH | Assessed against working production codebase. Every feature evaluated against 30+ existing components. Zero new dependencies confirmed necessary. |
+| Features | HIGH | Table stakes inventory cross-referenced against actual component files with LOC counts and status verification. Differentiator shells confirmed present via codebase inspection. |
+| Architecture | HIGH | Direct inspection of all 13 listed components, App.jsx routing, vite.config.js middleware, pipeline JSON outputs for MNST/SFM/MSFT/POOL. Critical data mismatches documented with exact fix instructions. |
+| Pitfalls | HIGH | Critical pitfalls grounded in measured data (report file sizes from filesystem), Phase 05B known bugs, and verified browser storage limits. Not hypothetical — the localStorage math was done. |
 
-**Known gaps to address in Phase 1:**
-- `z.looseObject()` to explicit schema conversion: theorized but not tested end-to-end against live `messages.parse()`. Verify in Phase 1 step 2 before proceeding.
-- Actual cache hit rate under true parallel dispatch (race condition: all agents fire before first response begins caching). Verify in Phase 1 step 5 with warm-cache-first-agent pattern.
-- API tier level for this project's Claude account: affects maximum parallelism. Check Console > Settings > Limits before Phase 2 dispatch queue tuning.
-- Narrative word count regression from two-pass API pattern vs CC V3: must be measured in Phase 2 per-agent comparison before declaring success.
+**Overall confidence:** HIGH
+
+### Gaps to Address
+
+- **react-markdown vs custom parser decision:** PITFALLS.md recommends adoption; STACK.md says no new deps. Resolve at Phase 2 start. Either choice requires explicit commitment — the current custom parser is insufficient and cannot be left as-is.
+
+- **Glossary data source for IndustryCard:** Static JSON (~100 hand-crafted financial terms) vs extracting from DataPacket industry data. Resolve at Phase 6 start. Recommendation: static JSON for V1 (known scope, zero API cost).
+
+- **Deep-dive content strategy:** Pre-computed during pipeline generation (cheaper) vs on-demand live Claude API calls (~$0.10/query, richer). Resolve before Phase 6. Recommendation: pre-computed for V1.
+
+- **Pipeline output consistency across tickers:** MNST was deeply inspected for schema verification. SFM, POOL, and MSFT may have different section key patterns or missing fields. Phase 1 should include cross-ticker verification of pipeline JSON schemas before fixing SECTION_DEFS.
+
+- **PitchDeck companyName and overallVerdict gap:** pitch-deck.json lacks these top-level fields that one-pager.json provides. Component accesses them and gets `undefined`. Either add to pipeline output or add fallback logic in component. Pipeline-side fix preferred for consistent schema across stages.
+
+- **Tauri production report serving:** All report fetching depends on Vite middleware that does not run in the Tauri production `.app` bundle. This is a known limitation, documented as out-of-scope for v1.3. Must be addressed before the app ships as a standalone Tauri build (Tauri fs plugin or IPC commands).
+
+- **Chart rendering gap:** `section.charts[]` exists in the section schema but SectionRenderer does not render charts. Recharts integration for embedded report charts is future scope — not blocking for v1.3.
+
+## Sources
+
+### Primary (HIGH confidence)
+
+- Thes1s codebase direct inspection: OnePager.jsx (557 LOC), PitchDeck.jsx (~1100 LOC), SectionRenderer.jsx (594 LOC), CitationTooltip.jsx, VerdictBadge.jsx, ConfidenceBadge.jsx, RedFlagCallout.jsx, SensitivityTable.jsx, DeepDivePanel.jsx, AssumptionTracker.jsx, IndustryCard.jsx, ReportsList.jsx, useOnePager.js, usePitchDeck.js, App.jsx, vite.config.js, theme.js, package.json
+- Pipeline output inspection: MNST, SFM, MSFT, POOL report JSON (one-pager.json, pitch-deck.json, full-story-api.json, debate-step-*.json)
+- Schema definitions: `src/schemas/reportSection.js`, `src/schemas/debateStep.js`, `src/schemas/progress.js`
+- Phase 05B UI Polish Notes: `.planning/phases/05B-one-pager-display-components/05B-UI-POLISH-NOTES.md`
+- Report file sizes: measured from `.thes1s/reports/` (MNST PD: 414KB, SFM PD: 544KB, MNST FS: 325KB, MSFT OP: 157KB)
+- [MDN: Storage quotas and eviction criteria](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria)
+
+### Secondary (MEDIUM confidence)
+
+- [ShapeofAI — Citation UI Patterns](https://www.shapeof.ai/patterns/citations) — Citation variant design, inline marker best practices
+- [Hebbia — Equity Research Report Patterns](https://www.hebbia.com/resources/equity-research-report) — Source-linked citations, audit trail requirements
+- [Scrollspy Demystified](https://blog.maximeheckel.com/posts/scrollspy-demystified/) — IntersectionObserver implementation patterns with rootMargin
+- [AG-UI Real-Time Streaming Guide](https://medium.datadriveninvestor.com/production-grade-agentic-apps-with-ag-ui-real-time-streaming-guide-2026-5331c452684a) — Progressive rendering, start/completion event patterns
+- [React v19 changelog](https://react.dev/blog/2024/12/05/react-19) — New APIs assessed for applicability (none required for v1.3)
+- [The Inferential Investor — Bull & Bear Investment Case Workups](https://www.inferentialinvestor.com/p/bull-and-bear-investment-case-workups) — Structured opposing arguments with explicit verdict calls
+
+### Tertiary (LOW confidence)
+
+- [react-markdown npm](https://www.npmjs.com/package/react-markdown) — Cited as alternative to custom parser; adoption decision unresolved
+- [Floating UI positioning engine](https://converter.brightcoding.dev/blog/floating-ui-the-modern-positioning-engine-every-developer-needs) — Assessed for citation tooltip clipping; manual boundary detection recommended instead
 
 ---
-
-## Cost Model
-
-| Scenario | Cost | Notes |
-|----------|------|-------|
-| V3 CC run (true total cost) | ~$32 | Includes ~$20 CC overhead |
-| V3 CC run (API-only portion) | ~$14 | What agents alone cost; CC overhead removed |
-| API migration with 80% cache hit | ~$7.30 | Projected with caching, 50 web searches, correct tier |
-| API migration, no caching (worst case) | ~$10.50 | Still 67% cheaper than V3 due to eliminated CC overhead |
-| Project cost ceiling | $12 | Per CLAUDE.md constraint |
-
-All projected scenarios land within the $8-12 target. The dominant cost reduction is CC overhead elimination ($20/run), not prompt caching. Prompt caching is a secondary optimization worth implementing but not the load-bearing cost lever.
-
----
-
-## Sources (Aggregated)
-
-- [Claude API Structured Outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs) — `output_config.format` GA, JSON Schema constraints, grammar compilation, Citations incompatibility confirmed
-- [Claude API Prompt Caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) — `cache_control`, TTL options, pricing multipliers, minimum token lengths, invalidation hierarchy, parallel request limitation
-- [Claude API Web Search Tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool) — Tool type strings, `max_uses`, response structure with URLs, citation format, pricing
-- [Claude API Rate Limits](https://platform.claude.com/docs/en/api/rate-limits) — Per-tier RPM/ITPM/OTPM, cache-aware ITPM exemption, model family sharing, response headers
-- [Claude API Pricing](https://platform.claude.com/docs/en/about-claude/pricing) — Model pricing, cache pricing, web search $10/1,000 searches
-- [Claude API Citations](https://platform.claude.com/docs/en/build-with-claude/citations) — Incompatibility with structured outputs confirmed
-- [@anthropic-ai/sdk on npm](https://www.npmjs.com/package/@anthropic-ai/sdk) — v0.80.0, Zod integration via `zodOutputFormat`, peer dependency Zod v4
-- [Claude API Tool Use Overview](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview) — Tool use + structured outputs combined usage confirmed
-- [Anthropic SDK TypeScript — DeepWiki](https://deepwiki.com/anthropics/anthropic-sdk-typescript) — `zodOutputFormat` helper paths
-- [Thes1s V3 Validation Report](.planning/phases/06.3-pipeline-validation-pt3/V3-VALIDATION-REPORT.md) — Citation format anarchy, web citation laundering, narrative collapse, DataPacket path fabrication, red flags type crash, cost regression (project-specific, HIGH confidence)
-- Local verification: `node -e` tests confirming `zodOutputFormat` + `ReportSectionSchema` compatibility
+*Research completed: 2026-04-01*
+*Ready for roadmap: yes*

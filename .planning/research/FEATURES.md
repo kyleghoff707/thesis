@@ -1,302 +1,215 @@
-# Feature Landscape: Claude API Orchestration Layer (v1.1 Migration)
+# Feature Landscape: Report Stage UI Display (v1.3)
 
-**Domain:** Multi-agent AI orchestration for investment research report generation
-**Researched:** 2026-03-27
-**Mode:** Ecosystem research for API migration from Claude Code subagent to direct Claude API
-**Confidence:** HIGH (official docs verified all capabilities)
+**Domain:** Multi-section AI-generated investment research report viewer with citations, verdicts, real-time generation progress, and interactive exploration
+**Researched:** 2026-04-01
+**Overall confidence:** HIGH (existing components examined, domain patterns well-established)
+
+## Context: What Already Exists
+
+Before mapping features, it is critical to note that significant report display infrastructure is already built. The v1.3 milestone is NOT greenfield -- it extends and completes existing components.
+
+**Already implemented (partial or complete):**
+- `SectionRenderer.jsx` -- Renders a single report section with header, verdict, confidence, summary callout, verdict rationale with inline citations, narrative with markdown parsing, structured data grid, tables, cross-cutting findings, red flags, and per-section citation list. ~595 lines, production-ready.
+- `OnePager.jsx` -- Full One Pager viewer with two-column layout (sticky sidebar nav + content), IntersectionObserver scroll-spy, progress bar during generation, fade-in animation for completed sections, spinner/pending/failed placeholders, approval gate (Approve/Reject buttons), consolidated reference list. ~558 lines.
+- `PitchDeck.jsx` -- Full Pitch Deck viewer with 10-section three-phase layout, generation status panel with elapsed time, phase indicators, section status grid, scroll-spy, DeepDivePanel/AssumptionTracker/IndustryCard integration. ~500+ lines.
+- `CitationTooltip.jsx` -- Inline [N] markers with hover tooltips showing source type (thes1s/sec/web) with icons, truncated excerpt, click-to-scroll to reference list. `renderTextWithCitations()` utility parses text and replaces `[N]` markers.
+- `VerdictBadge.jsx` -- PASS/FAIL/WATCHLIST/REVIEW badges with icons, two sizes.
+- `ConfidenceBadge.jsx` -- HIGH/MEDIUM/LOW badges with color coding.
+- `RedFlagCallout.jsx` -- Warning triangle icon with bulleted flag list.
+- `SensitivityTable.jsx` -- Color-coded valuation matrix (undervalued/near/overvalued) with current-intersection highlight.
+- `DeepDivePanel.jsx` -- 440px slide-out right panel with overlay, Escape/click-outside close, loading spinner, paragraph-split content display.
+- `AssumptionTracker.jsx` -- 360px slide-out panel listing assumptions with confidence bars (33%/66%/100%), source attribution, affects-sections mapping.
+- `IndustryCard.jsx` -- 320px absolute-positioned popover with term, category, definition, industry benchmarks.
+- `ReportsList.jsx` -- List view of generated reports with ticker cards, approval status, auto-create research entry on click.
+- `useOnePager.js` -- Hook that fetches report JSON + polls progress every 2s during generation.
+- `usePitchDeck.js` -- Hook that fetches pitch deck JSON + polls generation status.
+- Vite middleware serving report JSON from `.thes1s/reports/` directory via `/api/thes1s/reports/` endpoints.
+
+**What this means for the feature landscape:** Many "table stakes" features are already implemented. The remaining work is primarily Full Story display, debate rendering, stage gating integration, polish, and delight features that elevate the experience from "functional viewer" to "interactive research workspace."
 
 ---
 
 ## Table Stakes
 
-Features the orchestration layer MUST have. Missing any of these means the migration fails or produces worse results than the current CC skill approach.
+Features users expect from a multi-section report viewer. Missing = product feels broken or incomplete.
 
-| Feature | Why Required | Complexity | Dependencies | Notes |
-|---------|-------------|------------|--------------|-------|
-| **Structured JSON outputs** | Mechanically solves 4/6 V3 persistent issues (citation format, red flags type, searchesPerformed format, field completeness). Eliminates two-pass output pattern. | Medium | `@anthropic-ai/sdk >=0.80`, Zod v4, ReportSectionSchema adaptation | Schema must use `additionalProperties: false` on all objects. `z.looseObject({})` in current schema is INCOMPATIBLE -- must convert `data`, `config`, `ChartSchema.data` to explicit typed objects or use `z.record()` with strict wrapper. `minItems: 1` on redFlags IS supported. |
-| **Parallel agent dispatch** | Runtime: 2.5hr sequential -> ~30-40min parallel. Core value proposition of the migration. | Low | `Promise.allSettled()`, rate limit awareness | Already proven pattern in `dataExport.js`. Pitch deck has 7 unique agents across 10 sections. Phase 1 (2 agents), Phase 2 (3 agents), Phase 3 (2 agents + synthesis) can all parallelize within-phase. |
-| **Prompt caching** | Cost: ~$14 uncached -> ~$8-9 cached. Shared context (curriculum + DataPacket + PSR findings) repeats across 7+ agents. Without caching, each agent re-pays full input price for identical content. | Medium | Cache breakpoint placement strategy, minimum token thresholds (2048 for Sonnet, 4096 for Opus) | Max 4 explicit cache breakpoints per request. Content must be placed identically and at prompt start across agents. Cache lasts 5 min (1.25x write) or 1 hour (2x write), reads always 0.1x. |
-| **Web search tool** | Agents need real-time web data for competitor analysis, PEST risks, industry trends, management reputation. V3 had 53 web searches. API web search returns actual URLs in results -- solves citation URL laundering. | Low | Web search enabled in Claude Console, `web_search_20260209` tool type | $10/1000 searches. `max_uses` parameter controls cost per agent. Search results include `url`, `title`, `page_age`, `encrypted_content`. Citations auto-generated with source URLs. |
-| **Error handling + retry logic** | API calls fail (rate limits, timeouts, 5xx). A 10-section pipeline with no retry = frequent full failures. | Medium | Exponential backoff, per-agent isolation, partial result recovery | Must handle: rate limits (429), overloaded (529), server errors (500), timeout. Each agent failure should not crash the pipeline -- use `Promise.allSettled()` and report partial results. |
-| **DataPacket path reference** | Agents fabricate DataPacket paths when citing values. Must include actual field paths in agent prompts. Not solved by API migration alone -- this is a prompt-level fix. | Low | DataPacket schema introspection, path enumeration function | Generate a "DataPacket Field Reference" block listing all available top-level and second-level paths. Include in every agent's system prompt. |
-| **Token budget tracking** | Must track input/output tokens per agent and total pipeline cost. Existing `contextBudget.js` needs pricing update. | Low | Update `MODEL_PRICING` constants for Opus 4.6 ($5/$25) and Sonnet 4.6 ($3/$15). Add cache hit/miss tracking. | API response includes `usage.cache_read_input_tokens`, `usage.cache_creation_input_tokens`. Wire these into budget tracker. |
+| Feature | Why Expected | Complexity | Dependencies | Status |
+|---------|-------------|------------|--------------|--------|
+| Section-by-section rendering with verdict/confidence badges | Core report consumption pattern. Every investment report platform (Bloomberg, Morningstar, Hebbia) shows structured sections with clear status indicators. | Low | `SectionRenderer`, `VerdictBadge`, `ConfidenceBadge` | DONE |
+| Sticky sidebar navigation with scroll-spy | Users need to orient themselves in long documents. Perplexity, Notion, Google Docs, and every documentation site uses this pattern. IntersectionObserver-based scroll tracking is the standard implementation. | Low | Already built in `OnePager.jsx` and `PitchDeck.jsx` | DONE |
+| Inline citation markers with hover tooltips | Claim-to-source bond is non-negotiable for investment research. Perplexity popularized [N] inline markers. Hebbia uses "clickable, in-line citations." ShapeofAI identifies four citation variants; Thes1s uses inline markers with hover preview -- the strongest pattern for "point to exact passages" use cases. | Low | `CitationTooltip.jsx`, `renderTextWithCitations()` | DONE |
+| Consolidated reference list per report | Academic/research convention. Users need a scannable list of all sources at the bottom. Numbered references with source attribution and text excerpts. | Low | Already in `OnePager.jsx` | DONE |
+| Real-time generation progress during pipeline execution | Users must see that "something is happening." Skeleton placeholders for pending sections, spinner for active sections, fade-in for completed sections. AG-UI protocol pattern: start events create placeholders, completion events trigger content render. | Medium | `useOnePager.js` polling, `usePitchDeck.js` polling, progress/generation-status JSON endpoints | DONE |
+| Progress bar with section count and elapsed time | Quantitative progress feedback. "3/10 sections, 2:45 elapsed" gives users expectation-setting that a spinner alone cannot. | Low | Already in `PitchDeck.jsx` `GenerationStatusPanel` | DONE |
+| Stage gating -- OP approval unlocks PD, PD approval unlocks FS | The 3-stage workflow IS the product. Without gating, the progressive research methodology collapses. Users must explicitly approve before deeper (and more expensive) analysis runs. | Medium | `report.stageApprovals` in localStorage, route guards, approval bar UI | PARTIAL -- OP approval bar done, PD/FS gate checks not wired |
+| Approval bar with Approve/Reject actions | Decision point UI. Must be prominent, appear only when report is complete, and capture rejection notes. Approval should feel deliberate -- this commits the user to next-stage cost. | Low | Already in `OnePager.jsx` | PARTIAL -- OP done, PD/FS needed |
+| Red flag callouts per section | Investment research demands honest risk surfacing. Red flags must be visually distinct and impossible to miss. Yellow warning-triangle pattern with bulleted list. | Low | `RedFlagCallout.jsx` | DONE |
+| Full Story display -- 6 sections + debate rendering | Third and final stage. Inherits PD sections, adds scored checklists and adversarial debate. Without this viewer, the pipeline output exists only as raw JSON files. | High | New `FullStory.jsx` component, debate rendering sub-components, checklist renderers | NOT BUILT |
+| Scored checklist rendering (43 items across 3 checklists) | Core Full Story feature. Meaning (15pt), Moat (15pt), Management (13pt) checklists with PASS/PARTIAL/FAIL per item, aggregate scores. Must render as interactive scored tables with per-item evidence and confidence. | High | New `ChecklistRenderer.jsx`, data from Full Story JSON | NOT BUILT |
+| Adversarial debate rendering (Bull/Bear/Rebuttal/Judge) | The debate is a 4-step structured exchange per topic. Each exchange has Bull argument, Bear argument, Bull Rebuttal, and Judge Verdict with strength assessments. This is the crown jewel of the Full Story -- it cannot be a text wall. | High | New debate display component, structured data in `inversion_rebuttal` section | NOT BUILT |
+| Dark/light theme support for all new components | App already has dark/light toggle via `C` palette object. All new components must read from `C` -- no hardcoded colors. | Low | `theme.js`, existing `C` pattern | Inherent -- just follow conventions |
+| Report navigation -- discover and open reports | Users need a way to find and navigate between generated reports. Current `ReportsList.jsx` covers this for One Pagers. | Low | `ReportsList.jsx`, route structure | PARTIAL -- OP only, needs PD/FS routes |
+| Markdown narrative rendering | Reports contain markdown in narrative fields (headings, bullets, bold). Must render cleanly without raw markdown syntax showing. | Low | `parseMarkdown()` in `SectionRenderer.jsx` | DONE |
+| Structured data grids with smart formatting | Financial data (dollar amounts, percentages, ranges) must auto-format based on key patterns. Grid layout for data fields with category grouping when >8 entries. | Low | `formatDataValue()` and `groupDataEntries()` in `SectionRenderer.jsx` | DONE |
+| Table rendering for comparison/sensitivity data | Reports include structured tables (headers + rows). Must render as proper HTML tables with consistent styling. | Low | Table rendering in `SectionRenderer.jsx` | DONE |
 
 ---
 
 ## Differentiators
 
-Features that make the migration BETTER than the CC skill approach, beyond just fixing V3 issues.
+Features that set the product apart. Not expected, but valued. These are the "delight" features that transform a report viewer into a research workspace.
 
 | Feature | Value Proposition | Complexity | Dependencies | Notes |
 |---------|-------------------|------------|--------------|-------|
-| **Streaming progress** | Show real-time agent progress to the PM instead of 30+ min black box. Each agent streams its output as it generates. | Medium | SSE/streaming API, UI progress component | API supports streaming with `stream: true`. Agent thinking, tool use, and text blocks stream in order. Could show "Financial Analyst: writing FCF analysis..." in real-time. |
-| **Batch API (50% output discount)** | PSR agents (annual readers, quarterly readers) don't need real-time results -- they could run as a batch at 50% output token discount. PSR is the biggest cost driver. | High | Asynchronous batch submission, polling for results, 24hr completion window | Batch API: Sonnet input $1.50/MTok, output $7.50/MTok (vs $3/$15 standard). PSR reads 5-7 filings at ~70K tokens each = ~350-490K input tokens. 50% output discount on ~30K output tokens saves ~$0.22 per PSR run. Marginal savings but meaningful at scale. Adds complexity. |
-| **Dynamic web search filtering** | `web_search_20260209` tool with code execution filters search results BEFORE they enter context. Reduces irrelevant token consumption. | Low | Code execution tool must also be enabled alongside web search | Free when used with web search. Reduces token waste from irrelevant search results -- particularly valuable for PEST analysis and competitor research where broad queries return noise. |
-| **Strict tool_use validation** | Custom tools (getMetric, computeMOS, sensitivityTable) can use `strict: true` to guarantee schema-valid tool inputs from agents. Prevents malformed tool calls. | Low | Define JSON schemas for each custom tool's input_schema | Financial-analyst and valuation-specialist use 5+ custom tools. Strict validation means no more invalid `computeMOS({ fgr: "high" })` calls. |
-| **1-hour cache TTL** | For iterative runs (PM requests re-generation of specific sections), 1-hour cache means curriculum + DataPacket stays cached between runs. | Low | Use `ttl: "1h"` on cache_control for stable content | 2x write cost but 0.1x reads. Break-even after 2 reads. If PM iterates on a section 2+ times within an hour, this pays for itself. |
-| **Agent SDK structured outputs** | The Claude Agent SDK provides `structured_output` on agent completion -- the agent can use any tools during execution and still return validated JSON at the end. | Medium | `@anthropic-ai/sdk` Agent SDK, or manual multi-turn tool loop | This is the pattern for agents that need to search, compute, AND return structured JSON. The agent does its tool_use work, then the final response conforms to the output schema. |
-| **Zod-native schema integration** | SDK supports `zodOutputFormat()` helper -- pass Zod schemas directly instead of converting to JSON Schema manually. TypeScript type safety on parsed outputs. | Low | `@anthropic-ai/sdk >=0.80`, Zod v4 peer dependency | The `getReportSectionJSONSchema()` function already exists in `reportSection.js`. SDK's `zodOutputFormat()` wraps this automatically. Use `client.messages.parse()` for auto-validated responses. |
+| "Tell me more" deep-dive panel | Click a claim in the narrative, slide-out panel explains the underlying analysis in more depth. Mimics a PM asking an analyst "walk me through this." No competitor does this -- research reports are static documents everywhere else. | Medium | `DeepDivePanel.jsx` (shell built), needs AI call integration or pre-computed deep-dive content | Shell component exists. Integration with backend needed to actually generate deep-dive content on demand. Could be pre-computed for each section during generation (cheaper) or on-demand via Claude API (richer but ~$0.10/query). Recommend pre-computed deep-dives for V1, on-demand for V2. |
+| Assumption tracker sidebar | All key assumptions (FGR, maintenance capex %, historical P/E) in one panel with confidence bars, source attribution, and which sections they affect. Changes to assumptions propagate visually. Hebbia Matrix shows source-linked assumptions; Thes1s goes further by tracking confidence per assumption. | Low-Medium | `AssumptionTracker.jsx` (built), needs data wiring from report JSON `assumptions` array | Shell component exists. Need to extract assumptions from report JSON and wire into the sidebar. Read-only in V1 -- editable assumptions with re-scoring is a future feature. |
+| Industry context cards (glossary popover) | Dashed-underline terms in narrative text trigger a popover with definition, category, and industry benchmark values. Makes reports accessible without financial literacy prerequisites. No competitor explains terms inline. | Low-Medium | `IndustryCard.jsx` (built), needs term detection in narrative text and glossary data source | Shell component exists. Need: (1) glossary data (term -> definition + benchmarks), (2) term detection in `parseMarkdown` to wrap recognized terms with trigger elements. Glossary could be static JSON (~100 terms) or extracted from DataPacket industry data. |
+| Bull/Bear narrative toggle | Switch the entire report between "bull case emphasis" and "bear case emphasis." Same data, different narrative framing. Unique to Thes1s -- investment research platforms show a single perspective. | High | Requires dual narratives generated during pipeline, or dynamic re-weighting of existing content. New toggle UI component. | Expensive if implemented as dual full-report generation. Cheaper approach: highlight/dim bull-vs-bear arguments within existing sections. Recommend the cheaper "filter view" approach -- collapse bear arguments in bull mode, collapse bull arguments in bear mode. This works because the adversarial debate already has explicit Bull/Bear labels. |
+| Source preview -- hover citation to see actual 10-K paragraph | Instead of just citation metadata in the tooltip, show the actual passage from the source document (SEC filing paragraph, earnings transcript quote). Mimics Dovetail/Adobe inline linking to specific document sections. | High | Requires source text snippets stored in citation objects during generation. `CitationTooltip.jsx` already supports `text` field; pipeline must populate it with actual passage text. | Pipeline already stores citation text in most cases. For SEC filings, the text field would need to contain the actual 10-K paragraph, not just a reference to "10-K Item 7." This is a pipeline improvement more than a UI feature -- the tooltip already renders text. Cost: ~0 additional UI work if pipeline populates citation.text properly. |
+| Real-time progress dashboard during generation | Beyond basic progress bar: show which agent is working on which section, agent role names, per-section elapsed time, wave/phase indicators. The PitchDeck `GenerationStatusPanel` already does much of this. | Low | `GenerationStatusPanel` in `PitchDeck.jsx` already built for PD. Needs generalization for OP and FS stages. | Already implemented for Pitch Deck. Generalize `GenerationStatusPanel` into a shared component used by all three stage viewers. Low effort, high perceived value. |
+| Cross-section findings aggregation | Show findings that appear across multiple sections (e.g., "insider selling flagged in Management, Moat, and Inversion sections"). `SectionRenderer` already renders `crossCuttingFindings`. A report-level aggregation view would surface patterns. | Medium | Cross-cutting findings data in report JSON, new aggregation component | The per-section `crossCuttingFindings` rendering exists. A report-level "Executive Findings" panel that aggregates all cross-section issues would help the PM see the full picture without reading every section. |
+| Sensitivity table integration in Valuation section | Interactive heat-map-style tables varying FGR, EPS, CapEx across methods. `SensitivityTable.jsx` already renders these with color coding. Needs wiring into report Valuation section. | Low | `SensitivityTable.jsx` (built), valuation data from report JSON | Component exists and is production-ready. Just needs data extraction from the Pitch Deck valuation section's `data` and `tables` fields. |
+| Section collapse/expand for completed reports | Long reports (10+ sections) benefit from collapsible sections. Show summary + verdict inline, expand for full narrative. `CollapsibleSection.jsx` already exists. | Low | `CollapsibleSection.jsx`, wrapper in stage viewers | Very low effort. Wrap `SectionRenderer` in `CollapsibleSection` with summary as the collapsed preview. Useful for re-review of completed reports. |
+| Print/export link from report viewer | "Export this to PDF" button in the report header. Pipeline already generates PDF/Word exports. Surface a link to trigger export from the viewer. | Low | Existing PDF/Word generators in `scripts/pdf/`, needs UI trigger button | The heavy work (export generators) is done. UI just needs a button that calls the export script or links to the generated file. |
+| Keyboard navigation between sections | Arrow keys or J/K to jump between sections. Power-user feature for rapid report review. | Low | Key event listeners, scroll-to-section logic (already in `handleNavClick`) | Low effort. Add keydown handler that maps Up/Down or J/K to prev/next section scrolling. |
 
 ---
 
 ## Anti-Features
 
-Features to explicitly NOT build. These seem attractive but add complexity without proportional value, or actively harm the system.
+Features to explicitly NOT build. Either harmful, premature, or wrong for the product.
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **Claude Citations feature** | Citations feature (`citations: true`) is INCOMPATIBLE with structured outputs (`output_config.format`). Returns 400 error. Cannot use both. | Keep the existing manual citation schema (`CitationSchema` with id/ref/text/source). Agents populate citation fields in structured JSON. Web search URLs come from tool_result content, not the Citations feature. |
-| **Multi-turn agent conversations** | Complex stateful agent loops where each agent has a multi-turn conversation. Adds latency, complexity, and cost. Most analysis sections can be completed in a single response. | Single-turn with tools: agent gets system prompt + user message, uses web search and custom tools during its turn, returns structured JSON. Only PSR agents might need multi-turn (for very large filings), but even those work single-turn with the pre-processed filing markdown. |
-| **Inter-agent real-time communication** | Agents "talking" to each other during generation. The orchestrator already handles information flow via phased dispatch (Phase 1 findings feed Phase 2 context). | Use the existing phased dispatch pattern: Phase 1 agents produce findings, orchestrator extracts cross-cutting findings and includes them in Phase 2/3 agent context. Sequential dependency, not real-time chat. |
-| **Extended thinking** | Extended thinking blocks add significant output token cost. For analytical sections, the structured output schema already forces the model to think through the analysis (verdict, rationale, narrative, citations, red flags). | Use standard generation. The narrative field IS the model's thinking. If a section needs deeper reasoning, increase max_tokens and trust the prompt + curriculum to guide depth. |
-| **Fast mode (6x pricing)** | $30/$150 per MTok for Opus 4.6 fast mode. A full pipeline would cost $80+ per company. | Use standard mode. 30-40 min is acceptable for a research report that replaces 70+ hours of manual work. Speed is not the bottleneck -- quality is. |
-| **Custom tool for every engine function** | Exposing all 20+ engine functions as API tools. Most agents don't need them -- they get pre-computed data in the DataPacket. | Expose only the tools listed in each agent's `config.json` `tools` array. Financial-analyst gets 8 tools, valuation-specialist gets 5, business-analyst gets 0. The DataPacket already contains computed results for most fields. |
-| **Full filing text in API context** | Sending raw 10-K text (300KB+) through the API instead of using pre-processed filing markdown. | Continue using `scripts/prepare-data.js` to pre-process filings to markdown. PSR agents receive the pre-processed JSON sections. This saves ~60% of tokens vs raw HTML/text. |
+| Inline editing of report content | Reports are AI-generated research artifacts. Allowing direct text editing destroys the audit trail and makes citations unreliable. The PM reviews and approves/rejects -- they do not rewrite analyst output. A hedge fund PM does not rewrite analyst memos; they send them back with notes. | Rejection notes field on the approval bar. If rejected, re-generate with feedback. |
+| Real-time token-by-token streaming of section text | The report sections are generated as complete structured JSON objects (not streaming text). Token-by-token rendering would require restructuring the entire pipeline architecture for minimal UX gain. Sections complete in 15-30 seconds each -- the fade-in pattern is sufficient. | Poll-based progress + section-level fade-in (already implemented). Shows "Agent working..." placeholder, then complete section appears with animation. |
+| Multi-tab report viewing (multiple tickers open simultaneously) | Desktop app with 1400px max-width. Multiple simultaneous reports creates tab management overhead with no research benefit. Analysts compare companies via the Competitors tab, not by reading two reports side by side. | Single report view with easy navigation back to ReportsList. The Toolbox tabs already allow switching between data views for one company. |
+| Automated re-scoring when assumptions change | Tempting to make the Assumption Tracker editable and re-run valuation calculations when FGR changes. This is premature optimization -- the valuation calculators in the Toolbox already do this interactively. Duplicating that logic in the report viewer creates two sources of truth. | Read-only Assumption Tracker in V1. User adjusts assumptions in Valuation tab, regenerates if needed. |
+| Comment/annotation threading on sections | Collaborative features for a single-user app. There is no second user to collaborate with. The PM's feedback mechanism is the approval gate, not inline comments. | Rejection notes + re-generation feedback loop. |
+| Animated chart rendering during generation | Charting during streaming/generation is technically complex and provides no analytical value. Charts should render from complete data only. | Render charts after section completion. Use placeholder/skeleton during generation. |
+| Version diff view between report iterations | Comparing two iterations of a report line-by-line (like a git diff) is technically interesting but analytically useless. Investment theses change holistically, not line-by-line. The PM cares about "did the verdict change?" not "which paragraph was reworded." | Show verdict/confidence delta between versions (e.g., "Verdict changed: WATCHLIST -> PASS"). A simple comparison card, not a full diff view. |
+| Drag-and-drop section reordering | Sections follow the Rule One curriculum sequence. Reordering them violates the methodology's progressive disclosure design. The sequence IS the analytical framework. | Fixed section order matching the curriculum templates exactly. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-DataPacket assembly (existing)
-  -> DataPacket path reference generator (new)
-     -> Agent prompt builder (new)
+SectionRenderer (DONE) --> OnePager (DONE)
+SectionRenderer (DONE) --> PitchDeck (DONE)
+SectionRenderer (DONE) --> FullStory (NOT BUILT)
 
-ReportSectionSchema adaptation (existing schema, needs fixes)
-  -> Structured output format config (new)
-     -> Agent dispatch function (new)
+CitationTooltip (DONE) --> SectionRenderer (DONE)
+VerdictBadge (DONE) --> SectionRenderer (DONE)
+ConfidenceBadge (DONE) --> SectionRenderer (DONE)
+RedFlagCallout (DONE) --> SectionRenderer (DONE)
 
-Prompt caching strategy
-  -> Cache breakpoint placement in prompt builder
-     -> Parallel dispatch within phases
+FullStory.jsx --> ChecklistRenderer (NOT BUILT)
+FullStory.jsx --> DebateRenderer (NOT BUILT)
+FullStory.jsx --> useFullStory hook (NOT BUILT)
+FullStory.jsx --> SectionRenderer (DONE, reused)
+FullStory.jsx --> GenerationStatusPanel (exists in PitchDeck, needs extraction)
 
-Web search tool setup
-  -> Citation URL extraction from tool_result
-     -> Post-processing: inject URLs into citation.source
+Stage Gating --> OnePager approval (DONE) --> PitchDeck unlock
+Stage Gating --> PitchDeck approval (NOT BUILT) --> FullStory unlock
 
-Error handling / retry
-  -> Per-agent result tracking
-     -> Partial result recovery
-        -> Quality validation (existing critic.js)
+ReportsList --> Route structure for /research/:id/one-pager (DONE)
+ReportsList --> Route structure for /research/:id/pitch-deck (PARTIAL)
+ReportsList --> Route structure for /research/:id/full-story (NOT BUILT)
 
-Token budget tracking (existing contextBudget.js)
-  -> Updated pricing constants
-  -> Cache hit/miss accounting
-     -> Cost reporting
+GenerationStatusPanel (in PitchDeck) --> extract to shared component
+DeepDivePanel (built) --> AI call integration or pre-computed content
+AssumptionTracker (built) --> data wiring from report JSON
+IndustryCard (built) --> glossary data source + term detection
 ```
-
----
-
-## Critical Technical Details
-
-### 1. Structured Outputs + Tool Use: YES, They Work Together
-
-Verified from official docs: "JSON outputs and strict tool use solve different problems and can be used together. When combined, Claude can call tools with guaranteed-valid parameters AND return structured JSON responses."
-
-**How it works:** The grammar applies only to Claude's direct output (the final JSON response), not to tool_use calls or tool_result blocks. An agent can:
-1. Receive system prompt + user message with `output_config.format` specifying the JSON schema
-2. Call `web_search` tool multiple times during its turn
-3. Call custom tools (`computeMOS`, `sensitivityTable`) during its turn
-4. Return its final response as validated JSON matching the ReportSectionSchema
-
-This eliminates the two-pass output pattern entirely. The model doesn't need to "write prose first, then JSON" -- structured outputs guarantee the JSON is valid, and the narrative field within that JSON can be as long as needed.
-
-### 2. Structured Outputs + Citations: NO, Incompatible
-
-"Citations require interleaving citation blocks with text, which conflicts with strict JSON schema constraints. Returns 400 error if citations enabled with output_config.format."
-
-This means we CANNOT use the Claude Citations feature. Our existing manual citation approach (CitationSchema as a JSON array within the section) is the correct pattern. Web search URLs will be available from the tool_result content blocks -- agents must be prompted to extract and include them in citation `source` fields.
-
-### 3. Prompt Caching: Exact Mechanics
-
-**Minimum tokens:** Sonnet 4.6 = 2,048; Opus 4.6 = 4,096. Below minimum = silently skipped.
-
-**Max breakpoints:** 4 per request. Recommended layout for our agents:
-1. Tool definitions (web_search + custom tools) -- Breakpoint 1
-2. System prompt (curriculum + universal context) -- Breakpoint 2
-3. Shared context (DataPacket slice + PSR findings) -- Breakpoint 3
-4. Per-agent task instruction -- NOT cached (varies per section)
-
-**Cache invalidation:** Changing tool definitions, web search toggle, or output_config.format invalidates the cache. All agents using the same tool set and output schema should share cache hits.
-
-**Pricing math for Thes1s pitch deck:**
-- Curriculum + universal context: ~20K tokens (shared across 7 agents)
-- DataPacket (varies by agent slice): ~15-50K tokens
-- PSR findings: ~30K tokens (shared across Phase 1-3 agents)
-- Per-agent instruction: ~2-5K tokens (not cached)
-
-### 4. ReportSectionSchema: Required Adaptations
-
-The current schema has two incompatibilities with structured outputs:
-
-**Problem 1:** `z.looseObject({})` generates `additionalProperties: true`. Structured outputs require `additionalProperties: false` on ALL objects.
-
-**Fix:** Replace `z.looseObject({})` in these fields:
-- `data` field -> Use `z.record(z.string(), z.unknown())` or define explicit per-section data schemas
-- `ChartSchema.config` -> Define explicit chart config schema
-- `ChartSchema.data` items -> Define explicit chart data schema
-- `StageReportSchema.checkpoints[].userInput` -> Use `z.record(z.string(), z.unknown())`
-
-**Problem 2:** `z.record(z.unknown())` may not be supported. Structured outputs support `additionalProperties: false` but NOT arbitrary `additionalProperties` values.
-
-**Best solution:** Define per-section `data` schemas. Each section type (radar, fcf, pest, valuation) has a known data structure. Create section-specific Zod schemas:
-```
-ReportSectionSchema(sectionKey) -> uses sectionKey-specific data schema
-```
-This is more work upfront but produces better validation downstream.
-
-**Problem 3:** `.min(1)` on `redFlags` array -- this IS supported (`minItems` of 0 and 1 only). No change needed.
-
-### 5. Web Search: Cost and URL Extraction
-
-**Pricing:** $10 per 1,000 searches = $0.01 per search.
-V3 used 53 searches across 10 sections. At $0.01/search = $0.53 per company for web search fees.
-
-**URL extraction:** Web search tool_result includes `url` field on every `web_search_result`. The agent sees these URLs and can include them in citation `source` fields. The prompt must instruct: "When citing web search findings, use the exact URL from the search result, not a paraphrase of the source name."
-
-**max_uses parameter:** Controls searches per agent turn. Recommend:
-- business-analyst: `max_uses: 8`
-- competitor-evaluator: `max_uses: 8`
-- management-evaluator: `max_uses: 8`
-- risk-analyst: `max_uses: 10` (PEST needs more research)
-- financial-analyst: `max_uses: 4` (mostly DataPacket-driven)
-- valuation-specialist: `max_uses: 5`
-- synthesis-writer: `max_uses: 0` (no web search, reads section files)
-
-Total budget: ~51 searches max = ~$0.51 per company.
-
-### 6. Parallel Dispatch: Concrete Phase Plan
-
-Current CC skill dispatches sequentially (RAM constraint). API has no such constraint.
-
-**PSR Phase (sequential -- each year feeds the next):**
-- Annual readers: sequential, oldest first (5-7 agents, ~2-3 min each on Sonnet)
-- Quarterly readers: sequential batches (1-2 agents, ~3-4 min each)
-- PSR total: ~15-20 min (partially parallelizable -- annual + quarterly could overlap)
-
-**Generation Phase 1 (parallel):**
-- business-analyst (sections 1, 2) -- Sonnet
-- competitor-evaluator (sections 3, 4) -- Sonnet
-- These two agents have NO dependencies on each other.
-- Phase 1 total: ~4-6 min (wall clock)
-
-**Generation Phase 2 (partially parallel):**
-- financial-analyst (sections 5, 7, 8) -- Sonnet
-- management-evaluator (section 6) -- Sonnet
-- These can run in parallel. They consume Phase 1 cross-cutting findings.
-- Phase 2 total: ~5-8 min (wall clock for longest agent)
-
-**Generation Phase 3 (parallel):**
-- risk-analyst (section 9) -- Opus
-- valuation-specialist (section 10) -- Opus
-- These consume Phase 1 + Phase 2 findings.
-- Phase 3 total: ~5-8 min (Opus is slower)
-
-**Synthesis Phase:**
-- synthesis-writer -- Opus, consumes all 10 sections
-- ~3-5 min
-
-**Total estimated wall clock: 30-40 min** (down from 2.5 hours sequential)
-
----
-
-## Cost Model: Detailed Estimate
-
-### Current State (CC Skill, V3)
-| Component | Cost |
-|-----------|------|
-| PSR (5 annual + 2 quarterly, Sonnet) | ~$4.00 |
-| 7 analysis agents (mixed Sonnet/Opus) | ~$6.00 |
-| Synthesis writer (Opus) | ~$2.00 |
-| CC overhead (tool calls, state management) | ~$20.00 |
-| **Total** | **~$32.00** |
-
-### Projected State (API with Caching)
-
-**Pricing used:**
-- Sonnet 4.6: $3/$15 MTok (input/output), cache reads $0.30/MTok
-- Opus 4.6: $5/$25 MTok (input/output), cache reads $0.50/MTok
-- Web search: $0.01/search
-
-**PSR agents (no caching benefit -- each reads different filings):**
-
-| Agent | Model | Input (tokens) | Output (tokens) | Cost |
-|-------|-------|---------------|-----------------|------|
-| 5x annual-reader | Sonnet | 5 x 80K = 400K | 5 x 8K = 40K | $1.80 |
-| 2x quarterly-reader | Sonnet | 2 x 120K = 240K | 2 x 10K = 20K | $1.02 |
-| **PSR subtotal** | | **640K** | **60K** | **$2.82** |
-
-**Analysis agents (WITH caching):**
-
-Shared cached context per agent: curriculum (~20K) + universal files (~8K) + PSR findings (~30K) = ~58K tokens.
-First agent pays cache write (1.25x), remaining 6 agents pay cache read (0.1x).
-
-| Agent | Model | Cached (tokens) | Fresh Input (tokens) | Output (tokens) | Cost |
-|-------|-------|-----------------|---------------------|-----------------|------|
-| business-analyst (write) | Sonnet | 58K (write) | 25K | 12K | $0.47 |
-| competitor-evaluator (read) | Sonnet | 58K (read) | 20K | 12K | $0.28 |
-| financial-analyst (read) | Sonnet | 58K (read) | 40K | 15K | $0.37 |
-| management-evaluator (read) | Sonnet | 58K (read) | 15K | 10K | $0.23 |
-| risk-analyst (read) | Opus | 58K (read) | 15K | 12K | $0.44 |
-| valuation-specialist (read) | Opus | 58K (read) | 30K | 15K | $0.58 |
-| synthesis-writer (read) | Opus | 58K (read) | 50K | 15K | $0.68 |
-| **Analysis subtotal** | | | | | **$3.05** |
-
-**Web search:** ~50 searches x $0.01 = $0.50
-
-**Token overhead from search results in context:** ~50K additional input tokens across all agents = ~$0.15-0.25
-
-| Component | V3 Cost | Projected Cost | Savings |
-|-----------|---------|----------------|---------|
-| PSR | $4.00 | $2.82 | 30% (Sonnet pricing update, no CC overhead) |
-| Analysis agents | $6.00 | $3.05 | 49% (prompt caching) |
-| Synthesis | $2.00 | $0.68 | 66% (prompt caching) |
-| CC overhead | $20.00 | $0.00 | 100% (eliminated) |
-| Web search | included | $0.50 | N/A (new explicit cost) |
-| Search tokens | included | $0.25 | N/A |
-| **Total** | **$32.00** | **$7.30** | **77%** |
-
-**Note:** The $14 estimate in V3 validation report excluded CC overhead. True V3 cost was $32. The $7.30 projected cost is a fair apples-to-apples comparison. Against the $14 API-only baseline (what agents alone cost without CC overhead), savings are ~48%.
-
-### Sensitivity: What If Caching Misses?
-
-If agents run in parallel and cache isn't available for subsequent requests (concurrent cache race condition -- "A cache entry only becomes available after the first response begins"):
-
-**Mitigation:** Dispatch the first agent in each phase slightly ahead (~1-2s) to seed the cache before dispatching the rest. The first response begins streaming almost immediately, making the cache available.
-
-**Worst case (no caching at all):** Total cost rises to ~$10.50. Still 67% cheaper than V3 due to eliminated CC overhead.
 
 ---
 
 ## MVP Recommendation
 
-Prioritize in this order:
+### Phase 1: Complete the Core Viewers (HIGH priority)
 
-1. **Structured JSON outputs** -- Single highest-impact feature. Solves 4 persistent V3 issues mechanically. Requires ReportSectionSchema adaptation (the `looseObject` fix). Do this first.
+Prioritize (builds on what exists, fills critical gaps):
 
-2. **Parallel dispatch** -- Biggest user experience improvement (2.5hr -> 35min). Low complexity given existing `Promise.allSettled` patterns. Do immediately after structured outputs work.
+1. **Full Story viewer** (`FullStory.jsx`) -- 6 sections + debate rendering. This is the only stage without a display component. Without it, Full Story output exists only as JSON files. Reuse `SectionRenderer` for standard sections, build new `ChecklistRenderer` for scored checklists and `DebateRenderer` for the adversarial debate.
 
-3. **Web search tool** -- Solves citation URL laundering. Low complexity. Required for search compliance validation to pass.
+2. **Checklist rendering** -- The 43-item scored checklists (Meaning 15pt, Moat 15pt, Management 13pt) are the backbone of the Full Story. Each item has: question, verdict (PASS/PARTIAL/FAIL), confidence, evidence, and red flags. Render as scored tables with color-coded status, aggregate score display, and expandable evidence rows.
 
-4. **Prompt caching** -- Saves ~49% on analysis agent costs. Medium complexity (cache breakpoint placement matters). Do after dispatch is working to avoid premature optimization.
+3. **Debate rendering** -- The adversarial debate (9 exchanges x 4 steps = 36 content blocks) needs a purpose-built renderer. Each exchange should show: topic, Bull argument, Bear argument, Bull Rebuttal (with strength self-assessment), Judge Verdict (with direction: Strong Bull/Strong Bear/Unresolved/Mixed). A verdict summary table at the top shows all exchanges at a glance (this table already exists in the narrative markdown but should be a structured component).
 
-5. **Error handling + retry** -- Required for production reliability but can start simple (retry once with backoff) and iterate.
+4. **Stage gating wiring** -- Connect PitchDeck approval to FullStory unlock. Add approval bar to PitchDeck. Add route guards that prevent navigating to locked stages.
 
-6. **DataPacket path reference** -- Prompt-level fix, low complexity, solves the remaining V3 issue that structured outputs don't address.
+### Phase 2: Extract and Generalize (MEDIUM priority)
 
-**Defer:**
-- **Streaming progress UI** -- Nice to have but not required for v1.1. PM can wait 35 min.
-- **Batch API for PSR** -- Marginal savings (~$0.40) for significant complexity. Revisit if cost target isn't met.
-- **Strict tool_use validation** -- Agents with custom tools (financial-analyst, valuation-specialist) work fine without it in V3. Add later if tool call errors become a problem.
-- **1-hour cache TTL** -- Only matters for iterative re-runs. Start with 5-min TTL, upgrade if PM iteration pattern emerges.
+5. **Extract `GenerationStatusPanel`** from PitchDeck into a shared component usable by all three stage viewers. Parameterize section definitions and phase labels.
+
+6. **Wire delight feature shells** -- The DeepDivePanel, AssumptionTracker, and IndustryCard components are built but not wired to real data. Connect them to report JSON data:
+   - AssumptionTracker: extract `assumptions` array from report JSON
+   - IndustryCard: build static glossary JSON (~100 financial terms), add term detection to narrative rendering
+   - DeepDivePanel: populate with pre-computed deep-dive content from generation (defer on-demand AI calls)
+
+7. **Report navigation for all stages** -- Extend ReportsList to show stage progression per ticker (OP -> PD -> FS with status indicators). Add sub-navigation tabs within a report for switching between stages.
+
+### Phase 3: Polish (LOWER priority)
+
+Defer: Bull/Bear toggle, version comparison cards, keyboard navigation, export button. These are valuable but not blocking for the core report consumption workflow.
+
+---
+
+## Adversarial Debate Display: Design Recommendation
+
+The debate is the most complex rendering challenge in the Full Story. Based on the actual SFM data structure examined:
+
+**Data shape per exchange:**
+```
+Exchange N: [Topic]
+  BULL: [argument with sources]
+  BEAR: [argument with sources and citation URLs]
+  BULL REBUTTAL: [rebuttal with strength self-assessment]
+  JUDGE: [verdict: Strong Bull | Strong Bear | Unresolved | Mixed]
+```
+
+**Recommended display pattern:**
+
+1. **Verdict Summary Table** (top) -- All exchanges in a scored grid: #, Topic, Verdict, Bull Strength, Bear Strength. Color-coded rows (green = Strong Bull, red = Strong Bear, yellow = Unresolved). This gives the PM a 10-second overview before reading any detail.
+
+2. **Exchange Accordion** (below table) -- Each exchange is a collapsible card. Header shows: exchange number, topic, verdict badge, strength indicators. Expand to see the full 4-step exchange.
+
+3. **Within each exchange:** Two-column layout for Bull (left, green tint) vs Bear (right, red tint). Bull Rebuttal and Judge Verdict span full width below. Judge verdict gets a highlighted callout with direction and reasoning.
+
+4. **Citation handling within debate:** Bear arguments contain web search citation URLs. These should render as clickable links (not the [N] tooltip pattern used elsewhere) because they are external URLs, not internal DataPacket references.
+
+This pattern borrows from Morgan Stanley's Bull/Bear Investment Cases format -- structured opposing arguments with explicit verdict calls -- but adds the interactive accordion pattern for managing information density.
+
+---
+
+## Scored Checklist Display: Design Recommendation
+
+Based on the Full Story data (43 items across 3 checklists):
+
+**Recommended display:**
+
+1. **Aggregate score header** -- "Meaning: 15/15 PASS" or "Moat: 6/15 PASS, 8 PARTIAL, 1 FAIL" with a mini progress bar showing the ratio.
+
+2. **Item rows** -- Vertical list with: item number, question text, status badge (PASS green / PARTIAL yellow / FAIL red), confidence level. Click to expand evidence and red flags per item.
+
+3. **Conditional formatting** -- FAIL items get a red left border. PARTIAL items get a yellow left border. PASS items get a green left border or no special treatment (let failures stand out).
+
+This mirrors how rubric-based assessment UIs work: aggregate score at top, drill into individual items, failures highlighted.
 
 ---
 
 ## Sources
 
-- [Claude API Structured Outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs) -- Feature compatibility, JSON schema limitations, grammar compilation
-- [Claude API Prompt Caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) -- Cache breakpoints, TTL, pricing multipliers, minimum tokens
-- [Claude API Web Search Tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool) -- Tool definition, response format, citations, pricing
-- [Claude API Pricing](https://platform.claude.com/docs/en/about-claude/pricing) -- Model pricing table, cache multipliers, web search, batch discount
-- [@anthropic-ai/sdk on npm](https://www.npmjs.com/package/@anthropic-ai/sdk) -- v0.80.0 latest, Zod integration via zodOutputFormat helper
-- [Claude API Tool Use Overview](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview) -- Tool use + structured outputs combined usage
+Research sources informing these recommendations:
+
+- [ShapeofAI - Citation UI Patterns](https://www.shapeof.ai/patterns/citations) -- Four citation variants, design principles, product examples (Perplexity, Adobe, Dovetail, Granola)
+- [Hebbia - What Makes a Good Equity Research Report](https://www.hebbia.com/resources/equity-research-report) -- Iterative source decomposition, clickable in-line citations, audit trail requirements
+- [Perplexity Platform Guide - Citation-Forward Answers](https://www.unusual.ai/blog/perplexity-platform-guide-design-for-citation-forward-answers) -- Inline footnote numbers, expandable snippets, Sources panel
+- [thefrontkit - Streaming UI in AI Applications](https://thefrontkit.com/blogs/what-is-streaming-ui-in-ai-applications) -- Skeleton placeholders, progressive rendering, anti-patterns (layout thrashing, flickering)
+- [AG-UI Real-Time Streaming Guide](https://medium.datadriveninvestor.com/production-grade-agentic-apps-with-ag-ui-real-time-streaming-guide-2026-5331c452684a) -- Start events create placeholders, UI renders incrementally
+- [NN/g Progressive Disclosure](https://www.nngroup.com/articles/progressive-disclosure/) -- Reduce cognitive load by revealing information as users need it
+- [Morningstar Direct vs Bloomberg Terminal](https://www.institutionalinvestor.com/article/2b1c7fywh59l7zinwr280/ria-intel/morningstar-debuts-new-bloomberg-like-research-portal-built-for-financial-advisors) -- Presentation Studio for custom visualizations, customizable reporting
+- [Scrollspy Demystified](https://blog.maximeheckel.com/posts/scrollspy-demystified/) -- IntersectionObserver implementation patterns for section tracking
+- [The Inferential Investor - Bull & Bear Case Workups](https://www.inferentialinvestor.com/p/bull-and-bear-investment-case-workups) -- Structured opposing arguments with explicit "must-be-true conditions"
+- Existing Thes1s codebase: `SectionRenderer.jsx`, `OnePager.jsx`, `PitchDeck.jsx`, `CitationTooltip.jsx`, SFM Full Story fixture data
