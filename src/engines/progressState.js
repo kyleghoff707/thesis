@@ -12,7 +12,7 @@ const REPORTS_DIR = join(THES1S_DIR, 'reports');
 // Section keys per stage — matches dispatch-table.json sectionKeys
 const SECTION_KEYS = {
   onePager: ['company_info', 'minimum_standards', 'meaning', 'growth_metrics', 'valuation_summary', 'overall_verdict'],
-  pitchDeck: ['radar', 'simple_predictable', 'market_position', 'barriers_moats', 'fcf', 'management', 'roe_roic_debt', 'balance_sheet', 'pest', 'valuation'],
+  pitchDeck: ['radar', 'simple_and_predictable', 'market_position', 'barriers_and_moats', 'fcf', 'management', 'balance_sheet', 'pest_risks', 'valuation_summary', 'overall_verdict'],
   fullStory: ['event_analysis', 'meaning_checklist', 'moat_checklist', 'management_checklist', 'valuation_confirmation', 'inversion_rebuttal'],
 };
 
@@ -205,22 +205,22 @@ export function readQualityReport(ticker) {
 // Section-to-agent mapping for status display
 const SECTION_AGENT_MAP = {
   radar: 'business-analyst',
-  simple_predictable: 'business-analyst',
+  simple_and_predictable: 'business-analyst',
   market_position: 'competitor-evaluator',
-  barriers_moats: 'competitor-evaluator',
+  barriers_and_moats: 'competitor-evaluator',
   fcf: 'financial-analyst',
   management: 'management-evaluator',
-  roe_roic_debt: 'financial-analyst',
   balance_sheet: 'financial-analyst',
-  pest: 'risk-analyst',
-  valuation: 'valuation-specialist',
+  pest_risks: 'risk-analyst',
+  valuation_summary: 'valuation-specialist',
+  overall_verdict: 'valuation-specialist',
 };
 
 // Pitch Deck dispatch phases for status tracking
 const DISPATCH_PHASES = [
-  { phase: 1, sections: ['radar', 'simple_predictable', 'market_position'] },
-  { phase: 2, sections: ['barriers_moats', 'fcf', 'management', 'roe_roic_debt', 'balance_sheet'] },
-  { phase: 3, sections: ['pest', 'valuation'] },
+  { phase: 1, sections: ['radar', 'simple_and_predictable', 'market_position'] },
+  { phase: 2, sections: ['barriers_and_moats', 'fcf', 'management', 'balance_sheet'] },
+  { phase: 3, sections: ['pest_risks', 'valuation_summary', 'overall_verdict'] },
 ];
 
 // Returns the path to generation-status.json for a ticker

@@ -11,18 +11,18 @@ import DeepDivePanel from './pitchDeck/DeepDivePanel';
 import IndustryCard from './pitchDeck/IndustryCard';
 import AssumptionTracker from './pitchDeck/AssumptionTracker';
 
-// --- Section definitions for the Pitch Deck (10 sections, 3 phases) ---
+// --- Section definitions for the Pitch Deck (9 content sections, 3 phases) ---
+// overall_verdict is rendered as a hero banner, not a numbered section
 const SECTION_DEFS = [
   { key: 'radar', label: 'Radar', phase: 1 },
-  { key: 'simple_predictable', label: 'Simple & Predictable', phase: 1 },
+  { key: 'simple_and_predictable', label: 'Simple & Predictable', phase: 1 },
   { key: 'market_position', label: 'Market Position', phase: 1 },
-  { key: 'barriers_moats', label: 'Barriers & Moats', phase: 2 },
+  { key: 'barriers_and_moats', label: 'Barriers & Moats', phase: 2 },
   { key: 'fcf', label: 'FCF', phase: 2 },
   { key: 'management', label: 'Management', phase: 2 },
-  { key: 'roe_roic_debt', label: 'ROE/ROIC/Debt', phase: 2 },
   { key: 'balance_sheet', label: 'Balance Sheet', phase: 2 },
-  { key: 'pest', label: 'PEST', phase: 3 },
-  { key: 'valuation', label: 'Valuation', phase: 3 },
+  { key: 'pest_risks', label: 'PEST Risks', phase: 3 },
+  { key: 'valuation_summary', label: 'Valuation', phase: 3 },
 ];
 
 const PHASE_LABELS = [
@@ -31,8 +31,8 @@ const PHASE_LABELS = [
   'Phase 3: Risk & Valuation',
 ];
 
-// Phase boundary indexes: Phase 1 ends after index 2, Phase 2 after index 7
-const PHASE_BOUNDARIES = [2, 7]; // checkpoint after these indexes
+// Phase boundary indexes: Phase 1 ends after index 2, Phase 2 after index 6
+const PHASE_BOUNDARIES = [2, 6]; // checkpoint after these indexes
 
 // --- Pure helper functions (exported via _testExports) ---
 
@@ -47,8 +47,8 @@ function getPhaseStatus(sections) {
 
   const phases = [
     { start: 0, end: 2 },  // Phase 1: indexes 0-2
-    { start: 3, end: 7 },  // Phase 2: indexes 3-7
-    { start: 8, end: 9 },  // Phase 3: indexes 8-9
+    { start: 3, end: 6 },  // Phase 2: indexes 3-6
+    { start: 7, end: 8 },  // Phase 3: indexes 7-8
   ];
 
   return phases.map(({ start, end }) => {
@@ -479,6 +479,12 @@ export default function PitchDeck({ getReport, updateReport }) {
     return map;
   }, [pitchDeckData]);
 
+  // Extract overall_verdict for hero rendering (not a numbered section)
+  const overallVerdict = useMemo(() => {
+    if (!pitchDeckData?.sections) return null;
+    return pitchDeckData.sections.find(s => s.key === 'overall_verdict') || null;
+  }, [pitchDeckData]);
+
   // Collect all citations for reference list
   const allCitations = useMemo(() => {
     const citations = [];
@@ -858,6 +864,34 @@ export default function PitchDeck({ getReport, updateReport }) {
 
         {/* C2. Content Column */}
         <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Hero summary banner for overall_verdict */}
+          {overallVerdict && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 16,
+              background: C.bgCard,
+              border: '1px solid ' + C.border,
+              borderRadius: 8,
+              padding: 20,
+              marginBottom: 24,
+            }}>
+              <div style={{ flexShrink: 0 }}>
+                <VerdictBadge verdict={overallVerdict.verdict} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 6 }}>
+                  Overall Verdict
+                </div>
+                {overallVerdict.verdictRationale && (
+                  <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.5 }}>
+                    {overallVerdict.verdictRationale}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {SECTION_DEFS.map((def, idx) => {
             const section = sectionMap[def.key];
             const status = sectionStatuses[def.key];
@@ -1020,7 +1054,7 @@ export default function PitchDeck({ getReport, updateReport }) {
           })}
 
           {/* Section 10 extras: FGR Derivation + Sensitivity Tables */}
-          {sectionMap['valuation'] && (
+          {sectionMap['valuation_summary'] && (
             <div style={{ marginTop: 8 }}>
               {/* FGR Derivation */}
               {pitchDeckData?.fgrDerivation && (
