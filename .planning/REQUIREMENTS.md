@@ -75,33 +75,33 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | — | Pending |
-| FIX-02 | — | Pending |
-| FIX-03 | — | Pending |
-| FIX-04 | — | Pending |
-| INFRA-01 | — | Pending |
-| INFRA-02 | — | Pending |
-| INFRA-03 | — | Pending |
-| INFRA-04 | — | Pending |
-| FS-01 | — | Pending |
-| FS-02 | — | Pending |
-| FS-03 | — | Pending |
-| FS-04 | — | Pending |
-| FS-05 | — | Pending |
-| NAV-01 | — | Pending |
-| NAV-02 | — | Pending |
-| NAV-03 | — | Pending |
-| NAV-04 | — | Pending |
-| DLT-01 | — | Pending |
-| DLT-02 | — | Pending |
-| DLT-03 | — | Pending |
-| DLT-04 | — | Pending |
+| FIX-01 | Phase 18 | Pending |
+| FIX-02 | Phase 18 | Pending |
+| FIX-03 | Phase 18 | Pending |
+| FIX-04 | Phase 18 | Pending |
+| INFRA-01 | Phase 19 | Pending |
+| INFRA-02 | Phase 19 | Pending |
+| INFRA-03 | Phase 19 | Pending |
+| INFRA-04 | Phase 19 | Pending |
+| FS-01 | Phase 20 | Pending |
+| FS-02 | Phase 21 | Pending |
+| FS-03 | Phase 21 | Pending |
+| FS-04 | Phase 20 | Pending |
+| FS-05 | Phase 21 | Pending |
+| NAV-01 | Phase 22 | Pending |
+| NAV-02 | Phase 22 | Pending |
+| NAV-03 | Phase 22 | Pending |
+| NAV-04 | Phase 22 | Pending |
+| DLT-01 | Phase 23 | Pending |
+| DLT-02 | Phase 23 | Pending |
+| DLT-03 | Phase 23 | Pending |
+| DLT-04 | Phase 23 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 21 total
-- Mapped to phases: 0
-- Unmapped: 21 ⚠️
+- Mapped to phases: 21
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-01*
-*Last updated: 2026-04-01 after initial definition*
+*Last updated: 2026-04-01 after roadmap creation*
