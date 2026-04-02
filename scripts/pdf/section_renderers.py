@@ -130,6 +130,58 @@ def get_red_flags(section):
     return result
 
 
+def _humanize_datapacket_ref(ref):
+    """Convert internal DataPacket field paths to human-readable labels.
+
+    e.g. "dataPacket.compensation.executives[1].compensation['2023'].total"
+    -> "Executive #2 total compensation (2023)"
+    """
+    if not ref or not isinstance(ref, str):
+        return ref
+    if not ref.startswith('dataPacket.'):
+        return ref
+
+    # Strip the dataPacket. prefix
+    path = ref[len('dataPacket.'):]
+
+    # Extract year from path if present (e.g., ['2023'] or .2023)
+    import re
+    year_match = re.search(r"\['?(\d{4})'?\]", path)
+    year_suffix = f' ({year_match.group(1)})' if year_match else ''
+
+    # Common path humanizations
+    if 'compensation.executives' in path:
+        idx_match = re.search(r'executives\[(\d+)\]', path)
+        idx = int(idx_match.group(1)) + 1 if idx_match else '?'
+        field_match = re.search(r"\.(\w+)$", path)
+        field = field_match.group(1) if field_match else 'compensation'
+        field_label = field.replace('_', ' ').replace('nonEquityIncentive', 'non-equity incentive')
+        # Convert camelCase to spaced
+        field_label = re.sub(r'([a-z])([A-Z])', r'\1 \2', field_label).lower()
+        return f'Executive #{idx} {field_label}{year_suffix}'
+
+    if 'insiders.summary.' in path:
+        field = path.split('.')[-1]
+        field_label = re.sub(r'([a-z])([A-Z])', r'\1 \2', field).lower()
+        field_label = field_label.replace('12 m', '(12M)').replace('open market ', 'open-market ')
+        return f'Insider {field_label}'
+
+    if 'financials.' in path:
+        parts = path.split('.')
+        statement = parts[1] if len(parts) > 1 else ''
+        field = parts[-1] if len(parts) > 2 else ''
+        field_label = field.replace('_', ' ')
+        return f'{statement.capitalize()} — {field_label}{year_suffix}'
+
+    if path == 'ticker':
+        return 'Ticker'
+
+    # Generic fallback: last segment, humanized
+    last = path.split('.')[-1]
+    label = re.sub(r'([a-z])([A-Z])', r'\1 \2', last).replace('_', ' ')
+    return label.capitalize() + year_suffix
+
+
 def get_citations(section):
     """
     Extract citations normalized to list of {ref, text, source}.
@@ -138,6 +190,8 @@ def get_citations(section):
     - dict citations: extract ref/claim, text/value, source/url
     - string citations: use as ref with empty text/source
     - int citations: convert to string ref
+
+    DataPacket field paths are humanized to readable labels.
 
     Returns:
         list of {ref: str, text: str, source: str}
@@ -155,6 +209,8 @@ def get_citations(section):
             ref = c.get('ref') or c.get('claim') or c.get('field') or ''
             text = str(c.get('text') or c.get('value') or c.get('label') or '')
             source = c.get('source') or c.get('url') or 'DataPacket'
+            # Humanize internal DataPacket paths
+            ref = _humanize_datapacket_ref(ref)
             result.append({'ref': ref, 'text': text, 'source': source})
         elif isinstance(c, str):
             result.append({'ref': c, 'text': '', 'source': ''})

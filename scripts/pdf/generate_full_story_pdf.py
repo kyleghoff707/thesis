@@ -68,11 +68,28 @@ def _render_red_flags(pdf, flags):
         pdf.add_bullet(rf)
 
 
+def _format_citation_value(text):
+    """Format citation values: large numbers become currency/readable."""
+    if not text:
+        return text
+    try:
+        num = float(text)
+        if abs(num) >= 1e9:
+            return f'${num/1e9:.2f}B'
+        elif abs(num) >= 1e6:
+            return f'${num/1e6:.2f}M'
+        elif abs(num) >= 1e3 and num == int(num):
+            return f'${num:,.0f}'
+        return text
+    except (ValueError, TypeError):
+        return text
+
+
 def _render_citations_page(pdf, all_citations):
     """Render a numbered citations page."""
     pdf.add_section_header('Citations & Sources', level=1)
     pdf.add_body_text(
-        'All quantitative claims trace to DataPacket field paths or external sources. '
+        'All quantitative claims and data points are cited to their source. '
         'Citations are grouped by section.'
     )
     for section_name, cites in all_citations:
@@ -81,12 +98,12 @@ def _render_citations_page(pdf, all_citations):
         pdf.add_section_header(section_name, level=3)
         for i, c in enumerate(cites, 1):
             ref = c.get('ref', '')
-            text = c.get('text', '')
+            text = _format_citation_value(c.get('text', ''))
             source = c.get('source', 'DataPacket')
             line = f'[{i}] {ref}'
             if text:
-                line += f' = {text}'
-            if source:
+                line += f': {text}'
+            if source and source != 'DataPacket':
                 line += f'  ({source})'
             pdf.add_bullet(line, indent=2)
 

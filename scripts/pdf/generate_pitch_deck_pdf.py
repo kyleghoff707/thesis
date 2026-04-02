@@ -68,11 +68,28 @@ def _render_red_flags(pdf, flags):
         pdf.add_bullet(rf)
 
 
+def _format_citation_value(text):
+    """Format citation values: large numbers become currency/readable."""
+    if not text:
+        return text
+    try:
+        num = float(text)
+        if abs(num) >= 1e9:
+            return f'${num/1e9:.2f}B'
+        elif abs(num) >= 1e6:
+            return f'${num/1e6:.2f}M'
+        elif abs(num) >= 1e3 and num == int(num):
+            return f'${num:,.0f}'
+        return text
+    except (ValueError, TypeError):
+        return text
+
+
 def _render_citations_page(pdf, all_citations):
     """Render a numbered citations page."""
     pdf.add_section_header('Citations & Sources', level=1)
     pdf.add_body_text(
-        'All quantitative claims trace to DataPacket field paths or external sources. '
+        'All quantitative claims and data points are cited to their source. '
         'Citations are grouped by section.'
     )
     for section_name, cites in all_citations:
@@ -81,12 +98,12 @@ def _render_citations_page(pdf, all_citations):
         pdf.add_section_header(section_name, level=3)
         for i, c in enumerate(cites, 1):
             ref = c.get('ref', '')
-            text = c.get('text', '')
+            text = _format_citation_value(c.get('text', ''))
             source = c.get('source', 'DataPacket')
             line = f'[{i}] {ref}'
             if text:
-                line += f' = {text}'
-            if source:
+                line += f': {text}'
+            if source and source != 'DataPacket':
                 line += f'  ({source})'
             pdf.add_bullet(line, indent=2)
 
@@ -204,6 +221,131 @@ def _render_price_range(pdf, data):
                                    methods, current_price)
 
 
+def _render_valuation_deep_dive(pdf, data, section):
+    """Render detailed valuation content: FGR derivation, per-method prices,
+    historical P/E, dual owner earnings, convergence, and Rule of 72."""
+    section_data = section.get('data', {})
+    if isinstance(section_data, str):
+        try:
+            section_data = json.loads(section_data)
+        except (json.JSONDecodeError, TypeError):
+            section_data = {}
+    if not isinstance(section_data, dict):
+        return
+
+    # ── FGR Derivation ──────────────────────────────────────────────────
+    fgr = section_data.get('fgrDerivation', {})
+    if fgr:
+        pdf.add_section_header('Future Growth Rate (FGR) Derivation', level=2)
+
+        fgr_rows = []
+        perspective_names = {
+            'historicalComposite': 'Historical Composite (Big 4)',
+            'marketRelativity': 'Market Relativity (vs S&P 500)',
+            'companyGuidance': 'Company Guidance',
+            'industryCagr': 'Industry CAGR',
+            'analystConsensus': 'Analyst Consensus',
+        }
+        for key, label in perspective_names.items():
+            entry = fgr.get(key, {})
+            if isinstance(entry, dict):
+                val = entry.get('value', 'N/A')
+                conf = entry.get('confidence', 'N/A')
+                fgr_rows.append([label, str(val), str(conf)])
+
+        if fgr_rows:
+            pdf.add_table(['Perspective', 'Estimate', 'Confidence'], fgr_rows)
+
+        final_fgr = fgr.get('finalFGR', {})
+        if isinstance(final_fgr, dict):
+            low = final_fgr.get('low', '')
+            high = final_fgr.get('high', '')
+            if low and high:
+                low_pct = f'{float(low)*100:.0f}%' if isinstance(low, (int, float)) else str(low)
+                high_pct = f'{float(high)*100:.0f}%' if isinstance(high, (int, float)) else str(high)
+                pdf.add_body_text(f'Final FGR Range: {low_pct} — {high_pct}')
+
+    # ── Per-Method Buy Prices ───────────────────────────────────────────
+    method_data = []
+    method_configs = [
+        ('mosBuyPrice', 'Margin of Safety (MOS)', ['low', 'high']),
+        ('pbtBuyPrice', 'Payback Time (PBT)', ['low', 'high']),
+        ('tenCapPrice', 'Ten Cap', ['ruleOne', 'graham']),
+        ('equityBondBuyPrice', 'Equity Bond', ['low', 'high']),
+    ]
+    for field, label, keys in method_configs:
+        prices = section_data.get(field, {})
+        if isinstance(prices, dict):
+            vals = []
+            for k in keys:
+                v = prices.get(k)
+                if v is not None:
+                    vals.append(f'${float(v):,.2f}')
+                else:
+                    vals.append('N/A')
+            method_data.append([label, vals[0], vals[1] if len(vals) > 1 else 'N/A'])
+
+    if method_data:
+        pdf.add_section_header('Buy Price Summary by Method', level=2)
+        col_labels = ['Method', 'Conservative', 'Optimistic']
+        pdf.add_table(col_labels, method_data)
+
+    # Current price context
+    current = section_data.get('currentPrice')
+    pvb = section_data.get('priceVsBuyRange', '')
+    if pvb:
+        pdf.add_body_text(pvb)
+
+    # ── Historical P/E ──────────────────────────────────────────────────
+    hist_pe = section_data.get('historicalPE', {})
+    if isinstance(hist_pe, dict) and hist_pe:
+        pdf.add_section_header('Historical P/E Analysis', level=2)
+        pe_rows = []
+        for k, label in [('10yrAverage', '10-Year Average'), ('10yrMedian', '10-Year Median'),
+                         ('10yrMin', '10-Year Min'), ('10yrMax', '10-Year Max'),
+                         ('futurePEUsed', 'Future P/E Used')]:
+            v = hist_pe.get(k)
+            if v is not None:
+                pe_rows.append([label, f'{float(v):.1f}'])
+        if pe_rows:
+            pdf.add_table(['Metric', 'Value'], pe_rows)
+        rationale = hist_pe.get('rationale', '')
+        if rationale:
+            pdf.add_body_text(rationale)
+
+    # ── Dual Owner Earnings ─────────────────────────────────────────────
+    dual_oe = section_data.get('dualOwnerEarnings', {})
+    if isinstance(dual_oe, dict) and dual_oe:
+        pdf.add_section_header('Dual Owner Earnings', level=2)
+        oe_rows = []
+        r1 = dual_oe.get('ruleOneOE')
+        gr = dual_oe.get('grahamOE')
+        if r1 is not None:
+            oe_rows.append(['Rule One Method', format_currency(r1)])
+        if gr is not None:
+            oe_rows.append(['Graham Method', format_currency(gr)])
+        if oe_rows:
+            pdf.add_table(['Method', 'Owner Earnings'], oe_rows)
+        divergence = dual_oe.get('divergence', '')
+        if divergence:
+            pdf.add_body_text(f'Divergence: {divergence}')
+
+    # ── Convergence Analysis ────────────────────────────────────────────
+    convergence = section_data.get('convergence', '')
+    if convergence:
+        pdf.add_section_header('Method Convergence', level=2)
+        pdf.add_body_text(convergence)
+
+    # ── Rule of 72 Spot Check ───────────────────────────────────────────
+    rule72 = section_data.get('ruleOf72SpotCheck', {})
+    if isinstance(rule72, dict) and rule72:
+        pdf.add_section_header('Rule of 72 Market Ceiling Check', level=2)
+        for label, key in [('FGR Low', 'fgrLow'), ('FGR High', 'fgrHigh')]:
+            val = rule72.get(key, '')
+            if val:
+                pdf.add_bullet(f'{label}: {val}')
+
+
 # =========================================================================
 # SCORECARD BUILDER
 # =========================================================================
@@ -247,6 +389,7 @@ def _render_section_charts(pdf, data, section_key):
         _render_balance_sheet_chart(pdf, data)
     elif section_key == 'valuation_summary':
         _render_price_range(pdf, data)
+        _render_valuation_deep_dive(pdf, data, data.get_section(section_key))
     elif section_key == 'management':
         # Score gauges if data available
         scores = data.get_scores()
