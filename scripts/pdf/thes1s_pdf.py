@@ -247,7 +247,7 @@ class Thes1sPDF(ReportPDF):
             # Name cell
             self.set_font('ArialUni', '', 8)
             self.set_text_color(*self.slate_800)
-            self.cell(name_w, 10, name, border=1, fill=True)
+            self.cell(name_w, 10, self._truncate(name, name_w, 'ArialUni', '', 8), border=1, fill=True)
 
             # Verdict badge
             vc = verdict_colors.get(verdict, self.slate_500)
@@ -267,7 +267,7 @@ class Thes1sPDF(ReportPDF):
             self.set_font('ArialUni', '', 8)
             self.set_fill_color(*(self.teal_50 if i % 2 == 0 else (255, 255, 255)))
             self.cell(conf_w, 10, confidence, border=1, fill=True, align='C')
-            self.cell(note_w, 10, signal, border=1, fill=True, align='C')
+            self.cell(note_w, 10, self._truncate(signal, note_w, 'ArialUni', '', 8), border=1, fill=True, align='C')
             self.ln()
         self.ln(4)
 
