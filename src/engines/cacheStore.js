@@ -6,8 +6,8 @@
 import { openDB } from 'idb';
 
 const DB_NAME = 'thes1s-cache';
-const DB_VERSION = 5;
-const STORES = ['edgar-facts', 'edgar-statements', 'guru-data', 'nport-data', 'filing-markdown', 'insider-data', 'comp-data', 'transcript-data'];
+const DB_VERSION = 6;
+const STORES = ['edgar-facts', 'edgar-statements', 'guru-data', 'nport-data', 'filing-markdown', 'insider-data', 'comp-data', 'transcript-data', 'reports'];
 
 let dbPromise = null;
 
@@ -121,5 +121,28 @@ export async function idbClear(store, prefix) {
     }
   } catch {
     // Ignore clear errors
+  }
+}
+
+// Get all records from a store (no TTL check — for permanent data like reports)
+export async function idbGetAll(store) {
+  const db = await getDB();
+  if (!db) return [];
+  try {
+    const all = await db.getAll(store);
+    return all.map(record => record.data);
+  } catch {
+    return [];
+  }
+}
+
+// Delete a single record from a store by key
+export async function idbDelete(store, key) {
+  const db = await getDB();
+  if (!db) return;
+  try {
+    await db.delete(store, key);
+  } catch {
+    // Ignore delete errors
   }
 }
