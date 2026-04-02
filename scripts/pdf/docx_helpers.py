@@ -342,6 +342,7 @@ def add_body_paragraphs(doc, text):
     Split text on double newlines into paragraphs with bold formatting support.
 
     Handles **bold** markdown syntax by creating bold runs.
+    Strips inline <cite> tags and replaces "DataPacket" with "Thes1s toolbox".
     Skips empty paragraphs.
 
     Args:
@@ -350,6 +351,10 @@ def add_body_paragraphs(doc, text):
     """
     if not text or not isinstance(text, str):
         return
+
+    # Clean cite tags and internal jargon
+    from section_renderers import _clean_narrative
+    text = _clean_narrative(text)
 
     paragraphs = text.split('\n\n')
     for para_text in paragraphs:

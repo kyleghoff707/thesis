@@ -15,6 +15,36 @@ Usage:
 """
 
 
+def _clean_narrative(text):
+    """Strip inline <cite> tags and replace internal jargon in narrative text.
+
+    1. <cite index="...">visible text</cite> -> just the visible text
+    2. Self-closing <cite .../> tags -> removed entirely
+    3. "DataPacket" / "data packet" references -> "Thes1s toolbox"
+    """
+    import re
+
+    if not text:
+        return text
+
+    # Strip <cite index="...">content</cite> -> keep content
+    text = re.sub(r'<cite\s+[^>]*>(.*?)</cite>', r'\1', text)
+
+    # Strip self-closing <cite .../> tags
+    text = re.sub(r'<cite\s+[^/]*/>', '', text)
+
+    # Replace internal "DataPacket" terminology with user-facing name
+    text = re.sub(r'(?i)\bthe\s+DataPacket\b', 'the Thes1s toolbox', text)
+    text = re.sub(r'(?i)\bDataPacket\b', 'Thes1s toolbox', text)
+    text = re.sub(r'(?i)\bdata\s+packet\b', 'Thes1s toolbox', text)
+    text = re.sub(r'(?i)\baccording to Thes1s toolbox\b', 'according to the Thes1s toolbox', text)
+
+    # Clean up any double spaces left by tag removal
+    text = re.sub(r'  +', ' ', text)
+
+    return text.strip()
+
+
 def get_narrative(section):
     """
     Return the best available text for a section.
@@ -24,18 +54,21 @@ def get_narrative(section):
     2. Join verdictRationale + summary as fallback
     3. Empty string if nothing available
 
+    Inline <cite> tags are stripped and "DataPacket" references are replaced
+    with "Thes1s toolbox" for user-facing display.
+
     Args:
         section: Section dict from pipeline output
 
     Returns:
-        str: Best available narrative text
+        str: Best available narrative text, cleaned for display
     """
     if not isinstance(section, dict):
         return ''
 
     narr = section.get('narrative', '')
     if isinstance(narr, str) and len(narr) > 100 and not narr.startswith('See full'):
-        return narr
+        return _clean_narrative(narr)
 
     # Fall back to verdictRationale + summary
     parts = []
@@ -46,7 +79,7 @@ def get_narrative(section):
     if isinstance(sm, str) and sm:
         parts.append(sm)
 
-    return '\n\n'.join(parts)
+    return _clean_narrative('\n\n'.join(parts))
 
 
 def get_tables(section):

@@ -17,7 +17,7 @@ from thes1s_pdf import Thes1sPDF
 from report_data_reader import ReportData
 from section_renderers import (
     get_narrative, get_tables, get_red_flags, get_citations,
-    get_verdict_color, format_currency
+    get_verdict_color, format_currency, _clean_narrative
 )
 
 
@@ -29,6 +29,8 @@ def _render_narrative(pdf, narrative):
     """Render a section narrative, splitting on paragraph headers."""
     if not narrative:
         return
+    # Clean cite tags and internal jargon before rendering
+    narrative = _clean_narrative(narrative)
     for para in narrative.split('\n\n'):
         para = para.strip()
         if not para:
