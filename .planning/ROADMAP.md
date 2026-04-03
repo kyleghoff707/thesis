@@ -105,8 +105,8 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [x] 22-01-PLAN.md — Enhance reports API with per-stage availability + fix nav tab highlighting for report routes
-- [ ] 22-02-PLAN.md — Rewrite ReportsList with multi-stage pills, gate logic, and status-based navigation
+- [ ] 22-01-PLAN.md — Enhance reports API with per-stage availability + fix nav tab highlighting for report routes
+- [x] 22-02-PLAN.md — Rewrite ReportsList with multi-stage pills, gate logic, and status-based navigation
 
 ### Phase 23: Delight Feature Wiring
 **Goal**: Users can interact with enrichment features that deepen their understanding of the research
