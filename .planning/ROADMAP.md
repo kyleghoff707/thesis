@@ -55,7 +55,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 19-01-PLAN.md — Extract reportHelpers.js shared utilities + Spinner.jsx, refactor OnePager and PitchDeck to import from shared modules
+- [x] 19-01-PLAN.md — Extract reportHelpers.js shared utilities + Spinner.jsx, refactor OnePager and PitchDeck to import from shared modules
 - [ ] 19-02-PLAN.md — Build useScrollSpy hook + StageNavBar component, refactor OnePager and PitchDeck to use shared scroll spy
 - [ ] 19-03-PLAN.md — Install react-markdown + remark-gfm, build ReportMarkdown.jsx wrapper, refactor SectionRenderer to use it
 
@@ -135,7 +135,7 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 18. Critical Bug Fixes & Storage Migration | 3/3 | Complete    | 2026-04-02 |
-| 19. Shared Report Infrastructure | 0/3 | Not started | - |
+| 19. Shared Report Infrastructure | 1/3 | In Progress|  |
 | 20. Full Story Core Viewer | 0/2 | Not started | - |
 | 21. Checklist & Debate Renderers | 0/3 | Not started | - |
 | 22. Stage Gating & Navigation | 0/3 | Not started | - |
