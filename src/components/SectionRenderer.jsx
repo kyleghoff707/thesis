@@ -385,6 +385,47 @@ export default function SectionRenderer({ section, sectionId, onCitationClick })
           ))}
         </div>
       )}
+
+      {/* 10. Primary Source Insights */}
+      {section.primarySourceInsights && Array.isArray(section.primarySourceInsights) && section.primarySourceInsights.length > 0 && (
+        <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid ' + C.borderLight }}>
+          <div style={{
+            fontSize: 10, fontWeight: 700, color: C.textMuted,
+            textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6,
+          }}>
+            Primary Source Insights
+          </div>
+          {section.primarySourceInsights.map((insight, i) => (
+            <div key={i} style={{ fontSize: 11, color: C.textSecondary, marginBottom: 4, lineHeight: 1.5, paddingLeft: 8 }}>
+              {typeof insight === 'string' ? insight : (insight.text || insight.source || JSON.stringify(insight))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 11. Searches Performed */}
+      {section.searchesPerformed && Array.isArray(section.searchesPerformed) && section.searchesPerformed.length > 0 && (
+        <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid ' + C.borderLight }}>
+          <div style={{
+            fontSize: 10, fontWeight: 700, color: C.textMuted,
+            textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6,
+          }}>
+            Searches Performed
+          </div>
+          {section.searchesPerformed.map((search, i) => (
+            <div key={i} style={{
+              fontSize: 11, color: C.textSecondary, marginBottom: 4,
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}>
+              <span style={{ color: C.textMuted }}>Q:</span>
+              <span>{typeof search === 'string' ? search : search.query}</span>
+              {search.resultCount != null && (
+                <span style={{ color: C.textMuted, fontSize: 10 }}>({search.resultCount} results)</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

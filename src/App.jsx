@@ -64,7 +64,7 @@ export default function App() {
         <Route path="/research/:id/toolbox" element={<ToolboxRedirect />} />
         <Route path="/research/:id/one-pager" element={<ReportStageLayout getReport={getReport}><OnePager getReport={getReport} updateReport={updateReport} /></ReportStageLayout>} />
         <Route path="/research/:id/pitch-deck" element={<ReportStageLayout getReport={getReport}><PitchDeck getReport={getReport} updateReport={updateReport} /></ReportStageLayout>} />
-        <Route path="/research/:id/full-story" element={<ReportStageLayout getReport={getReport}><FullStory getReport={getReport} /></ReportStageLayout>} />
+        <Route path="/research/:id/full-story" element={<ReportStageLayout getReport={getReport}><FullStory getReport={getReport} updateReport={updateReport} /></ReportStageLayout>} />
         <Route path="/reports" element={<ReportsList reports={reports} getReport={getReport} createReport={createReport} />} />
         <Route path="/gurus" element={<Gurus />} />
         <Route path="/gurus/:cik" element={<GuruPortfolio />} />

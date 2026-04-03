@@ -496,6 +496,7 @@ function thes1sReportsPlugin() {
             'one-pager': 'one-pager.json',
             'pitch-deck': 'pitch-deck.json',
             'full-story': 'full-story-api.json',
+            'full-story-quality': 'quality/full-story-v4.quality.json',
             'progress': 'progress.json',
             'generation-status': 'generation-status.json',
           };
