@@ -88,8 +88,8 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [x] 21-01-PLAN.md — Extend VerdictBadge with PARTIAL + build ChecklistRenderer with aggregate bar and expandable items
-- [ ] 21-02-PLAN.md — Extract DirectionBadge to shared file + build DebateRenderer with 4 tabbed steps and role-colored content
+- [ ] 21-01-PLAN.md — Extend VerdictBadge with PARTIAL + build ChecklistRenderer with aggregate bar and expandable items
+- [x] 21-02-PLAN.md — Extract DirectionBadge to shared file + build DebateRenderer with 4 tabbed steps and role-colored content
 - [ ] 21-03-PLAN.md — Wire renderers into FullStory.jsx conditional dispatch + visual verification checkpoint
 
 ### Phase 22: Stage Gating & Navigation
