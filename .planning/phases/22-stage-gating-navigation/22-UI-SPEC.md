@@ -51,14 +51,14 @@ Source: Layout.jsx (padding: '0 16px', height: 52), ReportsList.jsx (padding: '1
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
-| Body | 13px | 400 (regular) | 1.5 |
+| Body | 13px | (theme default) | 1.5 |
 | Label / Badge | 11px | 600 (semibold) | 1.2 |
 | Heading | 20px | 700 (bold) | 1.2 |
 | Ticker name | 16px | 700 (bold) | 1.2 |
 
-Source: CLAUDE.md (13px base), existing ReportsList.jsx (heading 20/700, ticker 16/700, badge 11/600), existing VerdictBadge.jsx (11px/700 default size)
+Declared weights: **600** (semibold -- pill labels, nav tab active state) and **700** (bold -- headings, ticker names, badge text). Body text at 13px uses the browser/theme default weight (no explicit fontWeight assignment needed).
 
-Note: This phase uses 2 weights operationally: 600 and 700. Weight 400 appears only on body text within sub-labels. Weight 700 is for headings, ticker names, and badge text. Weight 600 is for pill labels and nav tab active state.
+Source: CLAUDE.md (13px base), existing ReportsList.jsx (heading 20/700, ticker 16/700, badge 11/600), existing VerdictBadge.jsx (11px/700 default size)
 
 ---
 
@@ -86,6 +86,12 @@ Accent reserved for: active nav tab border-bottom + label color, ticker name in 
 | Locked (gated) | `C.badge` (#f1f5f9 / #334155) | `C.textMuted` | 0.5 |
 
 Source: D-01 (green=approved, teal=generated, gray=pending), existing ReportsList.jsx pill pattern (`C.accent + '14'` for tint), VerdictBadge.jsx for semantic color mapping
+
+---
+
+## Focal Point
+
+Primary focal point: ticker name (`C.accent`, 16px/700) in the leftmost position of each card row.
 
 ---
 
@@ -189,7 +195,7 @@ Source: StageNavBar.jsx GATE_TOOLTIPS constant
 | Empty state heading | "No reports generated yet" |
 | Empty state body | "Use /generate:one-pager TICKER from Claude Code to generate your first One Pager." |
 | Loading state | "Loading reports..." (with spinner) |
-| Error state | "{error.message}" in `C.red` at 13px |
+| Error state | "{error.message}. Try reloading the page." in `C.red` at 13px |
 | Locked PD tooltip | "Approve One Pager to unlock Pitch Deck" |
 | Locked FS tooltip | "Approve Pitch Deck to unlock Full Story" |
 | Pill labels | "OP", "PD", "FS" (abbreviated stage names) |
