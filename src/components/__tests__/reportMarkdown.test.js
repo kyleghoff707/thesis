@@ -1,13 +1,13 @@
+// @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { flushSync } from 'react-dom';
 
 // Helper: render component to a DOM container and return container
 function renderToContainer(element) {
   const container = document.createElement('div');
   const root = createRoot(container);
-  // flushSync to ensure synchronous render in tests
-  const { flushSync } = require('react-dom');
   flushSync(() => root.render(element));
   return container;
 }
@@ -57,7 +57,9 @@ describe('processChildrenWithCitations', () => {
     const mod = await import('../ReportMarkdown.jsx');
     const { processChildrenWithCitations } = mod;
     const citations = [{ id: 1, source: 'Test', text: 'test' }];
-    expect(processChildrenWithCitations('no markers here', citations, null)).toBe('no markers here');
+    // React.Children.map wraps single child in array, but content is preserved
+    const result = processChildrenWithCitations('no markers here', citations, null);
+    expect(result).toEqual(['no markers here']);
   });
 });
 
