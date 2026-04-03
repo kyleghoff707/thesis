@@ -472,11 +472,16 @@ function thes1sReportsPlugin() {
             const entries = fs.readdirSync(reportsDir, { withFileTypes: true });
             const tickers = entries
               .filter(e => e.isDirectory())
-              .filter(e =>
-                fs.existsSync(path.join(reportsDir, e.name, 'one-pager.json')) ||
-                fs.existsSync(path.join(reportsDir, e.name, 'pitch-deck.json'))
-              )
-              .map(e => e.name);
+              .map(e => {
+                const dir = path.join(reportsDir, e.name);
+                const stages = {
+                  onePager: fs.existsSync(path.join(dir, 'one-pager.json')),
+                  pitchDeck: fs.existsSync(path.join(dir, 'pitch-deck.json')),
+                  fullStory: fs.existsSync(path.join(dir, 'full-story-api.json')),
+                };
+                return { ticker: e.name, stages };
+              })
+              .filter(t => t.stages.onePager || t.stages.pitchDeck || t.stages.fullStory);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ tickers }));
             return;
