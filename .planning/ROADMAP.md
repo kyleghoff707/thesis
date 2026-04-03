@@ -20,7 +20,7 @@ v1.3 builds the in-app presentation layer for viewing, navigating, and interacti
 - [x] **Phase 18: Critical Bug Fixes & Storage Migration** - Fix broken PitchDeck rendering, add Full Story route, migrate report storage to IndexedDB, normalize cross-ticker schema differences (completed 2026-04-02)
 - [x] **Phase 19: Shared Report Infrastructure** - Extract shared utilities, scroll spy hook, markdown renderer, and stage navigation bar to prevent triplication when FullStory is added (completed 2026-04-03)
 - [x] **Phase 20: Full Story Core Viewer** - Build FullStory.jsx shell with gate check, hero header, section rendering, quality scores, and approval bar (completed 2026-04-03)
-- [ ] **Phase 21: Checklist & Debate Renderers** - Build ChecklistRenderer for scored checklists and DebateRenderer for adversarial debate with step-specific sub-components
+- [x] **Phase 21: Checklist & Debate Renderers** - Build ChecklistRenderer for scored checklists and DebateRenderer for adversarial debate with step-specific sub-components (completed 2026-04-03)
 - [ ] **Phase 22: Stage Gating & Navigation** - Wire approval gates across all stages, build ReportsList for discovery, fix route highlighting, add stage progress overview
 - [ ] **Phase 23: Delight Feature Wiring** - Connect DeepDivePanel, AssumptionTracker, IndustryCard, and Bull/Bear toggle to report data
 
@@ -88,9 +88,9 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 21-01-PLAN.md — Extend VerdictBadge with PARTIAL + build ChecklistRenderer with aggregate bar and expandable items
+- [x] 21-01-PLAN.md — Extend VerdictBadge with PARTIAL + build ChecklistRenderer with aggregate bar and expandable items
 - [x] 21-02-PLAN.md — Extract DirectionBadge to shared file + build DebateRenderer with 4 tabbed steps and role-colored content
-- [ ] 21-03-PLAN.md — Wire renderers into FullStory.jsx conditional dispatch + visual verification checkpoint
+- [x] 21-03-PLAN.md — Wire renderers into FullStory.jsx conditional dispatch + visual verification checkpoint
 
 ### Phase 22: Stage Gating & Navigation
 **Goal**: Users can discover, navigate between, and track progress across all report stages for any company
@@ -137,6 +137,6 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23
 | 18. Critical Bug Fixes & Storage Migration | 3/3 | Complete    | 2026-04-02 |
 | 19. Shared Report Infrastructure | 2/3 | Complete    | 2026-04-03 |
 | 20. Full Story Core Viewer | 2/2 | Complete    | 2026-04-03 |
-| 21. Checklist & Debate Renderers | 1/3 | In Progress|  |
+| 21. Checklist & Debate Renderers | 3/3 | Complete   | 2026-04-03 |
 | 22. Stage Gating & Navigation | 0/3 | Not started | - |
 | 23. Delight Feature Wiring | 0/4 | Not started | - |
