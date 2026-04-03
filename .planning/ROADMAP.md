@@ -136,7 +136,7 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23
 |-------|----------------|--------|-----------|
 | 18. Critical Bug Fixes & Storage Migration | 3/3 | Complete    | 2026-04-02 |
 | 19. Shared Report Infrastructure | 2/3 | Complete    | 2026-04-03 |
-| 20. Full Story Core Viewer | 2/2 | Complete   | 2026-04-03 |
+| 20. Full Story Core Viewer | 2/2 | Complete    | 2026-04-03 |
 | 21. Checklist & Debate Renderers | 0/3 | Not started | - |
 | 22. Stage Gating & Navigation | 0/3 | Not started | - |
 | 23. Delight Feature Wiring | 0/4 | Not started | - |
