@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { C } from '../theme';
 import { usePitchDeck } from '../hooks/usePitchDeck';
+import { useScrollSpy } from '../hooks/useScrollSpy';
 import SectionRenderer from './SectionRenderer';
 import SensitivityTable from './SensitivityTable';
 import VerdictBadge from './VerdictBadge';
@@ -329,51 +330,14 @@ export default function PitchDeck({ getReport, updateReport }) {
   const { id } = useParams();
   const report = getReport ? getReport(id) : null;
   const { report: pitchDeckData, progress, generationStatus, loading, error } = usePitchDeck(report?.ticker);
-  const [activeSection, setActiveSection] = useState(null);
-  const observerRef = useRef(null);
+  // Scroll spy for active section tracking (shared hook, D-07/D-09)
+  const sectionKeysForSpy = SECTION_DEFS.map(d => d.key);
+  const activeSection = useScrollSpy(sectionKeysForSpy, { topOffset: 100 });
 
   // Delight feature state
   const [deepDive, setDeepDive] = useState({ isOpen: false, title: '', content: null, loading: false });
   const [industryCard, setIndustryCard] = useState({ isOpen: false, term: '', category: '', definition: '', benchmarks: [], position: { top: 0, left: 0 } });
   const [assumptionOpen, setAssumptionOpen] = useState(false);
-
-  // IntersectionObserver for active section tracking
-  useEffect(() => {
-    if (!pitchDeckData?.sections) return;
-
-    const sectionKeys = SECTION_DEFS.map(d => d.key);
-    const elements = sectionKeys
-      .map(key => document.getElementById('section-' + key))
-      .filter(Boolean);
-
-    if (elements.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        let best = null;
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            if (!best || entry.intersectionRatio > best.intersectionRatio) {
-              best = entry;
-            }
-          }
-        }
-        if (best) {
-          const key = best.target.id.replace('section-', '');
-          setActiveSection(key);
-        }
-      },
-      { threshold: 0.3, rootMargin: '-80px 0px -60% 0px' },
-    );
-
-    elements.forEach(el => observer.observe(el));
-    observerRef.current = observer;
-
-    return () => {
-      observer.disconnect();
-      observerRef.current = null;
-    };
-  }, [pitchDeckData]);
 
   // Phase statuses
   const phaseStatuses = useMemo(() => {
@@ -739,17 +703,18 @@ export default function PitchDeck({ getReport, updateReport }) {
                 onClick={() => handleNavClick(item.key)}
                 onKeyDown={(e) => handleNavKeyDown(e, item.key)}
                 style={{
-                  padding: '6px 10px',
+                  padding: '8px 12px',
                   fontSize: 12,
-                  color: isActive ? C.text : C.textSecondary,
+                  color: isActive ? C.accent : C.textSecondary,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
-                  borderRadius: 6,
+                  borderRadius: 8,
                   transition: 'all 0.15s',
                   background: isActive ? C.bgHover : 'transparent',
-                  fontWeight: isActive ? 700 : 400,
+                  fontWeight: isActive ? 600 : 400,
+                  borderLeft: isActive ? '3px solid ' + C.accent : '3px solid transparent',
                   outline: 'none',
                 }}
                 onMouseEnter={e => {
@@ -838,7 +803,7 @@ export default function PitchDeck({ getReport, updateReport }) {
                       alignItems: 'center',
                       gap: 12,
                       minHeight: 80,
-                      scrollMarginTop: 120,
+                      scrollMarginTop: 160,
                     }}
                   >
                     <Spinner />
@@ -855,7 +820,7 @@ export default function PitchDeck({ getReport, updateReport }) {
                       padding: '16px 20px',
                       marginBottom: 20,
                       background: C.redBg,
-                      scrollMarginTop: 120,
+                      scrollMarginTop: 160,
                     }}
                   >
                     <span style={{ fontSize: 13, fontWeight: 600, color: C.red }}>
@@ -878,7 +843,7 @@ export default function PitchDeck({ getReport, updateReport }) {
                       background: C.bgCard,
                       opacity: 0.4,
                       minHeight: 60,
-                      scrollMarginTop: 120,
+                      scrollMarginTop: 160,
                     }}
                   >
                     <span style={{ fontSize: 13, color: C.textMuted }}>

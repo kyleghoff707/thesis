@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { C } from '../theme';
 import { useOnePager } from '../hooks/useOnePager';
+import { useScrollSpy } from '../hooks/useScrollSpy';
 import SectionRenderer from './SectionRenderer.jsx';
 import VerdictBadge from './VerdictBadge.jsx';
 import { formatTitle, formatRelativeTime, stateToLabel, verdictDotColor } from './reportHelpers';
@@ -31,47 +31,10 @@ export default function OnePager({ getReport, updateReport }) {
   const { id } = useParams();
   const report = getReport ? getReport(id) : null;
   const { report: onePagerData, progress, loading, error } = useOnePager(report?.ticker);
-  const [activeSection, setActiveSection] = useState(null);
-  const observerRef = useRef(null);
 
-  // IntersectionObserver for active section tracking
-  useEffect(() => {
-    if (!onePagerData?.sections) return;
-
-    const sectionKeys = onePagerData.sectionKeys || onePagerData.sections.map(s => s.key);
-    const elements = sectionKeys
-      .map(key => document.getElementById('section-' + key))
-      .filter(Boolean);
-
-    if (elements.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Find the most visible entry
-        let best = null;
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            if (!best || entry.intersectionRatio > best.intersectionRatio) {
-              best = entry;
-            }
-          }
-        }
-        if (best) {
-          const key = best.target.id.replace('section-', '');
-          setActiveSection(key);
-        }
-      },
-      { threshold: 0.3, rootMargin: '-80px 0px -60% 0px' },
-    );
-
-    elements.forEach(el => observer.observe(el));
-    observerRef.current = observer;
-
-    return () => {
-      observer.disconnect();
-      observerRef.current = null;
-    };
-  }, [onePagerData]);
+  // Scroll spy for active section tracking (shared hook, D-07/D-09)
+  const sectionKeysForSpy = onePagerData?.sectionKeys || onePagerData?.sections?.map(s => s.key) || [];
+  const activeSection = useScrollSpy(sectionKeysForSpy, { topOffset: 100 });
 
   // Loading state
   if (loading && !onePagerData) {
@@ -254,17 +217,18 @@ export default function OnePager({ getReport, updateReport }) {
                 key={key}
                 onClick={() => handleNavClick(key)}
                 style={{
-                  padding: '6px 10px',
+                  padding: '8px 12px',
                   fontSize: 12,
-                  color: isActive ? C.text : C.textSecondary,
+                  color: isActive ? C.accent : C.textSecondary,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
-                  borderRadius: 6,
+                  borderRadius: 8,
                   transition: 'all 0.15s',
                   background: isActive ? C.bgHover : 'transparent',
                   fontWeight: isActive ? 600 : 400,
+                  borderLeft: isActive ? '3px solid ' + C.accent : '3px solid transparent',
                 }}
                 onMouseEnter={e => {
                   if (!isActive) e.currentTarget.style.background = C.bgHover;
@@ -325,7 +289,7 @@ export default function OnePager({ getReport, updateReport }) {
                     alignItems: 'center',
                     gap: 12,
                     minHeight: 80,
-                    scrollMarginTop: 120,
+                    scrollMarginTop: 160,
                   }}
                 >
                   <Spinner />
@@ -348,7 +312,7 @@ export default function OnePager({ getReport, updateReport }) {
                     padding: '16px 20px',
                     marginBottom: 20,
                     background: C.redBg,
-                    scrollMarginTop: 120,
+                    scrollMarginTop: 160,
                   }}
                 >
                   <span style={{ fontSize: 13, fontWeight: 600, color: C.red }}>
@@ -376,7 +340,7 @@ export default function OnePager({ getReport, updateReport }) {
                   background: C.bgCard,
                   opacity: 0.4,
                   minHeight: 60,
-                  scrollMarginTop: 120,
+                  scrollMarginTop: 160,
                 }}
               >
                 <span style={{ fontSize: 13, color: C.textMuted }}>
