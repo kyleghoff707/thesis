@@ -84,13 +84,13 @@ Plans:
   2. User views the adversarial debate and sees four visually distinct steps (Bull thesis, Bear inversion, Bull rebuttal, Judge verdict) with different styling per role
   3. User can navigate between debate steps via tabs or accordion controls without losing context
   4. User sees the Judge verdict with a direction banner (bullish/bearish/neutral) and per-exchange strength comparison
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 21-01: Build ChecklistRenderer with item-level verdicts and aggregate scoring
-- [ ] 21-02: Build DebateRenderer with 4 step-specific sub-components
-- [ ] 21-03: Integrate renderers into FullStory.jsx, replacing generic SectionRenderer for checklist and debate sections
+- [ ] 21-01-PLAN.md — Extend VerdictBadge with PARTIAL + build ChecklistRenderer with aggregate bar and expandable items
+- [ ] 21-02-PLAN.md — Extract DirectionBadge to shared file + build DebateRenderer with 4 tabbed steps and role-colored content
+- [ ] 21-03-PLAN.md — Wire renderers into FullStory.jsx conditional dispatch + visual verification checkpoint
 
 ### Phase 22: Stage Gating & Navigation
 **Goal**: Users can discover, navigate between, and track progress across all report stages for any company
