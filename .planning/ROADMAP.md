@@ -106,7 +106,7 @@ Plans:
 
 Plans:
 - [ ] 22-01-PLAN.md — Enhance reports API with per-stage availability + fix nav tab highlighting for report routes
-- [ ] 22-02-PLAN.md — Rewrite ReportsList with multi-stage pills, gate logic, and status-based navigation
+- [x] 22-02-PLAN.md — Rewrite ReportsList with multi-stage pills, gate logic, and status-based navigation
 
 ### Phase 23: Delight Feature Wiring
 **Goal**: Users can interact with enrichment features that deepen their understanding of the research
@@ -137,5 +137,5 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23
 | 19. Shared Report Infrastructure | 2/3 | Complete    | 2026-04-03 |
 | 20. Full Story Core Viewer | 2/2 | Complete    | 2026-04-03 |
 | 21. Checklist & Debate Renderers | 3/3 | Complete    | 2026-04-03 |
-| 22. Stage Gating & Navigation | 0/2 | Not started | - |
+| 22. Stage Gating & Navigation | 1/2 | In Progress|  |
 | 23. Delight Feature Wiring | 0/4 | Not started | - |
