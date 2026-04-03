@@ -51,13 +51,13 @@ Plans:
   2. User scrolls through any report and sees the active section highlighted in the sidebar nav without flicker
   3. User reads report narratives and sees properly formatted headings, numbered lists, blockquotes, and inline links (not raw markdown syntax or flat text blobs)
   4. User can switch between One Pager, Pitch Deck, and Full Story stages for the same company via a persistent stage nav bar
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 19-01: Extract reportHelpers.js shared utilities and Spinner component
-- [ ] 19-02: Build useScrollSpy hook and StageNavBar component
-- [ ] 19-03: Implement shared markdown renderer (react-markdown or extended custom parser)
+- [ ] 19-01-PLAN.md — Extract reportHelpers.js shared utilities + Spinner.jsx, refactor OnePager and PitchDeck to import from shared modules
+- [ ] 19-02-PLAN.md — Build useScrollSpy hook + StageNavBar component, refactor OnePager and PitchDeck to use shared scroll spy
+- [ ] 19-03-PLAN.md — Install react-markdown + remark-gfm, build ReportMarkdown.jsx wrapper, refactor SectionRenderer to use it
 
 ### Phase 20: Full Story Core Viewer
 **Goal**: Users can view Full Story reports in-app with the same quality as One Pager and Pitch Deck viewers
