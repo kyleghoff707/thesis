@@ -10,6 +10,8 @@ import CollapsibleSection from './CollapsibleSection';
 import DeepDivePanel from './pitchDeck/DeepDivePanel';
 import IndustryCard from './pitchDeck/IndustryCard';
 import AssumptionTracker from './pitchDeck/AssumptionTracker';
+import { formatTitle, formatRelativeTime, stateToLabel, verdictDotColor } from './reportHelpers';
+import Spinner from './Spinner';
 
 // --- Section definitions for the Pitch Deck (9 content sections, 3 phases) ---
 // overall_verdict is rendered as a hero banner, not a numbered section
@@ -86,86 +88,6 @@ function getSectionNavItems(sections) {
       verdict: section?.verdict || null,
     };
   });
-}
-
-// Verdict to dot color
-function verdictDotColor(verdict) {
-  const map = {
-    PASS: C.green,
-    FAIL: C.red,
-    WATCHLIST: C.yellow,
-    REVIEW: C.accent,
-  };
-  return map[verdict] || C.textMuted;
-}
-
-// Strip /NEW, /DE, /OLD suffixes and title-case
-function formatTitle(name) {
-  if (!name) return '';
-  const cleaned = name.replace(/\s*\/(NEW|DE|OLD)\s*$/i, '').trim();
-  return cleaned
-    .split(/\s+/)
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(' ');
-}
-
-// Human-readable relative time from ISO date string
-function formatRelativeTime(isoDate) {
-  if (!isoDate) return '';
-  const diff = Date.now() - new Date(isoDate).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins} minute${mins === 1 ? '' : 's'} ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} hour${hrs === 1 ? '' : 's'} ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days} day${days === 1 ? '' : 's'} ago`;
-}
-
-// Map progress state to label
-function stateToLabel(state) {
-  const map = {
-    IDLE: 'Preparing...',
-    DATA_ASSEMBLY: 'Assembling data...',
-    PRIMARY_SOURCE_READING: 'Reading primary sources...',
-    WAVE_1_RUNNING: 'Generating sections...',
-    CHECKPOINT_1: 'Checkpoint...',
-    WAVE_2_RUNNING: 'Generating sections...',
-    CHECKPOINT_2: 'Checkpoint...',
-    WAVE_3_RUNNING: 'Generating sections...',
-    CHECKPOINT_3: 'Checkpoint...',
-    SYNTHESIS: 'Writing synthesis...',
-    QUALITY_CHECK: 'Quality check...',
-    COMPLETE: 'Complete',
-  };
-  return map[state] || 'Working...';
-}
-
-// Inline spinner keyframes injection (once)
-let spinnerInjected = false;
-function injectSpinnerStyle() {
-  if (spinnerInjected || typeof document === 'undefined') return;
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes thes1s-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    @keyframes thes1s-fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes thes1s-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-  `;
-  document.head.appendChild(style);
-  spinnerInjected = true;
-}
-
-function Spinner({ size = 20 }) {
-  return (
-    <div style={{
-      width: size,
-      height: size,
-      border: '2px solid ' + C.border,
-      borderTopColor: C.accent,
-      borderRadius: '50%',
-      animation: 'thes1s-spin 1s linear infinite',
-    }} />
-  );
 }
 
 // --- Format elapsed milliseconds as mm:ss ---
@@ -414,11 +336,6 @@ export default function PitchDeck({ getReport, updateReport }) {
   const [deepDive, setDeepDive] = useState({ isOpen: false, title: '', content: null, loading: false });
   const [industryCard, setIndustryCard] = useState({ isOpen: false, term: '', category: '', definition: '', benchmarks: [], position: { top: 0, left: 0 } });
   const [assumptionOpen, setAssumptionOpen] = useState(false);
-
-  // Inject keyframes once
-  useEffect(() => {
-    injectSpinnerStyle();
-  }, []);
 
   // IntersectionObserver for active section tracking
   useEffect(() => {
@@ -1277,4 +1194,4 @@ export default function PitchDeck({ getReport, updateReport }) {
   );
 }
 
-export const _testExports = { getPhaseStatus, getSectionNavItems, formatTitle, formatRelativeTime };
+export const _testExports = { getPhaseStatus, getSectionNavItems };

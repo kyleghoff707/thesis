@@ -2,9 +2,7 @@
 // ONEP-02 coverage: formatTitle, formatRelativeTime, stateToLabel
 
 import { describe, it, expect } from 'vitest';
-import { _testExports } from '../OnePager.jsx';
-
-const { formatTitle, stateToLabel } = _testExports;
+import { formatTitle, stateToLabel } from '../reportHelpers.js';
 
 describe('OnePager: formatTitle', () => {
   it('strips /NEW suffix and title-cases', () => {

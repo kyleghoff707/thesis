@@ -4,52 +4,10 @@ import { C } from '../theme';
 import { useOnePager } from '../hooks/useOnePager';
 import SectionRenderer from './SectionRenderer.jsx';
 import VerdictBadge from './VerdictBadge.jsx';
+import { formatTitle, formatRelativeTime, stateToLabel, verdictDotColor } from './reportHelpers';
+import Spinner from './Spinner';
 
-// --- Pure helper functions (exported via _testExports for testing) ---
-
-// Strip /NEW, /DE, /OLD suffixes and title-case the result
-function formatTitle(name) {
-  if (!name) return '';
-  // Remove trailing / followed by common suffixes (case-insensitive)
-  const cleaned = name.replace(/\s*\/(NEW|DE|OLD)\s*$/i, '').trim();
-  // Title case: capitalize first letter of each word, lowercase the rest
-  return cleaned
-    .split(/\s+/)
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(' ');
-}
-
-// Return human-readable relative time from ISO date string
-function formatRelativeTime(isoDate) {
-  if (!isoDate) return '';
-  const diff = Date.now() - new Date(isoDate).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins} minute${mins === 1 ? '' : 's'} ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} hour${hrs === 1 ? '' : 's'} ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days} day${days === 1 ? '' : 's'} ago`;
-}
-
-// Map progress state enum to human-readable label
-function stateToLabel(state) {
-  const map = {
-    IDLE: 'Preparing...',
-    DATA_ASSEMBLY: 'Assembling data...',
-    PRIMARY_SOURCE_READING: 'Reading primary sources...',
-    WAVE_1_RUNNING: 'Generating sections...',
-    CHECKPOINT_1: 'Checkpoint...',
-    WAVE_2_RUNNING: 'Generating sections...',
-    CHECKPOINT_2: 'Checkpoint...',
-    WAVE_3_RUNNING: 'Generating sections...',
-    CHECKPOINT_3: 'Checkpoint...',
-    SYNTHESIS: 'Writing synthesis...',
-    QUALITY_CHECK: 'Quality check...',
-    COMPLETE: 'Complete',
-  };
-  return map[state] || 'Working...';
-}
+// --- OnePager-specific helper functions ---
 
 // Map progress sections to display statuses
 function computeSectionStatuses(progress) {
@@ -69,54 +27,12 @@ function computePercentage(statuses) {
   return Math.round((complete / keys.length) * 100);
 }
 
-// Verdict to dot color mapping
-function verdictDotColor(verdict) {
-  const map = {
-    PASS: C.green,
-    FAIL: C.red,
-    WATCHLIST: C.yellow,
-    REVIEW: C.accent,
-  };
-  return map[verdict] || C.textMuted;
-}
-
-// Inline spinner keyframes injection (once)
-let spinnerInjected = false;
-function injectSpinnerStyle() {
-  if (spinnerInjected || typeof document === 'undefined') return;
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes thes1s-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    @keyframes thes1s-fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  `;
-  document.head.appendChild(style);
-  spinnerInjected = true;
-}
-
-function Spinner({ size = 20 }) {
-  return (
-    <div style={{
-      width: size,
-      height: size,
-      border: '2px solid ' + C.border,
-      borderTopColor: C.accent,
-      borderRadius: '50%',
-      animation: 'thes1s-spin 1s linear infinite',
-    }} />
-  );
-}
-
 export default function OnePager({ getReport, updateReport }) {
   const { id } = useParams();
   const report = getReport ? getReport(id) : null;
   const { report: onePagerData, progress, loading, error } = useOnePager(report?.ticker);
   const [activeSection, setActiveSection] = useState(null);
   const observerRef = useRef(null);
-
-  // Inject spinner/fadeIn keyframes once
-  useEffect(() => {
-    injectSpinnerStyle();
-  }, []);
 
   // IntersectionObserver for active section tracking
   useEffect(() => {
@@ -554,4 +470,4 @@ export default function OnePager({ getReport, updateReport }) {
   );
 }
 
-export const _testExports = { formatTitle, formatRelativeTime, stateToLabel, computeSectionStatuses };
+export const _testExports = { computeSectionStatuses };
