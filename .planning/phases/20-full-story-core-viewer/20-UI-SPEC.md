@@ -54,22 +54,21 @@ Source: PitchDeck.jsx measured values, SectionRenderer.jsx line heights
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
+| Label | 11px | 400 (regular) | 1.4 |
 | Body | 13px | 400 (regular) | 1.6 |
-| Label | 11px | 600 (semibold) | 1.4 |
 | Heading | 14px | 700 (bold) | 1.3 |
 | Display | 24px | 700 (bold) | 1.2 |
 
 Usage mapping for this phase:
 - **Display (24px/700):** Company name in hero header (matches PitchDeck hero)
-- **Heading (14px/700):** Section title text within SectionRenderer section headers
-- **Body (13px/400):** Narrative text, verdict rationale, summary blurb, stage label, approval bar description, gate check message, empty/error state text
-- **Label (11px/600):** Generated timestamp, approval status indicator, quality badge labels, primarySourceInsights/searchesPerformed section headers (10px uppercase variant)
+- **Heading (14px/700):** Section title text within SectionRenderer section headers, empty state heading, gate check heading
+- **Body (13px/400):** Narrative text, verdict rationale, summary blurb, approval bar description suffix, gate check body, empty/error state body text
+- **Body bold (13px/700):** Ticker display in hero (color: `C.accent`), stage label "Stage 3: Full Story", approval bar "Ready for approval" prefix, approve/reject button text, nav active item text, DirectionBadge label text
+- **Label (11px/400):** Generated timestamp, approval status indicator, quality score line, primarySourceInsights items, searchesPerformed items
 
 Additional type treatments used in this phase:
-- **10px/700 uppercase, letterSpacing 0.04em:** Micro labels -- "Primary Source Insights", "Searches Performed", section subsection headers. Color: `C.textMuted`.
-- **13px/700:** Ticker display in hero. Color: `C.accent`.
-- **13px/600:** Stage label "Stage 3: Full Story", approval bar "Ready for approval" prefix, approve/reject button text.
-- **15px/600:** Empty state heading "No Full Story generated yet".
+- **11px/700 uppercase, letterSpacing 0.04em:** Micro labels -- "Primary Source Insights", "Searches Performed", "Investment Implication", section subsection headers. Color: `C.textMuted`.
+- **11px/400:** Search result count "({N} results)" in `C.textMuted`.
 
 Source: PitchDeck.jsx measured typography, OnePager.jsx patterns, SectionRenderer.jsx
 
@@ -118,7 +117,7 @@ Source: `src/theme.js` C_LIGHT/C_DARK palettes, CONTEXT.md D-03
 | Sub-Component | Responsibility |
 |---------------|---------------|
 | `DirectionBadge` | Renders BULL/BEAR/NEUTRAL pill badge in hero. Green/red/yellow bg, white text, 13px/700 uppercase |
-| `QualityBadge` | Renders "Mech N . Method N" pill badge. Traffic-light color per score. 10px/600 |
+| `QualityBadge` | Renders "Mech N . Method N" pill badge. Traffic-light color per score. 11px/400 label text, 11px/700 score values |
 | `qualityColor(score)` | Pure helper: returns `C.green` (>=90), `C.yellow` (70-89), `C.red` (<70), `C.textMuted` (null) |
 
 ### Reused Shared Components
@@ -184,19 +183,19 @@ Row 2: flex, alignItems center, gap 12, marginBottom 8
   - DirectionBadge: BULL/BEAR/NEUTRAL pill
 
 Row 3: flex, alignItems center, gap 12
-  - Stage label: "Stage 3: Full Story", 13px/600, color C.textSecondary
+  - Stage label: "Stage 3: Full Story", 13px/700, color C.textSecondary
   - Timestamp: "Generated {relative time}", 11px/400, color C.textMuted
     Uses completedAt (NOT generatedAt -- field does not exist in full-story-api.json)
   - Quality line: "Quality: {overallScore}/100 (Method: {overallMethodologyScore})"
-    11px/600, color uses qualityColor(overallScore)
+    11px/400, color uses qualityColor(overallScore)
   - Approval status: "Approved"/"Rejected" when applicable
-    11px/600, color C.green or C.red
+    11px/400, color C.green or C.red
 
 Row 4: Investment Implication callout box (only when debateOutputs.judge exists)
   - Container: background C.bgHover, borderRadius 8, padding 16, marginTop 12,
     borderLeft 4px solid (green for Bull, red for Bear, yellow for Neutral)
   - Summary blurb: 13px/400, color C.textSecondary, lineHeight 1.6, marginBottom 8
-  - "Investment Implication" label: 10px/700 uppercase, C.textMuted, marginBottom 4
+  - "Investment Implication" label: 11px/700 uppercase, C.textMuted, marginBottom 4
   - Implication text: 13px/400, color C.text, lineHeight 1.6
 
 Fallback (D-09): If debateOutputs.judge is missing, omit DirectionBadge and callout box.
@@ -210,11 +209,11 @@ Container: position sticky, top 72px, width 200px, flexShrink 0
 
 Per item (6 items):
   - padding: 8px 12px
-  - fontSize: 12px
+  - fontSize: 13px
   - borderRadius: 8px
   - borderLeft: 3px solid (C.accent when active, transparent otherwise)
   - background: C.bgHover when active, transparent otherwise
-  - fontWeight: 600 when active, 400 otherwise
+  - fontWeight: 700 when active, 400 otherwise
   - color: C.accent when active, C.textSecondary otherwise
   - Verdict dot: 8x8px circle, background verdictDotColor(verdict)
   - Label: "{index}. {label}" (truncate at 20 chars with "...")
@@ -242,16 +241,16 @@ Content: rendered by SectionRenderer (summary, narrative, data grid, tables,
 NEW blocks added to SectionRenderer:
   Block 10 - Primary Source Insights (D-11):
     Container: marginTop 12, paddingTop 10, borderTop 1px solid C.borderLight
-    Header: "Primary Source Insights", 10px/700 uppercase, C.textMuted, letterSpacing 0.04em
+    Header: "Primary Source Insights", 11px/700 uppercase, C.textMuted, letterSpacing 0.04em
     Items: 11px/400, C.textSecondary, lineHeight 1.5, paddingLeft 8, marginBottom 4
 
   Block 11 - Searches Performed (D-12):
     Container: marginTop 12, paddingTop 10, borderTop 1px solid C.borderLight
-    Header: "Searches Performed", 10px/700 uppercase, C.textMuted, letterSpacing 0.04em
+    Header: "Searches Performed", 11px/700 uppercase, C.textMuted, letterSpacing 0.04em
     Items: 11px/400, flex row, gap 8
       "Q:" prefix in C.textMuted
       Query text in C.textSecondary
-      Result count "(N results)" in C.textMuted, 10px
+      Result count "({N} results)" in C.textMuted, 11px/400
 ```
 
 ### Approval Bar Spec (D-17)
@@ -264,17 +263,17 @@ Condition: show when report is complete AND not yet approved/rejected
   (all 6 sections rendered, stageApprovals.fullStory is null)
 
 Description: flex 1
-  "Ready for approval" -- 13px/600, C.text
+  "Ready for approval" -- 13px/700, C.text
   " -- Review the Full Story and approve or reject." -- 13px/400, C.textMuted
 
 Approve button:
   background C.green, color #fff, padding 12px 24px, borderRadius 8,
-  fontWeight 600, fontSize 13, border none, cursor pointer
+  fontWeight 700, fontSize 13, border none, cursor pointer
   Label: "Approve Full Story"
 
 Reject button:
   background transparent, color C.red, border 1px solid C.red,
-  padding 12px 24px, borderRadius 8, fontWeight 600, fontSize 13, cursor pointer
+  padding 12px 24px, borderRadius 8, fontWeight 700, fontSize 13, cursor pointer
   Label: "Reject Full Story"
 ```
 
@@ -284,7 +283,7 @@ Reject button:
 Condition: report.stageApprovals.pitchDeck !== 'approved' AND no report data AND no progress
 
 Container: centered, padding 32px
-  Heading: 15px/600, C.text -- "Pitch Deck must be approved first"
+  Heading: 14px/700, C.text -- "Pitch Deck must be approved first"
   Body: 13px/400, C.textMuted -- "Approve the Pitch Deck before viewing the Full Story."
 ```
 
@@ -314,7 +313,7 @@ Container: padding 20
 
 ```
 Container: flex column, alignItems center, justifyContent center, gap 8
-  Heading: 15px/600, C.text -- "No Full Story generated yet"
+  Heading: 14px/700, C.text -- "No Full Story generated yet"
   Body: 13px/400, C.textMuted -- "Run the Full Story pipeline for {ticker} to create one. The Pitch Deck must be approved first."
 ```
 
@@ -329,7 +328,7 @@ When `quality` is null (older reports, quality check not run):
 
 Active section in sticky nav receives:
 - `color: C.accent` (was `C.textSecondary`)
-- `fontWeight: 600` (was `400`)
+- `fontWeight: 700` (was `400`)
 - `background: C.bgHover` (was `transparent`)
 - `borderLeft: 3px solid C.accent` (was `3px solid transparent`)
 
