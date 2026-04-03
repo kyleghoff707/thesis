@@ -34,21 +34,19 @@ Declared values (must be multiples of 4):
 | Token | Value | Usage in Phase 19 |
 |-------|-------|-------------------|
 | xs | 4px | Icon gaps in sidebar nav items (gap between verdict dot and label) |
-| sm | 8px | Compact element spacing, gap between nav items, inline padding |
-| md | 16px | Default content padding, margin-bottom on rendered paragraphs (12px used in markdown body) |
+| sm | 8px | Compact element spacing, gap between nav items, inline padding, sidebar nav item vertical padding, StageNavBar tab vertical padding |
+| md | 16px | Default content padding |
 | lg | 24px | Gap between sidebar and content column, section margin-bottom, marginBottom on StageNavBar |
 | xl | 32px | Not used in Phase 19 |
 | 2xl | 48px | Not used in Phase 19 |
 | 3xl | 64px | Not used in Phase 19 |
 
 Exceptions:
-- **6px/10px** -- Sidebar nav item padding (`padding: '6px 10px'`), matching existing OnePager sidebar pattern
-- **10px/20px** -- StageNavBar tab button padding (`padding: '10px 20px'`), matching existing Toolbox tab pattern
-- **12px** -- Markdown paragraph bottom margin (`marginBottom: 12`), matching existing SectionRenderer pattern
-- **20px** -- Content section padding, markdown heading top margins, matching existing SectionRenderer
-- **120px -> 160px** -- `scrollMarginTop` on section containers (52px Layout nav + 40px StageNavBar + 8px buffer = 100px, rounded to 160px for comfortable clearance)
+- **12px** -- Sidebar nav item horizontal padding, markdown paragraph bottom margin, matching existing SectionRenderer pattern. Multiple of 4: yes (4 x 3).
+- **20px** -- Content section padding, markdown heading top margins, StageNavBar tab horizontal padding, matching existing SectionRenderer and Toolbox patterns. Multiple of 4: yes (4 x 5).
+- **160px** -- `scrollMarginTop` on section containers (52px Layout nav + 40px StageNavBar + 8px buffer = 100px, rounded to 160px for comfortable clearance). Multiple of 4: yes (4 x 40).
 
-**Source:** Existing OnePager.jsx sidebar (lines 325-371), Toolbox.jsx tabs (lines 196-223), SectionRenderer.jsx spacing patterns.
+**Source:** Existing OnePager.jsx sidebar (lines 325-371), Toolbox.jsx tabs (lines 196-223), SectionRenderer.jsx spacing patterns. Non-conforming values (6px, 10px) from existing OnePager sidebar pattern normalized to 4-point grid.
 
 ---
 
@@ -56,18 +54,22 @@ Exceptions:
 
 | Role | Size | Weight | Line Height | Usage in Phase 19 |
 |------|------|--------|-------------|-------------------|
-| Body | 13px | 400 (regular) | 1.7 | Markdown paragraphs, sidebar nav text, StageNavBar labels |
 | Label | 12px | 400 (regular) | 1.5 | Sidebar section nav items, table cells (th/td), data formatters |
-| Heading-3 | 14px | 700 (bold) | 1.3 | Markdown h3 headings inside report sections |
-| Heading-2 | 15px | 700 (bold) | 1.3 | Markdown h2 headings inside report sections |
+| Body | 13px | 400 (regular) | 1.7 | Markdown paragraphs, sidebar nav text, StageNavBar labels |
+| Heading-3 | 14px | 600 (semibold) | 1.3 | Markdown h3 headings inside report sections |
+| Heading-2 | 16px | 600 (semibold) | 1.3 | Markdown h2 headings inside report sections |
 
-**Active state overrides:**
+**Weight pair: 400 (regular) + 600 (semibold).** Two weights only. Semibold is used for all emphasis: headings, active states, bold inline text.
+
+**Active state overrides (uses the same 2-weight pair):**
 - StageNavBar active tab: 13px, weight 600 (semibold)
 - StageNavBar inactive tab: 13px, weight 400 (regular), dimmed to `C.textSecondary`
 - Sidebar active item: 12px, weight 600 (semibold)
 - Sidebar inactive item: 12px, weight 400 (regular)
 
-**Source:** Existing OnePager.jsx line 342 (sidebar: 12px), Toolbox.jsx line 208-209 (tabs: 13px/600), SectionRenderer.jsx line 262-270 (h2: 15px/700, h3: 14px/700). CLAUDE.md specifies 13px base.
+**Size rationale:** 12 / 13 / 14 / 16 provides clear visual hierarchy -- 1px step from label to body (established CLAUDE.md convention), 1px step from body to sub-heading, 2px jump from sub-heading to heading. The h2 bump from 15px to 16px creates a distinct heading level visible at a glance.
+
+**Source:** Existing OnePager.jsx line 342 (sidebar: 12px), Toolbox.jsx line 208-209 (tabs: 13px/600), SectionRenderer.jsx line 262-270 (h2/h3 headings). CLAUDE.md specifies 13px base.
 
 ---
 
@@ -127,7 +129,7 @@ Phase 19 creates 4 new shared modules and refactors 2 existing components. No ne
 
 ### Layout
 - **Position:** Below company header, above report content. Rendered inside the report route layout, not in Layout.jsx
-- **Height:** ~40px (10px top padding + 13px text + 10px bottom padding + 2px border + 1px border-bottom = ~36-40px)
+- **Height:** ~36px (8px top padding + 13px text + 8px bottom padding + 2px border + 1px border-bottom = ~32-36px)
 - **Width:** Full content width (flex row, no max-width constraint -- inherits from parent container)
 - **Bottom border:** `1px solid C.border` spanning full width
 - **Bottom margin:** 24px gap before report content begins
@@ -148,10 +150,13 @@ Phase 19 creates 4 new shared modules and refactors 2 existing components. No ne
 | Inactive (unlocked) | 400 | `C.text` | `2px solid transparent` | 1 | `pointer` |
 | Locked | 400 | `C.textMuted` | `2px solid transparent` | 0.5 | `not-allowed` |
 
+### Tab Button Padding
+- **Padding:** `8px 20px` (8px vertical, 20px horizontal -- all multiples of 4)
+
 ### Lock Icon (for locked tabs)
 - **Size:** 12x12px inline SVG
 - **Color:** `C.textMuted`
-- **Position:** Left of tab label, 6px gap
+- **Position:** Left of tab label, 8px gap
 - **Icon:** Padlock (closed lock shape -- path-based SVG, not imported from a library)
 
 ### Tooltip (for locked tabs)
@@ -178,11 +183,11 @@ StageNavBar({ stageApprovals })
 - **Relationship:** Left column in a flex row (`display: flex, gap: 24, alignItems: flex-start`). Content column is `flex: 1, minWidth: 0`
 
 ### Nav Items
-- **Padding:** `6px 10px` per item
+- **Padding:** `8px 12px` per item (8px vertical, 12px horizontal -- all multiples of 4)
 - **Font:** 12px, weight 400 (inactive) or 600 (active)
 - **Color:** `C.textSecondary` (inactive), `C.text` (active)
 - **Background:** `transparent` (inactive), `C.bgHover` (active)
-- **Border radius:** 6px
+- **Border radius:** 8px
 - **Hover:** `C.bgHover` background on non-active items
 - **Transition:** `all 0.15s`
 
@@ -196,7 +201,7 @@ StageNavBar({ stageApprovals })
 - Smooth-scroll to section: `document.getElementById('section-' + key).scrollIntoView({ behavior: 'smooth' })`
 - Section containers have `scrollMarginTop: 160` (updated from 120 to account for StageNavBar)
 
-**Source:** D-07, D-08, D-09 from CONTEXT.md. Existing OnePager.jsx sidebar (lines 325-371).
+**Source:** D-07, D-08, D-09 from CONTEXT.md. Existing OnePager.jsx sidebar (lines 325-371). Padding normalized from `6px 10px` to `8px 12px` to conform to 4-point spacing grid.
 
 ---
 
@@ -206,14 +211,14 @@ StageNavBar({ stageApprovals })
 
 | HTML Element | Rendered As | Inline Styles |
 |-------------|-------------|---------------|
-| `h2` | `<div>` | `fontSize: 15, fontWeight: 700, color: C.text, marginTop: 20, marginBottom: 10` |
-| `h3` | `<div>` | `fontSize: 14, fontWeight: 700, color: C.text, marginTop: 16, marginBottom: 8` |
+| `h2` | `<div>` | `fontSize: 16, fontWeight: 600, color: C.text, marginTop: 20, marginBottom: 12` |
+| `h3` | `<div>` | `fontSize: 14, fontWeight: 600, color: C.text, marginTop: 16, marginBottom: 8` |
 | `p` | `<p>` | `margin: 0, marginBottom: 12, lineHeight: 1.7` |
-| `blockquote` | `<div>` | `background: C.accentLight, borderLeft: '3px solid ' + C.accent, padding: '10px 14px', borderRadius: '0 6px 6px 0', marginBottom: 12` |
+| `blockquote` | `<div>` | `background: C.accentLight, borderLeft: '3px solid ' + C.accent, padding: '12px 16px', borderRadius: '0 8px 8px 0', marginBottom: 12` |
 | `ul` | `<div>` | `marginBottom: 12` |
 | `li` (unordered) | `<div>` flex row | Custom bullet: 6x6px circle in `C.textMuted`, `marginTop: 7`, 8px gap to text |
 | `ol` | `<div>` | `marginBottom: 12, counterReset: 'ol-counter'` |
-| `strong` | `<strong>` | `fontWeight: 700` |
+| `strong` | `<strong>` | `fontWeight: 600` |
 | `a` | `<a>` | `color: C.accent, textDecoration: 'underline'`, opens in new tab (`target="_blank"`) |
 | `table` | `<table>` | `width: '100%', borderCollapse: 'collapse', marginBottom: 16` |
 | `th` | `<th>` | `padding: '8px 12px', borderBottom: '2px solid ' + C.border, fontSize: 12, fontWeight: 600, color: C.textMuted, textAlign: 'left'` |
@@ -235,7 +240,7 @@ ReportMarkdown({ content, citations, onCitationClick })
 - `citations`: Array of citation objects (optional)
 - `onCitationClick`: Callback when citation is clicked (optional)
 
-**Source:** D-01, D-02, D-03 from CONTEXT.md. RESEARCH.md Pattern 4 (ReportMarkdown Wrapper). Existing SectionRenderer.jsx parseMarkdown styles.
+**Source:** D-01, D-02, D-03 from CONTEXT.md. RESEARCH.md Pattern 4 (ReportMarkdown Wrapper). Existing SectionRenderer.jsx parseMarkdown styles. Weight 700 consolidated to 600 per 2-weight contract. h2 bumped from 15px to 16px for clearer size hierarchy. Blockquote padding normalized from `10px 14px` to `12px 16px` (4-point grid). Border radius normalized from 6px to 8px.
 
 ---
 
@@ -271,19 +276,21 @@ const activeSection = useScrollSpy(sectionIds, {
 | Element | Copy |
 |---------|------|
 | Loading state (report) | "Loading report..." (13px, `C.textMuted`, centered with Spinner) |
-| Empty state heading | "No One Pager generated yet" / "No Pitch Deck generated yet" / "No Full Story generated yet" (15px, weight 600, `C.text`) |
+| Empty state heading | "No One Pager generated yet" / "No Pitch Deck generated yet" / "No Full Story generated yet" (16px, weight 600, `C.text`) |
 | Empty state body | "Run /generate:one-pager {TICKER} to create one." / equivalent per stage (13px, `C.textMuted`) |
-| Error state | `{error message}` displayed in 13px `C.red` with 20px padding -- no user action prompt (errors are API/network, retry is implicit) |
+| Error state | `{error message}` followed by "Check your connection and try again." (13px, `C.red`, 20px padding) |
 | Locked tab tooltip | "Approve One Pager to unlock Pitch Deck" / "Approve Pitch Deck to unlock Full Story" |
 | Sidebar pending section | "{section_name} -- Pending..." (13px, `C.textMuted`, opacity 0.4) |
 | Sidebar failed section | "{section_name} -- Generation failed" (13px, weight 600, `C.red`, red background card) |
 | Sidebar working section | "Agent: {role} working..." (13px, `C.textMuted`, opacity 0.6, with Spinner) |
 
+**Error state format:** Two parts -- the specific error message on the first line, followed by a generic recovery hint ("Check your connection and try again.") as a fallback suffix. Both rendered in `C.red` at 13px. The recovery hint covers the most common failure mode (network/API errors) without being misleading for other error types.
+
 **No primary CTA in this phase.** Phase 19 is infrastructure extraction -- no new user-initiated actions. The "primary action" is scrolling and clicking sidebar nav items (implicit interaction, no button CTA).
 
 **No destructive actions in this phase.** No delete, reset, or irreversible operations.
 
-**Source:** Existing OnePager.jsx lines 162-194 (loading/error/empty states). D-05 from CONTEXT.md (lock tooltip copy).
+**Source:** Existing OnePager.jsx lines 162-194 (loading/error/empty states). D-05 from CONTEXT.md (lock tooltip copy). Empty state heading updated from 15px to 16px to match revised Heading-2 size.
 
 ---
 
