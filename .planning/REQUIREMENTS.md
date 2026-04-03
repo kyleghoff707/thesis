@@ -17,9 +17,9 @@ Requirements for this milestone. Each maps to roadmap phases.
 ### Shared Infrastructure
 
 - [x] **INFRA-01**: User sees consistently formatted numbers, currencies, and percentages across all report stages (extract shared formatting utilities)
-- [ ] **INFRA-02**: User sees active section highlighted in nav while scrolling through any report (shared scroll spy hook)
+- [x] **INFRA-02**: User sees active section highlighted in nav while scrolling through any report (shared scroll spy hook)
 - [ ] **INFRA-03**: User sees properly rendered markdown content in report narratives (shared markdown renderer replacing raw text blobs)
-- [ ] **INFRA-04**: User can navigate between One Pager, Pitch Deck, and Full Story stages for the same company via a stage nav bar
+- [x] **INFRA-04**: User can navigate between One Pager, Pitch Deck, and Full Story stages for the same company via a stage nav bar
 
 ### Full Story Viewer
 
@@ -80,9 +80,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FIX-03 | Phase 18 | Complete |
 | FIX-04 | Phase 18 | Complete |
 | INFRA-01 | Phase 19 | Complete |
-| INFRA-02 | Phase 19 | Pending |
+| INFRA-02 | Phase 19 | Complete |
 | INFRA-03 | Phase 19 | Pending |
-| INFRA-04 | Phase 19 | Pending |
+| INFRA-04 | Phase 19 | Complete |
 | FS-01 | Phase 20 | Pending |
 | FS-02 | Phase 21 | Pending |
 | FS-03 | Phase 21 | Pending |
