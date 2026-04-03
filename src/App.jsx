@@ -19,6 +19,7 @@ import OnePager from './components/OnePager';
 import PitchDeck from './components/PitchDeck';
 import FullStory from './components/FullStory';
 import ReportsList from './components/ReportsList';
+import StageNavBar from './components/StageNavBar';
 
 // Redirect /research to last-viewed report if one exists
 function ResearchRedirect({ reports }) {
@@ -35,6 +36,18 @@ function ToolboxRedirect() {
   return <Navigate to={`/research/${id}`} replace />;
 }
 
+// Shared layout for report stage routes — renders StageNavBar above content
+function ReportStageLayout({ getReport, children }) {
+  const { id } = useParams();
+  const report = getReport ? getReport(id) : null;
+  return (
+    <>
+      <StageNavBar stageApprovals={report?.stageApprovals} />
+      {children}
+    </>
+  );
+}
+
 export default function App() {
   const { isDark, toggleTheme } = useTheme();
   const { reports, createReport, updateReport, deleteReport, getReport } = useResearch();
@@ -49,9 +62,9 @@ export default function App() {
         <Route path="/research" element={<ResearchRedirect reports={reports} />} />
         <Route path="/research/:id" element={<Toolbox getReport={getReport} updateReport={updateReport} settings={settings} />} />
         <Route path="/research/:id/toolbox" element={<ToolboxRedirect />} />
-        <Route path="/research/:id/one-pager" element={<OnePager getReport={getReport} updateReport={updateReport} />} />
-        <Route path="/research/:id/pitch-deck" element={<PitchDeck getReport={getReport} updateReport={updateReport} />} />
-        <Route path="/research/:id/full-story" element={<FullStory getReport={getReport} />} />
+        <Route path="/research/:id/one-pager" element={<ReportStageLayout getReport={getReport}><OnePager getReport={getReport} updateReport={updateReport} /></ReportStageLayout>} />
+        <Route path="/research/:id/pitch-deck" element={<ReportStageLayout getReport={getReport}><PitchDeck getReport={getReport} updateReport={updateReport} /></ReportStageLayout>} />
+        <Route path="/research/:id/full-story" element={<ReportStageLayout getReport={getReport}><FullStory getReport={getReport} /></ReportStageLayout>} />
         <Route path="/reports" element={<ReportsList reports={reports} getReport={getReport} createReport={createReport} />} />
         <Route path="/gurus" element={<Gurus />} />
         <Route path="/gurus/:cik" element={<GuruPortfolio />} />
