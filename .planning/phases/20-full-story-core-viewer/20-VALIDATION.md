@@ -2,8 +2,8 @@
 phase: 20
 slug: full-story-core-viewer
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-02
 ---
 
@@ -38,18 +38,23 @@ created: 2026-04-02
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 20-01-01 | 01 | 1 | FS-01 | manual | Dev server visual check | N/A | ⬜ pending |
-| 20-01-02 | 01 | 1 | FS-01 | manual | Dev server visual check | N/A | ⬜ pending |
-| 20-02-01 | 02 | 1 | FS-04 | manual | Dev server visual check | N/A | ⬜ pending |
-| 20-02-02 | 02 | 1 | FS-04 | manual | Dev server visual check | N/A | ⬜ pending |
+| 20-01-00 | 01 | 1 | FS-01, FS-04 | unit | `npm test -- --run 2>&1 \| tail -10` | Yes (Wave 0) | pending |
+| 20-01-01 | 01 | 1 | FS-01 | automated+manual | `npm test -- --run 2>&1 \| tail -10` + grep checks | Yes | pending |
+| 20-01-02 | 01 | 1 | FS-01 | automated | `npm test -- --run 2>&1 \| tail -10` + build check | Yes | pending |
+| 20-02-01 | 02 | 2 | FS-01, FS-04 | automated+manual | `npm test -- --run 2>&1 \| tail -10` + build check | Yes | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
 ## Wave 0 Requirements
 
-Existing infrastructure covers all phase requirements. No new test stubs needed — this phase is primarily UI component work validated by visual inspection and existing vitest suite passing.
+Wave 0 test stubs are created by Plan 01 Task 0:
+
+- [x] `src/components/__tests__/fullStory.test.js` -- Tests for SECTION_DEFS 6-key correctness, qualityColor threshold logic (green/yellow/red/muted), qualityMap join logic (sectionKey mapping)
+- [x] `src/components/__tests__/sectionRenderer.test.js` -- Extended with tests for primarySourceInsights rendering contract (string array, object array, empty array guard) and searchesPerformed rendering contract (object with query, string-only, empty array guard)
+
+These stubs test the contract/spec independently. Plan 02 adds `_testExports` to FullStory.jsx, enabling the stubs to be upgraded to import from the actual component.
 
 ---
 
@@ -66,13 +71,27 @@ Existing infrastructure covers all phase requirements. No new test stubs needed 
 
 ---
 
+## Automated Test Coverage
+
+| Behavior | Requirement | Test File | Automated Command |
+|----------|-------------|-----------|-------------------|
+| SECTION_DEFS has exactly 6 correct keys | FS-01 | `src/components/__tests__/fullStory.test.js` | `npm test -- --run` |
+| qualityColor returns correct colors for thresholds | FS-04 | `src/components/__tests__/fullStory.test.js` | `npm test -- --run` |
+| qualityMap joins quality sections by sectionKey | FS-04 | `src/components/__tests__/fullStory.test.js` | `npm test -- --run` |
+| primarySourceInsights accepts string and object arrays | FS-01 | `src/components/__tests__/sectionRenderer.test.js` | `npm test -- --run` |
+| searchesPerformed accepts query objects and strings | FS-01 | `src/components/__tests__/sectionRenderer.test.js` | `npm test -- --run` |
+| Empty arrays do not render blocks | FS-01 | `src/components/__tests__/sectionRenderer.test.js` | `npm test -- --run` |
+| Build succeeds (JSX syntax valid) | FS-01 | N/A | `npm run build 2>&1 \| tail -5` |
+
+---
+
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 5s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify with `npm test -- --run`
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references (fullStory.test.js + sectionRenderer.test.js extensions)
+- [x] No watch-mode flags
+- [x] Feedback latency < 5s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved
