@@ -101,13 +101,12 @@ Plans:
   2. User opens the Reports list and sees all companies with per-stage status indicators (generated, approved, pending) and can navigate directly to any stage
   3. User views a report and sees the correct top-nav tab highlighted (Reports tab active on report routes, Research tab on research routes)
   4. User can see at a glance which stages are complete, approved, or pending for any company
-**Plans**: TBD
+**Plans**: 2 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 22-01: Wire stage gating logic (OP approval gates PD, PD approval gates FS)
-- [ ] 22-02: Update ReportsList with multi-stage display and navigation
-- [ ] 22-03: Fix route highlighting and add stage progress overview
+- [ ] 22-01-PLAN.md — Enhance reports API with per-stage availability + fix nav tab highlighting for report routes
+- [ ] 22-02-PLAN.md — Rewrite ReportsList with multi-stage pills, gate logic, and status-based navigation
 
 ### Phase 23: Delight Feature Wiring
 **Goal**: Users can interact with enrichment features that deepen their understanding of the research
@@ -138,5 +137,5 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23
 | 19. Shared Report Infrastructure | 2/3 | Complete    | 2026-04-03 |
 | 20. Full Story Core Viewer | 2/2 | Complete    | 2026-04-03 |
 | 21. Checklist & Debate Renderers | 3/3 | Complete    | 2026-04-03 |
-| 22. Stage Gating & Navigation | 0/3 | Not started | - |
+| 22. Stage Gating & Navigation | 0/2 | Not started | - |
 | 23. Delight Feature Wiring | 0/4 | Not started | - |
