@@ -68,12 +68,12 @@ Plans:
   2. User sees a gate check blocking Full Story access when Pitch Deck has not been approved
   3. User can see mechanical and methodology quality scores per section and as an overall aggregate
   4. User can approve or reject the Full Story via an approval bar at the bottom
-**Plans**: TBD
+**Plans**: 2 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 20-01: Build FullStory.jsx shell with gate check, hero, sections, and approval bar
-- [ ] 20-02: Wire useFullStory.js hook and quality score display
+- [ ] 20-01-PLAN.md — Wire infrastructure: quality endpoint, App.jsx route fix, SectionRenderer additions, useFullStory hook
+- [ ] 20-02-PLAN.md — Rewrite FullStory.jsx with gate check, hero, quality badges, sticky nav, sections, and approval bar
 
 ### Phase 21: Checklist & Debate Renderers
 **Goal**: Users can read scored checklists and adversarial debates as structured, visually distinct components -- not text walls
