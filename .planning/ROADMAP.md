@@ -56,8 +56,8 @@ Plans:
 
 Plans:
 - [x] 19-01-PLAN.md — Extract reportHelpers.js shared utilities + Spinner.jsx, refactor OnePager and PitchDeck to import from shared modules
-- [x] 19-02-PLAN.md — Build useScrollSpy hook + StageNavBar component, refactor OnePager and PitchDeck to use shared scroll spy
-- [ ] 19-03-PLAN.md — Install react-markdown + remark-gfm, build ReportMarkdown.jsx wrapper, refactor SectionRenderer to use it
+- [ ] 19-02-PLAN.md — Build useScrollSpy hook + StageNavBar component, refactor OnePager and PitchDeck to use shared scroll spy
+- [x] 19-03-PLAN.md — Install react-markdown + remark-gfm, build ReportMarkdown.jsx wrapper, refactor SectionRenderer to use it
 
 ### Phase 20: Full Story Core Viewer
 **Goal**: Users can view Full Story reports in-app with the same quality as One Pager and Pitch Deck viewers

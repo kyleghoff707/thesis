@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { _testExports } from '../SectionRenderer.jsx';
+import { formatDataValue } from '../reportHelpers.js';
 
-const { camelToTitle, formatDataValue } = _testExports;
+const { camelToTitle } = _testExports;
 
 describe('camelToTitle', () => {
   it('converts mosBuyPrice to MOS Buy Price', () => {

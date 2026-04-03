@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Report Stage UI
 status: executing
-stopped_at: Completed 19-02-PLAN.md
-last_updated: "2026-04-03T02:48:27.576Z"
+stopped_at: Completed 19-03-PLAN.md
+last_updated: "2026-04-03T02:50:26.499Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 6
@@ -57,7 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 18 P01 | 3min | 2 tasks | 5 files |
 | Phase 18 P02 | 1min | 1 tasks | 2 files |
 | Phase 18 P03 | 4min | 2 tasks | 2 files |
-| Phase 19 P02 | 5min | 2 tasks | 6 files |
+| Phase 19 P03 | 7min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -74,7 +74,8 @@ Recent decisions affecting current work:
 - [Phase 18]: overall_verdict excluded from SECTION_DEFS and rendered as hero banner; FullStory.jsx is temporary shell for Phase 20
 - [Phase 18]: Reports use 10-year TTL via idbSet rather than TTL-free variant; fire-and-forget async writes for responsive UI
 - [Phase 18]: Canonical PD key detection uses radar/simple_and_predictable specifically to distinguish canonical vs stale formats
-- [Phase 19]: useScrollSpy hook uses rAF debouncing with configurable topOffset (100px default); sidebar accent bar is 3px solid C.accent left border per D-08
+- [Phase 19]: react-markdown makeComponents() called inside render for theme reactivity (not memoized)
+- [Phase 19]: SectionRenderer custom parseMarkdown/renderInline/parseSummary fully removed, replaced by ReportMarkdown component
 
 ### Roadmap Evolution
 
@@ -96,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03T02:48:27.573Z
-Stopped at: Completed 19-02-PLAN.md
+Last session: 2026-04-03T02:50:26.496Z
+Stopped at: Completed 19-03-PLAN.md
 Resume file: None
