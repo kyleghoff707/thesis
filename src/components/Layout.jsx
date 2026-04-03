@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { C } from '../theme';
 import TickerSearch from './TickerSearch';
 
@@ -34,8 +34,12 @@ function GearIcon({ size = 16, color }) {
   );
 }
 
+const REPORT_STAGE_SUFFIXES = ['/one-pager', '/pitch-deck', '/full-story'];
+
 export default function Layout({ children, onNewResearch, onSettingsOpen }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isOnReportStage = REPORT_STAGE_SUFFIXES.some(s => location.pathname.endsWith(s));
 
   const handleNewResearch = (ticker) => {
     const report = onNewResearch(ticker);
@@ -89,20 +93,25 @@ export default function Layout({ children, onNewResearch, onSettingsOpen }) {
               key={tab.to}
               to={tab.to}
               end={tab.end}
-              style={({ isActive }) => ({
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '0 14px',
-                height: '100%',
-                fontSize: 13,
-                fontWeight: isActive ? 600 : 500,
-                color: isActive ? C.accent : C.textSecondary,
-                textDecoration: 'none',
-                borderBottom: isActive ? `2px solid ${C.accent}` : '2px solid transparent',
-                transition: 'all .15s',
-                whiteSpace: 'nowrap',
-              })}
+              style={({ isActive }) => {
+                let effectiveActive = isActive;
+                if (tab.to === '/research') effectiveActive = isActive && !isOnReportStage;
+                if (tab.to === '/reports') effectiveActive = isActive || isOnReportStage;
+                return {
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '0 14px',
+                  height: '100%',
+                  fontSize: 13,
+                  fontWeight: effectiveActive ? 600 : 500,
+                  color: effectiveActive ? C.accent : C.textSecondary,
+                  textDecoration: 'none',
+                  borderBottom: effectiveActive ? `2px solid ${C.accent}` : '2px solid transparent',
+                  transition: 'all .15s',
+                  whiteSpace: 'nowrap',
+                };
+              }}
             >
               <span style={{ display: 'flex', alignItems: 'center' }}>{tab.icon}</span>
               {tab.label}
