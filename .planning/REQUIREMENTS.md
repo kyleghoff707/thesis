@@ -33,7 +33,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 - [ ] **NAV-01**: User cannot access Pitch Deck until One Pager is approved, and cannot access Full Story until Pitch Deck is approved
 - [ ] **NAV-02**: User can discover and navigate between all generated reports across all stages from a reports list
-- [ ] **NAV-03**: User sees correct nav highlighting when viewing reports (fix route/tab highlighting bugs)
+- [x] **NAV-03**: User sees correct nav highlighting when viewing reports (fix route/tab highlighting bugs)
 - [ ] **NAV-04**: User can see a stage progress overview per company (which stages are complete, approved, or pending)
 
 ### Delight Features
@@ -90,7 +90,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FS-05 | Phase 21 | Complete |
 | NAV-01 | Phase 22 | Pending |
 | NAV-02 | Phase 22 | Pending |
-| NAV-03 | Phase 22 | Pending |
+| NAV-03 | Phase 22 | Complete |
 | NAV-04 | Phase 22 | Pending |
 | DLT-01 | Phase 23 | Pending |
 | DLT-02 | Phase 23 | Pending |
