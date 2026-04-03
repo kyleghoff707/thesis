@@ -4,6 +4,9 @@ import { C } from '../theme';
 import { useFullStory } from '../hooks/useFullStory';
 import { useScrollSpy } from '../hooks/useScrollSpy';
 import SectionRenderer from './SectionRenderer';
+import ChecklistRenderer from './ChecklistRenderer.jsx';
+import DebateRenderer from './DebateRenderer.jsx';
+import DirectionBadge from './DirectionBadge.jsx';
 import VerdictBadge from './VerdictBadge';
 import ConfidenceBadge from './ConfidenceBadge';
 import { formatTitle, formatRelativeTime, verdictDotColor } from './reportHelpers';
@@ -25,34 +28,6 @@ function qualityColor(score) {
   if (score >= 90) return C.green;
   if (score >= 70) return C.yellow;
   return C.red;
-}
-
-// --- Inline sub-component: BULL / BEAR / NEUTRAL direction badge ---
-function DirectionBadge({ direction }) {
-  const map = {
-    Bull: { bg: C.green, label: 'BULL' },
-    Bear: { bg: C.red, label: 'BEAR' },
-    Neutral: { bg: C.yellow, label: 'NEUTRAL' },
-  };
-  const style = map[direction];
-  if (!style) return null;
-
-  return (
-    <span style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      padding: '6px 16px',
-      borderRadius: 9999,
-      fontSize: 13,
-      fontWeight: 700,
-      textTransform: 'uppercase',
-      letterSpacing: '0.04em',
-      background: style.bg,
-      color: '#fff',
-    }}>
-      {style.label}
-    </span>
-  );
 }
 
 // --- Inline sub-component: per-section quality badge (Mech N . Method N) ---
@@ -86,6 +61,8 @@ function QualityBadge({ mechanical, methodology }) {
 
 // --- Main component ---
 export default function FullStory({ getReport, updateReport }) {
+  const CHECKLIST_KEYS = new Set(['meaning_checklist', 'moat_checklist', 'management_checklist']);
+
   const { id } = useParams();
   const report = getReport ? getReport(id) : null;
   const ticker = report?.ticker;
@@ -392,6 +369,35 @@ export default function FullStory({ getReport, updateReport }) {
             const section = sectionMap[def.key];
             const qs = qualityMap[def.key];
             if (!section) return null;
+
+            let content;
+            if (CHECKLIST_KEYS.has(def.key)) {
+              content = (
+                <ChecklistRenderer
+                  section={section}
+                  sectionId={'section-' + def.key}
+                  onCitationClick={handleCitationClick}
+                />
+              );
+            } else if (def.key === 'inversion_rebuttal') {
+              content = (
+                <DebateRenderer
+                  section={section}
+                  sectionId={'section-' + def.key}
+                  debateOutputs={fullStoryData?.debateOutputs}
+                  onCitationClick={handleCitationClick}
+                />
+              );
+            } else {
+              content = (
+                <SectionRenderer
+                  section={section}
+                  sectionId={'section-' + def.key}
+                  onCitationClick={handleCitationClick}
+                />
+              );
+            }
+
             return (
               <div key={def.key}>
                 {/* Quality badge — positioned above section card, right-aligned */}
@@ -400,11 +406,7 @@ export default function FullStory({ getReport, updateReport }) {
                     <QualityBadge mechanical={qs.score} methodology={qs.methodology?.score} />
                   </div>
                 )}
-                <SectionRenderer
-                  section={section}
-                  sectionId={'section-' + def.key}
-                  onCitationClick={handleCitationClick}
-                />
+                {content}
               </div>
             );
           })}
