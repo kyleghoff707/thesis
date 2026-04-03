@@ -7,6 +7,7 @@ function getVerdictStyle(verdict) {
     FAIL: { bg: C.red, text: '#fff', label: 'FAIL' },
     WATCHLIST: { bg: C.yellow, text: '#fff', label: 'WATCHLIST' },
     REVIEW: { bg: C.accent, text: '#fff', label: 'REVIEW' },
+    PARTIAL: { bg: C.yellow, text: '#fff', label: 'PARTIAL' },
   };
   return map[verdict] || null;
 }
@@ -33,6 +34,11 @@ const icons = {
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" />
       <polyline points="12 6 12 12 16 14" />
+    </svg>
+  ),
+  PARTIAL: (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0" />
     </svg>
   ),
 };
