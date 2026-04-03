@@ -89,7 +89,7 @@ Plans:
 
 Plans:
 - [ ] 21-01-PLAN.md — Extend VerdictBadge with PARTIAL + build ChecklistRenderer with aggregate bar and expandable items
-- [ ] 21-02-PLAN.md — Extract DirectionBadge to shared file + build DebateRenderer with 4 tabbed steps and role-colored content
+- [x] 21-02-PLAN.md — Extract DirectionBadge to shared file + build DebateRenderer with 4 tabbed steps and role-colored content
 - [ ] 21-03-PLAN.md — Wire renderers into FullStory.jsx conditional dispatch + visual verification checkpoint
 
 ### Phase 22: Stage Gating & Navigation
@@ -137,6 +137,6 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23
 | 18. Critical Bug Fixes & Storage Migration | 3/3 | Complete    | 2026-04-02 |
 | 19. Shared Report Infrastructure | 2/3 | Complete    | 2026-04-03 |
 | 20. Full Story Core Viewer | 2/2 | Complete    | 2026-04-03 |
-| 21. Checklist & Debate Renderers | 0/3 | Not started | - |
+| 21. Checklist & Debate Renderers | 1/3 | In Progress|  |
 | 22. Stage Gating & Navigation | 0/3 | Not started | - |
 | 23. Delight Feature Wiring | 0/4 | Not started | - |

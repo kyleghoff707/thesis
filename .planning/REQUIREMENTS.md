@@ -25,9 +25,9 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 - [x] **FS-01**: User can view Full Story report with 6 sections, gate check enforcing Pitch Deck approval, and approval bar
 - [ ] **FS-02**: User can view scored checklists (Meaning 15pt, Moat 15pt, Management 13pt) with item-level PASS/FAIL/PARTIAL indicators and aggregate scores
-- [ ] **FS-03**: User can view the adversarial debate (Bull → Bear → Bull Rebuttal → Judge) with distinct visual treatment per step
+- [x] **FS-03**: User can view the adversarial debate (Bull → Bear → Bull Rebuttal → Judge) with distinct visual treatment per step
 - [x] **FS-04**: User can see quality scores (mechanical and methodology) per section and overall
-- [ ] **FS-05**: User can navigate between debate steps via tabs or accordion controls
+- [x] **FS-05**: User can navigate between debate steps via tabs or accordion controls
 
 ### Stage Gating & Navigation
 
@@ -85,9 +85,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-04 | Phase 19 | Pending |
 | FS-01 | Phase 20 | Complete |
 | FS-02 | Phase 21 | Pending |
-| FS-03 | Phase 21 | Pending |
+| FS-03 | Phase 21 | Complete |
 | FS-04 | Phase 20 | Complete |
-| FS-05 | Phase 21 | Pending |
+| FS-05 | Phase 21 | Complete |
 | NAV-01 | Phase 22 | Pending |
 | NAV-02 | Phase 22 | Pending |
 | NAV-03 | Phase 22 | Pending |
