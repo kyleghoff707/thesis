@@ -1,114 +1,466 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { C } from '../theme';
+import { useFullStory } from '../hooks/useFullStory';
+import { useScrollSpy } from '../hooks/useScrollSpy';
+import SectionRenderer from './SectionRenderer';
 import VerdictBadge from './VerdictBadge';
+import ConfidenceBadge from './ConfidenceBadge';
+import { formatTitle, formatRelativeTime, verdictDotColor } from './reportHelpers';
+import Spinner from './Spinner';
 
-// Minimal Full Story viewer shell — temporary until Phase 20 builds the full component
-// with scroll spy, quality scores, checklist rendering, and debate display.
+// --- Section definitions for the Full Story (6 sections, no phase grouping) ---
+const SECTION_DEFS = [
+  { key: 'event_analysis', label: 'Event Analysis' },
+  { key: 'meaning_checklist', label: 'Meaning Checklist' },
+  { key: 'moat_checklist', label: 'Moat Checklist' },
+  { key: 'management_checklist', label: 'Management Checklist' },
+  { key: 'valuation_confirmation', label: 'Valuation Confirmation' },
+  { key: 'inversion_rebuttal', label: 'Inversion & Rebuttal' },
+];
 
-export default function FullStory({ getReport }) {
-  const { id } = useParams();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+// --- Pure helper: traffic-light color for quality scores ---
+function qualityColor(score) {
+  if (score == null) return C.textMuted;
+  if (score >= 90) return C.green;
+  if (score >= 70) return C.yellow;
+  return C.red;
+}
 
-  const report = getReport ? getReport(id) : null;
-  const ticker = report?.ticker;
-
-  useEffect(() => {
-    if (!ticker) {
-      setLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    async function fetchFullStory() {
-      try {
-        const res = await fetch(`/api/thes1s/reports/${encodeURIComponent(ticker)}/full-story`);
-        if (cancelled) return;
-        if (res.status === 404) {
-          setData(null);
-          setLoading(false);
-          return;
-        }
-        if (!res.ok) {
-          setError(`Failed to load Full Story (${res.status})`);
-          setLoading(false);
-          return;
-        }
-        const json = await res.json();
-        if (!cancelled) setData(json);
-      } catch (err) {
-        if (!cancelled) setError(err.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    fetchFullStory();
-    return () => { cancelled = true; };
-  }, [ticker]);
-
-  if (loading) {
-    return (
-      <div style={{ padding: 32, color: C.textSecondary, fontSize: 13 }}>
-        Loading Full Story...
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ padding: 32, color: C.danger, fontSize: 13 }}>
-        Error: {error}
-      </div>
-    );
-  }
-
-  if (!data || !data.sections || data.sections.length === 0) {
-    return (
-      <div style={{ padding: 32, color: C.textSecondary, fontSize: 13 }}>
-        No Full Story found for {ticker || 'this company'}. Generate one with the pipeline.
-      </div>
-    );
-  }
+// --- Inline sub-component: BULL / BEAR / NEUTRAL direction badge ---
+function DirectionBadge({ direction }) {
+  const map = {
+    Bull: { bg: C.green, label: 'BULL' },
+    Bear: { bg: C.red, label: 'BEAR' },
+    Neutral: { bg: C.yellow, label: 'NEUTRAL' },
+  };
+  const style = map[direction];
+  if (!style) return null;
 
   return (
-    <div style={{ padding: '24px 0', maxWidth: 900 }}>
-      <h2 style={{ fontSize: 20, fontWeight: 700, color: C.text, marginBottom: 20 }}>
-        Full Story {ticker ? `- ${ticker}` : ''}
-      </h2>
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      padding: '6px 16px',
+      borderRadius: 9999,
+      fontSize: 13,
+      fontWeight: 700,
+      textTransform: 'uppercase',
+      letterSpacing: '0.04em',
+      background: style.bg,
+      color: '#fff',
+    }}>
+      {style.label}
+    </span>
+  );
+}
 
-      {data.sections.map((section, idx) => (
-        <div
-          key={section.key || idx}
-          style={{
-            background: C.bgCard,
-            border: '1px solid ' + C.border,
+// --- Inline sub-component: per-section quality badge (Mech N . Method N) ---
+function QualityBadge({ mechanical, methodology }) {
+  if (mechanical == null && methodology == null) return null;
+
+  return (
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 6,
+      padding: '2px 10px',
+      borderRadius: 9999,
+      fontSize: 10,
+      fontWeight: 600,
+      background: C.badge,
+      color: C.badgeText,
+    }}>
+      {mechanical != null && (
+        <span style={{ color: qualityColor(mechanical) }}>Mech {mechanical}</span>
+      )}
+      {mechanical != null && methodology != null && (
+        <span style={{ color: C.textMuted }}>&middot;</span>
+      )}
+      {methodology != null && (
+        <span style={{ color: qualityColor(methodology) }}>Method {methodology}</span>
+      )}
+    </span>
+  );
+}
+
+// --- Main component ---
+export default function FullStory({ getReport, updateReport }) {
+  const { id } = useParams();
+  const report = getReport ? getReport(id) : null;
+  const ticker = report?.ticker;
+  const { report: fullStoryData, quality, progress, loading, error } = useFullStory(ticker);
+
+  const sectionIds = useMemo(() => SECTION_DEFS.map(d => d.key), []);
+  const activeSection = useScrollSpy(sectionIds);
+
+  // Map sections by key for O(1) lookup
+  const sectionMap = useMemo(() => {
+    const m = {};
+    if (fullStoryData?.sections) {
+      for (const s of fullStoryData.sections) m[s.key] = s;
+    }
+    return m;
+  }, [fullStoryData]);
+
+  // Map quality by sectionKey for O(1) lookup
+  const qualityMap = useMemo(() => {
+    const m = {};
+    if (quality?.sections) {
+      for (const qs of quality.sections) m[qs.sectionKey] = qs;
+    }
+    return m;
+  }, [quality]);
+
+  // Nav items with verdict dots
+  const navItems = useMemo(() => SECTION_DEFS.map((def, idx) => ({
+    key: def.key,
+    label: def.label,
+    index: idx + 1,
+    verdict: sectionMap[def.key]?.verdict || null,
+  })), [sectionMap]);
+
+  // Judge verdict — direct read from debateOutputs
+  const verdict = fullStoryData?.debateOutputs?.judge?.content?.overallVerdict;
+
+  // Company name fallback: report.companyName > fullStoryData.ticker > ''
+  const companyName = report?.companyName || fullStoryData?.ticker || '';
+
+  // Timestamp uses completedAt (the API JSON field name)
+  const timestamp = fullStoryData?.completedAt;
+
+  // Completion state
+  const isComplete = !progress || progress.state === 'COMPLETE';
+  const allSectionsRendered = fullStoryData?.sections?.length >= 6;
+  const approvalStatus = report?.stageApprovals?.fullStory;
+  const showApprovalBar = allSectionsRendered && isComplete && !approvalStatus;
+  const pitchDeckApproved = report?.stageApprovals?.pitchDeck === 'approved';
+
+  // --- Handlers ---
+  function handleNavClick(key) {
+    const el = document.getElementById('section-' + key);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function handleNavKeyDown(e, key) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleNavClick(key);
+    }
+  }
+
+  function handleCitationClick() {
+    const el = document.getElementById('citation-references');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function handleApprove() {
+    if (!updateReport || !id || !report) return;
+    updateReport(id, {
+      stageApprovals: { ...report.stageApprovals, fullStory: 'approved' },
+      updatedAt: new Date().toISOString().slice(0, 10),
+    });
+  }
+
+  function handleReject() {
+    if (!updateReport || !id || !report) return;
+    const notes = window.prompt('Why are you rejecting the Full Story? (optional)') || '';
+    const existingNotes = report.notes || '';
+    const separator = existingNotes && notes ? '\n' : '';
+    updateReport(id, {
+      stageApprovals: { ...report.stageApprovals, fullStory: 'rejected' },
+      notes: existingNotes + separator + (notes ? `[Rejection] ${notes}` : ''),
+      updatedAt: new Date().toISOString().slice(0, 10),
+    });
+  }
+
+  // --- Loading State ---
+  if (loading && !fullStoryData) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40vh', gap: 10 }}>
+        <Spinner />
+        <span style={{ fontSize: 13, color: C.textMuted }}>Loading report...</span>
+      </div>
+    );
+  }
+
+  // --- Error State ---
+  if (error) {
+    return (
+      <div style={{ padding: 20, color: C.red, fontSize: 13 }}>
+        {error}
+      </div>
+    );
+  }
+
+  // --- Gate Check (Pitch Deck not approved) ---
+  if (!pitchDeckApproved && !fullStoryData && !progress) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '40vh',
+        gap: 8,
+      }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>
+          Pitch Deck must be approved first
+        </div>
+        <div style={{ fontSize: 13, fontWeight: 400, color: C.textMuted }}>
+          Approve the Pitch Deck before viewing the Full Story.
+        </div>
+      </div>
+    );
+  }
+
+  // --- Empty State ---
+  if (!fullStoryData && !progress) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '40vh',
+        gap: 8,
+      }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>
+          No Full Story generated yet
+        </div>
+        <div style={{ fontSize: 13, fontWeight: 400, color: C.textMuted }}>
+          Run the Full Story pipeline for {ticker} to create one. The Pitch Deck must be approved first.
+        </div>
+      </div>
+    );
+  }
+
+  // --- Fallback verdict (D-09): most common section verdict when no judge ---
+  let fallbackVerdict = null;
+  if (!verdict && fullStoryData?.sections) {
+    const verdicts = fullStoryData.sections.map(s => s.verdict).filter(Boolean);
+    const counts = {};
+    for (const v of verdicts) counts[v] = (counts[v] || 0) + 1;
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    fallbackVerdict = sorted[0]?.[0] || null;
+  }
+
+  // --- Main Render ---
+  return (
+    <div>
+      {/* A. Hero Header */}
+      <div style={{
+        marginBottom: 24,
+        paddingBottom: 16,
+        borderBottom: '1px solid ' + C.border,
+      }}>
+        {/* Row 1: Ticker */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: C.accent }}>
+            {fullStoryData?.ticker || report?.ticker}
+          </span>
+        </div>
+
+        {/* Row 2: Company name + direction badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+          <span style={{ fontSize: 24, fontWeight: 700, color: C.text }}>
+            {formatTitle(companyName)}
+          </span>
+          {verdict
+            ? <DirectionBadge direction={verdict.direction} />
+            : fallbackVerdict && <VerdictBadge verdict={fallbackVerdict} size="large" />
+          }
+        </div>
+
+        {/* Row 3: Stage label, timestamp, quality, approval status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: C.textSecondary }}>
+            Stage 3: Full Story
+          </span>
+          {timestamp && (
+            <span style={{ fontSize: 11, fontWeight: 400, color: C.textMuted }}>
+              Generated {formatRelativeTime(timestamp)}
+            </span>
+          )}
+          {quality && (
+            <span style={{ fontSize: 11, fontWeight: 400, color: qualityColor(quality.overallScore) }}>
+              Quality: {quality.overallScore}/100 (Method: {quality.overallMethodologyScore})
+            </span>
+          )}
+          {approvalStatus === 'approved' && (
+            <span style={{ fontSize: 11, fontWeight: 600, color: C.green }}>Approved</span>
+          )}
+          {approvalStatus === 'rejected' && (
+            <span style={{ fontSize: 11, fontWeight: 600, color: C.red }}>Rejected</span>
+          )}
+        </div>
+
+        {/* Row 4: Investment Implication callout box (only when judge verdict exists) */}
+        {verdict && (
+          <div style={{
+            background: C.bgHover,
             borderRadius: 8,
             padding: 16,
-            marginBottom: 16,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>
-              {idx + 1}. {section.title || section.key}
-            </span>
-            {section.verdict && <VerdictBadge verdict={section.verdict} />}
+            marginTop: 12,
+            borderLeft: '4px solid ' + (verdict.direction === 'Bull' ? C.green : verdict.direction === 'Bear' ? C.red : C.yellow),
+          }}>
+            <div style={{ fontSize: 13, fontWeight: 400, color: C.textSecondary, lineHeight: 1.6, marginBottom: 8 }}>
+              {verdict.summary}
+            </div>
+            <div style={{
+              fontSize: 11,
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              color: C.textMuted,
+              letterSpacing: '0.04em',
+              marginBottom: 4,
+            }}>
+              Investment Implication
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 400, color: C.text, lineHeight: 1.6 }}>
+              {verdict.investmentImplication}
+            </div>
           </div>
+        )}
+      </div>
 
-          {section.narrative && (
-            <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-              {section.narrative.length > 500
-                ? section.narrative.slice(0, 500) + '...'
-                : section.narrative}
+      {/* B. Two-Column Layout */}
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+        {/* B1. Sticky Section Nav (200px) */}
+        <div style={{
+          position: 'sticky',
+          top: 72,
+          width: 200,
+          flexShrink: 0,
+        }}>
+          {navItems.map((item) => {
+            const isActive = activeSection === item.key;
+            const truncated = item.label.length > 20 ? item.label.slice(0, 20) + '...' : item.label;
+
+            return (
+              <div
+                key={item.key}
+                role="button"
+                tabIndex={0}
+                onClick={() => handleNavClick(item.key)}
+                onKeyDown={(e) => handleNavKeyDown(e, item.key)}
+                style={{
+                  padding: '8px 12px',
+                  fontSize: 12,
+                  color: isActive ? C.accent : C.textSecondary,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  borderRadius: 8,
+                  transition: 'all 0.15s',
+                  background: isActive ? C.bgHover : 'transparent',
+                  fontWeight: isActive ? 600 : 400,
+                  borderLeft: isActive ? '3px solid ' + C.accent : '3px solid transparent',
+                  outline: 'none',
+                }}
+                onMouseEnter={e => {
+                  if (!isActive) e.currentTarget.style.background = C.bgHover;
+                }}
+                onMouseLeave={e => {
+                  if (!isActive) e.currentTarget.style.background = 'transparent';
+                }}
+                onFocus={e => {
+                  e.currentTarget.style.boxShadow = `0 0 0 2px ${C.accent}`;
+                }}
+                onBlur={e => {
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <span style={{
+                  display: 'inline-block',
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: verdictDotColor(item.verdict),
+                  flexShrink: 0,
+                }} />
+                <span>{item.index}. {truncated}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* B2. Content Column */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {SECTION_DEFS.map((def) => {
+            const section = sectionMap[def.key];
+            const qs = qualityMap[def.key];
+            if (!section) return null;
+            return (
+              <div key={def.key}>
+                {/* Quality badge — positioned above section card, right-aligned */}
+                {qs && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: -8, position: 'relative', zIndex: 1, paddingRight: 8 }}>
+                    <QualityBadge mechanical={qs.score} methodology={qs.methodology?.score} />
+                  </div>
+                )}
+                <SectionRenderer
+                  section={section}
+                  sectionId={'section-' + def.key}
+                  onCitationClick={handleCitationClick}
+                />
+              </div>
+            );
+          })}
+
+          {/* C. Approval Bar */}
+          {showApprovalBar && (
+            <div style={{
+              background: C.bgCard,
+              border: '1px solid ' + C.border,
+              borderRadius: 8,
+              padding: '16px 20px',
+              marginTop: 24,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 16,
+            }}>
+              <span style={{ fontSize: 13, color: C.text, flex: 1 }}>
+                <span style={{ fontWeight: 700 }}>Ready for approval</span>
+                <span style={{ color: C.textMuted }}> -- Review the Full Story and approve or reject.</span>
+              </span>
+              <button
+                onClick={handleApprove}
+                style={{
+                  background: C.green,
+                  color: '#fff',
+                  padding: '12px 24px',
+                  borderRadius: 8,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                Approve Full Story
+              </button>
+              <button
+                onClick={handleReject}
+                style={{
+                  background: 'transparent',
+                  color: C.red,
+                  border: '1px solid ' + C.red,
+                  padding: '12px 24px',
+                  borderRadius: 8,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                Reject Full Story
+              </button>
             </div>
           )}
         </div>
-      ))}
+      </div>
     </div>
   );
 }
+
+export const _testExports = { SECTION_DEFS, qualityColor };
