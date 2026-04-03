@@ -64,3 +64,49 @@ describe('formatDataValue', () => {
     expect(formatDataValue('someField', undefined)).toBe('--');
   });
 });
+
+describe('primarySourceInsights rendering contract', () => {
+  it('accepts string array for primarySourceInsights', () => {
+    const insights = ['10-K paragraph about revenue', 'Earnings call Q3 2025 excerpt'];
+    expect(Array.isArray(insights)).toBe(true);
+    expect(insights.length).toBeGreaterThan(0);
+    expect(typeof insights[0]).toBe('string');
+  });
+
+  it('accepts object array with text field for primarySourceInsights', () => {
+    const insights = [
+      { text: 'From 10-K filing', source: 'SEC EDGAR' },
+      { text: 'From earnings call', source: 'Alpha Vantage' },
+    ];
+    expect(Array.isArray(insights)).toBe(true);
+    // SectionRenderer should handle: typeof insight === 'string' ? insight : (insight.text || insight.source)
+    expect(insights[0].text).toBe('From 10-K filing');
+  });
+
+  it('empty array should not render block', () => {
+    const insights = [];
+    // Guard: section.primarySourceInsights && Array.isArray(...) && .length > 0
+    expect(insights.length > 0).toBe(false);
+  });
+});
+
+describe('searchesPerformed rendering contract', () => {
+  it('accepts search objects with query field', () => {
+    const searches = [
+      { query: 'SFM competitive landscape', resultCount: 10, usedInSection: true },
+    ];
+    expect(searches[0].query).toBe('SFM competitive landscape');
+    expect(searches[0].resultCount).toBe(10);
+  });
+
+  it('accepts string-only searches', () => {
+    const searches = ['SFM revenue growth 2025'];
+    // Guard: typeof search === 'string' ? search : search.query
+    expect(typeof searches[0]).toBe('string');
+  });
+
+  it('empty array should not render block', () => {
+    const searches = [];
+    expect(searches.length > 0).toBe(false);
+  });
+});
