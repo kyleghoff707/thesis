@@ -21,7 +21,7 @@ v1.3 builds the in-app presentation layer for viewing, navigating, and interacti
 - [x] **Phase 19: Shared Report Infrastructure** - Extract shared utilities, scroll spy hook, markdown renderer, and stage navigation bar to prevent triplication when FullStory is added (completed 2026-04-03)
 - [x] **Phase 20: Full Story Core Viewer** - Build FullStory.jsx shell with gate check, hero header, section rendering, quality scores, and approval bar (completed 2026-04-03)
 - [x] **Phase 21: Checklist & Debate Renderers** - Build ChecklistRenderer for scored checklists and DebateRenderer for adversarial debate with step-specific sub-components (completed 2026-04-03)
-- [ ] **Phase 22: Stage Gating & Navigation** - Wire approval gates across all stages, build ReportsList for discovery, fix route highlighting, add stage progress overview
+- [x] **Phase 22: Stage Gating & Navigation** - Wire approval gates across all stages, build ReportsList for discovery, fix route highlighting, add stage progress overview (completed 2026-04-03)
 - [ ] **Phase 23: Delight Feature Wiring** - Connect DeepDivePanel, AssumptionTracker, IndustryCard, and Bull/Bear toggle to report data
 
 ## Phase Details
@@ -137,5 +137,5 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23
 | 19. Shared Report Infrastructure | 2/3 | Complete    | 2026-04-03 |
 | 20. Full Story Core Viewer | 2/2 | Complete    | 2026-04-03 |
 | 21. Checklist & Debate Renderers | 3/3 | Complete    | 2026-04-03 |
-| 22. Stage Gating & Navigation | 1/2 | In Progress|  |
+| 22. Stage Gating & Navigation | 1/2 | Complete    | 2026-04-03 |
 | 23. Delight Feature Wiring | 0/4 | Not started | - |
