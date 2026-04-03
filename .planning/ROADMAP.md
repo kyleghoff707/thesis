@@ -72,7 +72,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 20-01-PLAN.md — Wire infrastructure: quality endpoint, App.jsx route fix, SectionRenderer additions, useFullStory hook
+- [x] 20-01-PLAN.md — Wire infrastructure: quality endpoint, App.jsx route fix, SectionRenderer additions, useFullStory hook
 - [ ] 20-02-PLAN.md — Rewrite FullStory.jsx with gate check, hero, quality badges, sticky nav, sections, and approval bar
 
 ### Phase 21: Checklist & Debate Renderers
@@ -136,7 +136,7 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23
 |-------|----------------|--------|-----------|
 | 18. Critical Bug Fixes & Storage Migration | 3/3 | Complete    | 2026-04-02 |
 | 19. Shared Report Infrastructure | 2/3 | Complete    | 2026-04-03 |
-| 20. Full Story Core Viewer | 0/2 | Not started | - |
+| 20. Full Story Core Viewer | 1/2 | In Progress|  |
 | 21. Checklist & Debate Renderers | 0/3 | Not started | - |
 | 22. Stage Gating & Navigation | 0/3 | Not started | - |
 | 23. Delight Feature Wiring | 0/4 | Not started | - |
