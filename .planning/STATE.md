@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Report Stage UI
 status: executing
-stopped_at: Completed 20-01-PLAN.md
-last_updated: "2026-04-03T04:44:44.840Z"
-last_activity: 2026-04-03
+stopped_at: Phase 20 plans verified
+last_updated: "2026-04-03T04:39:50.353Z"
+last_activity: 2026-04-03 -- Phase 20 execution started
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 6
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** Depth of investigation that exceeds what a single human analyst can achieve in 70+ hours -- delivered in minutes, with zero shortcuts on rigor.
-**Current focus:** Phase 19 — shared-report-infrastructure
+**Current focus:** Phase 20 — full-story-core-viewer
 
 ## Current Position
 
-Phase: 20
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-04-03
+Phase: 20 (full-story-core-viewer) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 20
+Last activity: 2026-04-03 -- Phase 20 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -58,7 +58,6 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 18 P02 | 1min | 1 tasks | 2 files |
 | Phase 18 P03 | 4min | 2 tasks | 2 files |
 | Phase 19 P03 | 7min | 2 tasks | 6 files |
-| Phase 20 P01 | 3min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -77,8 +76,6 @@ Recent decisions affecting current work:
 - [Phase 18]: Canonical PD key detection uses radar/simple_and_predictable specifically to distinguish canonical vs stale formats
 - [Phase 19]: react-markdown makeComponents() called inside render for theme reactivity (not memoized)
 - [Phase 19]: SectionRenderer custom parseMarkdown/renderInline/parseSummary fully removed, replaced by ReportMarkdown component
-- [Phase 20]: useFullStory captures Promise.all results in init to avoid double-fetch bug from usePitchDeck
-- [Phase 20]: Quality endpoint resolves to quality/ subdirectory via fileMap path value; quality fetch silently degrades on 404
 
 ### Roadmap Evolution
 
@@ -100,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03T04:44:44.837Z
-Stopped at: Completed 20-01-PLAN.md
-Resume file: None
+Last session: 2026-04-03T04:39:08.599Z
+Stopped at: Phase 20 plans verified
+Resume file: .planning/phases/20-full-story-core-viewer/20-01-PLAN.md
