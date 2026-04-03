@@ -19,7 +19,7 @@ v1.3 builds the in-app presentation layer for viewing, navigating, and interacti
 
 - [x] **Phase 18: Critical Bug Fixes & Storage Migration** - Fix broken PitchDeck rendering, add Full Story route, migrate report storage to IndexedDB, normalize cross-ticker schema differences (completed 2026-04-02)
 - [x] **Phase 19: Shared Report Infrastructure** - Extract shared utilities, scroll spy hook, markdown renderer, and stage navigation bar to prevent triplication when FullStory is added (completed 2026-04-03)
-- [ ] **Phase 20: Full Story Core Viewer** - Build FullStory.jsx shell with gate check, hero header, section rendering, quality scores, and approval bar
+- [x] **Phase 20: Full Story Core Viewer** - Build FullStory.jsx shell with gate check, hero header, section rendering, quality scores, and approval bar (completed 2026-04-03)
 - [ ] **Phase 21: Checklist & Debate Renderers** - Build ChecklistRenderer for scored checklists and DebateRenderer for adversarial debate with step-specific sub-components
 - [ ] **Phase 22: Stage Gating & Navigation** - Wire approval gates across all stages, build ReportsList for discovery, fix route highlighting, add stage progress overview
 - [ ] **Phase 23: Delight Feature Wiring** - Connect DeepDivePanel, AssumptionTracker, IndustryCard, and Bull/Bear toggle to report data
@@ -73,7 +73,7 @@ Plans:
 
 Plans:
 - [x] 20-01-PLAN.md — Wire infrastructure: quality endpoint, App.jsx route fix, SectionRenderer additions, useFullStory hook
-- [ ] 20-02-PLAN.md — Rewrite FullStory.jsx with gate check, hero, quality badges, sticky nav, sections, and approval bar
+- [x] 20-02-PLAN.md — Rewrite FullStory.jsx with gate check, hero, quality badges, sticky nav, sections, and approval bar
 
 ### Phase 21: Checklist & Debate Renderers
 **Goal**: Users can read scored checklists and adversarial debates as structured, visually distinct components -- not text walls
@@ -136,7 +136,7 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23
 |-------|----------------|--------|-----------|
 | 18. Critical Bug Fixes & Storage Migration | 3/3 | Complete    | 2026-04-02 |
 | 19. Shared Report Infrastructure | 2/3 | Complete    | 2026-04-03 |
-| 20. Full Story Core Viewer | 1/2 | In Progress|  |
+| 20. Full Story Core Viewer | 2/2 | Complete   | 2026-04-03 |
 | 21. Checklist & Debate Renderers | 0/3 | Not started | - |
 | 22. Stage Gating & Navigation | 0/3 | Not started | - |
 | 23. Delight Feature Wiring | 0/4 | Not started | - |
