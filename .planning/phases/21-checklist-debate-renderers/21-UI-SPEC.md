@@ -34,11 +34,10 @@ Declared values (must be multiples of 4):
 | Token | Value | Usage in This Phase |
 |-------|-------|---------------------|
 | xs | 4px | Gap between verdict badge icon and label, checklist item number min-width alignment |
-| sm | 8px | Segmented bar top margin (6px rounded to 8px intent), gap between header badges |
+| sm | 8px | Segmented bar top margin, gap between header badges, row gap between checklist items (padding: '8px 0'), exchange row padding vertical (padding: '8px 12px') |
 | md | 16px | Section card padding (16px 20px), aggregate bar bottom margin, debate tab content margin-bottom |
 | lg | 20px | Card horizontal padding (per SectionRenderer convention: `padding: '16px 20px'`) |
 | xl | 24px | Number circle size (24x24px), approval bar margin-top |
-| divider | 10px | Row gap between checklist items (padding: '10px 0'), gap in header flex layout |
 | tab | 20px | Debate tab button horizontal padding |
 
 Exceptions:
@@ -57,13 +56,15 @@ Source: SectionRenderer.jsx lines 96-103, RESEARCH.md Pattern 3.
 | Section title | 16px | 700 | 1.2 | Section header title text |
 | Body / Evidence | 13px | 400 | 1.7 | Expanded checklist evidence, debate narrative content, exchange reasoning |
 | Label / Item text | 13px | 400 | 1.5 | Checklist item question text |
-| Small label | 12px | 600 | 1.3 | Aggregate score text, item number (#1), exchange topic, tab labels |
-| Badge text | 11px | 700 | 1.0 | Verdict badge label, section number circle, expand chevron |
-| Micro badge | 10px | 600 | 1.0 | Confidence badge text, strength badge text |
+| Small label | 12px | 700 | 1.3 | Aggregate score text, item number (#1), exchange topic, tab labels, "Investment Implication" label, Judge verdict heading |
+| Badge text | 11px | 700 | 1.0 | Verdict badge label, section number circle, expand chevron, confidence badge text, strength badge text, severity badge text |
 
 Font: Inter at all sizes. System stack fallback: `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`.
 
-Source: VerdictBadge.jsx (11px/700), ConfidenceBadge.jsx (10px/600), SectionRenderer.jsx (16px/700 title, 13px body), project 13px base from CLAUDE.md.
+Declared sizes: 11px, 12px, 13px, 16px (4 sizes).
+Declared weights: 400, 700 (2 weights).
+
+Source: VerdictBadge.jsx (11px/700), SectionRenderer.jsx (16px/700 title, 13px body), project 13px base from CLAUDE.md.
 
 ---
 
@@ -197,7 +198,7 @@ Source: CONTEXT.md D-15, D-16, RESEARCH.md Open Questions 1 and 2.
 | Toggle mechanism | `useState(new Set())` tracking expanded item numbers |
 | Expand indicator | Right-pointing triangle (&#9654;) rotates 90deg clockwise when expanded |
 | Rotation transition | `transition: 'transform 0.2s'` |
-| Expanded content | Evidence paragraph appears below the row with `padding: '10px 0 4px 44px'` left indent |
+| Expanded content | Evidence paragraph appears below the row with `padding: '8px 0 4px 44px'` left indent |
 | Role attribute | `role="button"` + `tabIndex={0}` on the clickable row div |
 | No animation on content | Content appears/disappears instantly (no height animation). CollapsibleSection is overkill for individual rows. |
 
@@ -251,7 +252,7 @@ Source: CONTEXT.md D-13, RESEARCH.md Code Examples (Judge Exchange Row).
 | [N] Section Title          [VerdictBadge] [Conf]  |  <- Section header (replicate SectionRenderer)
 |--------------------------------------------------|
 | [====green====][=yellow=][red]                    |  <- Segmented aggregate bar (8px height)
-| 12 PASS . 3 PARTIAL . 0 FAIL                     |  <- Score text (12px/600)
+| 12 PASS . 3 PARTIAL . 0 FAIL                     |  <- Score text (12px/700)
 |--------------------------------------------------|
 | [PASS] #1  Can you describe the business...  [>] |  <- Checklist item row (collapsed)
 |-------------------------------------------  -----|
@@ -280,7 +281,7 @@ Card wrapper: `border: 1px solid C.border`, `borderRadius: 8`, `padding: '16px 2
 | [Bull]  [Bear]  [Rebuttal]  [Judge]               |  <- Tab bar (2px bottom border)
 |==================================================|
 | 3px colored left border                           |
-| |  Overall thesis text (16px/600 heading)         |  <- Bull tab content
+| |  Overall thesis text (16px/700 heading)         |  <- Bull tab content
 | |                                                 |
 | |  > Point 1 text                           [>]  |  <- Expandable point
 | |  > Point 2 text                           [>]  |
@@ -299,7 +300,7 @@ Card wrapper: `border: 1px solid C.border`, `borderRadius: 8`, `padding: '16px 2
 |  (click to expand reasoning)      |
 ```
 
-Exchange row wrapper: `border: 1px solid C.borderLight`, `borderRadius: 6`, `marginBottom: 8`, `padding: '10px 12px'`.
+Exchange row wrapper: `border: 1px solid C.borderLight`, `borderRadius: 6`, `marginBottom: 8`, `padding: '8px 12px'`.
 
 ### Judge Tab Overall Verdict (Bottom)
 
@@ -307,7 +308,7 @@ Exchange row wrapper: `border: 1px solid C.borderLight`, `borderRadius: 6`, `mar
 +---------------------------------------------+
 | [BULL/BEAR/NEUTRAL badge]                    |  <- DirectionBadge
 | Summary text (13px, C.textSecondary)         |
-| Investment Implication (13px, C.text, 600)   |
+| Investment Implication (13px, C.text, 700)   |
 +---------------------------------------------+
 ```
 
@@ -327,8 +328,8 @@ Source: CONTEXT.md D-04, D-06, D-10 through D-14, RESEARCH.md Code Examples.
 | Bear tab header | Render `debateOutputs.bear.content.overallBearCase` verbatim as-is |
 | Honest admission label | `"Point conceded"` -- shown when `honest === false` on a rebuttal item |
 | Exchange verdict labels | Render verbatim from data: `"Resolved"`, `"Unresolved"`, `"Strong Bull"`, `"Strong Bear"` |
-| Judge verdict heading | `"Overall Verdict"` -- 16px/600, above DirectionBadge |
-| Investment implication label | `"Investment Implication"` -- 12px/600 label, followed by implication text |
+| Judge verdict heading | `"Overall Verdict"` -- 12px/700, above DirectionBadge |
+| Investment implication label | `"Investment Implication"` -- 12px/700 label, followed by implication text |
 | Empty debate state heading | `"Debate Not Available"` |
 | Empty debate state body | `"Adversarial debate data has not been generated for this report."` |
 | Empty checklist state heading | `"Checklist Not Available"` |
