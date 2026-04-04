@@ -41,7 +41,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **DLT-01**: User can click "Tell me more" on notable claims to see expanded AI analysis in a slide-out panel
 - [x] **DLT-02**: User can view all key assumptions with confidence levels in a sidebar, seeing which sections each assumption affects
 - [x] **DLT-03**: User can hover underlined industry terms to see glossary definitions with benchmarks
-- [ ] **DLT-04**: User can toggle between Bull and Bear narrative perspectives on the Full Story
+- [x] **DLT-04**: User can toggle between Bull and Bear narrative perspectives on the Full Story
 
 ## Future Requirements
 
@@ -95,7 +95,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DLT-01 | Phase 23 | Complete |
 | DLT-02 | Phase 23 | Complete |
 | DLT-03 | Phase 23 | Complete |
-| DLT-04 | Phase 23 | Pending |
+| DLT-04 | Phase 23 | Complete |
 
 **Coverage:**
 - v1.3 requirements: 21 total
