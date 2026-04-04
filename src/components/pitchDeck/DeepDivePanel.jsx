@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { C } from '../../theme';
+import ReportMarkdown from '../ReportMarkdown.jsx';
 
 // Slide-out panel for deep-dive analysis of section claims.
 // Triggered by "Tell me more" links in section narratives.
 // 440px wide, fixed right-side, with overlay + Escape/click-outside close.
+// Supports iterative deepening via "Go Deeper" button (max depth 3).
 
-export default function DeepDivePanel({ isOpen, onClose, title, content, loading }) {
+export default function DeepDivePanel({ isOpen, onClose, title, content, loading, depth = 0, maxDepth = 3, onGoDeeper, error }) {
   const panelRef = useRef(null);
   const [visible, setVisible] = useState(false);
 
@@ -145,6 +147,16 @@ export default function DeepDivePanel({ isOpen, onClose, title, content, loading
                 Analyzing...
               </span>
             </div>
+          ) : error ? (
+            <div style={{
+              fontSize: 13,
+              color: C.red,
+              paddingTop: 24,
+              textAlign: 'center',
+              lineHeight: 1.6,
+            }}>
+              {error}
+            </div>
           ) : content ? (
             <div style={{
               fontSize: 13,
@@ -153,10 +165,7 @@ export default function DeepDivePanel({ isOpen, onClose, title, content, loading
               color: C.text,
             }}>
               {typeof content === 'string' ? (
-                // Render string content with paragraph splitting
-                content.split('\n\n').map((para, i) => (
-                  <p key={i} style={{ marginBottom: 12 }}>{para}</p>
-                ))
+                <ReportMarkdown content={content} />
               ) : (
                 // Render React node content directly
                 content
@@ -170,6 +179,34 @@ export default function DeepDivePanel({ isOpen, onClose, title, content, loading
               textAlign: 'center',
             }}>
               No content available.
+            </div>
+          )}
+
+          {/* Go Deeper button */}
+          {onGoDeeper && content && !loading && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16 }}>
+              <button
+                onClick={onGoDeeper}
+                disabled={depth >= maxDepth}
+                style={{
+                  background: depth >= maxDepth ? C.badge : C.accent,
+                  color: depth >= maxDepth ? C.badgeText : '#fff',
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  border: 'none',
+                  cursor: depth >= maxDepth ? 'default' : 'pointer',
+                  opacity: depth >= maxDepth ? 0.5 : 1,
+                }}
+              >
+                Go Deeper
+              </button>
+              {depth > 0 && (
+                <span style={{ fontSize: 12, color: C.textMuted }}>
+                  Depth {depth}/{maxDepth}
+                </span>
+              )}
             </div>
           )}
         </div>
