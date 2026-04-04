@@ -77,7 +77,7 @@ function getSeverityColor(severity) {
   return map[severity] || C.textMuted;
 }
 
-export default function SectionRenderer({ section, sectionId, onCitationClick }) {
+export default function SectionRenderer({ section, sectionId, onCitationClick, notableClaims, onDeepDiveClick, glossaryTerms, onGlossaryClick }) {
   if (!section) return null;
 
   const hasData = section.data && typeof section.data === 'object' && Object.keys(section.data).length > 0;
@@ -183,7 +183,15 @@ export default function SectionRenderer({ section, sectionId, onCitationClick })
           borderTop: '1px solid ' + C.borderLight,
           paddingTop: 12,
         }}>
-          <ReportMarkdown content={section.narrative} citations={section.citations} onCitationClick={onCitationClick} />
+          <ReportMarkdown
+            content={section.narrative}
+            citations={section.citations}
+            onCitationClick={onCitationClick}
+            notableClaims={notableClaims}
+            onDeepDiveClick={onDeepDiveClick}
+            glossaryTerms={glossaryTerms}
+            onGlossaryClick={onGlossaryClick}
+          />
         </div>
       )}
 
