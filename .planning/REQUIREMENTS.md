@@ -43,6 +43,15 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **DLT-03**: User can hover underlined industry terms to see glossary definitions with benchmarks
 - [x] **DLT-04**: User can toggle between Bull and Bear narrative perspectives on the Full Story
 
+### PM Workflow Controls
+
+- [ ] **PM-01**: PM sees a checkpoint panel when a pipeline wave completes, with completed sections and Continue/Re-run action buttons (mid-pipeline review, not post-generation)
+- [ ] **PM-02**: PM can leave per-section comments with file attachments during checkpoint review via toggle-to-show comment boxes
+- [ ] **PM-03**: PM sees data gaps at the top of the checkpoint panel with severity indicators and can provide missing data sources (paste URL or attach file)
+- [ ] **PM-04**: PM sees a contextual Generate/View button in the Toolbox header that changes label based on pipeline state, with a confirmation dialog showing cost/time estimates before triggering
+- [ ] **PM-05**: Generation is triggered via API call (POST endpoint) with the pipeline spawning server-side; frontend polls for progress using existing infrastructure
+- [ ] **PM-06**: PM can navigate between Research and Reports tabs via cross-navigation buttons (View Reports on Research list, View Toolbox on Reports list)
+
 ## Future Requirements
 
 Deferred to future milestones. Tracked but not in current roadmap.
@@ -68,6 +77,9 @@ Deferred to future milestones. Tracked but not in current roadmap.
 | Drag-and-drop section reordering | Section order follows Rule One methodology — not user-configurable |
 | Real-time collaboration | Single-user desktop app |
 | Custom themes beyond dark/light | Existing C palette is sufficient |
+| Merging Research and Reports into a single tab | Deferred per D-14; keep separate with cross-navigation |
+| Multi-report per ticker | "View Reports" (plural) anticipates this but implementation deferred |
+| Batch generation from Research list | PM triggers one at a time from Toolbox header |
 
 ## Traceability
 
@@ -96,12 +108,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DLT-02 | Phase 23 | Complete |
 | DLT-03 | Phase 23 | Complete |
 | DLT-04 | Phase 23 | Complete |
+| PM-01 | Phase 24 | Pending |
+| PM-02 | Phase 24 | Pending |
+| PM-03 | Phase 24 | Pending |
+| PM-04 | Phase 24 | Pending |
+| PM-05 | Phase 24 | Pending |
+| PM-06 | Phase 24 | Pending |
 
 **Coverage:**
-- v1.3 requirements: 21 total
-- Mapped to phases: 21
+- v1.3 requirements: 27 total
+- Mapped to phases: 27
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-01*
-*Last updated: 2026-04-01 after roadmap creation*
+*Last updated: 2026-04-04 after Phase 24 planning*

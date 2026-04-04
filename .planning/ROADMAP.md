@@ -9,7 +9,7 @@ v1.3 builds the in-app presentation layer for viewing, navigating, and interacti
 - ✅ **v1.0 Agent Infrastructure & Pitch Deck Pipeline** - Phases 5A-6.3 (shipped 2026-03-27)
 - ✅ **v1.1 API Migration & Pitch Deck Quality** - Phases 7-11 (shipped 2026-03-29)
 - ✅ **v1.2 Full Story Pipeline** - Phases 12-17.1 (shipped 2026-04-02)
-- 🚧 **v1.3 Report Stage UI** - Phases 18-23 (in progress)
+- 🚧 **v1.3 Report Stage UI** - Phases 18-24 (in progress)
 
 ## Phases
 
@@ -141,11 +141,20 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23 → 24
 
 ### Phase 24: PM Workflow Controls
 
-**Goal:** Rich PM review controls (inline section comments, data gap summary before approval) and research initiation UX (Generate Research / Review Research buttons on Research tab)
-**Requirements**: TBD
+**Goal:** PM can trigger research generation from the Toolbox, review completed wave sections at mid-pipeline checkpoints with per-section comments and file attachments, see data gaps and provide missing data, and navigate fluidly between Research and Reports tabs
+**Requirements**: PM-01, PM-02, PM-03, PM-04, PM-05, PM-06
 **Depends on:** Phase 23
 **UI hint:** yes
-**Plans:** 0 plans
+**Plans:** 4 plans
+**Success Criteria** (what must be TRUE):
+  1. PM clicks "Generate One Pager" in the Toolbox header and sees a confirmation dialog with cost/time estimates before pipeline starts
+  2. When a pipeline wave completes, PM sees a checkpoint panel with completed sections, data gaps, comment boxes, and Continue/Re-run buttons
+  3. PM can leave per-section comments with file attachments during checkpoint review
+  4. PM can provide missing data sources for data gaps (paste URL or attach file)
+  5. PM can navigate from Research list to Reports tab and back via cross-navigation buttons
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 24 to break down)
+- [ ] 24-01-PLAN.md — Infrastructure: IndexedDB checkpoint-attachments store, Vite middleware endpoints (checkpoint CRUD + generate trigger), useCheckpoint + useGeneratePipeline hooks
+- [ ] 24-02-PLAN.md — Generate button + confirmation dialog + cross-navigation (GenerateButton, ConfirmGenerateDialog, Toolbox/ResearchList/ReportsList integration)
+- [ ] 24-03-PLAN.md — Checkpoint panel UI: DataGapsPanel, CheckpointCommentBox, CheckpointPanel container, SectionRenderer comment icon
+- [ ] 24-04-PLAN.md — Wire CheckpointPanel into PitchDeck/OnePager/FullStory viewers + visual verification checkpoint
