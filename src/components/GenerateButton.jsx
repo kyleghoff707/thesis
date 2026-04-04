@@ -11,17 +11,18 @@ function getButtonState(ticker, report, stageAvailability, generating) {
 
   const approvals = report?.stageApprovals || {};
   const avail = stageAvailability || {};
+  const reportId = report?.id;
 
   // Walk through stages in order
   if (!avail.onePager) return { label: 'Generate One Pager', action: 'generate', stage: 'one-pager', style: 'primary' };
-  if (approvals.onePager !== 'approved') return { label: 'View One Pager', action: 'view', stage: 'one-pager', route: `/reports/${ticker}/one-pager`, style: 'ghost' };
+  if (approvals.onePager !== 'approved') return { label: 'View One Pager', action: 'view', stage: 'one-pager', route: `/research/${reportId}/one-pager`, style: 'ghost' };
 
   if (!avail.pitchDeck) return { label: 'Generate Pitch Deck', action: 'generate', stage: 'pitch-deck', style: 'primary' };
-  if (approvals.pitchDeck !== 'approved') return { label: 'View Pitch Deck', action: 'view', stage: 'pitch-deck', route: `/reports/${ticker}/pitch-deck`, style: 'ghost' };
+  if (approvals.pitchDeck !== 'approved') return { label: 'View Pitch Deck', action: 'view', stage: 'pitch-deck', route: `/research/${reportId}/pitch-deck`, style: 'ghost' };
 
   if (!avail.fullStory) return { label: 'Generate Full Story', action: 'generate', stage: 'full-story', style: 'primary' };
   // FS exists (generated or approved)
-  return { label: 'View Full Story', action: 'view', stage: 'full-story', route: `/reports/${ticker}/full-story`, style: 'ghost' };
+  return { label: 'View Full Story', action: 'view', stage: 'full-story', route: `/research/${reportId}/full-story`, style: 'ghost' };
 }
 
 export default function GenerateButton({ ticker, report, stageAvailability, generating, onGenerate }) {
