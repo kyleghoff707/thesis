@@ -145,7 +145,7 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23 → 24
 **Requirements**: PM-01, PM-02, PM-03, PM-04, PM-05, PM-06
 **Depends on:** Phase 23
 **UI hint:** yes
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 **Success Criteria** (what must be TRUE):
   1. PM clicks "Generate One Pager" in the Toolbox header and sees a confirmation dialog with cost/time estimates before pipeline starts
   2. When a pipeline wave completes, PM sees a checkpoint panel with completed sections, data gaps, comment boxes, and Continue/Re-run buttons
@@ -155,6 +155,6 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23 → 24
 
 Plans:
 - [ ] 24-01-PLAN.md — Infrastructure: IndexedDB checkpoint-attachments store, Vite middleware endpoints (checkpoint CRUD + generate trigger), useCheckpoint + useGeneratePipeline hooks
-- [ ] 24-02-PLAN.md — Generate button + confirmation dialog + cross-navigation (GenerateButton, ConfirmGenerateDialog, Toolbox/ResearchList/ReportsList integration)
+- [x] 24-02-PLAN.md — Generate button + confirmation dialog + cross-navigation (GenerateButton, ConfirmGenerateDialog, Toolbox/ResearchList/ReportsList integration)
 - [ ] 24-03-PLAN.md — Checkpoint panel UI: DataGapsPanel, CheckpointCommentBox, CheckpointPanel container, SectionRenderer comment icon
 - [ ] 24-04-PLAN.md — Wire CheckpointPanel into PitchDeck/OnePager/FullStory viewers + visual verification checkpoint
