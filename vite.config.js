@@ -519,6 +519,13 @@ function thes1sReportsPlugin() {
                   }
                 }
                 fs.writeFileSync(cpPath, JSON.stringify(body, null, 2));
+                // Write response signal file for pipeline pause/resume
+                const responsePath = path.join(tickerDir, `checkpoint-${cpNum}-response.json`);
+                fs.writeFileSync(responsePath, JSON.stringify({
+                  action: body.action || 'continue',
+                  comments: body.comments || null,
+                  timestamp: new Date().toISOString(),
+                }, null, 2));
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'saved', path: `checkpoint-${cpNum}.json` }));
               } catch (e) {

@@ -23,8 +23,12 @@ import { fetchFilingMarkdown } from '../src/engines/filingMarkdown.js';
 import { extractAllSections } from '../src/engines/filingSections.js';
 import { validateStage } from '../src/engines/critic.js';
 import { formatQualityReport } from '../src/engines/qualityFormatter.js';
-import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
+import { mkdirSync, writeFileSync, readFileSync, existsSync, unlinkSync } from 'fs';
 import { join } from 'path';
+import {
+  createProgress, advanceState, updateGenerationStatus, initGenerationStatus,
+  updatePhaseStatus, startSection, completeSection, saveSectionOutput, saveBudgetReport,
+} from '../src/engines/progressState.js';
 
 // Canonical section fields (19 fields) — ensures consistent shape across all tickers
 const CANONICAL_SECTION_FIELDS = {
@@ -82,7 +86,44 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
-// Shared wave progress callback
+// Poll interval for checkpoint response (seconds)
+const CHECKPOINT_POLL_INTERVAL = 2;
+
+// Wait for PM response at a checkpoint — polls for checkpoint-{N}-response.json
+async function waitForCheckpointResponse(currentTicker, waveNumber) {
+  const reportsDir = join(process.cwd(), '.thes1s', 'reports', currentTicker.toUpperCase());
+  const responsePath = join(reportsDir, `checkpoint-${waveNumber}-response.json`);
+
+  // Clean up any stale response file from a previous run
+  if (existsSync(responsePath)) {
+    unlinkSync(responsePath);
+  }
+
+  console.log(`  ⏸  Waiting for PM review (checkpoint ${waveNumber})...`);
+  console.log(`     Pipeline paused. PM reviews in the app, then clicks Continue or Re-run.`);
+
+  // Poll for response file
+  while (true) {
+    await new Promise(resolve => setTimeout(resolve, CHECKPOINT_POLL_INTERVAL * 1000));
+    if (existsSync(responsePath)) {
+      try {
+        const raw = readFileSync(responsePath, 'utf-8');
+        const response = JSON.parse(raw);
+        console.log(`  ▶  PM responded: ${response.action}`);
+        if (response.comments) {
+          console.log(`     Feedback: ${response.comments}`);
+        }
+        // Clean up response file
+        unlinkSync(responsePath);
+        return response;
+      } catch (err) {
+        console.warn(`  Failed to parse checkpoint response: ${err.message}`);
+      }
+    }
+  }
+}
+
+// Shared wave progress callback — writes progress state + pauses at checkpoints for PM review
 const onWaveComplete = async (waveNumber, results, budgetSummary, cacheSummary) => {
   const sectionCount = results.filter(r => r != null).length;
   console.log(`--- Wave ${waveNumber} complete ---`);
@@ -93,8 +134,66 @@ const onWaveComplete = async (waveNumber, results, budgetSummary, cacheSummary) 
   if (cacheSummary) {
     console.log(`  Cache: ${cacheSummary.hitRatePct || '?'} hit rate (${cacheSummary.totalRead || 0} read / ${cacheSummary.totalWrite || 0} write tokens)`);
   }
+
+  // Mark completed sections in generation-status.json
+  for (const section of results) {
+    if (section?.key) {
+      try { completeSection(ticker, section.key); } catch { /* non-critical */ }
+    }
+  }
+
+  // Update phase status
+  try { updatePhaseStatus(ticker, waveNumber, 'complete'); } catch { /* non-critical */ }
+
+  // Advance state to CHECKPOINT_N
+  const checkpointState = `CHECKPOINT_${waveNumber}`;
+  try {
+    advanceState(ticker, checkpointState);
+    console.log(`  State: ${checkpointState}`);
+  } catch (err) {
+    // If checkpoint state transition fails (e.g., OP has no checkpoints), skip pause
+    console.log(`  Skipping checkpoint pause (${err.message})`);
+    console.log('');
+    return null;
+  }
+
+  // Write checkpoint data (data gaps, findings) for the frontend
+  const reportsDir = join(process.cwd(), '.thes1s', 'reports', ticker.toUpperCase());
+  const checkpointData = {
+    waveNumber,
+    sections: results.filter(r => r != null).map(r => r.key || 'unknown'),
+    dataGaps: [], // TODO: extract from agent results when available
+    budgetSummary: budgetSummary || null,
+    timestamp: new Date().toISOString(),
+  };
+  mkdirSync(reportsDir, { recursive: true });
+  writeFileSync(join(reportsDir, `checkpoint-${waveNumber}-data.json`), JSON.stringify(checkpointData, null, 2));
+
+  // Pause and wait for PM response
+  const response = await waitForCheckpointResponse(ticker, waveNumber);
+
+  if (response.action === 'rerun') {
+    console.log(`  Re-running wave ${waveNumber}...`);
+    // Advance back to WAVE_N_RUNNING for the re-run
+    try { advanceState(ticker, `WAVE_${waveNumber}_RUNNING`); } catch { /* state may not support this */ }
+    // Return 'rerun' as feedback — pipelineManager will need to handle this
+    return '__RERUN__';
+  }
+
+  // Continue — advance state to next wave
+  const nextWave = waveNumber + 1;
+  const nextWaveState = `WAVE_${nextWave}_RUNNING`;
+  try {
+    advanceState(ticker, nextWaveState);
+    updatePhaseStatus(ticker, nextWave, 'active');
+  } catch {
+    // If next wave doesn't exist (last checkpoint), advance to SYNTHESIS
+    try { advanceState(ticker, 'SYNTHESIS'); } catch { /* non-critical */ }
+  }
+
+  // Mark next wave sections as running
   console.log('');
-  return null; // No PM feedback in automated mode
+  return response.comments || null; // PM feedback text folded into next wave
 };
 
 // Shared DataPacket assembly + filing pre-processing
@@ -171,7 +270,23 @@ async function main() {
   console.log(`Stage: ${stage}`);
   console.log(`Started: ${new Date().toISOString()}\n`);
 
+  // Initialize progress tracking for the UI
+  try {
+    createProgress(ticker, stage);
+    initGenerationStatus(ticker, stage);
+    advanceState(ticker, 'DATA_ASSEMBLY');
+    console.log('Progress tracking initialized\n');
+  } catch (err) {
+    console.warn(`Progress init warning: ${err.message}`);
+  }
+
   const { dataPacket, assemblyTime } = await assembleAndPreprocess();
+
+  // Advance state to first wave
+  try {
+    advanceState(ticker, 'WAVE_1_RUNNING');
+    updatePhaseStatus(ticker, 1, 'active');
+  } catch { /* non-critical */ }
 
   // Run pipeline
   console.log(`Running ${stage} pipeline...\n`);
@@ -186,6 +301,12 @@ async function main() {
     process.exit(1);
   }
   const pipelineTime = ((Date.now() - startPipeline) / 1000).toFixed(1);
+
+  // Mark generation complete in progress tracking
+  try {
+    advanceState(ticker, 'COMPLETE');
+    updateGenerationStatus(ticker, { state: 'COMPLETE' });
+  } catch { /* non-critical */ }
 
   // Normalize section schemas for consistency across tickers (per D-07)
   if (result.sections) {
@@ -318,6 +439,15 @@ async function runAllStages() {
   console.log('STAGE 1: ONE PAGER');
   console.log('='.repeat(60) + '\n');
 
+  // Initialize progress tracking for One Pager
+  try {
+    createProgress(ticker, 'onePager');
+    initGenerationStatus(ticker, 'onePager');
+    advanceState(ticker, 'DATA_ASSEMBLY');
+    advanceState(ticker, 'WAVE_1_RUNNING');
+    updatePhaseStatus(ticker, 1, 'active');
+  } catch (err) { console.warn(`OP progress init: ${err.message}`); }
+
   const opStart = Date.now();
   let opResult;
   try {
@@ -329,6 +459,12 @@ async function runAllStages() {
   }
   const opTime = ((Date.now() - opStart) / 1000).toFixed(1);
   console.log(`One Pager completed in ${opTime}s`);
+
+  // Mark OP complete in progress tracking
+  try {
+    advanceState(ticker, 'COMPLETE');
+    updateGenerationStatus(ticker, { state: 'COMPLETE' });
+  } catch { /* non-critical */ }
 
   // Normalize OP sections (per D-07)
   if (opResult.sections) {
@@ -368,6 +504,15 @@ async function runAllStages() {
   console.log('STAGE 2: PITCH DECK');
   console.log('='.repeat(60) + '\n');
 
+  // Initialize progress tracking for Pitch Deck
+  try {
+    createProgress(ticker, 'pitchDeck');
+    initGenerationStatus(ticker, 'pitchDeck');
+    advanceState(ticker, 'DATA_ASSEMBLY');
+    advanceState(ticker, 'WAVE_1_RUNNING');
+    updatePhaseStatus(ticker, 1, 'active');
+  } catch (err) { console.warn(`PD progress init: ${err.message}`); }
+
   const pdStart = Date.now();
   let pdResult;
   try {
@@ -379,6 +524,12 @@ async function runAllStages() {
   }
   const pdTime = ((Date.now() - pdStart) / 1000).toFixed(1);
   console.log(`Pitch Deck completed in ${pdTime}s`);
+
+  // Mark PD complete in progress tracking
+  try {
+    advanceState(ticker, 'COMPLETE');
+    updateGenerationStatus(ticker, { state: 'COMPLETE' });
+  } catch { /* non-critical */ }
 
   // Normalize PD sections (per D-07)
   if (pdResult.sections) {
@@ -444,6 +595,15 @@ async function runAllStages() {
   dataPacket.pitchDeckSections = pdResult.sections || [];
   console.log(`Injected ${dataPacket.pitchDeckSections.length} Pitch Deck sections into DataPacket\n`);
 
+  // Initialize progress tracking for Full Story
+  try {
+    createProgress(ticker, 'fullStory');
+    initGenerationStatus(ticker, 'fullStory');
+    advanceState(ticker, 'DATA_ASSEMBLY');
+    advanceState(ticker, 'WAVE_1_RUNNING');
+    updatePhaseStatus(ticker, 1, 'active');
+  } catch (err) { console.warn(`FS progress init: ${err.message}`); }
+
   const fsStart = Date.now();
   let fsResult;
   try {
@@ -455,6 +615,12 @@ async function runAllStages() {
   }
   const fsTime = ((Date.now() - fsStart) / 1000).toFixed(1);
   console.log(`Full Story completed in ${fsTime}s`);
+
+  // Mark FS complete in progress tracking
+  try {
+    advanceState(ticker, 'COMPLETE');
+    updateGenerationStatus(ticker, { state: 'COMPLETE' });
+  } catch { /* non-critical */ }
 
   // Normalize FS sections (per D-07)
   if (fsResult.sections) {
