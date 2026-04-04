@@ -22,7 +22,7 @@ v1.3 builds the in-app presentation layer for viewing, navigating, and interacti
 - [x] **Phase 20: Full Story Core Viewer** - Build FullStory.jsx shell with gate check, hero header, section rendering, quality scores, and approval bar (completed 2026-04-03)
 - [x] **Phase 21: Checklist & Debate Renderers** - Build ChecklistRenderer for scored checklists and DebateRenderer for adversarial debate with step-specific sub-components (completed 2026-04-03)
 - [x] **Phase 22: Stage Gating & Navigation** - Wire approval gates across all stages, build ReportsList for discovery, fix route highlighting, add stage progress overview (completed 2026-04-03)
-- [ ] **Phase 23: Delight Feature Wiring** - Connect DeepDivePanel, AssumptionTracker, IndustryCard, and Bull/Bear toggle to report data
+- [ ] **Phase 23: Delight Feature Wiring** - Wire DeepDivePanel with on-demand Claude API, build Promise Tracker section, wire IndustryCard glossary tooltips
 
 ## Phase Details
 
@@ -114,17 +114,16 @@ Plans:
 **Requirements**: DLT-01, DLT-02, DLT-03, DLT-04
 **Success Criteria** (what must be TRUE):
   1. User clicks "Tell me more" on a notable claim and sees expanded analysis in a slide-out panel
-  2. User opens the assumption tracker sidebar and sees key assumptions with confidence levels and which sections each assumption affects
+  2. User views the Management Promise Tracker section and sees promises with KEPT/BROKEN/PARTIAL/PENDING status badges and expandable evidence
   3. User hovers an underlined industry term and sees a glossary tooltip with definition and benchmark data
-  4. User can toggle between Bull and Bear narrative perspectives on the Full Story, changing the emphasis of the overall presentation
-**Plans**: TBD
+  4. User can view Bull and Bear perspectives via the existing DebateRenderer tabs (DLT-04 covered by Phase 21)
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 23-01: Wire DeepDivePanel to pre-computed deep-dive content
-- [ ] 23-02: Wire AssumptionTracker to report JSON assumptions array
-- [ ] 23-03: Build glossary data source and wire IndustryCard term detection
-- [ ] 23-04: Build Bull/Bear narrative toggle for Full Story
+- [ ] 23-01-PLAN.md — Deep dive engine + ReportMarkdown/SectionRenderer enhancement for claims and glossary + DeepDivePanel Go Deeper button
+- [ ] 23-02-PLAN.md — PromiseStatusBadge + PromiseTracker section component with aggregate bar and timeline cards
+- [ ] 23-03-PLAN.md — Wire deep dive, glossary, and Promise Tracker into FullStory.jsx and PitchDeck.jsx viewers
 
 ## Progress
 
@@ -138,4 +137,4 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23
 | 20. Full Story Core Viewer | 2/2 | Complete    | 2026-04-03 |
 | 21. Checklist & Debate Renderers | 3/3 | Complete    | 2026-04-03 |
 | 22. Stage Gating & Navigation | 1/2 | Complete    | 2026-04-03 |
-| 23. Delight Feature Wiring | 0/4 | Not started | - |
+| 23. Delight Feature Wiring | 0/3 | Not started | - |
