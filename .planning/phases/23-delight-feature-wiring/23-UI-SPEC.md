@@ -41,7 +41,12 @@ Declared values (must be multiples of 4):
 | 2xl | 48px | Major section breaks |
 | 3xl | 64px | Not used this phase |
 
-Exceptions: none. All spacing values in this phase use existing project conventions observed in SectionRenderer (16px/20px card padding), ChecklistRenderer (8px item padding, 12px gap), and DeepDivePanel (16px padding).
+Exceptions (sub-4px and non-scale values retained for codebase consistency):
+
+| Value | Component | Justification |
+|-------|-----------|---------------|
+| 2px (vertical) | Category badge `padding: 2px 8px` | Matches established pattern in ConfidenceBadge, ResearchList stage pills, Validation badges, DebateRenderer round badges, Competitors score badges, and Watchlists badges -- all use `2px 8px`. |
+| 3px (vertical), 10px (horizontal) | Status badge `padding: 3px 10px` | Matches VerdictBadge (line 57: `isLarge ? '6px 16px' : '3px 10px'`), ResearchList stage pills (lines 150, 169, 190), ReportsList (line 87), Insiders (line 369), StockAtGlance (line 212), and FullStory (line 42). Changing would create visual inconsistency with 15+ existing badge instances. |
 
 ---
 
@@ -53,6 +58,8 @@ Exceptions: none. All spacing values in this phase use existing project conventi
 | Label | 10px | 700 | 1.0 |
 | Subhead | 12px | 700 | 1.5 |
 | Heading | 16px | 700 | 1.2 |
+
+Two weights only: 400 (regular) and 700 (bold).
 
 Source: Extracted from existing components. All Phase 23 components use these four tiers exactly:
 - **Body** (13px/400/1.7): Narrative text, evidence, deep dive content, promise quotes, glossary definitions. Matches SectionRenderer narrative and ChecklistRenderer evidence.
@@ -72,7 +79,7 @@ Source: Extracted from existing components. All Phase 23 components use these fo
 | Destructive | `C.red` | BROKEN promise badge background, FAIL verdict badge |
 
 Accent reserved for:
-1. "Tell me more" link text color in narrative
+1. "Tell me more" link text color
 2. "Go Deeper" button background
 3. Glossary term dashed underline color (using `C.accent` at 40% opacity for subtlety)
 4. Deep dive loading spinner top-border color (existing pattern from DeepDivePanel)
@@ -86,7 +93,7 @@ Accent reserved for:
 | BROKEN | `C.red` | `#fff` | Promise status badge, segmented bar segment |
 | PENDING | `C.badge` | `C.badgeText` | Promise status badge, segmented bar segment (neutral) |
 
-Source: Matches VerdictBadge PASS/PARTIAL/FAIL pattern exactly. PENDING uses the neutral badge style (same as existing `C.badge`/`C.badgeText`).
+Source: Matches VerdictBadge PASS/FAIL/PARTIAL/REVIEW pattern exactly. PENDING uses the neutral badge style (same as existing `C.badge`/`C.badgeText`).
 
 ---
 
@@ -100,7 +107,7 @@ Source: Matches VerdictBadge PASS/PARTIAL/FAIL pattern exactly. PENDING uses the
 |----------|---------------|
 | Element | `<span>` with click handler, styled as inline link |
 | Text color | `C.accent` |
-| Font | 13px, weight 600 (semibold to distinguish from body) |
+| Font | 13px, weight 700 |
 | Cursor | `pointer` |
 | Hover | Underline via `textDecoration: 'underline'` |
 | Icon | None (text-only link, avoid visual clutter in narrative) |
@@ -169,10 +176,10 @@ Each promise renders as a timeline card. Cards display in chronological order (o
 
 | Property | Specification |
 |----------|---------------|
-| Card container | `border: 1px solid C.borderLight`, `borderRadius: 6px`, `padding: 8px 12px`, `marginBottom: 8px` |
+| Card container | `border: 1px solid C.borderLight`, `borderRadius: 6px`, `padding: 8px 16px`, `marginBottom: 8px` |
 | Quarter tag | 12px, weight 700, `C.textMuted` (e.g., "Q3 2024") |
-| Category badge | 10px, weight 700, uppercase, `C.badge` bg, `C.badgeText` color, `padding: 2px 8px`, `borderRadius: 4px` |
-| Status badge | Pill badge matching VerdictBadge pattern: `padding: 3px 10px`, `borderRadius: 9999`, `fontSize: 11`, `fontWeight: 700`, uppercase. Colors per status table above. |
+| Category badge | 10px, weight 700, uppercase, `C.badge` bg, `C.badgeText` color, `padding: 2px 8px`, `borderRadius: 4px`. Exception: 2px vertical padding per Spacing Exceptions table. |
+| Status badge | Pill badge matching VerdictBadge pattern: `padding: 3px 10px`, `borderRadius: 9999`, `fontSize: 11`, `fontWeight: 700`, uppercase. Colors per status table above. Exception: 3px/10px per Spacing Exceptions table. |
 | Quote text | 13px, weight 400, `C.text`, `lineHeight: 1.7`, `fontStyle: italic` |
 | Expand/collapse | Chevron icon (11px, `C.textMuted`, rotates 90deg on expand). Same pattern as ChecklistRenderer items. |
 | Expanded evidence | 13px, `C.textSecondary`, `lineHeight: 1.7`, `paddingLeft: 20px`, `paddingTop: 8px`. Shows "What they said" vs "What happened" comparison. |
@@ -271,31 +278,31 @@ Source: VerdictBadge already supports PASS, FAIL, PARTIAL, REVIEW with matching 
 ### Deep Dive Flow
 
 ```
-Narrative text → "Tell me more" link → DeepDivePanel opens (right slide-out)
-  → Loading spinner (3-5s) → Content renders
-  → "Go Deeper" button → Loading → Appended content (separator line)
-  → Depth 3 reached → Button disabled
-  → Close (Escape / click overlay / X button) → Content persisted in report JSON
+Narrative text -> "Tell me more" link -> DeepDivePanel opens (right slide-out)
+  -> Loading spinner (3-5s) -> Content renders
+  -> "Go Deeper" button -> Loading -> Appended content (separator line)
+  -> Depth 3 reached -> Button disabled
+  -> Close (Escape / click overlay / X button) -> Content persisted in report JSON
 ```
 
 ### Promise Tracker Flow
 
 ```
-Full Story section nav → Click "Promise Tracker" → Scroll to section
-  → View aggregate bar (KEPT/PARTIAL/BROKEN proportions)
-  → Click timeline card → Expand evidence (what said vs what happened)
-  → Click again → Collapse
-  → Keyboard: Enter/Space toggles expand
+Full Story section nav -> Click "Promise Tracker" -> Scroll to section
+  -> View aggregate bar (KEPT/PARTIAL/BROKEN proportions)
+  -> Click timeline card -> Expand evidence (what said vs what happened)
+  -> Click again -> Collapse
+  -> Keyboard: Enter/Space toggles expand
 ```
 
 ### Glossary Flow
 
 ```
-Narrative text → Dashed-underline term → Hover (underline darkens)
-  → Click → IndustryCard popover below term
-  → Read definition + benchmarks
-  → Click-outside → Popover closes
-  → Click another term → Previous closes, new opens
+Narrative text -> Dashed-underline term -> Hover (underline darkens)
+  -> Click -> IndustryCard popover below term
+  -> Read definition + benchmarks
+  -> Click-outside -> Popover closes
+  -> Click another term -> Previous closes, new opens
 ```
 
 ### State Management
