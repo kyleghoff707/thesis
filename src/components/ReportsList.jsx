@@ -156,7 +156,7 @@ export default function ReportsList({ reports, getReport, createReport }) {
         }}>
           <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>No reports generated yet</div>
           <div style={{ fontSize: 13, color: C.textMuted }}>
-            Use /generate:one-pager TICKER from Claude Code to generate your first One Pager.
+            Search a ticker in the Research tab and click Generate One Pager to start.
           </div>
         </div>
       )}
