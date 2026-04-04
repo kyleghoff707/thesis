@@ -57,11 +57,10 @@ Exceptions:
 |------|------|--------|-------------|-------------------|
 | Body | 13px | 400 | 1.5-1.7 | Comment text, data gap descriptions, dialog body copy |
 | Label | 11px | 600 | 1.3 | Column headers, badge labels, uppercase meta text (`letterSpacing: 0.04em`, `textTransform: uppercase`) |
-| Heading | 16px | 700 | 1.2 | Section titles, panel titles, checkpoint panel header |
-| Subheading | 15px | 600 | 1.3 | Empty state heading, dialog title |
-| Display | 18px | 700 | 1.2 | Page-level headings (e.g., "Checkpoint Review") |
+| Heading | 16px | 600 | 1.2 | Section titles, panel titles, checkpoint panel header, empty state heading, dialog title |
+| Display | 18px | 600 | 1.2 | Page-level headings (e.g., "Checkpoint Review") |
 
-**Source:** Existing codebase conventions. 13px body (CLAUDE.md), 11px labels (CompanyHeader line 19, ResearchList line 97), 16px section titles (SectionRenderer line 131), 18px page headings (ResearchList line 76).
+**Source:** Existing codebase conventions. 13px body (CLAUDE.md), 11px labels (CompanyHeader line 19, ResearchList line 97), 16px section titles (SectionRenderer line 131), 18px page headings (ResearchList line 76). Weights collapsed to 400 (body) + 600 (emphasis) per checker feedback.
 
 ---
 
@@ -106,7 +105,7 @@ Exceptions:
 
 | Component | Change |
 |-----------|--------|
-| `SectionRenderer.jsx` | Add optional `onCommentClick` + `commentCount` props. Render comment icon in header badge row. |
+| `SectionRenderer.jsx` | Add optional `onCommentClick` + `commentCount` props. Render comment icon button (with `aria-label="Toggle section comments"`) in header badge row. |
 | `CompanyHeader.jsx` | No changes (GenerateButton rendered separately by Toolbox) |
 | `Toolbox.jsx` | Render GenerateButton alongside CompanyHeader |
 | `ResearchList.jsx` | Add "View Reports" button in action column |
@@ -162,13 +161,14 @@ Exceptions:
 
 ### IC-02: Toggle-to-Show Comment Box
 
-**Trigger:** Click on comment icon in SectionRenderer header
+**Trigger:** Click on comment icon button in SectionRenderer header
 **Behavior:** Comment area slides open below the section header (above narrative content). Uses CollapsibleSection animation pattern (scrollHeight measurement + 280ms CSS transition).
 
-**Comment icon spec:**
+**Comment icon button spec:**
 - SVG: 14px chat-bubble icon, stroke-based, 2px stroke
 - Color: `C.textMuted` when no comments, `C.accent` when comments exist
-- Badge: If `commentCount > 0`, show count in a 16px circle badge (background `C.accent`, color `#fff`, fontSize 10px, fontWeight 700) positioned top-right of icon (-4px offset)
+- `aria-label="Toggle section comments"`
+- Badge: If `commentCount > 0`, show count in a 16px circle badge (background `C.accent`, color `#fff`, fontSize 10px, fontWeight 600) positioned top-right of icon (-4px offset)
 - Click area: 28px square minimum touch target
 
 **Expanded comment area spec:**
@@ -187,11 +187,11 @@ Exceptions:
 
 **Attach File button:** Ghost button (transparent background, `1px solid ${C.border}`, borderRadius 6px, fontSize 11px, fontWeight 600, color `C.textSecondary`). Native `<input type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xlsx">` hidden behind it.
 
-**Save Comment button:** Primary button (background `C.accent`, color `#fff`, borderRadius 6px, padding `6px 16px`, fontSize 11px, fontWeight 600).
+**Save Comment button:** Primary button (background `C.accent`, color `#fff`, borderRadius 6px, padding `8px 16px`, fontSize 11px, fontWeight 600).
 
 **File attachment chips:**
-- Background: `C.badge`, borderRadius 4px, padding `2px 8px`
-- Text: fontSize 11px, color `C.text`, fontWeight 500
+- Background: `C.badge`, borderRadius 4px, padding `4px 8px`
+- Text: fontSize 11px, color `C.text`, fontWeight 400
 - Size label: fontSize 10px, color `C.textMuted`
 - Remove [x]: 14px, color `C.textMuted`, hover `C.red`, cursor pointer
 
@@ -256,7 +256,7 @@ Exceptions:
 | PD generated, not approved | "View Pitch Deck" | Ghost (border `C.accent`, color `C.accent`) | Navigate to `/reports/{ticker}/pitch-deck` |
 | PD approved, no FS | "Generate Full Story" | Primary (bg `C.accent`, color `#fff`) | Open ConfirmGenerateDialog |
 | FS generated, not approved | "View Full Story" | Ghost (border `C.accent`, color `C.accent`) | Navigate to `/reports/{ticker}/full-story` |
-| FS approved | "View Full Story" | Ghost (border `C.accent`, color `C.accent`) | Navigate to `/reports/{ticker}/full-story` |
+| FS approved | "View Full Story" | Ghost (border `C.accent`, color `#fff`) | Navigate to `/reports/{ticker}/full-story` |
 | Generation in progress | "Generating..." | Disabled (bg `C.badge`, color `C.badgeText`) | None (shows spinner) |
 
 **Primary button spec:** Background `C.accent`, color `#fff`, padding `8px 20px`, borderRadius 6px, fontSize 13px, fontWeight 600, cursor pointer. Hover: `C.accentHover`.
@@ -286,7 +286,7 @@ Exceptions:
 |  Full Story). The whole pipeline takes     |
 |  much longer -- by design.               |
 |                                           |
-|               [Cancel]  [Generate]        |
+|       [Never Mind]  [Generate One Pager]  |
 +------------------------------------------+
 ```
 
@@ -299,7 +299,7 @@ Exceptions:
 - BoxShadow: `0 8px 32px rgba(0,0,0,0.15)`
 - Position: fixed, top 50%, left 50%, transform translate(-50%, -50%), zIndex 1001
 
-**Dialog title:** fontSize 16px, fontWeight 700, color `C.text`, marginBottom 16px.
+**Dialog title:** fontSize 16px, fontWeight 600, color `C.text`, marginBottom 16px.
 
 **Dialog body:** fontSize 13px, color `C.textSecondary`, lineHeight 1.6.
 
@@ -311,17 +311,17 @@ Exceptions:
 | Pitch Deck | "Generate Pitch Deck for {TICKER}" | "~15-25 minutes, ~$4-6" | "This is a deep 10-section business analysis. You will review at checkpoints between each wave." |
 | Full Story | "Generate Full Story for {TICKER}" | "~10-15 minutes, ~$3-4" | "This is the final conviction gate. Includes checklists, adversarial debate, and valuation confirmation." |
 
-**Cancel button:** Ghost style (transparent background, `1px solid ${C.border}`, color `C.textSecondary`, borderRadius 6px, padding `8px 20px`, fontSize 13px, fontWeight 600).
+**Never Mind button:** Ghost style (transparent background, `1px solid ${C.border}`, color `C.textSecondary`, borderRadius 6px, padding `8px 20px`, fontSize 13px, fontWeight 600).
 
-**Generate button:** Primary accent style (background `C.accent`, color `#fff`, borderRadius 6px, padding `8px 20px`, fontSize 13px, fontWeight 600). Hover: `C.accentHover`.
+**Generate button (stage-specific label):** Label is "Generate One Pager" / "Generate Pitch Deck" / "Generate Full Story" matching the stage. Primary accent style (background `C.accent`, color `#fff`, borderRadius 6px, padding `8px 20px`, fontSize 13px, fontWeight 600). Hover: `C.accentHover`.
 
-**Close behavior:** Escape key, overlay click, or Cancel button. Same pattern as DeepDivePanel.
+**Close behavior:** Escape key, overlay click, or Never Mind button. Same pattern as DeepDivePanel.
 
 ### IC-07: Cross-Navigation Buttons
 
 **ResearchList "View Reports" button:**
 - Placement: In the action column (before the Delete button), same row
-- Style: Ghost button (transparent background, `1px solid ${C.border}`, borderRadius 6px, padding `3px 10px`, fontSize 11px, fontWeight 600, color `C.accent`)
+- Style: Ghost button (transparent background, `1px solid ${C.border}`, borderRadius 6px, padding `4px 8px`, fontSize 11px, fontWeight 600, color `C.accent`)
 - Hover: background `C.accentLight`, borderColor `C.accent`
 - Action: `navigate('/reports')` (navigates to Reports tab; user scans for ticker)
 - Always visible: Show for all research rows regardless of report existence. If no reports exist for that ticker, user sees the Reports empty state.
@@ -339,6 +339,8 @@ Exceptions:
 | Element | Copy |
 |---------|------|
 | Primary CTA | "Generate One Pager" / "Generate Pitch Deck" / "Generate Full Story" (contextual per stage) |
+| Dialog dismiss | "Never Mind" (all dialog dismiss buttons) |
+| Dialog confirm | "Generate One Pager" / "Generate Pitch Deck" / "Generate Full Story" (matches primary CTA, stage-specific) |
 | Empty state heading (checkpoint) | "No checkpoint data" |
 | Empty state body (checkpoint) | "Checkpoint data will appear here when a pipeline wave completes." |
 | Empty state heading (reports cross-nav) | "No reports yet" |
@@ -346,7 +348,7 @@ Exceptions:
 | Error state (generation fail) | "Generation failed. Check your API key in Settings and try again." |
 | Error state (checkpoint load fail) | "Could not load checkpoint data. The pipeline may still be running -- try refreshing." |
 | Error state (file too large) | "File exceeds 10MB limit. Choose a smaller file or compress it first." |
-| Destructive: Re-run Wave | "Re-run Wave {N}" confirmation: "This will re-generate all sections in Wave {N} using your feedback. Previously generated content for this wave will be replaced. Continue?" |
+| Destructive: Re-run Wave | Inline confirmation: "Re-run Wave {N}" (confirm) / "Keep Current" (dismiss). Confirmation text: "This will re-generate all sections in Wave {N} using your feedback. Previously generated content for this wave will be replaced." |
 | Checkpoint continue | "Continue to Wave {N+1}" or "Continue to Completion" |
 | Data gap prompt | "Paste URL to data source..." (placeholder) |
 | Comment placeholder | "Leave feedback for the analyst team..." (placeholder) |
@@ -370,7 +372,7 @@ Exceptions:
 | File attached | Chip with filename + size + remove [x] |
 | File upload error | Inline red text below attach button |
 | Continue clicked | Button disabled + spinner, "Advancing..." label |
-| Re-run clicked | Confirmation inline (same pattern as ResearchList delete: "Are you sure?" with Yes/Cancel) |
+| Re-run clicked | Inline confirmation: "Re-run Wave {N}" (confirm button) / "Keep Current" (dismiss button) |
 
 ### Generate Button States
 
@@ -386,8 +388,8 @@ Exceptions:
 
 | State | Visual Treatment |
 |-------|-----------------|
-| Open | Overlay + centered dialog, Generate button enabled |
-| Generating (after confirm) | Generate button disabled + spinner, "Starting pipeline..." label, dialog remains open until POST returns |
+| Open | Overlay + centered dialog, "Generate {Stage}" button enabled, "Never Mind" button enabled |
+| Generating (after confirm) | "Generate {Stage}" button disabled + spinner, "Starting pipeline..." label, dialog remains open until POST returns |
 | Error | Red text below dialog body: "Failed to start generation. {error message}" |
 | Success | Dialog closes, GenerateButton transitions to "Generating..." disabled state |
 
