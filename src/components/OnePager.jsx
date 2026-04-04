@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { C } from '../theme';
 import { useOnePager } from '../hooks/useOnePager';
@@ -42,7 +42,13 @@ export default function OnePager({ getReport, updateReport }) {
   const { id } = useParams();
   const report = getReport ? getReport(id) : null;
   const { report: onePagerData, progress, loading, error } = useOnePager(report?.ticker);
-  const mountTimeRef = useRef(Date.now());
+
+  // Grace period: show spinner for 5s after mount to let pipeline write progress.json
+  const [graceActive, setGraceActive] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setGraceActive(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Scroll spy for active section tracking (shared hook, D-07/D-09)
   const sectionKeysForSpy = onePagerData?.sectionKeys || onePagerData?.sections?.map(s => s.key) || [];
@@ -65,11 +71,9 @@ export default function OnePager({ getReport, updateReport }) {
     );
   }
 
-  // Grace period: avoid showing empty state if we just navigated here
-  // (pipeline may not have written progress.json yet)
-  const recentlyNavigated = Date.now() - mountTimeRef.current < 5000;
+  // Empty state — no report data and no progress (not generating)
   if (!onePagerData && !progress) {
-    if (recentlyNavigated) {
+    if (graceActive) {
       return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40vh', gap: 10 }}>
           <Spinner />
