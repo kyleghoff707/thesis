@@ -76,7 +76,7 @@ export default function OnePager({ getReport, updateReport }) {
       }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>No One Pager generated yet</div>
         <div style={{ fontSize: 13, color: C.textMuted }}>
-          Run /generate:one-pager {report?.ticker || 'TICKER'} to create one.
+          Go to the Research tab and click Generate One Pager to start.
         </div>
       </div>
     );
