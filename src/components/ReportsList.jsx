@@ -190,6 +190,26 @@ export default function ReportsList({ reports, getReport, createReport }) {
               <div style={{ fontSize: 13, color: C.textSecondary, marginTop: 2 }}>
                 {report?.companyName || ticker}
               </div>
+              {(() => {
+                const matchingReport = findReport(ticker);
+                if (!matchingReport) return null;
+                return (
+                  <span
+                    onClick={(e) => { e.stopPropagation(); navigate(`/research/${matchingReport.id}`); }}
+                    style={{
+                      fontSize: 12,
+                      color: C.accent,
+                      cursor: 'pointer',
+                      display: 'inline-block',
+                      marginTop: 2,
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                    onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                  >
+                    View Toolbox
+                  </span>
+                );
+              })()}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {STAGE_DEFS.map(stageDef => {
