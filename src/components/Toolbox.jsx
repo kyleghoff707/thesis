@@ -67,17 +67,18 @@ export default function Toolbox({ getReport, updateReport, settings }) {
   const { events: companyEvents, loading: eventsLoading, error: eventsError, irLink, irLinkIsDirect } = useCompanyEvents(ticker, company?.website, company?.name);
   const { triggerGeneration, generating, generationError } = useGeneratePipeline(ticker);
 
-  // Stage availability for GenerateButton — re-fetches when generation state changes
+  // Stage availability for GenerateButton — re-fetches when ticker or generation state changes
   const [stageAvailability, setStageAvailability] = useState(null);
   useEffect(() => {
     if (!ticker) return;
+    setStageAvailability(null); // Reset immediately to avoid showing stale data from previous ticker
     let cancelled = false;
     fetch('/api/thes1s/reports')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (cancelled || !data) return;
         const match = data.tickers?.find(t => t.ticker === ticker.toUpperCase());
-        if (match) setStageAvailability(match.stages);
+        setStageAvailability(match ? match.stages : null);
       })
       .catch(() => {});
     return () => { cancelled = true; };
