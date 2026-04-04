@@ -566,7 +566,6 @@ function thes1sReportsPlugin() {
           }
 
           // --- POST /api/thes1s/reports/:ticker/generate/:stage — Trigger pipeline generation ---
-          // TODO: Replace 501 with child_process.spawn when pipeline CLI entry point is ready
           if (parts[1] === 'generate' && req.method === 'POST') {
             const stage = parts[2];
             const validStages = ['one-pager', 'pitch-deck', 'full-story'];
@@ -575,13 +574,27 @@ function thes1sReportsPlugin() {
               res.end(JSON.stringify({ error: `Invalid stage: ${stage}. Must be one of: ${validStages.join(', ')}` }));
               return;
             }
-            res.writeHead(501, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({
-              status: 'not-implemented',
-              message: 'Pipeline CLI integration pending. Use /generate:{stage} {TICKER} skill for now.',
-              ticker,
-              stage,
-            }));
+            // Map URL stage names to pipeline script stage names
+            const stageMap = { 'one-pager': 'onePager', 'pitch-deck': 'pitchDeck', 'full-story': 'fullStory' };
+            const pipelineStage = stageMap[stage];
+            try {
+              const { spawn } = await import('child_process');
+              const child = spawn('node', [
+                '--loader', './scripts/node-esm-loader.js',
+                'scripts/run-pipeline.js', ticker, pipelineStage,
+              ], {
+                cwd: process.cwd(),
+                stdio: 'inherit',
+                detached: true,
+                env: { ...process.env },
+              });
+              child.unref();
+              res.writeHead(202, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ status: 'started', ticker, stage, pid: child.pid }));
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ status: 'error', message: err.message }));
+            }
             return;
           }
 
