@@ -13,6 +13,7 @@ import DeepDivePanel from './pitchDeck/DeepDivePanel';
 import IndustryCard from './pitchDeck/IndustryCard';
 import { formatTitle, formatRelativeTime, stateToLabel, verdictDotColor } from './reportHelpers';
 import Spinner from './Spinner';
+import CheckpointPanel from './CheckpointPanel';
 
 // --- Section definitions for the Pitch Deck (9 content sections, 3 phases) ---
 // overall_verdict is rendered as a hero banner, not a numbered section
@@ -36,6 +37,26 @@ const PHASE_LABELS = [
 
 // Phase boundary indexes: Phase 1 ends after index 2, Phase 2 after index 6
 const PHASE_BOUNDARIES = [2, 6]; // checkpoint after these indexes
+
+// --- Checkpoint detection helpers ---
+function isCheckpointState(state) {
+  return /^CHECKPOINT_\d+$/.test(state);
+}
+
+function getCheckpointNum(state) {
+  const match = state?.match(/^CHECKPOINT_(\d+)$/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+function getCheckpointSections(report, checkpointNum) {
+  if (!report?.sections) return [];
+  const sectionMap = {};
+  for (const s of report.sections) sectionMap[s.key] = s;
+  const endIdx = checkpointNum === 1 ? 2 : checkpointNum === 2 ? 6 : 8;
+  return SECTION_DEFS.slice(0, endIdx + 1)
+    .map(def => ({ ...sectionMap[def.key], key: def.key }))
+    .filter(s => s.title || s.narrative);
+}
 
 // --- Pure helper functions (exported via _testExports) ---
 
@@ -753,8 +774,34 @@ export default function PitchDeck({ getReport, updateReport }) {
         </div>
       )}
 
-      {/* Generation Status Panel */}
-      {generationStatus && (
+      {/* Checkpoint Review Panel — shown at mid-pipeline pauses */}
+      {progress && isCheckpointState(progress.state) && (
+        <CheckpointPanel
+          ticker={pitchDeckData?.ticker || report?.ticker}
+          checkpointNum={getCheckpointNum(progress.state)}
+          sections={getCheckpointSections(pitchDeckData, getCheckpointNum(progress.state))}
+          dataGaps={progress.checkpoints?.[getCheckpointNum(progress.state) - 1]?.dataGaps || []}
+          totalSections={SECTION_DEFS.length}
+          elapsedMs={progress.startedAt ? Date.now() - new Date(progress.startedAt).getTime() : (progress.elapsedMs || 0)}
+          onContinue={() => {
+            fetch(`/api/thes1s/reports/${encodeURIComponent(pitchDeckData?.ticker || report?.ticker)}/checkpoint`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ checkpointPhase: getCheckpointNum(progress.state), action: 'continue' }),
+            }).catch(() => {});
+          }}
+          onRerun={() => {
+            fetch(`/api/thes1s/reports/${encodeURIComponent(pitchDeckData?.ticker || report?.ticker)}/checkpoint`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ checkpointPhase: getCheckpointNum(progress.state), action: 'rerun' }),
+            }).catch(() => {});
+          }}
+        />
+      )}
+
+      {/* Generation Status Panel — shown during active wave generation (not at checkpoints) */}
+      {generationStatus && !isCheckpointState(progress?.state) && (
         <GenerationStatusPanel
           generationStatus={generationStatus}
           ticker={pitchDeckData?.ticker || report?.ticker}

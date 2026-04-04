@@ -15,6 +15,16 @@ import VerdictBadge from './VerdictBadge';
 import ConfidenceBadge from './ConfidenceBadge';
 import { formatTitle, formatRelativeTime, verdictDotColor } from './reportHelpers';
 import Spinner from './Spinner';
+import CheckpointPanel from './CheckpointPanel';
+
+function isCheckpointState(state) {
+  return /^CHECKPOINT_\d+$/.test(state);
+}
+
+function getCheckpointNum(state) {
+  const match = state?.match(/^CHECKPOINT_(\d+)$/);
+  return match ? parseInt(match[1], 10) : null;
+}
 
 // --- Section definitions for the Full Story (7 sections: 6 original + Promise Tracker) ---
 const SECTION_DEFS = [
@@ -450,6 +460,32 @@ export default function FullStory({ getReport, updateReport }) {
           </div>
         )}
       </div>
+
+      {/* Checkpoint Review Panel */}
+      {progress && isCheckpointState(progress.state) && (
+        <CheckpointPanel
+          ticker={fullStoryData?.ticker || report?.ticker}
+          checkpointNum={getCheckpointNum(progress.state)}
+          sections={(fullStoryData?.sections || []).map(s => ({ ...s, key: s.key || s.sectionKey }))}
+          dataGaps={progress.checkpoints?.[getCheckpointNum(progress.state) - 1]?.dataGaps || []}
+          totalSections={6}
+          elapsedMs={progress.startedAt ? Date.now() - new Date(progress.startedAt).getTime() : 0}
+          onContinue={() => {
+            fetch(`/api/thes1s/reports/${encodeURIComponent(fullStoryData?.ticker || report?.ticker)}/checkpoint`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ checkpointPhase: getCheckpointNum(progress.state), action: 'continue' }),
+            }).catch(() => {});
+          }}
+          onRerun={() => {
+            fetch(`/api/thes1s/reports/${encodeURIComponent(fullStoryData?.ticker || report?.ticker)}/checkpoint`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ checkpointPhase: getCheckpointNum(progress.state), action: 'rerun' }),
+            }).catch(() => {});
+          }}
+        />
+      )}
 
       {/* B. Two-Column Layout */}
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>

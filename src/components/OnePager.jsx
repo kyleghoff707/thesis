@@ -6,6 +6,16 @@ import SectionRenderer from './SectionRenderer.jsx';
 import VerdictBadge from './VerdictBadge.jsx';
 import { formatTitle, formatRelativeTime, stateToLabel, verdictDotColor } from './reportHelpers';
 import Spinner from './Spinner';
+import CheckpointPanel from './CheckpointPanel';
+
+function isCheckpointState(state) {
+  return /^CHECKPOINT_\d+$/.test(state);
+}
+
+function getCheckpointNum(state) {
+  const match = state?.match(/^CHECKPOINT_(\d+)$/);
+  return match ? parseInt(match[1], 10) : null;
+}
 
 // --- OnePager-specific helper functions ---
 
@@ -174,8 +184,34 @@ export default function OnePager({ getReport, updateReport }) {
         </div>
       </div>
 
-      {/* C. Progress Bar (visible during generation) */}
-      {progress && progress.state !== 'COMPLETE' && (
+      {/* Checkpoint Review Panel */}
+      {progress && isCheckpointState(progress.state) && (
+        <CheckpointPanel
+          ticker={onePagerData?.ticker || report?.ticker}
+          checkpointNum={getCheckpointNum(progress.state)}
+          sections={(onePagerData?.sections || []).map(s => ({ ...s, key: s.key || s.sectionKey }))}
+          dataGaps={progress.checkpoints?.[getCheckpointNum(progress.state) - 1]?.dataGaps || []}
+          totalSections={6}
+          elapsedMs={progress.startedAt ? Date.now() - new Date(progress.startedAt).getTime() : 0}
+          onContinue={() => {
+            fetch(`/api/thes1s/reports/${encodeURIComponent(onePagerData?.ticker || report?.ticker)}/checkpoint`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ checkpointPhase: getCheckpointNum(progress.state), action: 'continue' }),
+            }).catch(() => {});
+          }}
+          onRerun={() => {
+            fetch(`/api/thes1s/reports/${encodeURIComponent(onePagerData?.ticker || report?.ticker)}/checkpoint`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ checkpointPhase: getCheckpointNum(progress.state), action: 'rerun' }),
+            }).catch(() => {});
+          }}
+        />
+      )}
+
+      {/* C. Progress Bar (visible during generation, not at checkpoints) */}
+      {progress && progress.state !== 'COMPLETE' && !isCheckpointState(progress.state) && (
         <div style={{ marginBottom: 16 }}>
           <div style={{
             height: 4,
