@@ -496,6 +496,96 @@ function thes1sReportsPlugin() {
           }
 
           const ticker = parts[0].toUpperCase();
+          const tickerDir = path.join(reportsDir, ticker);
+
+          // --- POST /api/thes1s/reports/:ticker/checkpoint — Write checkpoint feedback to disk ---
+          if (parts[1] === 'checkpoint' && req.method === 'POST') {
+            const chunks = [];
+            req.on('data', chunk => chunks.push(chunk));
+            req.on('end', () => {
+              try {
+                const body = JSON.parse(Buffer.concat(chunks).toString());
+                const cpNum = body.checkpointPhase != null ? body.checkpointPhase : 0;
+                fs.mkdirSync(tickerDir, { recursive: true });
+                const cpPath = path.join(tickerDir, `checkpoint-${cpNum}.json`);
+                // Handle file attachments: write base64-encoded files to disk
+                if (Array.isArray(body.attachments)) {
+                  const attDir = path.join(tickerDir, 'attachments');
+                  fs.mkdirSync(attDir, { recursive: true });
+                  for (const att of body.attachments) {
+                    if (att.id && att.base64data) {
+                      fs.writeFileSync(path.join(attDir, att.id), Buffer.from(att.base64data, 'base64'));
+                    }
+                  }
+                }
+                fs.writeFileSync(cpPath, JSON.stringify(body, null, 2));
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ status: 'saved', path: `checkpoint-${cpNum}.json` }));
+              } catch (e) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Invalid JSON body: ' + e.message }));
+              }
+            });
+            return;
+          }
+
+          // --- GET /api/thes1s/reports/:ticker/checkpoint(/:num) — Read checkpoint feedback from disk ---
+          if (parts[1] === 'checkpoint' && req.method === 'GET') {
+            if (parts[2] != null) {
+              // Specific checkpoint: /TICKER/checkpoint/1
+              const cpPath = path.join(tickerDir, `checkpoint-${parts[2]}.json`);
+              if (!fs.existsSync(cpPath)) {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Checkpoint not found' }));
+                return;
+              }
+              const content = fs.readFileSync(cpPath, 'utf-8');
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(content);
+            } else {
+              // Latest checkpoint: scan for checkpoint-*.json, return highest number
+              if (!fs.existsSync(tickerDir)) {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'No checkpoints found' }));
+                return;
+              }
+              const files = fs.readdirSync(tickerDir).filter(f => /^checkpoint-\d+\.json$/.test(f));
+              if (files.length === 0) {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'No checkpoints found' }));
+                return;
+              }
+              const nums = files.map(f => parseInt(f.match(/checkpoint-(\d+)\.json/)[1], 10));
+              const latest = Math.max(...nums);
+              const cpPath = path.join(tickerDir, `checkpoint-${latest}.json`);
+              const content = fs.readFileSync(cpPath, 'utf-8');
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(content);
+            }
+            return;
+          }
+
+          // --- POST /api/thes1s/reports/:ticker/generate/:stage — Trigger pipeline generation ---
+          // TODO: Replace 501 with child_process.spawn when pipeline CLI entry point is ready
+          if (parts[1] === 'generate' && req.method === 'POST') {
+            const stage = parts[2];
+            const validStages = ['one-pager', 'pitch-deck', 'full-story'];
+            if (!stage || !validStages.includes(stage)) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: `Invalid stage: ${stage}. Must be one of: ${validStages.join(', ')}` }));
+              return;
+            }
+            res.writeHead(501, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+              status: 'not-implemented',
+              message: 'Pipeline CLI integration pending. Use /generate:{stage} {TICKER} skill for now.',
+              ticker,
+              stage,
+            }));
+            return;
+          }
+
+          // --- Existing GET routes via fileMap ---
           const fileType = parts[1];
           const fileMap = {
             'one-pager': 'one-pager.json',
