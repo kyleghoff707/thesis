@@ -67,7 +67,7 @@ export default function Toolbox({ getReport, updateReport, settings }) {
   const { events: companyEvents, loading: eventsLoading, error: eventsError, irLink, irLinkIsDirect } = useCompanyEvents(ticker, company?.website, company?.name);
   const { triggerGeneration, generating, generationError } = useGeneratePipeline(ticker);
 
-  // Stage availability for GenerateButton (fetched once on mount)
+  // Stage availability for GenerateButton — re-fetches when generation state changes
   const [stageAvailability, setStageAvailability] = useState(null);
   useEffect(() => {
     if (!ticker) return;
@@ -81,7 +81,7 @@ export default function Toolbox({ getReport, updateReport, settings }) {
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [ticker]);
+  }, [ticker, generating]);
 
   // Find gurus holding this ticker
   const gurusHoldingTicker = useMemo(() => {
