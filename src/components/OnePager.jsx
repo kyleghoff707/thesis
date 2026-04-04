@@ -20,7 +20,7 @@ function getCheckpointNum(state) {
 
 // Title-case a snake_case section key: "company_info" → "Company Info"
 function titleCase(key) {
-  return titleCase(key).replace(/\b\w/g, c => c.toUpperCase());
+  return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
 // --- OnePager-specific helper functions ---
