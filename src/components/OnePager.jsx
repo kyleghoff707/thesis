@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { C } from '../theme';
 import { useOnePager } from '../hooks/useOnePager';
@@ -41,6 +42,7 @@ export default function OnePager({ getReport, updateReport }) {
   const { id } = useParams();
   const report = getReport ? getReport(id) : null;
   const { report: onePagerData, progress, loading, error } = useOnePager(report?.ticker);
+  const mountTimeRef = useRef(Date.now());
 
   // Scroll spy for active section tracking (shared hook, D-07/D-09)
   const sectionKeysForSpy = onePagerData?.sectionKeys || onePagerData?.sections?.map(s => s.key) || [];
@@ -63,8 +65,18 @@ export default function OnePager({ getReport, updateReport }) {
     );
   }
 
-  // Empty state — no report data and no progress (not generating)
+  // Grace period: avoid showing empty state if we just navigated here
+  // (pipeline may not have written progress.json yet)
+  const recentlyNavigated = Date.now() - mountTimeRef.current < 5000;
   if (!onePagerData && !progress) {
+    if (recentlyNavigated) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40vh', gap: 10 }}>
+          <Spinner />
+          <span style={{ fontSize: 13, color: C.textMuted }}>Starting generation...</span>
+        </div>
+      );
+    }
     return (
       <div style={{
         display: 'flex',
