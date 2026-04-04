@@ -68,6 +68,18 @@ export default function OnePager({ getReport, updateReport }) {
     return () => clearTimeout(timer);
   }, []);
 
+  // Live elapsed timer — ticks every second while pipeline is active
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (!progress?.startedAt || progress.state === 'COMPLETE') return;
+    const startMs = new Date(progress.startedAt).getTime();
+    setElapsed(Math.floor((Date.now() - startMs) / 1000));
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startMs) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [progress?.startedAt, progress?.state]);
+
   // Scroll spy for active section tracking (shared hook, D-07/D-09)
   const sectionKeysForSpy = onePagerData?.sectionKeys || onePagerData?.sections?.map(s => s.key) || [];
   const activeSection = useScrollSpy(sectionKeysForSpy, { topOffset: 100 });
@@ -261,8 +273,13 @@ export default function OnePager({ getReport, updateReport }) {
               transition: 'width 0.5s ease',
             }} />
           </div>
-          <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>
-            {stateToLabel(progress.state)}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+            <span style={{ fontSize: 11, color: C.textMuted }}>
+              {stateToLabel(progress.state)}
+            </span>
+            <span style={{ fontSize: 11, color: C.textMuted, fontVariantNumeric: 'tabular-nums' }}>
+              {String(Math.floor(elapsed / 3600)).padStart(2, '0')}:{String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0')}:{String(elapsed % 60).padStart(2, '0')}
+            </span>
           </div>
         </div>
       )}
