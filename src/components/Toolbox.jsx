@@ -109,7 +109,8 @@ export default function Toolbox({ getReport, updateReport, settings }) {
   }, [ticker, guruActivities]);
 
   // Update report with company name once we have it — guard against stale company data from previous ticker
-  if (company?.name && report && !report.companyName && report.ticker === ticker) {
+  // finLoading check ensures we don't use stale company data during the transition between tickers
+  if (company?.name && report && !report.companyName && report.ticker === ticker && !finLoading) {
     updateReport(report.id, { companyName: formatCompanyName(company.name) });
   }
 
