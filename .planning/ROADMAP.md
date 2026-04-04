@@ -122,7 +122,7 @@ Plans:
 
 Plans:
 - [ ] 23-01-PLAN.md — Deep dive engine + ReportMarkdown/SectionRenderer enhancement for claims and glossary + DeepDivePanel Go Deeper button
-- [ ] 23-02-PLAN.md — PromiseStatusBadge + PromiseTracker section component with aggregate bar and timeline cards
+- [x] 23-02-PLAN.md — PromiseStatusBadge + PromiseTracker section component with aggregate bar and timeline cards
 - [ ] 23-03-PLAN.md — Wire deep dive, glossary, and Promise Tracker into FullStory.jsx and PitchDeck.jsx viewers
 
 ## Progress
@@ -137,4 +137,4 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23
 | 20. Full Story Core Viewer | 2/2 | Complete    | 2026-04-03 |
 | 21. Checklist & Debate Renderers | 3/3 | Complete    | 2026-04-03 |
 | 22. Stage Gating & Navigation | 1/2 | Complete    | 2026-04-03 |
-| 23. Delight Feature Wiring | 0/3 | Not started | - |
+| 23. Delight Feature Wiring | 1/3 | In Progress|  |
