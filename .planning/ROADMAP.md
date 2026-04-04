@@ -128,7 +128,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23
+Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23 → 24
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -138,3 +138,14 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23
 | 21. Checklist & Debate Renderers | 3/3 | Complete    | 2026-04-03 |
 | 22. Stage Gating & Navigation | 1/2 | Complete    | 2026-04-03 |
 | 23. Delight Feature Wiring | 3/3 | Complete    | 2026-04-04 |
+
+### Phase 24: PM Workflow Controls
+
+**Goal:** Rich PM review controls (inline section comments, data gap summary before approval) and research initiation UX (Generate Research / Review Research buttons on Research tab)
+**Requirements**: TBD
+**Depends on:** Phase 23
+**UI hint:** yes
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 24 to break down)
