@@ -18,6 +18,11 @@ function getCheckpointNum(state) {
   return match ? parseInt(match[1], 10) : null;
 }
 
+// Title-case a snake_case section key: "company_info" → "Company Info"
+function titleCase(key) {
+  return titleCase(key).replace(/\b\w/g, c => c.toUpperCase());
+}
+
 // --- OnePager-specific helper functions ---
 
 // Map progress sections to display statuses
@@ -221,6 +226,16 @@ export default function OnePager({ getReport, updateReport }) {
               Generated {formatRelativeTime(onePagerData.generatedAt)}
             </span>
           )}
+          {isComplete && progress?.startedAt && (
+            <span style={{ fontSize: 11, color: C.accent, fontWeight: 600 }}>
+              {(() => {
+                const totalSec = Math.floor((new Date(progress.lastUpdated || Date.now()).getTime() - new Date(progress.startedAt).getTime()) / 1000);
+                const m = Math.floor(totalSec / 60);
+                const s = totalSec % 60;
+                return `Generated in ${m}m ${s}s`;
+              })()}
+            </span>
+          )}
           {approvalStatus === 'approved' && (
             <span style={{ fontSize: 11, fontWeight: 600, color: C.green }}>Approved</span>
           )}
@@ -296,7 +311,7 @@ export default function OnePager({ getReport, updateReport }) {
           {displayKeys.map((key, idx) => {
             const section = sectionMap[key];
             const isActive = activeSection === key;
-            const title = section?.title || key.replace(/_/g, ' ');
+            const title = section?.title || titleCase(key);
             const truncated = title.length > 25 ? title.slice(0, 25) + '...' : title;
 
             return (
@@ -403,7 +418,7 @@ export default function OnePager({ getReport, updateReport }) {
                   }}
                 >
                   <span style={{ fontSize: 13, fontWeight: 600, color: C.red }}>
-                    {key.replace(/_/g, ' ')} -- Generation failed
+                    {titleCase(key)} -- Generation failed
                   </span>
                   {progress?.sections?.[key]?.error && (
                     <div style={{ fontSize: 12, color: C.red, marginTop: 4 }}>
@@ -431,7 +446,7 @@ export default function OnePager({ getReport, updateReport }) {
                 }}
               >
                 <span style={{ fontSize: 13, color: C.textMuted }}>
-                  {key.replace(/_/g, ' ')} -- Pending...
+                  {titleCase(key)} -- Pending...
                 </span>
               </div>
             );
