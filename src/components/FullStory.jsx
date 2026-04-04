@@ -1,18 +1,22 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { C } from '../theme';
 import { useFullStory } from '../hooks/useFullStory';
 import { useScrollSpy } from '../hooks/useScrollSpy';
+import { generateDeepDive } from '../engines/deepDive';
 import SectionRenderer from './SectionRenderer';
 import ChecklistRenderer from './ChecklistRenderer.jsx';
 import DebateRenderer from './DebateRenderer.jsx';
+import PromiseTracker from './PromiseTracker.jsx';
+import DeepDivePanel from './pitchDeck/DeepDivePanel.jsx';
+import IndustryCard from './pitchDeck/IndustryCard.jsx';
 import DirectionBadge from './DirectionBadge.jsx';
 import VerdictBadge from './VerdictBadge';
 import ConfidenceBadge from './ConfidenceBadge';
 import { formatTitle, formatRelativeTime, verdictDotColor } from './reportHelpers';
 import Spinner from './Spinner';
 
-// --- Section definitions for the Full Story (6 sections, no phase grouping) ---
+// --- Section definitions for the Full Story (7 sections: 6 original + Promise Tracker) ---
 const SECTION_DEFS = [
   { key: 'event_analysis', label: 'Event Analysis' },
   { key: 'meaning_checklist', label: 'Meaning Checklist' },
@@ -20,6 +24,7 @@ const SECTION_DEFS = [
   { key: 'management_checklist', label: 'Management Checklist' },
   { key: 'valuation_confirmation', label: 'Valuation Confirmation' },
   { key: 'inversion_rebuttal', label: 'Inversion & Rebuttal' },
+  { key: 'promise_tracker', label: 'Management Promise Tracker' },
 ];
 
 // --- Pure helper: traffic-light color for quality scores ---
@@ -89,13 +94,39 @@ export default function FullStory({ getReport, updateReport }) {
     return m;
   }, [quality]);
 
-  // Nav items with verdict dots
+  // Nav items with verdict dots (Promise Tracker has no verdict)
   const navItems = useMemo(() => SECTION_DEFS.map((def, idx) => ({
     key: def.key,
     label: def.label,
     index: idx + 1,
-    verdict: sectionMap[def.key]?.verdict || null,
+    verdict: def.key === 'promise_tracker' ? null : (sectionMap[def.key]?.verdict || null),
   })), [sectionMap]);
+
+  // Deep dive state
+  const [deepDive, setDeepDive] = useState({
+    isOpen: false,
+    title: '',
+    content: null,
+    loading: false,
+    depth: 0,
+    maxDepth: 3,
+    error: null,
+    sectionKey: null,
+    claimIndex: null,
+  });
+
+  // Glossary state
+  const [industryCard, setIndustryCard] = useState({
+    isOpen: false,
+    term: '',
+    category: '',
+    definition: '',
+    benchmarks: [],
+    position: { top: 0, left: 0 },
+  });
+
+  // Saved deep dives from report envelope
+  const savedDeepDives = report?.deepDives || {};
 
   // Judge verdict — direct read from debateOutputs
   const verdict = fullStoryData?.debateOutputs?.judge?.content?.overallVerdict;
@@ -129,6 +160,125 @@ export default function FullStory({ getReport, updateReport }) {
   function handleCitationClick() {
     const el = document.getElementById('citation-references');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // Deep dive click handler — shows cached dives or fires API call
+  async function handleDeepDiveClick(sectionKey, claimIndex, claim, sectionNarrative) {
+    const diveKey = `${sectionKey}:${claimIndex}`;
+    const existingDives = savedDeepDives[diveKey] || [];
+
+    // If we already have deep dives saved, show them immediately
+    if (existingDives.length > 0) {
+      const combinedContent = existingDives.map(d => d.content).join('\n\n---\n\n');
+      setDeepDive({
+        isOpen: true,
+        title: 'Deep Dive',
+        content: combinedContent,
+        loading: false,
+        depth: existingDives.length,
+        maxDepth: 3,
+        error: null,
+        sectionKey,
+        claimIndex,
+      });
+      return;
+    }
+
+    // Fire new deep dive API call
+    setDeepDive({
+      isOpen: true,
+      title: 'Deep Dive',
+      content: null,
+      loading: true,
+      depth: 0,
+      maxDepth: 3,
+      error: null,
+      sectionKey,
+      claimIndex,
+    });
+
+    const result = await generateDeepDive({
+      claim,
+      sectionContext: sectionNarrative || '',
+      ticker: ticker,
+      previousDives: [],
+    });
+
+    if (result.error) {
+      setDeepDive(prev => ({ ...prev, loading: false, error: result.error }));
+      return;
+    }
+
+    // Save to report envelope via updateReport
+    const newDive = { depth: 1, content: result.content, generatedAt: new Date().toISOString() };
+    const updatedDives = { ...savedDeepDives, [diveKey]: [newDive] };
+    if (updateReport && id) {
+      updateReport(id, { deepDives: updatedDives });
+    }
+
+    setDeepDive(prev => ({
+      ...prev,
+      loading: false,
+      content: result.content,
+      depth: 1,
+    }));
+  }
+
+  // Go Deeper handler — appends deeper analysis to existing dives
+  async function handleGoDeeper() {
+    const { sectionKey, claimIndex } = deepDive;
+    if (!sectionKey || claimIndex == null) return;
+
+    const diveKey = `${sectionKey}:${claimIndex}`;
+    const existingDives = savedDeepDives[diveKey] || [];
+    const section = sectionMap[sectionKey];
+    const claim = section?.notableClaims?.[claimIndex];
+    if (!claim) return;
+
+    setDeepDive(prev => ({ ...prev, loading: true, error: null }));
+
+    const result = await generateDeepDive({
+      claim,
+      sectionContext: section?.narrative || '',
+      ticker: ticker,
+      previousDives: existingDives,
+    });
+
+    if (result.error) {
+      setDeepDive(prev => ({ ...prev, loading: false, error: result.error }));
+      return;
+    }
+
+    const newDive = { depth: existingDives.length + 1, content: result.content, generatedAt: new Date().toISOString() };
+    const updatedDiveArray = [...existingDives, newDive];
+    const updatedDives = { ...savedDeepDives, [diveKey]: updatedDiveArray };
+    if (updateReport && id) {
+      updateReport(id, { deepDives: updatedDives });
+    }
+
+    const combinedContent = updatedDiveArray.map(d => d.content).join('\n\n---\n\n');
+    setDeepDive(prev => ({
+      ...prev,
+      loading: false,
+      content: combinedContent,
+      depth: updatedDiveArray.length,
+    }));
+  }
+
+  // Glossary term click handler — opens IndustryCard popover below term
+  function handleGlossaryClick(termObj, e) {
+    const rect = e.target.getBoundingClientRect();
+    setIndustryCard({
+      isOpen: true,
+      term: termObj.term,
+      category: termObj.category,
+      definition: termObj.definition,
+      benchmarks: termObj.benchmarks || [],
+      position: {
+        top: rect.bottom + 8 + window.scrollY,
+        left: rect.left + window.scrollX,
+      },
+    });
   }
 
   function handleApprove() {
@@ -368,6 +518,23 @@ export default function FullStory({ getReport, updateReport }) {
           {SECTION_DEFS.map((def) => {
             const section = sectionMap[def.key];
             const qs = qualityMap[def.key];
+
+            // Promise Tracker — data comes from fullStoryData.promises, not sections array
+            if (def.key === 'promise_tracker') {
+              const promises = fullStoryData?.promises || [];
+              if (!promises.length && !fullStoryData) return null;
+              return (
+                <div key={def.key} id={'section-' + def.key}>
+                  {qs && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: -8, position: 'relative', zIndex: 1, paddingRight: 8 }}>
+                      <QualityBadge mechanical={qs.score} methodology={qs.methodology?.score} />
+                    </div>
+                  )}
+                  <PromiseTracker promises={promises} sectionId={'section-' + def.key} />
+                </div>
+              );
+            }
+
             if (!section) return null;
 
             let content;
@@ -394,6 +561,10 @@ export default function FullStory({ getReport, updateReport }) {
                   section={section}
                   sectionId={'section-' + def.key}
                   onCitationClick={handleCitationClick}
+                  notableClaims={section.notableClaims}
+                  onDeepDiveClick={(claimIdx) => handleDeepDiveClick(def.key, claimIdx, section.notableClaims?.[claimIdx], section.narrative)}
+                  glossaryTerms={section.glossaryTerms}
+                  onGlossaryClick={handleGlossaryClick}
                 />
               );
             }
@@ -461,6 +632,30 @@ export default function FullStory({ getReport, updateReport }) {
           )}
         </div>
       </div>
+
+      {/* D. Deep Dive Panel overlay */}
+      <DeepDivePanel
+        isOpen={deepDive.isOpen}
+        onClose={() => setDeepDive(prev => ({ ...prev, isOpen: false }))}
+        title={deepDive.title}
+        content={deepDive.content}
+        loading={deepDive.loading}
+        depth={deepDive.depth}
+        maxDepth={deepDive.maxDepth}
+        onGoDeeper={handleGoDeeper}
+        error={deepDive.error}
+      />
+
+      {/* E. Industry Card glossary popover */}
+      <IndustryCard
+        isOpen={industryCard.isOpen}
+        onClose={() => setIndustryCard(c => ({ ...c, isOpen: false }))}
+        term={industryCard.term}
+        category={industryCard.category}
+        definition={industryCard.definition}
+        benchmarks={industryCard.benchmarks}
+        position={industryCard.position}
+      />
     </div>
   );
 }
