@@ -97,7 +97,15 @@ The complete 3-stage pipeline is operational: One Pager (filter) → Pitch Deck 
 
 ### Active
 
-(Requirements TBD — defining via milestone v1.3 workflow)
+(Requirements TBD — defining via next milestone workflow)
+
+### Validated in Phase 23: Delight Feature Wiring (v1.3)
+- Report Stage UI — PitchDeck/FullStory viewers with section rendering, scroll spy, stage navigation — v1.3
+- Deep dive engine — on-demand Claude API analysis with iterative Go Deeper (depth 1-3) — v1.3
+- Promise Tracker — aggregate credibility bar + expandable timeline cards replacing AssumptionTracker — v1.3
+- Glossary tooltips — dashed-underline terms with IndustryCard popover and density limiting — v1.3
+- Stage gating — approval workflows across One Pager → Pitch Deck → Full Story — v1.3
+- Shared report infrastructure — ReportMarkdown, SectionRenderer, ChecklistRenderer, DebateRenderer — v1.3
 
 ### Out of Scope
 
@@ -191,4 +199,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-01 — v1.3 Report Stage UI milestone started*
+*Last updated: 2026-04-04 — v1.3 Report Stage UI milestone complete (6 phases, 18 plans)*
