@@ -108,8 +108,8 @@ export default function Toolbox({ getReport, updateReport, settings }) {
     return results.sort((a, b) => b.portfolioPct - a.portfolioPct);
   }, [ticker, guruActivities]);
 
-  // Update report with company name once we have it
-  if (company?.name && report && !report.companyName) {
+  // Update report with company name once we have it — guard against stale company data from previous ticker
+  if (company?.name && report && !report.companyName && report.ticker === ticker) {
     updateReport(report.id, { companyName: formatCompanyName(company.name) });
   }
 
