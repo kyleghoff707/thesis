@@ -30,6 +30,7 @@ export default function GenerateButton({ ticker, report, stageAvailability, gene
   const [showDialog, setShowDialog] = useState(false);
   const [hovered, setHovered] = useState(false);
 
+  const reportId = report?.id;
   const state = getButtonState(ticker, report, stageAvailability, generating);
 
   // Disabled / generating state
@@ -89,6 +90,10 @@ export default function GenerateButton({ ticker, report, stageAvailability, gene
             onConfirm={() => {
               setShowDialog(false);
               if (onGenerate) onGenerate(state.stage);
+              // Navigate to the report stage view so user sees live progress
+              if (reportId && state.stage) {
+                navigate(`/research/${reportId}/${state.stage}`);
+              }
             }}
             onCancel={() => setShowDialog(false)}
           />
