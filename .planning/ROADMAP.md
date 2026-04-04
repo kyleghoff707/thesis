@@ -145,7 +145,7 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22 → 23 → 24
 **Requirements**: PM-01, PM-02, PM-03, PM-04, PM-05, PM-06
 **Depends on:** Phase 23
 **UI hint:** yes
-**Plans:** 1/4 plans executed
+**Plans:** 4/4 plans complete
 **Success Criteria** (what must be TRUE):
   1. PM clicks "Generate One Pager" in the Toolbox header and sees a confirmation dialog with cost/time estimates before pipeline starts
   2. When a pipeline wave completes, PM sees a checkpoint panel with completed sections, data gaps, comment boxes, and Continue/Re-run buttons
