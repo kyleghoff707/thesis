@@ -30,12 +30,30 @@ function computeSectionStatuses(progress) {
   return result;
 }
 
-// Compute completion percentage from section statuses
-function computePercentage(statuses) {
+// Compute completion percentage from section statuses + pipeline state
+function computePercentage(statuses, progressState) {
+  // Use section completion if any sections are complete
   const keys = Object.keys(statuses);
-  if (keys.length === 0) return 0;
-  const complete = keys.filter(k => statuses[k] === 'complete').length;
-  return Math.round((complete / keys.length) * 100);
+  if (keys.length > 0) {
+    const complete = keys.filter(k => statuses[k] === 'complete').length;
+    if (complete > 0) return Math.round((complete / keys.length) * 100);
+  }
+  // Fall back to pipeline state for progress indication
+  const stateProgress = {
+    'IDLE': 0,
+    'DATA_ASSEMBLY': 15,
+    'PRIMARY_SOURCE_READING': 30,
+    'WAVE_1_RUNNING': 50,
+    'CHECKPOINT_1': 65,
+    'WAVE_2_RUNNING': 70,
+    'CHECKPOINT_2': 80,
+    'WAVE_3_RUNNING': 85,
+    'CHECKPOINT_3': 90,
+    'SYNTHESIS': 92,
+    'QUALITY_CHECK': 95,
+    'COMPLETE': 100,
+  };
+  return stateProgress[progressState] || 0;
 }
 
 export default function OnePager({ getReport, updateReport }) {
@@ -101,7 +119,7 @@ export default function OnePager({ getReport, updateReport }) {
   // Compute section keys and statuses
   const sectionKeys = onePagerData?.sectionKeys || onePagerData?.sections?.map(s => s.key) || [];
   const sectionStatuses = computeSectionStatuses(progress);
-  const percentage = computePercentage(sectionStatuses);
+  const percentage = computePercentage(sectionStatuses, progress?.state);
   const isComplete = !progress || progress.state === 'COMPLETE';
 
   // Build section lookup
