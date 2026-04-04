@@ -45,11 +45,11 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### PM Workflow Controls
 
-- [ ] **PM-01**: PM sees a checkpoint panel when a pipeline wave completes, with completed sections and Continue/Re-run action buttons (mid-pipeline review, not post-generation)
-- [ ] **PM-02**: PM can leave per-section comments with file attachments during checkpoint review via toggle-to-show comment boxes
-- [ ] **PM-03**: PM sees data gaps at the top of the checkpoint panel with severity indicators and can provide missing data sources (paste URL or attach file)
+- [x] **PM-01**: PM sees a checkpoint panel when a pipeline wave completes, with completed sections and Continue/Re-run action buttons (mid-pipeline review, not post-generation)
+- [x] **PM-02**: PM can leave per-section comments with file attachments during checkpoint review via toggle-to-show comment boxes
+- [x] **PM-03**: PM sees data gaps at the top of the checkpoint panel with severity indicators and can provide missing data sources (paste URL or attach file)
 - [ ] **PM-04**: PM sees a contextual Generate/View button in the Toolbox header that changes label based on pipeline state, with a confirmation dialog showing cost/time estimates before triggering
-- [ ] **PM-05**: Generation is triggered via API call (POST endpoint) with the pipeline spawning server-side; frontend polls for progress using existing infrastructure
+- [x] **PM-05**: Generation is triggered via API call (POST endpoint) with the pipeline spawning server-side; frontend polls for progress using existing infrastructure
 - [ ] **PM-06**: PM can navigate between Research and Reports tabs via cross-navigation buttons (View Reports on Research list, View Toolbox on Reports list)
 
 ## Future Requirements
@@ -108,11 +108,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DLT-02 | Phase 23 | Complete |
 | DLT-03 | Phase 23 | Complete |
 | DLT-04 | Phase 23 | Complete |
-| PM-01 | Phase 24 | Pending |
-| PM-02 | Phase 24 | Pending |
-| PM-03 | Phase 24 | Pending |
+| PM-01 | Phase 24 | Complete |
+| PM-02 | Phase 24 | Complete |
+| PM-03 | Phase 24 | Complete |
 | PM-04 | Phase 24 | Pending |
-| PM-05 | Phase 24 | Pending |
+| PM-05 | Phase 24 | Complete |
 | PM-06 | Phase 24 | Pending |
 
 **Coverage:**
