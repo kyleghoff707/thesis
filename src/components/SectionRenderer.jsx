@@ -79,7 +79,7 @@ function getSeverityColor(severity) {
   return map[severity] || C.textMuted;
 }
 
-export default function SectionRenderer({ section, sectionId, onCitationClick, notableClaims, onDeepDiveClick, glossaryTerms, onGlossaryClick }) {
+export default function SectionRenderer({ section, sectionId, onCitationClick, notableClaims, onDeepDiveClick, glossaryTerms, onGlossaryClick, onCommentClick, commentCount }) {
   const [citationsExpanded, setCitationsExpanded] = useState(false);
   if (!section) return null;
 
@@ -138,6 +138,52 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <VerdictBadge verdict={section.verdict} />
           <ConfidenceBadge confidence={section.confidence} />
+          {onCommentClick && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onCommentClick(); }}
+              aria-label="Toggle section comments"
+              style={{
+                position: 'relative',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 28,
+                height: 28,
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                borderRadius: 4,
+                padding: 0,
+                marginLeft: 4,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke={commentCount > 0 ? C.accent : C.textMuted}
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+              </svg>
+              {commentCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: -4,
+                  right: -4,
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  background: C.accent,
+                  color: '#fff',
+                  fontSize: 10,
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: 1,
+                }}>
+                  {commentCount}
+                </span>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
