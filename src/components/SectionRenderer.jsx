@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { C } from '../theme';
 import VerdictBadge from './VerdictBadge.jsx';
 import ConfidenceBadge from './ConfidenceBadge.jsx';
 import RedFlagCallout from './RedFlagCallout.jsx';
 import { renderTextWithCitations } from './CitationTooltip.jsx';
 import ReportMarkdown from './ReportMarkdown.jsx';
-import { fmtNum, fmtDollar, fmtPct, formatDataValue } from './reportHelpers.js';
+// formatDataValue retained for _testExports consumers (sectionRenderer.test.js)
+// fmtNum, fmtDollar, fmtPct available in reportHelpers.js if needed
 
 // Known financial acronyms for title formatting
 const ACRONYMS = {
@@ -78,16 +80,13 @@ function getSeverityColor(severity) {
 }
 
 export default function SectionRenderer({ section, sectionId, onCitationClick, notableClaims, onDeepDiveClick, glossaryTerms, onGlossaryClick }) {
+  const [citationsExpanded, setCitationsExpanded] = useState(false);
   if (!section) return null;
 
-  const hasData = section.data && typeof section.data === 'object' && Object.keys(section.data).length > 0;
   const hasNarrative = section.narrative && typeof section.narrative === 'string' && section.narrative.length > 0;
   const hasTables = section.tables && Array.isArray(section.tables) && section.tables.length > 0;
   const hasCrossFindings = section.crossCuttingFindings && Array.isArray(section.crossCuttingFindings) && section.crossCuttingFindings.length > 0;
   const hasCitations = section.citations && Array.isArray(section.citations) && section.citations.length > 0;
-
-  // Group data entries for display
-  const dataGroups = hasData ? groupDataEntries(section.data) : [];
 
   return (
     <div
@@ -195,56 +194,7 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
         </div>
       )}
 
-      {/* 5. Structured Data Grid — with smart formatting and grouping */}
-      {hasData && dataGroups.map((group, gi) => (
-        <div key={gi} style={{ marginBottom: 16 }}>
-          {group.category && (
-            <div style={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: C.textMuted,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-              marginBottom: 8,
-              marginTop: gi > 0 ? 12 : 0,
-            }}>
-              {group.category}
-            </div>
-          )}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-            gap: 12,
-          }}>
-            {group.entries.map(([key, value]) => (
-              <div key={key} style={{
-                background: C.bgCard,
-                border: '1px solid ' + C.border,
-                borderRadius: 6,
-                padding: '10px 12px',
-              }}>
-                <div style={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: C.textMuted,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
-                  marginBottom: 4,
-                }}>
-                  {camelToTitle(key)}
-                </div>
-                <div style={{
-                  fontSize: 14,
-                  fontWeight: 700,
-                  color: C.text,
-                }}>
-                  {formatDataValue(key, value)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+      {/* 5. Structured Data Grid — hidden from display (data preserved in report JSON for future export) */}
 
       {/* 6. Tables (Optional) */}
       {hasTables && section.tables.map((table, ti) => (
@@ -361,36 +311,62 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
       {/* 8. Red Flags */}
       <RedFlagCallout flags={section.redFlags} />
 
-      {/* 9. Citations — visible per-section list */}
+      {/* 9. Citations — collapsible per-section list */}
       {hasCitations && (
         <div style={{
           marginTop: 12,
           paddingTop: 10,
           borderTop: '1px solid ' + C.borderLight,
         }}>
-          <div style={{
-            fontSize: 10,
-            fontWeight: 700,
-            color: C.textMuted,
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-            marginBottom: 6,
-          }}>
-            Citations
+          <div
+            onClick={() => setCitationsExpanded(prev => !prev)}
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: C.textMuted,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              marginBottom: citationsExpanded ? 6 : 0,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              userSelect: 'none',
+            }}
+          >
+            <span style={{
+              display: 'inline-block',
+              fontSize: 8,
+              transition: 'transform 0.15s ease',
+              transform: citationsExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+            }}>&#9654;</span>
+            Citations ({section.citations.length})
           </div>
-          {section.citations.map((citation, ci) => (
-            <div key={citation.id || ci} style={{
-              fontSize: 11,
-              color: C.textSecondary,
-              marginBottom: 4,
-              lineHeight: 1.5,
-            }}>
-              <span style={{ fontWeight: 600, color: C.textMuted }}>[{ci + 1}]</span>{' '}
-              {citation.source && <span style={{ fontWeight: 500 }}>{citation.source}</span>}
-              {citation.source && (citation.text || citation.note || citation.title) ? ' — ' : ''}
-              {citation.text || citation.note || citation.title || ''}
-            </div>
-          ))}
+          {citationsExpanded && section.citations.map((citation, ci) => {
+            const sourceText = citation.source || '';
+            const detail = citation.text || citation.note || citation.title || '';
+            // Detect URL in the source field
+            const sourceIsUrl = /^https?:\/\//i.test(sourceText);
+            // Also check for a url field on the citation object
+            const linkUrl = citation.url || (sourceIsUrl ? sourceText : null);
+            return (
+              <div key={citation.id || ci} style={{
+                fontSize: 11,
+                color: C.textSecondary,
+                marginBottom: 4,
+                lineHeight: 1.5,
+              }}>
+                <span style={{ fontWeight: 600, color: C.textMuted }}>[{ci + 1}]</span>{' '}
+                {sourceText && (
+                  linkUrl
+                    ? <a href={linkUrl} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 500, color: C.accent, textDecoration: 'underline' }}>{sourceText}</a>
+                    : <span style={{ fontWeight: 500 }}>{sourceText}</span>
+                )}
+                {sourceText && detail ? ' — ' : ''}
+                {detail}
+              </div>
+            );
+          })}
         </div>
       )}
 
