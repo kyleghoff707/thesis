@@ -73,14 +73,33 @@ export function useOnePager(ticker) {
     }
 
     init().then(() => {
-      // After initial fetch, start polling if generation is in progress
+      // Always start polling after mount — the pipeline may not have written
+      // progress.json yet when the user navigates here after clicking Generate.
+      // Polling will self-terminate when state === 'COMPLETE' or after 60 retries (~2min).
       if (!cancelled) {
-        // Re-read progress from state won't work (closure), so check again
-        fetchProgress().then(prog => {
-          if (!cancelled && prog && prog.state !== 'COMPLETE') {
-            pollRef.current = setTimeout(pollProgress, 2000);
+        let retries = 0;
+        const maxRetries = 60;
+        async function pollUntilFound() {
+          if (cancelled) return;
+          const prog = await fetchProgress();
+          if (cancelled) return;
+          if (prog && prog.state === 'COMPLETE') {
+            // Done — fetch the report
+            setTimeout(() => { if (!cancelled) fetchReport(); }, 500);
+            return;
           }
-        });
+          if (prog && prog.state !== 'COMPLETE') {
+            // Progress found and running — switch to normal polling
+            pollRef.current = setTimeout(pollProgress, 2000);
+            return;
+          }
+          // No progress yet — keep trying if within retry window
+          retries++;
+          if (retries < maxRetries) {
+            pollRef.current = setTimeout(pollUntilFound, 2000);
+          }
+        }
+        pollRef.current = setTimeout(pollUntilFound, 1000);
       }
     });
 
