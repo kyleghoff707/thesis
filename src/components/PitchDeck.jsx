@@ -8,9 +8,9 @@ import SensitivityTable from './SensitivityTable';
 import VerdictBadge from './VerdictBadge';
 import ConfidenceBadge from './ConfidenceBadge';
 import CollapsibleSection from './CollapsibleSection';
+import { generateDeepDive } from '../engines/deepDive';
 import DeepDivePanel from './pitchDeck/DeepDivePanel';
 import IndustryCard from './pitchDeck/IndustryCard';
-import AssumptionTracker from './pitchDeck/AssumptionTracker';
 import { formatTitle, formatRelativeTime, stateToLabel, verdictDotColor } from './reportHelpers';
 import Spinner from './Spinner';
 
@@ -335,9 +335,14 @@ export default function PitchDeck({ getReport, updateReport }) {
   const activeSection = useScrollSpy(sectionKeysForSpy, { topOffset: 100 });
 
   // Delight feature state
-  const [deepDive, setDeepDive] = useState({ isOpen: false, title: '', content: null, loading: false });
+  const [deepDive, setDeepDive] = useState({
+    isOpen: false, title: '', content: null, loading: false,
+    depth: 0, maxDepth: 3, error: null, sectionKey: null, claimIndex: null,
+  });
   const [industryCard, setIndustryCard] = useState({ isOpen: false, term: '', category: '', definition: '', benchmarks: [], position: { top: 0, left: 0 } });
-  const [assumptionOpen, setAssumptionOpen] = useState(false);
+
+  // Saved deep dives from report envelope
+  const savedDeepDives = report?.deepDives || {};
 
   // Phase statuses
   const phaseStatuses = useMemo(() => {
@@ -428,6 +433,98 @@ export default function PitchDeck({ getReport, updateReport }) {
   function handleCitationClick() {
     const el = document.getElementById('citation-references');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // Deep dive click handler — shows cached dives or fires API call
+  async function handleDeepDiveClick(sectionKey, claimIndex, claim, sectionNarrative) {
+    const diveKey = `pd:${sectionKey}:${claimIndex}`;
+    const existingDives = savedDeepDives[diveKey] || [];
+
+    if (existingDives.length > 0) {
+      const combinedContent = existingDives.map(d => d.content).join('\n\n---\n\n');
+      setDeepDive({
+        isOpen: true, title: 'Deep Dive', content: combinedContent, loading: false,
+        depth: existingDives.length, maxDepth: 3, error: null, sectionKey, claimIndex,
+      });
+      return;
+    }
+
+    setDeepDive({
+      isOpen: true, title: 'Deep Dive', content: null, loading: true,
+      depth: 0, maxDepth: 3, error: null, sectionKey, claimIndex,
+    });
+
+    const result = await generateDeepDive({
+      claim,
+      sectionContext: sectionNarrative || '',
+      ticker: report?.ticker,
+      previousDives: [],
+    });
+
+    if (result.error) {
+      setDeepDive(prev => ({ ...prev, loading: false, error: result.error }));
+      return;
+    }
+
+    const newDive = { depth: 1, content: result.content, generatedAt: new Date().toISOString() };
+    const updatedDives = { ...savedDeepDives, [diveKey]: [newDive] };
+    if (updateReport && id) {
+      updateReport(id, { deepDives: updatedDives });
+    }
+
+    setDeepDive(prev => ({ ...prev, loading: false, content: result.content, depth: 1 }));
+  }
+
+  // Go Deeper handler — appends deeper analysis to existing dives
+  async function handleGoDeeper() {
+    const { sectionKey, claimIndex } = deepDive;
+    if (!sectionKey || claimIndex == null) return;
+
+    const diveKey = `pd:${sectionKey}:${claimIndex}`;
+    const existingDives = savedDeepDives[diveKey] || [];
+    const section = sectionMap[sectionKey];
+    const claim = section?.notableClaims?.[claimIndex];
+    if (!claim) return;
+
+    setDeepDive(prev => ({ ...prev, loading: true, error: null }));
+
+    const result = await generateDeepDive({
+      claim,
+      sectionContext: section?.narrative || '',
+      ticker: report?.ticker,
+      previousDives: existingDives,
+    });
+
+    if (result.error) {
+      setDeepDive(prev => ({ ...prev, loading: false, error: result.error }));
+      return;
+    }
+
+    const newDive = { depth: existingDives.length + 1, content: result.content, generatedAt: new Date().toISOString() };
+    const updatedDiveArray = [...existingDives, newDive];
+    const updatedDives = { ...savedDeepDives, [diveKey]: updatedDiveArray };
+    if (updateReport && id) {
+      updateReport(id, { deepDives: updatedDives });
+    }
+
+    const combinedContent = updatedDiveArray.map(d => d.content).join('\n\n---\n\n');
+    setDeepDive(prev => ({ ...prev, loading: false, content: combinedContent, depth: updatedDiveArray.length }));
+  }
+
+  // Glossary term click handler — opens IndustryCard popover below term
+  function handleGlossaryClick(termObj, e) {
+    const rect = e.target.getBoundingClientRect();
+    setIndustryCard({
+      isOpen: true,
+      term: termObj.term,
+      category: termObj.category,
+      definition: termObj.definition,
+      benchmarks: termObj.benchmarks || [],
+      position: {
+        top: rect.bottom + 8 + window.scrollY,
+        left: rect.left + window.scrollX,
+      },
+    });
   }
 
   function handleApprove() {
@@ -535,24 +632,6 @@ export default function PitchDeck({ getReport, updateReport }) {
             <span style={{ fontSize: 11, color: C.textMuted }}>
               Generated {formatRelativeTime(pitchDeckData.generatedAt)}
             </span>
-          )}
-          {pitchDeckData?.assumptions && pitchDeckData.assumptions.length > 0 && (
-            <button
-              onClick={() => setAssumptionOpen(true)}
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: assumptionOpen ? C.accent : C.textSecondary,
-                background: assumptionOpen ? C.accentLight : C.badge,
-                borderRadius: 6,
-                padding: '4px 12px',
-                textTransform: 'uppercase',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              Assumptions ({pitchDeckData.assumptions.length})
-            </button>
           )}
           {approvalStatus === 'approved' && (
             <span style={{ fontSize: 11, fontWeight: 600, color: C.green }}>Approved</span>
@@ -787,6 +866,10 @@ export default function PitchDeck({ getReport, updateReport }) {
                       section={section}
                       sectionId={'section-' + def.key}
                       onCitationClick={handleCitationClick}
+                      notableClaims={section.notableClaims}
+                      onDeepDiveClick={(claimIdx) => handleDeepDiveClick(def.key, claimIdx, section.notableClaims?.[claimIdx], section.narrative)}
+                      glossaryTerms={section.glossaryTerms}
+                      onGlossaryClick={handleGlossaryClick}
                     />
                   </div>
                 ) : status === 'running' ? (
@@ -1133,13 +1216,17 @@ export default function PitchDeck({ getReport, updateReport }) {
         </div>
       </div>
 
-      {/* Delight features — slide-out panels + popover */}
+      {/* Delight features — slide-out panel + popover */}
       <DeepDivePanel
         isOpen={deepDive.isOpen}
         onClose={() => setDeepDive(d => ({ ...d, isOpen: false }))}
         title={deepDive.title}
         content={deepDive.content}
         loading={deepDive.loading}
+        depth={deepDive.depth}
+        maxDepth={deepDive.maxDepth}
+        onGoDeeper={handleGoDeeper}
+        error={deepDive.error}
       />
       <IndustryCard
         isOpen={industryCard.isOpen}
@@ -1149,11 +1236,6 @@ export default function PitchDeck({ getReport, updateReport }) {
         definition={industryCard.definition}
         benchmarks={industryCard.benchmarks}
         position={industryCard.position}
-      />
-      <AssumptionTracker
-        isOpen={assumptionOpen}
-        onClose={() => setAssumptionOpen(false)}
-        assumptions={pitchDeckData?.assumptions || []}
       />
     </div>
   );
