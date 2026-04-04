@@ -39,7 +39,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 ### Delight Features
 
 - [x] **DLT-01**: User can click "Tell me more" on notable claims to see expanded AI analysis in a slide-out panel
-- [ ] **DLT-02**: User can view all key assumptions with confidence levels in a sidebar, seeing which sections each assumption affects
+- [x] **DLT-02**: User can view all key assumptions with confidence levels in a sidebar, seeing which sections each assumption affects
 - [x] **DLT-03**: User can hover underlined industry terms to see glossary definitions with benchmarks
 - [ ] **DLT-04**: User can toggle between Bull and Bear narrative perspectives on the Full Story
 
@@ -93,7 +93,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NAV-03 | Phase 22 | Pending |
 | NAV-04 | Phase 22 | Complete |
 | DLT-01 | Phase 23 | Complete |
-| DLT-02 | Phase 23 | Pending |
+| DLT-02 | Phase 23 | Complete |
 | DLT-03 | Phase 23 | Complete |
 | DLT-04 | Phase 23 | Pending |
 

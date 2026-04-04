@@ -122,7 +122,7 @@ Plans:
 
 Plans:
 - [x] 23-01-PLAN.md — Deep dive engine + ReportMarkdown/SectionRenderer enhancement for claims and glossary + DeepDivePanel Go Deeper button
-- [ ] 23-02-PLAN.md — PromiseStatusBadge + PromiseTracker section component with aggregate bar and timeline cards
+- [x] 23-02-PLAN.md — PromiseStatusBadge + PromiseTracker section component with aggregate bar and timeline cards
 - [ ] 23-03-PLAN.md — Wire deep dive, glossary, and Promise Tracker into FullStory.jsx and PitchDeck.jsx viewers
 
 ## Progress
