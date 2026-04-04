@@ -4,7 +4,7 @@ import { C } from '../theme';
 const STAGE_COPY = {
   'one-pager': {
     title: ticker => `Generate One Pager for ${ticker}`,
-    estimate: '~5-10 minutes, ~$2-3',
+    estimate: '~2-3 minutes, ~$1-2',
     body: 'This kicks off an AI research pipeline. The One Pager is a screening filter -- only generate for companies you\'re seriously considering as investment targets.',
     extra: 'You are beginning a 3-stage research process (One Pager, Pitch Deck, Full Story). The whole pipeline takes much longer -- by design.',
     confirmLabel: 'Generate One Pager',
