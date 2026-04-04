@@ -13,6 +13,8 @@ import { useGurus } from '../hooks/useGurus';
 import { useInsiders } from '../hooks/useInsiders';
 import { useCompensation } from '../hooks/useCompensation';
 import CompanyHeader from './CompanyHeader';
+import GenerateButton from './GenerateButton';
+import { useGeneratePipeline } from '../hooks/useGeneratePipeline';
 import StockAtGlance from './StockAtGlance';
 import ScoreTable from './ScoreTable';
 import FinancialStatements from './FinancialStatements';
@@ -63,6 +65,23 @@ export default function Toolbox({ getReport, updateReport, settings }) {
   const { data: compData, loading: compLoading, error: compError } = useCompensation(ticker);
   const { activities: guruActivities } = useGurus();
   const { events: companyEvents, loading: eventsLoading, error: eventsError, irLink, irLinkIsDirect } = useCompanyEvents(ticker, company?.website, company?.name);
+  const { triggerGeneration, generating, generationError } = useGeneratePipeline(ticker);
+
+  // Stage availability for GenerateButton (fetched once on mount)
+  const [stageAvailability, setStageAvailability] = useState(null);
+  useEffect(() => {
+    if (!ticker) return;
+    let cancelled = false;
+    fetch('/api/thes1s/reports')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled || !data) return;
+        const match = data.tickers?.find(t => t.ticker === ticker.toUpperCase());
+        if (match) setStageAvailability(match.stages);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [ticker]);
 
   // Find gurus holding this ticker
   const gurusHoldingTicker = useMemo(() => {
@@ -191,6 +210,22 @@ export default function Toolbox({ getReport, updateReport, settings }) {
         managementScore={management?.managementScore}
         ruleOneScore={overallScore}
       />
+
+      {/* Generate / View button — contextual per pipeline stage */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8, marginBottom: 8 }}>
+        <GenerateButton
+          ticker={ticker}
+          report={report}
+          stageAvailability={stageAvailability}
+          generating={generating}
+          onGenerate={triggerGeneration}
+        />
+      </div>
+      {generationError && (
+        <div style={{ textAlign: 'right', fontSize: 12, color: C.red, marginBottom: 8 }}>
+          {generationError}
+        </div>
+      )}
 
       {/* Tab navigation */}
       <div style={{

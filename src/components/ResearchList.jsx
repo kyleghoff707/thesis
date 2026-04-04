@@ -134,81 +134,102 @@ export default function ResearchList({ reports, onDelete }) {
                   {report.updatedAt}
                 </td>
                 <td style={{ padding: '10px 14px', textAlign: 'right' }}>
-                  {confirmDeleteId === report.id ? (
-                    <div
-                      onClick={e => e.stopPropagation()}
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigate('/reports'); }}
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: C.accent,
+                        background: 'transparent',
+                        border: '1px solid ' + C.border,
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        transition: 'all .15s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = C.accentLight; e.currentTarget.style.borderColor = C.accent; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = C.border; }}
                     >
-                      <span style={{ fontSize: 11, color: C.textMuted, marginRight: 2 }}>Are you sure?</span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(report.id);
-                          setConfirmDeleteId(null);
-                        }}
-                        style={{
-                          padding: '3px 10px',
-                          fontSize: 11,
-                          fontWeight: 600,
-                          background: C.red,
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: 6,
-                          cursor: 'pointer',
-                          transition: 'all .15s',
-                        }}
+                      View Reports
+                    </button>
+                    {confirmDeleteId === report.id ? (
+                      <div
+                        onClick={e => e.stopPropagation()}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                       >
-                        Yes
-                      </button>
+                        <span style={{ fontSize: 11, color: C.textMuted, marginRight: 2 }}>Are you sure?</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(report.id);
+                            setConfirmDeleteId(null);
+                          }}
+                          style={{
+                            padding: '3px 10px',
+                            fontSize: 11,
+                            fontWeight: 600,
+                            background: C.red,
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: 6,
+                            cursor: 'pointer',
+                            transition: 'all .15s',
+                          }}
+                        >
+                          Yes
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmDeleteId(null);
+                          }}
+                          style={{
+                            padding: '3px 10px',
+                            fontSize: 11,
+                            fontWeight: 600,
+                            background: 'transparent',
+                            color: C.textSecondary,
+                            border: `1px solid ${C.border}`,
+                            borderRadius: 6,
+                            cursor: 'pointer',
+                            transition: 'all .15s',
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setConfirmDeleteId(null);
+                          setConfirmDeleteId(report.id);
                         }}
                         style={{
                           padding: '3px 10px',
                           fontSize: 11,
                           fontWeight: 600,
                           background: 'transparent',
-                          color: C.textSecondary,
+                          color: C.textMuted,
                           border: `1px solid ${C.border}`,
                           borderRadius: 6,
                           cursor: 'pointer',
                           transition: 'all .15s',
                         }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.color = C.red;
+                          e.currentTarget.style.borderColor = C.red;
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.color = C.textMuted;
+                          e.currentTarget.style.borderColor = C.border;
+                        }}
                       >
-                        Cancel
+                        Delete
                       </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setConfirmDeleteId(report.id);
-                      }}
-                      style={{
-                        padding: '3px 10px',
-                        fontSize: 11,
-                        fontWeight: 600,
-                        background: 'transparent',
-                        color: C.textMuted,
-                        border: `1px solid ${C.border}`,
-                        borderRadius: 6,
-                        cursor: 'pointer',
-                        transition: 'all .15s',
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.color = C.red;
-                        e.currentTarget.style.borderColor = C.red;
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.color = C.textMuted;
-                        e.currentTarget.style.borderColor = C.border;
-                      }}
-                    >
-                      Delete
-                    </button>
-                  )}
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
