@@ -262,7 +262,7 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
         );
       })}
 
-      {/* 7. Cross-Cutting Findings */}
+      {/* 7. Broader Linked Insights (cross-cutting findings from agent collaboration) */}
       {hasCrossFindings && (
         <div style={{ marginBottom: 8 }}>
           <div style={{
@@ -272,7 +272,7 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
             textTransform: 'uppercase',
             marginBottom: 8,
           }}>
-            Cross-Cutting Findings
+            Broader Linked Insights
           </div>
           {section.crossCuttingFindings.map((finding, fi) => (
             <div key={fi} style={{
