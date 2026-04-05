@@ -127,14 +127,15 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
             {section.sectionNumber}
           </span>
         )}
-        <span style={{
+        <h3 style={{
           fontSize: 16,
           fontWeight: 700,
           color: C.text,
           flex: 1,
+          margin: 0,
         }}>
           {section.title}
-        </span>
+        </h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <VerdictBadge verdict={section.verdict} />
           <ConfidenceBadge confidence={section.confidence} />

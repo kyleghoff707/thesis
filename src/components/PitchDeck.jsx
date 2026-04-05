@@ -708,9 +708,9 @@ export default function PitchDeck({ getReport, updateReport }) {
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-          <span style={{ fontSize: 24, fontWeight: 700, color: C.text }}>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: C.text, margin: 0 }}>
             {formatTitle(pitchDeckData?.companyName || report?.companyName || '')}
-          </span>
+          </h1>
           <VerdictBadge verdict={pitchDeckData?.overallVerdict} size="large" />
           {/* Generate button — shown when no generation is in progress and no completed data */}
           {!pitchDeckData && !progress && !generating && (
