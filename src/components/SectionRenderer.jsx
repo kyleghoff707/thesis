@@ -105,6 +105,7 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
       <div style={{
         display: 'flex',
         alignItems: 'center',
+        flexWrap: 'wrap',
         gap: 10,
         borderBottom: '1px solid ' + C.border,
         paddingBottom: 12,
@@ -136,7 +137,7 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
         }}>
           {section.title}
         </h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <VerdictBadge verdict={section.verdict} />
           <ConfidenceBadge confidence={section.confidence} />
         </div>
