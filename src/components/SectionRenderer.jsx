@@ -233,6 +233,7 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
                         fontWeight: 600,
                         color: C.textMuted,
                         textAlign: 'left',
+                        background: C.bg,
                       }}>
                         {header}
                       </th>
