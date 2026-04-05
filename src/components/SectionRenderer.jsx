@@ -165,7 +165,7 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
       {/* 3. Verdict Rationale (Primary Prose) */}
       {section.verdictRationale && (
         <div style={{
-          fontSize: 13,
+          fontSize: 14,
           color: C.text,
           lineHeight: 1.7,
           marginBottom: 16,
@@ -178,7 +178,7 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
       {/* 4. Narrative — rendered via ReportMarkdown with citation integration */}
       {hasNarrative && (
         <div style={{
-          fontSize: 13,
+          fontSize: 14,
           color: C.text,
           lineHeight: 1.7,
           marginBottom: 16,
