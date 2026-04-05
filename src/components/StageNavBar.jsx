@@ -50,7 +50,7 @@ export default function StageNavBar({ stageApprovals }) {
             onClick={() => !isLocked && navigate(`/research/${id}/${stage.key}`)}
             title={isLocked ? GATE_TOOLTIPS[stage.gate] : ''}
             style={{
-              padding: '8px 20px',
+              padding: '12px 20px',
               background: 'transparent',
               border: 'none',
               borderBottom: isActive ? '2px solid ' + C.accent : '2px solid transparent',

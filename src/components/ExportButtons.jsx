@@ -43,7 +43,7 @@ export default function ExportButtons({ ticker, stage }) {
     background: 'transparent',
     border: '1px solid ' + C.border,
     color: C.textSecondary,
-    padding: '6px 14px',
+    padding: '10px 14px',
     borderRadius: 6,
     fontSize: 12,
     fontWeight: 600,
