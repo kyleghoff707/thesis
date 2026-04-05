@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM Council Report — Thes1s Pipeline Architecture</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #fafafa;
+    color: #1a1a2e;
+    line-height: 1.6;
+    padding: 40px 20px;
+  }
+  .container { max-width: 860px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 40px 32px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: white;
+    border-radius: 12px;
+    margin-bottom: 32px;
+  }
+  .header-label {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #f1f5f9;
+  }
+  .header .subtitle {
+    font-size: 14px;
+    color: #94a3b8;
+  }
+  .header .date {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 16px;
+  }
+
+  /* Question box */
+  .question-box {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #0f766e;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+  .question-box .label {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #0f766e;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .question-box p {
+    font-size: 15px;
+    color: #334155;
+  }
+
+  /* Verdict sections */
+  .verdict-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+  }
+  .verdict-card h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .verdict-card p, .verdict-card li {
+    font-size: 14px;
+    color: #475569;
+    margin-bottom: 12px;
+  }
+  .verdict-card ul { padding-left: 20px; }
+  .verdict-card li { margin-bottom: 8px; }
+  .verdict-card strong { color: #1e293b; }
+
+  /* Recommendation highlight */
+  .recommendation {
+    border-left: 4px solid #0f766e;
+    background: linear-gradient(135deg, #f0fdfa 0%, #ffffff 100%);
+  }
+  .recommendation h2 { color: #0f766e; }
+  .rec-answer {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f766e;
+    margin-bottom: 16px;
+  }
+
+  /* First step highlight */
+  .first-step {
+    border-left: 4px solid #d97706;
+    background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+  }
+  .first-step h2 { color: #d97706; }
+
+  /* Alignment grid */
+  .alignment-grid {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+  }
+  .alignment-grid h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .advisor-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f8fafc;
+  }
+  .advisor-row:last-child { border-bottom: none; }
+  .advisor-name {
+    width: 180px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    flex-shrink: 0;
+  }
+  .advisor-position {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .position-bar {
+    height: 28px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: white;
+    white-space: nowrap;
+  }
+  .pos-a { background: #3b82f6; }
+  .pos-c { background: #8b5cf6; }
+  .pos-hybrid { background: #f59e0b; color: #1a1a2e; }
+  .peer-votes {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-left: 8px;
+  }
+
+  /* Collapsible sections */
+  details {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  summary {
+    padding: 16px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before {
+    content: '\25B6';
+    font-size: 10px;
+    color: #94a3b8;
+    transition: transform 0.2s;
+  }
+  details[open] summary::before { transform: rotate(90deg); }
+  .detail-content {
+    padding: 0 24px 20px;
+    font-size: 14px;
+    color: #475569;
+    line-height: 1.7;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 16px;
+  }
+  .detail-content p { margin-bottom: 12px; }
+
+  /* Advisor badge */
+  .advisor-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 6px;
+  }
+  .badge-contrarian { background: #fee2e2; color: #991b1b; }
+  .badge-fp { background: #dbeafe; color: #1e40af; }
+  .badge-expansionist { background: #f3e8ff; color: #6b21a8; }
+  .badge-outsider { background: #fef3c7; color: #92400e; }
+  .badge-executor { background: #d1fae5; color: #065f46; }
+
+  /* Peer review highlight */
+  .peer-highlight {
+    background: #f8fafc;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid #e2e8f0;
+  }
+  .peer-highlight .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 32px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-label">LLM Council Report</div>
+    <h1>Thes1s Pipeline Architecture Decision</h1>
+    <div class="subtitle">Should Thes1s migrate from JavaScript orchestration to the Claude Agent SDK?</div>
+    <div class="date">April 4, 2026 &middot; 5 advisors &middot; 5 peer reviews &middot; Chairman synthesis</div>
+  </div>
+
+  <!-- Question -->
+  <div class="question-box">
+    <div class="label">The Question</div>
+    <p>Should Thes1s migrate its AI pipeline orchestration from the current fragile JavaScript implementation (~1,600 lines) to the Claude Agent SDK (~50 lines), the Claude API Tool Runner (surgical fix), or a hybrid approach? The pipeline worked perfectly under Claude Code orchestration but broke badly when ported to standalone JavaScript &mdash; 10+ hours, $100+ wasted, 7 distinct failures across API conflicts, configuration gaps, caching bugs, and React state issues.</p>
+  </div>
+
+  <!-- Advisor Alignment -->
+  <div class="alignment-grid">
+    <h2>Advisor Positions</h2>
+
+    <div class="advisor-row">
+      <div class="advisor-name"><span class="advisor-badge badge-contrarian">Contrarian</span></div>
+      <div class="advisor-position">
+        <div class="position-bar pos-a" style="width: 220px;">Option A: Fix JavaScript</div>
+        <span class="peer-votes">Voted strongest by 2 reviewers</span>
+      </div>
+    </div>
+
+    <div class="advisor-row">
+      <div class="advisor-name"><span class="advisor-badge badge-fp">First Principles</span></div>
+      <div class="advisor-position">
+        <div class="position-bar pos-a" style="width: 220px;">Option A: Fix JavaScript</div>
+        <span class="peer-votes">Voted strongest by 3 reviewers</span>
+      </div>
+    </div>
+
+    <div class="advisor-row">
+      <div class="advisor-name"><span class="advisor-badge badge-expansionist">Expansionist</span></div>
+      <div class="advisor-position">
+        <div class="position-bar pos-c" style="width: 220px;">Option C: Agent SDK</div>
+        <span class="peer-votes">Flagged as blind spot by 1 reviewer</span>
+      </div>
+    </div>
+
+    <div class="advisor-row">
+      <div class="advisor-name"><span class="advisor-badge badge-outsider">Outsider</span></div>
+      <div class="advisor-position">
+        <div class="position-bar pos-c" style="width: 220px;">Option C: Agent SDK</div>
+      </div>
+    </div>
+
+    <div class="advisor-row">
+      <div class="advisor-name"><span class="advisor-badge badge-executor">Executor</span></div>
+      <div class="advisor-position">
+        <div class="position-bar pos-c" style="width: 220px;">Option C: Agent SDK</div>
+        <span class="peer-votes">Flagged as blind spot by 4 reviewers</span>
+      </div>
+    </div>
+
+    <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #f1f5f9; font-size: 13px; color: #64748b;">
+      <strong>Split: 2&ndash;3</strong> &mdash; Contrarian + First Principles favor Option A. Expansionist + Outsider + Executor favor Option C.
+      Peer reviewers overwhelmingly sided with the Option A camp on analytical rigor.
+    </div>
+  </div>
+
+  <!-- Verdict: Agrees -->
+  <div class="verdict-card">
+    <h2>Where the Council Agrees</h2>
+    <ul>
+      <li><strong>The Executor's claim that "the SDK already fixed the web search + structured output conflict" is wrong.</strong> Every peer reviewer flagged this. The SDK runs on the same Anthropic API. Migrating does not fix this bug.</li>
+      <li><strong>The data engines are not the problem.</strong> All five advisors agreed &mdash; XBRL, financials, scoring are solid. The failure is localized to the dispatch and orchestration layer.</li>
+      <li><strong>Fix the bugs you understand before adopting new infrastructure.</strong> The Contrarian counted seven failures and found only two are genuine orchestration intelligence problems. The First Principles Thinker and three peer reviewers independently reached the same conclusion.</li>
+      <li><strong>Multi-provider portability and the 10K-user vision are real but not today's problem.</strong> Every advisor acknowledged this is a future constraint.</li>
+    </ul>
+  </div>
+
+  <!-- Verdict: Clashes -->
+  <div class="verdict-card">
+    <h2>Where the Council Clashes</h2>
+    <p><strong>The central disagreement: is the Agent SDK a genuine architectural upgrade or a distraction?</strong></p>
+    <p>The <span class="advisor-badge badge-expansionist">Expansionist</span> and <span class="advisor-badge badge-outsider">Outsider</span> argue the SDK re-embeds intelligence that JavaScript cannot replicate &mdash; that you wrote down the outputs of Claude Code's reasoning without capturing the reasoning itself, and you'll keep chasing bugs until you stop pretending JavaScript can think. Their position: the 1-2 week cost buys a foundation that scales to the autonomous hedge fund vision.</p>
+    <p>The <span class="advisor-badge badge-contrarian">Contrarian</span> and <span class="advisor-badge badge-fp">First Principles</span> argue this is category confusion. The SDK is not magic. You still write the agents. The complexity moves from your dispatch table to your system prompts. The determinism, reproducibility, and auditability you need for a commercial product are harder to guarantee with an AI orchestrator. Their position: the 10 hours were the requirements-gathering session you skipped. You now know every edge case. Write tests. Fix the bugs.</p>
+    <p style="color: #64748b; font-style: italic;">Why reasonable advisors disagree: Both sides are right about different time horizons. For the problem in front of you, Option A is faster. For the product you want in three years, JavaScript dispatch is the wrong foundation. The disagreement is about which horizon to optimize for.</p>
+  </div>
+
+  <!-- Verdict: Blind Spots -->
+  <div class="verdict-card">
+    <h2>Blind Spots the Council Caught</h2>
+    <ul>
+      <li><strong>The RAM problem invalidates Option C's core appeal.</strong> Your laptop crashes from parallel agents. The Agent SDK's primary advantage is intelligent parallel coordination. If the hardware can't support it, you're paying the SDK's costs without getting its benefit.</li>
+      <li><strong>The cost model at scale is not $1-2.</strong> An AI orchestrator routing 17 agents across 3 waves generates unpredictable token consumption. Peer reviewers estimated $5-15 is plausible. At $500/year SaaS with 10K users, that spread determines margin viability.</li>
+      <li><strong>The deeper architecture problem nobody named:</strong> The entire pipeline runs as direct browser-to-Claude API calls in a Tauri desktop app with no server. This is correct for single-user. It's incompatible with 10K-user licensing. When you rebuild for server-side, the orchestration choice gets re-evaluated anyway.</li>
+      <li><strong>Commercial reproducibility.</strong> At 10K users, an AI orchestrator producing different outputs on re-runs creates support nightmares. Deterministic JavaScript produces the same output for the same inputs. That auditability is a commercial feature.</li>
+    </ul>
+  </div>
+
+  <!-- Recommendation -->
+  <div class="verdict-card recommendation">
+    <h2>The Recommendation</h2>
+    <div class="rec-answer">Fix the JavaScript. Option A. Do it in two days.</div>
+    <p>The Agent SDK does not fix five of your seven bugs. The two it might help with &mdash; data slice gaps and key normalization &mdash; are fully solvable in JavaScript now that you know exactly what they are.</p>
+    <p>The web search + structured output conflict is an API constraint that survives any migration. The PSR dispatch bug is a configuration error fixable with a three-line change. The IndexedDB issue is a Node.js environment mismatch with a known workaround. The React state bugs are React bugs.</p>
+    <p>The SDK's pitch &mdash; "stop maintaining 1,600 lines of brittle dispatch logic" &mdash; does not apply to a pipeline where the orchestration is already designed and the failures are enumerable. The lines are not brittle because they're long. They're brittle because they had bugs. Fix the bugs.</p>
+    <p>The Expansionist's three-year vision is probably correct. But the jump from "broken desktop pipeline" to "Agent SDK foundation for autonomous hedge fund" skips several intermediate steps, each of which changes the correct answer. When you rebuild as server-side for licensing, the orchestration choice gets re-evaluated with full information about scale requirements.</p>
+  </div>
+
+  <!-- First Step -->
+  <div class="verdict-card first-step">
+    <h2>The One Thing to Do First</h2>
+    <p><strong>Write a test for the PSR dispatch bug</strong> &mdash; the one that sent 5 filings to one agent instead of splitting them into 5 parallel agents &mdash; and confirm it fails. Then fix it and confirm it passes.</p>
+    <p>This is the most concrete, localized, fully-understood bug in the list. Fixing it with a test proves the methodology: you know what broke, you have a way to confirm it's fixed, and you are not guessing. Do that one thing before touching any other part of the pipeline or reading any SDK documentation.</p>
+  </div>
+
+  <!-- Collapsible: Advisor Responses -->
+  <h3 style="font-size: 14px; color: #64748b; margin: 32px 0 16px; text-transform: uppercase; letter-spacing: 1px;">Full Advisor Responses</h3>
+
+  <details>
+    <summary><span class="advisor-badge badge-contrarian">Contrarian</span> &mdash; "Fix the actual bugs first"</summary>
+    <div class="detail-content">
+      <p>The framing of this question has a buried assumption that needs challenging: the failures listed are being blamed on "dumb orchestration," but several of them are not orchestration problems at all.</p>
+      <p>The web search + structured output API conflict is an Anthropic API constraint. The Claude Agent SDK does not fix this &mdash; it runs on the same API. The PSR dispatch bug (5 filings to one agent) is a configuration error. A smart orchestrator doesn't automatically know your domain logic about splitting filings. You'd have to encode that logic somewhere &mdash; either in JavaScript config or in a system prompt. The complexity moves, it doesn't disappear. The IndexedDB-in-Node.js failure is a runtime environment mismatch. Also not an orchestration problem.</p>
+      <p>The real count: of the seven listed failures, roughly two (data slice gaps, key normalization) are genuine orchestration intelligence problems. The rest are bugs, API constraints, or environment issues that survive any migration.</p>
+      <p>Here's the fatal flaw in Option C's pitch: you're extrapolating from "Claude Code handled this gracefully" to "the Agent SDK will too." Claude Code is a long-context, tool-rich, human-supervised agent running in a privileged environment. The Agent SDK in production is not that. It's a framework for building agents &mdash; you still write the agents.</p>
+      <p>The honest diagnosis is that the pipeline had seven distinct bugs, only two of which the Agent SDK addresses. Migrating to fix two bugs while leaving five unaddressed &mdash; and adding token overhead, nondeterminism, and lock-in &mdash; is not an upgrade. It's a distraction.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="advisor-badge badge-fp">First Principles</span> &mdash; "You codified outputs without capturing the intelligence"</summary>
+    <div class="detail-content">
+      <p>The question being asked is "which orchestration framework should we use?" The actual question is "why did the pipeline break?"</p>
+      <p>The answer: because you built a system that replicates what Claude Code did without having what Claude Code had &mdash; which was the ability to read the problem and adapt. You wrote down the result of intelligent orchestration (the dispatch table, the wave structure, the 1,600 lines) without capturing the intelligence itself.</p>
+      <p>Option C (Agent SDK) re-embeds the intelligence. But notice what you'd actually be doing &mdash; replacing codified outputs with a system that generates fresh outputs each run. That's not simpler orchestration. That's delegating orchestration to a different runtime. You still have the same dependency; you've just moved where it lives.</p>
+      <p>Here's what you should actually do: the JavaScript pipeline is the right long-term architecture. It's portable, deterministic, testable, auditable. But you built it too early &mdash; before you fully understood the edge cases. The 10 hours and $100 were not wasted; they were the requirements-gathering session you skipped.</p>
+      <p>The correct path is Option A, but reframed: you now know exactly what the edge cases are. Write them down as tests before touching any code. A dumb orchestrator that handles all known cases correctly beats a smart orchestrator that handles unknown cases unpredictably, especially for commercial licensing where reproducibility matters.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="advisor-badge badge-expansionist">Expansionist</span> &mdash; "Option A gets you a working app. Option C gets you a category."</summary>
+    <div class="detail-content">
+      <p>The empirical data already answered this question. Agent-orchestrated worked. Code-orchestrated broke for 10 hours and $100. That's not a close call.</p>
+      <p>But here's what no one is saying loudly enough: the Agent SDK isn't just a fix for the current problem. It's the foundation for everything Kyle actually wants to build. The autonomous hedge fund stack &mdash; research to backtesting to execution to tracking &mdash; requires orchestration that can reason about state, handle failure gracefully, and coordinate complex multi-step workflows without a programmer maintaining 1,600 lines of brittle dispatch logic.</p>
+      <p>The multi-provider portability concern is real but it's a future problem. Build the abstraction layer when you have three paying customers asking for Gemini, not before. Premature abstraction is how solo founders stall.</p>
+      <p>The $1-2 token overhead per run is the most undervalued line item in this entire analysis. You're selling to 10,000 Rule One investors who already spend 70+ hours doing this manually. They're paying for time, not tokens. Price the product at $500/year, absorb the $1-2, and the math is irrelevant.</p>
+      <p>The real upside nobody is naming: if the Agent SDK works, Kyle has a living demonstration that a non-programmer sole founder built a hedge-fund-quality autonomous research pipeline using AI orchestration. That's the product story that raises a seed round. Option A gets you a working app. Option C gets you a category.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="advisor-badge badge-outsider">Outsider</span> &mdash; "Don't fix the brain. Replace it with an actual one."</summary>
+    <div class="detail-content">
+      <p>The JavaScript broke because it was trying to be a brain. It shouldn't be.</p>
+      <p>Look at what actually failed: the dispatch layer &mdash; the part responsible for deciding what to do next, handling edge cases, adapting when something unexpected happens. That's cognition work. You handed cognition work to a 1,600-line script and were surprised it couldn't think.</p>
+      <p>The data engines don't have this problem. They don't need to think &mdash; they just fetch and transform. Deterministic tasks stay in code. That's correct.</p>
+      <p>The question isn't "Option A vs B vs C." The question is: where does cognition belong in your architecture?</p>
+      <p>Fresh eyes say: cognition belongs in Claude, not in your JavaScript. The SDK isn't adding a dependency &mdash; it's removing a pretender. Your 1,600-line orchestrator was already attempting to be Claude. It was just worse at it.</p>
+      <p>The vendor lock-in concern is real but misordered. You don't have a working pipeline right now. Lock-in risk on a broken thing is zero priority. Get it working first. Abstraction layers come after you've solved the problem once.</p>
+      <p>The 1-2 week estimate is probably wrong &mdash; for a non-programmer using Claude Code as their IDE, this is more likely 3-5 days of actual work. Don't fix the brain. Replace it with an actual one.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="advisor-badge badge-executor">Executor</span> &mdash; "Wire one agent call through the SDK today"</summary>
+    <div class="detail-content">
+      <p>The pipeline worked in Claude Code. It broke when you ported it to JavaScript. That tells you exactly what to do: stop running it in JavaScript.</p>
+      <p>Option C (Agent SDK) is the right call. Here's the Monday morning path:</p>
+      <p><strong>Day 1:</strong> Read the Agent SDK quickstart. Pick one section of the One Pager &mdash; the simplest one. Wire it through the SDK. Get it generating output. That's your proof of concept.</p>
+      <p><strong>Day 2-3:</strong> Replace the dispatch layer in aiResearch.js section by section. Don't touch the React components or data engines. Keep everything upstream and downstream identical.</p>
+      <p><strong>Day 4-5:</strong> Test with a real ticker. Verify cost, timing, output quality.</p>
+      <p>The 1,600 lines you're trying to fix is fighting against how Claude actually works. The multi-provider concern is real but it's a 2027 problem. You don't have 10,000 users yet. You have a broken pipeline that cost $100+ to debug. Solve the problem in front of you.</p>
+    </div>
+  </details>
+
+  <!-- Collapsible: Peer Reviews -->
+  <h3 style="font-size: 14px; color: #64748b; margin: 32px 0 16px; text-transform: uppercase; letter-spacing: 1px;">Peer Review Highlights</h3>
+
+  <details>
+    <summary>Peer Reviews Summary (5 reviewers)</summary>
+    <div class="detail-content">
+      <div class="peer-highlight">
+        <div class="label">Strongest Response (consensus)</div>
+        <p><strong>First Principles Thinker</strong> (3 votes) and <strong>Contrarian</strong> (2 votes) were identified as strongest. The First Principles reframe &mdash; "you codified outputs without the intelligence" &mdash; was cited as precise and actionable. The Contrarian's bug-by-bug triage was called "the most intellectually honest work."</p>
+      </div>
+      <div class="peer-highlight">
+        <div class="label">Biggest Blind Spot (unanimous)</div>
+        <p><strong>The Executor</strong> was flagged by 4 of 5 reviewers for claiming "the SDK already fixed the web search + structured output conflict" without evidence. This claim is almost certainly false &mdash; the SDK runs on the same Anthropic API. The Expansionist was flagged by 1 reviewer for confusing "Claude Code worked" with "the SDK will work" (Claude Code had a human in the loop).</p>
+      </div>
+      <div class="peer-highlight">
+        <div class="label">What All Five Missed</div>
+        <ul>
+          <li><strong>RAM constraints</strong> &mdash; Kyle's laptop crashes from parallel agents. SDK's parallel coordination advantage disappears on 8GB hardware.</li>
+          <li><strong>Cost at scale</strong> &mdash; AI orchestrator token consumption is unpredictable. Could be $5-15/run, not $1-2. At 10K users &times; $500/year, margin viability depends on this number.</li>
+          <li><strong>Server-side migration</strong> &mdash; The Tauri desktop architecture (no server, no auth, direct API calls) cannot support 10K-user licensing. The orchestration choice will be re-evaluated when that rebuild happens.</li>
+          <li><strong>Reproducibility</strong> &mdash; AI orchestrators produce different outputs on re-runs. Deterministic JavaScript doesn't. For commercial licensing, that auditability is a feature.</li>
+        </ul>
+      </div>
+    </div>
+  </details>
+
+  <!-- Footer -->
+  <div class="footer">
+    LLM Council &middot; April 4, 2026 &middot; Thes1s Pipeline Architecture Decision<br>
+    5 advisors (Contrarian, First Principles, Expansionist, Outsider, Executor) &middot; 5 peer reviews &middot; Chairman synthesis<br>
+    Powered by Claude Opus 4.6
+  </div>
+
+</div>
+</body>
+</html>
