@@ -508,9 +508,9 @@ export default function FullStory({ getReport, updateReport }) {
       )}
 
       {/* B. Two-Column Layout */}
-      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+      <div className="thes1s-two-col" style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
         {/* B1. Sticky Section Nav (200px) */}
-        <div style={{
+        <div className="thes1s-section-nav" style={{
           position: 'sticky',
           top: 72,
           width: 200,

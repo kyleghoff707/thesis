@@ -19,6 +19,10 @@ style.textContent = `
   ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb, #cbd5e1); border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover, #94a3b8); }
   ::selection { background: rgba(15, 118, 110, 0.15); }
+  @media (max-width: 768px) {
+    .thes1s-section-nav { display: none !important; }
+    .thes1s-two-col { flex-direction: column !important; }
+  }
 `;
 document.head.appendChild(style);
 
