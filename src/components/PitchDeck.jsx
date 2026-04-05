@@ -1212,7 +1212,7 @@ export default function PitchDeck({ getReport, updateReport }) {
                 style={{
                   background: C.green,
                   color: '#fff',
-                  padding: '12px 24px',
+                  padding: '14px 24px',
                   borderRadius: 8,
                   fontWeight: 600,
                   fontSize: 13,
@@ -1228,7 +1228,7 @@ export default function PitchDeck({ getReport, updateReport }) {
                   background: 'transparent',
                   color: C.red,
                   border: '1px solid ' + C.red,
-                  padding: '12px 24px',
+                  padding: '14px 24px',
                   borderRadius: 8,
                   fontWeight: 600,
                   fontSize: 13,
