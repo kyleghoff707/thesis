@@ -14,7 +14,7 @@
     "knowledge/research-references/rule-one-fundamentals.md",
     "knowledge/research-references/tools-for-analysis.md"
   ],
-  "dataPacketSlice": ["growthRates", "returnMetrics", "fcf", "analystEstimates", "ttm", "currentPrice", "keyMetrics"],
+  "dataPacketSlice": ["growthRates", "returnMetrics", "fcf", "analystEstimates", "ttm", "currentPrice", "keyMetrics", "financials", "companyInfo", "prices"],
   "tools": ["computeMOS", "computePBT", "computeTenCap", "computeEquityBond", "sensitivityTable"],
   "exampleContamination": {
     "exclude": [

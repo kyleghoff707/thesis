@@ -7,7 +7,16 @@ import ConfirmGenerateDialog from './ConfirmGenerateDialog';
 // Determine button state from report + stage availability + generating flag
 // Pure function — exported via _testExports for testing
 function getButtonState(ticker, report, stageAvailability, generating) {
-  if (generating) return { label: 'Generating...', action: 'disabled', stage: null, style: 'disabled' };
+  if (generating) {
+    // Determine which stage is being generated so we can link to it
+    const approvals = report?.stageApprovals || {};
+    const avail = stageAvailability || {};
+    const reportId = report?.id;
+    if (!avail.onePager) return { label: 'Generating One Pager...', action: 'view', stage: 'one-pager', route: `/research/${reportId}/one-pager`, style: 'generating' };
+    if (approvals.onePager === 'approved' && !avail.pitchDeck) return { label: 'Generating Pitch Deck...', action: 'view', stage: 'pitch-deck', route: `/research/${reportId}/pitch-deck`, style: 'generating' };
+    if (approvals.pitchDeck === 'approved' && !avail.fullStory) return { label: 'Generating Full Story...', action: 'view', stage: 'full-story', route: `/research/${reportId}/full-story`, style: 'generating' };
+    return { label: 'Generating...', action: 'disabled', stage: null, style: 'disabled' };
+  }
 
   const approvals = report?.stageApprovals || {};
   const avail = stageAvailability || {};
@@ -109,6 +118,9 @@ export default function GenerateButton({ ticker, report, stageAvailability, gene
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 8,
         background: hovered ? C.accentLight : 'transparent',
         border: '1px solid ' + C.accent,
         color: C.accent,
@@ -121,6 +133,7 @@ export default function GenerateButton({ ticker, report, stageAvailability, gene
         transition: 'all .15s',
       }}
     >
+      {state.style === 'generating' && <Spinner size={12} />}
       {state.label}
     </button>
   );

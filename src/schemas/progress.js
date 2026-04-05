@@ -13,9 +13,7 @@ export const ProgressSchema = z.object({
   stage: z.enum(['onePager', 'pitchDeck', 'fullStory']),
   state: z.enum([
     'IDLE', 'DATA_ASSEMBLY', 'PRIMARY_SOURCE_READING',
-    'WAVE_1_RUNNING', 'CHECKPOINT_1',
-    'WAVE_2_RUNNING', 'CHECKPOINT_2',
-    'WAVE_3_RUNNING', 'CHECKPOINT_3',
+    'WAVE_1_RUNNING', 'WAVE_2_RUNNING', 'WAVE_3_RUNNING',
     'SYNTHESIS', 'QUALITY_CHECK', 'COMPLETE',
   ]),
   startedAt: z.string(),

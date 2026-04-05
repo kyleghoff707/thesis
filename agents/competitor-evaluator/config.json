@@ -13,7 +13,7 @@
     "knowledge/research-references/rule-one-fundamentals.md",
     "knowledge/research-references/tools-for-analysis.md"
   ],
-  "dataPacketSlice": ["peers", "peerMetrics", "classification", "companyInfo"],
+  "dataPacketSlice": ["peers", "peerMetrics", "classification", "companyInfo", "financials", "ttm", "growthRates", "ruleOneScore"],
   "tools": ["comparePeers"],
   "exampleContamination": {
     "exclude": [

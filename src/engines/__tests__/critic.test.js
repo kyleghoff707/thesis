@@ -478,24 +478,18 @@ describe('QUAL-06: Data Gap Detection', () => {
 // ─── QUAL-07: Search Compliance (D-06) ───────────────────────────────
 
 describe('QUAL-07: Search Compliance', () => {
-  // Helper to build a section with specific search/citation config
+  // Helper to build a section with specific citation config
   function makeSection(overrides = {}) {
     return {
       ...companyInfoSection,
       key: overrides.key || 'radar',
       title: overrides.title || 'Radar',
-      searchesPerformed: overrides.searchesPerformed || [],
       citations: overrides.citations || [],
     };
   }
 
-  it('should score 100 for section with searches and web citations', () => {
+  it('should score 100 for section with web citations', () => {
     const section = makeSection({
-      searchesPerformed: [
-        { query: 'Costco business model overview', resultCount: 12, usedInSection: true },
-        { query: 'Costco competitive advantages moat', resultCount: 8, usedInSection: true },
-        { query: 'COST bull bear case 2026', resultCount: 15, usedInSection: true },
-      ],
       citations: [
         { id: 1, ref: 'Web source', text: 'Business model data', source: 'Web', url: 'https://example.com/costco-analysis' },
         { id: 2, ref: 'DataPacket', text: 'Revenue data', source: 'DataPacket' },
@@ -506,24 +500,8 @@ describe('QUAL-07: Search Compliance', () => {
     expect(result.issues.length).toBe(0);
   });
 
-  it('should flag section with zero searchesPerformed as severity high', () => {
-    const section = makeSection({
-      searchesPerformed: [],
-      citations: [
-        { id: 1, ref: 'Web', text: 'Data', source: 'Web', url: 'https://example.com' },
-      ],
-    });
-    const result = checkSearchCompliance(section);
-    const noSearchIssues = result.issues.filter(i => i.type === 'search_compliance' && i.message.includes('zero web searches'));
-    expect(noSearchIssues.length).toBe(1);
-    expect(noSearchIssues[0].severity).toBe('high');
-  });
-
   it('should flag section with zero web citations as severity high', () => {
     const section = makeSection({
-      searchesPerformed: [
-        { query: 'Costco business model', resultCount: 10, usedInSection: true },
-      ],
       citations: [
         { id: 1, ref: 'dataPacket.ticker', text: 'COST', source: 'DataPacket' },
       ],
@@ -534,27 +512,10 @@ describe('QUAL-07: Search Compliance', () => {
     expect(noCitationIssues[0].severity).toBe('high');
   });
 
-  it('should flag searches reported but no web citations as suspicious (medium)', () => {
-    const section = makeSection({
-      searchesPerformed: [
-        { query: 'Costco business model', resultCount: 10, usedInSection: true },
-        { query: 'COST bull case 2026', resultCount: 5, usedInSection: true },
-      ],
-      citations: [
-        { id: 1, ref: 'dataPacket.ticker', text: 'COST', source: 'DataPacket' },
-      ],
-    });
-    const result = checkSearchCompliance(section);
-    const suspiciousIssues = result.issues.filter(i => i.type === 'search_compliance' && i.message.includes('fabricated'));
-    expect(suspiciousIssues.length).toBe(1);
-    expect(suspiciousIssues[0].severity).toBe('medium');
-  });
-
   it('should always score 100 for exempt sections (synthesis)', () => {
     const section = makeSection({
       key: 'synthesis',
       title: 'Overall Synthesis',
-      searchesPerformed: [],
       citations: [],
     });
     const result = checkSearchCompliance(section);
@@ -566,7 +527,6 @@ describe('QUAL-07: Search Compliance', () => {
     const section = makeSection({
       key: 'psr_annual',
       title: 'Primary Source Reader - Annual',
-      searchesPerformed: [],
       citations: [],
     });
     const result = checkSearchCompliance(section);
@@ -578,30 +538,11 @@ describe('QUAL-07: Search Compliance', () => {
     const section = makeSection({
       key: 'overall_verdict',
       title: 'Overall Verdict',
-      searchesPerformed: [],
       citations: [],
     });
     const result = checkSearchCompliance(section);
     expect(result.score).toBe(100);
     expect(result.issues.length).toBe(0);
-  });
-
-  it('should flag mostly empty search results as low severity warning', () => {
-    const section = makeSection({
-      searchesPerformed: [
-        { query: 'very specific query 1', resultCount: 0, usedInSection: false },
-        { query: 'very specific query 2', resultCount: 0, usedInSection: false },
-        { query: 'very specific query 3', resultCount: 0, usedInSection: false },
-        { query: 'Costco overview', resultCount: 10, usedInSection: true },
-      ],
-      citations: [
-        { id: 1, ref: 'Web', text: 'Data', source: 'Web', url: 'https://example.com' },
-      ],
-    });
-    const result = checkSearchCompliance(section);
-    const emptyIssues = result.issues.filter(i => i.type === 'search_compliance' && i.message.includes('returned 0 results'));
-    expect(emptyIssues.length).toBe(1);
-    expect(emptyIssues[0].severity).toBe('low');
   });
 });
 
@@ -686,7 +627,6 @@ describe('Methodology Scoring', () => {
       redFlags: overrides.redFlags || ['A valid red flag that is sufficiently long'],
       modelUsed: 'test-model',
       tokenCost: { input: 100, output: 100 },
-      searchesPerformed: overrides.searchesPerformed || [],
       ...overrides,
     };
   }
@@ -722,15 +662,15 @@ describe('Methodology Scoring', () => {
       expect(keys.length).toBeGreaterThanOrEqual(8);
     });
 
-    it('should include keys for company_info, market_position, barriers_and_moats, growth_metrics, management, balance_sheet, pest_risks, valuation_summary', () => {
+    it('should include keys for company_info, market_position, barriers_moats, growth_metrics, management, balance_sheet, pest, valuation', () => {
       expect(METHODOLOGY_CHECKS.company_info).toBeDefined();
       expect(METHODOLOGY_CHECKS.market_position).toBeDefined();
-      expect(METHODOLOGY_CHECKS.barriers_and_moats).toBeDefined();
+      expect(METHODOLOGY_CHECKS.barriers_moats).toBeDefined();
       expect(METHODOLOGY_CHECKS.growth_metrics).toBeDefined();
       expect(METHODOLOGY_CHECKS.management).toBeDefined();
       expect(METHODOLOGY_CHECKS.balance_sheet).toBeDefined();
-      expect(METHODOLOGY_CHECKS.pest_risks).toBeDefined();
-      expect(METHODOLOGY_CHECKS.valuation_summary).toBeDefined();
+      expect(METHODOLOGY_CHECKS.pest).toBeDefined();
+      expect(METHODOLOGY_CHECKS.valuation).toBeDefined();
     });
 
     it('should have at least 2 checks per section type', () => {
@@ -741,7 +681,7 @@ describe('Methodology Scoring', () => {
     });
 
     it('should have check objects with id, label, critical, and test fields', () => {
-      const checks = METHODOLOGY_CHECKS.valuation_summary;
+      const checks = METHODOLOGY_CHECKS.valuation;
       for (const check of checks) {
         expect(typeof check.id).toBe('string');
         expect(typeof check.label).toBe('string');
@@ -773,10 +713,10 @@ describe('Methodology Scoring', () => {
     });
   });
 
-  describe('Barriers & Moats (barriers_and_moats)', () => {
+  describe('Barriers & Moats (barriers_moats)', () => {
     it('should check for specific moat type identification', () => {
       const narrative = 'The company benefits from a strong brand moat — its name is synonymous with the category. Switching costs are low but the brand loyalty creates a de facto toll bridge. This moat should endure for 10-20 years as the brand recognition continues to deepen. Competitors like Whole Foods have tried to copy the format but cannot replicate the value proposition.';
-      const section = makeMethodSection('barriers_and_moats', 4, narrative);
+      const section = makeMethodSection('barriers_moats', 4, narrative);
       const result = scoreMethodology(section);
       const moatCheck = result.checks.find(c => c.id === 'moat-type');
       expect(moatCheck).toBeDefined();
@@ -785,7 +725,7 @@ describe('Methodology Scoring', () => {
 
     it('should fail when no moat type is identified', () => {
       const narrative = 'The company has some advantages but we did not analyze them specifically.';
-      const section = makeMethodSection('barriers_and_moats', 4, narrative);
+      const section = makeMethodSection('barriers_moats', 4, narrative);
       const result = scoreMethodology(section);
       const moatCheck = result.checks.find(c => c.id === 'moat-type');
       expect(moatCheck).toBeDefined();
@@ -793,26 +733,26 @@ describe('Methodology Scoring', () => {
     });
   });
 
-  describe('Valuation (valuation_summary)', () => {
+  describe('Valuation (valuation)', () => {
     it('should check for all 4 methods, FGR derivation, and buy price', () => {
       const narrative = 'We computed the MOS (Margin of Safety) price at $45, Payback Time (PBT) target of 6.2 years, Ten Cap price at $52, and Equity Bond price at $48. The FGR (future growth rate) was derived from historical growth of 15%, analyst consensus of 12%, company guidance of 14%, and sector CAGR of 8%. The buy price range is $42-$52 with a sticker price of $90. Sensitivity analysis across conservative and optimistic scenarios confirms the range. The 10-year outlook suggests durable growth.';
-      const section = makeMethodSection('valuation_summary', 10, narrative);
+      const section = makeMethodSection('valuation', 10, narrative);
       const result = scoreMethodology(section);
       expect(result.score).toBeGreaterThanOrEqual(80);
     });
 
     it('should fail when valuation methods are missing', () => {
       const narrative = 'The company looks undervalued based on our analysis. We think it is worth more.';
-      const section = makeMethodSection('valuation_summary', 10, narrative);
+      const section = makeMethodSection('valuation', 10, narrative);
       const result = scoreMethodology(section);
       expect(result.score).toBeLessThan(50);
     });
   });
 
-  describe('PEST Risks (pest_risks)', () => {
+  describe('PEST Risks (pest)', () => {
     it('should check for all 4 PEST categories', () => {
       const narrative = 'Political risks include tariffs on imported goods and FDA regulation changes. Economic factors like consumer spending slowdowns and inflation affect margins. Social trends toward health-conscious eating provide tailwinds. Technological disruption from online grocery delivery poses a long-term threat. Our rebuttal: the company has demonstrated resilience through multiple economic cycles.';
-      const section = makeMethodSection('pest_risks', 9, narrative);
+      const section = makeMethodSection('pest', 9, narrative);
       const result = scoreMethodology(section);
       const pestCheck = result.checks.find(c => c.id === 'pest-all-categories');
       expect(pestCheck).toBeDefined();
@@ -821,7 +761,7 @@ describe('Methodology Scoring', () => {
 
     it('should fail when PEST categories are incomplete', () => {
       const narrative = 'There are some political risks from regulation. Economic headwinds exist.';
-      const section = makeMethodSection('pest_risks', 9, narrative);
+      const section = makeMethodSection('pest', 9, narrative);
       const result = scoreMethodology(section);
       const pestCheck = result.checks.find(c => c.id === 'pest-all-categories');
       expect(pestCheck.passed).toBe(false);

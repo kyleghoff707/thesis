@@ -68,9 +68,9 @@ class ReportData:
         raw_sections = self.report.get('sections', [])
         if isinstance(raw_sections, list):
             for s in raw_sections:
-                key = s.get('key', '')
-                # Filter out reader sections for CC pipeline compatibility
-                if 'reader' in key:
+                key = s.get('key') or ''
+                # Filter out reader sections and skip entries with no key
+                if not key or 'reader' in key:
                     continue
                 # Parse data field if it's a string (One Pager sometimes has "{}")
                 if isinstance(s.get('data'), str):

@@ -138,52 +138,6 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <VerdictBadge verdict={section.verdict} />
           <ConfidenceBadge confidence={section.confidence} />
-          {onCommentClick && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onCommentClick(); }}
-              aria-label="Toggle section comments"
-              style={{
-                position: 'relative',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 28,
-                height: 28,
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                borderRadius: 4,
-                padding: 0,
-                marginLeft: 4,
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke={commentCount > 0 ? C.accent : C.textMuted}
-                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-              </svg>
-              {commentCount > 0 && (
-                <span style={{
-                  position: 'absolute',
-                  top: -4,
-                  right: -4,
-                  width: 16,
-                  height: 16,
-                  borderRadius: '50%',
-                  background: C.accent,
-                  color: '#fff',
-                  fontSize: 10,
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  lineHeight: 1,
-                }}>
-                  {commentCount}
-                </span>
-              )}
-            </button>
-          )}
         </div>
       </div>
 
@@ -242,60 +196,68 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
 
       {/* 5. Structured Data Grid — hidden from display (data preserved in report JSON for future export) */}
 
-      {/* 6. Tables (Optional) */}
-      {hasTables && section.tables.map((table, ti) => (
-        <div key={ti} style={{ marginBottom: 16 }}>
-          {table.title && (
-            <div style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: C.text,
-              marginBottom: 8,
-            }}>
-              {table.title}
-            </div>
-          )}
-          <table style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-          }}>
-            {table.headers && (
-              <thead>
-                <tr>
-                  {table.headers.map((header, hi) => (
-                    <th key={hi} style={{
-                      padding: '8px 12px',
-                      borderBottom: '2px solid ' + C.border,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: C.textMuted,
-                      textAlign: 'left',
-                    }}>
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
+      {/* 6. Tables (Optional) — handles both object format (legacy) and JSON string format */}
+      {hasTables && section.tables.map((rawTable, ti) => {
+        // Parse string tables, pass through objects (backward compat)
+        let table = rawTable;
+        if (typeof rawTable === 'string') {
+          try { table = JSON.parse(rawTable); } catch { return null; }
+        }
+        if (!table || typeof table !== 'object') return null;
+        return (
+          <div key={ti} style={{ marginBottom: 16 }}>
+            {table.title && (
+              <div style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: C.text,
+                marginBottom: 8,
+              }}>
+                {table.title}
+              </div>
             )}
-            <tbody>
-              {table.rows && table.rows.map((row, ri) => (
-                <tr key={ri}>
-                  {row.map((cell, ci) => (
-                    <td key={ci} style={{
-                      padding: '8px 12px',
-                      borderBottom: '1px solid ' + C.borderLight,
-                      fontSize: 12,
-                      color: C.text,
-                    }}>
-                      {cell != null ? cell : '--'}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ))}
+            <table style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+            }}>
+              {table.headers && (
+                <thead>
+                  <tr>
+                    {table.headers.map((header, hi) => (
+                      <th key={hi} style={{
+                        padding: '8px 12px',
+                        borderBottom: '2px solid ' + C.border,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: C.textMuted,
+                        textAlign: 'left',
+                      }}>
+                        {header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+              )}
+              <tbody>
+                {table.rows && table.rows.map((row, ri) => (
+                  <tr key={ri}>
+                    {(Array.isArray(row) ? row : []).map((cell, ci) => (
+                      <td key={ci} style={{
+                        padding: '8px 12px',
+                        borderBottom: '1px solid ' + C.borderLight,
+                        fontSize: 12,
+                        color: C.text,
+                      }}>
+                        {cell != null ? cell : '--'}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      })}
 
       {/* 7. Cross-Cutting Findings */}
       {hasCrossFindings && (
@@ -433,27 +395,35 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
         </div>
       )}
 
-      {/* 11. Searches Performed */}
-      {section.searchesPerformed && Array.isArray(section.searchesPerformed) && section.searchesPerformed.length > 0 && (
-        <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid ' + C.borderLight }}>
-          <div style={{
-            fontSize: 10, fontWeight: 700, color: C.textMuted,
-            textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6,
-          }}>
-            Searches Performed
-          </div>
-          {section.searchesPerformed.map((search, i) => (
-            <div key={i} style={{
-              fontSize: 11, color: C.textSecondary, marginBottom: 4,
-              display: 'flex', alignItems: 'center', gap: 8,
-            }}>
-              <span style={{ color: C.textMuted }}>Q:</span>
-              <span>{typeof search === 'string' ? search : search.query}</span>
-              {search.resultCount != null && (
-                <span style={{ color: C.textMuted, fontSize: 10 }}>({search.resultCount} results)</span>
-              )}
-            </div>
-          ))}
+      {/* Comment button — bottom of section for intuitive placement */}
+      {onCommentClick && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12, paddingTop: 8, borderTop: '1px solid ' + C.borderLight }}>
+          <button
+            onClick={(e) => { e.stopPropagation(); onCommentClick(); }}
+            aria-label="Toggle section comments"
+            style={{
+              position: 'relative',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'transparent',
+              border: '1px solid ' + C.border,
+              cursor: 'pointer',
+              borderRadius: 6,
+              padding: '6px 12px',
+              fontSize: 12,
+              fontWeight: 500,
+              color: commentCount > 0 ? C.accent : C.textMuted,
+              fontFamily: 'inherit',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+            </svg>
+            {commentCount > 0 ? `${commentCount} comment${commentCount > 1 ? 's' : ''}` : 'Add comment'}
+          </button>
         </div>
       )}
     </div>

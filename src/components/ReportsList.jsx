@@ -22,9 +22,9 @@ export default function ReportsList({ reports, getReport, createReport }) {
   // Stage definitions -- pill labels are abbreviated
   // Defined inside component function because C palette is mutable (per Phase 21 decision)
   const STAGE_DEFS = [
-    { key: 'one-pager', pillLabel: 'OP', approvalKey: 'onePager', stagesKey: 'onePager', gate: null },
-    { key: 'pitch-deck', pillLabel: 'PD', approvalKey: 'pitchDeck', stagesKey: 'pitchDeck', gate: 'onePager' },
-    { key: 'full-story', pillLabel: 'FS', approvalKey: 'fullStory', stagesKey: 'fullStory', gate: 'pitchDeck' },
+    { key: 'one-pager', pillLabel: 'One Pager', approvalKey: 'onePager', stagesKey: 'onePager', gate: null },
+    { key: 'pitch-deck', pillLabel: 'Pitch Deck', approvalKey: 'pitchDeck', stagesKey: 'pitchDeck', gate: 'onePager' },
+    { key: 'full-story', pillLabel: 'Full Story', approvalKey: 'fullStory', stagesKey: 'fullStory', gate: 'pitchDeck' },
   ];
 
   const GATE_TOOLTIPS = {

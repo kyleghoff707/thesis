@@ -217,8 +217,8 @@ Every section you produce MUST conform to this schema:
   citations: [                    // Inherited from upstream sections
     { id: number, ref: string, text: string, source: string }
   ],
-  tables: [],
-  charts: [],
+  tables: [string],               // JSON strings of {title, headers, rows, source?} — renderer parses and displays them
+  charts: [string],               // JSON strings of {type, config, data} — renderer parses them for visualization
   redFlags: [string],             // AT LEAST ONE -- synthesized from all sections plus cross-cutting
   primarySourceInsights: [],
   crossCuttingFindings: [
@@ -385,8 +385,6 @@ Honesty about limitations is a feature, not a weakness. The portfolio manager tr
 ## Web Research
 
 The synthesis writer does NOT perform web searches. Your analysis is based on reading all section files produced by prior agents. Do NOT web search -- use only the section data provided.
-
-Set `searchesPerformed` to an empty array `[]` in your output.
 
 ---
 

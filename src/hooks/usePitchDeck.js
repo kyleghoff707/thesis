@@ -1,17 +1,24 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Hook for fetching Pitch Deck report data, polling generation progress,
 // and polling generation-status.json for real-time section status.
-// Returns { report, progress, generationStatus, loading, error }.
+// Returns { report, progress, generationStatus, loading, error, startPolling }.
 // When generation is in progress, polls every 2s.
 // On completion, waits 500ms then re-fetches the report.
+// Call startPolling() after triggering generation to begin polling immediately.
 export function usePitchDeck(ticker) {
   const [report, setReport] = useState(null);
   const [progress, setProgress] = useState(null);
   const [generationStatus, setGenerationStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [pollTrigger, setPollTrigger] = useState(0);
   const pollRef = useRef(null);
+
+  // Call this after triggerGeneration() to start polling
+  const startPolling = useCallback(() => {
+    setPollTrigger(n => n + 1);
+  }, []);
 
   useEffect(() => {
     if (!ticker) return;
@@ -80,6 +87,9 @@ export function usePitchDeck(ticker) {
         pollRef.current = setTimeout(async () => {
           if (!cancelled) await fetchReport();
         }, 500);
+      } else if (pollTrigger > 0 && !prog && !genStatus) {
+        // Files not yet created — pipeline still initializing, keep trying
+        pollRef.current = setTimeout(pollAll, 2000);
       }
     }
 
@@ -97,9 +107,14 @@ export function usePitchDeck(ticker) {
     }
 
     init().then(() => {
-      // After initial fetch, start polling if generation is in progress
       if (!cancelled) {
-        // Re-read from endpoints since closure state is stale
+        // When triggered by startPolling(), always begin polling —
+        // progress files may not exist yet (pipeline still initializing)
+        if (pollTrigger > 0) {
+          pollRef.current = setTimeout(pollAll, 2000);
+          return;
+        }
+        // Normal mount: only poll if generation is already in progress
         Promise.all([fetchProgress(), fetchGenerationStatus()]).then(([prog, genStatus]) => {
           if (cancelled) return;
           const progressActive = prog && prog.state !== 'COMPLETE';
@@ -118,9 +133,9 @@ export function usePitchDeck(ticker) {
         pollRef.current = null;
       }
     };
-  }, [ticker]);
+  }, [ticker, pollTrigger]);
 
-  if (!ticker) return { report: null, progress: null, generationStatus: null, loading: false, error: null };
+  if (!ticker) return { report: null, progress: null, generationStatus: null, loading: false, error: null, startPolling };
 
-  return { report, progress, generationStatus, loading, error };
+  return { report, progress, generationStatus, loading, error, startPolling };
 }

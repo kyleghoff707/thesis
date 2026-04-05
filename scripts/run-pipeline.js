@@ -21,13 +21,15 @@ import { runPipeline } from '../src/engines/pipelineManager.js';
 import { formatBudgetReport } from '../src/engines/contextBudget.js';
 import { fetchFilingMarkdown } from '../src/engines/filingMarkdown.js';
 import { extractAllSections } from '../src/engines/filingSections.js';
+import { fetchTranscript, fetchTranscriptForFiling } from '../src/engines/transcripts.js';
 import { validateStage } from '../src/engines/critic.js';
 import { formatQualityReport } from '../src/engines/qualityFormatter.js';
-import { mkdirSync, writeFileSync, readFileSync, existsSync, unlinkSync } from 'fs';
+import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import {
   createProgress, advanceState, updateGenerationStatus, initGenerationStatus,
-  updatePhaseStatus, startSection, completeSection, saveSectionOutput, saveBudgetReport,
+  updatePhaseStatus, startSection, completeSection, completeSectionWithData,
+  saveSectionOutput, saveBudgetReport,
 } from '../src/engines/progressState.js';
 
 // Canonical section fields (19 fields) — ensures consistent shape across all tickers
@@ -48,17 +50,80 @@ const CANONICAL_SECTION_FIELDS = {
   redFlags: [],
   primarySourceInsights: [],
   crossCuttingFindings: [],
-  searchesPerformed: [],
+  questions: [],
   modelUsed: null,
   tokenCost: null,
 };
 
-// Normalize a section object: fill missing fields with defaults, remove unexpected fields
+// Map AI-produced key variants to canonical keys (dispatch-table.json keys)
+// Comprehensive — covers every plausible name an agent might use per section
+const KEY_NORMALIZATION = {
+  // Section 1: Radar
+  radar_section: 'radar',
+  initial_awareness: 'radar',
+  event_context: 'radar',
+
+  // Section 2: Simple & Predictable
+  simple_and_predictable: 'simple_predictable',
+  simple_predictability: 'simple_predictable',
+  business_model: 'simple_predictable',
+
+  // Section 3: Market Position
+  market_position_analysis: 'market_position',
+  competitive_position: 'market_position',
+  dominant_market_position: 'market_position',
+
+  // Section 4: Barriers & Moats
+  barriers_and_moats: 'barriers_moats',
+  moats: 'barriers_moats',
+  moat_analysis: 'barriers_moats',
+  barriers_to_entry: 'barriers_moats',
+  barriers: 'barriers_moats',
+
+  // Section 5: FCF
+  fcf_analysis: 'fcf',
+  free_cash_flow: 'fcf',
+  owner_earnings: 'fcf',
+  fcf_owner_earnings: 'fcf',
+
+  // Section 6: Management
+  management_analysis: 'management',
+  management_talent: 'management',
+  management_integrity: 'management',
+  management_evaluation: 'management',
+
+  // Section 7: ROE/ROIC & Debt
+  roe_roic_roa_debt: 'roe_roic_debt',
+  roe_roic: 'roe_roic_debt',
+  capital_structure: 'roe_roic_debt',
+  return_metrics: 'roe_roic_debt',
+
+  // Section 8: Balance Sheet
+  balance_sheet_analysis: 'balance_sheet',
+  balance_sheet_deep_dive: 'balance_sheet',
+
+  // Section 9: PEST Risks
+  pest_risks: 'pest',
+  pest_analysis: 'pest',
+  pest_risk_analysis: 'pest',
+  risk_analysis: 'pest',
+
+  // Section 10: Valuation
+  valuation_summary: 'valuation',
+  valuation_analysis: 'valuation',
+  valuation_section: 'valuation',
+};
+
+// Normalize a section object: remap key variants, fill missing fields with defaults
 function normalizeSection(section) {
   if (!section) return null;
   const normalized = {};
   for (const [field, defaultVal] of Object.entries(CANONICAL_SECTION_FIELDS)) {
     normalized[field] = section[field] !== undefined ? section[field] : defaultVal;
+  }
+  // Remap known key variants
+  if (normalized.key && KEY_NORMALIZATION[normalized.key]) {
+    normalized.key = KEY_NORMALIZATION[normalized.key];
   }
   return normalized;
 }
@@ -86,44 +151,7 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
-// Poll interval for checkpoint response (seconds)
-const CHECKPOINT_POLL_INTERVAL = 2;
-
-// Wait for PM response at a checkpoint — polls for checkpoint-{N}-response.json
-async function waitForCheckpointResponse(currentTicker, waveNumber) {
-  const reportsDir = join(process.cwd(), '.thes1s', 'reports', currentTicker.toUpperCase());
-  const responsePath = join(reportsDir, `checkpoint-${waveNumber}-response.json`);
-
-  // Clean up any stale response file from a previous run
-  if (existsSync(responsePath)) {
-    unlinkSync(responsePath);
-  }
-
-  console.log(`  ⏸  Waiting for PM review (checkpoint ${waveNumber})...`);
-  console.log(`     Pipeline paused. PM reviews in the app, then clicks Continue or Re-run.`);
-
-  // Poll for response file
-  while (true) {
-    await new Promise(resolve => setTimeout(resolve, CHECKPOINT_POLL_INTERVAL * 1000));
-    if (existsSync(responsePath)) {
-      try {
-        const raw = readFileSync(responsePath, 'utf-8');
-        const response = JSON.parse(raw);
-        console.log(`  ▶  PM responded: ${response.action}`);
-        if (response.comments) {
-          console.log(`     Feedback: ${response.comments}`);
-        }
-        // Clean up response file
-        unlinkSync(responsePath);
-        return response;
-      } catch (err) {
-        console.warn(`  Failed to parse checkpoint response: ${err.message}`);
-      }
-    }
-  }
-}
-
-// Shared wave progress callback — writes progress state + pauses at checkpoints for PM review
+// Shared wave progress callback — logs progress, persists sections, advances directly to next wave
 const onWaveComplete = async (waveNumber, results, budgetSummary, cacheSummary) => {
   const sectionCount = results.filter(r => r != null).length;
   console.log(`--- Wave ${waveNumber} complete ---`);
@@ -135,65 +163,39 @@ const onWaveComplete = async (waveNumber, results, budgetSummary, cacheSummary) 
     console.log(`  Cache: ${cacheSummary.hitRatePct || '?'} hit rate (${cacheSummary.totalRead || 0} read / ${cacheSummary.totalWrite || 0} write tokens)`);
   }
 
-  // Mark completed sections in generation-status.json
-  for (const section of results) {
+  // Flatten results (agents may return arrays) and normalize keys
+  const flatResults = results.flat().filter(r => r != null && typeof r === 'object');
+  for (const section of flatResults) {
+    if (section?.key && KEY_NORMALIZATION[section.key]) {
+      section.key = KEY_NORMALIZATION[section.key];
+    }
+  }
+
+  // Mark completed sections in generation-status.json + persist section data for live UI
+  for (const section of flatResults) {
     if (section?.key) {
       try { completeSection(ticker, section.key); } catch { /* non-critical */ }
+      try { saveSectionOutput(ticker, section.key, section); } catch { /* non-critical */ }
+      try { completeSectionWithData(ticker, section.key, section); } catch { /* non-critical */ }
     }
   }
 
   // Update phase status
   try { updatePhaseStatus(ticker, waveNumber, 'complete'); } catch { /* non-critical */ }
 
-  // Advance state to CHECKPOINT_N
-  const checkpointState = `CHECKPOINT_${waveNumber}`;
-  try {
-    advanceState(ticker, checkpointState);
-    console.log(`  State: ${checkpointState}`);
-  } catch (err) {
-    // If checkpoint state transition fails (e.g., OP has no checkpoints), skip pause
-    console.log(`  Skipping checkpoint pause (${err.message})`);
-    console.log('');
-    return null;
-  }
-
-  // Write checkpoint data (data gaps, findings) for the frontend
-  const reportsDir = join(process.cwd(), '.thes1s', 'reports', ticker.toUpperCase());
-  const checkpointData = {
-    waveNumber,
-    sections: results.filter(r => r != null).map(r => r.key || 'unknown'),
-    dataGaps: [], // TODO: extract from agent results when available
-    budgetSummary: budgetSummary || null,
-    timestamp: new Date().toISOString(),
-  };
-  mkdirSync(reportsDir, { recursive: true });
-  writeFileSync(join(reportsDir, `checkpoint-${waveNumber}-data.json`), JSON.stringify(checkpointData, null, 2));
-
-  // Pause and wait for PM response
-  const response = await waitForCheckpointResponse(ticker, waveNumber);
-
-  if (response.action === 'rerun') {
-    console.log(`  Re-running wave ${waveNumber}...`);
-    // Advance back to WAVE_N_RUNNING for the re-run
-    try { advanceState(ticker, `WAVE_${waveNumber}_RUNNING`); } catch { /* state may not support this */ }
-    // Return 'rerun' as feedback — pipelineManager will need to handle this
-    return '__RERUN__';
-  }
-
-  // Continue — advance state to next wave
+  // Advance directly to next wave (no checkpoint pause)
   const nextWave = waveNumber + 1;
   const nextWaveState = `WAVE_${nextWave}_RUNNING`;
   try {
     advanceState(ticker, nextWaveState);
     updatePhaseStatus(ticker, nextWave, 'active');
   } catch {
-    // If next wave doesn't exist (last checkpoint), advance to SYNTHESIS
+    // If next wave doesn't exist (last wave), advance to SYNTHESIS
     try { advanceState(ticker, 'SYNTHESIS'); } catch { /* non-critical */ }
   }
 
-  // Mark next wave sections as running
   console.log('');
-  return response.comments || null; // PM feedback text folded into next wave
+  return null; // No PM feedback — waves run straight through
 };
 
 // Shared DataPacket assembly + filing pre-processing
@@ -257,6 +259,73 @@ async function assembleAndPreprocess() {
 
     if (processedCount > 0) {
       dataPacket.filingContent = filingContent;
+    }
+  }
+
+  // Pre-fetch earnings call transcripts by brute-force scanning recent quarters.
+  // AV uses fiscal quarter labels which vary by company FY — instead of guessing,
+  // fetch the last 8 quarters (2 years), cache them to disk, and pass all found to the transcript reader.
+  // Disk cache persists across pipeline runs (IndexedDB doesn't work in Node.js).
+  {
+    console.log('Fetching earnings call transcripts...');
+    const startTranscripts = Date.now();
+    const transcriptContent = {};
+    const transcriptDir = join(process.cwd(), '.thes1s', 'reports', ticker.toUpperCase(), 'transcripts');
+    mkdirSync(transcriptDir, { recursive: true });
+    let fetched = 0;
+    let diskCached = 0;
+    const currentYear = new Date().getFullYear();
+
+    // Try last 8 fiscal quarters: current year Q4→Q1, prior year Q4→Q1
+    const quartersToTry = [];
+    for (let y = currentYear; y >= currentYear - 1; y--) {
+      for (let q = 4; q >= 1; q--) {
+        quartersToTry.push({ year: y, quarter: q });
+      }
+    }
+
+    for (const { year: y, quarter: q } of quartersToTry) {
+      const diskPath = join(transcriptDir, `${y}Q${q}.json`);
+      const key = `transcript-${y}Q${q}`;
+
+      // Check disk cache first
+      if (existsSync(diskPath)) {
+        try {
+          const saved = JSON.parse(readFileSync(diskPath, 'utf-8'));
+          transcriptContent[key] = saved;
+          diskCached++;
+          console.log(`  ${y}Q${q}: disk cache (${(saved.charCount / 1024).toFixed(0)}KB)`);
+          continue;
+        } catch { /* corrupt file — re-fetch */ }
+      }
+
+      // Fetch from API
+      try {
+        const result = await fetchTranscript(ticker, { year: y, quarter: q, id: null });
+        if (result.found) {
+          const entry = {
+            quarter: `${y}Q${q}`,
+            text: result.text,
+            meta: result.meta,
+            charCount: result.charCount,
+          };
+          transcriptContent[key] = entry;
+          // Save to disk for future runs
+          writeFileSync(diskPath, JSON.stringify(entry, null, 2));
+          fetched++;
+          console.log(`  ${y}Q${q}: fetched (${(result.charCount / 1024).toFixed(0)}KB)`);
+        }
+      } catch (err) {
+        console.warn(`  ${y}Q${q}: failed - ${err.message}`);
+      }
+    }
+
+    const transcriptTime = ((Date.now() - startTranscripts) / 1000).toFixed(1);
+    const totalFound = Object.keys(transcriptContent).length;
+    console.log(`Transcript pre-processing: ${totalFound}/8 quarters found (${fetched} fetched, ${diskCached} disk cached) in ${transcriptTime}s\n`);
+
+    if (totalFound > 0) {
+      dataPacket.transcriptContent = transcriptContent;
     }
   }
 
@@ -326,10 +395,9 @@ async function main() {
     for (const section of result.sections) {
       const citations = section.citations?.length || 0;
       const redFlags = section.redFlags?.length || 0;
-      const searches = section.searchesPerformed?.length || 0;
       console.log(`  [${section.sectionNumber || '?'}] ${section.key || '?'} — ${section.title || 'untitled'}`);
       console.log(`      status: ${section.status || '?'} | confidence: ${section.confidence || '?'} | verdict: ${section.verdict || '?'}`);
-      console.log(`      citations: ${citations} | redFlags: ${redFlags} | searches: ${searches}`);
+      console.log(`      citations: ${citations} | redFlags: ${redFlags}`);
     }
     console.log('');
   }

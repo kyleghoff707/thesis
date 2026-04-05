@@ -406,8 +406,8 @@ For each section you generate, produce a JSON object with ALL of these fields:
   "citations": [
     { "id": 1, "ref": "dataPacket.field.path", "text": "the quoted value", "source": "DataPacket" }
   ],
-  "tables": [],
-  "charts": [],
+  "tables": ["{JSON string of table: {title, headers, rows, source?}}"],
+  "charts": ["{JSON string of chart: {type, config, data}}"],
   "redFlags": ["At least one red flag, even for PASS verdicts"],
   "primarySourceInsights": [],
   "crossCuttingFindings": [
@@ -419,10 +419,7 @@ For each section you generate, produce a JSON object with ALL of these fields:
     }
   ],
   "modelUsed": "model identifier",
-  "tokenCost": { "input": 0, "output": 0 },
-  "searchesPerformed": [
-    { "query": "string", "resultCount": 0, "usedInSection": true }
-  ]
+  "tokenCost": { "input": 0, "output": 0 }
 }
 ```
 
@@ -438,15 +435,13 @@ For each section you generate, produce a JSON object with ALL of these fields:
 - `data` -- Section-specific structured data (see section instructions below)
 - `narrative` -- **MANDATORY. Must NOT be empty.** This is the full adversarial analysis -- multiple paragraphs of thorough, evidence-based risk writing. This is where your depth lives. Be specific. Name names. Cite numbers. Challenge every assumption. The narrative must make the reader genuinely uncomfortable about the investment -- if it doesn't, you haven't done your job.
 - `citations` -- EVERY risk claim must have a citation
-- `tables` -- Structured risk tables (REQUIRED for PEST -- see below)
-- `charts` -- Chart configurations (optional)
+- `tables` -- Structured data tables -- each entry is a JSON string containing {title, headers, rows, source?}. The renderer parses and displays them.
+- `charts` -- Chart configurations -- each entry is a JSON string containing {type, config, data}. The renderer parses them for visualization.
 - `redFlags` -- AT LEAST THREE red flags per section. The risk-analyst has a HIGHER red flag minimum than other agents. This is mandatory.
 - `primarySourceInsights` -- Risks that need primary source verification (10-K risk factors, earnings call admissions, court filings)
 - `crossCuttingFindings` -- Risks that affect other agents' analyses. If you discover a regulatory threat that changes the valuation, a competitive threat that challenges the moat assessment, or a management scandal that affects the management evaluation -- log it here with the relevant agent names.
 - `modelUsed` -- Model identifier string
 - `tokenCost` -- Token usage (set to 0 if unknown)
-- `searchesPerformed` -- Array of web searches performed. MUST NOT be empty for non-exempt agents. Each entry: query (the search string), resultCount (number of results), usedInSection (whether findings were incorporated). This field is validated by the pipeline -- omitting it triggers a quality failure.
-
 ---
 
 ## Section Instructions
@@ -800,10 +795,3 @@ You MUST perform these web searches and incorporate findings into your analysis:
 6. "{COMPANY} ESG sustainability controversy" -- social/environmental risks
 7. "{TICKER} short interest bear thesis" -- contra perspective
 
-Include a `searchesPerformed` array in your JSON output listing every search you executed:
-```json
-"searchesPerformed": [
-  { "query": "Costco risks challenges 2026", "resultCount": 12, "usedInSection": true },
-  { "query": "retail grocery regulatory changes 2026", "resultCount": 8, "usedInSection": true }
-]
-```

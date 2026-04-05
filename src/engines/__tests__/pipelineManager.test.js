@@ -23,7 +23,6 @@ vi.mock('fs', () => ({
                 { agent: 'business-analyst', sections: [1, 2], parallel: true },
                 { agent: 'competitor-evaluator', sections: [3], parallel: true },
               ],
-              checkpoint: { after: true, presents: ['findings', 'dataGaps'] },
             },
             {
               phase: 2,
@@ -32,7 +31,6 @@ vi.mock('fs', () => ({
                 { agent: 'financial-analyst', sections: [5], parallel: true },
                 { agent: 'management-evaluator', sections: [6], parallel: true },
               ],
-              checkpoint: { after: true, presents: ['findings'] },
             },
             {
               phase: 3,
@@ -41,7 +39,6 @@ vi.mock('fs', () => ({
                 { agent: 'risk-analyst', sections: [9], parallel: true },
                 { agent: 'valuation-specialist', sections: [10], parallel: true },
               ],
-              checkpoint: { after: true, presents: ['findings', 'valuationReview'] },
             },
           ],
           postProcessing: [
@@ -64,7 +61,6 @@ vi.mock('fs', () => ({
                 { agent: 'management-evaluator', sections: [4], parallel: true },
                 { agent: 'valuation-specialist', sections: [5], parallel: true },
               ],
-              checkpoint: { after: true, presents: ['findings', 'checklistScores', 'confidence'] },
             },
             {
               phase: 2,
@@ -79,7 +75,6 @@ vi.mock('fs', () => ({
               ],
               outputSection: 6,
               outputKey: 'inversion_rebuttal',
-              checkpoint: { after: true, presents: ['debateOutcome'] },
             },
           ],
           postProcessing: [],
@@ -271,7 +266,7 @@ describe('pipelineManager — runPipeline', () => {
 
     await runPipeline('pitchDeck', mockDataPacket, { onWaveComplete });
 
-    // 3 waves, each has checkpoint.after = true
+    // 3 waves, each calls onWaveComplete
     expect(onWaveComplete).toHaveBeenCalledTimes(3);
 
     // First call: wave 1
@@ -299,11 +294,11 @@ describe('pipelineManager — runPipeline', () => {
     const wave1Call = calls.find(c => c[0] === 'business-analyst');
     expect(wave1Call[2].pmFeedback).toBeNull();
 
-    // Wave 2 agents should have feedback from wave 1 checkpoint
+    // Wave 2 agents should have feedback from wave 1 callback
     const wave2Call = calls.find(c => c[0] === 'financial-analyst');
     expect(wave2Call[2].pmFeedback).toBe('Focus more on debt analysis');
 
-    // Wave 3 agents should have feedback from wave 2 checkpoint
+    // Wave 3 agents should have feedback from wave 2 callback
     const wave3Call = calls.find(c => c[0] === 'risk-analyst');
     expect(wave3Call[2].pmFeedback).toBe('Look deeper at cash flow');
   });
@@ -765,7 +760,6 @@ describe('pipelineManager — fullStory debate dispatch', () => {
             redFlags: ['Insider selling concern'],
             primarySourceInsights: [],
             crossCuttingFindings: [],
-            searchesPerformed: [],
             modelUsed: 'claude-sonnet-4-6',
             tokenCost: { input: 35000, output: 8000 },
           },
@@ -961,13 +955,12 @@ describe('pipelineManager — fullStory debate dispatch', () => {
     expect(debateSteps[3].agent).toBe('financial-analyst'); // judge
   });
 
-  it('Test FS-12: checkpoint callback fires after debate wave if wave.checkpoint.after is true', async () => {
+  it('Test FS-12: onWaveComplete callback fires after each wave including debate', async () => {
     const onWaveComplete = vi.fn().mockResolvedValue(null);
 
     await runPipeline('fullStory', mockDataPacket, { onWaveComplete });
 
     // 2 waves — wave 1 (parallel S1-S5) and wave 2 (debate)
-    // Both have checkpoint.after = true in our mock dispatch table
     expect(onWaveComplete).toHaveBeenCalledTimes(2);
 
     // Second call should be the debate wave (phase 2)

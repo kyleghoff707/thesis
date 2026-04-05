@@ -8,7 +8,6 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import {
   ReportSectionSchema,
   CitationSchema,
-  ChartSchema,
   StageReportSchema,
   getReportSectionJSONSchema,
 } from '../reportSection.js';
@@ -80,16 +79,10 @@ describe('FMT-01: looseObject replacement', () => {
     expect(result.schema.properties.data.type).toBe('string');
   });
 
-  it('Test F2: zodOutputFormat schema has chart config.type === string', () => {
+  it('Test F2: zodOutputFormat schema has charts items as type string', () => {
     const result = zodOutputFormat(ReportSectionSchema);
     const chartsItems = result.schema.properties.charts.items;
-    expect(chartsItems.properties.config.type).toBe('string');
-  });
-
-  it('Test F3: zodOutputFormat schema has chart data items as type string', () => {
-    const result = zodOutputFormat(ReportSectionSchema);
-    const chartsItems = result.schema.properties.charts.items;
-    expect(chartsItems.properties.data.items.type).toBe('string');
+    expect(chartsItems.type).toBe('string');
   });
 
   it('Test F5: ReportSectionSchema.safeParse succeeds when data is a JSON string', () => {
@@ -101,14 +94,13 @@ describe('FMT-01: looseObject replacement', () => {
     expect(result.success).toBe(true);
   });
 
-  it('Test F6: ReportSectionSchema.safeParse succeeds with string chart config and data', () => {
+  it('Test F6: ReportSectionSchema.safeParse succeeds with string chart entries', () => {
     const section = {
       ...validSection,
-      charts: [{
-        type: 'bar',
-        config: '{"xAxis":"year","yAxis":"revenue"}',
-        data: ['{"year":2022,"revenue":100}', '{"year":2023,"revenue":120}'],
-      }],
+      charts: [
+        '{"type":"bar","config":{"xAxis":"year","yAxis":"revenue"},"data":[{"year":2022,"revenue":100}]}',
+        '{"type":"line","config":{"xAxis":"year","yAxis":"price"},"data":[{"year":2022,"price":50}]}',
+      ],
     };
     const result = ReportSectionSchema.safeParse(section);
     expect(result.success).toBe(true);

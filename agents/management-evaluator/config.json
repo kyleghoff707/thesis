@@ -13,7 +13,7 @@
     "knowledge/research-references/rule-one-fundamentals.md",
     "knowledge/research-references/tools-for-analysis.md"
   ],
-  "dataPacketSlice": ["compensation", "insiders", "gurus", "companyInfo"],
+  "dataPacketSlice": ["compensation", "insiders", "gurus", "companyInfo", "financials", "ttm", "returnMetrics", "classification"],
   "tools": [],
   "exampleContamination": {
     "exclude": [

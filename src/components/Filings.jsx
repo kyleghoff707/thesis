@@ -3,7 +3,7 @@ import { C } from '../theme';
 import { fetchFilings } from '../engines/edgar';
 import { cacheGetAsync, cacheClear } from '../engines/cache';
 import { fetchFilingMarkdown } from '../engines/filingMarkdown';
-import { fetchTranscriptList, matchTranscriptsToFilings, fetchTranscript, fetchTranscriptForFiling, checkTranscriptCache, isEarningsFiling, clearTranscriptCache } from '../engines/transcripts';
+import { fetchTranscript, fetchTranscriptForFiling, checkTranscriptCache, isEarningsFiling, clearTranscriptCache } from '../engines/transcripts';
 
 // ─── Constants ──────────────────────────────────────────────
 
@@ -215,23 +215,11 @@ export default function Filings({ ticker }) {
     return () => { cancelled = true; };
   }, [visible.length, showCount, filter, year, filings]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch transcript list (Finnhub) and match to earnings filings, plus check cache
+  // Check cache for all earnings filings (Alpha Vantage cached transcripts)
   useEffect(() => {
     if (!ticker || !filings.length) return;
     let cancelled = false;
 
-    // Try Finnhub list for matching (premium) — also check cache for all earnings filings
-    fetchTranscriptList(ticker)
-      .then(list => {
-        if (cancelled) return;
-        if (list.length) {
-          const matches = matchTranscriptsToFilings(list, filings);
-          setTranscriptMap(matches);
-        }
-      })
-      .catch(() => {});
-
-    // Check cache for all earnings filings (works with both Finnhub and AV-cached transcripts)
     checkTranscriptCache(ticker, filings)
       .then(cached => { if (!cancelled) setTranscriptCached(cached); })
       .catch(() => {});
@@ -316,7 +304,7 @@ export default function Filings({ ticker }) {
     setTranscriptError(null);
 
     try {
-      // Use matched entry if available (Finnhub premium), otherwise auto-derive quarter
+      // Use matched entry if available, otherwise auto-derive quarter from filing date
       const result = entry
         ? await fetchTranscript(ticker, entry)
         : await fetchTranscriptForFiling(ticker, filing);

@@ -21,7 +21,7 @@ The user is NOT a programmer. Keep explanations in plain English.
 - **Frontend**: Vite + React (functional components, hooks, inline styles with dark/light palette)
 - **Storage**: localStorage (reports, settings, watchlists), IndexedDB (EDGAR, guru, price, insider, compensation caches) via `cacheStore.js`
 - **AI**: Claude API direct from app (`VITE_CLAUDE_KEY` in `.env.local`)
-- **Financial Data**: SEC EDGAR XBRL (all financials, 13F guru holdings, N-PORT, insiders, compensation — free), Yahoo Finance (prices, stock splits — free), Finviz (analyst estimates — free), GuruFocus (optional $25/mo API), Finnhub (earnings transcripts — premium only, `VITE_FINNHUB_KEY`), Alpha Vantage (earnings transcripts — free 25 calls/day, `VITE_ALPHA_VANTAGE_KEY`)
+- **Financial Data**: SEC EDGAR XBRL (all financials, 13F guru holdings, N-PORT, insiders, compensation — free), Yahoo Finance (prices, stock splits — free), Finviz (analyst estimates — free), GuruFocus (optional $25/mo API), Alpha Vantage (earnings transcripts — free 25 calls/day, 2-key failover: `VITE_ALPHA_VANTAGE_KEY` + `VITE_ALPHA_VANTAGE_KEY_2`)
 - **Charts**: Recharts
 - **Deps**: recharts, @anthropic-ai/sdk, uuid, react-router-dom, turndown, turndown-plugin-gfm, yahoo-finance2, cheerio, idb
 - **No server, no auth** — runs entirely locally. API calls go direct to external services.
@@ -77,7 +77,7 @@ All tag definitions in `FRAMES_TAGS` and `PEER_FRAMES_TAGS` have a `period: 'ins
 Phases 1-4 complete — app shell, data engines, calculation engines, and full Toolbox UI all functional. **XBRL engine complete** — three-layer tag resolution (static + taxonomy + AI), industry overlays (bank/REIT/insurance), full provenance tracking (annual + TTM), coverage monitor, and Audit tab dashboard. Validated across all 503 S&P 500 companies with 0 failures. See `gstack/plans/gstack-xbrl-engine-strategy-eng-plan-20260318.md` for full architecture and `validation/reports/financial-data-comparison-rca.md` for the original 12-ticker RCA. **The remaining work is Phase 5-8: AI-driven report generation.**
 
 ### What's Built
-All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems (validation, guru, ticker, N-PORT, compensation), Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores + derived metric computation + Yahoo data backfill + per-ticker caching + sparse peer filtering + data completeness indicators + industry-aware column defaults, Upcoming Events & News section on Overview (SEC 8-K events + Yahoo calendar + IR page discovery), three-layer XBRL engine with provenance tracking and coverage monitoring (173 tests via vitest), earnings call transcript engine (Finnhub premium + Alpha Vantage free, cached in IndexedDB, Transcript buttons on Filings tab for 10-K/10-Q). See source tree below.
+All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems (validation, guru, ticker, N-PORT, compensation), Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores + derived metric computation + Yahoo data backfill + per-ticker caching + sparse peer filtering + data completeness indicators + industry-aware column defaults, Upcoming Events & News section on Overview (SEC 8-K events + Yahoo calendar + IR page discovery), three-layer XBRL engine with provenance tracking and coverage monitoring (173 tests via vitest), earnings call transcript engine (Alpha Vantage with 2-key failover, cached in IndexedDB, Transcript buttons on Filings tab for 10-K/10-Q). See source tree below.
 
 ### What's NOT Built
 - AI report generation (One Pager, Pitch Deck, Full Story) — Phases 5-7
@@ -277,7 +277,7 @@ src/
 │   ├── peerMetrics.js           — Peer metrics via Frames API + derived metrics (GrossProfit, OpIncome from building blocks) + Yahoo backfill + completeness scoring + multi-year scores
 │   ├── batchQuotes.js           — Yahoo batch quotes with per-ticker caching (market cap, P/E, EPS, book value, shares, dividend yield)
 │   ├── companyEvents.js         — Upcoming events engine (SEC 8-K parsing, Yahoo calendarEvents+assetProfile, IR page discovery with parallel probing, Google search fallback)
-│   ├── transcripts.js           — Earnings call transcript engine (Finnhub premium + Alpha Vantage free, IndexedDB cache, date-proximity matching, dual-source fallback)
+│   ├── transcripts.js           — Earnings call transcript engine (Alpha Vantage with 2-key failover, IndexedDB cache, quarter-matching)
 │   ├── __tests__/peerMetrics.test.js — Vitest: peer metrics bug reproduction tests
 │   ├── __tests__/splits.test.js — Vitest: split detection + cumulativeSplitFactor tests
 │   ├── __tests__/edgarFinancials.test.js — Vitest: taxonomy coverage + derived field + provenance tests
@@ -334,10 +334,9 @@ validation/                      — 3-layer validation system (scripts/, data/,
 When fixing bugs, follow this approach — do NOT jump straight to a fix:
 
 1. **Diagnose with `/investigate`** (gstack). Four-phase root cause analysis — investigate, analyze, hypothesize, implement. Most bugs resolve here.
-2. **Escalate with `/gsd:debug`** if the bug is complex, spans many files, or might need multiple sessions. Spawns a fresh 200k-context subagent with persistent state in `.planning/debug/`.
-3. **Write a failing test.** The test should prove the bug exists. Include a test for the expected post-fix behavior. Use vitest (`npm test`).
-4. **Fix with a subagent.** Give the subagent the failing test and the specific files to modify. It works until all tests pass.
-5. **Verify.** All tests pass, app compiles, dev server runs.
+2. **Write a failing test.** The test should prove the bug exists. Include a test for the expected post-fix behavior. Use vitest (`npm test`).
+3. **Fix with a subagent.** Give the subagent the failing test and the specific files to modify. It works until all tests pass.
+4. **Verify.** All tests pass, app compiles, dev server runs.
 
 Writing tests first forces you to define "correct" before writing code — this caught a critical EDGAR Frames API bug that a direct fix attempt missed entirely.
 
@@ -549,7 +548,6 @@ cp -R .gstack/{name}/* gstack/{name}/ 2>/dev/null; rm -rf .gstack/{name}; ln -sf
 
 **If skill SKILL.md files changed write paths**: Read the changelog or diff the updated skill files in `~/.claude/skills/gstack/`. If any skill changed its output path (e.g., `.gstack/qa-reports/` → `.gstack/qa/`), update the symlink accordingly and tell the user what changed and how it affects our redirect setup.
 
-<!-- GSD:project-start source:PROJECT.md -->
 ## Project
 
 **Thes1s — AI Agent Workflow**
@@ -571,9 +569,7 @@ The power of Rule One research is the depth. A human analyst doing 70 hours of m
 - **LULU contamination**: Agents must never access LULU examples during generation. Evaluation only.
 - **Rule One methodology**: Agents follow the curriculum exactly. Creative freedom is limited to investigation depth and narrative style — never methodology.
 - **User verification**: The user personally verifies agent output quality at each milestone. No milestone is "done" until the user says so.
-<!-- GSD:project-end -->
 
-<!-- GSD:stack-start source:codebase/STACK.md -->
 ## Technology Stack
 
 ## Languages
@@ -620,9 +616,7 @@ The power of Rule One research is the depth. A human analyst doing 70 hours of m
 - macOS desktop app (`.app` bundle via `npm run tauri:build`)
 - Tauri 2 native webview — no CORS enforcement, can set arbitrary headers
 - No server, no auth, no network infrastructure — all API calls go direct to external services
-<!-- GSD:stack-end -->
 
-<!-- GSD:conventions-start source:CONVENTIONS.md -->
 ## Conventions
 
 ## Naming Patterns
@@ -669,7 +663,7 @@ The power of Rule One research is the depth. A human analyst doing 70 hours of m
 - `console.warn(...)` for non-fatal errors, degraded functionality, API failures — `console.warn('EDGAR submissions failed: ...')`
 - `console.log(...)` sparingly for diagnostic milestones — `console.log('EDGAR statements AAPL [restated]: 12 years ...')`
 - Never `console.error(...)` — errors are captured in state and displayed in UI or silently degraded
-- Third-party 403s (e.g., Finnhub free tier) are suppressed to avoid console noise
+- Third-party 403s are suppressed to avoid console noise
 ## Comments
 - Explain non-obvious data conventions: `// payables increase = cash source (already positive)`
 - Reference bug numbers in fixes: `// Fix 3 (P1a): Debt tags + sanity check`
@@ -688,9 +682,7 @@ The power of Rule One research is the depth. A human analyst doing 70 hours of m
 - Constants: named exports for shared data — `export const PERIODS = [10, 7, 5, 3, 1]`
 - Test-only exports: collected under `export const _testExports = { ... }` at file bottom
 ## Theme Usage
-<!-- GSD:conventions-end -->
 
-<!-- GSD:architecture-start source:ARCHITECTURE.md -->
 ## Architecture
 
 ## Pattern Overview
@@ -799,24 +791,4 @@ The power of Rule One research is the depth. A human analyst doing 70 hours of m
 - Cache misses are silent — engines fall back to network without surfacing errors
 - EDGAR 404s (missing filings) return `null` gracefully; components show "no data" states
 ## Cross-Cutting Concerns
-<!-- GSD:architecture-end -->
 
-<!-- GSD:workflow-start source:GSD defaults -->
-## GSD Workflow Enforcement
-
-Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
-
-Use these entry points:
-- `/gsd:quick` for small fixes, doc updates, and ad-hoc tasks
-- `/gsd:debug` for investigation and bug fixing
-- `/gsd:execute-phase` for planned phase work
-
-Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
-<!-- GSD:workflow-end -->
-
-<!-- GSD:profile-start -->
-## Developer Profile
-
-> Profile not yet configured. Run `/gsd:profile-user` to generate your developer profile.
-> This section is managed by `generate-claude-profile` -- do not edit manually.
-<!-- GSD:profile-end -->

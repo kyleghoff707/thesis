@@ -48,7 +48,7 @@ describe('progressState', () => {
       const sectionKeys = Object.keys(progress.sections);
       expect(sectionKeys.length).toBe(10);
       expect(sectionKeys).toContain('radar');
-      expect(sectionKeys).toContain('valuation_summary');
+      expect(sectionKeys).toContain('valuation');
       for (const key of sectionKeys) {
         expect(progress.sections[key].status).toBe('pending');
       }
@@ -124,9 +124,9 @@ describe('progressState', () => {
     });
 
     it('should persist the updated status to disk', () => {
-      updateSectionStatus(TEST_TICKER, 'simple_and_predictable', 'running');
+      updateSectionStatus(TEST_TICKER, 'simple_predictable', 'running');
       const readBack = readProgress(TEST_TICKER);
-      expect(readBack.sections.simple_and_predictable.status).toBe('running');
+      expect(readBack.sections.simple_predictable.status).toBe('running');
     });
   });
 
@@ -239,7 +239,7 @@ describe('progressState', () => {
         expect(updated.sections.radar.status).toBe('running');
         expect(updated.sections.radar.startedAt).toBe('2026-03-25T10:00:00Z');
         // Other sections remain pending
-        expect(updated.sections.simple_and_predictable.status).toBe('pending');
+        expect(updated.sections.simple_predictable.status).toBe('pending');
       });
 
       it('should update top-level fields', () => {
@@ -258,7 +258,7 @@ describe('progressState', () => {
           sections: { radar: { status: 'complete' } },
         });
         const updated = updateGenerationStatus(TEST_TICKER, {
-          sections: { simple_and_predictable: { status: 'complete' } },
+          sections: { simple_predictable: { status: 'complete' } },
         });
         expect(updated.completedCount).toBe(2);
       });
@@ -283,8 +283,8 @@ describe('progressState', () => {
 
       it('should use default agent from SECTION_AGENT_MAP if none provided', () => {
         initGenerationStatus(TEST_TICKER, 'pitchDeck');
-        const updated = startSection(TEST_TICKER, 'pest_risks');
-        expect(updated.sections.pest_risks.agent).toBe('risk-analyst');
+        const updated = startSection(TEST_TICKER, 'pest');
+        expect(updated.sections.pest.agent).toBe('risk-analyst');
       });
     });
 

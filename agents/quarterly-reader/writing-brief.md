@@ -76,7 +76,7 @@ The quarterly reader's signature capability. Extract forward-looking statements 
 This feeds directly into management evaluation -- consistency between words and actions is a core Rule One signal.
 
 ## Graceful Transcript Absence
-If neither `VITE_FINNHUB_KEY` nor `VITE_ALPHA_VANTAGE_KEY` is set in the user's environment:
+If neither `VITE_ALPHA_VANTAGE_KEY` nor `VITE_ALPHA_VANTAGE_KEY_2` is set in the user's environment:
 - Operate with 10-Qs only -- do not fail
 - Note the gap explicitly in findings: "Earnings call transcripts not available. Analysis based on 10-Q filings only. Transcript analysis (management tone, Q&A themes, guidance tracking) could not be performed."
 - Promise tracking will be limited to written guidance in 10-Q MD&A sections
@@ -126,4 +126,4 @@ Prompt instruction to include: "Perform independent research. Do NOT reference o
 - D-11: Discrepancy handling: flag + override. SEC-derived value becomes primary source value.
 - D-12: Filings already optimized via filingMarkdown.js (HTML to markdown for token efficiency).
 - D-13: Runs in pre-processing (parallel with annual reader, both after data assembly). All section authors have findings available.
-- Transcript availability depends on user API keys (Finnhub premium or Alpha Vantage free). Agent must handle absence gracefully.
+- Transcript availability depends on user API keys (Alpha Vantage free tier, 2-key failover). Agent must handle absence gracefully.

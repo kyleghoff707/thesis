@@ -279,27 +279,54 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // Extract parsed result from response — handles both structured output and manual JSON parsing
 function extractResult(response, schema) {
-  // Structured output path: parsed_output is set by messages.parse()
+  // Structured output path: parsed_output is set by stream().finalMessage() with output_config
   if (response.parsed_output) return response.parsed_output;
 
   // Manual path: extract JSON from text content blocks (used when tools are present)
-  const textBlocks = (response.content || []).filter(b => b.type === 'text');
-  if (textBlocks.length === 0) return null;
-
+  const content = response.content || [];
+  const textBlocks = content.filter(b => b.type === 'text');
   const text = textBlocks.map(b => b.text).join('').trim();
+
   if (!text) return null;
 
-  // Find JSON object in the response text (may have leading/trailing text)
+  // Strategy 1: Try to find a JSON code block (```json ... ```)
+  const codeBlockMatch = text.match(/```json\s*([\s\S]*?)```/);
+  if (codeBlockMatch) {
+    try {
+      const parsed = JSON.parse(codeBlockMatch[1].trim());
+      if (schema) {
+        const result = schema.safeParse(parsed);
+        if (result.success) return result.data;
+        return parsed;
+      }
+      return parsed;
+    } catch { /* fall through */ }
+  }
+
+  // Strategy 2: Find the outermost JSON object with a known key field
+  // Look for objects that start with {"key": which is the ReportSection pattern
+  const keyMatch = text.match(/\{"key"\s*:\s*"[\s\S]*\}/);
+  if (keyMatch) {
+    try {
+      const parsed = JSON.parse(keyMatch[0]);
+      if (schema) {
+        const result = schema.safeParse(parsed);
+        if (result.success) return result.data;
+        return parsed;
+      }
+      return parsed;
+    } catch { /* fall through */ }
+  }
+
+  // Strategy 3: Greedy match — first { to last }
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) return null;
 
   try {
     const parsed = JSON.parse(jsonMatch[0]);
-    // Validate against schema if provided
     if (schema) {
       const result = schema.safeParse(parsed);
       if (result.success) return result.data;
-      // Schema validation failed — return raw parsed JSON anyway (best effort)
       return parsed;
     }
     return parsed;
@@ -315,9 +342,10 @@ async function dispatchWithRetry(callFn, agentRole, schema) {
 
     // Check stop_reason
     if (response.stop_reason === 'max_tokens') {
-      // Truncated — retry once with higher max_tokens
-      console.warn(`${agentRole}: max_tokens hit, retrying with 32768`);
-      const retryResponse = await callFn({ maxTokens: 32768 });
+      // Truncated — retry once with doubled max_tokens (cap at 64000)
+      const retryMax = Math.min(64000, (response.usage?.output_tokens || 16384) * 2);
+      console.warn(`${agentRole}: max_tokens hit (${response.usage?.output_tokens || '?'} tokens), retrying with ${retryMax}`);
+      const retryResponse = await callFn({ maxTokens: retryMax });
       if (retryResponse.stop_reason !== 'end_turn') {
         return {
           result: null,
@@ -364,21 +392,38 @@ async function dispatchWithRetry(callFn, agentRole, schema) {
       await sleep(retryAfter * 1000);
       try {
         const retryResponse = await callFn();
-        return { result: retryResponse.parsed_output, error: null, response: retryResponse };
+        return { result: extractResult(retryResponse, schema), error: null, response: retryResponse };
       } catch (retryErr) {
         return { result: null, error: `Rate limit retry failed: ${retryErr.message}` };
       }
     }
 
-    // Overloaded (529) or server error (5xx)
+    // Overloaded (529) or server error (5xx) — retry twice with increasing delays
     if (err.status >= 500) {
-      console.warn(`${agentRole}: server error ${err.status}, retrying after 10s`);
-      await sleep(10000);
+      for (const delay of [10, 30]) {
+        console.warn(`${agentRole}: server error ${err.status}, retrying after ${delay}s`);
+        await sleep(delay * 1000);
+        try {
+          const retryResponse = await callFn();
+          return { result: extractResult(retryResponse, schema), error: null, response: retryResponse };
+        } catch (retryErr) {
+          if (retryErr.status >= 500) continue; // Try again with longer delay
+          return { result: null, error: `Server error retry failed: ${retryErr.message}` };
+        }
+      }
+      return { result: null, error: `Server error: ${err.status} after 2 retries` };
+    }
+
+    // Structured output truncation — JSON was cut off at max_tokens
+    // The API throws instead of returning stop_reason: 'max_tokens'
+    if (err.message?.includes('Failed to parse structured output')) {
+      const retryMax = 32768;
+      console.warn(`${agentRole}: structured output truncated, retrying with ${retryMax} max_tokens`);
       try {
-        const retryResponse = await callFn();
-        return { result: retryResponse.parsed_output, error: null, response: retryResponse };
+        const retryResponse = await callFn({ maxTokens: retryMax });
+        return { result: extractResult(retryResponse, schema), error: null, response: retryResponse };
       } catch (retryErr) {
-        return { result: null, error: `Server error retry failed: ${retryErr.message}` };
+        return { result: null, error: `Structured output retry failed: ${retryErr.message}` };
       }
     }
 
@@ -428,9 +473,7 @@ export async function dispatchAgent(agentRole, dataPacket, options = {}) {
   // Schema parameter (D-05): use options.schema when provided, else ReportSectionSchema
   const schema = options.schema || ReportSectionSchema;
 
-  // Opus 4.6 bug: output_config + tools together produces empty responses for some prompts.
-  // When tools are present, skip output_config and parse JSON manually from response text.
-  const useStructuredOutput = effectiveTools.length === 0;
+  const hasTools = effectiveTools.length > 0;
 
   const callFn = (overrides = {}) => {
     const params = {
@@ -440,53 +483,77 @@ export async function dispatchAgent(agentRole, dataPacket, options = {}) {
       messages: [{ role: 'user', content: userContent }],
     };
 
-    if (useStructuredOutput) {
-      // No tools — safe to use structured output enforcement
-      params.tools = [];
-      params.output_config = { format: zodOutputFormat(schema) };
-      return client.messages.parse(params);
-    } else {
-      // Tools present — use create() without output_config, parse JSON manually
-      params.tools = effectiveTools;
-      return client.messages.create(params);
-    }
+    // Simplified schema fits within grammar limits — output_config works with all tools.
+    // Every agent gets reliable parsed_output, eliminating manual JSON extraction.
+    params.tools = hasTools ? effectiveTools : [];
+    params.output_config = { format: zodOutputFormat(schema) };
+
+    // Always use streaming to avoid 10-minute timeout on long API calls.
+    return client.messages.stream(params).finalMessage();
   };
 
   // 7. Dispatch with retry handling
   const retryResult = await dispatchWithRetry(callFn, agentRole, schema);
 
-  // 8. Handle error case
-  if (retryResult.error) {
-    return {
-      section: null,
-      usage: buildUsage(retryResult.response?.usage || {}, model),
-      webSearches: [],
-      model,
-      stopReason: retryResult.response?.stop_reason || 'error',
-      duration: Date.now() - startTime,
-      error: retryResult.error,
-    };
-  }
-
-  // 9. Process parsed_output
+  // 8. Process result — try repair call if primary dispatch failed for ANY reason
   const section = retryResult.result;
 
-  // Guard: if parsed_output is null (schema validation failed or model returned minimal tokens),
-  // return an error instead of silently propagating null section
+  // Guard: if section is null (parsing failed, API error, truncation, overload, etc.),
+  // attempt a repair call before giving up. This fires regardless of whether the error
+  // was in parsing or in the API itself.
+  if (!section) {
+    const resp = retryResult.response;
+    const textBlocks = (resp?.content || []).filter(b => b.type === 'text');
+    const rawText = textBlocks.map(b => b.text).join('').trim();
+
+    if (rawText.length > 100) {
+      console.warn(`${agentRole}: extractResult failed, attempting repair call (${rawText.length} chars of text content)`);
+      try {
+        const repairResponse = await client.messages.stream({
+          model: MODEL_MAP.sonnet,
+          max_tokens: 16384,
+          tools: [],
+          output_config: { format: zodOutputFormat(schema) },
+          messages: [{
+            role: 'user',
+            content: `Extract the structured JSON from the following agent output. Return ONLY the JSON object matching the schema. Do not add commentary.\n\n${rawText.substring(0, 50000)}`,
+          }],
+        }).finalMessage();
+
+        const repaired = extractResult(repairResponse, schema);
+        if (repaired) {
+          console.warn(`${agentRole}: repair call succeeded`);
+          // Merge usage from both calls
+          const totalUsage = buildUsage(retryResult.response?.usage || {}, model);
+          if (repairResponse.usage) {
+            totalUsage.input += repairResponse.usage.input_tokens || 0;
+            totalUsage.output += repairResponse.usage.output_tokens || 0;
+          }
+          return {
+            section: repaired,
+            usage: totalUsage,
+            webSearches: [],
+            model,
+            stopReason: 'end_turn',
+            duration: Date.now() - startTime,
+          };
+        }
+        console.warn(`${agentRole}: repair call also failed to extract JSON`);
+      } catch (repairErr) {
+        console.warn(`${agentRole}: repair call error: ${repairErr.message}`);
+      }
+    }
+  }
+
   if (!section) {
     const outputTokens = retryResult.response?.usage?.output_tokens || 0;
-    // Diagnostic: dump full response structure to understand parsing failure
     const resp = retryResult.response;
     console.warn(`${agentRole}: parsed_output is null (${outputTokens} output tokens)`);
     console.warn(`  stop_reason: ${resp?.stop_reason}`);
-    console.warn(`  content length: ${resp?.content?.length}`);
-    console.warn(`  content: ${JSON.stringify(resp?.content)?.substring(0, 500)}`);
-    console.warn(`  response keys: ${resp ? Object.keys(resp).join(', ') : 'null'}`);
-    // Check for output field (structured output may use different field)
-    if (resp?.output) console.warn(`  output: ${JSON.stringify(resp.output)?.substring(0, 500)}`);
-    if (resp?.parsed_output !== undefined) console.warn(`  parsed_output: ${JSON.stringify(resp.parsed_output)?.substring(0, 200)}`);
-    // Check the raw HTTP response body if available
-    if (resp?._raw) console.warn(`  _raw keys: ${Object.keys(resp._raw).join(', ')}`);
+    const blockTypes = (resp?.content || []).map(b => b.type);
+    const typeCounts = {};
+    for (const t of blockTypes) typeCounts[t] = (typeCounts[t] || 0) + 1;
+    console.warn(`  content block types: ${JSON.stringify(typeCounts)}`);
     return {
       section: null,
       usage: buildUsage(retryResult.response?.usage || {}, model),
@@ -494,7 +561,7 @@ export async function dispatchAgent(agentRole, dataPacket, options = {}) {
       model,
       stopReason: retryResult.response?.stop_reason || 'unknown',
       duration: Date.now() - startTime,
-      error: `Structured output parsing failed (${outputTokens} output tokens, stop_reason: ${retryResult.response?.stop_reason || 'unknown'})`,
+      error: retryResult.error || `Structured output parsing failed after repair attempt (${outputTokens} output tokens)`,
     };
   }
 

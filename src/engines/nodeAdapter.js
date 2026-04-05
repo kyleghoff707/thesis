@@ -18,7 +18,7 @@ import { DOMParser as XmlDOMParser } from '@xmldom/xmldom';
 // ─── Load .env.local ─────────────────────────────────────────
 // CRITICAL: Load .env.local specifically, NOT bare `import 'dotenv/config'`.
 // The default dotenv only loads .env which does NOT exist in this project.
-// API keys (VITE_CLAUDE_KEY, VITE_FINNHUB_KEY, VITE_ALPHA_VANTAGE_KEY)
+// API keys (VITE_CLAUDE_KEY, VITE_ALPHA_VANTAGE_KEY, VITE_ALPHA_VANTAGE_KEY_2)
 // are in .env.local.
 dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
@@ -62,7 +62,6 @@ export const PROXY_MAP = {
   '/api/efts/': 'https://efts.sec.gov/',
   '/api/yahoo/': 'https://query1.finance.yahoo.com/',
   '/api/finviz/': 'https://finviz.com/',
-  '/api/finnhub/': 'https://finnhub.io/',
   '/api/alpha/': 'https://www.alphavantage.co/',
 };
 

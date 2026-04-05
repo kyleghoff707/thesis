@@ -23,7 +23,7 @@ import { fetchAnalystEstimates } from './analystEstimates.js';
 import { fetchFinvizData } from './finviz.js';
 import { fetchPrices, latestPrice } from './prices.js';
 import { fetchBatchQuotes } from './batchQuotes.js';
-import { fetchTranscriptList } from './transcripts.js';
+import { ALPHA_VANTAGE_KEY, ALPHA_VANTAGE_KEY_2 } from './config.js';
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const IS_NODE = typeof window === 'undefined';
@@ -109,7 +109,6 @@ export async function assembleDataPacket(ticker) {
     safeCall(() => fetchPeersByTier('industry', classification), 'peers', errors),
     IS_NODE ? Promise.resolve(null) : safeCall(() => fetchAnalystEstimates(ticker), 'analystEstimates', errors, { retry: true }),
     IS_NODE ? Promise.resolve(null) : safeCall(() => fetchPrices(ticker, '10y'), 'prices', errors, { retry: true }),
-    safeCall(() => fetchTranscriptList(ticker), 'transcripts', errors, { retry: true }),
     safeCall(() => fetchFilingList(ticker), 'filings', errors),
   ]);
 
@@ -119,8 +118,7 @@ export async function assembleDataPacket(ticker) {
   const peers = step3[3].value ?? null;
   let analystEstimates = step3[4].value ?? null;
   let prices = step3[5].value ?? null;
-  const transcriptList = step3[6].value ?? null;
-  const filings = step3[7].value ?? null;
+  const filings = step3[6].value ?? null;
 
   // Yahoo enrichment removed from DataPacket assembly (Phase 6.3 — A1).
   // Yahoo crumb auth causes 30-60s timeouts in Node.js, blocking the pipeline.
@@ -241,9 +239,12 @@ export async function assembleDataPacket(ticker) {
   const currentPrice = prices ? latestPrice(prices) : null;
 
   // ── Build transcript availability summary ──
+  // Alpha Vantage is the sole transcript source (2-key failover).
+  // We report key availability; actual transcripts are fetched on-demand per quarter.
 
-  const transcriptAvailability = transcriptList
-    ? { count: transcriptList.length, latestQuarter: transcriptList[0]?.title || null }
+  const hasAVKeys = !!(ALPHA_VANTAGE_KEY || ALPHA_VANTAGE_KEY_2);
+  const transcriptAvailability = hasAVKeys
+    ? { available: true, source: 'alpha_vantage' }
     : null;
 
   // ── Wire Yahoo quote data into keyMetrics price ratios ──

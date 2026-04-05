@@ -399,8 +399,8 @@ For each section you generate, produce a JSON object with ALL of these fields:
   "citations": [
     { "id": 1, "ref": "dataPacket.field.path", "text": "the quoted value", "source": "DataPacket" }
   ],
-  "tables": [],
-  "charts": [],
+  "tables": ["{JSON string of table: {title, headers, rows, source?}}"],
+  "charts": ["{JSON string of chart: {type, config, data}}"],
   "redFlags": ["At least one red flag, even for PASS verdicts"],
   "primarySourceInsights": [],
   "crossCuttingFindings": [
@@ -428,8 +428,8 @@ For each section you generate, produce a JSON object with ALL of these fields:
 - `data` -- Section-specific structured data (see section instructions below)
 - `narrative` -- **MANDATORY. Must NOT be empty.** This is the full Buffett-style prose analysis — multiple paragraphs of thorough, conversational writing. This is where your depth lives. The `verdictRationale` is a 1-2 sentence summary; the `narrative` is the full story. Cite specific numbers. OK to say "I don't know yet." If your narrative is empty, the report viewer will show a blank section — that is a failure.
 - `citations` -- EVERY quantitative claim must have a citation with DataPacket field path
-- `tables` -- Structured data tables (required for growth metrics)
-- `charts` -- Chart configurations (optional)
+- `tables` -- Structured data tables -- each entry is a JSON string containing {title, headers, rows, source?}. The renderer parses and displays them.
+- `charts` -- Chart configurations -- each entry is a JSON string containing {type, config, data}. The renderer parses them for visualization.
 - `redFlags` -- AT LEAST ONE red flag per section, even for PASS. This is mandatory.
 - `primarySourceInsights` -- Insights that would benefit from primary source verification
 - `crossCuttingFindings` -- Qualitative discoveries that affect other agents' work. If you discover a financial anomaly that affects valuation (e.g., one-time charge distorting earnings, acquisition changing capital structure, accounting restatement), log it here. The orchestrator routes these to downstream agents.
@@ -692,14 +692,6 @@ You MUST perform these web searches and incorporate findings into your analysis:
 3. "{TICKER} free cash flow analysis" -- independent FCF assessment
 4. "{COMPANY} debt maturity schedule" -- debt structure details
 5. "{INDUSTRY} average margins ROE benchmarks" -- industry comparisons
-
-Include a `searchesPerformed` array in your JSON output listing every search you executed:
-```json
-"searchesPerformed": [
-  { "query": "COST analyst estimates EPS revenue 2026", "resultCount": 10, "usedInSection": true },
-  { "query": "Costco capital allocation strategy", "resultCount": 8, "usedInSection": true }
-]
-```
 
 ---
 

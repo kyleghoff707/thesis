@@ -7,16 +7,7 @@ import SectionRenderer from './SectionRenderer.jsx';
 import VerdictBadge from './VerdictBadge.jsx';
 import { formatTitle, formatRelativeTime, stateToLabel, verdictDotColor } from './reportHelpers';
 import Spinner from './Spinner';
-import CheckpointPanel from './CheckpointPanel';
-
-function isCheckpointState(state) {
-  return /^CHECKPOINT_\d+$/.test(state);
-}
-
-function getCheckpointNum(state) {
-  const match = state?.match(/^CHECKPOINT_(\d+)$/);
-  return match ? parseInt(match[1], 10) : null;
-}
+import ExportButtons from './ExportButtons';
 
 // Title-case a snake_case section key: "company_info" → "Company Info"
 function titleCase(key) {
@@ -49,11 +40,8 @@ function computePercentage(statuses, progressState) {
     'DATA_ASSEMBLY': 15,
     'PRIMARY_SOURCE_READING': 30,
     'WAVE_1_RUNNING': 50,
-    'CHECKPOINT_1': 65,
     'WAVE_2_RUNNING': 70,
-    'CHECKPOINT_2': 80,
     'WAVE_3_RUNNING': 85,
-    'CHECKPOINT_3': 90,
     'SYNTHESIS': 92,
     'QUALITY_CHECK': 95,
     'COMPLETE': 100,
@@ -242,37 +230,14 @@ export default function OnePager({ getReport, updateReport }) {
           {approvalStatus === 'rejected' && (
             <span style={{ fontSize: 11, fontWeight: 600, color: C.red }}>Rejected</span>
           )}
+          {onePagerData && isComplete && (
+            <ExportButtons ticker={report?.ticker} stage="one-pager" />
+          )}
         </div>
       </div>
 
-      {/* Checkpoint Review Panel */}
-      {progress && isCheckpointState(progress.state) && (
-        <CheckpointPanel
-          ticker={onePagerData?.ticker || report?.ticker}
-          checkpointNum={getCheckpointNum(progress.state)}
-          sections={(onePagerData?.sections || []).map(s => ({ ...s, key: s.key || s.sectionKey }))}
-          dataGaps={progress.checkpoints?.[getCheckpointNum(progress.state) - 1]?.dataGaps || []}
-          totalSections={6}
-          elapsedMs={progress.startedAt ? Date.now() - new Date(progress.startedAt).getTime() : 0}
-          onContinue={() => {
-            fetch(`/api/thes1s/reports/${encodeURIComponent(onePagerData?.ticker || report?.ticker)}/checkpoint`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ checkpointPhase: getCheckpointNum(progress.state), action: 'continue' }),
-            }).catch(() => {});
-          }}
-          onRerun={() => {
-            fetch(`/api/thes1s/reports/${encodeURIComponent(onePagerData?.ticker || report?.ticker)}/checkpoint`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ checkpointPhase: getCheckpointNum(progress.state), action: 'rerun' }),
-            }).catch(() => {});
-          }}
-        />
-      )}
-
-      {/* C. Progress Bar (visible during generation, not at checkpoints) */}
-      {progress && progress.state !== 'COMPLETE' && !isCheckpointState(progress.state) && (
+      {/* C. Progress Bar (visible during generation) */}
+      {progress && progress.state !== 'COMPLETE' && (
         <div style={{ marginBottom: 16 }}>
           <div style={{
             height: 4,
@@ -452,35 +417,7 @@ export default function OnePager({ getReport, updateReport }) {
             );
           })}
 
-          {/* F. Citation Reference List */}
-          {allCitations.length > 0 && (
-            <div id="citation-references" style={{
-              marginTop: 24,
-              paddingTop: 16,
-              borderTop: '1px solid ' + C.border,
-            }}>
-              <div style={{
-                fontSize: 14,
-                fontWeight: 700,
-                color: C.text,
-                marginBottom: 12,
-              }}>
-                References
-              </div>
-              {allCitations.map((citation, idx) => (
-                <div key={citation.id} style={{
-                  fontSize: 12,
-                  color: C.textSecondary,
-                  marginBottom: 6,
-                  lineHeight: 1.5,
-                }}>
-                  <span style={{ fontWeight: 600, color: C.textMuted }}>[{idx + 1}]</span>{' '}
-                  {citation.source && <span style={{ fontWeight: 500 }}>{citation.source}: </span>}
-                  {citation.text || citation.title || ''}
-                </div>
-              ))}
-            </div>
-          )}
+          {/* F. References — hidden in working view, available for future export view */}
 
           {/* G. Approval Bar */}
           {showApprovalBar && (

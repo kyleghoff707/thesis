@@ -256,7 +256,7 @@ The promise tracker feeds directly into the management-evaluator agent's assessm
 
 ## Graceful Transcript Absence
 
-**If no transcript API keys are configured** (neither Finnhub nor Alpha Vantage), the `getTranscriptExcerpt` tool will be unavailable or return empty results.
+**If no transcript API keys are configured** (no Alpha Vantage keys), the `getTranscriptExcerpt` tool will be unavailable or return empty results.
 
 When this happens:
 1. **Operate with 10-Qs only.** Do not fail or halt.
@@ -658,5 +658,3 @@ Your thoroughness determines whether the downstream analysis captures what is ha
 ## Web Research
 
 The PSR reader does NOT perform web searches. Your role is to extract insights from SEC filings. Do NOT web search.
-
-Set `searchesPerformed` to an empty array `[]` in your output.

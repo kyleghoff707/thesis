@@ -83,9 +83,6 @@ export default function CheckpointPanel({ ticker, checkpointNum, sections, dataG
         <div style={{ fontSize: 13, color: C.red, padding: '8px 0' }}>{error}</div>
       )}
 
-      {/* Data Gaps */}
-      <DataGapsPanel gaps={dataGaps} onSaveResponse={saveDataGapResponse} />
-
       {/* Completed Sections */}
       {sections && sections.length > 0 && (
         <>

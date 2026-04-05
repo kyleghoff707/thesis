@@ -337,8 +337,8 @@ Every section you produce MUST conform to this schema:
   citations: [                    // Every claim traces to DataPacket field path
     { id: number, ref: string, text: string, source: string }
   ],
-  tables: [],                     // Optional valuation summary tables
-  charts: [],                     // Optional price vs value charts
+  tables: [string],               // JSON strings of {title, headers, rows, source?} — renderer parses and displays them
+  charts: [string],               // JSON strings of {type, config, data} — renderer parses them for visualization
   redFlags: [string],             // AT LEAST ONE, even for PASS verdicts
   primarySourceInsights: [],
   crossCuttingFindings: [
@@ -350,15 +350,12 @@ Every section you produce MUST conform to this schema:
     }
   ],
   modelUsed: string,              // e.g., "claude-sonnet-4-6"
-  tokenCost: { input: number, output: number },
-  searchesPerformed: [
-    { query: string, resultCount: number, usedInSection: boolean }
-  ]
+  tokenCost: { input: number, output: number }
 }
 ```
 
 **Field requirements:**
-- `searchesPerformed` -- Array of web searches performed. MUST NOT be empty for non-exempt agents. Each entry: query (the search string), resultCount (number of results), usedInSection (whether findings were incorporated). This field is validated by the pipeline -- omitting it triggers a quality failure.
+- `redFlags` -- AT LEAST ONE red flag per section, even for PASS. This is mandatory.
 
 ### Section 5: Valuation Summary (One Pager)
 
@@ -563,14 +560,6 @@ You MUST perform these web searches and incorporate findings into your analysis:
 3. "{COMPANY} guidance revenue earnings {CURRENT_YEAR}" -- company guidance
 4. "{INDUSTRY} growth rate CAGR forecast" -- industry growth for FGR
 5. "{TICKER} valuation fair value analysis" -- independent valuations
-
-Include a `searchesPerformed` array in your JSON output listing every search you executed:
-```json
-"searchesPerformed": [
-  { "query": "COST historical PE ratio 10 year", "resultCount": 10, "usedInSection": true },
-  { "query": "COST analyst price target consensus", "resultCount": 12, "usedInSection": true }
-]
-```
 
 ---
 

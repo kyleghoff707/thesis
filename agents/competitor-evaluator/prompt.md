@@ -391,8 +391,8 @@ For each section you generate, produce a JSON object with ALL of these fields:
   "citations": [
     { "id": 1, "ref": "dataPacket.field.path", "text": "the quoted value", "source": "DataPacket" }
   ],
-  "tables": [],
-  "charts": [],
+  "tables": ["{JSON string of table: {title, headers, rows, source?}}"],
+  "charts": ["{JSON string of chart: {type, config, data}}"],
   "redFlags": ["At least one red flag, even for PASS verdicts"],
   "primarySourceInsights": [],
   "crossCuttingFindings": [
@@ -420,8 +420,8 @@ For each section you generate, produce a JSON object with ALL of these fields:
 - `data` -- Section-specific structured data (see section instructions below)
 - `narrative` -- **MANDATORY. Must NOT be empty.** Full Buffett-style prose analysis -- multiple paragraphs of thorough, conversational writing. This is where your depth lives. Cite specific numbers. OK to say "I don't know yet."
 - `citations` -- EVERY quantitative claim must have a citation with DataPacket field path or source URL
-- `tables` -- Structured data tables (peer comparison tables are REQUIRED, not optional)
-- `charts` -- Chart configurations (optional)
+- `tables` -- Structured data tables -- each entry is a JSON string containing {title, headers, rows, source?}. The renderer parses and displays them.
+- `charts` -- Chart configurations -- each entry is a JSON string containing {type, config, data}. The renderer parses them for visualization.
 - `redFlags` -- AT LEAST ONE red flag per section, even for PASS. This is mandatory.
 - `primarySourceInsights` -- Insights that would benefit from primary source verification (10-K reading, management commentary)
 - `crossCuttingFindings` -- Discoveries that other agents need to know about. If you find emerging competitors, regulatory threats, market saturation signals, or acquisition activity, log it here with relevant agent names.
@@ -655,14 +655,6 @@ You MUST perform these web searches and incorporate findings into your analysis:
 3. "{INDUSTRY} market size TAM {CURRENT_YEAR}" -- total addressable market
 4. "{COMPANY} new market expansion growth" -- growth vectors
 5. "{INDUSTRY} market share trends" -- competitive dynamics
-
-Include a `searchesPerformed` array in your JSON output listing every search you executed:
-```json
-"searchesPerformed": [
-  { "query": "Costco market share grocery retail", "resultCount": 15, "usedInSection": true },
-  { "query": "grocery retail market size TAM 2026", "resultCount": 10, "usedInSection": true }
-]
-```
 
 ---
 

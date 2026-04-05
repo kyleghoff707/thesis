@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { C } from '../theme';
 import { useFullStory } from '../hooks/useFullStory';
+import { useGeneratePipeline } from '../hooks/useGeneratePipeline';
+import ConfirmGenerateDialog from './ConfirmGenerateDialog';
 import { useScrollSpy } from '../hooks/useScrollSpy';
 import { generateDeepDive } from '../engines/deepDive';
 import SectionRenderer from './SectionRenderer';
@@ -15,16 +17,7 @@ import VerdictBadge from './VerdictBadge';
 import ConfidenceBadge from './ConfidenceBadge';
 import { formatTitle, formatRelativeTime, verdictDotColor } from './reportHelpers';
 import Spinner from './Spinner';
-import CheckpointPanel from './CheckpointPanel';
-
-function isCheckpointState(state) {
-  return /^CHECKPOINT_\d+$/.test(state);
-}
-
-function getCheckpointNum(state) {
-  const match = state?.match(/^CHECKPOINT_(\d+)$/);
-  return match ? parseInt(match[1], 10) : null;
-}
+import PsrSummaryCard from './PsrSummaryCard';
 
 // --- Section definitions for the Full Story (7 sections: 6 original + Promise Tracker) ---
 const SECTION_DEFS = [
@@ -81,7 +74,14 @@ export default function FullStory({ getReport, updateReport }) {
   const { id } = useParams();
   const report = getReport ? getReport(id) : null;
   const ticker = report?.ticker;
-  const { report: fullStoryData, quality, progress, loading, error } = useFullStory(ticker);
+  const { report: fullStoryData, quality, progress: rawProgress, generationStatus: rawGenStatus, loading, error, startPolling } = useFullStory(ticker);
+  const { triggerGeneration, generating } = useGeneratePipeline(ticker);
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
+  const [graceActive, setGraceActive] = useState(false);
+
+  // Filter out stale progress/generationStatus from other stages
+  const progress = rawProgress?.stage === 'fullStory' ? rawProgress : null;
+  const generationStatus = rawGenStatus?.stage === 'fullStory' ? rawGenStatus : null;
 
   const sectionIds = useMemo(() => SECTION_DEFS.map(d => d.key), []);
   const activeSection = useScrollSpy(sectionIds);
@@ -351,6 +351,16 @@ export default function FullStory({ getReport, updateReport }) {
     );
   }
 
+  // --- Grace period (pipeline starting, progress files not yet created) ---
+  if (graceActive && !fullStoryData && !progress) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40vh', gap: 10 }}>
+        <Spinner />
+        <span style={{ fontSize: 13, color: C.textMuted }}>Starting generation...</span>
+      </div>
+    );
+  }
+
   // --- Empty State ---
   if (!fullStoryData && !progress) {
     return (
@@ -360,14 +370,45 @@ export default function FullStory({ getReport, updateReport }) {
         alignItems: 'center',
         justifyContent: 'center',
         height: '40vh',
-        gap: 8,
+        gap: 16,
       }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>
           No Full Story generated yet
         </div>
-        <div style={{ fontSize: 13, fontWeight: 400, color: C.textMuted }}>
-          Run the Full Story pipeline for {ticker} to create one. The Pitch Deck must be approved first.
-        </div>
+        <button
+          onClick={() => setShowGenerateDialog(true)}
+          disabled={generating}
+          style={{
+            background: generating ? C.badge : C.accent,
+            color: '#fff',
+            padding: '8px 20px',
+            borderRadius: 6,
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: generating ? 'default' : 'pointer',
+            border: 'none',
+            fontFamily: 'inherit',
+            opacity: generating ? 0.7 : 1,
+            transition: 'background .15s',
+          }}
+          onMouseEnter={e => { if (!generating) e.currentTarget.style.background = C.accentHover; }}
+          onMouseLeave={e => { if (!generating) e.currentTarget.style.background = C.accent; }}
+        >
+          {generating ? 'Generating...' : 'Generate Full Story'}
+        </button>
+        {showGenerateDialog && (
+          <ConfirmGenerateDialog
+            ticker={ticker}
+            stage="full-story"
+            onConfirm={() => {
+              setShowGenerateDialog(false);
+              setGraceActive(true);
+              setTimeout(() => setGraceActive(false), 5000);
+              triggerGeneration('full-story').then(() => startPolling());
+            }}
+            onCancel={() => setShowGenerateDialog(false)}
+          />
+        )}
       </div>
     );
   }
@@ -461,30 +502,9 @@ export default function FullStory({ getReport, updateReport }) {
         )}
       </div>
 
-      {/* Checkpoint Review Panel */}
-      {progress && isCheckpointState(progress.state) && (
-        <CheckpointPanel
-          ticker={fullStoryData?.ticker || report?.ticker}
-          checkpointNum={getCheckpointNum(progress.state)}
-          sections={(fullStoryData?.sections || []).map(s => ({ ...s, key: s.key || s.sectionKey }))}
-          dataGaps={progress.checkpoints?.[getCheckpointNum(progress.state) - 1]?.dataGaps || []}
-          totalSections={6}
-          elapsedMs={progress.startedAt ? Date.now() - new Date(progress.startedAt).getTime() : 0}
-          onContinue={() => {
-            fetch(`/api/thes1s/reports/${encodeURIComponent(fullStoryData?.ticker || report?.ticker)}/checkpoint`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ checkpointPhase: getCheckpointNum(progress.state), action: 'continue' }),
-            }).catch(() => {});
-          }}
-          onRerun={() => {
-            fetch(`/api/thes1s/reports/${encodeURIComponent(fullStoryData?.ticker || report?.ticker)}/checkpoint`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ checkpointPhase: getCheckpointNum(progress.state), action: 'rerun' }),
-            }).catch(() => {});
-          }}
-        />
+      {/* PSR Summary Card — shown above sections when report is complete */}
+      {(!progress || progress.state === 'COMPLETE') && fullStoryData && (
+        <PsrSummaryCard ticker={ticker} />
       )}
 
       {/* B. Two-Column Layout */}

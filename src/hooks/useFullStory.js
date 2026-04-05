@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Hook for fetching Full Story report data + quality scores,
 // polling generation progress, and polling generation-status.json.
-// Returns { report, quality, progress, generationStatus, loading, error }.
+// Returns { report, quality, progress, generationStatus, loading, error, startPolling }.
 // When generation is in progress, polls every 2s.
 // On completion, waits 500ms then re-fetches report + quality.
+// Call startPolling() after triggering generation to begin polling immediately.
 export function useFullStory(ticker) {
   const [report, setReport] = useState(null);
   const [quality, setQuality] = useState(null);
@@ -12,7 +13,13 @@ export function useFullStory(ticker) {
   const [generationStatus, setGenerationStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [pollTrigger, setPollTrigger] = useState(0);
   const pollRef = useRef(null);
+
+  // Call this after triggerGeneration() to start polling
+  const startPolling = useCallback(() => {
+    setPollTrigger(n => n + 1);
+  }, []);
 
   useEffect(() => {
     if (!ticker) return;
@@ -95,13 +102,12 @@ export function useFullStory(ticker) {
             await Promise.all([fetchReport(), fetchQuality()]);
           }
         }, 500);
+      } else if (pollTrigger > 0 && !prog && !genStatus) {
+        // Files not yet created — pipeline still initializing, keep trying
+        pollRef.current = setTimeout(pollAll, 2000);
       }
     }
 
-    // FIX vs usePitchDeck: Capture init results to avoid double-fetch.
-    // usePitchDeck calls fetchProgress + fetchGenerationStatus inside init(),
-    // then re-fetches them in init().then() to decide whether to poll.
-    // Instead, capture the Promise.all results and use them directly.
     async function init() {
       setLoading(true);
       setError(null);
@@ -112,13 +118,17 @@ export function useFullStory(ticker) {
           fetchProgress(),
           fetchGenerationStatus(),
         ]);
-        // Use captured results to decide whether to start polling
-        // (no second fetch needed)
         if (!cancelled) {
-          const progressActive = prog && prog.state !== 'COMPLETE';
-          const genStatusActive = genStatus && genStatus.state !== 'COMPLETE';
-          if (progressActive || genStatusActive) {
+          // When triggered by startPolling(), always begin polling
+          if (pollTrigger > 0) {
             pollRef.current = setTimeout(pollAll, 2000);
+          } else {
+            // Normal mount: only poll if generation is already in progress
+            const progressActive = prog && prog.state !== 'COMPLETE';
+            const genStatusActive = genStatus && genStatus.state !== 'COMPLETE';
+            if (progressActive || genStatusActive) {
+              pollRef.current = setTimeout(pollAll, 2000);
+            }
           }
         }
       } catch (e) {
@@ -137,9 +147,9 @@ export function useFullStory(ticker) {
         pollRef.current = null;
       }
     };
-  }, [ticker]);
+  }, [ticker, pollTrigger]);
 
-  if (!ticker) return { report: null, quality: null, progress: null, generationStatus: null, loading: false, error: null };
+  if (!ticker) return { report: null, quality: null, progress: null, generationStatus: null, loading: false, error: null, startPolling };
 
-  return { report, quality, progress, generationStatus, loading, error };
+  return { report, quality, progress, generationStatus, loading, error, startPolling };
 }

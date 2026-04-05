@@ -90,23 +90,3 @@ describe('primarySourceInsights rendering contract', () => {
   });
 });
 
-describe('searchesPerformed rendering contract', () => {
-  it('accepts search objects with query field', () => {
-    const searches = [
-      { query: 'SFM competitive landscape', resultCount: 10, usedInSection: true },
-    ];
-    expect(searches[0].query).toBe('SFM competitive landscape');
-    expect(searches[0].resultCount).toBe(10);
-  });
-
-  it('accepts string-only searches', () => {
-    const searches = ['SFM revenue growth 2025'];
-    // Guard: typeof search === 'string' ? search : search.query
-    expect(typeof searches[0]).toBe('string');
-  });
-
-  it('empty array should not render block', () => {
-    const searches = [];
-    expect(searches.length > 0).toBe(false);
-  });
-});

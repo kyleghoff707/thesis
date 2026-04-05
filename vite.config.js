@@ -498,77 +498,87 @@ function thes1sReportsPlugin() {
           const ticker = parts[0].toUpperCase();
           const tickerDir = path.join(reportsDir, ticker);
 
-          // --- POST /api/thes1s/reports/:ticker/checkpoint — Write checkpoint feedback to disk ---
-          if (parts[1] === 'checkpoint' && req.method === 'POST') {
-            const chunks = [];
-            req.on('data', chunk => chunks.push(chunk));
-            req.on('end', () => {
-              try {
-                const body = JSON.parse(Buffer.concat(chunks).toString());
-                const cpNum = body.checkpointPhase != null ? body.checkpointPhase : 0;
-                fs.mkdirSync(tickerDir, { recursive: true });
-                const cpPath = path.join(tickerDir, `checkpoint-${cpNum}.json`);
-                // Handle file attachments: write base64-encoded files to disk
-                if (Array.isArray(body.attachments)) {
-                  const attDir = path.join(tickerDir, 'attachments');
-                  fs.mkdirSync(attDir, { recursive: true });
-                  for (const att of body.attachments) {
-                    if (att.id && att.base64data) {
-                      fs.writeFileSync(path.join(attDir, att.id), Buffer.from(att.base64data, 'base64'));
-                    }
-                  }
-                }
-                fs.writeFileSync(cpPath, JSON.stringify(body, null, 2));
-                // Write response signal file for pipeline pause/resume
-                const responsePath = path.join(tickerDir, `checkpoint-${cpNum}-response.json`);
-                fs.writeFileSync(responsePath, JSON.stringify({
-                  action: body.action || 'continue',
-                  comments: body.comments || null,
-                  timestamp: new Date().toISOString(),
-                }, null, 2));
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ status: 'saved', path: `checkpoint-${cpNum}.json` }));
-              } catch (e) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Invalid JSON body: ' + e.message }));
-              }
-            });
+          // --- GET /api/thes1s/reports/:ticker/psr-summary — Read PSR summary ---
+          if (parts[1] === 'psr-summary' && req.method === 'GET') {
+            const psrPath = path.join(tickerDir, 'psr-summary.json');
+            if (!fs.existsSync(psrPath)) {
+              res.writeHead(404, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'PSR summary not found' }));
+              return;
+            }
+            const content = fs.readFileSync(psrPath, 'utf-8');
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(content);
             return;
           }
 
-          // --- GET /api/thes1s/reports/:ticker/checkpoint(/:num) — Read checkpoint feedback from disk ---
-          if (parts[1] === 'checkpoint' && req.method === 'GET') {
-            if (parts[2] != null) {
-              // Specific checkpoint: /TICKER/checkpoint/1
-              const cpPath = path.join(tickerDir, `checkpoint-${parts[2]}.json`);
-              if (!fs.existsSync(cpPath)) {
-                res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Checkpoint not found' }));
-                return;
-              }
-              const content = fs.readFileSync(cpPath, 'utf-8');
-              res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(content);
-            } else {
-              // Latest checkpoint: scan for checkpoint-*.json, return highest number
-              if (!fs.existsSync(tickerDir)) {
-                res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'No checkpoints found' }));
-                return;
-              }
-              const files = fs.readdirSync(tickerDir).filter(f => /^checkpoint-\d+\.json$/.test(f));
-              if (files.length === 0) {
-                res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'No checkpoints found' }));
-                return;
-              }
-              const nums = files.map(f => parseInt(f.match(/checkpoint-(\d+)\.json/)[1], 10));
-              const latest = Math.max(...nums);
-              const cpPath = path.join(tickerDir, `checkpoint-${latest}.json`);
-              const content = fs.readFileSync(cpPath, 'utf-8');
-              res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(content);
+          // --- POST /api/thes1s/reports/:ticker/export/:stage/:format — Generate PDF/DOCX export ---
+          if (parts[1] === 'export' && req.method === 'POST') {
+            const stage = parts[2];    // one-pager, pitch-deck, full-story
+            const format = parts[3];   // pdf, docx
+            const scriptMap = {
+              'one-pager':  { pdf: 'generate_one_pager_pdf.py',  docx: 'generate_one_pager_docx.py' },
+              'pitch-deck': { pdf: 'generate_pitch_deck_pdf.py', docx: 'generate_pitch_deck_docx.py' },
+              'full-story': { pdf: 'generate_full_story_pdf.py', docx: 'generate_full_story_docx.py' },
+            };
+            if (!scriptMap[stage] || !scriptMap[stage][format]) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: `Invalid export: stage=${stage}, format=${format}` }));
+              return;
             }
+            const script = scriptMap[stage][format];
+            try {
+              const { execFile } = await import('child_process');
+              const scriptPath = path.join(process.cwd(), 'scripts', 'pdf', script);
+              execFile('python3', [scriptPath, ticker], { cwd: process.cwd(), timeout: 120000 }, (err, stdout, stderr) => {
+                if (err) {
+                  console.warn(`Export ${format} failed:`, stderr || err.message);
+                  res.writeHead(500, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ error: stderr || err.message }));
+                  return;
+                }
+                // Parse output path from stdout
+                const fileExt = format === 'pdf' ? '.pdf' : '.docx';
+                const stageFile = stage + fileExt;
+                const outPath = path.join(tickerDir, stageFile);
+                if (fs.existsSync(outPath)) {
+                  res.writeHead(200, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ status: 'complete', path: outPath, filename: `${ticker}-${stageFile}` }));
+                } else {
+                  res.writeHead(200, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ status: 'complete', output: stdout }));
+                }
+              });
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: err.message }));
+            }
+            return;
+          }
+
+          // --- GET /api/thes1s/reports/:ticker/download/:filename — Download exported file ---
+          if (parts[1] === 'download' && req.method === 'GET') {
+            const filename = parts[2];
+            if (!filename || filename.includes('..')) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Invalid filename' }));
+              return;
+            }
+            const filePath = path.join(tickerDir, filename);
+            if (!fs.existsSync(filePath)) {
+              res.writeHead(404, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'File not found' }));
+              return;
+            }
+            const ext = path.extname(filename).toLowerCase();
+            const mimeMap = { '.pdf': 'application/pdf', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' };
+            const contentType = mimeMap[ext] || 'application/octet-stream';
+            res.writeHead(200, {
+              'Content-Type': contentType,
+              'Content-Disposition': `attachment; filename="${ticker}-${filename}"`,
+            });
+            const stream = fs.createReadStream(filePath);
+            stream.pipe(res);
             return;
           }
 

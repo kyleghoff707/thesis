@@ -231,7 +231,7 @@ If NO transcripts are available (transcriptAvailability.count === 0), include th
 ```
 ## Earnings Call Transcripts: UNAVAILABLE
 
-No earnings call transcripts were available for {TICKER} from Finnhub or Alpha Vantage.
+No earnings call transcripts were available for {TICKER} from Alpha Vantage.
 Proceed with 10-Q filings only. Flag this as a data gap in your output.
 ```
 7. Task instruction: "Read {TICKER}'s quarterly SEC filings (10-Q) provided below, covering Q{start} through Q{end}. ALL filing sections are included -- read every section thoroughly. If earnings call transcripts are provided, cross-reference management commentary from the transcripts against the 10-Q filings. For each quarter extract: revenue and earnings trends, management guidance changes, competitive dynamics, forward-looking statements, red flags, and cross-validate quarterly financial data against the DataPacket. Track management promises and their fulfillment across quarters. Return your findings as a structured JSON object matching the quarterly-reader output schema."

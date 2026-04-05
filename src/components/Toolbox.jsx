@@ -69,18 +69,27 @@ export default function Toolbox({ getReport, updateReport, settings }) {
 
   // Stage availability for GenerateButton — re-fetches when ticker or generation state changes
   const [stageAvailability, setStageAvailability] = useState(null);
+  // Check if a pipeline is actively running for this ticker (persists across navigation)
+  const [pipelineActive, setPipelineActive] = useState(false);
   useEffect(() => {
     if (!ticker) return;
-    setStageAvailability(null); // Reset immediately to avoid showing stale data from previous ticker
+    setStageAvailability(null);
+    setPipelineActive(false);
     let cancelled = false;
-    fetch('/api/thes1s/reports')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (cancelled || !data) return;
+    // Fetch stage availability and active pipeline status in parallel
+    Promise.all([
+      fetch('/api/thes1s/reports').then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`/api/thes1s/reports/${encodeURIComponent(ticker)}/progress`).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([data, progress]) => {
+      if (cancelled) return;
+      if (data) {
         const match = data.tickers?.find(t => t.ticker === ticker.toUpperCase());
         setStageAvailability(match ? match.stages : null);
-      })
-      .catch(() => {});
+      }
+      if (progress && progress.state !== 'COMPLETE') {
+        setPipelineActive(true);
+      }
+    });
     return () => { cancelled = true; };
   }, [ticker, generating]);
 
@@ -219,7 +228,7 @@ export default function Toolbox({ getReport, updateReport, settings }) {
           ticker={ticker}
           report={report}
           stageAvailability={stageAvailability}
-          generating={generating}
+          generating={generating || pipelineActive}
           onGenerate={triggerGeneration}
         />
       </div>

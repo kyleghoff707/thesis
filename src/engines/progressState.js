@@ -12,23 +12,20 @@ const REPORTS_DIR = join(THES1S_DIR, 'reports');
 // Section keys per stage — matches dispatch-table.json sectionKeys
 const SECTION_KEYS = {
   onePager: ['company_info', 'minimum_standards', 'meaning', 'growth_metrics', 'valuation_summary', 'overall_verdict'],
-  pitchDeck: ['radar', 'simple_and_predictable', 'market_position', 'barriers_and_moats', 'fcf', 'management', 'balance_sheet', 'pest_risks', 'valuation_summary', 'overall_verdict'],
+  pitchDeck: ['radar', 'simple_predictable', 'market_position', 'barriers_moats', 'fcf', 'management', 'roe_roic_debt', 'balance_sheet', 'pest', 'valuation'],
   fullStory: ['event_analysis', 'meaning_checklist', 'moat_checklist', 'management_checklist', 'valuation_confirmation', 'inversion_rebuttal'],
 };
 
 // Valid state machine transitions
 // WAVE_1_RUNNING can go to COMPLETE for single-wave stages (One Pager)
-// Each wave can also skip checkpoints and go directly to next wave or SYNTHESIS/COMPLETE
+// Waves flow directly to next wave, SYNTHESIS, or COMPLETE (no checkpoint pauses)
 const VALID_TRANSITIONS = {
   IDLE: ['DATA_ASSEMBLY'],
   DATA_ASSEMBLY: ['PRIMARY_SOURCE_READING', 'WAVE_1_RUNNING'],
   PRIMARY_SOURCE_READING: ['WAVE_1_RUNNING'],
-  WAVE_1_RUNNING: ['CHECKPOINT_1', 'WAVE_2_RUNNING', 'SYNTHESIS', 'COMPLETE'],
-  CHECKPOINT_1: ['WAVE_1_RUNNING', 'WAVE_2_RUNNING'],
-  WAVE_2_RUNNING: ['CHECKPOINT_2', 'WAVE_3_RUNNING', 'SYNTHESIS', 'COMPLETE'],
-  CHECKPOINT_2: ['WAVE_2_RUNNING', 'WAVE_3_RUNNING'],
-  WAVE_3_RUNNING: ['CHECKPOINT_3', 'SYNTHESIS', 'COMPLETE'],
-  CHECKPOINT_3: ['WAVE_3_RUNNING', 'SYNTHESIS'],
+  WAVE_1_RUNNING: ['WAVE_2_RUNNING', 'SYNTHESIS', 'COMPLETE'],
+  WAVE_2_RUNNING: ['WAVE_3_RUNNING', 'SYNTHESIS', 'COMPLETE'],
+  WAVE_3_RUNNING: ['SYNTHESIS', 'COMPLETE'],
   SYNTHESIS: ['QUALITY_CHECK', 'COMPLETE'],
   QUALITY_CHECK: ['COMPLETE'],
   COMPLETE: [],
@@ -207,22 +204,22 @@ export function readQualityReport(ticker) {
 // Section-to-agent mapping for status display
 const SECTION_AGENT_MAP = {
   radar: 'business-analyst',
-  simple_and_predictable: 'business-analyst',
+  simple_predictable: 'business-analyst',
   market_position: 'competitor-evaluator',
-  barriers_and_moats: 'competitor-evaluator',
+  barriers_moats: 'competitor-evaluator',
   fcf: 'financial-analyst',
   management: 'management-evaluator',
+  roe_roic_debt: 'financial-analyst',
   balance_sheet: 'financial-analyst',
-  pest_risks: 'risk-analyst',
-  valuation_summary: 'valuation-specialist',
-  overall_verdict: 'valuation-specialist',
+  pest: 'risk-analyst',
+  valuation: 'valuation-specialist',
 };
 
 // Pitch Deck dispatch phases for status tracking
 const DISPATCH_PHASES = [
-  { phase: 1, sections: ['radar', 'simple_and_predictable', 'market_position'] },
-  { phase: 2, sections: ['barriers_and_moats', 'fcf', 'management', 'balance_sheet'] },
-  { phase: 3, sections: ['pest_risks', 'valuation_summary', 'overall_verdict'] },
+  { phase: 1, sections: ['radar', 'simple_predictable', 'market_position'] },
+  { phase: 2, sections: ['barriers_moats', 'fcf', 'management', 'roe_roic_debt', 'balance_sheet'] },
+  { phase: 3, sections: ['pest', 'valuation'] },
 ];
 
 // Returns the path to generation-status.json for a ticker
@@ -248,7 +245,8 @@ export function initGenerationStatus(ticker, stage) {
     state: 'IDLE',
     startedAt: now,
     lastUpdated: now,
-    elapsedMs: 0,
+    activeMs: 0,            // Wall-clock generation time (Date.now() - startedAt)
+    elapsedMs: 0,           // Alias for activeMs (backward compat)
     sections,
     phases,
     currentAgent: null,
@@ -296,9 +294,14 @@ export function updateGenerationStatus(ticker, updates) {
   Object.assign(status, updates);
 
   // Recompute derived fields
-  status.lastUpdated = new Date().toISOString();
+  const now = Date.now();
+  const nowIso = new Date().toISOString();
+  status.lastUpdated = nowIso;
+
+  // Wall-clock generation time — no checkpoint pauses to track
   if (status.startedAt) {
-    status.elapsedMs = Date.now() - new Date(status.startedAt).getTime();
+    status.activeMs = now - new Date(status.startedAt).getTime();
+    status.elapsedMs = status.activeMs; // backward compat alias
   }
   status.completedCount = Object.values(status.sections)
     .filter(s => s.status === 'complete').length;
@@ -334,6 +337,30 @@ export function completeSection(ticker, sectionKey) {
   return updateGenerationStatus(ticker, {
     sections: { [sectionKey]: { status: 'complete', completedAt: now, durationMs } },
   });
+}
+
+// Append a completed section's full data to generation-status.json's completedSections array
+// This lets the UI show section content as soon as each wave finishes (no separate endpoint)
+export function completeSectionWithData(ticker, sectionKey, sectionData) {
+  const statusPath = getStatusPath(ticker);
+  let status;
+  try {
+    const raw = readFileSync(statusPath, 'utf-8');
+    status = JSON.parse(raw);
+  } catch { return; }
+
+  if (!status.completedSections) {
+    status.completedSections = [];
+  }
+  // Avoid duplicates
+  const existing = status.completedSections.findIndex(s => s.key === sectionKey);
+  if (existing >= 0) {
+    status.completedSections[existing] = sectionData;
+  } else {
+    status.completedSections.push(sectionData);
+  }
+  status.lastUpdated = new Date().toISOString();
+  writeFileSync(statusPath, JSON.stringify(status, null, 2));
 }
 
 // Update a dispatch phase's status and timestamps

@@ -46,11 +46,6 @@ describe('resolveURL', () => {
       .toBe('https://finviz.com/quote.ashx?t=AAPL');
   });
 
-  it('resolves /api/finnhub/ to https://finnhub.io/', () => {
-    expect(resolveURL('/api/finnhub/api/v1/stock/earnings?symbol=AAPL'))
-      .toBe('https://finnhub.io/api/v1/stock/earnings?symbol=AAPL');
-  });
-
   it('resolves /api/alpha/ to https://www.alphavantage.co/', () => {
     expect(resolveURL('/api/alpha/query?function=EARNINGS'))
       .toBe('https://www.alphavantage.co/query?function=EARNINGS');
@@ -197,14 +192,13 @@ describe('createNodeFetch', () => {
 // ─── Constants ───────────────────────────────────────────────
 
 describe('constants', () => {
-  it('PROXY_MAP has all 7 routes', () => {
-    expect(Object.keys(PROXY_MAP)).toHaveLength(7);
+  it('PROXY_MAP has all 6 routes', () => {
+    expect(Object.keys(PROXY_MAP)).toHaveLength(6);
     expect(PROXY_MAP['/api/sec/']).toBe('https://www.sec.gov/');
     expect(PROXY_MAP['/api/edgar/']).toBe('https://data.sec.gov/');
     expect(PROXY_MAP['/api/efts/']).toBe('https://efts.sec.gov/');
     expect(PROXY_MAP['/api/yahoo/']).toBe('https://query1.finance.yahoo.com/');
     expect(PROXY_MAP['/api/finviz/']).toBe('https://finviz.com/');
-    expect(PROXY_MAP['/api/finnhub/']).toBe('https://finnhub.io/');
     expect(PROXY_MAP['/api/alpha/']).toBe('https://www.alphavantage.co/');
   });
 

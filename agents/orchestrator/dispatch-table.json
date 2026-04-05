@@ -19,11 +19,7 @@
           { "agent": "business-analyst", "sections": [1], "parallel": true },
           { "agent": "business-analyst", "sections": [2], "parallel": true },
           { "agent": "competitor-evaluator", "sections": [3], "parallel": true }
-        ],
-        "checkpoint": {
-          "after": true,
-          "presents": ["findings", "dataGaps", "questions", "confidence"]
-        }
+        ]
       },
       {
         "phase": 2,
@@ -34,11 +30,7 @@
           { "agent": "management-evaluator", "sections": [6], "parallel": true },
           { "agent": "financial-analyst", "sections": [7], "parallel": true },
           { "agent": "financial-analyst", "sections": [8], "parallel": true }
-        ],
-        "checkpoint": {
-          "after": true,
-          "presents": ["findings", "dataGaps", "questions", "confidence"]
-        }
+        ]
       },
       {
         "phase": 3,
@@ -46,11 +38,7 @@
         "agents": [
           { "agent": "risk-analyst", "sections": [9], "parallel": true },
           { "agent": "valuation-specialist", "sections": [10], "parallel": true, "subWorkflow": "fgr-derivation" }
-        ],
-        "checkpoint": {
-          "after": true,
-          "presents": ["findings", "fgrConfirmation", "valuationReview"]
-        }
+        ]
       }
     ],
     "postProcessing": [
@@ -72,11 +60,7 @@
           { "agent": "competitor-evaluator", "sections": [3], "parallel": true, "note": "Moat — 15pt checklist" },
           { "agent": "management-evaluator", "sections": [4], "parallel": true, "note": "Management — 13pt checklist" },
           { "agent": "valuation-specialist", "sections": [5], "parallel": true, "note": "Valuation Confirmation" }
-        ],
-        "checkpoint": {
-          "after": true,
-          "presents": ["findings", "checklistScores", "confidence"]
-        }
+        ]
       },
       {
         "phase": 2,

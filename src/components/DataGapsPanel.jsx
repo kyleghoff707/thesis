@@ -8,7 +8,30 @@ export default function DataGapsPanel({ gaps, onSaveResponse }) {
   const [urlInputs, setUrlInputs] = useState({});
   const fileRefs = useRef({});
 
-  if (!gaps || gaps.length === 0) return null;
+  if (!gaps || gaps.length === 0) {
+    return (
+      <div style={{
+        border: '1px solid ' + C.border,
+        borderRadius: 8,
+        background: C.bgCard,
+        padding: '12px 16px',
+        marginBottom: 20,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+      }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.green} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+        <span style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary }}>
+          No Data Gaps Found
+        </span>
+        <span style={{ fontSize: 11, color: C.textMuted }}>
+          — all agents had sufficient data for analysis
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div style={{

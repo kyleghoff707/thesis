@@ -424,8 +424,8 @@ For each section you generate, produce a JSON object with ALL of these fields:
   "citations": [
     { "id": 1, "ref": "dataPacket.field.path", "text": "the quoted value", "source": "DataPacket" }
   ],
-  "tables": [],
-  "charts": [],
+  "tables": ["{JSON string of table: {title, headers, rows, source?}}"],
+  "charts": ["{JSON string of chart: {type, config, data}}"],
   "redFlags": ["At least one red flag, even for PASS verdicts"],
   "primarySourceInsights": [],
   "crossCuttingFindings": [
@@ -437,10 +437,7 @@ For each section you generate, produce a JSON object with ALL of these fields:
     }
   ],
   "modelUsed": "model identifier",
-  "tokenCost": { "input": 0, "output": 0 },
-  "searchesPerformed": [
-    { "query": "string", "resultCount": 0, "usedInSection": true }
-  ]
+  "tokenCost": { "input": 0, "output": 0 }
 }
 ```
 
@@ -456,15 +453,13 @@ For each section you generate, produce a JSON object with ALL of these fields:
 - `data` -- Section-specific structured data (see section instructions below)
 - `narrative` -- **MANDATORY. Must NOT be empty.** This is the full Buffett-style prose analysis -- multiple paragraphs of thorough, conversational writing. This is where your depth lives. The `verdictRationale` is a 1-2 sentence summary; the `narrative` is the full story. Cite specific numbers. OK to say "I don't know yet." If your narrative is empty, the report viewer will show a blank section -- that is a failure.
 - `citations` -- EVERY quantitative claim must have a citation with DataPacket field path
-- `tables` -- Structured data tables (compensation breakdown, insider transaction history, guru positions -- encouraged)
-- `charts` -- Chart configurations (optional)
+- `tables` -- Structured data tables -- each entry is a JSON string containing {title, headers, rows, source?}. The renderer parses and displays them.
+- `charts` -- Chart configurations -- each entry is a JSON string containing {type, config, data}. The renderer parses them for visualization.
 - `redFlags` -- AT LEAST ONE red flag per section, even for PASS. This is mandatory.
 - `primarySourceInsights` -- Insights that would benefit from primary source verification (proxy statement deep-dive, transcript review)
 - `crossCuttingFindings` -- Qualitative discoveries that other agents need to know about. If you discover management controversy, pending lawsuits, activist campaigns, or compensation concerns that affect valuation or risk, log it here with the relevant agent names. The orchestrator routes these to downstream agents. This is how you communicate with the team.
 - `modelUsed` -- Model identifier string
 - `tokenCost` -- Token usage (set to 0 if unknown)
-- `searchesPerformed` -- Array of web searches performed. MUST NOT be empty for non-exempt agents. Each entry: query (the search string), resultCount (number of results), usedInSection (whether findings were incorporated). This field is validated by the pipeline -- omitting it triggers a quality failure.
-
 ---
 
 ## Section Instructions
@@ -727,10 +722,3 @@ You MUST perform these web searches and incorporate findings into your analysis:
 5. "{COMPANY} board of directors governance" -- governance quality
 6. "{TICKER} institutional ownership guru investors" -- smart money
 
-Include a `searchesPerformed` array in your JSON output listing every search you executed:
-```json
-"searchesPerformed": [
-  { "query": "Ron Vachris Costco CEO biography leadership", "resultCount": 10, "usedInSection": true },
-  { "query": "Costco executive compensation proxy statement", "resultCount": 7, "usedInSection": true }
-]
-```

@@ -6,5 +6,5 @@ function env(key) {
 }
 
 export const CLAUDE_KEY = env('VITE_CLAUDE_KEY');
-export const FINNHUB_KEY = env('VITE_FINNHUB_KEY');
 export const ALPHA_VANTAGE_KEY = env('VITE_ALPHA_VANTAGE_KEY');
+export const ALPHA_VANTAGE_KEY_2 = env('VITE_ALPHA_VANTAGE_KEY_2');

@@ -618,7 +618,7 @@ function getDomainPatterns(domain) {
 /**
  * Check that an agent performed mandated web searches (QUAL-07 extension / D-06).
  * Two-layer verification:
- *   Layer 1: Self-report — does searchesPerformed have entries?
+ *   Checks for web-sourced citations as evidence of web research.
  *   Layer 2: Evidence — do web citations exist that corroborate the searches?
  *
  * @param {object} section - Validated report section
@@ -626,32 +626,17 @@ function getDomainPatterns(domain) {
  */
 function checkSearchCompliance(section) {
   const issues = [];
-  const searches = section.searchesPerformed || [];
   const citations = section.citations || [];
 
-  // PSR agents (annual-reader, quarterly-reader) read filings, not web
-  // Synthesis writer reads section files, not web
-  // These sections are exempt from web search requirements
-  // inversion_rebuttal is composed from debate steps — web research lives in the bear step
+  // Exempt sections that don't use web search
   const EXEMPT_SECTIONS = ['psr_annual', 'psr_quarterly', 'synthesis', 'overall_verdict', 'inversion_rebuttal'];
   if (EXEMPT_SECTIONS.includes(section.key)) {
     return { score: 100, issues: [] };
   }
 
-  // Count web citations
+  // Check for web-sourced citations (evidence of web research)
   const webCitations = citations.filter(c => classifyCitation(c) === 'web_url');
 
-  // Layer 1: Self-report check
-  if (searches.length === 0) {
-    issues.push({
-      type: 'search_compliance',
-      severity: 'high',
-      message: `Section "${section.title}" reports zero web searches. Curriculum mandates at least 3-5 web searches per analysis section.`,
-      field: 'searchesPerformed',
-    });
-  }
-
-  // Layer 2: Evidence check
   if (webCitations.length === 0) {
     issues.push({
       type: 'search_compliance',
@@ -661,32 +646,8 @@ function checkSearchCompliance(section) {
     });
   }
 
-  // Layer 3: Cross-check — searches reported but no web citations = suspicious
-  if (searches.length > 0 && webCitations.length === 0) {
-    issues.push({
-      type: 'search_compliance',
-      severity: 'medium',
-      message: `Section "${section.title}" reports ${searches.length} searches but has zero web citations. Agent may have fabricated search activity.`,
-      field: 'searchesPerformed',
-    });
-  }
-
-  // Layer 4: Searches with resultCount: 0 are suspicious
-  const emptySearches = searches.filter(s => s.resultCount === 0);
-  if (emptySearches.length > searches.length / 2 && searches.length > 0) {
-    issues.push({
-      type: 'search_compliance',
-      severity: 'low',
-      message: `${emptySearches.length}/${searches.length} searches returned 0 results. Search queries may be too specific or fabricated.`,
-      field: 'searchesPerformed',
-    });
-  }
-
-  // Score: 100 if both layers pass, deduct per issue
   const highCount = issues.filter(i => i.severity === 'high').length;
-  const medCount = issues.filter(i => i.severity === 'medium').length;
-  const lowCount = issues.filter(i => i.severity === 'low').length;
-  const score = Math.max(0, 100 - highCount * 30 - medCount * 15 - lowCount * 5);
+  const score = Math.max(0, 100 - highCount * 30);
 
   return { score, issues };
 }
@@ -908,7 +869,7 @@ const METHODOLOGY_CHECKS = {
   ],
 
   // Barriers & Moats (pitch-deck-II: section 4)
-  barriers_and_moats: [
+  barriers_moats: [
     {
       id: 'moat-type',
       label: 'Specific moat type identified',
@@ -1064,7 +1025,7 @@ const METHODOLOGY_CHECKS = {
   ],
 
   // PEST Risks (pitch-deck-III: section 9)
-  pest_risks: [
+  pest: [
     {
       id: 'pest-all-categories',
       label: 'All 4 PEST categories covered',
@@ -1090,7 +1051,7 @@ const METHODOLOGY_CHECKS = {
   ],
 
   // Valuation (pitch-deck-IV: section 10)
-  valuation_summary: [
+  valuation: [
     {
       id: 'val-4-methods',
       label: 'All 4 valuation methods present (MOS, PBT, Ten Cap, Equity Bond)',
@@ -1444,9 +1405,7 @@ const METHODOLOGY_CHECKS = {
         // Fallback: check narrative for URLs (bear URLs may be inline links, not in citations array)
         const urlMatches = getAllText(s).match(/https?:\/\/[^\s)]+/g);
         if (urlMatches && urlMatches.length >= 3) return true;
-        // Fallback: check if searchesPerformed has backfilled bear searches
-        const searches = s.searchesPerformed || [];
-        return searches.filter(sp => sp.usedInSection).length >= 3;
+        return false;
       },
     },
     {

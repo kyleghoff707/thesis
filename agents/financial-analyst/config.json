@@ -12,7 +12,7 @@
     "knowledge/research-references/rule-one-fundamentals.md",
     "knowledge/research-references/tools-for-analysis.md"
   ],
-  "dataPacketSlice": ["financials", "ttm", "growthRates", "returnMetrics", "debtMetrics", "fcf", "keyMetrics"],
+  "dataPacketSlice": ["financials", "ttm", "growthRates", "returnMetrics", "debtMetrics", "fcf", "keyMetrics", "companyInfo", "analystEstimates", "prices", "classification"],
   "tools": ["getMetric", "getFinancialLine", "computeGrowthRates", "computeMOS", "computePBT", "computeTenCap", "computeEquityBond", "sensitivityTable", "comparePeers"],
   "exampleContamination": {
     "exclude": [

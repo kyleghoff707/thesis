@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { C } from '../theme';
 import { usePitchDeck } from '../hooks/usePitchDeck';
 import { useScrollSpy } from '../hooks/useScrollSpy';
+import { useGeneratePipeline } from '../hooks/useGeneratePipeline';
 import SectionRenderer from './SectionRenderer';
 import SensitivityTable from './SensitivityTable';
 import VerdictBadge from './VerdictBadge';
@@ -13,50 +14,45 @@ import DeepDivePanel from './pitchDeck/DeepDivePanel';
 import IndustryCard from './pitchDeck/IndustryCard';
 import { formatTitle, formatRelativeTime, stateToLabel, verdictDotColor } from './reportHelpers';
 import Spinner from './Spinner';
-import CheckpointPanel from './CheckpointPanel';
+import ConfirmGenerateDialog from './ConfirmGenerateDialog';
+import ExportButtons from './ExportButtons';
+import PsrSummaryCard from './PsrSummaryCard';
+
+// Map AI-produced key variants to canonical keys (mirrors KEY_NORMALIZATION in run-pipeline.js)
+const KEY_ALIASES = {
+  radar_section: 'radar', initial_awareness: 'radar', event_context: 'radar',
+  simple_and_predictable: 'simple_predictable', simple_predictability: 'simple_predictable', business_model: 'simple_predictable',
+  market_position_analysis: 'market_position', competitive_position: 'market_position', dominant_market_position: 'market_position',
+  barriers_and_moats: 'barriers_moats', moats: 'barriers_moats', moat_analysis: 'barriers_moats', barriers_to_entry: 'barriers_moats', barriers: 'barriers_moats',
+  fcf_analysis: 'fcf', free_cash_flow: 'fcf', owner_earnings: 'fcf', fcf_owner_earnings: 'fcf',
+  management_analysis: 'management', management_talent: 'management', management_integrity: 'management', management_evaluation: 'management',
+  roe_roic_roa_debt: 'roe_roic_debt', roe_roic: 'roe_roic_debt', capital_structure: 'roe_roic_debt', return_metrics: 'roe_roic_debt',
+  balance_sheet_analysis: 'balance_sheet', balance_sheet_deep_dive: 'balance_sheet',
+  pest_risks: 'pest', pest_analysis: 'pest', pest_risk_analysis: 'pest', risk_analysis: 'pest',
+  valuation_summary: 'valuation', valuation_analysis: 'valuation', valuation_section: 'valuation',
+};
 
 // --- Section definitions for the Pitch Deck (9 content sections, 3 phases) ---
 // overall_verdict is rendered as a hero banner, not a numbered section
 const SECTION_DEFS = [
   { key: 'radar', label: 'Radar', phase: 1 },
-  { key: 'simple_and_predictable', label: 'Simple & Predictable', phase: 1 },
+  { key: 'simple_predictable', label: 'Simple & Predictable', phase: 1 },
   { key: 'market_position', label: 'Market Position', phase: 1 },
-  { key: 'barriers_and_moats', label: 'Barriers & Moats', phase: 2 },
+  { key: 'barriers_moats', label: 'Barriers & Moats', phase: 2 },
   { key: 'fcf', label: 'FCF', phase: 2 },
   { key: 'management', label: 'Management', phase: 2 },
+  { key: 'roe_roic_debt', label: 'ROE/ROIC & Debt', phase: 2 },
   { key: 'balance_sheet', label: 'Balance Sheet', phase: 2 },
-  { key: 'pest_risks', label: 'PEST Risks', phase: 3 },
-  { key: 'valuation_summary', label: 'Valuation', phase: 3 },
+  { key: 'pest', label: 'PEST Risks', phase: 3 },
+  { key: 'valuation', label: 'Valuation', phase: 3 },
 ];
 
 const PHASE_LABELS = [
   'Phase 1: Business Fundamentals',
   'Phase 2: Financial Deep-Dive',
   'Phase 3: Risk & Valuation',
+  'Final: Synthesis',
 ];
-
-// Phase boundary indexes: Phase 1 ends after index 2, Phase 2 after index 6
-const PHASE_BOUNDARIES = [2, 6]; // checkpoint after these indexes
-
-// --- Checkpoint detection helpers ---
-function isCheckpointState(state) {
-  return /^CHECKPOINT_\d+$/.test(state);
-}
-
-function getCheckpointNum(state) {
-  const match = state?.match(/^CHECKPOINT_(\d+)$/);
-  return match ? parseInt(match[1], 10) : null;
-}
-
-function getCheckpointSections(report, checkpointNum) {
-  if (!report?.sections) return [];
-  const sectionMap = {};
-  for (const s of report.sections) sectionMap[s.key] = s;
-  const endIdx = checkpointNum === 1 ? 2 : checkpointNum === 2 ? 6 : 8;
-  return SECTION_DEFS.slice(0, endIdx + 1)
-    .map(def => ({ ...sectionMap[def.key], key: def.key }))
-    .filter(s => s.title || s.narrative);
-}
 
 // --- Pure helper functions (exported via _testExports) ---
 
@@ -71,8 +67,8 @@ function getPhaseStatus(sections) {
 
   const phases = [
     { start: 0, end: 2 },  // Phase 1: indexes 0-2
-    { start: 3, end: 6 },  // Phase 2: indexes 3-6
-    { start: 7, end: 8 },  // Phase 3: indexes 7-8
+    { start: 3, end: 7 },  // Phase 2: indexes 3-7
+    { start: 8, end: 9 },  // Phase 3: indexes 8-9
   ];
 
   return phases.map(({ start, end }) => {
@@ -130,23 +126,26 @@ function agentDisplayName(name) {
 // --- Generation Status Panel ---
 // Shows real-time pipeline progress during Pitch Deck generation
 function GenerationStatusPanel({ generationStatus, ticker }) {
-  const [elapsedMs, setElapsedMs] = useState(generationStatus?.elapsedMs || 0);
+  const [elapsedMs, setElapsedMs] = useState(0);
 
-  // Tick elapsed time every second from startedAt
+  // Track elapsed generation time — simple wall-clock from startedAt
   useEffect(() => {
-    if (!generationStatus?.startedAt || generationStatus.state === 'COMPLETE') {
-      setElapsedMs(generationStatus?.elapsedMs || 0);
+    const state = generationStatus?.state;
+    const startedAt = generationStatus?.startedAt;
+
+    if (!state || state === 'COMPLETE' || !startedAt) {
+      setElapsedMs(generationStatus?.activeMs || 0);
       return;
     }
 
+    const startTime = new Date(startedAt).getTime();
     function tick() {
-      const start = new Date(generationStatus.startedAt).getTime();
-      setElapsedMs(Date.now() - start);
+      setElapsedMs(Date.now() - startTime);
     }
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [generationStatus?.startedAt, generationStatus?.state, generationStatus?.elapsedMs]);
+  }, [generationStatus?.state, generationStatus?.startedAt]);
 
   if (!generationStatus) return null;
 
@@ -350,7 +349,15 @@ function GenerationStatusPanel({ generationStatus, ticker }) {
 export default function PitchDeck({ getReport, updateReport }) {
   const { id } = useParams();
   const report = getReport ? getReport(id) : null;
-  const { report: pitchDeckData, progress, generationStatus, loading, error } = usePitchDeck(report?.ticker);
+  const { report: pitchDeckData, progress: rawProgress, generationStatus: rawGenStatus, loading, error, startPolling } = usePitchDeck(report?.ticker);
+  const { triggerGeneration, generating } = useGeneratePipeline(report?.ticker);
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
+  const [graceActive, setGraceActive] = useState(false);
+
+  // Filter out stale progress/generationStatus from other stages (e.g. One Pager)
+  const progress = rawProgress?.stage === 'pitchDeck' ? rawProgress : null;
+  const generationStatus = rawGenStatus?.stage === 'pitchDeck' ? rawGenStatus : null;
+
   // Scroll spy for active section tracking (shared hook, D-07/D-09)
   const sectionKeysForSpy = SECTION_DEFS.map(d => d.key);
   const activeSection = useScrollSpy(sectionKeysForSpy, { topOffset: 100 });
@@ -365,26 +372,54 @@ export default function PitchDeck({ getReport, updateReport }) {
   // Saved deep dives from report envelope
   const savedDeepDives = report?.deepDives || {};
 
-  // Phase statuses
+  // Phase statuses — prefer generationStatus.phases during generation, fall back to report data
   const phaseStatuses = useMemo(() => {
-    return getPhaseStatus(pitchDeckData?.sections || []);
-  }, [pitchDeckData]);
+    let statuses;
+    if (generationStatus?.phases) {
+      statuses = generationStatus.phases.map(p => p.status || 'pending');
+    } else {
+      statuses = getPhaseStatus(pitchDeckData?.sections || []);
+    }
+    // Add synthesis phase status (4th phase)
+    const progressState = progress?.state || '';
+    if (progressState === 'COMPLETE' || pitchDeckData) {
+      statuses[3] = 'complete';
+    } else if (progressState === 'SYNTHESIS' || /QUALITY|WRITING/.test(progressState)) {
+      statuses[3] = 'active';
+    } else if (statuses[2] === 'complete') {
+      statuses[3] = 'active';
+    } else {
+      statuses[3] = 'pending';
+    }
+    return statuses;
+  }, [pitchDeckData, generationStatus, progress?.state]);
 
   // Nav items
   const navItems = useMemo(() => {
     return getSectionNavItems(pitchDeckData?.sections || []);
   }, [pitchDeckData]);
 
-  // Section lookup map
+  // Section lookup map — merge live completedSections during generation, normalize keys
   const sectionMap = useMemo(() => {
     const map = {};
+    // Load completed sections from generation-status.json (live during generation)
+    if (generationStatus?.completedSections) {
+      for (const s of generationStatus.completedSections) {
+        if (s.key) {
+          const canonical = KEY_ALIASES[s.key] || s.key;
+          map[canonical] = { ...s, key: canonical };
+        }
+      }
+    }
+    // Final report data overrides live data
     if (pitchDeckData?.sections) {
       for (const s of pitchDeckData.sections) {
-        map[s.key] = s;
+        const canonical = KEY_ALIASES[s.key] || s.key;
+        map[canonical] = { ...s, key: canonical };
       }
     }
     return map;
-  }, [pitchDeckData]);
+  }, [pitchDeckData, generationStatus?.completedSections]);
 
   // Extract overall_verdict for hero rendering (not a numbered section)
   const overallVerdict = useMemo(() => {
@@ -392,34 +427,27 @@ export default function PitchDeck({ getReport, updateReport }) {
     return pitchDeckData.sections.find(s => s.key === 'overall_verdict') || null;
   }, [pitchDeckData]);
 
-  // Collect all citations for reference list
-  const allCitations = useMemo(() => {
-    const citations = [];
-    const ids = new Set();
-    if (pitchDeckData?.sections) {
-      for (const section of pitchDeckData.sections) {
-        if (section.citations && Array.isArray(section.citations)) {
-          for (const c of section.citations) {
-            if (c.id && !ids.has(c.id)) {
-              ids.add(c.id);
-              citations.push(c);
-            }
-          }
-        }
-      }
-    }
-    return citations;
-  }, [pitchDeckData]);
+  // allCitations removed — References section hidden in working view
 
-  // Progress section statuses
+  // Progress section statuses — normalize AI key variants to canonical keys
   const sectionStatuses = useMemo(() => {
     if (!progress || !progress.sections) return {};
     const result = {};
     for (const key of Object.keys(progress.sections)) {
-      result[key] = progress.sections[key].status;
+      const canonical = KEY_ALIASES[key] || key;
+      result[canonical] = progress.sections[key].status;
+    }
+    // Also check generationStatus.sections for completed sections with variant keys
+    if (generationStatus?.sections) {
+      for (const key of Object.keys(generationStatus.sections)) {
+        const canonical = KEY_ALIASES[key] || key;
+        if (generationStatus.sections[key].status === 'complete') {
+          result[canonical] = 'complete';
+        }
+      }
     }
     return result;
-  }, [progress]);
+  }, [progress, generationStatus]);
 
   // Completion
   const isComplete = !progress || progress.state === 'COMPLETE';
@@ -452,8 +480,7 @@ export default function PitchDeck({ getReport, updateReport }) {
   }
 
   function handleCitationClick() {
-    const el = document.getElementById('citation-references');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
+    // No-op — References section hidden in working view
   }
 
   // Deep dive click handler — shows cached dives or fires API call
@@ -606,6 +633,16 @@ export default function PitchDeck({ getReport, updateReport }) {
     );
   }
 
+  // --- Grace period (pipeline starting, progress files not yet created) ---
+  if (graceActive && !pitchDeckData && !progress) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40vh', gap: 10 }}>
+        <Spinner />
+        <span style={{ fontSize: 13, color: C.textMuted }}>Starting generation...</span>
+      </div>
+    );
+  }
+
   // --- Empty State ---
   if (!pitchDeckData && !progress) {
     return (
@@ -615,12 +652,43 @@ export default function PitchDeck({ getReport, updateReport }) {
         alignItems: 'center',
         justifyContent: 'center',
         height: '40vh',
-        gap: 8,
+        gap: 16,
       }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>No Pitch Deck generated yet</div>
-        <div style={{ fontSize: 13, color: C.textMuted }}>
-          Run /generate:pitch-deck {report?.ticker || 'TICKER'} to create one. The One Pager must be approved first.
-        </div>
+        <button
+          onClick={() => setShowGenerateDialog(true)}
+          disabled={generating}
+          style={{
+            background: generating ? C.badge : C.accent,
+            color: '#fff',
+            padding: '8px 20px',
+            borderRadius: 6,
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: generating ? 'default' : 'pointer',
+            border: 'none',
+            fontFamily: 'inherit',
+            opacity: generating ? 0.7 : 1,
+            transition: 'background .15s',
+          }}
+          onMouseEnter={e => { if (!generating) e.currentTarget.style.background = C.accentHover; }}
+          onMouseLeave={e => { if (!generating) e.currentTarget.style.background = C.accent; }}
+        >
+          {generating ? 'Generating...' : 'Generate Pitch Deck'}
+        </button>
+        {showGenerateDialog && (
+          <ConfirmGenerateDialog
+            ticker={report?.ticker}
+            stage="pitch-deck"
+            onConfirm={() => {
+              setShowGenerateDialog(false);
+              setGraceActive(true);
+              setTimeout(() => setGraceActive(false), 5000);
+              triggerGeneration('pitch-deck').then(() => startPolling());
+            }}
+            onCancel={() => setShowGenerateDialog(false)}
+          />
+        )}
       </div>
     );
   }
@@ -644,6 +712,29 @@ export default function PitchDeck({ getReport, updateReport }) {
             {formatTitle(pitchDeckData?.companyName || report?.companyName || '')}
           </span>
           <VerdictBadge verdict={pitchDeckData?.overallVerdict} size="large" />
+          {/* Generate button — shown when no generation is in progress and no completed data */}
+          {!pitchDeckData && !progress && !generating && (
+            <button
+              onClick={() => setShowGenerateDialog(true)}
+              style={{
+                background: C.accent,
+                color: '#fff',
+                padding: '6px 16px',
+                borderRadius: 6,
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                border: 'none',
+                fontFamily: 'inherit',
+                transition: 'background .15s',
+                marginLeft: 4,
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = C.accentHover}
+              onMouseLeave={e => e.currentTarget.style.background = C.accent}
+            >
+              Generate Pitch Deck
+            </button>
+          )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: C.textSecondary }}>
@@ -660,8 +751,24 @@ export default function PitchDeck({ getReport, updateReport }) {
           {approvalStatus === 'rejected' && (
             <span style={{ fontSize: 11, fontWeight: 600, color: C.red }}>Rejected</span>
           )}
+          {pitchDeckData && isComplete && (
+            <ExportButtons ticker={report?.ticker} stage="pitch-deck" />
+          )}
         </div>
       </div>
+
+      {/* Generate Pitch Deck confirmation dialog (main render) */}
+      {showGenerateDialog && (
+        <ConfirmGenerateDialog
+          ticker={report?.ticker}
+          stage="pitch-deck"
+          onConfirm={() => {
+            setShowGenerateDialog(false);
+            triggerGeneration('pitch-deck');
+          }}
+          onCancel={() => setShowGenerateDialog(false)}
+        />
+      )}
 
       {/* B. Phase Progress Indicator */}
       <div style={{
@@ -774,34 +881,8 @@ export default function PitchDeck({ getReport, updateReport }) {
         </div>
       )}
 
-      {/* Checkpoint Review Panel — shown at mid-pipeline pauses */}
-      {progress && isCheckpointState(progress.state) && (
-        <CheckpointPanel
-          ticker={pitchDeckData?.ticker || report?.ticker}
-          checkpointNum={getCheckpointNum(progress.state)}
-          sections={getCheckpointSections(pitchDeckData, getCheckpointNum(progress.state))}
-          dataGaps={progress.checkpoints?.[getCheckpointNum(progress.state) - 1]?.dataGaps || []}
-          totalSections={SECTION_DEFS.length}
-          elapsedMs={progress.startedAt ? Date.now() - new Date(progress.startedAt).getTime() : (progress.elapsedMs || 0)}
-          onContinue={() => {
-            fetch(`/api/thes1s/reports/${encodeURIComponent(pitchDeckData?.ticker || report?.ticker)}/checkpoint`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ checkpointPhase: getCheckpointNum(progress.state), action: 'continue' }),
-            }).catch(() => {});
-          }}
-          onRerun={() => {
-            fetch(`/api/thes1s/reports/${encodeURIComponent(pitchDeckData?.ticker || report?.ticker)}/checkpoint`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ checkpointPhase: getCheckpointNum(progress.state), action: 'rerun' }),
-            }).catch(() => {});
-          }}
-        />
-      )}
-
-      {/* Generation Status Panel — shown during active wave generation (not at checkpoints) */}
-      {generationStatus && !isCheckpointState(progress?.state) && (
+      {/* Generation Status Panel — shown during active generation */}
+      {generationStatus && progress?.state !== 'COMPLETE' && (
         <GenerationStatusPanel
           generationStatus={generationStatus}
           ticker={pitchDeckData?.ticker || report?.ticker}
@@ -872,6 +953,11 @@ export default function PitchDeck({ getReport, updateReport }) {
 
         {/* C2. Content Column */}
         <div style={{ flex: 1, minWidth: 0 }}>
+          {/* PSR Summary Card — shown above sections when report is complete */}
+          {isComplete && pitchDeckData && (
+            <PsrSummaryCard ticker={report?.ticker} />
+          )}
+
           {/* Hero summary banner for overall_verdict */}
           {overallVerdict && (
             <div style={{
@@ -982,91 +1068,12 @@ export default function PitchDeck({ getReport, updateReport }) {
                   </div>
                 )}
 
-                {/* Checkpoint display blocks after Phase 1 (index 2) and Phase 2 (index 7) */}
-                {PHASE_BOUNDARIES.includes(idx) && pitchDeckData?.checkpoints && (() => {
-                  const phaseNum = idx === 2 ? 1 : 2;
-                  const checkpoint = pitchDeckData.checkpoints.find(cp => cp.afterPhase === phaseNum);
-                  if (!checkpoint) return null;
-
-                  return (
-                    <div style={{
-                      position: 'relative',
-                      marginTop: 24,
-                      marginBottom: 24,
-                      borderTop: '1px solid ' + C.border,
-                      paddingTop: 16,
-                    }}>
-                      <div style={{
-                        position: 'absolute',
-                        top: -10,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: C.bg,
-                        padding: '0 12px',
-                        fontSize: 13,
-                        fontWeight: 700,
-                        color: C.textSecondary,
-                      }}>
-                        {PHASE_LABELS[phaseNum - 1]}
-                      </div>
-
-                      {/* Data gaps */}
-                      {checkpoint.dataGaps && checkpoint.dataGaps.length > 0 && (
-                        <div style={{ marginTop: 8, marginBottom: 8 }}>
-                          <div style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', marginBottom: 4 }}>
-                            Data Gaps
-                          </div>
-                          {checkpoint.dataGaps.map((gap, gi) => (
-                            <div key={gi} style={{ fontSize: 12, color: C.textSecondary, marginBottom: 2, paddingLeft: 12 }}>
-                              - {gap}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* PM notes */}
-                      {checkpoint.pmNotes && (
-                        <div style={{
-                          marginTop: 8,
-                          padding: '8px 12px',
-                          background: C.accentLight,
-                          borderLeft: '3px solid ' + C.accent,
-                          borderRadius: '0 6px 6px 0',
-                          fontSize: 12,
-                          color: C.text,
-                          fontStyle: 'italic',
-                        }}>
-                          PM: {checkpoint.pmNotes}
-                        </div>
-                      )}
-
-                      {/* Section confidence snapshot */}
-                      {checkpoint.sectionConfidence && (
-                        <div style={{
-                          marginTop: 8,
-                          display: 'flex',
-                          gap: 8,
-                          flexWrap: 'wrap',
-                        }}>
-                          {Object.entries(checkpoint.sectionConfidence).map(([key, conf]) => (
-                            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                              <span style={{ fontSize: 10, color: C.textMuted }}>
-                                {key.replace(/_/g, ' ')}:
-                              </span>
-                              <ConfidenceBadge confidence={conf} />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
               </div>
             );
           })}
 
           {/* Section 10 extras: FGR Derivation + Sensitivity Tables */}
-          {sectionMap['valuation_summary'] && (
+          {sectionMap['valuation'] && (
             <div style={{ marginTop: 8 }}>
               {/* FGR Derivation */}
               {pitchDeckData?.fgrDerivation && (
@@ -1182,35 +1189,7 @@ export default function PitchDeck({ getReport, updateReport }) {
             </div>
           )}
 
-          {/* D. References */}
-          {allCitations.length > 0 && (
-            <div id="citation-references" style={{
-              marginTop: 24,
-              paddingTop: 16,
-              borderTop: '1px solid ' + C.border,
-            }}>
-              <div style={{
-                fontSize: 14,
-                fontWeight: 700,
-                color: C.text,
-                marginBottom: 12,
-              }}>
-                References
-              </div>
-              {allCitations.map((citation, idx) => (
-                <div key={citation.id} style={{
-                  fontSize: 12,
-                  color: C.textSecondary,
-                  marginBottom: 6,
-                  lineHeight: 1.5,
-                }}>
-                  <span style={{ fontWeight: 600, color: C.textMuted }}>[{idx + 1}]</span>{' '}
-                  {citation.source && <span style={{ fontWeight: 500 }}>{citation.source}: </span>}
-                  {citation.text || citation.title || ''}
-                </div>
-              ))}
-            </div>
-          )}
+          {/* D. References — hidden in working view, available for future export view */}
 
           {/* E. Approval Bar */}
           {showApprovalBar && (
