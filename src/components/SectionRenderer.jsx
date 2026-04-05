@@ -167,6 +167,7 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
           color: C.text,
           lineHeight: 1.7,
           marginBottom: 16,
+          maxWidth: 680,
         }}>
           {renderTextWithCitations(section.verdictRationale, section.citations, onCitationClick)}
         </div>
@@ -181,6 +182,7 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
           marginBottom: 16,
           borderTop: '1px solid ' + C.borderLight,
           paddingTop: 12,
+          maxWidth: 680,
         }}>
           <ReportMarkdown
             content={section.narrative}
