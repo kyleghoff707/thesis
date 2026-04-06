@@ -19,6 +19,26 @@ import { join } from 'path';
 
 const ticker = (process.argv[2] || 'SFM').toUpperCase();
 
+// Map AI-produced key variants to canonical keys (mirrors KEY_ALIASES in FullStory.jsx)
+const KEY_NORMALIZATION = {
+  event: 'event_analysis', eventAnalysis: 'event_analysis', 'event-analysis': 'event_analysis',
+  event_context: 'event_analysis', event_analysis_section: 'event_analysis',
+  meaning: 'meaning_checklist', meaningChecklist: 'meaning_checklist', 'meaning-checklist': 'meaning_checklist',
+  meaning_check: 'meaning_checklist', meaning_analysis: 'meaning_checklist',
+  moat: 'moat_checklist', moatChecklist: 'moat_checklist', 'moat-checklist': 'moat_checklist',
+  moat_check: 'moat_checklist', moat_analysis: 'moat_checklist',
+  management: 'management_checklist', managementChecklist: 'management_checklist', 'management-checklist': 'management_checklist',
+  management_check: 'management_checklist', management_evaluation: 'management_checklist',
+  valuation: 'valuation_confirmation', valuationConfirmation: 'valuation_confirmation', 'valuation-confirmation': 'valuation_confirmation',
+  valuation_confirm: 'valuation_confirmation', valuation_analysis: 'valuation_confirmation', valuation_summary: 'valuation_confirmation',
+  inversion: 'inversion_rebuttal', rebuttal: 'inversion_rebuttal', inversionRebuttal: 'inversion_rebuttal',
+  'inversion-rebuttal': 'inversion_rebuttal', inversion_and_rebuttal: 'inversion_rebuttal', debate: 'inversion_rebuttal',
+};
+
+function normalizeKey(key) {
+  return KEY_NORMALIZATION[key] || key;
+}
+
 async function main() {
   console.log(`\n=== Thes1s Full Story Pipeline Runner ===`);
   console.log(`Ticker: ${ticker}`);
@@ -172,6 +192,8 @@ async function main() {
   if (result.sections?.length > 0) {
     for (const section of result.sections) {
       if (!section) continue;
+      // Normalize key variants before saving
+      if (section.key) section.key = normalizeKey(section.key);
       const sNum = section.sectionNumber || '?';
       const sKey = section.key || sectionKeyMap[sNum - 1] || `unknown`;
       const sectionPath = join(sectionsDir, `fullStory-S${sNum}-${sKey}.json`);
@@ -180,7 +202,23 @@ async function main() {
     }
   }
 
-  // Step 5: Write full output to full-story-api.json (NOT pipeline-output.json)
+  // Step 5a: Extract promises from management_checklist section
+  let promises = [];
+  const mgmtSection = result.sections?.find(s =>
+    normalizeKey(s?.key) === 'management_checklist'
+  );
+  if (mgmtSection) {
+    let data = mgmtSection.data;
+    if (typeof data === 'string') {
+      try { data = JSON.parse(data); } catch { /* keep as-is */ }
+    }
+    if (data && Array.isArray(data.promises)) {
+      promises = data.promises;
+      console.log(`  Extracted ${promises.length} management promises`);
+    }
+  }
+
+  // Step 5b: Write full output to full-story-api.json (NOT pipeline-output.json)
   const outputPath = join(outputDir, 'full-story-api.json');
   writeFileSync(outputPath, JSON.stringify({
     ticker,
@@ -195,6 +233,7 @@ async function main() {
     cacheStats: result.cacheStats,
     errors: result.errors,
     debateOutputs: result.debateOutputs,
+    promises,
   }, null, 2));
   console.log(`\nOutput written to ${outputPath}`);
 
@@ -212,10 +251,9 @@ async function main() {
       if (!section) continue;
       const citations = section.citations?.length || 0;
       const redFlags = section.redFlags?.length || 0;
-      const searches = section.searchesPerformed?.length || 0;
       console.log(`  [${section.sectionNumber || '?'}] ${section.key || '?'} — ${section.title || 'untitled'}`);
       console.log(`      status: ${section.status || '?'} | confidence: ${section.confidence || '?'} | verdict: ${section.verdict || '?'}`);
-      console.log(`      citations: ${citations} | redFlags: ${redFlags} | searches: ${searches}`);
+      console.log(`      citations: ${citations} | redFlags: ${redFlags}`);
     }
     console.log('');
   }

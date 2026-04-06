@@ -404,6 +404,7 @@ export default function DebateRenderer({ section, sectionId, debateOutputs, onCi
   if (!section) return null;
 
   const [activeTab, setActiveTab] = useState(DEFAULT_TAB);
+  const [citationsExpanded, setCitationsExpanded] = useState(false);
 
   // Tab definitions inside the component (C is mutable)
   const DEBATE_TABS = [
@@ -576,29 +577,52 @@ export default function DebateRenderer({ section, sectionId, debateOutputs, onCi
           paddingTop: 10,
           borderTop: '1px solid ' + C.borderLight,
         }}>
-          <div style={{
-            fontSize: 10,
-            fontWeight: 700,
-            color: C.textMuted,
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-            marginBottom: 6,
-          }}>
-            Citations
+          <div
+            onClick={() => setCitationsExpanded(prev => !prev)}
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: C.textMuted,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              marginBottom: citationsExpanded ? 6 : 0,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              userSelect: 'none',
+            }}
+          >
+            <span style={{
+              display: 'inline-block',
+              fontSize: 8,
+              transition: 'transform 0.15s ease',
+              transform: citationsExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+            }}>&#9654;</span>
+            Citations ({section.citations.length})
           </div>
-          {section.citations.map((citation, ci) => (
-            <div key={citation.id || ci} style={{
-              fontSize: 11,
-              color: C.textSecondary,
-              marginBottom: 4,
-              lineHeight: 1.5,
-            }}>
-              <span style={{ fontWeight: 600, color: C.textMuted }}>[{ci + 1}]</span>{' '}
-              {citation.source && <span style={{ fontWeight: 500 }}>{citation.source}</span>}
-              {citation.source && (citation.text || citation.note || citation.title) ? ' — ' : ''}
-              {citation.text || citation.note || citation.title || ''}
-            </div>
-          ))}
+          {citationsExpanded && section.citations.map((citation, ci) => {
+            const sourceText = citation.source || '';
+            const sourceIsUrl = /^https?:\/\//i.test(sourceText);
+            const linkUrl = citation.url || (sourceIsUrl ? sourceText : null);
+            return (
+              <div key={citation.id || ci} style={{
+                fontSize: 11,
+                color: C.textSecondary,
+                marginBottom: 4,
+                lineHeight: 1.5,
+              }}>
+                <span style={{ fontWeight: 600, color: C.textMuted }}>[{ci + 1}]</span>{' '}
+                {sourceText && (
+                  linkUrl
+                    ? <a href={linkUrl} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 500, color: C.accent, textDecoration: 'underline' }}>{sourceText}</a>
+                    : <span style={{ fontWeight: 500 }}>{sourceText}</span>
+                )}
+                {sourceText && (citation.text || citation.note || citation.title) ? ' — ' : ''}
+                {citation.text || citation.note || citation.title || ''}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

@@ -433,8 +433,87 @@ async function main() {
     budget: result.budget,
     cacheStats: result.cacheStats,
     errors: result.errors,
+    debateOutputs: result.debateOutputs || null,
   }, null, 2));
   console.log(`Output written to ${outputPath}`);
+
+  // For fullStory: write full-story-api.json + debate steps + section files + promises
+  if (stage === 'fullStory') {
+    const sectionsDir = join(outputDir, 'sections');
+    mkdirSync(sectionsDir, { recursive: true });
+
+    // Note: FS sections use their own KEY_NORMALIZATION (in run-full-story.js/FullStory.jsx).
+    // Do NOT apply PD's normalizeSections() here — it has conflicting key mappings.
+
+    // Save debate step outputs individually
+    if (result.debateOutputs) {
+      console.log('\nSaving debate step outputs...');
+      for (const [role, output] of Object.entries(result.debateOutputs)) {
+        const stepNum = { bull: 1, bear: 2, bull_rebuttal: 3, judge: 4 }[role];
+        if (stepNum && output) {
+          writeFileSync(join(sectionsDir, `debate-step-${stepNum}.json`), JSON.stringify(output, null, 2));
+          console.log(`  Saved debate-step-${stepNum}.json (${role})`);
+        }
+      }
+    }
+
+    // Save section outputs individually
+    const sectionKeyMap = ['event_analysis', 'meaning_checklist', 'moat_checklist', 'management_checklist', 'valuation_confirmation', 'inversion_rebuttal'];
+    if (result.sections?.length > 0) {
+      console.log('\nSaving section outputs...');
+      for (const section of result.sections) {
+        if (!section) continue;
+        const sNum = section.sectionNumber || '?';
+        const sKey = section.key || sectionKeyMap[sNum - 1] || 'unknown';
+        writeFileSync(join(sectionsDir, `fullStory-S${sNum}-${sKey}.json`), JSON.stringify(section, null, 2));
+        console.log(`  Saved fullStory-S${sNum}-${sKey}.json`);
+      }
+    }
+
+    // Extract promises from management_checklist section
+    let fsPromises = [];
+    const fsMgmtSection = result.sections?.find(s => s?.key === 'management_checklist');
+    if (fsMgmtSection) {
+      let mgmtData = fsMgmtSection.data;
+      if (typeof mgmtData === 'string') {
+        try { mgmtData = JSON.parse(mgmtData); } catch { /* keep as-is */ }
+      }
+      if (mgmtData && Array.isArray(mgmtData.promises)) {
+        fsPromises = mgmtData.promises;
+        console.log(`  Extracted ${fsPromises.length} management promises`);
+      }
+    }
+
+    // Write full-story-api.json (canonical FS output for Vite middleware)
+    writeFileSync(join(outputDir, 'full-story-api.json'), JSON.stringify({
+      ticker,
+      stage: 'fullStory',
+      completedAt: new Date().toISOString(),
+      pipelineTimeSeconds: parseFloat(pipelineTime),
+      sectionCount: result.sections?.length || 0,
+      errorCount: result.errors?.length || 0,
+      sections: result.sections,
+      budget: result.budget,
+      cacheStats: result.cacheStats,
+      errors: result.errors,
+      debateOutputs: result.debateOutputs,
+      promises: fsPromises,
+    }, null, 2));
+    console.log(`Full Story output written to full-story-api.json`);
+
+    // Quality scoring (non-critical — don't crash on failure)
+    try {
+      const qualityDir = join(outputDir, 'quality');
+      mkdirSync(qualityDir, { recursive: true });
+      const fsQuality = validateStage(result.sections, dataPacket);
+      writeFileSync(join(qualityDir, 'full-story-v4.quality.json'), JSON.stringify(fsQuality, null, 2));
+      const fsQualityMd = formatQualityReport(fsQuality, { ticker, stage: 'fullStory' });
+      writeFileSync(join(qualityDir, 'full-story-v4.quality.md'), fsQualityMd);
+      console.log(`Full Story quality: mechanical=${fsQuality.overallScore}, methodology=${fsQuality.overallMethodologyScore}`);
+    } catch (err) {
+      console.warn(`Quality scoring failed (non-critical): ${err.message}`);
+    }
+  }
 
   // For pitchDeck: also write pitch-deck.json (canonical name for Vite middleware)
   if (stage === 'pitchDeck') {
@@ -727,6 +806,20 @@ async function runAllStages() {
     }
   }
 
+  // Extract promises from management_checklist section
+  let fsPromises = [];
+  const fsMgmtSection = fsResult.sections?.find(s => s?.key === 'management_checklist');
+  if (fsMgmtSection) {
+    let mgmtData = fsMgmtSection.data;
+    if (typeof mgmtData === 'string') {
+      try { mgmtData = JSON.parse(mgmtData); } catch { /* keep as-is */ }
+    }
+    if (mgmtData && Array.isArray(mgmtData.promises)) {
+      fsPromises = mgmtData.promises;
+      console.log(`  Extracted ${fsPromises.length} management promises`);
+    }
+  }
+
   // Write full-story-api.json (FS canonical name)
   writeFileSync(join(outputDir, 'full-story-api.json'), JSON.stringify({
     ticker,
@@ -740,6 +833,7 @@ async function runAllStages() {
     cacheStats: fsResult.cacheStats,
     errors: fsResult.errors,
     debateOutputs: fsResult.debateOutputs,
+    promises: fsPromises,
   }, null, 2));
 
   // Gate check: FS quality score (per D-05)

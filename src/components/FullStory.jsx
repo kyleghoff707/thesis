@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { C } from '../theme';
 import { useFullStory } from '../hooks/useFullStory';
@@ -15,20 +15,127 @@ import IndustryCard from './pitchDeck/IndustryCard.jsx';
 import DirectionBadge from './DirectionBadge.jsx';
 import VerdictBadge from './VerdictBadge';
 import ConfidenceBadge from './ConfidenceBadge';
+import ExportButtons from './ExportButtons';
 import { formatTitle, formatRelativeTime, verdictDotColor } from './reportHelpers';
 import Spinner from './Spinner';
 import PsrSummaryCard from './PsrSummaryCard';
 
+// Map AI-produced key variants to canonical keys (mirrors KEY_NORMALIZATION in run-full-story.js)
+const KEY_ALIASES = {
+  // Section 1: Event Analysis
+  event: 'event_analysis',
+  eventAnalysis: 'event_analysis',
+  'event-analysis': 'event_analysis',
+  event_context: 'event_analysis',
+  event_analysis_section: 'event_analysis',
+
+  // Section 2: Meaning Checklist
+  meaning: 'meaning_checklist',
+  meaningChecklist: 'meaning_checklist',
+  'meaning-checklist': 'meaning_checklist',
+  meaning_check: 'meaning_checklist',
+  meaning_analysis: 'meaning_checklist',
+
+  // Section 3: Moat Checklist
+  moat: 'moat_checklist',
+  moatChecklist: 'moat_checklist',
+  'moat-checklist': 'moat_checklist',
+  moat_check: 'moat_checklist',
+  moat_analysis: 'moat_checklist',
+
+  // Section 4: Management Checklist
+  management: 'management_checklist',
+  managementChecklist: 'management_checklist',
+  'management-checklist': 'management_checklist',
+  management_check: 'management_checklist',
+  management_evaluation: 'management_checklist',
+
+  // Section 5: Valuation Confirmation
+  valuation: 'valuation_confirmation',
+  valuationConfirmation: 'valuation_confirmation',
+  'valuation-confirmation': 'valuation_confirmation',
+  valuation_confirm: 'valuation_confirmation',
+  valuation_analysis: 'valuation_confirmation',
+  valuation_summary: 'valuation_confirmation',
+
+  // Section 6: Inversion & Rebuttal
+  inversion: 'inversion_rebuttal',
+  rebuttal: 'inversion_rebuttal',
+  inversionRebuttal: 'inversion_rebuttal',
+  'inversion-rebuttal': 'inversion_rebuttal',
+  inversion_and_rebuttal: 'inversion_rebuttal',
+  debate: 'inversion_rebuttal',
+};
+
 // --- Section definitions for the Full Story (7 sections: 6 original + Promise Tracker) ---
 const SECTION_DEFS = [
-  { key: 'event_analysis', label: 'Event Analysis' },
-  { key: 'meaning_checklist', label: 'Meaning Checklist' },
-  { key: 'moat_checklist', label: 'Moat Checklist' },
-  { key: 'management_checklist', label: 'Management Checklist' },
-  { key: 'valuation_confirmation', label: 'Valuation Confirmation' },
-  { key: 'inversion_rebuttal', label: 'Inversion & Rebuttal' },
-  { key: 'promise_tracker', label: 'Management Promise Tracker' },
+  { key: 'event_analysis', label: 'Event Analysis', phase: 1 },
+  { key: 'meaning_checklist', label: 'Meaning Checklist', phase: 1 },
+  { key: 'moat_checklist', label: 'Moat Checklist', phase: 1 },
+  { key: 'management_checklist', label: 'Management Checklist', phase: 1 },
+  { key: 'valuation_confirmation', label: 'Valuation Confirmation', phase: 1 },
+  { key: 'inversion_rebuttal', label: 'Inversion & Rebuttal', phase: 2 },
+  { key: 'promise_tracker', label: 'Management Promise Tracker', phase: null },
 ];
+
+const FS_PHASE_LABELS = [
+  'Phase 1: Deep Analysis',
+  'Phase 2: The Debate',
+];
+
+// FS-specific state labels (override PD-centric defaults)
+function fsStateToLabel(state) {
+  const map = {
+    IDLE: 'Preparing...',
+    DATA_ASSEMBLY: 'Assembling data...',
+    PRIMARY_SOURCE_READING: 'Reading primary sources...',
+    WAVE_1_RUNNING: 'Phase 1: Deep Analysis...',
+    WAVE_2_RUNNING: 'Phase 2: The Debate...',
+    SYNTHESIS: 'Writing synthesis...',
+    QUALITY_CHECK: 'Quality check...',
+    COMPLETE: 'Complete',
+  };
+  return map[state] || 'Working...';
+}
+
+// Format elapsed milliseconds as m:ss
+function fmtElapsed(ms) {
+  if (ms == null || ms < 0) return '0:00';
+  const totalSec = Math.floor(ms / 1000);
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return `${min}:${sec.toString().padStart(2, '0')}`;
+}
+
+// Compute phase statuses from section completion + progress state
+// Returns ['complete'|'active'|'pending', 'complete'|'active'|'pending']
+function getPhaseStatuses(sectionMap, progressState) {
+  const phase1Keys = ['event_analysis', 'meaning_checklist', 'moat_checklist', 'management_checklist', 'valuation_confirmation'];
+  const phase1Done = phase1Keys.every(k => sectionMap[k]);
+  const phase1Any = phase1Keys.some(k => sectionMap[k]);
+
+  const phase2Done = !!sectionMap['inversion_rebuttal'];
+
+  let p1 = 'pending', p2 = 'pending';
+
+  if (phase1Done) {
+    p1 = 'complete';
+    if (phase2Done) p2 = 'complete';
+    else if (progressState === 'WAVE_2_RUNNING' || progressState === 'SYNTHESIS') p2 = 'active';
+    else p2 = 'pending';
+  } else if (phase1Any || progressState === 'WAVE_1_RUNNING' || progressState === 'PRIMARY_SOURCE_READING') {
+    p1 = 'active';
+  } else if (progressState === 'DATA_ASSEMBLY' || progressState === 'IDLE') {
+    p1 = 'active';
+  }
+
+  if (progressState === 'COMPLETE') {
+    p1 = 'complete';
+    p2 = 'complete';
+  }
+
+  return [p1, p2];
+}
 
 // --- Pure helper: traffic-light color for quality scores ---
 function qualityColor(score) {
@@ -83,17 +190,75 @@ export default function FullStory({ getReport, updateReport }) {
   const progress = rawProgress?.stage === 'fullStory' ? rawProgress : null;
   const generationStatus = rawGenStatus?.stage === 'fullStory' ? rawGenStatus : null;
 
+  // Timer: wall-clock elapsed during generation
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const timerRef = useRef(null);
+  const progressState = progress?.state;
+  const isGenerating = progress && progressState !== 'COMPLETE';
+
+  useEffect(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (!isGenerating) return;
+    const startedAt = progress?.startedAt || generationStatus?.startedAt;
+    if (!startedAt) return;
+    const startTime = new Date(startedAt).getTime();
+    function tick() { setElapsedMs(Date.now() - startTime); }
+    tick();
+    timerRef.current = setInterval(tick, 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [isGenerating, progress?.startedAt, generationStatus?.startedAt]);
+
+  // Section progress status from generation-status.json (for nav dots + placeholders)
+  const sectionProgress = useMemo(() => {
+    const result = {};
+    if (generationStatus?.sections) {
+      for (const key of Object.keys(generationStatus.sections)) {
+        const canonical = KEY_ALIASES[key] || key;
+        result[canonical] = generationStatus.sections[key].status;
+      }
+    }
+    if (progress?.sections) {
+      for (const key of Object.keys(progress.sections)) {
+        const canonical = KEY_ALIASES[key] || key;
+        if (!result[canonical]) result[canonical] = progress.sections[key].status;
+      }
+    }
+    return result;
+  }, [generationStatus, progress]);
+
+  // Phase-based progress: Phase 1 = 0-50%, Phase 2 = 50-100%
+  const phase1Keys = ['event_analysis', 'meaning_checklist', 'moat_checklist', 'management_checklist', 'valuation_confirmation'];
+  const phase1Complete = phase1Keys.filter(k => sectionProgress[k] === 'complete').length;
+  const phase2Complete = sectionProgress['inversion_rebuttal'] === 'complete' ? 1 : 0;
+  const progressPct = isGenerating
+    ? Math.round((phase1Complete / phase1Keys.length) * 50 + phase2Complete * 50)
+    : 0;
+
   const sectionIds = useMemo(() => SECTION_DEFS.map(d => d.key), []);
   const activeSection = useScrollSpy(sectionIds);
 
-  // Map sections by key for O(1) lookup
+  // Map sections by key for O(1) lookup (normalize AI key variants)
   const sectionMap = useMemo(() => {
     const m = {};
+    if (generationStatus?.completedSections) {
+      for (const s of generationStatus.completedSections) {
+        if (s.key) {
+          const canonical = KEY_ALIASES[s.key] || s.key;
+          m[canonical] = { ...s, key: canonical };
+        }
+      }
+    }
     if (fullStoryData?.sections) {
-      for (const s of fullStoryData.sections) m[s.key] = s;
+      for (const s of fullStoryData.sections) {
+        const canonical = KEY_ALIASES[s.key] || s.key;
+        m[canonical] = { ...s, key: canonical };
+      }
     }
     return m;
-  }, [fullStoryData]);
+  }, [fullStoryData, generationStatus]);
+
+  // Phase statuses for indicators (computed once, not per-render-iteration)
+  const phaseStatuses = useMemo(() => getPhaseStatuses(sectionMap, progressState), [sectionMap, progressState]);
 
   // Map quality by sectionKey for O(1) lookup
   const qualityMap = useMemo(() => {
@@ -104,13 +269,14 @@ export default function FullStory({ getReport, updateReport }) {
     return m;
   }, [quality]);
 
-  // Nav items with verdict dots (Promise Tracker has no verdict)
+  // Nav items with verdict dots + progress status (Promise Tracker has no verdict)
   const navItems = useMemo(() => SECTION_DEFS.map((def, idx) => ({
     key: def.key,
     label: def.label,
     index: idx + 1,
     verdict: def.key === 'promise_tracker' ? null : (sectionMap[def.key]?.verdict || null),
-  })), [sectionMap]);
+    status: sectionProgress[def.key] || null,
+  })), [sectionMap, sectionProgress]);
 
   // Deep dive state
   const [deepDive, setDeepDive] = useState({
@@ -450,11 +616,14 @@ export default function FullStory({ getReport, updateReport }) {
           }
         </div>
 
-        {/* Row 3: Stage label, timestamp, quality, approval status */}
+        {/* Row 3: Stage label, timestamp, quality, approval status, export */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: C.textSecondary }}>
             Stage 3: Full Story
           </span>
+          {fullStoryData && isComplete && (
+            <ExportButtons ticker={ticker} stage="full-story" />
+          )}
           {timestamp && (
             <span style={{ fontSize: 11, fontWeight: 400, color: C.textMuted }}>
               Generated {formatRelativeTime(timestamp)}
@@ -501,6 +670,77 @@ export default function FullStory({ getReport, updateReport }) {
           </div>
         )}
       </div>
+
+      {/* Generation Progress: bar + state label + timer + phase indicators */}
+      {isGenerating && (
+        <div style={{ marginBottom: 24 }}>
+          {/* Progress bar */}
+          <div style={{
+            height: 4,
+            background: C.border,
+            borderRadius: 2,
+            overflow: 'hidden',
+          }}>
+            <div style={{
+              height: '100%',
+              background: C.accent,
+              borderRadius: 2,
+              width: progressPct + '%',
+              transition: 'width 0.5s ease',
+            }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
+            <span style={{ fontSize: 11, color: C.textMuted }}>
+              {fsStateToLabel(progressState)}
+            </span>
+            <span style={{ fontSize: 11, color: C.textMuted }}>
+              {fmtElapsed(elapsedMs)} elapsed
+            </span>
+          </div>
+
+          {/* Phase indicators (2 phases, evenly spaced like PD) */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', height: 64, marginTop: 16, gap: 0 }}>
+            {FS_PHASE_LABELS.map((label, idx) => {
+              const status = phaseStatuses[idx];
+              const isLast = idx === FS_PHASE_LABELS.length - 1;
+              const circleColor = status === 'complete' ? C.green : status === 'active' ? C.accent : C.border;
+              const circleFill = status === 'complete' || status === 'active' ? circleColor : 'transparent';
+              const connectorColor = status === 'complete' ? C.green : C.border;
+              const connectorBorder = status === 'complete' ? `2px solid ${connectorColor}` : `2px dashed ${connectorColor}`;
+
+              return (
+                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', flex: isLast ? 0 : 1 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    <div style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      border: `2px solid ${circleColor}`,
+                      background: circleFill,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      animation: status === 'active' ? 'thes1s-pulse 2s ease-in-out infinite' : 'none',
+                    }}>
+                      {status === 'complete' && (
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <path d="M2 6L5 9L10 3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
+                    <span style={{ fontSize: 10, color: status === 'active' ? C.accent : status === 'complete' ? C.green : C.textMuted, fontWeight: 600, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+                      {label}
+                    </span>
+                  </div>
+                  {!isLast && (
+                    <div style={{ flex: 1, borderTop: connectorBorder, marginTop: 12, marginLeft: 8, marginRight: 8 }} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* PSR Summary Card — shown above sections when report is complete */}
       {(!progress || progress.state === 'COMPLETE') && fullStoryData && (
@@ -560,8 +800,12 @@ export default function FullStory({ getReport, updateReport }) {
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  background: verdictDotColor(item.verdict),
+                  background: item.verdict ? verdictDotColor(item.verdict)
+                    : item.status === 'complete' ? C.green
+                    : item.status === 'running' ? C.accent
+                    : C.border,
                   flexShrink: 0,
+                  animation: item.status === 'running' ? 'thes1s-pulse 2s ease-in-out infinite' : 'none',
                 }} />
                 <span>{item.index}. {truncated}</span>
               </div>
@@ -591,7 +835,42 @@ export default function FullStory({ getReport, updateReport }) {
               );
             }
 
-            if (!section) return null;
+            // Section placeholder during generation (matches PD thin/faded style)
+            if (!section) {
+              if (!isGenerating) return null;
+              const secStatus = sectionProgress[def.key];
+              if (secStatus === 'failed') {
+                return (
+                  <div key={def.key} id={'section-' + def.key} style={{
+                    border: '1px solid ' + C.red,
+                    borderRadius: 8,
+                    padding: '16px 20px',
+                    marginBottom: 20,
+                    background: C.bgCard,
+                    minHeight: 60,
+                    scrollMarginTop: 160,
+                  }}>
+                    <span style={{ fontSize: 13, color: C.red }}>{def.label} -- Failed</span>
+                  </div>
+                );
+              }
+              return (
+                <div key={def.key} id={'section-' + def.key} style={{
+                  border: '1px solid ' + C.border,
+                  borderRadius: 8,
+                  padding: '16px 20px',
+                  marginBottom: 20,
+                  background: C.bgCard,
+                  opacity: 0.4,
+                  minHeight: 60,
+                  scrollMarginTop: 160,
+                }}>
+                  <span style={{ fontSize: 13, color: C.textMuted }}>
+                    {def.label} -- {secStatus === 'running' ? 'Generating...' : 'Pending...'}
+                  </span>
+                </div>
+              );
+            }
 
             let content;
             if (CHECKLIST_KEYS.has(def.key)) {

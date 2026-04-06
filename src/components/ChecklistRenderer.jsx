@@ -26,6 +26,7 @@ export default function ChecklistRenderer({ section, sectionId, onCitationClick 
   if (!section) return null;
 
   const [expanded, setExpanded] = useState(new Set());
+  const [citationsExpanded, setCitationsExpanded] = useState(false);
 
   function toggle(num) {
     setExpanded(prev => {
@@ -215,34 +216,74 @@ export default function ChecklistRenderer({ section, sectionId, onCitationClick 
       {/* Red Flags */}
       <RedFlagCallout flags={section.redFlags} />
 
-      {/* Citations */}
+      {/* Citations (collapsible, clickable links) */}
       {hasCitations && (
         <div style={{
           marginTop: 12,
           paddingTop: 10,
           borderTop: '1px solid ' + C.borderLight,
         }}>
-          <div style={{
-            fontSize: 10,
-            fontWeight: 700,
-            color: C.textMuted,
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-            marginBottom: 6,
-          }}>
-            Citations
+          <div
+            onClick={() => setCitationsExpanded(prev => !prev)}
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: C.textMuted,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              marginBottom: citationsExpanded ? 6 : 0,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              userSelect: 'none',
+            }}
+          >
+            <span style={{
+              display: 'inline-block',
+              fontSize: 8,
+              transition: 'transform 0.15s ease',
+              transform: citationsExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+            }}>&#9654;</span>
+            Citations ({section.citations.length})
           </div>
-          {section.citations.map((citation, ci) => (
-            <div key={citation.id || ci} style={{
-              fontSize: 11,
-              color: C.textSecondary,
-              marginBottom: 4,
-              lineHeight: 1.5,
-            }}>
-              <span style={{ fontWeight: 600, color: C.textMuted }}>[{ci + 1}]</span>{' '}
-              {citation.source && <span style={{ fontWeight: 500 }}>{citation.source}</span>}
-              {citation.source && (citation.text || citation.note || citation.title) ? ' — ' : ''}
-              {citation.text || citation.note || citation.title || ''}
+          {citationsExpanded && section.citations.map((citation, ci) => {
+            const sourceText = citation.source || '';
+            const sourceIsUrl = /^https?:\/\//i.test(sourceText);
+            const linkUrl = citation.url || (sourceIsUrl ? sourceText : null);
+            return (
+              <div key={citation.id || ci} style={{
+                fontSize: 11,
+                color: C.textSecondary,
+                marginBottom: 4,
+                lineHeight: 1.5,
+              }}>
+                <span style={{ fontWeight: 600, color: C.textMuted }}>[{ci + 1}]</span>{' '}
+                {sourceText && (
+                  linkUrl
+                    ? <a href={linkUrl} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 500, color: C.accent, textDecoration: 'underline' }}>{sourceText}</a>
+                    : <span style={{ fontWeight: 500 }}>{sourceText}</span>
+                )}
+                {sourceText && (citation.text || citation.note || citation.title) ? ' — ' : ''}
+                {citation.text || citation.note || citation.title || ''}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Primary Source Insights (matches SectionRenderer pattern) */}
+      {section.primarySourceInsights && Array.isArray(section.primarySourceInsights) && section.primarySourceInsights.length > 0 && (
+        <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid ' + C.borderLight }}>
+          <div style={{
+            fontSize: 10, fontWeight: 700, color: C.textMuted,
+            textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6,
+          }}>
+            Primary Source Insights
+          </div>
+          {section.primarySourceInsights.map((insight, i) => (
+            <div key={i} style={{ fontSize: 11, color: C.textSecondary, marginBottom: 4, lineHeight: 1.5, paddingLeft: 8 }}>
+              {typeof insight === 'string' ? insight : (insight.text || insight.source || JSON.stringify(insight))}
             </div>
           ))}
         </div>

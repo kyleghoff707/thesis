@@ -41,13 +41,26 @@ function loadAgentConfig(role) {
   }
 }
 
-// Load agent prompt.md
-function loadAgentPrompt(role) {
+// Load agent prompt.md, with optional stage-specific overlay appended
+function loadAgentPrompt(role, stage) {
   const promptPath = resolve(AGENTS_DIR, role, 'prompt.md');
+  let basePrompt;
   try {
-    return readFileSync(promptPath, 'utf8');
+    basePrompt = readFileSync(promptPath, 'utf8');
   } catch (err) {
     throw new Error(`Failed to load agent prompt for "${role}": ${err.message}`);
+  }
+
+  if (!stage) return basePrompt;
+
+  // Try to load stage-specific overlay (e.g. agents/{role}/prompts/fullStory.md)
+  const overlayPath = resolve(AGENTS_DIR, role, 'prompts', `${stage}.md`);
+  try {
+    const overlay = readFileSync(overlayPath, 'utf8');
+    return basePrompt + '\n\n---\n\n' + overlay;
+  } catch {
+    // No overlay for this stage — use base prompt only
+    return basePrompt;
   }
 }
 
@@ -437,9 +450,9 @@ async function dispatchWithRetry(callFn, agentRole, schema) {
 export async function dispatchAgent(agentRole, dataPacket, options = {}) {
   const startTime = Date.now();
 
-  // 1. Load agent config, prompt, curriculum
+  // 1. Load agent config, prompt, curriculum (stage overlay appended if present)
   const config = loadAgentConfig(agentRole);
-  const prompt = loadAgentPrompt(agentRole);
+  const prompt = loadAgentPrompt(agentRole, options.stage);
 
   // Load universal context files if agent requests them
   let universalContext = '';

@@ -2,6 +2,7 @@
   "role": "financial-analyst",
   "model": "sonnet",
   "curriculum": [
+    "knowledge/stage-3-full-story/story-form-II.md",
     "knowledge/research-references/advanced-financial-analysis.md",
     "knowledge/research-references/fgr.md",
     "knowledge/research-references/capex-cash-flow-explained.md"

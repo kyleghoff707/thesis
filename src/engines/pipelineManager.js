@@ -67,12 +67,27 @@ function buildDebateContext(receivesContext, debateOutputs, allSections) {
         return `### ${s.title} (${label})\n${s.summary}${narrativeBlock}\n${redFlags}`;
       }).join('\n\n');
       parts.push(summaries);
-    } else if (ctx === 'bull_output' && debateOutputs.bull) {
-      parts.push(`## Bull Thesis (Step 1)\n\n\`\`\`json\n${JSON.stringify(debateOutputs.bull, null, 2)}\n\`\`\``);
-    } else if (ctx === 'bear_output' && debateOutputs.bear) {
-      parts.push(`## Bear Inversion (Step 2)\n\n\`\`\`json\n${JSON.stringify(debateOutputs.bear, null, 2)}\n\`\`\``);
-    } else if (ctx === 'bull_rebuttal_output' && debateOutputs.bull_rebuttal) {
-      parts.push(`## Bull Rebuttal (Step 3)\n\n\`\`\`json\n${JSON.stringify(debateOutputs.bull_rebuttal, null, 2)}\n\`\`\``);
+    } else if (ctx === 'bull_output') {
+      if (debateOutputs.bull) {
+        parts.push(`## Bull Thesis (Step 1)\n\n\`\`\`json\n${JSON.stringify(debateOutputs.bull, null, 2)}\n\`\`\``);
+      } else {
+        console.warn(`buildDebateContext: Expected bull_output but it is missing — downstream agent receives incomplete context`);
+        parts.push(`## Bull Thesis (Step 1)\n\n**[MISSING — bull thesis generation failed. Proceed with available context only.]**`);
+      }
+    } else if (ctx === 'bear_output') {
+      if (debateOutputs.bear) {
+        parts.push(`## Bear Inversion (Step 2)\n\n\`\`\`json\n${JSON.stringify(debateOutputs.bear, null, 2)}\n\`\`\``);
+      } else {
+        console.warn(`buildDebateContext: Expected bear_output but it is missing — downstream agent receives incomplete context`);
+        parts.push(`## Bear Inversion (Step 2)\n\n**[MISSING — bear inversion generation failed. Proceed with available context only.]**`);
+      }
+    } else if (ctx === 'bull_rebuttal_output') {
+      if (debateOutputs.bull_rebuttal) {
+        parts.push(`## Bull Rebuttal (Step 3)\n\n\`\`\`json\n${JSON.stringify(debateOutputs.bull_rebuttal, null, 2)}\n\`\`\``);
+      } else {
+        console.warn(`buildDebateContext: Expected bull_rebuttal_output but it is missing — downstream agent receives incomplete context`);
+        parts.push(`## Bull Rebuttal (Step 3)\n\n**[MISSING — bull rebuttal generation failed. Proceed with available context only.]**`);
+      }
     }
   }
 
@@ -253,6 +268,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
 
         try {
           const result = await dispatchAgent(step.agent, dataPacket, {
+            stage,
             schema: stepSchema,
             debateContext,
             debateRole: step.role,
@@ -280,15 +296,29 @@ export async function runPipeline(stage, dataPacket, options = {}) {
       }
 
       // 5th call: synthesis-writer composes S6 ReportSectionSchema (per D-04, D-05)
+      // Guard: check which debate steps completed
+      let composedS6 = null; // Hoisted for onWaveComplete access
+      const expectedRoles = ['bull', 'bear', 'bull_rebuttal', 'judge'];
+      const missingRoles = expectedRoles.filter(r => !debateOutputs[r]);
+      if (missingRoles.length > 0) {
+        console.warn(`DEBATE INCOMPLETE: Missing outputs for: ${missingRoles.join(', ')}. Synthesis-writer will compose S6 from partial debate.`);
+        errors.push({ agent: 'debate-flow', step: 'debate-validation', error: `Missing debate outputs: ${missingRoles.join(', ')}` });
+      }
+
       try {
         const allDebateJSON = Object.entries(debateOutputs)
           .map(([role, output]) => `## ${role}\n\n\`\`\`json\n${JSON.stringify(output, null, 2)}\n\`\`\``)
           .join('\n\n---\n\n');
 
+        const missingNote = missingRoles.length > 0
+          ? ` NOTE: The following debate steps failed and are missing: ${missingRoles.join(', ')}. Compose the section from whatever debate outputs are available. Acknowledge any gaps.`
+          : '';
+
         const synthesisResult = await dispatchAgent('synthesis-writer', dataPacket, {
+          stage,
           // No schema override — defaults to ReportSectionSchema
           debateContext: allDebateJSON,
-          sectionAssignment: `Compose Section ${wave.outputSection}: Inversion & Rebuttal from debate outputs. Key: ${wave.outputKey}. Include ALL bear source URLs as clickable links in the narrative. Never drop a URL.`,
+          sectionAssignment: `Compose Section ${wave.outputSection}: Inversion & Rebuttal from debate outputs. Key: ${wave.outputKey}. Include ALL bear source URLs as clickable links in the narrative. Never drop a URL.${missingNote}`,
           priorSections: allSections.slice(),
           psrFindings: psrFindingsForAgents,
           pmFeedback,
@@ -299,7 +329,8 @@ export async function runPipeline(stage, dataPacket, options = {}) {
         if (synthesisResult.error) {
           errors.push({ agent: 'synthesis-writer', step: 'debate-composition', error: synthesisResult.error });
         } else {
-          allSections.push(synthesisResult.section);
+          composedS6 = synthesisResult.section;
+          allSections.push(composedS6);
         }
 
         budget.record('synthesis-writer:composition', synthesisResult.usage);
@@ -309,11 +340,12 @@ export async function runPipeline(stage, dataPacket, options = {}) {
       }
 
       // Wave complete callback (notify runner of wave completion)
+      // Include composed S6 alongside debate step outputs so onWaveComplete can mark it complete
       if (options.onWaveComplete) {
         const cacheSummary = cacheMonitor.getSummary();
         const feedback = await options.onWaveComplete(
           wave.phase,
-          Object.values(debateOutputs),
+          [...Object.values(debateOutputs), composedS6].filter(Boolean),
           budget.getSummary(),
           cacheSummary
         );
@@ -331,6 +363,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
       // Dispatch all agents in this wave simultaneously via Promise.allSettled
       const results = await Promise.allSettled(
         waveAgents.map(a => dispatchAgent(a.agent, dataPacket, {
+          stage,
           sectionAssignment: buildSectionAssignment(a.sections, stage),
           priorSections: allSections.slice(),
           psrFindings: psrFindingsForAgents,
@@ -390,6 +423,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
     if (!step.agent) continue;
 
     const result = await dispatchAgent(step.agent, dataPacket, {
+      stage,
       sectionAssignment: buildSectionAssignment(step.sections, stage),
       priorSections: allSections.slice(),
       psrFindings: psrFindingsForAgents,

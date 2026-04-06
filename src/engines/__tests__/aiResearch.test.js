@@ -35,6 +35,16 @@ vi.mock('fs', async (importOriginal) => {
           universalContext: false,
         });
       }
+      if (path.includes('prompts/fullStory.md')) {
+        // Only return overlay for management-evaluator (simulates overlay existing for one agent)
+        if (path.includes('management-evaluator')) {
+          return '## Full Story Overlay\nPromise tracking instructions here.';
+        }
+        // All other agents: throw ENOENT to simulate missing overlay
+        const err = new Error('ENOENT');
+        err.code = 'ENOENT';
+        throw err;
+      }
       if (path.includes('prompt.md')) {
         return 'You are a business analyst.';
       }
@@ -757,5 +767,88 @@ describe('constants', () => {
     expect(PRICING['claude-sonnet-4-6'].output).toBe(15.0);
     expect(PRICING['claude-opus-4-6'].input).toBe(5.0);
     expect(PRICING['claude-opus-4-6'].output).toBe(25.0);
+  });
+});
+
+describe('loadAgentPrompt — stage overlay loading', () => {
+  it('returns base prompt only when no stage is provided', () => {
+    const result = loadAgentPrompt('business-analyst');
+    expect(result).toBe('You are a business analyst.');
+  });
+
+  it('returns base prompt only when stage is null', () => {
+    const result = loadAgentPrompt('business-analyst', null);
+    expect(result).toBe('You are a business analyst.');
+  });
+
+  it('returns base + overlay when overlay file exists for the stage', () => {
+    const result = loadAgentPrompt('management-evaluator', 'fullStory');
+    expect(result).toContain('You are a business analyst.');
+    expect(result).toContain('---');
+    expect(result).toContain('Full Story Overlay');
+    expect(result).toContain('Promise tracking instructions here.');
+  });
+
+  it('returns base prompt only when overlay file does not exist', () => {
+    const result = loadAgentPrompt('business-analyst', 'fullStory');
+    expect(result).toBe('You are a business analyst.');
+  });
+
+  it('returns base prompt only for unknown stage', () => {
+    const result = loadAgentPrompt('business-analyst', 'unknownStage');
+    expect(result).toBe('You are a business analyst.');
+  });
+});
+
+describe('promise extraction logic', () => {
+  function extractPromises(sections) {
+    let promises = [];
+    const mgmtSection = sections?.find(s => s?.key === 'management_checklist');
+    if (mgmtSection) {
+      let data = mgmtSection.data;
+      if (typeof data === 'string') {
+        try { data = JSON.parse(data); } catch { /* keep as-is */ }
+      }
+      if (data && Array.isArray(data.promises)) {
+        promises = data.promises;
+      }
+    }
+    return promises;
+  }
+
+  it('extracts promises when management_checklist section has data.promises', () => {
+    const sections = [{
+      key: 'management_checklist',
+      data: { items: [], promises: [{ quarterYear: 'Q1 2024', category: 'GUIDANCE', quote: 'test', evidence: 'result', status: 'KEPT' }] },
+    }];
+    expect(extractPromises(sections)).toHaveLength(1);
+    expect(extractPromises(sections)[0].status).toBe('KEPT');
+  });
+
+  it('returns empty array when management_checklist has no promises field', () => {
+    const sections = [{ key: 'management_checklist', data: { items: [] } }];
+    expect(extractPromises(sections)).toEqual([]);
+  });
+
+  it('returns empty array when management_checklist section is missing', () => {
+    const sections = [{ key: 'event_analysis', data: {} }];
+    expect(extractPromises(sections)).toEqual([]);
+  });
+
+  it('handles data as JSON string (pre-parsed)', () => {
+    const sections = [{
+      key: 'management_checklist',
+      data: JSON.stringify({ items: [], promises: [{ quarterYear: 'Q2 2023', category: 'GROWTH', quote: 'expand', evidence: 'expanded', status: 'KEPT' }] }),
+    }];
+    expect(extractPromises(sections)).toHaveLength(1);
+  });
+
+  it('returns empty array when data is invalid JSON string', () => {
+    const sections = [{ key: 'management_checklist', data: 'not-json' }];
+    expect(extractPromises(sections)).toEqual([]);
+  });
+
+  it('returns empty array when sections is null', () => {
+    expect(extractPromises(null)).toEqual([]);
   });
 });
