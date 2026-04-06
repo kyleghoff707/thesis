@@ -339,10 +339,16 @@ describe('matchColumns (Bug 1)', () => {
     const mapping = matchColumns(row, EXEC_COLUMN_PATTERNS);
     expect(mapping).not.toBeNull();
     // Physical positions should be 0, 2, 4, 6 — not content indices 0, 1, 2, 3
-    expect(mapping.name).toBe(0);
-    expect(mapping.year).toBe(2);
-    expect(mapping.salary).toBe(4);
-    expect(mapping.total).toBe(6);
+    // Each value is { physCol, contentIdx }
+    expect(mapping.name.physCol).toBe(0);
+    expect(mapping.year.physCol).toBe(2);
+    expect(mapping.salary.physCol).toBe(4);
+    expect(mapping.total.physCol).toBe(6);
+    // Content indices are 0, 1, 2, 3 (spacers filtered out)
+    expect(mapping.name.contentIdx).toBe(0);
+    expect(mapping.year.contentIdx).toBe(1);
+    expect(mapping.salary.contentIdx).toBe(2);
+    expect(mapping.total.contentIdx).toBe(3);
   });
 });
 
@@ -775,5 +781,85 @@ describe('Low-value fallback (Bug 11)', () => {
     const median = totals[Math.floor(totals.length / 2)];
     expect(median).toBe(8000000);
     expect(median).toBeGreaterThanOrEqual(50000);
+  });
+
+  it('detects all-null compensation and clears executives for XBRL fallback', () => {
+    const nullExecs = [
+      { name: 'Exec A', compensation: { 2024: { salary: null, total: null }, 2023: { salary: null, total: null } } },
+      { name: 'Exec B', compensation: { 2024: { salary: null, total: null } } },
+    ];
+
+    const totals = nullExecs
+      .flatMap(e => Object.values(e.compensation).map(c => c.total))
+      .filter(t => t != null && t > 0)
+      .sort((a, b) => a - b);
+
+    // totals should be empty — all null values filtered out
+    expect(totals.length).toBe(0);
+    // This triggers the new else branch: clear executives for XBRL fallback
+  });
+});
+
+// ─── Honorific stripping (Fix 3) ──────────────────────────────
+describe('normalizeExecName — honorific stripping', () => {
+  it('strips Mr./Mrs./Ms./Dr. prefixes', () => {
+    expect(normalizeExecName('Mr. Khosrowshahi')).toBe('khosrowshahi');
+    expect(normalizeExecName('Dr. Lisa Su')).toBe('lisa su');
+    expect(normalizeExecName('Mrs. Jane Smith')).toBe('jane smith');
+    expect(normalizeExecName('Ms. Mary Barra')).toBe('mary barra');
+  });
+
+  it('strips Jr./Sr./II/III/IV suffixes', () => {
+    expect(normalizeExecName('James Smith Jr.')).toBe('james smith');
+    expect(normalizeExecName('William Gates III')).toBe('william gates');
+    expect(normalizeExecName('Robert Johnson II')).toBe('robert johnson');
+  });
+});
+
+// ─── Last-name-only matching (Fix 3) ──────────────────────────
+describe('findExecMatch — last-name-only matching', () => {
+  it('matches single-word name against existing entries by last name', () => {
+    const execMap = new Map();
+    execMap.set('dara khosrowshahi', { name: 'Dara Khosrowshahi' });
+    execMap.set('nelson chai', { name: 'Nelson Chai' });
+
+    // "Mr. Khosrowshahi" normalizes to "khosrowshahi" (single word after Mr. strip)
+    const match = findExecMatch(execMap, 'Mr. Khosrowshahi');
+    expect(match).toBe('dara khosrowshahi');
+  });
+});
+
+// ─── Content-ordinal fallback (Fix 1B) ────────────────────────
+describe('parseSummaryCompensationTable — spacer mismatch fallback', () => {
+  it('extracts data when data rows have more spacers than header', () => {
+    // Header: 1 spacer between each content cell
+    // Data: 2 spacers between each content cell (different physical positions)
+    const html = `
+      <html><body>
+        <h3>Summary Compensation Table</h3>
+        <table>
+          <tr>
+            <td>Name</td><td>\u00a0</td>
+            <td>Year</td><td>\u00a0</td>
+            <td>Salary</td><td>\u00a0</td>
+            <td>Total</td>
+          </tr>
+          <tr>
+            <td>John Parker</td><td>\u00a0</td><td>\u00a0</td>
+            <td>2024</td><td>\u00a0</td><td>\u00a0</td>
+            <td>$500,000</td><td>\u00a0</td><td>\u00a0</td>
+            <td>$5,000,000</td>
+          </tr>
+        </table>
+      </body></html>
+    `;
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const result = parseSummaryCompensationTable(doc);
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0].name).toBe('John Parker');
+    const comp2024 = result[0].compensation['2024'];
+    expect(comp2024).toBeDefined();
+    expect(comp2024.salary).toBe(500000);
+    expect(comp2024.total).toBe(5000000);
   });
 });

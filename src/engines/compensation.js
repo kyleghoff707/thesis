@@ -22,7 +22,7 @@ function sleep(ms) {
 // ─── Constants ──────────────────────────────────────────────
 
 const COMP_CACHE_V = 'v3';
-const FETCH_DELAY_MS = 120;
+const FETCH_DELAY_MS = 250;
 
 // SEC-mandated Summary Compensation Table column headers (Item 402)
 // Normalized to lowercase for fuzzy matching
@@ -267,7 +267,7 @@ function matchColumns(headerRow, patterns) {
     for (let i = 0; i < headerTexts.length; i++) {
       const h = headerTexts[i];
       if (pats.some(p => h.includes(p))) {
-        mapping[key] = contentPhysCols[i].startCol; // physical position
+        mapping[key] = { physCol: contentPhysCols[i].startCol, contentIdx: i };
         matchCount++;
         break;
       }
@@ -411,6 +411,7 @@ function normalizeExecName(name) {
   return name
     .toLowerCase()
     .replace(/\(\d+\)/g, '')      // strip footnote refs "(1)", "(6)"
+    .replace(/\b(mr|mrs|ms|dr|jr|sr|ii|iii|iv)\b\.?\s*/g, '')  // strip honorifics/suffixes
     .replace(/[^a-z\s]/g, '')     // strip non-alpha except spaces
     .replace(/\s+/g, ' ')
     .trim()
@@ -451,6 +452,16 @@ function findExecMatch(execMap, name) {
             return existingKey;
           }
         }
+      }
+    }
+  }
+
+  // Last-name-only match (handles "Mr. Khosrowshahi" → normalized to just "khosrowshahi")
+  if (parts.length === 1) {
+    for (const [existingKey] of execMap) {
+      const existingParts = existingKey.split(' ');
+      if (existingParts.length >= 1 && existingParts[existingParts.length - 1] === parts[0]) {
+        return existingKey;
       }
     }
   }
@@ -531,23 +542,51 @@ function parseSummaryCompensationTable(doc) {
   let rowspanColspan = 0; // physical columns consumed by the rowspanned name cell
 
   // Helper: extract comp values from a row using physical column positions
+  // with content-ordinal fallback for tables with different spacer counts in header vs data
+  //
+  // Detect spacer mismatch: if the data row has a different number of content cells than
+  // the header, physical positions are unreliable — use content-ordinal instead.
+  // Cache header row total cell count for spacer mismatch detection
+  const headerTotalCells = getDirectCells(rows[headerEndIdx - 1]).length;
+
   function extractCompByPhysicalPos(row, offset) {
     const cellMap = buildPhysicalCellMap(row, offset);
+    // Detect spacer mismatch: if total cell count differs from header, physical positions
+    // are unreliable — fall back to content-cell ordinal ordering
+    const rowTotalCells = getDirectCells(row).length;
+    const useOrdinal = rowTotalCells !== headerTotalCells && offset === 0;
+    let contentCells = null;
+    if (useOrdinal) contentCells = getContentCells(row);
     const comp = {};
     for (const { key } of EXEC_COLUMN_PATTERNS) {
       if (key === 'name' || key === 'year') continue;
-      const physPos = mapping[key];
-      if (physPos !== undefined) {
-        const cell = cellMap.get(physPos);
+      const pos = mapping[key];
+      if (pos !== undefined) {
+        const physCol = typeof pos === 'object' ? pos.physCol : pos;
+        const contentIdx = typeof pos === 'object' ? pos.contentIdx : undefined;
+        let cell;
+        if (useOrdinal && contentIdx !== undefined) {
+          cell = contentCells[contentIdx] || null;
+        } else {
+          cell = cellMap.get(physCol);
+        }
         if (cell) {
           comp[key] = parseCompValue(cellText(cell));
         }
       }
     }
-    // Extract year by physical position
+    // Extract year
     let year = null;
     if (mapping.year !== undefined) {
-      const yearCell = cellMap.get(mapping.year);
+      const pos = mapping.year;
+      const physCol = typeof pos === 'object' ? pos.physCol : pos;
+      const contentIdx = typeof pos === 'object' ? pos.contentIdx : undefined;
+      let yearCell;
+      if (useOrdinal && contentIdx !== undefined) {
+        yearCell = contentCells[contentIdx] || null;
+      } else {
+        yearCell = cellMap.get(physCol);
+      }
       if (yearCell) year = parseYear(cellText(yearCell));
     }
     return { comp, year };
@@ -742,11 +781,18 @@ function parseDirectorCompensationTable(doc) {
     // Use physical column positions for data extraction
     const cellMap = buildPhysicalCellMap(row);
     const comp = {};
+    let dirContentCells = null;
     for (const { key } of DIRECTOR_COLUMN_PATTERNS) {
       if (key === 'name') continue;
-      const physPos = mapping[key];
-      if (physPos !== undefined) {
-        const cell = cellMap.get(physPos);
+      const pos = mapping[key];
+      if (pos !== undefined) {
+        const physCol = typeof pos === 'object' ? pos.physCol : pos;
+        const contentIdx = typeof pos === 'object' ? pos.contentIdx : undefined;
+        let cell = cellMap.get(physCol);
+        if ((!cell || isSpacerCell(cell)) && contentIdx !== undefined) {
+          if (!dirContentCells) dirContentCells = getContentCells(row);
+          cell = dirContentCells[contentIdx] || null;
+        }
         if (cell) {
           comp[key] = parseCompValue(cellText(cell));
         }
@@ -821,6 +867,8 @@ async function findXbrlInstanceFile(filing) {
     const url = filingIndexUrl(filing.cik, filing.accessionNumber);
     const res = await fetch(url);
     if (!res.ok) return null;
+    const ct = res.headers?.get?.('content-type') || '';
+    if (ct && !ct.includes('json') && !ct.includes('text/plain')) return null;
     const data = await res.json();
     const items = data?.directory?.item || [];
     const xmlFile = items.find(f => f.name.endsWith('_htm.xml'));
@@ -1079,6 +1127,10 @@ async function fetchAndParseProxy(filing) {
         console.warn(`Compensation: median total $${median} < $50K — likely garbled data, clearing for XBRL fallback`);
         executives = [];
       }
+    } else {
+      // All values null — column misalignment produced zero extractable numbers
+      console.warn('Compensation: all comp values null — likely column misalignment, clearing for XBRL fallback');
+      executives = [];
     }
   }
 
