@@ -1,6 +1,6 @@
 # Normalization Engine Status
 
-The normalization engine validates Thes1s's XBRL financial extraction against external truth sets (Morningstar 50-company, FMP S&P 500) to prove accuracy and find bugs. Work was organized in 5 phases using GSD (now archived). This document captures where everything stands so future sessions can continue the work.
+The normalization engine validates Thes1s's XBRL financial extraction against external truth sets (Morningstar 50-company, FMP S&P 500) to prove accuracy and find bugs. This document is the source of truth for normalization work going forward.
 
 ## Accuracy (as of April 6, 2026)
 
@@ -16,6 +16,58 @@ The normalization engine validates Thes1s's XBRL financial extraction against ex
 The 94.8% MS number is the regression gate -- engine changes must not drop it below 94.0%.
 
 The S&P 500 numbers reflect comparator-level fixes (sign convention + fiscal year alignment) applied in `sp500-fmp-comparator.mjs`. No engine modifications were made during Phase 4. The remaining Tier 1 gap (87.3% vs 100%) is methodology differences between FMP's normalization and our XBRL extraction, not bugs.
+
+## Requirements Status
+
+| ID | Description | Status | Notes |
+|----|-------------|--------|-------|
+| HARNESS-01 | FY alignment engine | **Complete** | Phase 1 |
+| HARNESS-02 | Sign convention normalizer | **Complete** | Phase 1 |
+| HARNESS-03 | Scale normalizer | **Complete** | Phase 1 |
+| HARNESS-04 | Universal field mapping JSON | **Complete** | Phase 1 (101 fields) |
+| HARNESS-05 | All-JS comparison harness | **Complete** | Phase 1 |
+| TRI-01 | FMP data collector | **Complete** | Phase 2 |
+| TRI-02 | SimFin data collector | **Complete** | Phase 2 |
+| TRI-03 | mstarpy Python bridge | **Complete** | Phase 2 |
+| TRI-04 | Triangulation consensus engine | **Complete** | Phase 2 |
+| TRI-05 | Root cause tagger | **Complete** | Phase 2 |
+| TRI-06 | Reporter with regression diffing | **Needs verification** | Reporter exists; regression diffing may be incomplete |
+| ENGINE-01 | Tag coverage fixes | **Complete** | Phase 3 |
+| ENGINE-02 | Residual Other with 95% gate | **Complete** | Phase 3 |
+| ENGINE-03 | Financial sector overlay validation | **Complete** | Phase 3 |
+| ENGINE-04 | Regression protection via baselines | **Complete** | Phase 3 |
+| SCALE-01 | 94%+ MS accuracy | **Complete** | 94.8% confirmed |
+| SCALE-02 | S&P 500 structural validation | **Complete** | 87.3% FMP Tier 1, 83.8% identity checks, 503/503 companies |
+| SCALE-03 | Beyond-S&P 500 validation | **Dropped** | Margin work, S&P 500 coverage is sufficient |
+| SCALE-04 | Eliminate paid API subscriptions | **Waiting** | User cancels after COMP work is verified |
+| COMP-01 | Fix 11 compensation bugs | **Code done, needs manual verification** | 47/47 tests pass; 30-company manual check pending |
+| COMP-02 | FMP compensation comparison layer | **Not started** | Needs plan |
+
+**Summary:** 17/22 complete, 2 need work (TRI-06, COMP-02), 1 needs manual verification (COMP-01), 1 waiting on user action (SCALE-04), 1 dropped (SCALE-03).
+
+## What's Left
+
+### 1. TRI-06: Verify regression diffing in reporter
+The reporter (`validation/scripts/lib/reporter.mjs`) exists and is used by the MS comparison pipeline. Need to verify the regression diffing feature (comparing current run vs previous run to show fields gained/lost) actually works. If not, build it.
+
+### 2. COMP-02: FMP compensation comparison layer
+Build a comparison pipeline that validates our compensation extraction against FMP's compensation data. FMP has a 339-record AAPL dataset as a reference. Extend across the truth set.
+
+**Plan reference:** `gstack/plans/gstack-compensation-engine-bugfix-eng-plan-20260321.md` (covers COMP-01 bug fixes which are already done; COMP-02 needs its own plan)
+
+### 3. COMP-01: Manual verification (user action)
+After COMP-02 is planned, user runs the dev server, clears IndexedDB `comp-data` store, and checks 30 companies:
+- **Column alignment (Bug 1):** TXRH, ODFL, EW, BOOT, AMZN, GOOGL, JPM, NVDA, SFM
+- **Name/title (Bugs 2, 6, 7):** AAPL, MSFT, GOOGL, JPM, NVDA, WFC, MLI, SFM
+- **Dedup (Bug 3):** AAPL, GOOGL, NVDA, WFC, SFM
+- **Non-names (Bug 4):** NVDA, ODFL, MU, EW, BA
+- **Directors (Bug 9):** AMZN, JPM
+- **Cache (Bug 8):** MET
+- **Pay ratio (Bug 10):** MLI
+- **No regressions:** META, UNH, LULU, BRK-B
+
+### 4. SCALE-04: Cancel API subscriptions (user action)
+After all verification is done, cancel FMP and SimFin subscriptions. The normalization rules are self-sufficient -- paid sources were only needed to build and validate them.
 
 ## Completed Work
 
@@ -37,77 +89,38 @@ Built 3 data collectors (FMP, SimFin, mstarpy) with rate-limited caching. Consen
 **Key files:** `src/engines/edgarFinancials.js`, `src/engines/industryOverlays.js`, `validation/scripts/lib/field-alias-map.mjs`
 **Archive:** `_planning-archive/phases/03-engine-fixes/` (22 files, 11 plans -- each with PLAN.md + SUMMARY.md)
 
-### Phase 4, Plan 01: S&P 500 Comparison Infrastructure (Complete)
-Built the S&P 500 comparison pipeline: Wikipedia ticker scraper (503 tickers, 7-day cache), batch FMP data fetcher with 200ms rate limiting, 85-field tiered comparator (23 Tier 1 / 32 Tier 2 / 30 Tier 3 with tier-aware tolerance thresholds), tiered accuracy reporter (console + JSON), and full comparison orchestrator with SEC fetch interceptor and auto-bundle.
+### Phase 4: Scale Validation (Complete)
+Validated the engine across all 503 S&P 500 companies using FMP comparison (tiered) and accounting identity checks. Built comparison infrastructure (ticker scraper, batch fetcher, tiered comparator, reporter, orchestrator). Ran full comparison, applied comparator-level fixes (sign convention + FY alignment), investigated outliers (RACE, MET, WFC, CRM, EW, EQIX). Ran identity checks (83.8% pass, 50,882/60,692 checks). No engine bugs found -- all gaps are methodology differences.
 
 **Key files:**
-- `validation/scripts/fetch-sp500-fmp.mjs` -- S&P 500 ticker scraper + batch FMP fetcher
-- `validation/scripts/compare-sp500-fmp.mjs` -- Main comparison orchestrator
+- `validation/scripts/compare-sp500-fmp.mjs` -- S&P 500 FMP comparison orchestrator
+- `validation/scripts/validate-sp500-identities.mjs` -- Identity check orchestrator
 - `validation/scripts/lib/sp500-fmp-comparator.mjs` -- 85-field tiered comparator
-- `validation/scripts/lib/sp500-reporter.mjs` -- Tiered console + JSON reporter
+- `validation/reports/sp500-final-report.md` -- Comprehensive final report
+- `validation/reports/sp500-outlier-investigation.md` -- Outlier deep-dives
 
-**Archive:** `_planning-archive/phases/04-scale-validation/04-01-SUMMARY.md`
+**Archive:** `_planning-archive/phases/04-scale-validation/` (8 files, 3 plans)
 
-### Phase 4, Plan 02: S&P 500 FMP Comparison Run (Tasks 1-2 Complete, Task 3 Pending)
-Fetched FMP data for all 503 S&P 500 companies. Ran initial comparison (Tier 1: 80.0%, Overall: 77.4%). Applied two comparator fixes:
+### COMP-01: Compensation Bug Fixes (Code Complete, Manual Verification Pending)
+All 11 bugs fixed in `src/engines/compensation.js`. 47/47 tests pass. Cache bumped v2 -> v3. Bugs: column misalignment (physical position tracking), name/title concatenation (3-stage split pipeline), duplicates (tertiary matching + post-merge dedup), non-names (word-boundary validation), HTML entities, footnote artifacts, director headings, pay ratio regex, XBRL fallback trigger ($50K median gate).
 
-1. **Sign convention** -- Added SIGN_FLIP_FIELDS for 5 cash flow fields (share_repurchases, dividends_paid, capital_expenditures, debt_repayment, common_stock_repurchased) where FMP outflow convention (negative) differs from XBRL Payments convention (positive). Reduced share_repurchases failures from 446 to 133 companies.
-
-2. **Fiscal year alignment** -- Added revenue-matching `detectFYOffset()` for non-December FY companies. Resolved near-0% accuracy for ~24 companies (LULU, WMT, NVDA, HD, CRM, etc.) where FMP labels fiscal years differently than our engine.
-
-After fixes: Tier 1 = 87.3%, Overall = 83.0% (+7.3% / +5.6%).
-
-Updated REQUIREMENTS.md: SCALE-01 revised from 98%+ to 94%+ per decision D-01.
-
-**Outlier investigation completed** (documented in `validation/reports/sp500-outlier-investigation.md`):
-- **RACE** (Ferrari): Not in S&P 500, EUR filer -- non-issue
-- **MET** (MetLife, T1: 51.2%): Insurance sector METHODOLOGY_DIFF -- revenue/operating income definitions inherently differ
-- **WFC** (Wells Fargo, T1: 72.0%): Bank sector partial METHODOLOGY_DIFF + sign fix helped
-- **CRM** (Salesforce, T1: was 24.4%): FY alignment fixed it
-- **EW** (Edwards Lifesciences, T1: 81.3%): Sign fix + residual methodology
-- **EQIX** (Equinix, T1: 87.8%): REIT debt classification METHODOLOGY_DIFF
-
-**Fix cycle concluded:** No fixable Tier 1 engine bugs remain. All remaining failures are METHODOLOGY_DIFF (operating_income_loss 250 companies, short_term_debt 222, long_term_debt 170, share_repurchases 133, capital_expenditures 120, cash 94).
-
-**Bottom 10 companies:** VST (6.3%), NEE (8%), GM (10%), CRH (31.4%), PPL (36.4%), PSKY (40%), MET (51.2%), SW (52.9%), VTR (57.5%), KR (57.8%) -- financial sector, non-standard XBRL, or unusual FY patterns.
-
-**No SUMMARY.md exists** -- the GSD checkpoint was interrupted before it could be created.
-
-**Git commits:** `48ca0fd` (feat: fetch + initial comparison + outlier investigation), `8e6458a` (fix: comparator sign convention + FY alignment)
-
-**Archive:** `_planning-archive/phases/04-scale-validation/04-02-PLAN.md`
-
-## Remaining Work
-
-### Phase 4: Scale Validation -- COMPLETE (April 6, 2026)
-
-All Phase 4 deliverables are done:
-- Identity check orchestrator: `validation/scripts/validate-sp500-identities.mjs`
-- Identity results: `validation/reports/sp500-identity-checks.json` (83.8% pass, 503 companies, 0 errors)
-- Final report: `validation/reports/sp500-final-report.md`
-- SCALE-01 PASS (94.8%), SCALE-02 PASS, SCALE-03/04 DEFERRED
-
-### Phase 5: Executive Compensation (Not Started)
-Fix 11 documented bugs in the compensation extraction engine and validate against FMP's compensation data.
-
-**Plan reference:** `gstack/plans/gstack-compensation-engine-bugfix-eng-plan-20260321.md`
-**Requirements:** COMP-01 (11 bugs), COMP-02 (FMP comparison layer)
-**Archive:** `_planning-archive/REQUIREMENTS.md` (full traceability matrix)
+**Key files:** `src/engines/compensation.js`, `src/engines/__tests__/compensation.test.js`
+**Plan:** `gstack/plans/gstack-compensation-engine-bugfix-eng-plan-20260321.md`
 
 ## Key Decisions
 
 These decisions were made during Phases 1-4 and must be respected going forward:
 
-1. **94%+ is the target** (not 98%) -- remaining diffs are methodology, not bugs. Chasing 98% would mean matching Morningstar's arbitrary choices, not fixing our engine.
+1. **94%+ is the target** (not 98%) -- remaining diffs are methodology, not bugs.
 2. **FMP is the primary S&P 500 truth set** -- SimFin/mstarpy are secondary/supplementary.
 3. **Only fix FMP-confirmed Tier 1 bugs** -- do not chase Tier 2/3 disagreements or methodology diffs.
 4. **Fix+validate iteratively** -- make one fix, rebuild bundle, check MS regression gate (94%+), check S&P 500 improvement, repeat.
-5. **Beyond-S&P 500 validation deferred** -- S&P 500 coverage is sufficient for this milestone.
-6. **Comparator fixes != engine fixes** -- sign convention and FY alignment corrections live in `sp500-fmp-comparator.mjs`, not in the engine itself.
-7. **Alias map resolves at lookup time** -- canonical->engine name resolution happens during comparison, not by renaming engine fields (50+ UI components depend on engine field names).
-8. **Overlay-wins for industry overlays** -- REIT/bank/insurance overlay tags take priority over generic base taxonomy.
-9. **95% coverage gate on residual Other** -- only compute residual "Other" fields when 95%+ of named items are present.
-10. **Engine bundle must be rebuilt** after any engine change: `node validation/scripts/bundle.mjs`
+5. **Comparator fixes != engine fixes** -- sign convention and FY alignment corrections live in `sp500-fmp-comparator.mjs`, not in the engine itself.
+6. **Alias map resolves at lookup time** -- canonical->engine name resolution happens during comparison, not by renaming engine fields (50+ UI components depend on engine field names).
+7. **Overlay-wins for industry overlays** -- REIT/bank/insurance overlay tags take priority over generic base taxonomy.
+8. **95% coverage gate on residual Other** -- only compute residual "Other" fields when 95%+ of named items are present.
+9. **Engine bundle must be rebuilt** after any engine change: `node validation/scripts/bundle.mjs`
+10. **S&P 500 coverage is sufficient** -- beyond-S&P validation (SCALE-03) is dropped as margin work.
 
 ## Validation Commands
 
@@ -130,22 +143,13 @@ node --max-old-space-size=4096 validation/scripts/validate-sp500-identities.mjs
 # S&P 500 FMP data fetch (run first if cache is stale)
 node validation/scripts/fetch-sp500-fmp.mjs
 
+# Run project tests (exclude gstack skill tests)
+npm test -- --run
+
 # Read existing accuracy reports (fast, no re-run)
 node -e "const r=JSON.parse(require('fs').readFileSync('validation/reports/morningstar-accuracy.json','utf8')); console.log('MS:', r.overallAccuracy)"
 node -e "const r=JSON.parse(require('fs').readFileSync('validation/reports/sp500-fmp-accuracy.json','utf8')); console.log(JSON.stringify(r.summary, null, 2))"
 ```
-
-## Requirements Tracker
-
-From `_planning-archive/REQUIREMENTS.md` -- 22 requirements total:
-
-| Group | Count | Status |
-|-------|-------|--------|
-| HARNESS (Phase 1) | 5 | All complete |
-| TRI (Phase 2) | 6 | 5 complete, TRI-06 pending |
-| ENGINE (Phase 3) | 4 | All complete |
-| SCALE (Phase 4) | 4 | SCALE-01/02 pending, SCALE-03 deferred, SCALE-04 deferred |
-| COMP (Phase 5) | 2 | Not started |
 
 ## Archive Reference
 
@@ -154,12 +158,11 @@ The `_planning-archive/` directory contains the full GSD planning history. Key f
 | File | What it contains |
 |------|-----------------|
 | `_planning-archive/ROADMAP.md` | Full 5-phase roadmap with success criteria per phase |
-| `_planning-archive/REQUIREMENTS.md` | All 22 requirements with traceability matrix |
+| `_planning-archive/REQUIREMENTS.md` | All 22 requirements with original traceability matrix |
 | `_planning-archive/STATE.md` | 23 accumulated decisions, velocity metrics, blockers |
 | `_planning-archive/PROJECT.md` | Core value statement, key decisions table, validated requirements |
 | `_planning-archive/phases/03-engine-fixes/` | 11 plan+summary pairs documenting every engine fix (most useful for understanding why specific XBRL decisions were made) |
 | `_planning-archive/phases/04-scale-validation/04-CONTEXT.md` | 10 locked decisions (D-01 through D-10) for the S&P 500 validation approach |
 | `_planning-archive/phases/04-scale-validation/04-RESEARCH.md` | FMP rate limits, field count corrections, architecture patterns, common pitfalls |
-| `_planning-archive/phases/04-scale-validation/04-03-PLAN.md` | Full spec for the remaining identity check + final report work |
 | `_planning-archive/codebase/` | 6 docs on existing architecture (useful for onboarding) |
 | `_planning-archive/research/` | 5 investigation docs on data sources and approaches |
