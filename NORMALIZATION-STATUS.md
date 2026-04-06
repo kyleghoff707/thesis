@@ -2,7 +2,7 @@
 
 The normalization engine validates Thes1s's XBRL financial extraction against external truth sets (Morningstar 50-company, FMP S&P 500) to prove accuracy and find bugs. Work was organized in 5 phases using GSD (now archived). This document captures where everything stands so future sessions can continue the work.
 
-## Accuracy (as of March 27, 2026)
+## Accuracy (as of April 6, 2026)
 
 | Metric | Value | Source |
 |--------|-------|--------|
@@ -11,6 +11,7 @@ The normalization engine validates Thes1s's XBRL financial extraction against ex
 | S&P 500 Tier 2 (display) | **83.8%** | " |
 | S&P 500 Tier 3 (expanded) | **61.0%** | " |
 | S&P 500 Overall | **83.0%** | " |
+| S&P 500 Identity Checks | **83.8%** | validation/reports/sp500-identity-checks.json |
 
 The 94.8% MS number is the regression gate -- engine changes must not drop it below 94.0%.
 
@@ -78,17 +79,13 @@ Updated REQUIREMENTS.md: SCALE-01 revised from 98%+ to 94%+ per decision D-01.
 
 ## Remaining Work
 
-### To Finish Phase 4
+### Phase 4: Scale Validation -- COMPLETE (April 6, 2026)
 
-**1. Accounting identity checks at S&P 500 scale**
-Build `validation/scripts/validate-sp500-identities.mjs` -- runs the existing `validateCompany()` function (from `src/engines/validation.js`) against all 503 companies. The function checks 10 accounting identities (Assets=L+E, GP=Rev-COGS, OCF+ICF+FCF=Cash Change, etc.). Follow the same orchestrator pattern as `compare-sp500-fmp.mjs` (browser polyfills, SEC fetch interceptor, auto-bundle, progress reporting). Output: console report + `validation/reports/sp500-identity-checks.json`.
-
-See `_planning-archive/phases/04-scale-validation/04-03-PLAN.md` Task 1 for the full spec.
-
-**2. Comprehensive final report**
-Create `validation/reports/sp500-final-report.md` summarizing all Phase 4 findings: MS baseline (94.8%), S&P 500 FMP accuracy (87.3% Tier 1), identity check pass rate, outlier investigations, fix cycle results, and requirement verification (SCALE-01 through SCALE-04).
-
-See `_planning-archive/phases/04-scale-validation/04-03-PLAN.md` Task 2 for the full spec.
+All Phase 4 deliverables are done:
+- Identity check orchestrator: `validation/scripts/validate-sp500-identities.mjs`
+- Identity results: `validation/reports/sp500-identity-checks.json` (83.8% pass, 503 companies, 0 errors)
+- Final report: `validation/reports/sp500-final-report.md`
+- SCALE-01 PASS (94.8%), SCALE-02 PASS, SCALE-03/04 DEFERRED
 
 ### Phase 5: Executive Compensation (Not Started)
 Fix 11 documented bugs in the compensation extraction engine and validate against FMP's compensation data.
@@ -126,6 +123,9 @@ node validation/scripts/compare-sp500-fmp.mjs
 
 # S&P 500 FMP comparison (single ticker debug)
 node validation/scripts/compare-sp500-fmp.mjs --ticker AAPL
+
+# S&P 500 accounting identity checks (503 companies)
+node --max-old-space-size=4096 validation/scripts/validate-sp500-identities.mjs
 
 # S&P 500 FMP data fetch (run first if cache is stale)
 node validation/scripts/fetch-sp500-fmp.mjs
