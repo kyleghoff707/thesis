@@ -280,6 +280,46 @@ process.stdout.write(`EDGAR API: ${requestCount} live requests, ${cacheHits} cac
 fs.mkdirSync(REPORTS_DIR, { recursive: true });
 const jsonReport = generateJsonReport(allResults);
 const jsonPath = path.resolve(REPORTS_DIR, 'morningstar-accuracy.json');
+
+// ─── Regression Diff (TRI-06) ──────────────────────────────
+// Compare against previous report before overwriting
+if (fs.existsSync(jsonPath)) {
+  try {
+    const previous = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+    const prevAcc = previous.overallAccuracy;
+    const currAcc = jsonReport.overallAccuracy;
+    const delta = (currAcc - prevAcc).toFixed(1);
+    const sign = delta > 0 ? '+' : '';
+
+    // Diff failure patterns
+    const prevFails = new Set((previous.topFailurePatterns || []).map(p => p.field));
+    const currFails = new Set((jsonReport.topFailurePatterns || []).map(p => p.field));
+    const gained = [...prevFails].filter(f => !currFails.has(f));
+    const lost = [...currFails].filter(f => !prevFails.has(f));
+
+    // Per-company regressions (dropped > 2%)
+    const prevByTicker = {};
+    for (const c of (previous.companies || [])) prevByTicker[c.ticker] = c.accuracy;
+    const regressions = [];
+    for (const c of (jsonReport.companies || [])) {
+      const prev = prevByTicker[c.ticker];
+      if (prev != null && c.accuracy < prev - 2) {
+        regressions.push(`${c.ticker} ${prev.toFixed(1)}% → ${c.accuracy.toFixed(1)}%`);
+      }
+    }
+
+    process.stdout.write('\nREGRESSION DIFF (vs previous run):\n');
+    process.stdout.write(`  Accuracy: ${prevAcc.toFixed(1)}% → ${currAcc.toFixed(1)}% (${sign}${delta}%)\n`);
+    process.stdout.write(`  Failure patterns resolved: ${gained.length}${gained.length > 0 ? ' (' + gained.join(', ') + ')' : ''}\n`);
+    process.stdout.write(`  New failure patterns: ${lost.length}${lost.length > 0 ? ' (' + lost.join(', ') + ')' : ''}\n`);
+    if (regressions.length > 0) {
+      process.stdout.write(`  Company regressions (>2% drop): ${regressions.join(', ')}\n`);
+    }
+  } catch (e) {
+    process.stderr.write(`WARNING: Could not diff against previous report: ${e.message}\n`);
+  }
+}
+
 fs.writeFileSync(jsonPath, JSON.stringify(jsonReport, null, 2));
 process.stderr.write(`\nJSON report written to: ${jsonPath}\n`);
 
