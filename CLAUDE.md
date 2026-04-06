@@ -76,6 +76,8 @@ All tag definitions in `FRAMES_TAGS` and `PEER_FRAMES_TAGS` have a `period: 'ins
 ## Current Status
 Phases 1-4 complete — app shell, data engines, calculation engines, and full Toolbox UI all functional. **XBRL engine complete** — three-layer tag resolution (static + taxonomy + AI), industry overlays (bank/REIT/insurance), full provenance tracking (annual + TTM), coverage monitor, and Audit tab dashboard. Validated across all 503 S&P 500 companies with 0 failures. See `gstack/plans/gstack-xbrl-engine-strategy-eng-plan-20260318.md` for full architecture and `validation/reports/financial-data-comparison-rca.md` for the original 12-ticker RCA. **The remaining work is Phase 5-8: AI-driven report generation.**
 
+**Normalization engine:** See `NORMALIZATION-STATUS.md` for the multi-source validation pipeline status (accuracy metrics, remaining work, archive references).
+
 ### What's Built
 All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems (validation, guru, ticker, N-PORT, compensation), Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores + derived metric computation + Yahoo data backfill + per-ticker caching + sparse peer filtering + data completeness indicators + industry-aware column defaults, Upcoming Events & News section on Overview (SEC 8-K events + Yahoo calendar + IR page discovery), three-layer XBRL engine with provenance tracking and coverage monitoring (173 tests via vitest), earnings call transcript engine (Finnhub premium + Alpha Vantage free, cached in IndexedDB, Transcript buttons on Filings tab for 10-K/10-Q). See source tree below.
 
@@ -334,10 +336,9 @@ validation/                      — 3-layer validation system (scripts/, data/,
 When fixing bugs, follow this approach — do NOT jump straight to a fix:
 
 1. **Diagnose with `/investigate`** (gstack). Four-phase root cause analysis — investigate, analyze, hypothesize, implement. Most bugs resolve here.
-2. **Escalate with `/gsd:debug`** if the bug is complex, spans many files, or might need multiple sessions. Spawns a fresh 200k-context subagent with persistent state in `.planning/debug/`.
-3. **Write a failing test.** The test should prove the bug exists. Include a test for the expected post-fix behavior. Use vitest (`npm test`).
-4. **Fix with a subagent.** Give the subagent the failing test and the specific files to modify. It works until all tests pass.
-5. **Verify.** All tests pass, app compiles, dev server runs.
+2. **Write a failing test.** The test should prove the bug exists. Include a test for the expected post-fix behavior. Use vitest (`npm test`).
+3. **Fix with a subagent.** Give the subagent the failing test and the specific files to modify. It works until all tests pass.
+4. **Verify.** All tests pass, app compiles, dev server runs.
 
 Writing tests first forces you to define "correct" before writing code — this caught a critical EDGAR Frames API bug that a direct fix attempt missed entirely.
 
@@ -549,7 +550,6 @@ cp -R .gstack/{name}/* gstack/{name}/ 2>/dev/null; rm -rf .gstack/{name}; ln -sf
 
 **If skill SKILL.md files changed write paths**: Read the changelog or diff the updated skill files in `~/.claude/skills/gstack/`. If any skill changed its output path (e.g., `.gstack/qa-reports/` → `.gstack/qa/`), update the symlink accordingly and tell the user what changed and how it affects our redirect setup.
 
-<!-- GSD:project-start source:PROJECT.md -->
 ## Project
 
 **Thes1s — AI Agent Workflow**
@@ -571,9 +571,7 @@ The power of Rule One research is the depth. A human analyst doing 70 hours of m
 - **LULU contamination**: Agents must never access LULU examples during generation. Evaluation only.
 - **Rule One methodology**: Agents follow the curriculum exactly. Creative freedom is limited to investigation depth and narrative style — never methodology.
 - **User verification**: The user personally verifies agent output quality at each milestone. No milestone is "done" until the user says so.
-<!-- GSD:project-end -->
 
-<!-- GSD:stack-start source:codebase/STACK.md -->
 ## Technology Stack
 
 ## Languages
@@ -620,9 +618,7 @@ The power of Rule One research is the depth. A human analyst doing 70 hours of m
 - macOS desktop app (`.app` bundle via `npm run tauri:build`)
 - Tauri 2 native webview — no CORS enforcement, can set arbitrary headers
 - No server, no auth, no network infrastructure — all API calls go direct to external services
-<!-- GSD:stack-end -->
 
-<!-- GSD:conventions-start source:CONVENTIONS.md -->
 ## Conventions
 
 ## Naming Patterns
@@ -688,9 +684,7 @@ The power of Rule One research is the depth. A human analyst doing 70 hours of m
 - Constants: named exports for shared data — `export const PERIODS = [10, 7, 5, 3, 1]`
 - Test-only exports: collected under `export const _testExports = { ... }` at file bottom
 ## Theme Usage
-<!-- GSD:conventions-end -->
 
-<!-- GSD:architecture-start source:ARCHITECTURE.md -->
 ## Architecture
 
 ## Pattern Overview
@@ -799,24 +793,3 @@ The power of Rule One research is the depth. A human analyst doing 70 hours of m
 - Cache misses are silent — engines fall back to network without surfacing errors
 - EDGAR 404s (missing filings) return `null` gracefully; components show "no data" states
 ## Cross-Cutting Concerns
-<!-- GSD:architecture-end -->
-
-<!-- GSD:workflow-start source:GSD defaults -->
-## GSD Workflow Enforcement
-
-Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
-
-Use these entry points:
-- `/gsd:quick` for small fixes, doc updates, and ad-hoc tasks
-- `/gsd:debug` for investigation and bug fixing
-- `/gsd:execute-phase` for planned phase work
-
-Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
-<!-- GSD:workflow-end -->
-
-<!-- GSD:profile-start -->
-## Developer Profile
-
-> Profile not yet configured. Run `/gsd:profile-user` to generate your developer profile.
-> This section is managed by `generate-claude-profile` -- do not edit manually.
-<!-- GSD:profile-end -->
