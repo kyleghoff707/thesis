@@ -29,6 +29,7 @@ await build({
       export { validateCompany } from '${resolve(ROOT, 'src/engines/validation.js').replace(/\\/g, '/')}';
       export { lookupCIK, fetchCompanyFacts } from '${resolve(ROOT, 'src/engines/edgar.js').replace(/\\/g, '/')}';
       export { cacheClear } from '${resolve(ROOT, 'src/engines/cache.js').replace(/\\/g, '/')}';
+      export { fetchCompensation } from '${resolve(ROOT, 'src/engines/compensation.js').replace(/\\/g, '/')}';
       export { GURUS, parseInfoTable, aggregateShareClasses, enrichHoldings, fetchGuruFilings, fetchGuruWithChanges, aggregateTopBuys, aggregateTopHoldings, resolveTickersForHoldings } from '${resolve(ROOT, 'src/engines/gurus.js').replace(/\\/g, '/')}';
     `,
     resolveDir: resolve(ROOT, 'src/engines'),
