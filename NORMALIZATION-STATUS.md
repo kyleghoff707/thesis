@@ -2,7 +2,7 @@
 
 The normalization engine validates Thes1s's XBRL financial extraction against external truth sets (Morningstar 50-company, FMP S&P 500) to prove accuracy and find bugs. This document is the source of truth for normalization work going forward.
 
-## Accuracy (as of April 6, 2026)
+## Accuracy (updated April 6, 2026)
 
 | Metric | Value | Source |
 |--------|-------|--------|
@@ -12,6 +12,7 @@ The normalization engine validates Thes1s's XBRL financial extraction against ex
 | S&P 500 Tier 3 (expanded) | **61.0%** | " |
 | S&P 500 Overall | **83.0%** | " |
 | S&P 500 Identity Checks | **83.8%** | validation/reports/sp500-identity-checks.json |
+| Compensation field accuracy (5 tickers) | **100%** | validation/reports/comp-accuracy.json |
 
 The 94.8% MS number is the regression gate -- engine changes must not drop it below 94.0%.
 
@@ -31,7 +32,7 @@ The S&P 500 numbers reflect comparator-level fixes (sign convention + fiscal yea
 | TRI-03 | mstarpy Python bridge | **Complete** | Phase 2 |
 | TRI-04 | Triangulation consensus engine | **Complete** | Phase 2 |
 | TRI-05 | Root cause tagger | **Complete** | Phase 2 |
-| TRI-06 | Reporter with regression diffing | **Needs verification** | Reporter exists; regression diffing may be incomplete |
+| TRI-06 | Reporter with regression diffing | **Complete** | Added to compare-morningstar.mjs: accuracy delta, patterns resolved/new, per-company regressions |
 | ENGINE-01 | Tag coverage fixes | **Complete** | Phase 3 |
 | ENGINE-02 | Residual Other with 95% gate | **Complete** | Phase 3 |
 | ENGINE-03 | Financial sector overlay validation | **Complete** | Phase 3 |
@@ -41,22 +42,14 @@ The S&P 500 numbers reflect comparator-level fixes (sign convention + fiscal yea
 | SCALE-03 | Beyond-S&P 500 validation | **Dropped** | Margin work, S&P 500 coverage is sufficient |
 | SCALE-04 | Eliminate paid API subscriptions | **Waiting** | User cancels after COMP work is verified |
 | COMP-01 | Fix 11 compensation bugs | **Code done, needs manual verification** | 47/47 tests pass; 30-company manual check pending |
-| COMP-02 | FMP compensation comparison layer | **Not started** | Needs plan |
+| COMP-02 | FMP compensation comparison layer | **Complete** | AAPL 100% field accuracy, 5-ticker verified. compare-compensation.mjs built |
 
-**Summary:** 17/22 complete, 2 need work (TRI-06, COMP-02), 1 needs manual verification (COMP-01), 1 waiting on user action (SCALE-04), 1 dropped (SCALE-03).
+**Summary:** 19/22 complete, 1 needs manual verification (COMP-01), 1 waiting on user action (SCALE-04), 1 dropped (SCALE-03).
 
 ## What's Left
 
-### 1. TRI-06: Verify regression diffing in reporter
-The reporter (`validation/scripts/lib/reporter.mjs`) exists and is used by the MS comparison pipeline. Need to verify the regression diffing feature (comparing current run vs previous run to show fields gained/lost) actually works. If not, build it.
-
-### 2. COMP-02: FMP compensation comparison layer
-Build a comparison pipeline that validates our compensation extraction against FMP's compensation data. FMP has a 339-record AAPL dataset as a reference. Extend across the truth set.
-
-**Plan reference:** `gstack/plans/gstack-compensation-engine-bugfix-eng-plan-20260321.md` (covers COMP-01 bug fixes which are already done; COMP-02 needs its own plan)
-
-### 3. COMP-01: Manual verification (user action)
-After COMP-02 is planned, user runs the dev server, clears IndexedDB `comp-data` store, and checks 30 companies:
+### 1. COMP-01: Manual verification (user action)
+Run the dev server, clear IndexedDB `comp-data` store, and check 30 companies:
 - **Column alignment (Bug 1):** TXRH, ODFL, EW, BOOT, AMZN, GOOGL, JPM, NVDA, SFM
 - **Name/title (Bugs 2, 6, 7):** AAPL, MSFT, GOOGL, JPM, NVDA, WFC, MLI, SFM
 - **Dedup (Bug 3):** AAPL, GOOGL, NVDA, WFC, SFM
@@ -66,7 +59,7 @@ After COMP-02 is planned, user runs the dev server, clears IndexedDB `comp-data`
 - **Pay ratio (Bug 10):** MLI
 - **No regressions:** META, UNH, LULU, BRK-B
 
-### 4. SCALE-04: Cancel API subscriptions (user action)
+### 2. SCALE-04: Cancel API subscriptions (user action)
 After all verification is done, cancel FMP and SimFin subscriptions. The normalization rules are self-sufficient -- paid sources were only needed to build and validate them.
 
 ## Completed Work
@@ -139,6 +132,10 @@ node validation/scripts/compare-sp500-fmp.mjs --ticker AAPL
 
 # S&P 500 accounting identity checks (503 companies)
 node --max-old-space-size=4096 validation/scripts/validate-sp500-identities.mjs
+
+# Compensation comparison (FMP vs engine)
+node validation/scripts/compare-compensation.mjs --ticker AAPL
+node validation/scripts/compare-compensation.mjs --fetch              # fetch FMP comp data + compare all
 
 # S&P 500 FMP data fetch (run first if cache is stale)
 node validation/scripts/fetch-sp500-fmp.mjs
