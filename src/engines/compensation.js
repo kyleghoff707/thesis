@@ -27,13 +27,13 @@ const FETCH_DELAY_MS = 250;
 // SEC-mandated Summary Compensation Table column headers (Item 402)
 // Normalized to lowercase for fuzzy matching
 const EXEC_COLUMN_PATTERNS = [
-  { key: 'name', patterns: ['name'] },
+  { key: 'name', patterns: ['name', 'named executive', 'principal position'] },
   { key: 'year', patterns: ['year', 'fiscal year'] },
-  { key: 'salary', patterns: ['salary', 'base sal'] },
+  { key: 'salary', patterns: ['salary', 'base sal', 'base comp'] },
   { key: 'bonus', patterns: ['bonus'] },
-  { key: 'stockAwards', patterns: ['stock award'] },
+  { key: 'stockAwards', patterns: ['stock award', 'rsu', 'restricted stock'] },
   { key: 'optionAwards', patterns: ['option award'] },
-  { key: 'nonEquityIncentive', patterns: ['non-equity', 'non equity', 'incentive plan'] },
+  { key: 'nonEquityIncentive', patterns: ['non-equity', 'non equity', 'incentive plan', 'annual incentive', 'annual payout'] },
   { key: 'pensionChange', patterns: ['change in pension', 'pension value', 'nonqualified deferred', 'nqdc'] },
   { key: 'otherComp', patterns: ['all other', 'other comp'] },
   { key: 'total', patterns: ['total'] },
@@ -101,6 +101,7 @@ function cleanIxbrlFromDoc(doc) {
       els[i].remove();
     }
   }
+
 }
 
 // ─── Value Parsing ──────────────────────────────────────────
@@ -149,13 +150,28 @@ function normalizeText(text) {
 }
 
 function cellText(el) {
-  return (el.textContent || '')
+  let text = (el.textContent || '')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/g, '&')
     .replace(/\u00a0/g, ' ')
     .replace(/[\u200b\u200c\u200d\uFEFF]/g, '')  // strip zero-width chars
     .replace(/\s+/g, ' ')
     .trim();
+
+  // Fallback for visibility:hidden headers (KO, ULTA, DE, etc.):
+  // When textContent is empty but innerHTML has real text behind hidden CSS,
+  // extract text from innerHTML by stripping tags.
+  if (!text && el.innerHTML && el.innerHTML.length > 10) {
+    text = el.innerHTML
+      .replace(/<[^>]*>/g, ' ')        // strip HTML tags
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/\u00a0/g, ' ')
+      .replace(/[\u200b\u200c\u200d\uFEFF]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  return text;
 }
 
 // ─── DOM Helpers ────────────────────────────────────────────
@@ -258,7 +274,7 @@ function matchColumns(headerRow, patterns) {
   const contentPhysCols = physCols.filter(pc => !isSpacerCell(pc.cell));
   if (contentPhysCols.length < 4) return null;
 
-  const headerTexts = contentPhysCols.map(pc => normalizeText(pc.cell.textContent));
+  const headerTexts = contentPhysCols.map(pc => normalizeText(cellText(pc.cell)));
 
   const mapping = {};
   let matchCount = 0;
@@ -524,6 +540,49 @@ function findSummaryCompensationTable(doc) {
     const headerResult = findHeaderMapping(rows, EXEC_COLUMN_PATTERNS);
     if (headerResult && headerResult.mapping.salary !== undefined) {
       return { table, rows, ...headerResult };
+    }
+  }
+
+  // Pass 3 fallback: detect SCT by data pattern (hidden headers, CSS-positioned text)
+  // SEC Item 402(c) mandates a specific column order: Name, Year, Salary, Bonus,
+  // Stock Awards, Option Awards, Non-Equity Incentive, Pension Change, Other Comp, Total.
+  // When headers are unreadable (visibility:hidden), detect via data rows.
+  for (const table of allTables) {
+    const rows = getDirectRows(table);
+    if (rows.length < 5) continue; // SCT needs at least a few data rows
+
+    // Look for a row that has: a name-like first cell, a year, and dollar amounts
+    for (let r = 0; r < Math.min(rows.length, 15); r++) {
+      const content = getContentCells(rows[r]);
+      if (content.length < 5) continue;
+
+      const c0 = cellText(content[0]);
+      const c1 = cellText(content[1]);
+      const c2 = cellText(content[2]);
+
+      // Check: first cell is a name, second is a year, third+ are dollar values
+      const hasName = c0.length > 3 && looksLikeName(c0.replace(/\(\d+\)/g, '').trim());
+      const hasYear = /^20\d{2}$/.test(c1.trim());
+      const hasDollar = c2.replace(/[$,]/g, '').match(/^\d+$/);
+
+      if (hasName && hasYear && hasDollar) {
+        // Found a data row matching SCT pattern. Build positional mapping.
+        // SEC-mandated order: Name(0), Year(1), Salary(2), Bonus(3), StockAwards(4),
+        // OptionAwards(5), NonEquityIncentive(6), PensionChange(7), OtherComp(8), Total(last)
+        const mapping = {};
+        const keys = ['name', 'year', 'salary', 'bonus', 'stockAwards', 'optionAwards',
+                      'nonEquityIncentive', 'pensionChange', 'otherComp', 'total'];
+        // Map first N content columns to SEC-mandated order, last column is always total
+        for (let k = 0; k < keys.length && k < content.length; k++) {
+          mapping[keys[k]] = { physCol: -1, contentIdx: k }; // use content-ordinal only
+        }
+        // Override total to always be the last content column
+        if (content.length > 2) {
+          mapping.total = { physCol: -1, contentIdx: content.length - 1 };
+        }
+
+        return { table, rows, mapping, headerEndIdx: r };
+      }
     }
   }
 
@@ -867,8 +926,6 @@ async function findXbrlInstanceFile(filing) {
     const url = filingIndexUrl(filing.cik, filing.accessionNumber);
     const res = await fetch(url);
     if (!res.ok) return null;
-    const ct = res.headers?.get?.('content-type') || '';
-    if (ct && !ct.includes('json') && !ct.includes('text/plain')) return null;
     const data = await res.json();
     const items = data?.directory?.item || [];
     const xmlFile = items.find(f => f.name.endsWith('_htm.xml'));
