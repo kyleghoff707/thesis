@@ -22,7 +22,55 @@ function sleep(ms) {
 // ─── Constants ──────────────────────────────────────────────
 
 const COMP_CACHE_V = 'v3';
-const FETCH_DELAY_MS = 250;
+
+// ─── SEC Fetch Wrapper ─────────────────────────────────────
+// All SEC requests route through secFetch for rate limiting + retry.
+// Replaces the old FETCH_DELAY_MS per-ticker delay with per-request pacing.
+
+let lastSecFetchTime = 0;
+const SEC_MIN_INTERVAL = 120; // 120ms between SEC requests (~8 req/sec)
+
+async function secFetch(url, opts = {}, retries = 3) {
+  let lastResponse = null;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    // Per-request rate limit
+    const now = Date.now();
+    const elapsed = now - lastSecFetchTime;
+    if (elapsed < SEC_MIN_INTERVAL) {
+      await sleep(SEC_MIN_INTERVAL - elapsed);
+    }
+    lastSecFetchTime = Date.now();
+
+    try {
+      const res = await fetch(url, opts);
+      lastResponse = res;
+      if (res.ok) return res;
+
+      // Retriable status codes
+      if (res.status === 403 || res.status === 429 || res.status === 503) {
+        const retryAfter = parseInt(res.headers?.get?.('Retry-After') || '0');
+        const delay = retryAfter > 0
+          ? retryAfter * 1000
+          : Math.min(1000 * Math.pow(2, attempt), 10000);
+        if (attempt < retries - 1) {
+          console.warn(`SEC ${res.status} for ${url.slice(0, 60)}... retry ${attempt + 1}/${retries} in ${delay}ms`);
+          await sleep(delay);
+          continue;
+        }
+      }
+
+      return res; // non-retriable error or last attempt
+    } catch (e) {
+      if (attempt < retries - 1) {
+        await sleep(1000 * Math.pow(2, attempt));
+        continue;
+      }
+      // Network error on last attempt: return a synthetic failed response
+      return lastResponse || new Response('', { status: 0 });
+    }
+  }
+  return lastResponse || new Response('', { status: 0 });
+}
 
 // SEC-mandated Summary Compensation Table column headers (Item 402)
 // Normalized to lowercase for fuzzy matching
@@ -543,10 +591,90 @@ function findSummaryCompensationTable(doc) {
     }
   }
 
-  // Pass 3 fallback: detect SCT by data pattern (hidden headers, CSS-positioned text)
-  // SEC Item 402(c) mandates a specific column order: Name, Year, Salary, Bonus,
-  // Stock Awards, Option Awards, Non-Equity Incentive, Pension Change, Other Comp, Total.
-  // When headers are unreadable (visibility:hidden), detect via data rows.
+  // Pass 3.5: Anchor-based SCT detection for hidden-header filings (KO, ULTA, DE pattern)
+  // Stage A: Find "Summary Compensation Table" text in document, check nearby tables
+  // Stage B: Detect (a)(b)(c) label row pattern that SEC mandates above data rows
+  // Stage C: Merge $-split cell pairs for column mapping
+  const bodyText = (doc.body?.textContent || '').toLowerCase();
+  const sctTextIdx = bodyText.indexOf('summary compensation table');
+  if (sctTextIdx > -1) {
+    // Build proximity scores for each table relative to the SCT text position
+    const tableProximity = allTables.map((table, idx) => {
+      // Approximate table position by its textContent's position in body text
+      const tableTextStart = bodyText.indexOf(normalizeText(table.textContent).slice(0, 50));
+      const distance = tableTextStart > -1 ? Math.abs(tableTextStart - sctTextIdx) : Infinity;
+      return { table, idx, distance };
+    });
+    tableProximity.sort((a, b) => a.distance - b.distance);
+
+    // Check the 10 closest tables for SCT data patterns
+    for (const { table } of tableProximity.slice(0, 10)) {
+      const rows = getDirectRows(table);
+      if (rows.length < 5) continue;
+
+      // Stage B: Look for SEC-mandated label row: (a) (b) (c) (d) ...
+      let labelRowIdx = -1;
+      for (let r = 0; r < Math.min(rows.length, 15); r++) {
+        const content = getContentCells(rows[r]);
+        const labelCells = content.filter(c => /^\([a-z]\)$/.test(cellText(c).trim()));
+        if (labelCells.length >= 4) {
+          labelRowIdx = r;
+          break;
+        }
+      }
+
+      // Find a data row (after label row if found, or scan from start)
+      const scanStart = labelRowIdx > -1 ? labelRowIdx + 1 : 0;
+      for (let r = scanStart; r < Math.min(rows.length, scanStart + 15); r++) {
+        const allCells = getDirectCells(rows[r]);
+        if (allCells.length < 5) continue;
+
+        // Stage C: Merge $-split cell pairs. Build a list of "value cells" by
+        // skipping $ signs and spacers, keeping names, years, and numbers.
+        const valueCells = [];
+        for (let c = 0; c < allCells.length; c++) {
+          const text = cellText(allCells[c]).trim();
+          if (!text || text === '$' || text === '($)') continue; // skip $ and spacer cells
+          if (/^\u00a0+$/.test(text) || /^[\u200b\u200c\u200d]+$/.test(text)) continue; // zero-width
+          valueCells.push({ cell: allCells[c], text });
+        }
+        if (valueCells.length < 5) continue;
+
+        // Check: first value cell is a name, second is a year, rest are numbers
+        const cleanName = valueCells[0].text.replace(/\(\d+\)/g, '').trim();
+        const hasName = cleanName.length > 3 && cleanName.length < 60 && looksLikeName(cleanName);
+        const hasYear = /^20\d{2}$/.test(valueCells[1].text.trim());
+        if (!hasName || !hasYear) continue;
+
+        // Count numeric cells (3+ digit numbers = compensation values)
+        let numCount = 0;
+        for (let v = 2; v < valueCells.length; v++) {
+          const stripped = valueCells[v].text.replace(/[$,\s]/g, '');
+          if (/^\d{3,}$/.test(stripped) || stripped === '0') numCount++;
+        }
+        if (numCount < 3) continue;
+
+        // Found SCT data. Map value cells to SEC-mandated column order.
+        const mapping = {};
+        const keys = ['name', 'year', 'salary', 'bonus', 'stockAwards', 'optionAwards',
+                      'nonEquityIncentive', 'pensionChange', 'otherComp', 'total'];
+        for (let k = 0; k < keys.length && k < valueCells.length; k++) {
+          mapping[keys[k]] = { physCol: -1, contentIdx: k, _valueCell: true };
+        }
+        // Total is always the last value cell
+        if (valueCells.length > 2) {
+          mapping.total = { physCol: -1, contentIdx: valueCells.length - 1, _valueCell: true };
+        }
+
+        // Build a custom extractComp that uses valueCells instead of content cells
+        // Store the value-cell extraction mode in the mapping for parseSummaryCompensationTable
+        return { table, rows, mapping, headerEndIdx: r, _useValueCells: true };
+      }
+    }
+  }
+
+  // Pass 3 fallback (original): detect SCT by data pattern, scanning ALL tables
+  // Safety net for filings without "Summary Compensation Table" text nearby.
   for (const table of allTables) {
     const rows = getDirectRows(table);
     if (rows.length < 5) continue;
@@ -598,7 +726,7 @@ function parseSummaryCompensationTable(doc) {
   const found = findSummaryCompensationTable(doc);
   if (!found) return [];
 
-  const { rows, mapping, headerEndIdx } = found;
+  const { rows, mapping, headerEndIdx, _useValueCells } = found;
   const executives = [];
   let currentName = null;
   let currentTitle = null;
@@ -613,10 +741,44 @@ function parseSummaryCompensationTable(doc) {
   // Cache header row total cell count for spacer mismatch detection
   const headerTotalCells = getDirectCells(rows[headerEndIdx - 1]).length;
 
+  // Helper: get "value cells" from a row by filtering out $ signs and spacers
+  // Used by Pass 3.5's _useValueCells mode for $-split tables (KO pattern)
+  function getValueCells(row) {
+    const allCells = getDirectCells(row);
+    return allCells.filter(c => {
+      const text = cellText(c).trim();
+      if (!text) return false;
+      if (text === '$' || text === '($)') return false;
+      if (/^\u00a0+$/.test(text) || /^[\u200b\u200c\u200d]+$/.test(text)) return false;
+      return true;
+    });
+  }
+
   function extractCompByPhysicalPos(row, offset) {
+    // Value-cell mode (Pass 3.5): extract from merged cells, not physical positions
+    if (_useValueCells) {
+      const valCells = getValueCells(row);
+      const comp = {};
+      for (const { key } of EXEC_COLUMN_PATTERNS) {
+        if (key === 'name' || key === 'year') continue;
+        const pos = mapping[key];
+        if (pos !== undefined) {
+          const idx = typeof pos === 'object' ? pos.contentIdx : pos;
+          const cell = valCells[idx];
+          if (cell) comp[key] = parseCompValue(cellText(cell));
+        }
+      }
+      let year = null;
+      if (mapping.year !== undefined) {
+        const idx = typeof mapping.year === 'object' ? mapping.year.contentIdx : mapping.year;
+        const yearCell = valCells[idx];
+        if (yearCell) year = parseYear(cellText(yearCell));
+      }
+      return { comp, year };
+    }
+
+    // Standard mode: physical positions with content-ordinal fallback
     const cellMap = buildPhysicalCellMap(row, offset);
-    // Detect spacer mismatch: if total cell count differs from header, physical positions
-    // are unreliable — fall back to content-cell ordinal ordering
     const rowTotalCells = getDirectCells(row).length;
     const useOrdinal = rowTotalCells !== headerTotalCells && offset === 0;
     let contentCells = null;
@@ -639,7 +801,6 @@ function parseSummaryCompensationTable(doc) {
         }
       }
     }
-    // Extract year
     let year = null;
     if (mapping.year !== undefined) {
       const pos = mapping.year;
@@ -929,7 +1090,7 @@ function filingArchiveUrl(cik, accessionNumber, filename) {
 async function findXbrlInstanceFile(filing) {
   try {
     const url = filingIndexUrl(filing.cik, filing.accessionNumber);
-    const res = await fetch(url);
+    const res = await secFetch(url);
     if (!res.ok) return null;
     const data = await res.json();
     const items = data?.directory?.item || [];
@@ -1153,7 +1314,7 @@ async function fetchEcdXbrlFallback(filing) {
     if (!xmlFilename) return null;
 
     const url = filingArchiveUrl(filing.cik, filing.accessionNumber, xmlFilename);
-    const res = await fetch(url);
+    const res = await secFetch(url);
     if (!res.ok) return null;
 
     const xmlText = await res.text();
@@ -1173,7 +1334,7 @@ async function fetchAndParseProxy(filing) {
   if (cached) return cached;
 
   const url = filingHtmlUrl(filing.cik, filing.accessionNumber, filing.primaryDocument);
-  const res = await fetch(url);
+  const res = await secFetch(url);
   if (!res.ok) return null;
 
   const html = await res.text();
@@ -1240,9 +1401,18 @@ async function fetchAndParseProxy(filing) {
 
 // ─── Find DEF 14A Filings ───────────────────────────────────
 
+const PROXY_FORM_TYPES = new Set(['DEF 14A', 'DEFA14A', 'DEF 14C']);
+
 function findProxyFilings(allFilings, count = 2) {
-  return allFilings
+  // Prefer DEF 14A, fall back to DEFA14A/DEF 14C if no DEF 14A exists
+  const def14a = allFilings
     .filter(f => f.form === 'DEF 14A')
+    .sort((a, b) => b.filingDate.localeCompare(a.filingDate))
+    .slice(0, count);
+  if (def14a.length > 0) return def14a;
+
+  return allFilings
+    .filter(f => PROXY_FORM_TYPES.has(f.form))
     .sort((a, b) => b.filingDate.localeCompare(a.filingDate))
     .slice(0, count);
 }
@@ -1464,7 +1634,7 @@ export async function auditCompensation(companies, onProgress) {
         result.category = 'NO_CIK';
         result.issues.push('Could not resolve CIK from ticker');
         results.push(result);
-        await sleep(FETCH_DELAY_MS);
+        // pacing handled by secFetch
         continue;
       }
 
@@ -1478,21 +1648,21 @@ export async function auditCompensation(companies, onProgress) {
         result.category = 'NO_FILINGS';
         result.issues.push('No DEF 14A filings found in EDGAR submissions');
         results.push(result);
-        await sleep(FETCH_DELAY_MS);
+        // pacing handled by secFetch
         continue;
       }
 
       // Step 3: Fetch most recent proxy HTML
       const filing = allProxies[0];
       const url = filingHtmlUrl(filing.cik, filing.accessionNumber, filing.primaryDocument);
-      const res = await fetch(url);
+      const res = await secFetch(url);
 
       if (!res.ok) {
         result.status = 'FAIL';
         result.category = 'FETCH_FAILED';
         result.issues.push(`HTTP ${res.status} fetching proxy (${filing.primaryDocument})`);
         results.push(result);
-        await sleep(FETCH_DELAY_MS);
+        // pacing handled by secFetch
         continue;
       }
 
@@ -1571,7 +1741,7 @@ export async function auditCompensation(companies, onProgress) {
     }
 
     results.push(result);
-    if (i < companies.length - 1) await sleep(FETCH_DELAY_MS);
+    // pacing handled by secFetch
   }
 
   return results;
@@ -1600,7 +1770,7 @@ export async function fetchCompensation(ticker) {
   for (let i = 0; i < proxyFilings.length; i++) {
     const result = await fetchAndParseProxy(proxyFilings[i]);
     results.push(result);
-    if (i < proxyFilings.length - 1) await sleep(FETCH_DELAY_MS);
+    // pacing handled by secFetch
   }
 
   // Merge across filings
