@@ -549,40 +549,45 @@ function findSummaryCompensationTable(doc) {
   // When headers are unreadable (visibility:hidden), detect via data rows.
   for (const table of allTables) {
     const rows = getDirectRows(table);
-    if (rows.length < 5) continue; // SCT needs at least a few data rows
+    if (rows.length < 5) continue;
 
-    // Look for a row that has: a name-like first cell, a year, and dollar amounts
-    for (let r = 0; r < Math.min(rows.length, 15); r++) {
+    // Look for a row that has: a name-like first cell, a year, and dollar/number values
+    for (let r = 0; r < Math.min(rows.length, 20); r++) {
       const content = getContentCells(rows[r]);
       if (content.length < 5) continue;
 
       const c0 = cellText(content[0]);
       const c1 = cellText(content[1]);
-      const c2 = cellText(content[2]);
 
-      // Check: first cell is a name, second is a year, third+ are dollar values
-      const hasName = c0.length > 3 && looksLikeName(c0.replace(/\(\d+\)/g, '').trim());
+      // Check: first cell is a name, second is a year
+      const cleanName = c0.replace(/\(\d+\)/g, '').trim();
+      const hasName = cleanName.length > 3 && looksLikeName(cleanName);
       const hasYear = /^20\d{2}$/.test(c1.trim());
-      const hasDollar = c2.replace(/[$,]/g, '').match(/^\d+$/);
+      if (!hasName || !hasYear) continue;
 
-      if (hasName && hasYear && hasDollar) {
-        // Found a data row matching SCT pattern. Build positional mapping.
-        // SEC-mandated order: Name(0), Year(1), Salary(2), Bonus(3), StockAwards(4),
-        // OptionAwards(5), NonEquityIncentive(6), PensionChange(7), OtherComp(8), Total(last)
-        const mapping = {};
-        const keys = ['name', 'year', 'salary', 'bonus', 'stockAwards', 'optionAwards',
-                      'nonEquityIncentive', 'pensionChange', 'otherComp', 'total'];
-        // Map first N content columns to SEC-mandated order, last column is always total
-        for (let k = 0; k < keys.length && k < content.length; k++) {
-          mapping[keys[k]] = { physCol: -1, contentIdx: k }; // use content-ordinal only
-        }
-        // Override total to always be the last content column
-        if (content.length > 2) {
-          mapping.total = { physCol: -1, contentIdx: content.length - 1 };
-        }
-
-        return { table, rows, mapping, headerEndIdx: r };
+      // Check remaining cells for dollar values (handle $ in separate cells)
+      let dollarCount = 0;
+      for (let c = 2; c < content.length; c++) {
+        const val = cellText(content[c]).replace(/[$,\s]/g, '');
+        if (/^\d{3,}$/.test(val)) dollarCount++; // 3+ digit numbers = compensation values
       }
+      if (dollarCount < 3) continue; // need at least salary + something + total
+
+      // Found a data row matching SCT pattern. Build positional mapping.
+      // SEC-mandated order: Name(0), Year(1), Salary(2), Bonus(3), StockAwards(4),
+      // OptionAwards(5), NonEquityIncentive(6), PensionChange(7), OtherComp(8), Total(last)
+      const mapping = {};
+      const keys = ['name', 'year', 'salary', 'bonus', 'stockAwards', 'optionAwards',
+                    'nonEquityIncentive', 'pensionChange', 'otherComp', 'total'];
+      for (let k = 0; k < keys.length && k < content.length; k++) {
+        mapping[keys[k]] = { physCol: -1, contentIdx: k };
+      }
+      // Override total to always be the last content column
+      if (content.length > 2) {
+        mapping.total = { physCol: -1, contentIdx: content.length - 1 };
+      }
+
+      return { table, rows, mapping, headerEndIdx: r };
     }
   }
 
@@ -960,17 +965,28 @@ function parseEcdXbrl(xmlText) {
   }
 
   // Extract fiscal year periods from contextRefs
-  // Formats vary: "From2024-09-29to2025-09-27", "P10_28_2024To10_26_2025", etc.
+  // Formats vary wildly across filing providers:
+  //   "From2024-09-29to2025-09-27"           (ISO with "to")
+  //   "P10_28_2024To10_26_2025"              (US date with underscores)
+  //   "Duration_1_1_2025_To_12_31_2025_xxx"  (Workiva/Donnelley underscore format)
   function extractYearFromContext(ctx) {
     // Look for the ending year in the context — the "to" date determines the fiscal year
-    // Try ISO format: "to2025-09-27" or "To10_26_2025"
+    // Try ISO format: "to2025-09-27"
     const isoMatch = ctx.match(/to(\d{4})-(\d{2})-(\d{2})/i);
     if (isoMatch) return parseInt(isoMatch[1]);
-    const usMatch = ctx.match(/To(\d{1,2})_(\d{1,2})_(\d{4})/i);
+    // US underscore format: "To10_26_2025" or "To_12_31_2025"
+    const usMatch = ctx.match(/To_?(\d{1,2})_(\d{1,2})_(\d{4})/i);
     if (usMatch) return parseInt(usMatch[3]);
-    // Fallback: find any 4-digit year
-    const years = ctx.match(/\b(20\d{2})\b/g);
-    if (years && years.length > 0) return parseInt(years[years.length - 1]);
+    // Workiva format: "Duration_M_D_YYYY_To_M_D_YYYY" — grab the last year after "To"
+    const workivaMatch = ctx.match(/To_\d{1,2}_\d{1,2}_(20\d{2})/i);
+    if (workivaMatch) return parseInt(workivaMatch[1]);
+    // Fallback: find any 4-digit year (no \b — underscores are word chars in regex)
+    const years = ctx.match(/(?:^|[^0-9])(20\d{2})(?:$|[^0-9])/g);
+    if (years && years.length > 0) {
+      // Extract just the year from the match (may have leading/trailing non-digit)
+      const lastMatch = years[years.length - 1].match(/(20\d{2})/);
+      if (lastMatch) return parseInt(lastMatch[1]);
+    }
     return null;
   }
 
