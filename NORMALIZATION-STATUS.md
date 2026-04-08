@@ -13,7 +13,7 @@ The normalization engine validates Thes1s's XBRL financial extraction against ex
 | S&P 500 Overall | **83.0%** | " |
 | S&P 500 Identity Checks | **83.8%** | validation/reports/sp500-identity-checks.json |
 | Compensation field accuracy (5 tickers) | **100%** | validation/reports/comp-accuracy.json |
-| Compensation parsing (503 S&P 500) | **92.8% GOOD** (467/503) | 0 all-null, 26 no-execs, 10 rate-limit errors |
+| Compensation parsing (503 S&P 500) | **94.8% GOOD** (477/503) | 0 all-null, 25 no-execs, 1 error |
 
 The 94.8% MS number is the regression gate -- engine changes must not drop it below 94.0%.
 
@@ -42,7 +42,7 @@ The S&P 500 numbers reflect comparator-level fixes (sign convention + fiscal yea
 | SCALE-02 | S&P 500 structural validation | **Complete** | 87.3% FMP Tier 1, 83.8% identity checks, 503/503 companies |
 | SCALE-03 | Beyond-S&P 500 validation | **Dropped** | Margin work, S&P 500 coverage is sufficient |
 | SCALE-04 | Eliminate paid API subscriptions | **Waiting** | User cancels after COMP work is verified |
-| COMP-01 | Fix 11 compensation bugs + scale fixes | **Code done, needs manual verification** | 56/56 tests pass; 92.8% of 503 S&P 500 tickers parse successfully (was 54%); 26 no-execs remaining (hidden headers, non-standard formats); 30-company manual check pending |
+| COMP-01 | Fix 11 compensation bugs + scale fixes | **Code done, needs manual verification** | 56/56 tests pass; 94.8% of 503 S&P 500 tickers (477/503, was 54%); secFetch retry wrapper, Pass 3.5 shape detection, expanded filing types; 25 no-execs remaining (CSS overlay edge cases); 30-company manual check pending |
 | COMP-02 | FMP compensation comparison layer | **Complete** | AAPL 100% field accuracy, 5-ticker verified. compare-compensation.mjs built |
 
 **Summary:** 19/22 complete, 1 needs manual verification (COMP-01), 1 waiting on user action (SCALE-04), 1 dropped (SCALE-03).
