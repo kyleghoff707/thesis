@@ -400,6 +400,15 @@ Use `/browse` for all web browsing. Never use `mcp__claude-in-chrome__*` tools. 
 ### Key Skills
 `/investigate` (debugging) | `/qa` `/qa-only` (testing) | `/review` (code review) | `/ship` (deploy) | `/browse` (web) | `/design-review` (visual QA) | `/plan-ceo-review` `/plan-eng-review` `/plan-design-review` (planning) | `/autoplan` (all reviews) | `/codex` (second opinion) | `/cso` (security audit) | `/retro` (retrospective) | `/office-hours` | `/design-consultation` | `/careful` `/freeze` `/guard` `/unfreeze` (safety) | `/land-and-deploy` `/canary` `/benchmark` `/setup-deploy` (deployment)
 
+### Upgrading gstack
+Before running `/gstack-upgrade`, delete all old gstack symlinks from `.claude/skills/` first, then upgrade. Otherwise macOS appends " 2" to the old symlinks instead of replacing them, creating duplicates.
+
+```bash
+# Remove old gstack symlinks, then upgrade
+cd .claude/skills && find . -maxdepth 1 -type l -name "* 2" -delete; find . -maxdepth 1 -type l -lname "gstack/*" -delete; cd ../..
+# Then run /gstack-upgrade
+```
+
 ### Artifact Output
 All gstack artifacts save to `gstack/` subfolders (plans, qa-reports, reviews, design, test-plans, test-outcomes, investigations, security-reports, browse-logs). File naming: `gstack-{topic}-{type}-{YYYYMMDD}.md`.
 
