@@ -636,6 +636,7 @@ function findSummaryCompensationTable(doc) {
           const text = cellText(allCells[c]).trim();
           if (!text || text === '$' || text === '($)') continue; // skip $ and spacer cells
           if (/^\u00a0+$/.test(text) || /^[\u200b\u200c\u200d]+$/.test(text)) continue; // zero-width
+          if (text === '&nbsp;' || text === '\u00a0' || /^(&nbsp;\s*)+$/i.test(text)) continue; // literal &nbsp;
           valueCells.push({ cell: allCells[c], text });
         }
         if (valueCells.length < 5) continue;
@@ -750,6 +751,8 @@ function parseSummaryCompensationTable(doc) {
       if (!text) return false;
       if (text === '$' || text === '($)') return false;
       if (/^\u00a0+$/.test(text) || /^[\u200b\u200c\u200d]+$/.test(text)) return false;
+      // Filter &nbsp; entities that survive innerHTML fallback as literal text
+      if (text === '&nbsp;' || text === '\u00a0' || /^(&nbsp;\s*)+$/i.test(text)) return false;
       return true;
     });
   }
@@ -763,9 +766,17 @@ function parseSummaryCompensationTable(doc) {
         if (key === 'name' || key === 'year') continue;
         const pos = mapping[key];
         if (pos !== undefined) {
-          const idx = typeof pos === 'object' ? pos.contentIdx : pos;
-          const cell = valCells[idx];
-          if (cell) comp[key] = parseCompValue(cellText(cell));
+          // Total is always the LAST numeric value cell (row length varies due to &nbsp; ghosts)
+          if (key === 'total') {
+            for (let v = valCells.length - 1; v >= 2; v--) {
+              const val = parseCompValue(cellText(valCells[v]));
+              if (val != null) { comp.total = val; break; }
+            }
+          } else {
+            const idx = typeof pos === 'object' ? pos.contentIdx : pos;
+            const cell = valCells[idx];
+            if (cell) comp[key] = parseCompValue(cellText(cell));
+          }
         }
       }
       let year = null;
@@ -814,6 +825,19 @@ function parseSummaryCompensationTable(doc) {
       }
       if (yearCell) year = parseYear(cellText(yearCell));
     }
+
+    // Universal total fallback: if total wasn't found by positional mapping,
+    // scan backwards from the last cell in the row for the last parseable number.
+    // SEC mandates total as the rightmost data column. Handles $-split tables
+    // where physical column positions don't align.
+    if (comp.total == null) {
+      const allCells = getDirectCells(row);
+      for (let c = allCells.length - 1; c >= 0; c--) {
+        const val = parseCompValue(cellText(allCells[c]));
+        if (val != null && val > 0) { comp.total = val; break; }
+      }
+    }
+
     return { comp, year };
   }
 
