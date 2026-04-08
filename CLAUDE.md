@@ -23,7 +23,7 @@ The user is NOT a programmer. Keep explanations in plain English.
 - **AI**: Claude API direct from app (`VITE_CLAUDE_KEY` in `.env.local`)
 - **Financial Data**: SEC EDGAR XBRL (all financials, 13F guru holdings, N-PORT, insiders, compensation — free), Yahoo Finance (prices, stock splits — free), Finviz (analyst estimates — free), GuruFocus (optional $25/mo API), Alpha Vantage (earnings transcripts — free 25 calls/day, 2-key failover: `VITE_ALPHA_VANTAGE_KEY` + `VITE_ALPHA_VANTAGE_KEY_2`)
 - **Charts**: Recharts
-- **Deps**: recharts, @anthropic-ai/sdk, uuid, react-router-dom, turndown, turndown-plugin-gfm, yahoo-finance2, cheerio, idb
+- **Deps**: recharts, @anthropic-ai/sdk, uuid, react-router-dom, turndown, turndown-plugin-gfm, yahoo-finance2, cheerio, idb, zod (structured output schemas)
 - **No server, no auth** — runs entirely locally. API calls go direct to external services.
 
 For detailed API integration notes (CORS proxying, EDGAR XBRL details, parsing internals), see `knowledge/engineering/app-architecture.md`.
@@ -53,6 +53,8 @@ The engine uses a three-layer resolution strategy to map SEC XBRL tags to ~85 st
 
 **Coverage monitor** — Baseline storage + change detection (fields gained/lost/tags changed) per ticker in localStorage. Auto-saves baseline on first load.
 
+**Display name resolution** — Ticker search dropdown uses a 2-tier name lookup: (1) curated S&P 500 names from `src/data/sp500-display-names.json` (503 companies, sourced from Wikipedia + manual review), (2) `formatCompanyName()` algorithmic fallback for non-S&P companies (handles ALL CAPS → title case, acronyms, legal suffixes). Curated map is regenerated via `node validation/scripts/audit-display-names.js`. Raw SEC names are cached in localStorage; display names are applied at index-build time so curated JSON updates take effect without cache clearing.
+
 ### EDGAR Frames API — Period Distinction (Critical)
 The Frames endpoint (`/api/xbrl/frames/us-gaap/{tag}/{unit}/CY{year}.json`) uses **different period specifiers** for balance sheet vs income statement tags:
 - **Duration tags** (income statement, cash flows): `CY{year}.json` — e.g., `CY2024.json`
@@ -74,15 +76,24 @@ All tag definitions in `FRAMES_TAGS` and `PEER_FRAMES_TAGS` have a `period: 'ins
 ---
 
 ## Current Status
-Phases 1-4 complete — app shell, data engines, calculation engines, and full Toolbox UI all functional. **XBRL engine complete** — three-layer tag resolution (static + taxonomy + AI), industry overlays (bank/REIT/insurance), full provenance tracking (annual + TTM), coverage monitor, and Audit tab dashboard. Validated across all 503 S&P 500 companies with 0 failures. See `gstack/plans/gstack-xbrl-engine-strategy-eng-plan-20260318.md` for full architecture and `validation/reports/financial-data-comparison-rca.md` for the original 12-ticker RCA. **The remaining work is Phase 5-8: AI-driven report generation.**
+**v1.3 complete — all 3 pipeline stages validated in-app.** The entire AI report generation pipeline is built and functional: 12 specialized agents, wave-based orchestration, structured output schemas, quality validation (critic), and in-app rendering for One Pager, Pitch Deck, and Full Story. Validated on LULU (full 3-stage), SFM (Pitch Deck), and CMG. The CC-to-API migration is complete — pipeline runs via direct Claude API calls with prompt caching.
+
+Built across Phases 5A–24 (archived in `previous-prompt-and-plans/gsd-archive/phases/`), with final in-app validation done via gstack skills (QA, design review, eng review). See `gstack/` folder for plan/review/qa artifacts.
+
+**Pipeline cost:** ~$8-12/company for Pitch Deck (with prompt caching), ~$13-14 for Full Story, ~$28-30 for all 3 stages. Cost optimization (PSR reuse, model downgrades) is deferred.
 
 ### What's Built
-All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems (validation, guru, ticker, N-PORT, compensation), Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores + derived metric computation + Yahoo data backfill + per-ticker caching + sparse peer filtering + data completeness indicators + industry-aware column defaults, Upcoming Events & News section on Overview (SEC 8-K events + Yahoo calendar + IR page discovery), three-layer XBRL engine with provenance tracking and coverage monitoring (173 tests via vitest), earnings call transcript engine (Alpha Vantage with 2-key failover, cached in IndexedDB, Transcript buttons on Filings tab for 10-K/10-Q). See source tree below.
+**Data layer (Phases 1-4):** All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems, Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores, three-layer XBRL engine with provenance tracking and coverage monitoring (173 tests via vitest), earnings call transcript engine.
 
-### What's NOT Built
-- AI report generation (One Pager, Pitch Deck, Full Story) — Phases 5-7
-- Sensitivity tables, status badges, export view, reference/citation system — Phase 8
-- `aiResearch.js` engine (Claude API calls + prompt builders per stage)
+**Agent pipeline (Phases 5A-17):** 12 AI agents with configs, prompts, stage overlays, writing briefs. Wave-based orchestrator with dispatch table. `aiResearch.js` Claude API dispatch engine with structured outputs (Zod schemas). `pipelineManager.js` for wave orchestration. `critic.js` quality validation (citation classification, data gap mapping, red flag detection, methodology scoring). Data assembly pipeline (`dataExport.js`). CLI runner (`scripts/run-pipeline.js`). One Pager single-call generator (`onePagerGenerator.js`). Full Story adversarial debate (Bull/Bear/Rebuttal/Judge).
+
+**In-app wiring (Phases 18-24):** Storage migration, shared report infrastructure, stage navigation + gating, report renderers (SectionRenderer, ChecklistRenderer, DebateRenderer), PromiseTracker, generation UX (phases, timer, progress bar, placeholders), export generators (PDF/Word), PM workflow controls. All 3 stages render and generate in-app.
+
+### What's NOT Built (Remaining Polish)
+- Sensitivity tables in reports (schema exists, not yet in agent output)
+- Cost optimization (PSR reuse across stages, Sonnet downgrades for preprocessing agents)
+- Content quality improvements (citation URL laundering, DataPacket path fabrication by agents)
+- Multi-user / server-side architecture (future — see Agent SDK decision in memory)
 
 ---
 
@@ -234,70 +245,112 @@ These patterns were observed across the user's real analyses (LULU, EW, SFM, MU,
 ## Source Structure
 
 ```
+agents/                          — 12 AI agents + orchestrator
+├── orchestrator/                — Wave-based dispatch (code-driven, NOT AI)
+│   ├── config.json              — Dispatch routing, section mapping for all 3 stages
+│   ├── dispatch-table.json      — Phase sequencing, parallel/dependency specs
+│   ├── schemas/                 — checklist-item.schema.json, debate-step.schema.json
+│   └── README.md
+├── business-analyst/            — Meaning & Simple Predictability (PD sections 1-2, OP sections 1-2, FS section 2)
+├── competitor-evaluator/        — Market Position & Barriers/Moats (PD sections 3-4)
+├── financial-analyst/           — FCF, ROE/ROIC, Balance Sheet (PD sections 5,7,8)
+├── management-evaluator/        — Management Quality (PD section 6)
+├── risk-analyst/                — PEST Risks (PD section 9)
+├── valuation-specialist/        — Valuation & FGR (PD section 10, OP section 5)
+├── synthesis-writer/            — Polish & Final Synthesis
+├── annual-reader/               — Annual report reading (preprocessing)
+├── quarterly-reader/            — Quarterly report reading (preprocessing)
+├── primary-source-reader/       — SEC filing extraction
+├── data-assembler/              — Data staging (orchestration code-driven)
+├── writing-briefs/              — 12 reference docs for agent writing guidance
+└── __tests__/                   — agentDefinitions.test.js, ccSkill.test.js
+    (Each agent has: config.json, prompt.md, prompts/fullStory.md, README.md)
+
+scripts/
+├── run-pipeline.js              — Main CLI entry: assemble DataPacket, dispatch, write output
+├── run-full-story.js            — Full Story CLI (debate orchestration)
+├── run-quality-v4.js            — Quality validation CLI
+├── assemble-data.js, prepare-data.js, data-quality-checkpoint.js
+├── preprocess-filings.js, prefetch-gurus.js, normalize-reports.js
+├── node-esm-loader.js           — ESM loader for CLI scripts
+└── pdf/                         — Thes1s-branded PDF toolkit
+
 src/
 ├── main.jsx, App.jsx, theme.js
+├── schemas/
+│   ├── reportSection.js         — Zod schema: contract for all agent outputs
+│   ├── debateStep.js            — Bull/Bear/Rebuttal/Judge debate outputs
+│   ├── dataPacket.js            — Complete research data assembled from all engines
+│   ├── progress.js              — Generation state schema
+│   └── onePagerOutput.js        — One Pager output format
 ├── components/
 │   ├── Layout.jsx, TickerSearch.jsx, Watchlists.jsx, Settings.jsx
-│   ├── ResearchEmpty.jsx, ResearchList.jsx
-│   ├── Toolbox.jsx              — Main research container (8 tabs: Overview/Financials/Growth/Valuation/Competitors/Insiders/Filings/Audit)
+│   ├── ResearchEmpty.jsx, ResearchList.jsx, ReportsList.jsx
+│   ├── Toolbox.jsx              — Main research container (8 tabs)
 │   ├── CompanyHeader.jsx, StockAtGlance.jsx, ScoreTable.jsx
-│   ├── FinancialStatements.jsx  — Financials + Key Metrics, 4 dropdown controls
-│   ├── GrowthAnalysis.jsx, GrowthRateAnalysis.jsx
-│   ├── Valuation.jsx            — 4 sub-tabs (Growth Rate Analysis/Inputs/Calculators/Price vs Value)
-│   ├── ValuationCalculators.jsx, ValuationInputs.jsx, HistoricalBuyPrices.jsx
+│   ├── FinancialStatements.jsx, GrowthAnalysis.jsx, GrowthRateAnalysis.jsx
+│   ├── Valuation.jsx, ValuationCalculators.jsx, ValuationInputs.jsx, HistoricalBuyPrices.jsx
 │   ├── Insiders.jsx, ExecutiveCompensation.jsx, Filings.jsx
 │   ├── Gurus.jsx, GuruPortfolio.jsx
 │   ├── GuruAudit.jsx, TickerAudit.jsx, NportAudit.jsx, CompAudit.jsx, TickerDataAudit.jsx
-│   ├── CompanyEvents.jsx        — Upcoming Events & News (SEC 8-K, Yahoo calendar, date badges, event rows)
-│   ├── Competitors.jsx          — Competitor benchmarking (SIC peers, 22 metrics, private competitors, completeness dots, sparse peer filtering, industry-aware column defaults)
-│   ├── Validation.jsx, CollapsibleSection.jsx
-│   ├── SensitivityTable.jsx     — (planned) reusable valuation matrix
-│   ├── StatusBadge.jsx          — (planned) section-level status
-│   ├── OnePager.jsx             — (planned) Stage 1
-│   ├── PitchDeck.jsx            — (planned) Stage 2
-│   ├── pitchDeck/               — (planned) RadarSection, ValuationSection, FCFSection, PESTSection
-│   ├── FullStory.jsx            — (planned) Stage 3
-│   ├── fullStory/               — (planned) ChecklistSection, InversionSection, TradingStrategy
-│   ├── ExportView.jsx           — (planned) clean export/print view
-│   └── ReferenceList.jsx        — (planned) citation manager
+│   ├── CompanyEvents.jsx, Competitors.jsx, Validation.jsx, CollapsibleSection.jsx
+│   ├── OnePager.jsx             — Stage 1 renderer (476L)
+│   ├── PitchDeck.jsx            — Stage 2 renderer (1,270L)
+│   ├── FullStory.jsx            — Stage 3 renderer (998L) — 6-phase debate + synthesis
+│   ├── pitchDeck/               — AssumptionTracker.jsx, DeepDivePanel.jsx, IndustryCard.jsx
+│   ├── SectionRenderer.jsx      — Render individual report sections with citations
+│   ├── ChecklistRenderer.jsx    — Render meaning/moat/management checklists
+│   ├── DebateRenderer.jsx       — Render Bull/Bear/Rebuttal/Judge debate steps
+│   ├── ReportMarkdown.jsx       — Markdown rendering with syntax highlight
+│   ├── PromiseTracker.jsx       — Phase/section completion tracking UI
+│   ├── GenerateButton.jsx, ConfirmGenerateDialog.jsx, StageNavBar.jsx
+│   ├── ExportButtons.jsx        — PDF/Word export
+│   └── Spinner.jsx
 ├── engines/
 │   ├── config.js, edgar.js, edgarFinancials.js, edgarFrames.js
 │   ├── keyMetrics.js, prices.js, priceStore.js, cache.js, cacheStore.js
 │   ├── gurus.js, nport.js, insiders.js, compensation.js
-│   ├── splits.js                — Stock split detection (Yahoo primary, EDGAR XBRL fallback) + cumulative split factor with fiscal-month-aware date comparison
+│   ├── splits.js                — Stock split detection + cumulative split factor
 │   ├── growthRates.js, freeCashFlow.js, returnMetrics.js, ruleOneScore.js
 │   ├── valuation.js, fgr.js, validation.js
 │   ├── tickerSearch.js, companyDetails.js, sicClassification.js, tickerAudit.js
-│   ├── taxonomyResolver.js      — Layer 2: augments taxonomy with FASB calc linkbase descendants
-│   ├── companyAdapter.js        — Layer 3: AI tag classification (pre-built S&P 500 + runtime Claude API)
-│   ├── industryClassifier.js    — SIC → industry type (bank/reit/insurance/standard) for overlay selection
-│   ├── industryOverlays.js      — Additive XBRL taxonomy overlays: bank (NII, deposits, efficiency ratio), REIT (FFO, NAV, NOI), insurance (premiums, claims, combined ratio)
-│   ├── analystEstimates.js, finviz.js, gurufocus.js, filingMarkdown.js
-│   ├── peers.js                 — SIC-based peer discovery (browse-edgar + Frames fallback)
-│   ├── peerMetrics.js           — Peer metrics via Frames API + derived metrics (GrossProfit, OpIncome from building blocks) + Yahoo backfill + completeness scoring + multi-year scores
-│   ├── batchQuotes.js           — Yahoo batch quotes with per-ticker caching (market cap, P/E, EPS, book value, shares, dividend yield)
-│   ├── companyEvents.js         — Upcoming events engine (SEC 8-K parsing, Yahoo calendarEvents+assetProfile, IR page discovery with parallel probing, Google search fallback)
-│   ├── transcripts.js           — Earnings call transcript engine (Alpha Vantage with 2-key failover, IndexedDB cache, quarter-matching)
-│   ├── __tests__/peerMetrics.test.js — Vitest: peer metrics bug reproduction tests
-│   ├── __tests__/splits.test.js — Vitest: split detection + cumulativeSplitFactor tests
-│   ├── __tests__/edgarFinancials.test.js — Vitest: taxonomy coverage + derived field + provenance tests
-│   ├── __tests__/taxonomyResolver.test.js — Vitest: Layer 2 taxonomy augmentation + provenance tests
-│   ├── __tests__/industryOverlays.test.js — Vitest: industry classifier + bank/REIT/insurance overlay tests
-│   ├── __tests__/companyAdapter.test.js — Vitest: Layer 3 AI classification + orphan tag discovery tests
-│   ├── __tests__/coverageMonitor.test.js — Vitest: baseline storage + coverage comparison tests
-│   └── aiResearch.js            — (planned) Claude API calls + prompt builders
+│   ├── taxonomyResolver.js      — Layer 2: FASB calc linkbase descendants
+│   ├── companyAdapter.js        — Layer 3: AI tag classification
+│   ├── industryClassifier.js, industryOverlays.js
+│   ├── analystEstimates.js, finviz.js, gurufocus.js, filingMarkdown.js, filingSections.js
+│   ├── peers.js, peerMetrics.js, batchQuotes.js
+│   ├── companyEvents.js, transcripts.js
+│   ├── aiResearch.js            — Claude API dispatch engine (structured outputs via Zod, prompt loading, curriculum assembly, DataPacket slicing)
+│   ├── pipelineManager.js       — Wave-based dispatch orchestration (reads dispatch-table.json, Promise.allSettled, budget/cache tracking)
+│   ├── critic.js                — Quality validation (1,638L): citation classification, data path resolution, completeness scoring, red flag detection, methodology scoring
+│   ├── nodeAdapter.js           — Node.js fetch polyfill for ESM (SDK auth header passthrough)
+│   ├── onePagerGenerator.js     — Single-call Sonnet generation for One Pager
+│   ├── dataExport.js            — Assemble DataPacket from all source engines
+│   ├── contextBudget.js         — Token budget tracking, cost calculation per model
+│   ├── formatCompanyName.js     — Display-time name normalization (ALL CAPS → title case, acronyms, suffixes)
+│   ├── qualityFormatter.js      — Format quality report output
+│   ├── progressState.js         — State persistence for generation progress
+│   ├── cacheMonitor.js          — Cache baseline + field change detection
+│   └── __tests__/               — 173+ vitest tests (XBRL, splits, peers, pipeline, agents)
 ├── data/
 │   ├── validationCompanies.js
-│   ├── taxonomy-hierarchy.json  — Layer 2: 1,937 FASB descendant tags (84KB, built from 3 taxonomy versions)
-│   └── sp500-tag-classifications.json — Layer 3: 1,989 AI-classified tags for S&P 500 (387KB)
+│   ├── taxonomy-hierarchy.json  — Layer 2: 1,937 FASB descendant tags (84KB)
+│   ├── sp500-tag-classifications.json — Layer 3: 1,989 AI-classified tags (387KB)
+│   └── sp500-display-names.json — Curated S&P 500 display names (503 companies)
 ├── hooks/
 │   ├── useResearch.js, useFinancials.js, usePrices.js, useEdgar.js
 │   ├── useGurus.js, useInsiders.js, useCompensation.js
-│   ├── useCompetitors.js        — Progressive 3-phase loading (peers → metrics+Yahoo backfill → scores) + completeness scoring
-│   ├── useCompanyEvents.js      — Hook for company events + two-phase IR link (direct probe → Google search fallback)
+│   ├── useCompetitors.js        — Progressive 3-phase loading + completeness scoring
+│   ├── useCompanyEvents.js      — Company events + two-phase IR link
 │   ├── useAnalystData.js, useAnalystEstimates.js
 │   ├── useWatchlists.js, useSettings.js, useTheme.js
+│   ├── useGeneratePipeline.js   — POST generate/{stage}, polling coordination
+│   ├── useOnePager.js           — One Pager state polling
+│   ├── usePitchDeck.js          — Pitch Deck state polling + checkpoint display
+│   └── useFullStory.js          — Full Story state polling + debate step display
 validation/                      — 3-layer validation system (scripts/, data/, reports/)
+previous-prompt-and-plans/
+└── gsd-archive/phases/          — Phase 5A–24 implementation archive (plans, summaries, verification)
 ```
 
 ---
@@ -377,42 +430,45 @@ Writing tests first forces you to define "correct" before writing code — this 
 
 ---
 
-## Remaining Implementation Plan
+## Implementation History
 
-### Phase 5 — Stage 1: One Pager
-| Step | What | Files |
-|------|------|-------|
-| 5.1 | Claude API integration (direct fetch, `anthropic-dangerous-direct-browser-access` header) | `src/engines/aiResearch.js` |
-| 5.2 | One Pager component — 6 sections, auto-populated + AI-generated + user input | `src/components/OnePager.jsx` |
-| 5.3 | Status indicators + approval gate | `src/components/StatusBadge.jsx` |
+The original CLAUDE.md planned Phases 5-8 for AI report generation. In practice, the work expanded to **Phases 5A through 24**, archived at `previous-prompt-and-plans/gsd-archive/phases/`:
 
-### Phase 6 — Stage 2: Pitch Deck
-| Step | What | Files |
-|------|------|-------|
-| 6.1 | Pitch Deck container — 10 collapsible sections, gate check | `src/components/PitchDeck.jsx` |
-| 6.2 | Section sub-components (Radar, Valuation, FCF, PEST, etc.) | `src/components/pitchDeck/*.jsx` |
-| 6.3 | FGR derivation workflow UI (5 inputs with sources) | `ValuationSection.jsx` |
-| 6.4 | Sensitivity table component | `src/components/SensitivityTable.jsx` |
+| Phase | What |
+|-------|------|
+| 5A | Agent definitions foundation (12 agents, configs, prompts) |
+| 5B | One Pager display components |
+| 5C | CC skill first analysis (prototype pipeline via Claude Code) |
+| 5D | Quality system (critic, citation validation) |
+| 6 | Pitch Deck pipeline (3-phase wave dispatch) |
+| 6.1-6.3 | Pipeline hardening, data pipeline hardening, validation |
+| 7 | Schema SDK foundation (Zod structured outputs) |
+| 8 | Core agent dispatch (`aiResearch.js`, `pipelineManager.js`) |
+| 9 | Parallel dispatch + caching |
+| 10 | Pipeline integration + prompt fixes (first live SFM run: $8.53) |
+| 11 | Validation + methodology scoring |
+| 12 | Full Story foundation |
+| 13 | CC pipeline |
+| 14 | Adversarial debate (Bull/Bear/Rebuttal/Judge) |
+| 15 | Quality system v2 |
+| 16-16.2 | API migration (CC subagents → direct Claude API) |
+| 17-17.1 | End-to-end validation + report export generators (PDF/Word) |
+| 18 | Critical bug fixes + storage migration |
+| 19 | Shared report infrastructure |
+| 20 | Full Story core viewer |
+| 21 | Checklist + debate renderers |
+| 22 | Stage gating + navigation |
+| 23 | Delight feature wiring (PromiseTracker, generation UX) |
+| 24 | PM workflow controls |
 
-### Phase 7 — Stage 3: Full Story
-| Step | What | Files |
-|------|------|-------|
-| 7.1 | Full Story container — 8 major sections, gate check | `src/components/FullStory.jsx` |
-| 7.2 | Checklist components (Meaning 15pt, Moat 15pt, Management 13pt) | `fullStory/ChecklistSection.jsx` |
-| 7.3 | Inversion & Rebuttal UI | `fullStory/InversionSection.jsx` |
-| 7.4 | Trading Strategy + PACE Plan | `fullStory/TradingStrategy.jsx` |
+Final in-app validation done via gstack skills (`/qa`, `/design-review`, `/plan-eng-review`).
 
-### Phase 8 — Polish
-| Step | What | Files |
-|------|------|-------|
-| 8.1 | Enhanced dashboard (sort, filter, watchlist toggle) | `ResearchList.jsx` |
-| 8.2 | Working view vs clean export view | `ExportView.jsx` |
-| 8.3 | Reference/citation system | `ReferenceList.jsx` |
-
-### Known Risks
-- **Claude API cost**: Generate sections individually to control tokens. Use claude-sonnet-4-20250514 for efficiency.
-- **XBRL tag variation**: Three-layer engine covers 96.1% of scoring-critical fields across S&P 500. Remaining gaps are structural (non-dividend-payers, financials without CapEx). Companies outside S&P 500 may trigger runtime Layer 3 AI classification (~$0.01/company).
-- **Key Metrics Price category**: Historical P/E per year not yet implemented (would need historical price × FY mapping).
+### Remaining Work
+- **Cost optimization**: PSR agents re-read all filings fresh for FS instead of reusing PD findings. Two Opus agents in Phase 1. Target: $15 PD+FS ceiling (currently ~$28-30).
+- **Content quality**: Citation URL laundering (agents cite domain names not URLs), DataPacket path fabrication, searchesPerformed format chaos across agents.
+- **Sensitivity tables**: Schema exists but not yet wired into agent output or UI.
+- **Key Metrics Price category**: Historical P/E per year not yet implemented.
+- **Future architecture**: Agent SDK migration when moving server-side for multi-user (see council decision in memory).
 
 ---
 
@@ -576,7 +632,7 @@ The power of Rule One research is the depth. A human analyst doing 70 hours of m
 - JavaScript (ES2020+) - All frontend logic, engine layer, React components, Vite plugins
 - JSX - React component templates (`src/components/*.jsx`)
 - Rust (edition 2021, min 1.77.2) - Tauri native shell (`src-tauri/src/`)
-- JSON - Static data files: taxonomy hierarchy (`src/data/taxonomy-hierarchy.json`), S&P 500 tag classifications (`src/data/sp500-tag-classifications.json`), industry company assignments (`industry-classification/thes1s-company-assignments.json`)
+- JSON - Static data files: taxonomy hierarchy (`src/data/taxonomy-hierarchy.json`), S&P 500 tag classifications (`src/data/sp500-tag-classifications.json`), S&P 500 display names (`src/data/sp500-display-names.json`), industry company assignments (`industry-classification/thes1s-company-assignments.json`)
 ## Runtime
 - Node.js v24.13.1 (confirmed on dev machine)
 - npm (lockfile version 3)

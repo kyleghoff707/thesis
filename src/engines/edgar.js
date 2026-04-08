@@ -7,6 +7,8 @@
 // doesn't enforce CORS and can set arbitrary headers.
 
 import { cacheGet, cacheGetAsync, cacheSet } from './cache';
+import { formatCompanyName } from './formatCompanyName';
+import sp500Names from '../data/sp500-display-names.json';
 
 // ─── SEC URL helpers ────────────────────────────────────────
 
@@ -34,6 +36,11 @@ function secSubmissionsUrl(cik) {
 
 // ─── CIK Lookup ──────────────────────────────────────────────
 
+// Display name resolution: curated S&P 500 names → formatCompanyName() fallback
+function displayName(ticker, rawSECName) {
+  return sp500Names.names[ticker] || formatCompanyName(rawSECName);
+}
+
 // Cache the full tickers map (loaded once, reused for all lookups)
 let tickerMapPromise = null;
 // Search index: array of { ticker, name, cik } for autocomplete
@@ -47,7 +54,7 @@ async function loadTickerMap() {
     if (!tickerSearchIndex) {
       tickerSearchIndex = Object.entries(cached.cikMap).map(([ticker, cik]) => ({
         ticker,
-        name: cached.names?.[ticker] || '',
+        name: displayName(ticker, cached.names?.[ticker]),
         cik,
       }));
     }
@@ -67,7 +74,7 @@ async function loadTickerMap() {
     const cik = String(entry.cik_str).padStart(10, '0');
     cikMap[ticker] = cik;
     names[ticker] = entry.title || '';
-    tickerSearchIndex.push({ ticker, name: entry.title || '', cik });
+    tickerSearchIndex.push({ ticker, name: displayName(ticker, entry.title), cik });
   }
 
   cacheSet(cacheKey, { cikMap, names }, 'financials'); // 24hr cache
@@ -492,3 +499,6 @@ export async function fetchEdgarFinancials(ticker) {
 
   return { capEx, depreciation, cash, dividendsPerShare, retainedEarnings };
 }
+
+// Test exports
+export const _testExports = { displayName };
