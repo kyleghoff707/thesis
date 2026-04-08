@@ -28,7 +28,8 @@ vi.mock('fs', () => ({
               phase: 2,
               description: 'Financial deep-dive',
               agents: [
-                { agent: 'financial-analyst', sections: [5], parallel: true },
+                { agent: 'competitor-evaluator', sections: [4], parallel: false, note: 'Moat validation needs Phase 1 context' },
+                { agent: 'financial-analyst', sections: [5, 7, 8], parallel: true },
                 { agent: 'management-evaluator', sections: [6], parallel: true },
               ],
             },
@@ -143,7 +144,39 @@ describe('pipelineManager — runPipeline', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Default: all dispatches succeed
-    dispatchAgent.mockImplementation((agentRole) => {
+    // Multi-section entries (schema === MultiSectionSchema) return { sections: [...] }
+    dispatchAgent.mockImplementation((agentRole, dp, opts) => {
+      if (opts?.schema) {
+        // Multi-section dispatch — return wrapped array
+        const sections = opts.sectionAssignment?.match(/sections: ([\d, ]+)/)?.[1];
+        const nums = sections ? sections.split(',').map(s => parseInt(s.trim())) : [1];
+        return Promise.resolve({
+          section: {
+            sections: nums.map(n => ({
+              key: `section_${n}`,
+              title: `Section ${n} by ${agentRole}`,
+              sectionNumber: n,
+              status: 'pass',
+              confidence: 'HIGH',
+              verdict: 'PASS',
+              verdictRationale: 'Mock rationale',
+              summary: `Mock summary from ${agentRole} for section ${n}`,
+              data: '{}',
+              narrative: `Mock narrative for section ${n}`,
+              citations: [],
+              redFlags: ['Minor concern'],
+              modelUsed: 'claude-sonnet-4-6',
+              tokenCost: { input: 20000, output: 3000 },
+            })),
+          },
+          usage: { inputTokens: 40000, outputTokens: 8000, cacheRead: 15000, cacheWrite: 5000, webSearches: 1, cost: 0.24 },
+          webSearches: [],
+          model: 'claude-sonnet-4-6',
+          stopReason: 'end_turn',
+          duration: 8000,
+          error: null,
+        });
+      }
       const sectionNum = agentRole.includes('business') ? 1 :
         agentRole.includes('competitor') ? 3 :
         agentRole.includes('financial') ? 5 :
@@ -174,13 +207,10 @@ describe('pipelineManager — runPipeline', () => {
   it('Test 2: Wave 1 agents fire in parallel via Promise.allSettled', async () => {
     await runPipeline('pitchDeck', mockDataPacket);
 
-    // Wave 1 has business-analyst and competitor-evaluator
-    // After pre-processing (annual-reader, quarterly-reader), wave 1 dispatches both
+    // Wave 1 has business-analyst (consolidated [1,2]) and competitor-evaluator [3]
     const calls = dispatchAgent.mock.calls;
     const agentNames = calls.map(c => c[0]);
 
-    // Pre-processing: annual-reader, quarterly-reader
-    // Wave 1: business-analyst, competitor-evaluator
     expect(agentNames).toContain('business-analyst');
     expect(agentNames).toContain('competitor-evaluator');
 
@@ -193,14 +223,26 @@ describe('pipelineManager — runPipeline', () => {
 
   it('Test 3: Waves execute sequentially — Wave 2 agents do not start until Wave 1 completes', async () => {
     const callOrder = [];
-    dispatchAgent.mockImplementation((agentRole) => {
+    dispatchAgent.mockImplementation((agentRole, dp, opts) => {
       callOrder.push(agentRole);
+      if (opts?.schema) {
+        // Multi-section: return wrapped sections
+        const sections = opts.sectionAssignment?.match(/sections: ([\d, ]+)/)?.[1];
+        const nums = sections ? sections.split(',').map(s => parseInt(s.trim())) : [1];
+        return Promise.resolve({
+          section: { sections: nums.map(n => ({ key: `section_${n}`, title: `Section ${n}`, sectionNumber: n, status: 'pass', summary: 'Mock', redFlags: ['x'] })) },
+          usage: { inputTokens: 20000, outputTokens: 3000, cacheRead: 15000, cacheWrite: 5000, webSearches: 1, cost: 0.12 },
+          error: null,
+        });
+      }
       return Promise.resolve(mockResult(agentRole));
     });
 
     await runPipeline('pitchDeck', mockDataPacket);
 
-    // Pre-processing agents first, then wave 1, then wave 2, then wave 3, then post-processing
+    // Wave 1: business-analyst, competitor-evaluator
+    // Wave 2: competitor-evaluator, financial-analyst, management-evaluator
+    // Wave 3: risk-analyst, valuation-specialist
     const wave1Agents = ['business-analyst', 'competitor-evaluator'];
     const wave2Agents = ['financial-analyst', 'management-evaluator'];
     const wave3Agents = ['risk-analyst', 'valuation-specialist'];
@@ -232,11 +274,18 @@ describe('pipelineManager — runPipeline', () => {
     await runPipeline('pitchDeck', mockDataPacket);
 
     const calls = dispatchAgent.mock.calls;
-    // Find business-analyst call (sections: [1, 2])
+    // Find business-analyst call (consolidated sections: [1, 2])
     const baCall = calls.find(c => c[0] === 'business-analyst');
     expect(baCall).toBeDefined();
     expect(baCall[2].sectionAssignment).toContain('1');
     expect(baCall[2].sectionAssignment).toContain('2');
+
+    // Find financial-analyst call (consolidated sections: [5, 7, 8])
+    const faCall = calls.find(c => c[0] === 'financial-analyst');
+    expect(faCall).toBeDefined();
+    expect(faCall[2].sectionAssignment).toContain('5');
+    expect(faCall[2].sectionAssignment).toContain('7');
+    expect(faCall[2].sectionAssignment).toContain('8');
 
     // Find competitor-evaluator call (sections: [3])
     const ceCall = calls.find(c => c[0] === 'competitor-evaluator');
@@ -269,11 +318,11 @@ describe('pipelineManager — runPipeline', () => {
     // 3 waves, each calls onWaveComplete
     expect(onWaveComplete).toHaveBeenCalledTimes(3);
 
-    // First call: wave 1
+    // First call: wave 1 — business-analyst (consolidated) + competitor-evaluator
     const [waveNum, results, budgetSummary, cacheSummary] = onWaveComplete.mock.calls[0];
     expect(waveNum).toBe(1);
     expect(Array.isArray(results)).toBe(true);
-    expect(results.length).toBe(2); // business-analyst + competitor-evaluator
+    expect(results.length).toBe(2); // 2 dispatch calls (business-analyst + competitor-evaluator)
     expect(budgetSummary).toBeDefined();
     expect(budgetSummary.totals).toBeDefined();
     expect(cacheSummary).toBeDefined();
@@ -379,8 +428,11 @@ describe('pipelineManager — runPipeline', () => {
     // Synthesis call should receive all prior sections
     const synthesisCall = calls[calls.length - 1];
     expect(synthesisCall[2].priorSections).toBeDefined();
-    // Pre-processing (2) + wave 1 (2) + wave 2 (2) + wave 3 (2) = 8 prior sections
-    expect(synthesisCall[2].priorSections.length).toBe(8);
+    // Wave 1: business-analyst [1,2]=2 sections + competitor-evaluator [3]=1 = 3
+    // Wave 2: competitor-evaluator [4]=1 + financial-analyst [5,7,8]=3 + management-evaluator [6]=1 = 5
+    // Wave 3: risk-analyst [9]=1 + valuation-specialist [10]=1 = 2
+    // Total: 10 prior sections
+    expect(synthesisCall[2].priorSections.length).toBe(10);
   });
 
   it('Test 14: Cache monitor belowThreshold warning is logged when hit rate < 70%', async () => {
@@ -1152,5 +1204,172 @@ describe('buildDebateContext', () => {
     // Each section's narrative should be at most 2000 chars (truncated)
     // We can verify by checking the result doesn't contain 3000 x's in a row
     expect(result).not.toContain('x'.repeat(2001));
+  });
+});
+
+// ─── PSR reuse for fullStory (inherit-pitch-deck) ──────────────
+
+describe('PSR reuse for fullStory', () => {
+  let callOrder;
+
+  // Mock PSR sections as they appear in pitchDeckSections (from pitch-deck.json)
+  const mockPsrSections = [
+    {
+      key: 'annual-reader',
+      title: 'Annual Filing Analysis (10-K FY2025)',
+      sectionNumber: 98,
+      status: 'pass',
+      confidence: 90,
+      summary: 'Strong revenue growth from new store openings',
+      narrative: 'The 10-K reveals strong revenue growth of 14% driven by new store openings and same-store sales improvement.',
+      primarySourceInsights: ['Revenue grew 14%', 'Operating margin improved to 7.5%', 'New stores added: 42'],
+      redFlags: [],
+    },
+    {
+      key: 'annual-reader',
+      title: 'Annual Filing Analysis (10-K FY2024)',
+      sectionNumber: 98,
+      status: 'pass',
+      confidence: 88,
+      summary: 'Continued growth trajectory',
+      narrative: 'FY2024 showed 11% revenue growth with margin expansion across all segments.',
+      primarySourceInsights: ['Revenue grew 11%', 'Gross margin expanded to 38%'],
+      redFlags: [],
+    },
+    {
+      key: 'quarterly-reader',
+      title: 'Quarterly Report Reader — Earnings Call Transcript Analysis',
+      sectionNumber: 99,
+      status: 'pass',
+      confidence: 85,
+      summary: 'Management raised guidance for FY2026',
+      narrative: 'Q4 results show acceleration with same-store sales up 5.2%. Management raised full-year guidance.',
+      primarySourceInsights: ['Same-store sales up 5.2%', 'Management raised guidance', 'New distribution center planned'],
+      redFlags: [],
+    },
+  ];
+
+  // Non-PSR sections that should be ignored by the filter
+  const mockAnalysisSections = [
+    { key: 'radar', title: 'Radar', sectionNumber: 1, status: 'pass', summary: 'Good radar', narrative: 'Analysis...', redFlags: [] },
+    { key: 'market_position', title: 'Market Position', sectionNumber: 3, status: 'pass', summary: 'Strong position', narrative: 'Analysis...', redFlags: [] },
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    callOrder = [];
+
+    dispatchAgent.mockImplementation((agentRole, dp, opts) => {
+      callOrder.push({ agent: agentRole, opts });
+
+      // Debate step mocks
+      if (opts?.debateRole === 'bull') return Promise.resolve({ section: mockBullOutput(), usage: { inputTokens: 20000, outputTokens: 4000, cacheRead: 15000, cacheWrite: 5000, webSearches: 0, cost: 0.15 }, error: null });
+      if (opts?.debateRole === 'bear') return Promise.resolve({ section: mockBearOutput(), usage: { inputTokens: 22000, outputTokens: 5000, cacheRead: 16000, cacheWrite: 5000, webSearches: 3, cost: 0.20 }, error: null });
+      if (opts?.debateRole === 'bull_rebuttal') return Promise.resolve({ section: mockRebuttalOutput(), usage: { inputTokens: 25000, outputTokens: 3000, cacheRead: 18000, cacheWrite: 5000, webSearches: 0, cost: 0.14 }, error: null });
+      if (opts?.debateRole === 'judge') return Promise.resolve({ section: mockJudgeOutput(), usage: { inputTokens: 30000, outputTokens: 4000, cacheRead: 20000, cacheWrite: 5000, webSearches: 0, cost: 0.18 }, error: null });
+      if (agentRole === 'synthesis-writer' && opts?.sectionAssignment?.includes('Compose Section 6')) {
+        return Promise.resolve({ section: { key: 'inversion_rebuttal', title: 'S6', sectionNumber: 6, status: 'pass', summary: 'Mock', redFlags: [] }, usage: { inputTokens: 35000, outputTokens: 8000, cacheRead: 25000, cacheWrite: 5000, webSearches: 0, cost: 0.30 }, error: null });
+      }
+
+      // Wave 1 parallel agents
+      const sectionMap = { 'risk-analyst': 1, 'business-analyst': 2, 'competitor-evaluator': 3, 'management-evaluator': 4, 'valuation-specialist': 5 };
+      const sectionNum = sectionMap[agentRole] || 1;
+      return Promise.resolve({
+        section: mockFullStorySection(agentRole, sectionNum),
+        usage: { inputTokens: 20000, outputTokens: 3000, cacheRead: 15000, cacheWrite: 5000, webSearches: 1, cost: 0.12 },
+        error: null,
+      });
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('PSR-1: fullStory reuses PSR sections from pitchDeckSections — does NOT dispatch annual-reader or quarterly-reader', async () => {
+    const dataPacket = {
+      ...mockDataPacket,
+      pitchDeckSections: [...mockPsrSections, ...mockAnalysisSections],
+      filingContent: { '10-K-2025-03-27': {}, '10-K-2024-03-21': {} },
+    };
+
+    await runPipeline('fullStory', dataPacket);
+
+    const agentNames = callOrder.map(c => c.agent);
+    expect(agentNames).not.toContain('annual-reader');
+    expect(agentNames).not.toContain('quarterly-reader');
+  });
+
+  it('PSR-2: reused PSR sections flow through to downstream agents as formatted psrFindings', async () => {
+    const dataPacket = {
+      ...mockDataPacket,
+      pitchDeckSections: [...mockPsrSections, ...mockAnalysisSections],
+    };
+
+    await runPipeline('fullStory', dataPacket);
+
+    // Wave 1 agent should receive PSR findings containing the reused narrative text
+    const wave1Call = callOrder.find(c => c.agent === 'risk-analyst' && !c.opts?.debateRole);
+    expect(wave1Call).toBeDefined();
+    expect(wave1Call.opts.psrFindings).toContain('Primary Source Reader Findings');
+    expect(wave1Call.opts.psrFindings).toContain('revenue growth of 14%');
+    expect(wave1Call.opts.psrFindings).toContain('Same-store sales up 5.2%');
+  });
+
+  it('PSR-3: budget does NOT record any PSR costs when reusing', async () => {
+    const dataPacket = {
+      ...mockDataPacket,
+      pitchDeckSections: [...mockPsrSections, ...mockAnalysisSections],
+    };
+
+    const result = await runPipeline('fullStory', dataPacket);
+
+    // No budget entries for PSR agents
+    const psrEntries = result.budget.entries.filter(e =>
+      e.agentRole?.includes('annual-reader') || e.agentRole?.includes('quarterly-reader')
+    );
+    expect(psrEntries).toHaveLength(0);
+  });
+
+  it('PSR-4: psrSummary contains reused-from-pitch-deck status entries', async () => {
+    const dataPacket = {
+      ...mockDataPacket,
+      pitchDeckSections: [...mockPsrSections, ...mockAnalysisSections],
+    };
+
+    const result = await runPipeline('fullStory', dataPacket);
+
+    // psrSummary is returned in the result
+    expect(result.psrSummary).toBeDefined();
+    expect(result.psrSummary.length).toBe(3);
+    for (const entry of result.psrSummary) {
+      expect(entry.status).toBe('reused-from-pitch-deck');
+    }
+  });
+
+  it('PSR-5: fallback — when pitchDeckSections is empty, fullStory dispatches PSR agents normally', async () => {
+    const dataPacket = {
+      ...mockDataPacket,
+      pitchDeckSections: [],
+      filingContent: { '10-K-2025-03-27': { form: '10-K', sections: {} } },
+    };
+
+    await runPipeline('fullStory', dataPacket);
+
+    const agentNames = callOrder.map(c => c.agent);
+    expect(agentNames).toContain('annual-reader');
+  });
+
+  it('PSR-6: fallback — pitchDeck stage always dispatches PSR agents even with pitchDeckSections present', async () => {
+    const dataPacket = {
+      ...mockDataPacket,
+      pitchDeckSections: [...mockPsrSections],
+      filingContent: { '10-K-2025-03-27': { form: '10-K', sections: {} } },
+    };
+
+    await runPipeline('pitchDeck', dataPacket);
+
+    const agentNames = callOrder.map(c => c.agent);
+    expect(agentNames).toContain('annual-reader');
   });
 });

@@ -1,6 +1,6 @@
 {
   "role": "valuation-specialist",
-  "model": "opus",
+  "model": "sonnet",
   "curriculum": [
     "knowledge/stage-2-pitch-deck/pitch-deck-IV.md",
     "knowledge/stage-3-full-story/story-form-II.md",

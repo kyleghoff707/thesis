@@ -16,8 +16,7 @@
         "phase": 1,
         "description": "Business fundamentals",
         "agents": [
-          { "agent": "business-analyst", "sections": [1], "parallel": true },
-          { "agent": "business-analyst", "sections": [2], "parallel": true },
+          { "agent": "business-analyst", "sections": [1, 2], "parallel": true },
           { "agent": "competitor-evaluator", "sections": [3], "parallel": true }
         ]
       },
@@ -26,10 +25,8 @@
         "description": "Financial deep-dive",
         "agents": [
           { "agent": "competitor-evaluator", "sections": [4], "parallel": false, "note": "Moat validation needs Phase 1 context" },
-          { "agent": "financial-analyst", "sections": [5], "parallel": true },
-          { "agent": "management-evaluator", "sections": [6], "parallel": true },
-          { "agent": "financial-analyst", "sections": [7], "parallel": true },
-          { "agent": "financial-analyst", "sections": [8], "parallel": true }
+          { "agent": "financial-analyst", "sections": [5, 7, 8], "parallel": true },
+          { "agent": "management-evaluator", "sections": [6], "parallel": true }
         ]
       },
       {

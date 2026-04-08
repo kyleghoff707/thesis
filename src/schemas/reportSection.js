@@ -62,6 +62,13 @@ export const StageReportSchema = z.object({
   })).optional().default([]),
 });
 
+// MultiSection — wraps multiple ReportSections for consolidated agent calls.
+// When a single agent produces multiple sections in one API call (e.g., financial-analyst
+// generating FCF + ROE/ROIC + Balance Sheet), this schema wraps them as an array.
+export const MultiSectionSchema = z.object({
+  sections: z.array(ReportSectionSchema),
+});
+
 // Returns JSON Schema suitable for Claude API output_config.format
 export function getReportSectionJSONSchema() {
   return z.toJSONSchema(ReportSectionSchema);

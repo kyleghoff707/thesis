@@ -351,6 +351,25 @@ async function main() {
 
   const { dataPacket, assemblyTime } = await assembleAndPreprocess();
 
+  // For fullStory: load Pitch Deck sections for PSR reuse (inherit-pitch-deck)
+  if (stage === 'fullStory') {
+    const reportsDir = join(process.cwd(), '.thes1s', 'reports', ticker);
+    const pdPath = join(reportsDir, 'pitch-deck.json');
+    const pdAltPath = join(reportsDir, 'pipeline-output.json');
+    const pdFile = existsSync(pdPath) ? pdPath : existsSync(pdAltPath) ? pdAltPath : null;
+    if (pdFile) {
+      try {
+        const pitchDeckOutput = JSON.parse(readFileSync(pdFile, 'utf8'));
+        dataPacket.pitchDeckSections = pitchDeckOutput.sections || [];
+        console.log(`Loaded ${dataPacket.pitchDeckSections.length} Pitch Deck sections for PSR reuse\n`);
+      } catch (err) {
+        console.warn(`Failed to load Pitch Deck for PSR reuse: ${err.message} — PSR agents will run from scratch\n`);
+      }
+    } else {
+      console.warn(`No Pitch Deck found for ${ticker} — PSR agents will run from scratch\n`);
+    }
+  }
+
   // Advance state to first wave
   try {
     advanceState(ticker, 'WAVE_1_RUNNING');

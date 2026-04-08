@@ -1,6 +1,6 @@
 {
   "role": "synthesis-writer",
-  "model": "opus",
+  "model": "sonnet",
   "curriculum": [
     "knowledge/research-references/buffett-writing-style-guide.md"
   ],

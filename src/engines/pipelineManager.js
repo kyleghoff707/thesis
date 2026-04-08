@@ -10,6 +10,7 @@ import { generateOnePager } from './onePagerGenerator.js';
 import { createCacheMonitor } from './cacheMonitor.js';
 import { createBudgetTracker, formatBudgetReport } from './contextBudget.js';
 import { DEBATE_SCHEMAS } from '../schemas/debateStep.js';
+import { MultiSectionSchema } from '../schemas/reportSection.js';
 
 const AGENTS_DIR = resolve(process.cwd(), 'agents');
 
@@ -138,108 +139,148 @@ export async function runPipeline(stage, dataPacket, options = {}) {
   // Split filingContent into per-agent DataPackets and dispatch all PSR agents in parallel.
   // Annual readers: 1 per 10-K (up to 5). Quarterly readers: 1 for all 10-Qs.
   // This matches the CC skill orchestrator design — 7 agents max, all concurrent.
+  //
+  // PSR Reuse (inherit-pitch-deck): When running fullStory and Pitch Deck PSR sections
+  // are available in dataPacket.pitchDeckSections, reuse them instead of re-dispatching.
+  // The PSR agents are identical for both stages — same prompts, same configs, same output.
   {
-    const filingContent = dataPacket.filingContent || {};
-    const annualKeys = Object.keys(filingContent).filter(k => k.startsWith('10-K')).sort();
-    const quarterlyKeys = Object.keys(filingContent).filter(k => k.startsWith('10-Q')).sort();
+    const pdSections = dataPacket.pitchDeckSections || [];
+    const inheritedPsrSections = pdSections.filter(s =>
+      s && (s.key === 'annual-reader' || s.key === 'quarterly-reader' ||
+            s.agentRole === 'annual-reader' || s.agentRole === 'quarterly-reader' ||
+            s.title?.includes('Annual') || s.title?.includes('Quarterly'))
+    );
 
-    const psrDispatches = [];
-
-    // One annual-reader per 10-K, each with only its year's filing
-    for (const key of annualKeys) {
-      const perYearPacket = { ...dataPacket, filingContent: { [key]: filingContent[key] } };
-      const fyLabel = key; // e.g. "10-K-2026-02-04"
-      psrDispatches.push({
-        label: `annual-reader (${fyLabel})`,
-        agent: 'annual-reader',
-        promise: dispatchAgent('annual-reader', perYearPacket, {
-          sectionAssignment: `Read the single 10-K filing provided in filingContent (${fyLabel}). Extract findings per the annual-reader schema.`,
-          maxSearches: 0,
-          maxTokens: 32768,
-        }),
-      });
-    }
-
-    // One quarterly-reader for all 10-Qs (≤4 filings per batch)
-    if (quarterlyKeys.length > 0) {
-      const quarterlyPacket = { ...dataPacket, filingContent: Object.fromEntries(quarterlyKeys.map(k => [k, filingContent[k]])) };
-      psrDispatches.push({
-        label: `quarterly-reader (${quarterlyKeys.join(', ')})`,
-        agent: 'quarterly-reader',
-        promise: dispatchAgent('quarterly-reader', quarterlyPacket, {
-          sectionAssignment: `Read all ${quarterlyKeys.length} 10-Q filings provided in filingContent. Extract findings per the quarterly-reader schema.`,
-          maxSearches: 0,
-          maxTokens: 32768,
-        }),
-      });
-    }
-
-    // One quarterly-reader for earnings call transcripts (separate from 10-Q reader)
-    const transcriptContent = dataPacket.transcriptContent || {};
-    const transcriptKeys = Object.keys(transcriptContent);
-    if (transcriptKeys.length > 0) {
-      // Build a DataPacket with transcripts as the filing content so the agent reads them
-      const transcriptPacket = { ...dataPacket, filingContent: {}, transcriptContent };
-      psrDispatches.push({
-        label: `quarterly-reader (transcripts: ${transcriptKeys.map(k => k.replace('transcript-', '')).join(', ')})`,
-        agent: 'quarterly-reader',
-        promise: dispatchAgent('quarterly-reader', transcriptPacket, {
-          sectionAssignment: `Read all ${transcriptKeys.length} earnings call transcripts provided in transcriptContent. Focus on: management guidance changes, tone shifts, promise tracking, forward-looking statements, and Q&A insights. Cross-reference management promises across quarters. Extract findings per the quarterly-reader schema.`,
-          maxSearches: 0,
-          maxTokens: 32768,
-        }),
-      });
-    }
-
-    if (psrDispatches.length > 0) {
-      console.log(`Dispatching ${psrDispatches.length} PSR agents in parallel...`);
-      for (const d of psrDispatches) console.log(`  ${d.label}`);
-
-      const psrResults = await Promise.allSettled(psrDispatches.map(d => d.promise));
-
-      for (let i = 0; i < psrResults.length; i++) {
-        const label = psrDispatches[i].label;
-        if (psrResults[i].status === 'fulfilled') {
-          const r = psrResults[i].value;
-          if (r.error) {
-            errors.push({ agent: label, step: 'pre-processing', error: r.error });
-            psrAgentResults.push({ label, status: 'failed', error: r.error });
-            console.warn(`PSR ${label} failed: ${r.error}`);
-          } else if (r.section) {
-            allSections.push(r.section);
-            psrAgentResults.push({ label, status: 'complete' });
-          }
-          budget.record(label, r.usage);
-          cacheMonitor.record(r.usage);
-        } else {
-          const err = psrResults[i].reason?.message || 'Unknown error';
-          errors.push({ agent: label, step: 'pre-processing', error: err });
-          psrAgentResults.push({ label, status: 'failed', error: err });
-          console.warn(`PSR ${label} rejected: ${err}`);
-        }
+    if (stage === 'fullStory' && inheritedPsrSections.length > 0) {
+      // Reuse Pitch Deck PSR findings — skip redundant API calls (~$4/run savings)
+      console.log(`PSR REUSE: Inheriting ${inheritedPsrSections.length} PSR sections from Pitch Deck (skipping redundant API calls)`);
+      for (const s of inheritedPsrSections) {
+        console.log(`  Reused: ${s.title || s.key}`);
+        allSections.push(s);
+        psrAgentResults.push({ label: s.title || s.key, status: 'reused-from-pitch-deck' });
       }
-      console.log(`PSR pre-processing complete: ${allSections.length} sections produced\n`);
+      console.log(`PSR reuse complete: ${inheritedPsrSections.length} sections inherited\n`);
 
-      // Write PSR summary to disk for checkpoint 1 UI display
+      // Write PSR summary indicating reuse (for UI status display)
       try {
         const { mkdirSync, writeFileSync } = await import('fs');
         const { join } = await import('path');
         const reportsDir = join(process.cwd(), '.thes1s', 'reports', dataPacket.ticker.toUpperCase());
         mkdirSync(reportsDir, { recursive: true });
-        const transcriptKeys = Object.keys(dataPacket.transcriptContent || {});
         writeFileSync(join(reportsDir, 'psr-summary.json'), JSON.stringify({
           agents: psrAgentResults,
-          completed: psrAgentResults.filter(r => r.status === 'complete').length,
-          failed: psrAgentResults.filter(r => r.status === 'failed').length,
+          completed: psrAgentResults.length,
+          failed: 0,
           total: psrAgentResults.length,
-          transcripts: {
-            available: transcriptKeys.length > 0,
-            count: transcriptKeys.length,
-            keys: transcriptKeys,
-          },
+          reused: true,
+          reusedFrom: 'pitchDeck',
           timestamp: new Date().toISOString(),
         }, null, 2));
       } catch { /* non-critical */ }
+    } else {
+      // Fresh PSR dispatch — no Pitch Deck sections available or not fullStory stage
+      const filingContent = dataPacket.filingContent || {};
+      const annualKeys = Object.keys(filingContent).filter(k => k.startsWith('10-K')).sort();
+      const quarterlyKeys = Object.keys(filingContent).filter(k => k.startsWith('10-Q')).sort();
+
+      const psrDispatches = [];
+
+      // One annual-reader per 10-K, each with only its year's filing
+      for (const key of annualKeys) {
+        const perYearPacket = { ...dataPacket, filingContent: { [key]: filingContent[key] } };
+        const fyLabel = key; // e.g. "10-K-2026-02-04"
+        psrDispatches.push({
+          label: `annual-reader (${fyLabel})`,
+          agent: 'annual-reader',
+          promise: dispatchAgent('annual-reader', perYearPacket, {
+            sectionAssignment: `Read the single 10-K filing provided in filingContent (${fyLabel}). Extract findings per the annual-reader schema.`,
+            maxSearches: 0,
+            maxTokens: 32768,
+          }),
+        });
+      }
+
+      // One quarterly-reader for all 10-Qs (≤4 filings per batch)
+      if (quarterlyKeys.length > 0) {
+        const quarterlyPacket = { ...dataPacket, filingContent: Object.fromEntries(quarterlyKeys.map(k => [k, filingContent[k]])) };
+        psrDispatches.push({
+          label: `quarterly-reader (${quarterlyKeys.join(', ')})`,
+          agent: 'quarterly-reader',
+          promise: dispatchAgent('quarterly-reader', quarterlyPacket, {
+            sectionAssignment: `Read all ${quarterlyKeys.length} 10-Q filings provided in filingContent. Extract findings per the quarterly-reader schema.`,
+            maxSearches: 0,
+            maxTokens: 32768,
+          }),
+        });
+      }
+
+      // One quarterly-reader for earnings call transcripts (separate from 10-Q reader)
+      const transcriptContent = dataPacket.transcriptContent || {};
+      const transcriptKeys = Object.keys(transcriptContent);
+      if (transcriptKeys.length > 0) {
+        // Build a DataPacket with transcripts as the filing content so the agent reads them
+        const transcriptPacket = { ...dataPacket, filingContent: {}, transcriptContent };
+        psrDispatches.push({
+          label: `quarterly-reader (transcripts: ${transcriptKeys.map(k => k.replace('transcript-', '')).join(', ')})`,
+          agent: 'quarterly-reader',
+          promise: dispatchAgent('quarterly-reader', transcriptPacket, {
+            sectionAssignment: `Read all ${transcriptKeys.length} earnings call transcripts provided in transcriptContent. Focus on: management guidance changes, tone shifts, promise tracking, forward-looking statements, and Q&A insights. Cross-reference management promises across quarters. Extract findings per the quarterly-reader schema.`,
+            maxSearches: 0,
+            maxTokens: 32768,
+          }),
+        });
+      }
+
+      if (psrDispatches.length > 0) {
+        console.log(`Dispatching ${psrDispatches.length} PSR agents in parallel...`);
+        for (const d of psrDispatches) console.log(`  ${d.label}`);
+
+        const psrResults = await Promise.allSettled(psrDispatches.map(d => d.promise));
+
+        for (let i = 0; i < psrResults.length; i++) {
+          const label = psrDispatches[i].label;
+          if (psrResults[i].status === 'fulfilled') {
+            const r = psrResults[i].value;
+            if (r.error) {
+              errors.push({ agent: label, step: 'pre-processing', error: r.error });
+              psrAgentResults.push({ label, status: 'failed', error: r.error });
+              console.warn(`PSR ${label} failed: ${r.error}`);
+            } else if (r.section) {
+              allSections.push(r.section);
+              psrAgentResults.push({ label, status: 'complete' });
+            }
+            budget.record(label, r.usage);
+            cacheMonitor.record(r.usage);
+          } else {
+            const err = psrResults[i].reason?.message || 'Unknown error';
+            errors.push({ agent: label, step: 'pre-processing', error: err });
+            psrAgentResults.push({ label, status: 'failed', error: err });
+            console.warn(`PSR ${label} rejected: ${err}`);
+          }
+        }
+        console.log(`PSR pre-processing complete: ${allSections.length} sections produced\n`);
+
+        // Write PSR summary to disk for checkpoint 1 UI display
+        try {
+          const { mkdirSync, writeFileSync } = await import('fs');
+          const { join } = await import('path');
+          const reportsDir = join(process.cwd(), '.thes1s', 'reports', dataPacket.ticker.toUpperCase());
+          mkdirSync(reportsDir, { recursive: true });
+          const transcriptKeys = Object.keys(dataPacket.transcriptContent || {});
+          writeFileSync(join(reportsDir, 'psr-summary.json'), JSON.stringify({
+            agents: psrAgentResults,
+            completed: psrAgentResults.filter(r => r.status === 'complete').length,
+            failed: psrAgentResults.filter(r => r.status === 'failed').length,
+            total: psrAgentResults.length,
+            transcripts: {
+              available: transcriptKeys.length > 0,
+              count: transcriptKeys.length,
+              keys: transcriptKeys,
+            },
+            timestamp: new Date().toISOString(),
+          }, null, 2));
+        } catch { /* non-critical */ }
+      }
     }
   }
 
@@ -357,29 +398,42 @@ export async function runPipeline(stage, dataPacket, options = {}) {
       allDebateOutputs = debateOutputs;
 
     } else {
-      // --- Parallel wave dispatch (existing pattern, unchanged) ---
+      // --- Parallel wave dispatch ---
       const waveAgents = wave.agents;
 
       // Dispatch all agents in this wave simultaneously via Promise.allSettled
+      // Multi-section entries (sections.length > 1) use MultiSectionSchema to return
+      // multiple sections from a single API call, reducing cacheWrite costs.
       const results = await Promise.allSettled(
-        waveAgents.map(a => dispatchAgent(a.agent, dataPacket, {
-          stage,
-          sectionAssignment: buildSectionAssignment(a.sections, stage),
-          priorSections: allSections.slice(),
-          psrFindings: psrFindingsForAgents,
-          pmFeedback,
-          maxSearches: options.maxSearches,
-        }))
+        waveAgents.map(a => {
+          const isMultiSection = a.sections && a.sections.length > 1;
+          return dispatchAgent(a.agent, dataPacket, {
+            stage,
+            sectionAssignment: buildSectionAssignment(a.sections, stage),
+            priorSections: allSections.slice(),
+            psrFindings: psrFindingsForAgents,
+            pmFeedback,
+            maxSearches: options.maxSearches,
+            ...(isMultiSection ? { schema: MultiSectionSchema, maxTokens: 32768 } : {}),
+          });
+        })
       );
 
       // Process results from this wave
       const waveResults = [];
       for (let i = 0; i < results.length; i++) {
         const agentName = waveAgents[i].agent;
+        const isMultiSection = waveAgents[i].sections && waveAgents[i].sections.length > 1;
         if (results[i].status === 'fulfilled') {
           const r = results[i].value;
           if (r.error) {
             errors.push({ agent: agentName, wave: wave.phase, error: r.error });
+          } else if (isMultiSection && r.section?.sections) {
+            // Unwrap multi-section result — push each section individually
+            for (const s of r.section.sections) {
+              allSections.push(s);
+            }
+            waveResults.push(r);
           } else if (r.section) {
             allSections.push(r.section);
             waveResults.push(r);
