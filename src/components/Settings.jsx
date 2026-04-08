@@ -1,5 +1,6 @@
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { C } from '../theme';
+import { clearAllCaches } from '../engines/cache';
 
 function SettingSelect({ label, value, onChange, options }) {
   return (
@@ -34,8 +35,77 @@ function SectionHeader({ label }) {
   );
 }
 
+function SubGroupLabel({ label }) {
+  return (
+    <div style={{
+      fontSize: 11, fontWeight: 500, color: C.textMuted,
+      paddingTop: 12, paddingBottom: 2,
+    }}>{label}</div>
+  );
+}
+
+function ClearCacheButton() {
+  const [state, setState] = useState('idle');
+
+  const handleClick = async () => {
+    if (state === 'idle') {
+      setState('confirm');
+      setTimeout(() => setState(prev => prev === 'confirm' ? 'idle' : prev), 3000);
+      return;
+    }
+    if (state === 'confirm') {
+      setState('clearing');
+      try {
+        await clearAllCaches();
+        setState('done');
+        setTimeout(() => setState('idle'), 2000);
+      } catch {
+        setState('error');
+        setTimeout(() => setState('idle'), 3000);
+      }
+    }
+  };
+
+  const config = {
+    idle: { label: 'Clear All Cached Data', border: C.border, color: C.textSecondary },
+    confirm: { label: 'Click again to confirm', border: C.red, color: C.red },
+    clearing: { label: 'Clearing...', border: C.border, color: C.textMuted },
+    done: { label: 'Cache cleared', border: `${C.green}40`, color: C.green },
+    error: { label: 'Failed — try again', border: C.red, color: C.red },
+  };
+
+  const { label, border, color } = config[state];
+
+  return (
+    <div style={{ padding: '8px 0' }}>
+      <button
+        onClick={handleClick}
+        disabled={state === 'clearing'}
+        style={{
+          background: 'transparent',
+          border: `1px solid ${border}`,
+          borderRadius: 6,
+          padding: '6px 12px',
+          fontSize: 13,
+          fontWeight: 500,
+          color,
+          cursor: state === 'clearing' ? 'wait' : 'pointer',
+          transition: 'all .15s',
+          fontFamily: 'inherit',
+        }}
+        onMouseEnter={e => { if (state === 'idle') { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; } }}
+        onMouseLeave={e => { if (state === 'idle') { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSecondary; } }}
+      >
+        {label}
+      </button>
+      <div style={{ fontSize: 11, color: C.textMuted, marginTop: 6 }}>
+        Removes cached financial data, filings, and quotes. Your research reports and settings are not affected.
+      </div>
+    </div>
+  );
+}
+
 export default function Settings({ settings, updateSettings, isDark, toggleTheme, onClose }) {
-  const navigate = useNavigate();
   return (
     <div
       onClick={onClose}
@@ -68,6 +138,7 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
           >&times;</button>
         </div>
 
+        {/* ── Appearance ── */}
         <SectionHeader label="Appearance" />
         <SettingSelect
           label="Theme"
@@ -79,7 +150,10 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
           ]}
         />
 
-        <SectionHeader label="Financial Statements" />
+        {/* ── Display Defaults ── */}
+        <SectionHeader label="Display Defaults" />
+
+        <SubGroupLabel label="Financial Statements" />
         <SettingSelect
           label="Default Layout"
           value={settings.defaultLayout}
@@ -131,7 +205,7 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
           ]}
         />
 
-        <SectionHeader label="Growth Analysis" />
+        <SubGroupLabel label="Charts" />
         <SettingSelect
           label="Default Chart Years"
           value={settings.growthChartYears}
@@ -143,8 +217,6 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
             { value: 'all', label: 'All' },
           ]}
         />
-
-        <SectionHeader label="Price Chart" />
         <SettingSelect
           label="Default Range"
           value={settings.defaultPriceRange}
@@ -158,7 +230,8 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
           ]}
         />
 
-        <SectionHeader label="Gurus" />
+        {/* ── Data Sources ── */}
+        <SectionHeader label="Data Sources" />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0' }}>
           <div>
             <span style={{ fontSize: 13, fontWeight: 500, color: C.text }}>Enable N-PORT data</span>
@@ -167,6 +240,9 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
             </div>
           </div>
           <button
+            role="switch"
+            aria-checked={settings.enableNport}
+            aria-label="Enable N-PORT data"
             onClick={() => updateSettings({ enableNport: !settings.enableNport })}
             style={{
               width: 40, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer',
@@ -184,91 +260,20 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
           </button>
         </div>
 
-        <SectionHeader label="Tools" />
-        <div style={{ padding: '8px 0' }}>
-          <button
-            onClick={() => { onClose(); navigate('/validation'); }}
-            style={{
-              background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 6,
-              padding: '6px 12px', fontSize: 13, fontWeight: 500, color: C.textSecondary,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-              transition: 'all .15s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSecondary; }}
-          >
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
-            </svg>
-            Run Validation
-          </button>
-          <button
-            onClick={() => { onClose(); navigate('/guru-audit'); }}
-            style={{
-              background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 6,
-              padding: '6px 12px', fontSize: 13, fontWeight: 500, color: C.textSecondary,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-              transition: 'all .15s', marginTop: 8,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSecondary; }}
-          >
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
-            </svg>
-            Run Guru Audit
-          </button>
-          <button
-            onClick={() => { onClose(); navigate('/ticker-audit'); }}
-            style={{
-              background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 6,
-              padding: '6px 12px', fontSize: 13, fontWeight: 500, color: C.textSecondary,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-              transition: 'all .15s', marginTop: 8,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSecondary; }}
-          >
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 7h16M4 12h16M4 17h10" /><circle cx="19" cy="17" r="3" /><path d="M21.5 19.5L23 21" />
-            </svg>
-            Run Ticker Audit
-          </button>
-          <button
-            onClick={() => { onClose(); navigate('/nport-audit'); }}
-            style={{
-              background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 6,
-              padding: '6px 12px', fontSize: 13, fontWeight: 500, color: C.textSecondary,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-              transition: 'all .15s', marginTop: 8,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSecondary; }}
-          >
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><path d="M12 18v-6" /><path d="M9 15h6" />
-            </svg>
-            Run N-PORT Audit
-          </button>
-          <button
-            onClick={() => { onClose(); navigate('/comp-audit'); }}
-            style={{
-              background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 6,
-              padding: '6px 12px', fontSize: 13, fontWeight: 500, color: C.textSecondary,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-              transition: 'all .15s', marginTop: 8,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSecondary; }}
-          >
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="20" height="18" rx="2" /><path d="M8 7h8M8 12h8M8 17h4" />
-            </svg>
-            Run Compensation Audit
-          </button>
-        </div>
+        {/* ── Storage ── */}
+        <SectionHeader label="Storage" />
+        <ClearCacheButton />
 
+        {/* ── About (divider only, no section header) ── */}
         <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 16 }}>
+            <img src="/logo.svg" alt="Thes1s" style={{ width: 28, height: 28, borderRadius: 6 }} />
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Thes1s</div>
+              <div style={{ fontSize: 11, color: C.textMuted }}>AI-Powered Stock Research</div>
+            </div>
+          </div>
+
           <button
             onClick={onClose}
             style={{

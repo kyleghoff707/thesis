@@ -10,10 +10,6 @@ import Watchlists from './components/Watchlists';
 import Gurus from './components/Gurus';
 import GuruPortfolio from './components/GuruPortfolio';
 import Validation from './components/Validation';
-import GuruAudit from './components/GuruAudit';
-import TickerAudit from './components/TickerAudit';
-import NportAudit from './components/NportAudit';
-import CompAudit from './components/CompAudit';
 import Settings from './components/Settings';
 import OnePager from './components/OnePager';
 import PitchDeck from './components/PitchDeck';
@@ -69,10 +65,6 @@ export default function App() {
         <Route path="/gurus" element={<Gurus />} />
         <Route path="/gurus/:cik" element={<GuruPortfolio />} />
         <Route path="/validation" element={<Validation />} />
-        <Route path="/guru-audit" element={<GuruAudit />} />
-        <Route path="/ticker-audit" element={<TickerAudit />} />
-        <Route path="/nport-audit" element={<NportAudit />} />
-        <Route path="/comp-audit" element={<CompAudit />} />
       </Routes>
       {showSettings && (
         <Settings

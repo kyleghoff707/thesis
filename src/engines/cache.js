@@ -3,7 +3,7 @@
 // In Node.js: routes ALL operations to file-based cache via globalThis.__nodeCache
 // (set by nodeAdapter.js before any engine imports)
 
-import { idbGet, idbSet, idbGetMeta, idbBulkGet, idbClear } from './cacheStore.js';
+import { idbGet, idbSet, idbGetMeta, idbBulkGet, idbClear, idbClearAllCaches } from './cacheStore.js';
 
 const IS_NODE = typeof window === 'undefined';
 
@@ -286,4 +286,23 @@ export function cacheClear(prefix) {
       idbClear(store, prefix).catch(() => {});
     }
   }
+}
+
+// Clear all cached data across all three tiers.
+// Does NOT touch settings, reports, or non-cache localStorage keys.
+export async function clearAllCaches() {
+  memoryCache.clear();
+
+  try {
+    const toRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('sa-cache:')) {
+        toRemove.push(k);
+      }
+    }
+    toRemove.forEach(k => localStorage.removeItem(k));
+  } catch {}
+
+  await idbClearAllCaches();
 }

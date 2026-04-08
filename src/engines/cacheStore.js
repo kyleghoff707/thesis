@@ -136,6 +136,14 @@ export async function idbGetAll(store) {
   }
 }
 
+// Clear all cache stores (excludes 'reports' and 'checkpoint-attachments' which hold user content)
+export async function idbClearAllCaches() {
+  const cacheStores = STORES.filter(s => s !== 'reports' && s !== 'checkpoint-attachments');
+  for (const store of cacheStores) {
+    await idbClear(store);
+  }
+}
+
 // Delete a single record from a store by key
 export async function idbDelete(store, key) {
   const db = await getDB();

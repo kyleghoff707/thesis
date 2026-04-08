@@ -4,7 +4,7 @@ import { C } from '../theme';
 const THES1S_SOURCES = [
   'DataPacket', 'Competitors Tab', 'Growth Analysis', 'Guru Holdings',
   'Financials Tab', 'Valuation Tab', 'Overview Tab', 'Insiders Tab',
-  'Filings Tab', 'Audit Tab',
+  'Filings Tab',
 ];
 
 // Detect citation type: thes1s (app data), sec (SEC filings), web (external)

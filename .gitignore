@@ -54,3 +54,4 @@ src/engines/__tests__/fixtures/edgar-cache/
 # Node adapter file cache (runtime, regenerated on demand)
 .thes1s/
 .claude/worktrees/
+.council/
