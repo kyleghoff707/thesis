@@ -2,7 +2,7 @@
 
 The normalization engine validates Thes1s's XBRL financial extraction against external truth sets (Morningstar 50-company, FMP S&P 500) to prove accuracy and find bugs. This document is the source of truth for normalization work going forward.
 
-## Accuracy (updated April 6, 2026)
+## Accuracy (updated April 7, 2026)
 
 | Metric | Value | Source |
 |--------|-------|--------|
@@ -12,6 +12,8 @@ The normalization engine validates Thes1s's XBRL financial extraction against ex
 | S&P 500 Tier 3 (expanded) | **61.0%** | " |
 | S&P 500 Overall | **83.0%** | " |
 | S&P 500 Identity Checks | **83.8%** | validation/reports/sp500-identity-checks.json |
+| Key Metrics (S&P 100, top fields) | **85-94%** | validation/reports/key-metrics-accuracy.json |
+| Key Metrics (S&P 100, overall) | **65.9%** | " |
 | Compensation field accuracy (5 tickers) | **100%** | validation/reports/comp-accuracy.json |
 | Compensation parsing (503 S&P 500) | **94.8% GOOD** (477/503) | 0 all-null, 25 no-execs, 1 error |
 
@@ -44,8 +46,10 @@ The S&P 500 numbers reflect comparator-level fixes (sign convention + fiscal yea
 | SCALE-04 | Eliminate paid API subscriptions | **Waiting** | User cancels after COMP work is verified |
 | COMP-01 | Fix 11 compensation bugs + scale fixes | **Complete** | 56/56 tests pass; 94.8% of 503 S&P 500 tickers (477/503, was 54%); secFetch wrapper, Pass 3.5 shape detection, universal total fallback, expanded filing types; verified in-app for KO, SFM, UBER, AAPL |
 | COMP-02 | FMP compensation comparison layer | **Complete** | AAPL 100% field accuracy, 5-ticker verified. compare-compensation.mjs built |
+| KM-01 | Key metrics formula validation (S&P 100) | **Complete** | 65.9% overall, 85-94% on core fields (currentRatio 93.6%, ROA 90.7%, ROE 89.3%, workingCapital 89.6%). Diffs are methodology (FY alignment, debt classification, receivable definitions), not formula bugs. 56 vitest tests. |
+| KM-02 | Add 5 missing key metrics | **Complete** | Working Capital, EBITDA Interest Coverage, Operating CF/NI, Payout Ratio (null when EPS≤0), Shareholder Yield. 61 total metrics. |
 
-**Summary:** 20/22 complete, 1 waiting on user action (SCALE-04), 1 dropped (SCALE-03).
+**Summary:** 22/24 complete, 1 waiting on user action (SCALE-04), 1 dropped (SCALE-03).
 
 ## What's Left
 
@@ -90,6 +94,13 @@ All 11 bugs fixed in `src/engines/compensation.js`. 47/47 tests pass. Cache bump
 **Key files:** `src/engines/compensation.js`, `src/engines/__tests__/compensation.test.js`
 **Plan:** `gstack/plans/gstack-compensation-engine-bugfix-eng-plan-20260321.md`
 
+### KM-01/KM-02: Key Metrics Validation + Expansion (Complete)
+Validated all 61 computed key metrics against FMP pre-computed ratios across S&P 100 (102 companies). Added 5 new metrics: Working Capital, EBITDA Interest Coverage, Operating CF/NI (earnings quality), Payout Ratio, Shareholder Yield. 56 vitest formula tests covering all categories + edge cases.
+
+**Results:** 65.9% overall, driven down by known methodology diffs (FY alignment for non-Dec companies like NVDA/HD/LOW/WMT, debt classification, receivable definitions, financial sector overlays). Core formula fields: currentRatio 93.6%, ROA 90.7%, ROE 89.3%, workingCapital 89.6%, assetTurnover 82.8%. No formula bugs found — all diffs trace to input methodology differences already documented in Phase 4.
+
+**Key files:** `src/engines/keyMetrics.js`, `src/engines/__tests__/keyMetrics.test.js`, `validation/scripts/compare-key-metrics.mjs`, `validation/scripts/lib/key-metrics-comparator.mjs`, `validation/scripts/fetch-sp100-fmp-metrics.mjs`
+
 ## Key Decisions
 
 These decisions were made during Phases 1-4 and must be respected going forward:
@@ -126,6 +137,15 @@ node --max-old-space-size=4096 validation/scripts/validate-sp500-identities.mjs
 # Compensation comparison (FMP vs engine)
 node validation/scripts/compare-compensation.mjs --ticker AAPL
 node validation/scripts/compare-compensation.mjs --fetch              # fetch FMP comp data + compare all
+
+# Key metrics validation (S&P 100, FMP pre-computed ratios)
+node validation/scripts/compare-key-metrics.mjs
+
+# Key metrics single ticker debug
+node validation/scripts/compare-key-metrics.mjs --ticker AAPL
+
+# Fetch FMP metrics (one-time, cached 7 days)
+node validation/scripts/fetch-sp100-fmp-metrics.mjs
 
 # S&P 500 FMP data fetch (run first if cache is stale)
 node validation/scripts/fetch-sp500-fmp.mjs

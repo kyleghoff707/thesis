@@ -27,6 +27,7 @@ dist-ssr
 knowledge/
 
 # Validation data (cached API responses, reports, bundled engines — local only)
+validation/cache/
 validation/data/
 validation/reports/
 validation/scripts/bundled-engines.mjs

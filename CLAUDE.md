@@ -76,7 +76,7 @@ All tag definitions in `FRAMES_TAGS` and `PEER_FRAMES_TAGS` have a `period: 'ins
 ## Current Status
 Phases 1-4 complete — app shell, data engines, calculation engines, and full Toolbox UI all functional. **XBRL engine complete** — three-layer tag resolution (static + taxonomy + AI), industry overlays (bank/REIT/insurance), full provenance tracking (annual + TTM), coverage monitor, and Audit tab dashboard. Validated across all 503 S&P 500 companies with 0 failures. See `gstack/plans/gstack-xbrl-engine-strategy-eng-plan-20260318.md` for full architecture and `validation/reports/financial-data-comparison-rca.md` for the original 12-ticker RCA. **The remaining work is Phase 5-8: AI-driven report generation.**
 
-**Normalization engine:** Complete. 94.8% MS accuracy, 94.8% S&P 500 compensation parsing (477/503). See `NORMALIZATION-STATUS.md` for full details.
+**Normalization engine:** Complete. 94.8% MS accuracy, 94.8% S&P 500 compensation parsing (477/503). Key metrics validated against FMP S&P 100 (no formula bugs, 85-94% on core fields). See `NORMALIZATION-STATUS.md` for full details.
 
 ### What's Built
 All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems (validation, guru, ticker, N-PORT, compensation), Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores + derived metric computation + Yahoo data backfill + per-ticker caching + sparse peer filtering + data completeness indicators + industry-aware column defaults, Upcoming Events & News section on Overview (SEC 8-K events + Yahoo calendar + IR page discovery), three-layer XBRL engine with provenance tracking and coverage monitoring (173 tests via vitest), earnings call transcript engine (Finnhub premium + Alpha Vantage free, cached in IndexedDB, Transcript buttons on Filings tab for 10-K/10-Q). See source tree below.
@@ -264,7 +264,8 @@ src/
 │   └── ReferenceList.jsx        — (planned) citation manager
 ├── engines/
 │   ├── config.js, edgar.js, edgarFinancials.js, edgarFrames.js
-│   ├── keyMetrics.js, prices.js, priceStore.js, cache.js, cacheStore.js
+│   ├── keyMetrics.js             — 61 derived metrics (7 categories), validated against FMP S&P 100
+│   ├── prices.js, priceStore.js, cache.js, cacheStore.js
 │   ├── gurus.js, nport.js, insiders.js, compensation.js
 │   ├── splits.js                — Stock split detection (Yahoo primary, EDGAR XBRL fallback) + cumulative split factor with fiscal-month-aware date comparison
 │   ├── growthRates.js, freeCashFlow.js, returnMetrics.js, ruleOneScore.js
@@ -287,6 +288,7 @@ src/
 │   ├── __tests__/industryOverlays.test.js — Vitest: industry classifier + bank/REIT/insurance overlay tests
 │   ├── __tests__/companyAdapter.test.js — Vitest: Layer 3 AI classification + orphan tag discovery tests
 │   ├── __tests__/coverageMonitor.test.js — Vitest: baseline storage + coverage comparison tests
+│   ├── __tests__/keyMetrics.test.js — Vitest: 56 formula tests for all 61 key metrics + edge cases
 │   └── aiResearch.js            — (planned) Claude API calls + prompt builders
 ├── data/
 │   ├── validationCompanies.js
