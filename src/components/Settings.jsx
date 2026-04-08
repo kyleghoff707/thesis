@@ -140,15 +140,30 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
 
         {/* ── Appearance ── */}
         <SectionHeader label="Appearance" />
-        <SettingSelect
-          label="Theme"
-          value={isDark ? 'dark' : 'light'}
-          onChange={v => { if ((v === 'dark') !== isDark) toggleTheme(); }}
-          options={[
-            { value: 'light', label: 'Light' },
-            { value: 'dark', label: 'Dark' },
-          ]}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0' }}>
+          <div>
+            <span style={{ fontSize: 13, fontWeight: 500, color: C.text }}>Dark mode</span>
+          </div>
+          <button
+            role="switch"
+            aria-checked={isDark}
+            aria-label="Dark mode"
+            onClick={toggleTheme}
+            style={{
+              width: 40, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer',
+              background: isDark ? C.accent : C.border,
+              position: 'relative', transition: 'background .2s', flexShrink: 0,
+            }}
+          >
+            <div style={{
+              width: 16, height: 16, borderRadius: '50%', background: '#fff',
+              position: 'absolute', top: 3,
+              left: isDark ? 21 : 3,
+              transition: 'left .2s',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+            }} />
+          </button>
+        </div>
 
         {/* ── Display Defaults ── */}
         <SectionHeader label="Display Defaults" />
