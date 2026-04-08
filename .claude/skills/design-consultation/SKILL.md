@@ -1,0 +1,1 @@
+/Users/kylehoff/Desktop/stock-analyzer/.claude/skills/gstack/design-consultation/SKILL.md
