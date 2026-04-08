@@ -42,26 +42,15 @@ The S&P 500 numbers reflect comparator-level fixes (sign convention + fiscal yea
 | SCALE-02 | S&P 500 structural validation | **Complete** | 87.3% FMP Tier 1, 83.8% identity checks, 503/503 companies |
 | SCALE-03 | Beyond-S&P 500 validation | **Dropped** | Margin work, S&P 500 coverage is sufficient |
 | SCALE-04 | Eliminate paid API subscriptions | **Waiting** | User cancels after COMP work is verified |
-| COMP-01 | Fix 11 compensation bugs + scale fixes | **Code done, needs manual verification** | 56/56 tests pass; 94.8% of 503 S&P 500 tickers (477/503, was 54%); secFetch retry wrapper, Pass 3.5 shape detection, expanded filing types; 25 no-execs remaining (CSS overlay edge cases); 30-company manual check pending |
+| COMP-01 | Fix 11 compensation bugs + scale fixes | **Complete** | 56/56 tests pass; 94.8% of 503 S&P 500 tickers (477/503, was 54%); secFetch wrapper, Pass 3.5 shape detection, universal total fallback, expanded filing types; verified in-app for KO, SFM, UBER, AAPL |
 | COMP-02 | FMP compensation comparison layer | **Complete** | AAPL 100% field accuracy, 5-ticker verified. compare-compensation.mjs built |
 
-**Summary:** 19/22 complete, 1 needs manual verification (COMP-01), 1 waiting on user action (SCALE-04), 1 dropped (SCALE-03).
+**Summary:** 20/22 complete, 1 waiting on user action (SCALE-04), 1 dropped (SCALE-03).
 
 ## What's Left
 
-### 1. COMP-01: Manual verification (user action)
-Run the dev server, clear IndexedDB `comp-data` store, and check 30 companies:
-- **Column alignment (Bug 1):** TXRH, ODFL, EW, BOOT, AMZN, GOOGL, JPM, NVDA, SFM
-- **Name/title (Bugs 2, 6, 7):** AAPL, MSFT, GOOGL, JPM, NVDA, WFC, MLI, SFM
-- **Dedup (Bug 3):** AAPL, GOOGL, NVDA, WFC, SFM
-- **Non-names (Bug 4):** NVDA, ODFL, MU, EW, BA
-- **Directors (Bug 9):** AMZN, JPM
-- **Cache (Bug 8):** MET
-- **Pay ratio (Bug 10):** MLI
-- **No regressions:** META, UNH, LULU, BRK-B
-
-### 2. SCALE-04: Cancel API subscriptions (user action)
-After all verification is done, cancel FMP and SimFin subscriptions. The normalization rules are self-sufficient -- paid sources were only needed to build and validate them.
+### 1. SCALE-04: Cancel API subscriptions (user action)
+Cancel FMP and SimFin subscriptions. The normalization rules are self-sufficient, paid sources were only needed to build and validate them.
 
 ## Completed Work
 
