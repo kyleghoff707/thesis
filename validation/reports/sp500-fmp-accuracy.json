@@ -1,0 +1,6172 @@
+{
+  "timestamp": "2026-03-27T05:21:07.306Z",
+  "summary": {
+    "totalCompanies": 503,
+    "compared": 503,
+    "skipped": 0,
+    "failed": 0,
+    "tier1Accuracy": 87.3,
+    "tier2Accuracy": 83.8,
+    "tier3Accuracy": 61,
+    "overallAccuracy": 83
+  },
+  "topTier1Failures": [
+    {
+      "field": "operating_income_loss",
+      "companyCount": 250,
+      "avgPct": 88.8
+    },
+    {
+      "field": "short_term_debt",
+      "companyCount": 222,
+      "avgPct": 1229.7
+    },
+    {
+      "field": "long_term_debt",
+      "companyCount": 170,
+      "avgPct": 67.9
+    },
+    {
+      "field": "share_repurchases",
+      "companyCount": 133,
+      "avgPct": 159.9
+    },
+    {
+      "field": "capital_expenditures",
+      "companyCount": 120,
+      "avgPct": 79.9
+    },
+    {
+      "field": "revenues",
+      "companyCount": 94,
+      "avgPct": 42.3
+    },
+    {
+      "field": "cash",
+      "companyCount": 94,
+      "avgPct": 1939
+    },
+    {
+      "field": "income_tax",
+      "companyCount": 91,
+      "avgPct": 90.6
+    },
+    {
+      "field": "diluted_earnings_per_share",
+      "companyCount": 65,
+      "avgPct": 2091405.8
+    },
+    {
+      "field": "retained_earnings",
+      "companyCount": 65,
+      "avgPct": 84.9
+    },
+    {
+      "field": "net_income_loss",
+      "companyCount": 63,
+      "avgPct": 100.3
+    },
+    {
+      "field": "net_cash_flow_from_operating_activities",
+      "companyCount": 62,
+      "avgPct": 81.4
+    },
+    {
+      "field": "liabilities",
+      "companyCount": 51,
+      "avgPct": 46.9
+    },
+    {
+      "field": "diluted_average_shares",
+      "companyCount": 40,
+      "avgPct": 8536.5
+    },
+    {
+      "field": "basic_average_shares",
+      "companyCount": 39,
+      "avgPct": 9117.1
+    }
+  ],
+  "companies": [
+    {
+      "ticker": "A",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 96.7,
+      "overallAccuracy": 92.4,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "AAPL",
+      "status": "OK",
+      "tier1Accuracy": 94.1,
+      "tier2Accuracy": 85.3,
+      "overallAccuracy": 86.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "ABBV",
+      "status": "OK",
+      "tier1Accuracy": 86.9,
+      "tier2Accuracy": 85,
+      "overallAccuracy": 83.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "short_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "ABNB",
+      "status": "OK",
+      "tier1Accuracy": 97.4,
+      "tier2Accuracy": 95.5,
+      "overallAccuracy": 94.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "net_cash_flow_from_operating_activities",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "ABT",
+      "status": "OK",
+      "tier1Accuracy": 94,
+      "tier2Accuracy": 80.7,
+      "overallAccuracy": 85.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "ACGL",
+      "status": "OK",
+      "tier1Accuracy": 86.7,
+      "tier2Accuracy": 67.9,
+      "overallAccuracy": 75.4,
+      "yearsCompared": 4,
+      "topFailures": [
+        "operating_income_loss",
+        "assets",
+        "liabilities"
+      ]
+    },
+    {
+      "ticker": "ACN",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 83.5,
+      "overallAccuracy": 87.9,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "ADBE",
+      "status": "OK",
+      "tier1Accuracy": 97.6,
+      "tier2Accuracy": 92.3,
+      "overallAccuracy": 90,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "ADI",
+      "status": "OK",
+      "tier1Accuracy": 95.1,
+      "tier2Accuracy": 90.4,
+      "overallAccuracy": 91.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "ADM",
+      "status": "OK",
+      "tier1Accuracy": 82.4,
+      "tier2Accuracy": 76.7,
+      "overallAccuracy": 75.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "ADP",
+      "status": "OK",
+      "tier1Accuracy": 90.6,
+      "tier2Accuracy": 84.4,
+      "overallAccuracy": 85.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "ADSK",
+      "status": "OK",
+      "tier1Accuracy": 87.5,
+      "tier2Accuracy": 90.9,
+      "overallAccuracy": 88.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "AEE",
+      "status": "OK",
+      "tier1Accuracy": 90,
+      "tier2Accuracy": 91.7,
+      "overallAccuracy": 81.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "AEP",
+      "status": "OK",
+      "tier1Accuracy": 72.4,
+      "tier2Accuracy": 79.6,
+      "overallAccuracy": 72.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "AES",
+      "status": "OK",
+      "tier1Accuracy": 81.4,
+      "tier2Accuracy": 86.3,
+      "overallAccuracy": 77.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "cash",
+        "equity"
+      ]
+    },
+    {
+      "ticker": "AFL",
+      "status": "OK",
+      "tier1Accuracy": 77.1,
+      "tier2Accuracy": 51.1,
+      "overallAccuracy": 64.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "income_tax",
+        "equity"
+      ]
+    },
+    {
+      "ticker": "AIG",
+      "status": "OK",
+      "tier1Accuracy": 64.6,
+      "tier2Accuracy": 42.9,
+      "overallAccuracy": 61,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "cash",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "AIZ",
+      "status": "OK",
+      "tier1Accuracy": 90,
+      "tier2Accuracy": 71.4,
+      "overallAccuracy": 83.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "diluted_earnings_per_share",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "AJG",
+      "status": "OK",
+      "tier1Accuracy": 75.7,
+      "tier2Accuracy": 82.8,
+      "overallAccuracy": 80.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "AKAM",
+      "status": "OK",
+      "tier1Accuracy": 92,
+      "tier2Accuracy": 91.8,
+      "overallAccuracy": 91.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "ALB",
+      "status": "OK",
+      "tier1Accuracy": 68.3,
+      "tier2Accuracy": 69.1,
+      "overallAccuracy": 68.2,
+      "yearsCompared": 4,
+      "topFailures": [
+        "operating_income_loss",
+        "revenues",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "ALGN",
+      "status": "OK",
+      "tier1Accuracy": 97.4,
+      "tier2Accuracy": 94.1,
+      "overallAccuracy": 88.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "ALL",
+      "status": "OK",
+      "tier1Accuracy": 87.5,
+      "tier2Accuracy": 40,
+      "overallAccuracy": 68.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_earnings_per_share",
+        "long_term_debt",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "ALLE",
+      "status": "OK",
+      "tier1Accuracy": 97.6,
+      "tier2Accuracy": 91.3,
+      "overallAccuracy": 92.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "AMAT",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 88,
+      "overallAccuracy": 90.8,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "AMCR",
+      "status": "OK",
+      "tier1Accuracy": 87.5,
+      "tier2Accuracy": 97.7,
+      "overallAccuracy": 89.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "AMD",
+      "status": "OK",
+      "tier1Accuracy": 94.1,
+      "tier2Accuracy": 96.4,
+      "overallAccuracy": 91.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "AME",
+      "status": "OK",
+      "tier1Accuracy": 97.6,
+      "tier2Accuracy": 94.3,
+      "overallAccuracy": 93.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "AMGN",
+      "status": "OK",
+      "tier1Accuracy": 92.9,
+      "tier2Accuracy": 82.2,
+      "overallAccuracy": 83.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "AMP",
+      "status": "OK",
+      "tier1Accuracy": 72.2,
+      "tier2Accuracy": 51.1,
+      "overallAccuracy": 66,
+      "yearsCompared": 5,
+      "topFailures": [
+        "cash",
+        "diluted_earnings_per_share",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "AMT",
+      "status": "OK",
+      "tier1Accuracy": 83.1,
+      "tier2Accuracy": 73.1,
+      "overallAccuracy": 77.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "income_tax",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "AMZN",
+      "status": "OK",
+      "tier1Accuracy": 97.5,
+      "tier2Accuracy": 98.6,
+      "overallAccuracy": 94.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "ANET",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 94,
+      "overallAccuracy": 92.6,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "AON",
+      "status": "OK",
+      "tier1Accuracy": 98.8,
+      "tier2Accuracy": 94.8,
+      "overallAccuracy": 85.8,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "AOS",
+      "status": "OK",
+      "tier1Accuracy": 93.8,
+      "tier2Accuracy": 95.5,
+      "overallAccuracy": 89.8,
+      "yearsCompared": 4,
+      "topFailures": [
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "APA",
+      "status": "OK",
+      "tier1Accuracy": 75.4,
+      "tier2Accuracy": 77.4,
+      "overallAccuracy": 74.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "net_income_loss",
+        "liabilities"
+      ]
+    },
+    {
+      "ticker": "APD",
+      "status": "OK",
+      "tier1Accuracy": 90.7,
+      "tier2Accuracy": 93.2,
+      "overallAccuracy": 84.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "APH",
+      "status": "OK",
+      "tier1Accuracy": 94.7,
+      "tier2Accuracy": 92,
+      "overallAccuracy": 90.8,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "APO",
+      "status": "OK",
+      "tier1Accuracy": 61.7,
+      "tier2Accuracy": 57.1,
+      "overallAccuracy": 63.2,
+      "yearsCompared": 4,
+      "topFailures": [
+        "cash",
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "APP",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 93.9,
+      "overallAccuracy": 94.5,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "APTV",
+      "status": "OK",
+      "tier1Accuracy": 91.8,
+      "tier2Accuracy": 83.3,
+      "overallAccuracy": 80,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "share_repurchases",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "ARE",
+      "status": "OK",
+      "tier1Accuracy": 91.8,
+      "tier2Accuracy": 75,
+      "overallAccuracy": 83.3,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "ARES",
+      "status": "OK",
+      "tier1Accuracy": 68.1,
+      "tier2Accuracy": 45.2,
+      "overallAccuracy": 64.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "cash",
+        "liabilities",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "ATO",
+      "status": "OK",
+      "tier1Accuracy": 93.2,
+      "tier2Accuracy": 88.7,
+      "overallAccuracy": 81,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "AVB",
+      "status": "OK",
+      "tier1Accuracy": 90,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 93.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "AVGO",
+      "status": "OK",
+      "tier1Accuracy": 93.4,
+      "tier2Accuracy": 90.5,
+      "overallAccuracy": 85.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "AVY",
+      "status": "OK",
+      "tier1Accuracy": 89.4,
+      "tier2Accuracy": 78.4,
+      "overallAccuracy": 79.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "AWK",
+      "status": "OK",
+      "tier1Accuracy": 84.2,
+      "tier2Accuracy": 80.4,
+      "overallAccuracy": 75.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "capital_expenditures",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "AXON",
+      "status": "OK",
+      "tier1Accuracy": 91.5,
+      "tier2Accuracy": 85.3,
+      "overallAccuracy": 82.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_average_shares",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "AXP",
+      "status": "OK",
+      "tier1Accuracy": 85.7,
+      "tier2Accuracy": 97.5,
+      "overallAccuracy": 86,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "AZO",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 97.7,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "BA",
+      "status": "OK",
+      "tier1Accuracy": 81.5,
+      "tier2Accuracy": 73.3,
+      "overallAccuracy": 81.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "BAC",
+      "status": "OK",
+      "tier1Accuracy": 73.1,
+      "tier2Accuracy": 77.8,
+      "overallAccuracy": 68.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "BALL",
+      "status": "OK",
+      "tier1Accuracy": 85,
+      "tier2Accuracy": 75.3,
+      "overallAccuracy": 74.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "BAX",
+      "status": "OK",
+      "tier1Accuracy": 69,
+      "tier2Accuracy": 70,
+      "overallAccuracy": 70.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "revenues",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "BBY",
+      "status": "OK",
+      "tier1Accuracy": 96.3,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 93.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "BDX",
+      "status": "OK",
+      "tier1Accuracy": 80,
+      "tier2Accuracy": 85.9,
+      "overallAccuracy": 83.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "cash",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "BEN",
+      "status": "OK",
+      "tier1Accuracy": 92.5,
+      "tier2Accuracy": 78.2,
+      "overallAccuracy": 86.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "BF-B",
+      "status": "OK",
+      "tier1Accuracy": 94,
+      "tier2Accuracy": 87.5,
+      "overallAccuracy": 89.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "BG",
+      "status": "OK",
+      "tier1Accuracy": 78.4,
+      "tier2Accuracy": 82.7,
+      "overallAccuracy": 75,
+      "yearsCompared": 3,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "BIIB",
+      "status": "OK",
+      "tier1Accuracy": 86.9,
+      "tier2Accuracy": 78.2,
+      "overallAccuracy": 84,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "capital_expenditures",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "BK",
+      "status": "OK",
+      "tier1Accuracy": 71.1,
+      "tier2Accuracy": 43.6,
+      "overallAccuracy": 65.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "cash",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "BKNG",
+      "status": "OK",
+      "tier1Accuracy": 98.8,
+      "tier2Accuracy": 89.5,
+      "overallAccuracy": 91.8,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "BKR",
+      "status": "OK",
+      "tier1Accuracy": 95.6,
+      "tier2Accuracy": 91.3,
+      "overallAccuracy": 88.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "BLDR",
+      "status": "OK",
+      "tier1Accuracy": 98.7,
+      "tier2Accuracy": 86.3,
+      "overallAccuracy": 94,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "BLK",
+      "status": "OK",
+      "tier1Accuracy": 93.5,
+      "tier2Accuracy": 80,
+      "overallAccuracy": 85.9,
+      "yearsCompared": 2,
+      "topFailures": []
+    },
+    {
+      "ticker": "BMY",
+      "status": "OK",
+      "tier1Accuracy": 95.3,
+      "tier2Accuracy": 78.8,
+      "overallAccuracy": 78.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "BR",
+      "status": "OK",
+      "tier1Accuracy": 91.8,
+      "tier2Accuracy": 88.8,
+      "overallAccuracy": 87.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "BRK-B",
+      "status": "OK",
+      "tier1Accuracy": 75,
+      "tier2Accuracy": 75.6,
+      "overallAccuracy": 81.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "BRO",
+      "status": "OK",
+      "tier1Accuracy": 82.1,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 83.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "operating_income_loss",
+        "diluted_average_shares"
+      ]
+    },
+    {
+      "ticker": "BSX",
+      "status": "OK",
+      "tier1Accuracy": 87,
+      "tier2Accuracy": 82.4,
+      "overallAccuracy": 81.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "BX",
+      "status": "OK",
+      "tier1Accuracy": 72.5,
+      "tier2Accuracy": 58,
+      "overallAccuracy": 67.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "long_term_debt",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "BXP",
+      "status": "OK",
+      "tier1Accuracy": 90.8,
+      "tier2Accuracy": 77.5,
+      "overallAccuracy": 83.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "C",
+      "status": "OK",
+      "tier1Accuracy": 74.1,
+      "tier2Accuracy": 85.3,
+      "overallAccuracy": 77.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "CAG",
+      "status": "OK",
+      "tier1Accuracy": 88.2,
+      "tier2Accuracy": 84.7,
+      "overallAccuracy": 85.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "CAH",
+      "status": "OK",
+      "tier1Accuracy": 89.3,
+      "tier2Accuracy": 90.6,
+      "overallAccuracy": 89.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "income_tax",
+        "net_income_loss",
+        "diluted_earnings_per_share"
+      ]
+    },
+    {
+      "ticker": "CARR",
+      "status": "OK",
+      "tier1Accuracy": 67.5,
+      "tier2Accuracy": 70.7,
+      "overallAccuracy": 69.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "income_tax",
+        "revenues",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "CAT",
+      "status": "OK",
+      "tier1Accuracy": 88.2,
+      "tier2Accuracy": 91.8,
+      "overallAccuracy": 84.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "CB",
+      "status": "OK",
+      "tier1Accuracy": 78.8,
+      "tier2Accuracy": 71.4,
+      "overallAccuracy": 73.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "cash",
+        "assets"
+      ]
+    },
+    {
+      "ticker": "CBOE",
+      "status": "OK",
+      "tier1Accuracy": 86.3,
+      "tier2Accuracy": 72,
+      "overallAccuracy": 76.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "net_cash_flow_from_operating_activities",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "CBRE",
+      "status": "OK",
+      "tier1Accuracy": 83.5,
+      "tier2Accuracy": 72.3,
+      "overallAccuracy": 75.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "net_cash_flow_from_operating_activities",
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "CCI",
+      "status": "OK",
+      "tier1Accuracy": 89.4,
+      "tier2Accuracy": 78.8,
+      "overallAccuracy": 78.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "income_tax",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "CCL",
+      "status": "OK",
+      "tier1Accuracy": 95,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 95.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "CDNS",
+      "status": "OK",
+      "tier1Accuracy": 90.7,
+      "tier2Accuracy": 94.3,
+      "overallAccuracy": 91.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "operating_income_loss",
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "CDW",
+      "status": "OK",
+      "tier1Accuracy": 98.8,
+      "tier2Accuracy": 92.5,
+      "overallAccuracy": 95.7,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "CEG",
+      "status": "OK",
+      "tier1Accuracy": 88.1,
+      "tier2Accuracy": 78.3,
+      "overallAccuracy": 75.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "CF",
+      "status": "OK",
+      "tier1Accuracy": 82.5,
+      "tier2Accuracy": 98.8,
+      "overallAccuracy": 91.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "net_income_loss",
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "CFG",
+      "status": "OK",
+      "tier1Accuracy": 77.5,
+      "tier2Accuracy": 87.5,
+      "overallAccuracy": 79.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "CHD",
+      "status": "OK",
+      "tier1Accuracy": 94.1,
+      "tier2Accuracy": 82.2,
+      "overallAccuracy": 88.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "CHRW",
+      "status": "OK",
+      "tier1Accuracy": 95,
+      "tier2Accuracy": 74.5,
+      "overallAccuracy": 84.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "CHTR",
+      "status": "OK",
+      "tier1Accuracy": 91.3,
+      "tier2Accuracy": 90,
+      "overallAccuracy": 92.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "CI",
+      "status": "OK",
+      "tier1Accuracy": 91.4,
+      "tier2Accuracy": 62.5,
+      "overallAccuracy": 72.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "net_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "CIEN",
+      "status": "OK",
+      "tier1Accuracy": 88.8,
+      "tier2Accuracy": 80.7,
+      "overallAccuracy": 86.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "CINF",
+      "status": "OK",
+      "tier1Accuracy": 93.8,
+      "tier2Accuracy": 96.2,
+      "overallAccuracy": 81.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "CL",
+      "status": "OK",
+      "tier1Accuracy": 87.1,
+      "tier2Accuracy": 79.5,
+      "overallAccuracy": 84.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "CLX",
+      "status": "OK",
+      "tier1Accuracy": 92.9,
+      "tier2Accuracy": 88.9,
+      "overallAccuracy": 93,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "CMCSA",
+      "status": "OK",
+      "tier1Accuracy": 89.9,
+      "tier2Accuracy": 86,
+      "overallAccuracy": 85.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "short_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "CME",
+      "status": "OK",
+      "tier1Accuracy": 97.3,
+      "tier2Accuracy": 78.2,
+      "overallAccuracy": 86.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "CMG",
+      "status": "OK",
+      "tier1Accuracy": 97.5,
+      "tier2Accuracy": 90,
+      "overallAccuracy": 93,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "CMI",
+      "status": "OK",
+      "tier1Accuracy": 81.9,
+      "tier2Accuracy": 91.3,
+      "overallAccuracy": 82.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "long_term_debt",
+        "net_income_loss"
+      ]
+    },
+    {
+      "ticker": "CMS",
+      "status": "OK",
+      "tier1Accuracy": 88.9,
+      "tier2Accuracy": 90.5,
+      "overallAccuracy": 79.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "cash"
+      ]
+    },
+    {
+      "ticker": "CNC",
+      "status": "OK",
+      "tier1Accuracy": 90,
+      "tier2Accuracy": 80.9,
+      "overallAccuracy": 82,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "CNP",
+      "status": "OK",
+      "tier1Accuracy": 92.5,
+      "tier2Accuracy": 63.5,
+      "overallAccuracy": 77.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "cash",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "COF",
+      "status": "OK",
+      "tier1Accuracy": 71.8,
+      "tier2Accuracy": 80,
+      "overallAccuracy": 77.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "COHR",
+      "status": "OK",
+      "tier1Accuracy": 85,
+      "tier2Accuracy": 91.7,
+      "overallAccuracy": 88.8,
+      "yearsCompared": 4,
+      "topFailures": [
+        "equity",
+        "operating_income_loss",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "COIN",
+      "status": "OK",
+      "tier1Accuracy": 93.6,
+      "tier2Accuracy": 82.1,
+      "overallAccuracy": 81.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "assets",
+        "liabilities",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "COO",
+      "status": "OK",
+      "tier1Accuracy": 94.1,
+      "tier2Accuracy": 83.7,
+      "overallAccuracy": 88.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_earnings_per_share",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "COP",
+      "status": "OK",
+      "tier1Accuracy": 77.9,
+      "tier2Accuracy": 63.7,
+      "overallAccuracy": 71.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "COR",
+      "status": "OK",
+      "tier1Accuracy": 77.6,
+      "tier2Accuracy": 90,
+      "overallAccuracy": 80.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "long_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "COST",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 90.7,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "CPAY",
+      "status": "OK",
+      "tier1Accuracy": 92.4,
+      "tier2Accuracy": 90,
+      "overallAccuracy": 91,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "CPB",
+      "status": "OK",
+      "tier1Accuracy": 88.8,
+      "tier2Accuracy": 94.1,
+      "overallAccuracy": 88.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "CPRT",
+      "status": "OK",
+      "tier1Accuracy": 95.9,
+      "tier2Accuracy": 96.8,
+      "overallAccuracy": 91.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_earnings_per_share",
+        "diluted_average_shares",
+        "basic_average_shares"
+      ]
+    },
+    {
+      "ticker": "CPT",
+      "status": "OK",
+      "tier1Accuracy": 76.5,
+      "tier2Accuracy": 66.7,
+      "overallAccuracy": 75.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "capital_expenditures",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "CRH",
+      "status": "OK",
+      "tier1Accuracy": 31.4,
+      "tier2Accuracy": 52.2,
+      "overallAccuracy": 46.3,
+      "yearsCompared": 3,
+      "topFailures": [
+        "revenues",
+        "income_tax",
+        "net_income_loss"
+      ]
+    },
+    {
+      "ticker": "CRL",
+      "status": "OK",
+      "tier1Accuracy": 96,
+      "tier2Accuracy": 97.3,
+      "overallAccuracy": 92.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "net_income_loss",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "CRM",
+      "status": "OK",
+      "tier1Accuracy": 74.6,
+      "tier2Accuracy": 71.6,
+      "overallAccuracy": 70.9,
+      "yearsCompared": 4,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "CRWD",
+      "status": "OK",
+      "tier1Accuracy": 74.6,
+      "tier2Accuracy": 71,
+      "overallAccuracy": 69.3,
+      "yearsCompared": 4,
+      "topFailures": [
+        "capital_expenditures",
+        "revenues",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "CSCO",
+      "status": "OK",
+      "tier1Accuracy": 92.9,
+      "tier2Accuracy": 77.3,
+      "overallAccuracy": 82.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "CSGP",
+      "status": "OK",
+      "tier1Accuracy": 80.3,
+      "tier2Accuracy": 92.6,
+      "overallAccuracy": 88.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "diluted_average_shares",
+        "basic_average_shares"
+      ]
+    },
+    {
+      "ticker": "CSX",
+      "status": "OK",
+      "tier1Accuracy": 84,
+      "tier2Accuracy": 91.5,
+      "overallAccuracy": 85,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "CTAS",
+      "status": "OK",
+      "tier1Accuracy": 84.1,
+      "tier2Accuracy": 85.5,
+      "overallAccuracy": 85,
+      "yearsCompared": 5,
+      "topFailures": [
+        "liabilities",
+        "short_term_debt",
+        "diluted_earnings_per_share"
+      ]
+    },
+    {
+      "ticker": "CTRA",
+      "status": "OK",
+      "tier1Accuracy": 92,
+      "tier2Accuracy": 84.2,
+      "overallAccuracy": 83.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "CTSH",
+      "status": "OK",
+      "tier1Accuracy": 92.9,
+      "tier2Accuracy": 92.6,
+      "overallAccuracy": 86.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "income_tax",
+        "short_term_debt",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "CTVA",
+      "status": "OK",
+      "tier1Accuracy": 88.8,
+      "tier2Accuracy": 81.9,
+      "overallAccuracy": 85.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "CVNA",
+      "status": "OK",
+      "tier1Accuracy": 89,
+      "tier2Accuracy": 88.5,
+      "overallAccuracy": 84.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_earnings_per_share",
+        "diluted_average_shares",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "CVS",
+      "status": "OK",
+      "tier1Accuracy": 84.4,
+      "tier2Accuracy": 78.2,
+      "overallAccuracy": 78.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "CVX",
+      "status": "OK",
+      "tier1Accuracy": 76.5,
+      "tier2Accuracy": 73.3,
+      "overallAccuracy": 77.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "D",
+      "status": "OK",
+      "tier1Accuracy": 61.8,
+      "tier2Accuracy": 56.9,
+      "overallAccuracy": 59.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "long_term_debt",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "DAL",
+      "status": "OK",
+      "tier1Accuracy": 92.2,
+      "tier2Accuracy": 88.3,
+      "overallAccuracy": 88.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "DASH",
+      "status": "OK",
+      "tier1Accuracy": 93.2,
+      "tier2Accuracy": 91.5,
+      "overallAccuracy": 89.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "DD",
+      "status": "OK",
+      "tier1Accuracy": 80.5,
+      "tier2Accuracy": 57.5,
+      "overallAccuracy": 69.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "share_repurchases",
+        "net_cash_flow_from_operating_activities"
+      ]
+    },
+    {
+      "ticker": "DDOG",
+      "status": "OK",
+      "tier1Accuracy": 97.1,
+      "tier2Accuracy": 89.7,
+      "overallAccuracy": 90.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "DE",
+      "status": "OK",
+      "tier1Accuracy": 71.8,
+      "tier2Accuracy": 75.4,
+      "overallAccuracy": 73.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "capital_expenditures",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "DECK",
+      "status": "OK",
+      "tier1Accuracy": 92.1,
+      "tier2Accuracy": 83.8,
+      "overallAccuracy": 84,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "liabilities"
+      ]
+    },
+    {
+      "ticker": "DELL",
+      "status": "OK",
+      "tier1Accuracy": 83.5,
+      "tier2Accuracy": 79.3,
+      "overallAccuracy": 81.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "net_income_loss",
+        "diluted_earnings_per_share"
+      ]
+    },
+    {
+      "ticker": "DG",
+      "status": "OK",
+      "tier1Accuracy": 97.3,
+      "tier2Accuracy": 98.6,
+      "overallAccuracy": 97.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "DGX",
+      "status": "OK",
+      "tier1Accuracy": 95,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 94.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "DHI",
+      "status": "OK",
+      "tier1Accuracy": 88,
+      "tier2Accuracy": 88,
+      "overallAccuracy": 84.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "DHR",
+      "status": "OK",
+      "tier1Accuracy": 86.6,
+      "tier2Accuracy": 82.7,
+      "overallAccuracy": 81.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "DIS",
+      "status": "OK",
+      "tier1Accuracy": 84.1,
+      "tier2Accuracy": 89.3,
+      "overallAccuracy": 79.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "liabilities"
+      ]
+    },
+    {
+      "ticker": "DLR",
+      "status": "OK",
+      "tier1Accuracy": 85.1,
+      "tier2Accuracy": 75,
+      "overallAccuracy": 82.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "diluted_average_shares",
+        "basic_average_shares"
+      ]
+    },
+    {
+      "ticker": "DLTR",
+      "status": "OK",
+      "tier1Accuracy": 83.1,
+      "tier2Accuracy": 80.6,
+      "overallAccuracy": 80,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "DOC",
+      "status": "OK",
+      "tier1Accuracy": 78.5,
+      "tier2Accuracy": 71.7,
+      "overallAccuracy": 74.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "DOV",
+      "status": "OK",
+      "tier1Accuracy": 87.1,
+      "tier2Accuracy": 78.4,
+      "overallAccuracy": 84.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "DOW",
+      "status": "OK",
+      "tier1Accuracy": 74.4,
+      "tier2Accuracy": 82.5,
+      "overallAccuracy": 71.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "net_income_loss"
+      ]
+    },
+    {
+      "ticker": "DPZ",
+      "status": "OK",
+      "tier1Accuracy": 72.1,
+      "tier2Accuracy": 80.4,
+      "overallAccuracy": 72.4,
+      "yearsCompared": 4,
+      "topFailures": [
+        "cash",
+        "net_income_loss",
+        "diluted_earnings_per_share"
+      ]
+    },
+    {
+      "ticker": "DRI",
+      "status": "OK",
+      "tier1Accuracy": 88,
+      "tier2Accuracy": 78.2,
+      "overallAccuracy": 79.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "DTE",
+      "status": "OK",
+      "tier1Accuracy": 85.1,
+      "tier2Accuracy": 78.3,
+      "overallAccuracy": 74,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "long_term_debt",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "DUK",
+      "status": "OK",
+      "tier1Accuracy": 81.3,
+      "tier2Accuracy": 60,
+      "overallAccuracy": 70.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "income_tax",
+        "net_income_loss"
+      ]
+    },
+    {
+      "ticker": "DVA",
+      "status": "OK",
+      "tier1Accuracy": 89.3,
+      "tier2Accuracy": 88.6,
+      "overallAccuracy": 85.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_average_shares",
+        "basic_average_shares",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "DVN",
+      "status": "OK",
+      "tier1Accuracy": 79.8,
+      "tier2Accuracy": 95.2,
+      "overallAccuracy": 83.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "capital_expenditures",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "DXCM",
+      "status": "OK",
+      "tier1Accuracy": 89.2,
+      "tier2Accuracy": 89.3,
+      "overallAccuracy": 84.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "income_tax",
+        "net_income_loss",
+        "diluted_average_shares"
+      ]
+    },
+    {
+      "ticker": "EA",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 90.7,
+      "overallAccuracy": 94.2,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "EBAY",
+      "status": "OK",
+      "tier1Accuracy": 88,
+      "tier2Accuracy": 89.6,
+      "overallAccuracy": 84.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "cash",
+        "retained_earnings",
+        "net_cash_flow_from_operating_activities"
+      ]
+    },
+    {
+      "ticker": "ECL",
+      "status": "OK",
+      "tier1Accuracy": 91.3,
+      "tier2Accuracy": 87.1,
+      "overallAccuracy": 84.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "ED",
+      "status": "OK",
+      "tier1Accuracy": 82.7,
+      "tier2Accuracy": 70.5,
+      "overallAccuracy": 74.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "EFX",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 98.5,
+      "overallAccuracy": 94.5,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "EG",
+      "status": "OK",
+      "tier1Accuracy": 81.4,
+      "tier2Accuracy": 70,
+      "overallAccuracy": 67.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "diluted_average_shares",
+        "basic_average_shares"
+      ]
+    },
+    {
+      "ticker": "EIX",
+      "status": "OK",
+      "tier1Accuracy": 89,
+      "tier2Accuracy": 81,
+      "overallAccuracy": 78.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "EL",
+      "status": "OK",
+      "tier1Accuracy": 93.8,
+      "tier2Accuracy": 95.2,
+      "overallAccuracy": 90.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "liabilities",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "ELV",
+      "status": "OK",
+      "tier1Accuracy": 77.6,
+      "tier2Accuracy": 60.3,
+      "overallAccuracy": 67.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "EME",
+      "status": "OK",
+      "tier1Accuracy": 94.7,
+      "tier2Accuracy": 84.9,
+      "overallAccuracy": 87,
+      "yearsCompared": 5,
+      "topFailures": [
+        "income_tax",
+        "liabilities"
+      ]
+    },
+    {
+      "ticker": "EMR",
+      "status": "OK",
+      "tier1Accuracy": 81.2,
+      "tier2Accuracy": 66.7,
+      "overallAccuracy": 73.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "income_tax",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "EOG",
+      "status": "OK",
+      "tier1Accuracy": 80,
+      "tier2Accuracy": 91.7,
+      "overallAccuracy": 83.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "revenues",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "EPAM",
+      "status": "OK",
+      "tier1Accuracy": 98.8,
+      "tier2Accuracy": 92.3,
+      "overallAccuracy": 93.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "EQIX",
+      "status": "OK",
+      "tier1Accuracy": 87.8,
+      "tier2Accuracy": 86.3,
+      "overallAccuracy": 81.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "retained_earnings",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "EQR",
+      "status": "OK",
+      "tier1Accuracy": 82.2,
+      "tier2Accuracy": 66.7,
+      "overallAccuracy": 79,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "long_term_debt",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "EQT",
+      "status": "OK",
+      "tier1Accuracy": 88.8,
+      "tier2Accuracy": 80.6,
+      "overallAccuracy": 83.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_average_shares",
+        "assets",
+        "liabilities"
+      ]
+    },
+    {
+      "ticker": "ERIE",
+      "status": "OK",
+      "tier1Accuracy": 98.2,
+      "tier2Accuracy": 93.8,
+      "overallAccuracy": 81.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "cash"
+      ]
+    },
+    {
+      "ticker": "ES",
+      "status": "OK",
+      "tier1Accuracy": 89.3,
+      "tier2Accuracy": 83.7,
+      "overallAccuracy": 78.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "ESS",
+      "status": "OK",
+      "tier1Accuracy": 78.3,
+      "tier2Accuracy": 88.9,
+      "overallAccuracy": 84.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "net_income_loss",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "ETN",
+      "status": "OK",
+      "tier1Accuracy": 82.4,
+      "tier2Accuracy": 90.9,
+      "overallAccuracy": 80.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "ETR",
+      "status": "OK",
+      "tier1Accuracy": 78.8,
+      "tier2Accuracy": 64.7,
+      "overallAccuracy": 70.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "capital_expenditures",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "EVRG",
+      "status": "OK",
+      "tier1Accuracy": 79,
+      "tier2Accuracy": 78.3,
+      "overallAccuracy": 74,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "cash",
+        "liabilities"
+      ]
+    },
+    {
+      "ticker": "EW",
+      "status": "OK",
+      "tier1Accuracy": 87.5,
+      "tier2Accuracy": 73.5,
+      "overallAccuracy": 78.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "revenues",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "EXC",
+      "status": "OK",
+      "tier1Accuracy": 78.8,
+      "tier2Accuracy": 75.5,
+      "overallAccuracy": 71.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "cash",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "EXE",
+      "status": "OK",
+      "tier1Accuracy": 83.5,
+      "tier2Accuracy": 86.3,
+      "overallAccuracy": 77,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "EXPD",
+      "status": "OK",
+      "tier1Accuracy": 97.4,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 96,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "EXPE",
+      "status": "OK",
+      "tier1Accuracy": 90,
+      "tier2Accuracy": 95.6,
+      "overallAccuracy": 90.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "liabilities",
+        "operating_income_loss",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "EXR",
+      "status": "OK",
+      "tier1Accuracy": 80.7,
+      "tier2Accuracy": 58.8,
+      "overallAccuracy": 70.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "capital_expenditures",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "F",
+      "status": "OK",
+      "tier1Accuracy": 97.3,
+      "tier2Accuracy": 51.3,
+      "overallAccuracy": 76.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "net_income_loss",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "FANG",
+      "status": "OK",
+      "tier1Accuracy": 92.1,
+      "tier2Accuracy": 81.4,
+      "overallAccuracy": 82.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "FAST",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 92.9,
+      "overallAccuracy": 96.4,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "FCX",
+      "status": "OK",
+      "tier1Accuracy": 62.5,
+      "tier2Accuracy": 67.9,
+      "overallAccuracy": 68.1,
+      "yearsCompared": 4,
+      "topFailures": [
+        "net_income_loss",
+        "operating_income_loss",
+        "diluted_earnings_per_share"
+      ]
+    },
+    {
+      "ticker": "FDS",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 89.3,
+      "overallAccuracy": 93.5,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "FDX",
+      "status": "OK",
+      "tier1Accuracy": 87.5,
+      "tier2Accuracy": 85.9,
+      "overallAccuracy": 84.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "FE",
+      "status": "OK",
+      "tier1Accuracy": 88,
+      "tier2Accuracy": 79.1,
+      "overallAccuracy": 81.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "liabilities",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "FFIV",
+      "status": "OK",
+      "tier1Accuracy": 97.4,
+      "tier2Accuracy": 91.8,
+      "overallAccuracy": 87.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "FICO",
+      "status": "OK",
+      "tier1Accuracy": 98.8,
+      "tier2Accuracy": 93.5,
+      "overallAccuracy": 92.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "FIS",
+      "status": "OK",
+      "tier1Accuracy": 76.5,
+      "tier2Accuracy": 64.9,
+      "overallAccuracy": 70.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "FISV",
+      "status": "OK",
+      "tier1Accuracy": 92,
+      "tier2Accuracy": 85.7,
+      "overallAccuracy": 85.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "FITB",
+      "status": "OK",
+      "tier1Accuracy": 81.7,
+      "tier2Accuracy": 77.5,
+      "overallAccuracy": 77.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "FIX",
+      "status": "OK",
+      "tier1Accuracy": 98.8,
+      "tier2Accuracy": 91.3,
+      "overallAccuracy": 90.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "FOX",
+      "status": "OK",
+      "tier1Accuracy": 83.8,
+      "tier2Accuracy": 98.4,
+      "overallAccuracy": 84.7,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "FOXA",
+      "status": "OK",
+      "tier1Accuracy": 83.8,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 85.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "basic_average_shares"
+      ]
+    },
+    {
+      "ticker": "FRT",
+      "status": "OK",
+      "tier1Accuracy": 75,
+      "tier2Accuracy": 58.3,
+      "overallAccuracy": 76,
+      "yearsCompared": 4,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "net_income_loss"
+      ]
+    },
+    {
+      "ticker": "FSLR",
+      "status": "OK",
+      "tier1Accuracy": 98.7,
+      "tier2Accuracy": 83.1,
+      "overallAccuracy": 85.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "FTNT",
+      "status": "OK",
+      "tier1Accuracy": 97.5,
+      "tier2Accuracy": 86.7,
+      "overallAccuracy": 87.9,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "FTV",
+      "status": "OK",
+      "tier1Accuracy": 89.9,
+      "tier2Accuracy": 84.7,
+      "overallAccuracy": 83.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "GD",
+      "status": "OK",
+      "tier1Accuracy": 98.8,
+      "tier2Accuracy": 81.4,
+      "overallAccuracy": 86.8,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "GDDY",
+      "status": "OK",
+      "tier1Accuracy": 92.6,
+      "tier2Accuracy": 92.5,
+      "overallAccuracy": 89.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "GE",
+      "status": "OK",
+      "tier1Accuracy": 63,
+      "tier2Accuracy": 42.6,
+      "overallAccuracy": 51.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "GEHC",
+      "status": "OK",
+      "tier1Accuracy": 98,
+      "tier2Accuracy": 97.3,
+      "overallAccuracy": 85.9,
+      "yearsCompared": 3,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "GEN",
+      "status": "OK",
+      "tier1Accuracy": 90,
+      "tier2Accuracy": 87.5,
+      "overallAccuracy": 82,
+      "yearsCompared": 5,
+      "topFailures": [
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "GEV",
+      "status": "OK",
+      "tier1Accuracy": 90.3,
+      "tier2Accuracy": 84,
+      "overallAccuracy": 80.8,
+      "yearsCompared": 2,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "GILD",
+      "status": "OK",
+      "tier1Accuracy": 95.3,
+      "tier2Accuracy": 85.4,
+      "overallAccuracy": 85.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "GIS",
+      "status": "OK",
+      "tier1Accuracy": 93.8,
+      "tier2Accuracy": 84.4,
+      "overallAccuracy": 82.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "GL",
+      "status": "OK",
+      "tier1Accuracy": 78.8,
+      "tier2Accuracy": 55.3,
+      "overallAccuracy": 66.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "income_tax",
+        "net_income_loss"
+      ]
+    },
+    {
+      "ticker": "GLW",
+      "status": "OK",
+      "tier1Accuracy": 88,
+      "tier2Accuracy": 92.5,
+      "overallAccuracy": 86.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "GM",
+      "status": "OK",
+      "tier1Accuracy": 10,
+      "tier2Accuracy": 32.7,
+      "overallAccuracy": 32.9,
+      "yearsCompared": 4,
+      "topFailures": [
+        "operating_income_loss",
+        "income_tax",
+        "diluted_earnings_per_share"
+      ]
+    },
+    {
+      "ticker": "GNRC",
+      "status": "OK",
+      "tier1Accuracy": 81.2,
+      "tier2Accuracy": 93.3,
+      "overallAccuracy": 89.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "net_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "GOOG",
+      "status": "OK",
+      "tier1Accuracy": 92.4,
+      "tier2Accuracy": 97.4,
+      "overallAccuracy": 89,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "diluted_earnings_per_share",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "GOOGL",
+      "status": "OK",
+      "tier1Accuracy": 92.4,
+      "tier2Accuracy": 97.4,
+      "overallAccuracy": 89,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "diluted_earnings_per_share",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "GPC",
+      "status": "OK",
+      "tier1Accuracy": 90.4,
+      "tier2Accuracy": 98.7,
+      "overallAccuracy": 91.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "GPN",
+      "status": "OK",
+      "tier1Accuracy": 82.5,
+      "tier2Accuracy": 76.3,
+      "overallAccuracy": 77.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "long_term_debt",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "GRMN",
+      "status": "OK",
+      "tier1Accuracy": 94.3,
+      "tier2Accuracy": 94.7,
+      "overallAccuracy": 91.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_average_shares",
+        "basic_average_shares"
+      ]
+    },
+    {
+      "ticker": "GS",
+      "status": "OK",
+      "tier1Accuracy": 77.2,
+      "tier2Accuracy": 97.7,
+      "overallAccuracy": 78,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "long_term_debt",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "GWW",
+      "status": "OK",
+      "tier1Accuracy": 95,
+      "tier2Accuracy": 91.3,
+      "overallAccuracy": 91.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "long_term_debt",
+        "equity"
+      ]
+    },
+    {
+      "ticker": "HAL",
+      "status": "OK",
+      "tier1Accuracy": 94,
+      "tier2Accuracy": 88.3,
+      "overallAccuracy": 85,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "HAS",
+      "status": "OK",
+      "tier1Accuracy": 86.6,
+      "tier2Accuracy": 65.9,
+      "overallAccuracy": 77.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "equity"
+      ]
+    },
+    {
+      "ticker": "HBAN",
+      "status": "OK",
+      "tier1Accuracy": 78.3,
+      "tier2Accuracy": 77.3,
+      "overallAccuracy": 74.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "HCA",
+      "status": "OK",
+      "tier1Accuracy": 91.4,
+      "tier2Accuracy": 90.9,
+      "overallAccuracy": 88,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "HD",
+      "status": "OK",
+      "tier1Accuracy": 89.4,
+      "tier2Accuracy": 86.1,
+      "overallAccuracy": 87.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "HIG",
+      "status": "OK",
+      "tier1Accuracy": 81.2,
+      "tier2Accuracy": 52,
+      "overallAccuracy": 68.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "cash",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "HII",
+      "status": "OK",
+      "tier1Accuracy": 97.4,
+      "tier2Accuracy": 83.1,
+      "overallAccuracy": 82.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "HLT",
+      "status": "OK",
+      "tier1Accuracy": 90.7,
+      "tier2Accuracy": 86.4,
+      "overallAccuracy": 83.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "HOLX",
+      "status": "OK",
+      "tier1Accuracy": 91.3,
+      "tier2Accuracy": 96.4,
+      "overallAccuracy": 88.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "HON",
+      "status": "OK",
+      "tier1Accuracy": 75,
+      "tier2Accuracy": 82.5,
+      "overallAccuracy": 81.4,
+      "yearsCompared": 4,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "HOOD",
+      "status": "OK",
+      "tier1Accuracy": 89.2,
+      "tier2Accuracy": 71.4,
+      "overallAccuracy": 73.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "diluted_earnings_per_share",
+        "diluted_average_shares"
+      ]
+    },
+    {
+      "ticker": "HPE",
+      "status": "OK",
+      "tier1Accuracy": 87.1,
+      "tier2Accuracy": 81.3,
+      "overallAccuracy": 81.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "HPQ",
+      "status": "OK",
+      "tier1Accuracy": 89.4,
+      "tier2Accuracy": 90.8,
+      "overallAccuracy": 82.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "HRL",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 84.5,
+      "overallAccuracy": 85.8,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "HSIC",
+      "status": "OK",
+      "tier1Accuracy": 84.8,
+      "tier2Accuracy": 85,
+      "overallAccuracy": 82.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "HST",
+      "status": "OK",
+      "tier1Accuracy": 85,
+      "tier2Accuracy": 97,
+      "overallAccuracy": 88.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "diluted_average_shares",
+        "basic_average_shares"
+      ]
+    },
+    {
+      "ticker": "HSY",
+      "status": "OK",
+      "tier1Accuracy": 89.2,
+      "tier2Accuracy": 85.9,
+      "overallAccuracy": 84.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "retained_earnings",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "HUBB",
+      "status": "OK",
+      "tier1Accuracy": 94.1,
+      "tier2Accuracy": 92,
+      "overallAccuracy": 88.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "net_cash_flow_from_operating_activities",
+        "diluted_earnings_per_share",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "HUM",
+      "status": "OK",
+      "tier1Accuracy": 82.4,
+      "tier2Accuracy": 71.2,
+      "overallAccuracy": 71.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "HWM",
+      "status": "OK",
+      "tier1Accuracy": 89.4,
+      "tier2Accuracy": 92.3,
+      "overallAccuracy": 87.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "IBKR",
+      "status": "OK",
+      "tier1Accuracy": 81.5,
+      "tier2Accuracy": 56.8,
+      "overallAccuracy": 74.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "net_income_loss"
+      ]
+    },
+    {
+      "ticker": "IBM",
+      "status": "OK",
+      "tier1Accuracy": 82.7,
+      "tier2Accuracy": 87.1,
+      "overallAccuracy": 84.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "ICE",
+      "status": "OK",
+      "tier1Accuracy": 83.5,
+      "tier2Accuracy": 84.1,
+      "overallAccuracy": 78.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "short_term_debt",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "IDXX",
+      "status": "OK",
+      "tier1Accuracy": 97.5,
+      "tier2Accuracy": 90.9,
+      "overallAccuracy": 88.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "IEX",
+      "status": "OK",
+      "tier1Accuracy": 93.8,
+      "tier2Accuracy": 82.6,
+      "overallAccuracy": 87,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "IFF",
+      "status": "OK",
+      "tier1Accuracy": 85.2,
+      "tier2Accuracy": 85.2,
+      "overallAccuracy": 77.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "INCY",
+      "status": "OK",
+      "tier1Accuracy": 88.7,
+      "tier2Accuracy": 90.4,
+      "overallAccuracy": 83.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "capital_expenditures",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "INTC",
+      "status": "OK",
+      "tier1Accuracy": 92.8,
+      "tier2Accuracy": 98.8,
+      "overallAccuracy": 91.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "diluted_average_shares",
+        "basic_average_shares"
+      ]
+    },
+    {
+      "ticker": "INTU",
+      "status": "OK",
+      "tier1Accuracy": 93.8,
+      "tier2Accuracy": 88.6,
+      "overallAccuracy": 87.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "INVH",
+      "status": "OK",
+      "tier1Accuracy": 95.7,
+      "tier2Accuracy": 75,
+      "overallAccuracy": 87.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "IP",
+      "status": "OK",
+      "tier1Accuracy": 87.1,
+      "tier2Accuracy": 81.4,
+      "overallAccuracy": 79.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "revenues",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "IQV",
+      "status": "OK",
+      "tier1Accuracy": 96.3,
+      "tier2Accuracy": 95.7,
+      "overallAccuracy": 94.8,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "IR",
+      "status": "OK",
+      "tier1Accuracy": 93.8,
+      "tier2Accuracy": 81.8,
+      "overallAccuracy": 87.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "IRM",
+      "status": "OK",
+      "tier1Accuracy": 90,
+      "tier2Accuracy": 96.7,
+      "overallAccuracy": 90.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "net_income_loss"
+      ]
+    },
+    {
+      "ticker": "ISRG",
+      "status": "OK",
+      "tier1Accuracy": 97.3,
+      "tier2Accuracy": 92.5,
+      "overallAccuracy": 91.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "liabilities"
+      ]
+    },
+    {
+      "ticker": "IT",
+      "status": "OK",
+      "tier1Accuracy": 96,
+      "tier2Accuracy": 96.2,
+      "overallAccuracy": 92.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "ITW",
+      "status": "OK",
+      "tier1Accuracy": 96.5,
+      "tier2Accuracy": 84.9,
+      "overallAccuracy": 86.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "IVZ",
+      "status": "OK",
+      "tier1Accuracy": 81.3,
+      "tier2Accuracy": 66.7,
+      "overallAccuracy": 78.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "net_income_loss",
+        "long_term_debt",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "J",
+      "status": "OK",
+      "tier1Accuracy": 82.9,
+      "tier2Accuracy": 75.6,
+      "overallAccuracy": 80.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "liabilities",
+        "revenues",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "JBHT",
+      "status": "OK",
+      "tier1Accuracy": 80,
+      "tier2Accuracy": 86.4,
+      "overallAccuracy": 79.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "liabilities",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "JBL",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 92.9,
+      "overallAccuracy": 93.7,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "JCI",
+      "status": "OK",
+      "tier1Accuracy": 68.3,
+      "tier2Accuracy": 70.1,
+      "overallAccuracy": 69.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "JKHY",
+      "status": "OK",
+      "tier1Accuracy": 66.3,
+      "tier2Accuracy": 78.6,
+      "overallAccuracy": 70.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "liabilities",
+        "long_term_debt",
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "JNJ",
+      "status": "OK",
+      "tier1Accuracy": 84.7,
+      "tier2Accuracy": 73.9,
+      "overallAccuracy": 81.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "revenues",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "JPM",
+      "status": "OK",
+      "tier1Accuracy": 74.7,
+      "tier2Accuracy": 71.4,
+      "overallAccuracy": 68.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "revenues",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "KDP",
+      "status": "OK",
+      "tier1Accuracy": 95.2,
+      "tier2Accuracy": 84.3,
+      "overallAccuracy": 84.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "KEY",
+      "status": "OK",
+      "tier1Accuracy": 78.3,
+      "tier2Accuracy": 75.6,
+      "overallAccuracy": 71.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "KEYS",
+      "status": "OK",
+      "tier1Accuracy": 97.6,
+      "tier2Accuracy": 97.6,
+      "overallAccuracy": 91.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "KHC",
+      "status": "OK",
+      "tier1Accuracy": 96.1,
+      "tier2Accuracy": 85.6,
+      "overallAccuracy": 90.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "KIM",
+      "status": "OK",
+      "tier1Accuracy": 84.7,
+      "tier2Accuracy": 69.2,
+      "overallAccuracy": 72.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "income_tax",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "KKR",
+      "status": "OK",
+      "tier1Accuracy": 58,
+      "tier2Accuracy": 54.5,
+      "overallAccuracy": 61.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "share_repurchases",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "KLAC",
+      "status": "OK",
+      "tier1Accuracy": 95.1,
+      "tier2Accuracy": 85.2,
+      "overallAccuracy": 83.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "KMB",
+      "status": "OK",
+      "tier1Accuracy": 95,
+      "tier2Accuracy": 89.4,
+      "overallAccuracy": 90.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "KMI",
+      "status": "OK",
+      "tier1Accuracy": 78.8,
+      "tier2Accuracy": 93.2,
+      "overallAccuracy": 84.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "KO",
+      "status": "OK",
+      "tier1Accuracy": 94,
+      "tier2Accuracy": 90.4,
+      "overallAccuracy": 91.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "KR",
+      "status": "OK",
+      "tier1Accuracy": 57.8,
+      "tier2Accuracy": 63.8,
+      "overallAccuracy": 65.1,
+      "yearsCompared": 4,
+      "topFailures": [
+        "operating_income_loss",
+        "net_income_loss",
+        "diluted_earnings_per_share"
+      ]
+    },
+    {
+      "ticker": "KVUE",
+      "status": "OK",
+      "tier1Accuracy": 93.8,
+      "tier2Accuracy": 77.8,
+      "overallAccuracy": 84.2,
+      "yearsCompared": 3,
+      "topFailures": [
+        "operating_income_loss",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "L",
+      "status": "OK",
+      "tier1Accuracy": 77.3,
+      "tier2Accuracy": 81.5,
+      "overallAccuracy": 76.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "LDOS",
+      "status": "OK",
+      "tier1Accuracy": 87.5,
+      "tier2Accuracy": 90.7,
+      "overallAccuracy": 87.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "cash",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "LEN",
+      "status": "OK",
+      "tier1Accuracy": 97.1,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 91,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "LH",
+      "status": "OK",
+      "tier1Accuracy": 71.6,
+      "tier2Accuracy": 60.3,
+      "overallAccuracy": 70.6,
+      "yearsCompared": 4,
+      "topFailures": [
+        "operating_income_loss",
+        "long_term_debt",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "LHX",
+      "status": "OK",
+      "tier1Accuracy": 87.1,
+      "tier2Accuracy": 75,
+      "overallAccuracy": 80.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "LII",
+      "status": "OK",
+      "tier1Accuracy": 85.9,
+      "tier2Accuracy": 87.7,
+      "overallAccuracy": 82.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "LIN",
+      "status": "OK",
+      "tier1Accuracy": 90.6,
+      "tier2Accuracy": 83.8,
+      "overallAccuracy": 79.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "LITE",
+      "status": "OK",
+      "tier1Accuracy": 83.5,
+      "tier2Accuracy": 97.1,
+      "overallAccuracy": 88.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "share_repurchases",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "LLY",
+      "status": "OK",
+      "tier1Accuracy": 78.8,
+      "tier2Accuracy": 86.7,
+      "overallAccuracy": 79.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "capital_expenditures",
+        "diluted_earnings_per_share"
+      ]
+    },
+    {
+      "ticker": "LMT",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 77.1,
+      "overallAccuracy": 86.8,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "LNT",
+      "status": "OK",
+      "tier1Accuracy": 87.5,
+      "tier2Accuracy": 57.1,
+      "overallAccuracy": 73.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "LOW",
+      "status": "OK",
+      "tier1Accuracy": 77.1,
+      "tier2Accuracy": 80.6,
+      "overallAccuracy": 82.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "long_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "LRCX",
+      "status": "OK",
+      "tier1Accuracy": 96.3,
+      "tier2Accuracy": 95.6,
+      "overallAccuracy": 91.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_earnings_per_share",
+        "diluted_average_shares",
+        "basic_average_shares"
+      ]
+    },
+    {
+      "ticker": "LULU",
+      "status": "OK",
+      "tier1Accuracy": 98.8,
+      "tier2Accuracy": 89.5,
+      "overallAccuracy": 90.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "LUV",
+      "status": "OK",
+      "tier1Accuracy": 93.6,
+      "tier2Accuracy": 90.2,
+      "overallAccuracy": 89.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "LVS",
+      "status": "OK",
+      "tier1Accuracy": 81.1,
+      "tier2Accuracy": 76.9,
+      "overallAccuracy": 79.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "net_cash_flow_from_operating_activities",
+        "operating_income_loss",
+        "diluted_earnings_per_share"
+      ]
+    },
+    {
+      "ticker": "LYB",
+      "status": "OK",
+      "tier1Accuracy": 87.1,
+      "tier2Accuracy": 90.4,
+      "overallAccuracy": 86.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "LYV",
+      "status": "OK",
+      "tier1Accuracy": 75.4,
+      "tier2Accuracy": 98.7,
+      "overallAccuracy": 79,
+      "yearsCompared": 5,
+      "topFailures": [
+        "income_tax",
+        "liabilities",
+        "net_income_loss"
+      ]
+    },
+    {
+      "ticker": "MA",
+      "status": "OK",
+      "tier1Accuracy": 92.5,
+      "tier2Accuracy": 81.4,
+      "overallAccuracy": 79.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "revenues",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "MAA",
+      "status": "OK",
+      "tier1Accuracy": 86.4,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 87.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "MAR",
+      "status": "OK",
+      "tier1Accuracy": 85.9,
+      "tier2Accuracy": 89.6,
+      "overallAccuracy": 81.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "MAS",
+      "status": "OK",
+      "tier1Accuracy": 95,
+      "tier2Accuracy": 94.9,
+      "overallAccuracy": 89.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "MCD",
+      "status": "OK",
+      "tier1Accuracy": 90.4,
+      "tier2Accuracy": 82.3,
+      "overallAccuracy": 87.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_average_shares",
+        "basic_average_shares",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "MCHP",
+      "status": "OK",
+      "tier1Accuracy": 96.2,
+      "tier2Accuracy": 93.3,
+      "overallAccuracy": 93.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_earnings_per_share",
+        "diluted_average_shares",
+        "basic_average_shares"
+      ]
+    },
+    {
+      "ticker": "MCK",
+      "status": "OK",
+      "tier1Accuracy": 80,
+      "tier2Accuracy": 84.5,
+      "overallAccuracy": 81.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "long_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "MCO",
+      "status": "OK",
+      "tier1Accuracy": 87.5,
+      "tier2Accuracy": 80,
+      "overallAccuracy": 80.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "MDLZ",
+      "status": "OK",
+      "tier1Accuracy": 87.5,
+      "tier2Accuracy": 83.3,
+      "overallAccuracy": 81.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "MDT",
+      "status": "OK",
+      "tier1Accuracy": 97.5,
+      "tier2Accuracy": 90.5,
+      "overallAccuracy": 88.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "MET",
+      "status": "OK",
+      "tier1Accuracy": 51.2,
+      "tier2Accuracy": 33.3,
+      "overallAccuracy": 48.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "META",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 97.6,
+      "overallAccuracy": 94.6,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "MGM",
+      "status": "OK",
+      "tier1Accuracy": 92.5,
+      "tier2Accuracy": 87.7,
+      "overallAccuracy": 89.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_earnings_per_share",
+        "income_tax",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "MKC",
+      "status": "OK",
+      "tier1Accuracy": 92.9,
+      "tier2Accuracy": 88.2,
+      "overallAccuracy": 85.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "MLM",
+      "status": "OK",
+      "tier1Accuracy": 93.8,
+      "tier2Accuracy": 90.6,
+      "overallAccuracy": 86.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "MMM",
+      "status": "OK",
+      "tier1Accuracy": 88,
+      "tier2Accuracy": 75.3,
+      "overallAccuracy": 76.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "revenues",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "MNST",
+      "status": "OK",
+      "tier1Accuracy": 93.5,
+      "tier2Accuracy": 87.1,
+      "overallAccuracy": 89.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "MO",
+      "status": "OK",
+      "tier1Accuracy": 85.9,
+      "tier2Accuracy": 85.9,
+      "overallAccuracy": 85.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "short_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "MOS",
+      "status": "OK",
+      "tier1Accuracy": 92.5,
+      "tier2Accuracy": 86.3,
+      "overallAccuracy": 84.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "MPC",
+      "status": "OK",
+      "tier1Accuracy": 91.3,
+      "tier2Accuracy": 77.6,
+      "overallAccuracy": 83.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "diluted_earnings_per_share",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "MPWR",
+      "status": "OK",
+      "tier1Accuracy": 97.3,
+      "tier2Accuracy": 92.7,
+      "overallAccuracy": 88.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "MRK",
+      "status": "OK",
+      "tier1Accuracy": 90.6,
+      "tier2Accuracy": 88,
+      "overallAccuracy": 85.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "net_cash_flow_from_operating_activities"
+      ]
+    },
+    {
+      "ticker": "MRNA",
+      "status": "OK",
+      "tier1Accuracy": 93.4,
+      "tier2Accuracy": 88.2,
+      "overallAccuracy": 87.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "MRSH",
+      "status": "OK",
+      "tier1Accuracy": 91.8,
+      "tier2Accuracy": 87.3,
+      "overallAccuracy": 82.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "assets",
+        "liabilities"
+      ]
+    },
+    {
+      "ticker": "MS",
+      "status": "OK",
+      "tier1Accuracy": 76.9,
+      "tier2Accuracy": 95.6,
+      "overallAccuracy": 79.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "cash",
+        "net_cash_flow_from_operating_activities"
+      ]
+    },
+    {
+      "ticker": "MSCI",
+      "status": "OK",
+      "tier1Accuracy": 96.3,
+      "tier2Accuracy": 89.3,
+      "overallAccuracy": 92.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "MSFT",
+      "status": "OK",
+      "tier1Accuracy": 97.6,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 93.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "MSI",
+      "status": "OK",
+      "tier1Accuracy": 97.6,
+      "tier2Accuracy": 92.9,
+      "overallAccuracy": 92.3,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "MTB",
+      "status": "OK",
+      "tier1Accuracy": 78.3,
+      "tier2Accuracy": 71.4,
+      "overallAccuracy": 75.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "cash",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "MTD",
+      "status": "OK",
+      "tier1Accuracy": 89.4,
+      "tier2Accuracy": 92.9,
+      "overallAccuracy": 89.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "MU",
+      "status": "OK",
+      "tier1Accuracy": 90.6,
+      "tier2Accuracy": 88.6,
+      "overallAccuracy": 88.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "long_term_debt",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "NCLH",
+      "status": "OK",
+      "tier1Accuracy": 94.4,
+      "tier2Accuracy": 84.3,
+      "overallAccuracy": 86.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "NDAQ",
+      "status": "OK",
+      "tier1Accuracy": 97.6,
+      "tier2Accuracy": 81.2,
+      "overallAccuracy": 87.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "cash",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "NDSN",
+      "status": "OK",
+      "tier1Accuracy": 89.2,
+      "tier2Accuracy": 87.2,
+      "overallAccuracy": 87.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "NEE",
+      "status": "OK",
+      "tier1Accuracy": 8,
+      "tier2Accuracy": 26.7,
+      "overallAccuracy": 25.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "income_tax",
+        "assets"
+      ]
+    },
+    {
+      "ticker": "NEM",
+      "status": "OK",
+      "tier1Accuracy": 93.3,
+      "tier2Accuracy": 78.3,
+      "overallAccuracy": 78.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "net_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "NFLX",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 78.3,
+      "overallAccuracy": 87.3,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "NI",
+      "status": "OK",
+      "tier1Accuracy": 76,
+      "tier2Accuracy": 81.3,
+      "overallAccuracy": 74.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "liabilities",
+        "short_term_debt",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "NKE",
+      "status": "OK",
+      "tier1Accuracy": 95.3,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 95.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "NOC",
+      "status": "OK",
+      "tier1Accuracy": 92.5,
+      "tier2Accuracy": 91.4,
+      "overallAccuracy": 82.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "NOW",
+      "status": "OK",
+      "tier1Accuracy": 98.6,
+      "tier2Accuracy": 96.3,
+      "overallAccuracy": 94.9,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "NRG",
+      "status": "OK",
+      "tier1Accuracy": 88.6,
+      "tier2Accuracy": 80.9,
+      "overallAccuracy": 84.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "income_tax",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "NSC",
+      "status": "OK",
+      "tier1Accuracy": 92.4,
+      "tier2Accuracy": 89.8,
+      "overallAccuracy": 87.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "NTAP",
+      "status": "OK",
+      "tier1Accuracy": 91.8,
+      "tier2Accuracy": 97.8,
+      "overallAccuracy": 92.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "NTRS",
+      "status": "OK",
+      "tier1Accuracy": 66.3,
+      "tier2Accuracy": 60,
+      "overallAccuracy": 67.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "cash",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "NUE",
+      "status": "OK",
+      "tier1Accuracy": 90,
+      "tier2Accuracy": 93.8,
+      "overallAccuracy": 88.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "NVDA",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 98.9,
+      "overallAccuracy": 96.4,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "NVR",
+      "status": "OK",
+      "tier1Accuracy": 89.2,
+      "tier2Accuracy": 94.1,
+      "overallAccuracy": 89.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "NWS",
+      "status": "OK",
+      "tier1Accuracy": 82.4,
+      "tier2Accuracy": 63.3,
+      "overallAccuracy": 74.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "income_tax",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "NWSA",
+      "status": "OK",
+      "tier1Accuracy": 89.2,
+      "tier2Accuracy": 75,
+      "overallAccuracy": 82.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "income_tax",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "NXPI",
+      "status": "OK",
+      "tier1Accuracy": 86.7,
+      "tier2Accuracy": 89.4,
+      "overallAccuracy": 85.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "cash",
+        "capital_expenditures",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "O",
+      "status": "OK",
+      "tier1Accuracy": 75.7,
+      "tier2Accuracy": 75,
+      "overallAccuracy": 76.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "ODFL",
+      "status": "OK",
+      "tier1Accuracy": 93.8,
+      "tier2Accuracy": 87.5,
+      "overallAccuracy": 89.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "OKE",
+      "status": "OK",
+      "tier1Accuracy": 88.9,
+      "tier2Accuracy": 79.5,
+      "overallAccuracy": 80.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "OMC",
+      "status": "OK",
+      "tier1Accuracy": 85.9,
+      "tier2Accuracy": 83.8,
+      "overallAccuracy": 87.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "ON",
+      "status": "OK",
+      "tier1Accuracy": 93.8,
+      "tier2Accuracy": 95.2,
+      "overallAccuracy": 94.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "long_term_debt",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "ORCL",
+      "status": "OK",
+      "tier1Accuracy": 92.9,
+      "tier2Accuracy": 82.7,
+      "overallAccuracy": 86.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "ORLY",
+      "status": "OK",
+      "tier1Accuracy": 91.3,
+      "tier2Accuracy": 92.9,
+      "overallAccuracy": 90,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_average_shares"
+      ]
+    },
+    {
+      "ticker": "OTIS",
+      "status": "OK",
+      "tier1Accuracy": 98.8,
+      "tier2Accuracy": 85.3,
+      "overallAccuracy": 83.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "OXY",
+      "status": "OK",
+      "tier1Accuracy": 82.3,
+      "tier2Accuracy": 75.7,
+      "overallAccuracy": 78,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "long_term_debt",
+        "liabilities"
+      ]
+    },
+    {
+      "ticker": "PANW",
+      "status": "OK",
+      "tier1Accuracy": 85.9,
+      "tier2Accuracy": 88,
+      "overallAccuracy": 87.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "diluted_earnings_per_share",
+        "diluted_average_shares"
+      ]
+    },
+    {
+      "ticker": "PAYX",
+      "status": "OK",
+      "tier1Accuracy": 90.6,
+      "tier2Accuracy": 98.6,
+      "overallAccuracy": 89.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "PCAR",
+      "status": "OK",
+      "tier1Accuracy": 80.6,
+      "tier2Accuracy": 60.5,
+      "overallAccuracy": 74.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "operating_income_loss",
+        "diluted_earnings_per_share"
+      ]
+    },
+    {
+      "ticker": "PCG",
+      "status": "OK",
+      "tier1Accuracy": 88.8,
+      "tier2Accuracy": 68.8,
+      "overallAccuracy": 74.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "PEG",
+      "status": "OK",
+      "tier1Accuracy": 84.3,
+      "tier2Accuracy": 59.6,
+      "overallAccuracy": 63.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "liabilities",
+        "short_term_debt",
+        "net_cash_flow_from_operating_activities"
+      ]
+    },
+    {
+      "ticker": "PEP",
+      "status": "OK",
+      "tier1Accuracy": 98.8,
+      "tier2Accuracy": 80,
+      "overallAccuracy": 87.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "PFE",
+      "status": "OK",
+      "tier1Accuracy": 89.3,
+      "tier2Accuracy": 76.7,
+      "overallAccuracy": 82.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "revenues",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "PFG",
+      "status": "OK",
+      "tier1Accuracy": 78.7,
+      "tier2Accuracy": 58.1,
+      "overallAccuracy": 70.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "income_tax",
+        "net_income_loss",
+        "diluted_earnings_per_share"
+      ]
+    },
+    {
+      "ticker": "PG",
+      "status": "OK",
+      "tier1Accuracy": 96.5,
+      "tier2Accuracy": 94.1,
+      "overallAccuracy": 94.3,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "PGR",
+      "status": "OK",
+      "tier1Accuracy": 80,
+      "tier2Accuracy": 72.7,
+      "overallAccuracy": 70.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "cash",
+        "operating_income_loss",
+        "assets"
+      ]
+    },
+    {
+      "ticker": "PH",
+      "status": "OK",
+      "tier1Accuracy": 83.5,
+      "tier2Accuracy": 87.3,
+      "overallAccuracy": 85.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "PHM",
+      "status": "OK",
+      "tier1Accuracy": 75.3,
+      "tier2Accuracy": 93.8,
+      "overallAccuracy": 81.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "PKG",
+      "status": "OK",
+      "tier1Accuracy": 71.3,
+      "tier2Accuracy": 98.8,
+      "overallAccuracy": 84.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_earnings_per_share",
+        "diluted_average_shares",
+        "basic_average_shares"
+      ]
+    },
+    {
+      "ticker": "PLD",
+      "status": "OK",
+      "tier1Accuracy": 80,
+      "tier2Accuracy": 63.6,
+      "overallAccuracy": 72,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "long_term_debt",
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "PLTR",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 94.8,
+      "overallAccuracy": 94.1,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "PM",
+      "status": "OK",
+      "tier1Accuracy": 92.4,
+      "tier2Accuracy": 83.1,
+      "overallAccuracy": 90.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "PNC",
+      "status": "OK",
+      "tier1Accuracy": 69.3,
+      "tier2Accuracy": 80,
+      "overallAccuracy": 73,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "revenues",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "PNR",
+      "status": "OK",
+      "tier1Accuracy": 97.5,
+      "tier2Accuracy": 97.1,
+      "overallAccuracy": 92.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "retained_earnings",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "PNW",
+      "status": "OK",
+      "tier1Accuracy": 81.5,
+      "tier2Accuracy": 75,
+      "overallAccuracy": 75.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "assets",
+        "liabilities"
+      ]
+    },
+    {
+      "ticker": "PODD",
+      "status": "OK",
+      "tier1Accuracy": 89.3,
+      "tier2Accuracy": 92.8,
+      "overallAccuracy": 86.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "cash",
+        "long_term_debt",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "POOL",
+      "status": "OK",
+      "tier1Accuracy": 92.9,
+      "tier2Accuracy": 87.1,
+      "overallAccuracy": 87.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "PPG",
+      "status": "OK",
+      "tier1Accuracy": 80,
+      "tier2Accuracy": 65.9,
+      "overallAccuracy": 73.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "revenues",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "PPL",
+      "status": "OK",
+      "tier1Accuracy": 36.4,
+      "tier2Accuracy": 42.3,
+      "overallAccuracy": 43.2,
+      "yearsCompared": 2,
+      "topFailures": [
+        "liabilities",
+        "short_term_debt",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "PRU",
+      "status": "OK",
+      "tier1Accuracy": 72.2,
+      "tier2Accuracy": 41,
+      "overallAccuracy": 59.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "PSA",
+      "status": "OK",
+      "tier1Accuracy": 95.6,
+      "tier2Accuracy": 82.9,
+      "overallAccuracy": 90.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "PSKY",
+      "status": "OK",
+      "tier1Accuracy": 40,
+      "tier2Accuracy": 54.5,
+      "overallAccuracy": 48.7,
+      "yearsCompared": 1,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "PSX",
+      "status": "OK",
+      "tier1Accuracy": 92,
+      "tier2Accuracy": 75.6,
+      "overallAccuracy": 81.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "PTC",
+      "status": "OK",
+      "tier1Accuracy": 95,
+      "tier2Accuracy": 94.1,
+      "overallAccuracy": 94,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "PWR",
+      "status": "OK",
+      "tier1Accuracy": 91.3,
+      "tier2Accuracy": 83.6,
+      "overallAccuracy": 87.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "income_tax",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "PYPL",
+      "status": "OK",
+      "tier1Accuracy": 98.8,
+      "tier2Accuracy": 80.9,
+      "overallAccuracy": 88.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "net_cash_flow_from_operating_activities"
+      ]
+    },
+    {
+      "ticker": "Q",
+      "status": "OK",
+      "tier1Accuracy": 75,
+      "tier2Accuracy": 50,
+      "overallAccuracy": 65.9,
+      "yearsCompared": 1,
+      "topFailures": [
+        "operating_income_loss",
+        "net_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "QCOM",
+      "status": "OK",
+      "tier1Accuracy": 95.3,
+      "tier2Accuracy": 82.2,
+      "overallAccuracy": 87.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "RCL",
+      "status": "OK",
+      "tier1Accuracy": 94.7,
+      "tier2Accuracy": 88,
+      "overallAccuracy": 91.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "REG",
+      "status": "OK",
+      "tier1Accuracy": 61.4,
+      "tier2Accuracy": 70.2,
+      "overallAccuracy": 67.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "share_repurchases",
+        "cash"
+      ]
+    },
+    {
+      "ticker": "REGN",
+      "status": "OK",
+      "tier1Accuracy": 91.3,
+      "tier2Accuracy": 95.5,
+      "overallAccuracy": 95.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "operating_income_loss",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "RF",
+      "status": "OK",
+      "tier1Accuracy": 87.3,
+      "tier2Accuracy": 70.6,
+      "overallAccuracy": 83.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "share_repurchases",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "RJF",
+      "status": "OK",
+      "tier1Accuracy": 83.6,
+      "tier2Accuracy": 97.8,
+      "overallAccuracy": 84.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "long_term_debt",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "RL",
+      "status": "OK",
+      "tier1Accuracy": 92.9,
+      "tier2Accuracy": 93.8,
+      "overallAccuracy": 90,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "RMD",
+      "status": "OK",
+      "tier1Accuracy": 94,
+      "tier2Accuracy": 86.4,
+      "overallAccuracy": 89.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "ROK",
+      "status": "OK",
+      "tier1Accuracy": 87.8,
+      "tier2Accuracy": 96.6,
+      "overallAccuracy": 88.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "ROL",
+      "status": "OK",
+      "tier1Accuracy": 85.5,
+      "tier2Accuracy": 81.5,
+      "overallAccuracy": 78.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "long_term_debt",
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "ROP",
+      "status": "OK",
+      "tier1Accuracy": 87.3,
+      "tier2Accuracy": 71.8,
+      "overallAccuracy": 82.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "net_income_loss",
+        "diluted_earnings_per_share",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "ROST",
+      "status": "OK",
+      "tier1Accuracy": 89.1,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 93.8,
+      "yearsCompared": 4,
+      "topFailures": [
+        "operating_income_loss",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "RSG",
+      "status": "OK",
+      "tier1Accuracy": 92.5,
+      "tier2Accuracy": 73.2,
+      "overallAccuracy": 78.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "RTX",
+      "status": "OK",
+      "tier1Accuracy": 79.8,
+      "tier2Accuracy": 83.5,
+      "overallAccuracy": 80.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "capital_expenditures",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "RVTY",
+      "status": "OK",
+      "tier1Accuracy": 79,
+      "tier2Accuracy": 70.1,
+      "overallAccuracy": 72.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "income_tax",
+        "operating_income_loss",
+        "net_income_loss"
+      ]
+    },
+    {
+      "ticker": "SATS",
+      "status": "OK",
+      "tier1Accuracy": 65.4,
+      "tier2Accuracy": 61.2,
+      "overallAccuracy": 65.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "income_tax",
+        "net_income_loss",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "SBAC",
+      "status": "OK",
+      "tier1Accuracy": 95,
+      "tier2Accuracy": 69.2,
+      "overallAccuracy": 83,
+      "yearsCompared": 5,
+      "topFailures": [
+        "cash"
+      ]
+    },
+    {
+      "ticker": "SBUX",
+      "status": "OK",
+      "tier1Accuracy": 92.9,
+      "tier2Accuracy": 91.4,
+      "overallAccuracy": 90.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "SCHW",
+      "status": "OK",
+      "tier1Accuracy": 76.5,
+      "tier2Accuracy": 89.5,
+      "overallAccuracy": 74.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "revenues",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "SHW",
+      "status": "OK",
+      "tier1Accuracy": 87.1,
+      "tier2Accuracy": 87.5,
+      "overallAccuracy": 81.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "SJM",
+      "status": "OK",
+      "tier1Accuracy": 96.2,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 90.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "SLB",
+      "status": "OK",
+      "tier1Accuracy": 80.5,
+      "tier2Accuracy": 88,
+      "overallAccuracy": 83.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "capital_expenditures",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "SMCI",
+      "status": "OK",
+      "tier1Accuracy": 88.9,
+      "tier2Accuracy": 93.6,
+      "overallAccuracy": 88.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_earnings_per_share",
+        "diluted_average_shares",
+        "basic_average_shares"
+      ]
+    },
+    {
+      "ticker": "SNA",
+      "status": "OK",
+      "tier1Accuracy": 92.1,
+      "tier2Accuracy": 85.3,
+      "overallAccuracy": 86.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "SNDK",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 87.5,
+      "overallAccuracy": 92.7,
+      "yearsCompared": 1,
+      "topFailures": []
+    },
+    {
+      "ticker": "SNPS",
+      "status": "OK",
+      "tier1Accuracy": 87.8,
+      "tier2Accuracy": 85.2,
+      "overallAccuracy": 88,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "SO",
+      "status": "OK",
+      "tier1Accuracy": 85.3,
+      "tier2Accuracy": 79.2,
+      "overallAccuracy": 71.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "SOLV",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 85.3,
+      "overallAccuracy": 89,
+      "yearsCompared": 2,
+      "topFailures": []
+    },
+    {
+      "ticker": "SPG",
+      "status": "OK",
+      "tier1Accuracy": 78.9,
+      "tier2Accuracy": 44,
+      "overallAccuracy": 74.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "net_income_loss",
+        "share_repurchases",
+        "diluted_earnings_per_share"
+      ]
+    },
+    {
+      "ticker": "SPGI",
+      "status": "OK",
+      "tier1Accuracy": 97,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 91.2,
+      "yearsCompared": 4,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "SRE",
+      "status": "OK",
+      "tier1Accuracy": 67.5,
+      "tier2Accuracy": 77.8,
+      "overallAccuracy": 70.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "long_term_debt",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "STE",
+      "status": "OK",
+      "tier1Accuracy": 91.8,
+      "tier2Accuracy": 85.4,
+      "overallAccuracy": 85.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "STLD",
+      "status": "OK",
+      "tier1Accuracy": 97.5,
+      "tier2Accuracy": 96.3,
+      "overallAccuracy": 93.8,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "STT",
+      "status": "OK",
+      "tier1Accuracy": 70,
+      "tier2Accuracy": 80,
+      "overallAccuracy": 73.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "cash",
+        "short_term_debt",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "STX",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 92.9,
+      "overallAccuracy": 92.5,
+      "yearsCompared": 4,
+      "topFailures": []
+    },
+    {
+      "ticker": "STZ",
+      "status": "OK",
+      "tier1Accuracy": 85.7,
+      "tier2Accuracy": 86.5,
+      "overallAccuracy": 79.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "SW",
+      "status": "OK",
+      "tier1Accuracy": 52.9,
+      "tier2Accuracy": 65.6,
+      "overallAccuracy": 58.5,
+      "yearsCompared": 2,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "SWK",
+      "status": "OK",
+      "tier1Accuracy": 83.5,
+      "tier2Accuracy": 76.3,
+      "overallAccuracy": 78.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "net_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "SWKS",
+      "status": "OK",
+      "tier1Accuracy": 90.5,
+      "tier2Accuracy": 96.5,
+      "overallAccuracy": 86.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "SYF",
+      "status": "OK",
+      "tier1Accuracy": 90,
+      "tier2Accuracy": 97.1,
+      "overallAccuracy": 87.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "SYK",
+      "status": "OK",
+      "tier1Accuracy": 85.2,
+      "tier2Accuracy": 81.2,
+      "overallAccuracy": 81.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "SYY",
+      "status": "OK",
+      "tier1Accuracy": 97.4,
+      "tier2Accuracy": 90,
+      "overallAccuracy": 92.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "net_cash_flow_from_operating_activities"
+      ]
+    },
+    {
+      "ticker": "T",
+      "status": "OK",
+      "tier1Accuracy": 69.4,
+      "tier2Accuracy": 77.6,
+      "overallAccuracy": 73.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "equity",
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "TAP",
+      "status": "OK",
+      "tier1Accuracy": 91.7,
+      "tier2Accuracy": 85.9,
+      "overallAccuracy": 88.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "TDG",
+      "status": "OK",
+      "tier1Accuracy": 90.4,
+      "tier2Accuracy": 88.2,
+      "overallAccuracy": 88.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "basic_average_shares",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "TDY",
+      "status": "OK",
+      "tier1Accuracy": 98.7,
+      "tier2Accuracy": 78.1,
+      "overallAccuracy": 83.6,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "TECH",
+      "status": "OK",
+      "tier1Accuracy": 96,
+      "tier2Accuracy": 92.8,
+      "overallAccuracy": 90.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_earnings_per_share",
+        "diluted_average_shares",
+        "basic_average_shares"
+      ]
+    },
+    {
+      "ticker": "TEL",
+      "status": "OK",
+      "tier1Accuracy": 83.5,
+      "tier2Accuracy": 92,
+      "overallAccuracy": 85.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "long_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "TER",
+      "status": "OK",
+      "tier1Accuracy": 93.4,
+      "tier2Accuracy": 86.7,
+      "overallAccuracy": 83,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "TFC",
+      "status": "OK",
+      "tier1Accuracy": 77.9,
+      "tier2Accuracy": 45,
+      "overallAccuracy": 69.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "short_term_debt",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "TGT",
+      "status": "OK",
+      "tier1Accuracy": 90,
+      "tier2Accuracy": 91.2,
+      "overallAccuracy": 84.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "TJX",
+      "status": "OK",
+      "tier1Accuracy": 93.8,
+      "tier2Accuracy": 87.5,
+      "overallAccuracy": 85.2,
+      "yearsCompared": 4,
+      "topFailures": []
+    },
+    {
+      "ticker": "TKO",
+      "status": "OK",
+      "tier1Accuracy": 91.1,
+      "tier2Accuracy": 69.2,
+      "overallAccuracy": 82.5,
+      "yearsCompared": 3,
+      "topFailures": [
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "TMO",
+      "status": "OK",
+      "tier1Accuracy": 81.2,
+      "tier2Accuracy": 84.9,
+      "overallAccuracy": 84.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "short_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "TMUS",
+      "status": "OK",
+      "tier1Accuracy": 87.1,
+      "tier2Accuracy": 84.5,
+      "overallAccuracy": 87.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "short_term_debt",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "TPL",
+      "status": "OK",
+      "tier1Accuracy": 91.5,
+      "tier2Accuracy": 79.5,
+      "overallAccuracy": 84.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "TPR",
+      "status": "OK",
+      "tier1Accuracy": 98.8,
+      "tier2Accuracy": 84.3,
+      "overallAccuracy": 85.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "TRGP",
+      "status": "OK",
+      "tier1Accuracy": 58.5,
+      "tier2Accuracy": 61.5,
+      "overallAccuracy": 59.3,
+      "yearsCompared": 4,
+      "topFailures": [
+        "revenues",
+        "long_term_debt",
+        "net_income_loss"
+      ]
+    },
+    {
+      "ticker": "TRMB",
+      "status": "OK",
+      "tier1Accuracy": 94,
+      "tier2Accuracy": 97.6,
+      "overallAccuracy": 91.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "TROW",
+      "status": "OK",
+      "tier1Accuracy": 92,
+      "tier2Accuracy": 80,
+      "overallAccuracy": 83,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "liabilities"
+      ]
+    },
+    {
+      "ticker": "TRV",
+      "status": "OK",
+      "tier1Accuracy": 85.3,
+      "tier2Accuracy": 80,
+      "overallAccuracy": 81.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "cash",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "TSCO",
+      "status": "OK",
+      "tier1Accuracy": 95,
+      "tier2Accuracy": 94.5,
+      "overallAccuracy": 94.5,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "TSLA",
+      "status": "OK",
+      "tier1Accuracy": 88.8,
+      "tier2Accuracy": 84.3,
+      "overallAccuracy": 81.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_earnings_per_share",
+        "diluted_average_shares",
+        "basic_average_shares"
+      ]
+    },
+    {
+      "ticker": "TSN",
+      "status": "OK",
+      "tier1Accuracy": 94.3,
+      "tier2Accuracy": 93.8,
+      "overallAccuracy": 92.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_average_shares",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "TT",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 84.3,
+      "overallAccuracy": 88.7,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "TTD",
+      "status": "OK",
+      "tier1Accuracy": 91.8,
+      "tier2Accuracy": 90,
+      "overallAccuracy": 90.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "TTWO",
+      "status": "OK",
+      "tier1Accuracy": 100,
+      "tier2Accuracy": 68.8,
+      "overallAccuracy": 81,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "TXN",
+      "status": "OK",
+      "tier1Accuracy": 89.4,
+      "tier2Accuracy": 93.3,
+      "overallAccuracy": 84.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "TXT",
+      "status": "OK",
+      "tier1Accuracy": 80.3,
+      "tier2Accuracy": 75.9,
+      "overallAccuracy": 81.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "net_cash_flow_from_operating_activities",
+        "capital_expenditures",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "TYL",
+      "status": "OK",
+      "tier1Accuracy": 89.9,
+      "tier2Accuracy": 73.3,
+      "overallAccuracy": 85.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "long_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "UAL",
+      "status": "OK",
+      "tier1Accuracy": 92.4,
+      "tier2Accuracy": 88.3,
+      "overallAccuracy": 86.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "UBER",
+      "status": "OK",
+      "tier1Accuracy": 91,
+      "tier2Accuracy": 93.2,
+      "overallAccuracy": 84.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "cash",
+        "short_term_debt",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "UDR",
+      "status": "OK",
+      "tier1Accuracy": 87.1,
+      "tier2Accuracy": 45,
+      "overallAccuracy": 73.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "share_repurchases",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "UHS",
+      "status": "OK",
+      "tier1Accuracy": 93.8,
+      "tier2Accuracy": 86.7,
+      "overallAccuracy": 86.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "retained_earnings",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "ULTA",
+      "status": "OK",
+      "tier1Accuracy": 86.3,
+      "tier2Accuracy": 98.6,
+      "overallAccuracy": 90.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "UNH",
+      "status": "OK",
+      "tier1Accuracy": 92.9,
+      "tier2Accuracy": 70.2,
+      "overallAccuracy": 81,
+      "yearsCompared": 5,
+      "topFailures": [
+        "equity",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "UNP",
+      "status": "OK",
+      "tier1Accuracy": 88.2,
+      "tier2Accuracy": 93.8,
+      "overallAccuracy": 91.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "UPS",
+      "status": "OK",
+      "tier1Accuracy": 89.2,
+      "tier2Accuracy": 98.4,
+      "overallAccuracy": 84.4,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "operating_income_loss",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "URI",
+      "status": "OK",
+      "tier1Accuracy": 85.7,
+      "tier2Accuracy": 84,
+      "overallAccuracy": 87,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "long_term_debt",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "USB",
+      "status": "OK",
+      "tier1Accuracy": 86.5,
+      "tier2Accuracy": 81.8,
+      "overallAccuracy": 81,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "revenues",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "V",
+      "status": "OK",
+      "tier1Accuracy": 96.9,
+      "tier2Accuracy": 78.9,
+      "overallAccuracy": 88.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "cash",
+        "share_repurchases"
+      ]
+    },
+    {
+      "ticker": "VICI",
+      "status": "OK",
+      "tier1Accuracy": 97.3,
+      "tier2Accuracy": 80.5,
+      "overallAccuracy": 86.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "VLO",
+      "status": "OK",
+      "tier1Accuracy": 84.5,
+      "tier2Accuracy": 76.3,
+      "overallAccuracy": 79.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "capital_expenditures",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "VLTO",
+      "status": "OK",
+      "tier1Accuracy": 97.8,
+      "tier2Accuracy": 91.8,
+      "overallAccuracy": 88.3,
+      "yearsCompared": 3,
+      "topFailures": [
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "VMC",
+      "status": "OK",
+      "tier1Accuracy": 88.2,
+      "tier2Accuracy": 93.2,
+      "overallAccuracy": 88.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "share_repurchases",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "VRSK",
+      "status": "OK",
+      "tier1Accuracy": 80,
+      "tier2Accuracy": 67.9,
+      "overallAccuracy": 69.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "revenues",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "VRSN",
+      "status": "OK",
+      "tier1Accuracy": 96,
+      "tier2Accuracy": 86.7,
+      "overallAccuracy": 87.7,
+      "yearsCompared": 5,
+      "topFailures": []
+    },
+    {
+      "ticker": "VRT",
+      "status": "OK",
+      "tier1Accuracy": 82.1,
+      "tier2Accuracy": 84.4,
+      "overallAccuracy": 82.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "long_term_debt",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "VRTX",
+      "status": "OK",
+      "tier1Accuracy": 94.7,
+      "tier2Accuracy": 97.6,
+      "overallAccuracy": 89.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "liabilities",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "VST",
+      "status": "OK",
+      "tier1Accuracy": 6.3,
+      "tier2Accuracy": 21.6,
+      "overallAccuracy": 23.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "income_tax",
+        "diluted_earnings_per_share"
+      ]
+    },
+    {
+      "ticker": "VTR",
+      "status": "OK",
+      "tier1Accuracy": 57.5,
+      "tier2Accuracy": 66.7,
+      "overallAccuracy": 64.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "operating_income_loss",
+        "net_income_loss"
+      ]
+    },
+    {
+      "ticker": "VTRS",
+      "status": "OK",
+      "tier1Accuracy": 86.7,
+      "tier2Accuracy": 93.3,
+      "overallAccuracy": 85.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "VZ",
+      "status": "OK",
+      "tier1Accuracy": 81.4,
+      "tier2Accuracy": 90.2,
+      "overallAccuracy": 81,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "WAB",
+      "status": "OK",
+      "tier1Accuracy": 95.1,
+      "tier2Accuracy": 88.2,
+      "overallAccuracy": 88.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "WAT",
+      "status": "OK",
+      "tier1Accuracy": 96.1,
+      "tier2Accuracy": 90.6,
+      "overallAccuracy": 86.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "long_term_debt",
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "WBD",
+      "status": "OK",
+      "tier1Accuracy": 94.6,
+      "tier2Accuracy": 72.6,
+      "overallAccuracy": 83.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "WDAY",
+      "status": "OK",
+      "tier1Accuracy": 92.1,
+      "tier2Accuracy": 95,
+      "overallAccuracy": 88,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "WDC",
+      "status": "OK",
+      "tier1Accuracy": 68.8,
+      "tier2Accuracy": 74.1,
+      "overallAccuracy": 71.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "operating_income_loss",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "WEC",
+      "status": "OK",
+      "tier1Accuracy": 83.3,
+      "tier2Accuracy": 66.7,
+      "overallAccuracy": 76.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "capital_expenditures",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "WELL",
+      "status": "OK",
+      "tier1Accuracy": 74,
+      "tier2Accuracy": 68.4,
+      "overallAccuracy": 73,
+      "yearsCompared": 5,
+      "topFailures": [
+        "retained_earnings",
+        "operating_income_loss",
+        "net_income_loss"
+      ]
+    },
+    {
+      "ticker": "WFC",
+      "status": "OK",
+      "tier1Accuracy": 73.3,
+      "tier2Accuracy": 46.8,
+      "overallAccuracy": 61.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "share_repurchases",
+        "income_tax"
+      ]
+    },
+    {
+      "ticker": "WM",
+      "status": "OK",
+      "tier1Accuracy": 88.8,
+      "tier2Accuracy": 70,
+      "overallAccuracy": 78.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss",
+        "capital_expenditures",
+        "retained_earnings"
+      ]
+    },
+    {
+      "ticker": "WMB",
+      "status": "OK",
+      "tier1Accuracy": 84.4,
+      "tier2Accuracy": 96.7,
+      "overallAccuracy": 84.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "revenues",
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "WMT",
+      "status": "OK",
+      "tier1Accuracy": 89.4,
+      "tier2Accuracy": 78.7,
+      "overallAccuracy": 85.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "diluted_earnings_per_share",
+        "diluted_average_shares"
+      ]
+    },
+    {
+      "ticker": "WRB",
+      "status": "OK",
+      "tier1Accuracy": 78.6,
+      "tier2Accuracy": 59.1,
+      "overallAccuracy": 80.2,
+      "yearsCompared": 3,
+      "topFailures": [
+        "operating_income_loss",
+        "diluted_average_shares",
+        "basic_average_shares"
+      ]
+    },
+    {
+      "ticker": "WSM",
+      "status": "OK",
+      "tier1Accuracy": 96,
+      "tier2Accuracy": 100,
+      "overallAccuracy": 97,
+      "yearsCompared": 5,
+      "topFailures": [
+        "diluted_earnings_per_share",
+        "diluted_average_shares",
+        "basic_average_shares"
+      ]
+    },
+    {
+      "ticker": "WST",
+      "status": "OK",
+      "tier1Accuracy": 88.8,
+      "tier2Accuracy": 94.4,
+      "overallAccuracy": 88.8,
+      "yearsCompared": 5,
+      "topFailures": [
+        "share_repurchases",
+        "operating_income_loss",
+        "long_term_debt"
+      ]
+    },
+    {
+      "ticker": "WTW",
+      "status": "OK",
+      "tier1Accuracy": 63,
+      "tier2Accuracy": 69.7,
+      "overallAccuracy": 57.9,
+      "yearsCompared": 3,
+      "topFailures": [
+        "operating_income_loss",
+        "income_tax",
+        "net_income_loss"
+      ]
+    },
+    {
+      "ticker": "WY",
+      "status": "OK",
+      "tier1Accuracy": 98.7,
+      "tier2Accuracy": 84.3,
+      "overallAccuracy": 89,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "WYNN",
+      "status": "OK",
+      "tier1Accuracy": 92.5,
+      "tier2Accuracy": 95.9,
+      "overallAccuracy": 92.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "XEL",
+      "status": "OK",
+      "tier1Accuracy": 90.1,
+      "tier2Accuracy": 77.8,
+      "overallAccuracy": 80.1,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt",
+        "operating_income_loss",
+        "capital_expenditures"
+      ]
+    },
+    {
+      "ticker": "XOM",
+      "status": "OK",
+      "tier1Accuracy": 88,
+      "tier2Accuracy": 83.6,
+      "overallAccuracy": 81.7,
+      "yearsCompared": 5,
+      "topFailures": [
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "XYL",
+      "status": "OK",
+      "tier1Accuracy": 97.6,
+      "tier2Accuracy": 92,
+      "overallAccuracy": 90.9,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "XYZ",
+      "status": "OK",
+      "tier1Accuracy": 84.6,
+      "tier2Accuracy": 75.6,
+      "overallAccuracy": 75,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "cash",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "YUM",
+      "status": "OK",
+      "tier1Accuracy": 93.8,
+      "tier2Accuracy": 72.3,
+      "overallAccuracy": 78.2,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    },
+    {
+      "ticker": "ZBH",
+      "status": "OK",
+      "tier1Accuracy": 86.1,
+      "tier2Accuracy": 75.3,
+      "overallAccuracy": 78.6,
+      "yearsCompared": 5,
+      "topFailures": [
+        "capital_expenditures",
+        "operating_income_loss",
+        "revenues"
+      ]
+    },
+    {
+      "ticker": "ZBRA",
+      "status": "OK",
+      "tier1Accuracy": 96.3,
+      "tier2Accuracy": 98.8,
+      "overallAccuracy": 94.3,
+      "yearsCompared": 5,
+      "topFailures": [
+        "long_term_debt",
+        "operating_income_loss"
+      ]
+    },
+    {
+      "ticker": "ZTS",
+      "status": "OK",
+      "tier1Accuracy": 90.6,
+      "tier2Accuracy": 91.1,
+      "overallAccuracy": 88.5,
+      "yearsCompared": 5,
+      "topFailures": [
+        "short_term_debt"
+      ]
+    }
+  ]
+}

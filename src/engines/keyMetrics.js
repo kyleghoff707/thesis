@@ -1,8 +1,8 @@
-// Key Metrics — 62 derived metrics matching Rule One Toolbox Key Metrics export
+// Key Metrics — 61 derived metrics matching Rule One Toolbox Key Metrics export
 // Computed from EDGAR financial statement data (edgarFinancials.js output).
 //
-// Categories: Per Share (18), Shares (3), Liquidity (4), Profitability (10),
-//             Debt Ratios (7), Operating (11), Price (9)
+// Categories: Per Share (15), Shares (3), Liquidity (5), Profitability (10),
+//             Debt Ratios (8), Operating (12), Price (8)
 
 // ─── Helpers ─────────────────────────────────────────────────
 
@@ -97,6 +97,9 @@ export function computeKeyMetrics(edgarData, latestPrice = null) {
       prevInc.diluted_average_shares ?? prevBal.shares_outstanding
     );
 
+    // Payout Ratio (null when EPS <= 0 — negative payout ratio is meaningless)
+    const payoutRatio = epsDiluted != null && epsDiluted > 0 ? safeDiv(dps, epsDiluted) : null;
+
     // Profitability
     const grossMargin = safeDiv(grossProfit, revenue);
     const ebitMargin = safeDiv(ebit, revenue);
@@ -116,6 +119,8 @@ export function computeKeyMetrics(edgarData, latestPrice = null) {
     const cashRatio = safeDiv(cash, currentLiabilities);
     const currentRatio = safeDiv(currentAssets, currentLiabilities);
     const tie = safeDiv(operatingIncome, interestExpense);
+    const workingCapital = (currentAssets != null && currentLiabilities != null)
+      ? currentAssets - currentLiabilities : null;
 
     // Debt Ratios
     const netDebtVal = netDebt ?? 0;
@@ -127,6 +132,7 @@ export function computeKeyMetrics(edgarData, latestPrice = null) {
     const ltDebtToEquity = safeDiv(ltDebt, equity);
     const ltDebtPlusEquity = (equity ?? 0) + ltDebt;
     const debtToTotalCapital = ltDebtPlusEquity > 0 ? safeDiv(ltDebt, ltDebtPlusEquity) : null;
+    const ebitdaInterestCoverage = safeDiv(ebitda, interestExpense);
 
     // Operating
     const assetTurnover = safeDiv(revenue, totalAssets);
@@ -141,6 +147,7 @@ export function computeKeyMetrics(edgarData, latestPrice = null) {
       ? daysReceivables + daysInventory - daysPayable : null;
     const fcfRatio = safeDiv(fcf, netIncome);
     const fcfSalesRatio = safeDiv(fcf, revenue);
+    const opCFToNetIncome = safeDiv(opCF, netIncome);
 
     // Price (only for latest year if price provided)
     const isLatest = (year === sortedYears[sortedYears.length - 1]);
@@ -154,6 +161,10 @@ export function computeKeyMetrics(edgarData, latestPrice = null) {
     const priceToFCF = price && fcfPerShare && fcfPerShare > 0 ? price / fcfPerShare : null;
     const pegRatio = peRatio && epsBasic && prevEpsBasic && prevEpsBasic > 0
       ? safeDiv(peRatio, pctChange(epsBasic, prevEpsBasic)) : null;
+    const dividendsPaidTotal = cf.dividends_paid ? Math.abs(cf.dividends_paid) : 0;
+    const marketCap = price && sharesEOP ? price * sharesEOP : null;
+    const shareholderYield = marketCap
+      ? ((dividendsPaidTotal + buybacksTotal) / marketCap) * 100 : null;
 
     metrics[year] = {
       perShare: {
@@ -171,6 +182,7 @@ export function computeKeyMetrics(edgarData, latestPrice = null) {
         dividendPerShareChange: pctChange(dps, prevInc.dividends_per_share ?? (prevCf.dividends_per_share ?? 0)),
         buybacksPerShare,
         buybacksPerShareChange: pctChange(buybacksPerShare, prevBuybacksPerShare),
+        payoutRatio,
       },
       shares: {
         commonSharesOutstanding: sharesEOP,
@@ -182,6 +194,7 @@ export function computeKeyMetrics(edgarData, latestPrice = null) {
         cashRatio,
         currentRatio,
         timesInterestEarned: tie,
+        workingCapital,
       },
       profitability: {
         grossMargin: grossMargin != null ? grossMargin * 100 : null,
@@ -203,6 +216,7 @@ export function computeKeyMetrics(edgarData, latestPrice = null) {
         ltDebtToFCF,
         ltDebtToEquity,
         debtToTotalCapital,
+        ebitdaInterestCoverage,
       },
       operating: {
         assetTurnover,
@@ -216,6 +230,7 @@ export function computeKeyMetrics(edgarData, latestPrice = null) {
         cashConversionCycle,
         fcfRatio,
         fcfSalesRatio,
+        opCFToNetIncome,
       },
       price: {
         dividendYield,
@@ -225,6 +240,7 @@ export function computeKeyMetrics(edgarData, latestPrice = null) {
         priceToBook,
         priceToCashFlow: priceToCF,
         priceToFCF,
+        shareholderYield,
       },
     };
   }
@@ -256,6 +272,7 @@ export const KEY_METRICS_ROWS = {
       { key: 'dividendPerShareChange', label: 'Dividend per Share Change', format: 'pct' },
       { key: 'buybacksPerShare', label: 'Buybacks per Share', format: 'dollar' },
       { key: 'buybacksPerShareChange', label: 'Buybacks per Share Change', format: 'pct' },
+      { key: 'payoutRatio', label: 'Payout Ratio', format: 'ratio' },
     ],
   },
   shares: {
@@ -273,6 +290,7 @@ export const KEY_METRICS_ROWS = {
       { key: 'cashRatio', label: 'Cash Ratio', format: 'ratio' },
       { key: 'currentRatio', label: 'Current Ratio', format: 'ratio' },
       { key: 'timesInterestEarned', label: 'Times Interest Earned (TIE) Ratio', format: 'ratio' },
+      { key: 'workingCapital', label: 'Working Capital', format: 'dollar' },
     ],
   },
   profitability: {
@@ -300,6 +318,7 @@ export const KEY_METRICS_ROWS = {
       { key: 'ltDebtToFCF', label: 'Long-term Debt to FCF', format: 'ratio' },
       { key: 'ltDebtToEquity', label: 'Long-term Debt to Equity', format: 'ratio' },
       { key: 'debtToTotalCapital', label: 'Debt to Total Capital', format: 'ratio' },
+      { key: 'ebitdaInterestCoverage', label: 'EBITDA Interest Coverage', format: 'ratio' },
     ],
   },
   operating: {
@@ -316,6 +335,7 @@ export const KEY_METRICS_ROWS = {
       { key: 'cashConversionCycle', label: 'Cash Conversion Cycle', format: 'days' },
       { key: 'fcfRatio', label: 'Free Cash Flow Ratio', format: 'ratio' },
       { key: 'fcfSalesRatio', label: 'FCF Sales Ratio', format: 'ratio' },
+      { key: 'opCFToNetIncome', label: 'Operating CF to Net Income', format: 'ratio' },
     ],
   },
   price: {
@@ -328,6 +348,7 @@ export const KEY_METRICS_ROWS = {
       { key: 'priceToBook', label: 'Price to Book', format: 'ratio' },
       { key: 'priceToCashFlow', label: 'Price to Cash Flow', format: 'ratio' },
       { key: 'priceToFCF', label: 'Price to Free Cash', format: 'ratio' },
+      { key: 'shareholderYield', label: 'Shareholder Yield', format: 'pct' },
     ],
   },
 };

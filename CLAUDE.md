@@ -82,6 +82,8 @@ Built across Phases 5A–24 (archived in `previous-prompt-and-plans/gsd-archive/
 
 **Pipeline cost:** ~$8-12/company for Pitch Deck (with prompt caching), ~$13-14 for Full Story, ~$28-30 for all 3 stages. Cost optimization (PSR reuse, model downgrades) is deferred.
 
+**Normalization engine:** Complete. 94.8% MS accuracy, 94.8% S&P 500 compensation parsing (477/503). Key metrics validated against FMP S&P 100 (no formula bugs, 85-94% on core fields). See `NORMALIZATION-STATUS.md` for full details.
+
 ### What's Built
 **Data layer (Phases 1-4):** All data engines, all UI tabs (Overview, Financials, Growth, Valuation, Competitors, Insiders, Filings, Audit), Gurus tab with 13F + N-PORT, Watchlists, executive compensation, filing markdown conversion, 5 audit systems, Competitors tab with SIC-based peer discovery + Frames API metrics + Yahoo batch quotes + Rule One scores, three-layer XBRL engine with provenance tracking and coverage monitoring (173 tests via vitest), earnings call transcript engine.
 
@@ -308,7 +310,8 @@ src/
 │   └── Spinner.jsx
 ├── engines/
 │   ├── config.js, edgar.js, edgarFinancials.js, edgarFrames.js
-│   ├── keyMetrics.js, prices.js, priceStore.js, cache.js, cacheStore.js
+│   ├── keyMetrics.js             — 61 derived metrics (7 categories), validated against FMP S&P 100
+│   ├── prices.js, priceStore.js, cache.js, cacheStore.js
 │   ├── gurus.js, nport.js, insiders.js, compensation.js
 │   ├── splits.js                — Stock split detection + cumulative split factor
 │   ├── growthRates.js, freeCashFlow.js, returnMetrics.js, ruleOneScore.js

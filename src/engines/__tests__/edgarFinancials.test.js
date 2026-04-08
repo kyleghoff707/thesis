@@ -27,7 +27,7 @@ vi.mock('../splits', () => ({
 }));
 
 // Import the taxonomies, computeDerivedFields, and provenance helpers for testing
-const { INCOME_TAXONOMY, BALANCE_TAXONOMY, CASHFLOW_TAXONOMY, computeDerivedFields, computeTTM, extractSection, buildProvenance } = await import('../edgarFinancials');
+const { INCOME_TAXONOMY, BALANCE_TAXONOMY, CASHFLOW_TAXONOMY, computeDerivedFields, computeTTM, extractSection, buildProvenance, getDerivedFormula } = await import('../edgarFinancials');
 const { extractAnnualFact } = await import('../edgar');
 
 describe('Fix 2 (P1b): Cash tag — restricted cash included', () => {
@@ -634,6 +634,428 @@ describe('Phase 2: derived field detection via pre/post diff', () => {
   });
 });
 
+// ─── Residual "Other" computation with 95% precondition gate ────────────────
+describe('Residual Other computation', () => {
+  it('computes OtherCL when named item coverage >= 95%', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 50000000000,       // $50B total CL
+      accounts_payable: 10000000000,          // $10B
+      accrued_liabilities: 8000000000,        // $8B
+      short_term_debt: 5000000000,            // $5B
+      current_portion_lt_debt: 3000000000,    // $3B
+      operating_lease_liability_current: 2000000000, // $2B
+      finance_lease_liability_current: 1000000000,   // $1B
+      deferred_revenue_current: 4000000000,   // $4B
+      taxes_payable: 2000000000,              // $2B
+      // Named sum = 10+8+5+3+2+1+4+2 = $35B
+      // Residual = 50 - 35 = $15B
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_liabilities).toBe(15000000000);
+  });
+
+  it('does NOT compute OtherCL when coverage < 95%', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 50000000000,       // $50B total CL
+      accounts_payable: 10000000000,          // Only 3 of 8 named items present = 37.5%
+      accrued_liabilities: 8000000000,
+      short_term_debt: 5000000000,
+      // Missing: current_portion_lt_debt, operating_lease_liability_current,
+      //          finance_lease_liability_current, deferred_revenue_current, taxes_payable
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_liabilities).toBeUndefined();
+  });
+
+  it('does NOT set negative OtherCL (overcounting guard)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 20000000000,       // $20B total CL
+      accounts_payable: 10000000000,          // Named items sum to $45B > $20B CL
+      accrued_liabilities: 8000000000,
+      short_term_debt: 5000000000,
+      current_portion_lt_debt: 3000000000,
+      operating_lease_liability_current: 2000000000,
+      finance_lease_liability_current: 1000000000,
+      deferred_revenue_current: 10000000000,
+      taxes_payable: 6000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_liabilities).toBeUndefined();
+  });
+
+  it('sets OtherCL = 0 when named items exactly sum to current_liabilities', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 35000000000,       // $35B = exact sum of named items
+      accounts_payable: 10000000000,
+      accrued_liabilities: 8000000000,
+      short_term_debt: 5000000000,
+      current_portion_lt_debt: 3000000000,
+      operating_lease_liability_current: 2000000000,
+      finance_lease_liability_current: 1000000000,
+      deferred_revenue_current: 4000000000,
+      taxes_payable: 2000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_liabilities).toBe(0);
+  });
+
+  it('does not overwrite existing OtherCL from XBRL tag', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 50000000000,
+      other_current_liabilities: 12000000000, // Already has a value from direct XBRL extraction
+      accounts_payable: 10000000000,
+      accrued_liabilities: 8000000000,
+      short_term_debt: 5000000000,
+      current_portion_lt_debt: 3000000000,
+      operating_lease_liability_current: 2000000000,
+      finance_lease_liability_current: 1000000000,
+      deferred_revenue_current: 4000000000,
+      taxes_payable: 2000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Existing XBRL value preserved — XBRL vs MS residual is a METHODOLOGY_DIFF
+    expect(balance[2024].other_current_liabilities).toBe(12000000000);
+  });
+
+  it('computes OtherIncomeExpense when components available', () => {
+    const years = [2024];
+    const income = { 2024: {
+      income_before_tax: 15000000000,         // $15B pretax
+      operating_income_loss: 12000000000,     // $12B operating
+      interest_income: 500000000,             // $500M interest income
+      interest_expense: 800000000,            // $800M interest expense
+      // OtherIncomeExpense = 15B - 12B - 0.5B + 0.8B = $3.3B
+    }};
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(income[2024].other_income_expense).toBe(3300000000);
+  });
+
+  it('does not overwrite existing OtherIncomeExpense from XBRL tag', () => {
+    const years = [2024];
+    const income = { 2024: {
+      income_before_tax: 15000000000,
+      operating_income_loss: 12000000000,
+      interest_income: 500000000,
+      interest_expense: 800000000,
+      other_income_expense: 2000000000,       // Existing value from XBRL
+    }};
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Existing value must NOT be overwritten
+    expect(income[2024].other_income_expense).toBe(2000000000);
+  });
+
+  it('coverage gate counts only the 8 named CL items', () => {
+    // Even if balance sheet has many other fields, only the 8 CL-specific items matter
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 50000000000,
+      // Lots of non-CL fields present
+      assets: 100000000000,
+      equity: 40000000000,
+      goodwill: 5000000000,
+      liabilities: 60000000000,
+      // But only 6 of 8 CL named items = 75% coverage (below 95%)
+      accounts_payable: 10000000000,
+      accrued_liabilities: 8000000000,
+      short_term_debt: 5000000000,
+      current_portion_lt_debt: 3000000000,
+      operating_lease_liability_current: 2000000000,
+      finance_lease_liability_current: 1000000000,
+      // Missing: deferred_revenue_current, taxes_payable
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // 6/8 = 75% < 95% — should NOT compute residual
+    expect(balance[2024].other_current_liabilities).toBeUndefined();
+  });
+});
+
+// ─── Investment flow component summation ─────────────────────────────────────
+
+describe('Investment flow component summation', () => {
+  it('sale_of_investments uses component sum when aggregate is null and AFS + maturity + STI + equity components present', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      sale_of_investments: null,
+      sale_of_investments_afs: 5000000000,
+      sale_of_investments_maturity: 3000000000,
+      sale_of_investments_sti: 1000000000,
+      sale_of_investments_equity: 2000000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // 5B + 3B + 1B + 2B = 11B
+    expect(cashFlow[2024].sale_of_investments).toBe(11000000000);
+  });
+
+  it('sale_of_investments uses component sum when it exceeds aggregate by >5%', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      sale_of_investments: 5000000000,  // partial aggregate
+      sale_of_investments_afs: 5000000000,
+      sale_of_investments_maturity: 3000000000,
+      sale_of_investments_sti: 1000000000,
+      sale_of_investments_equity: 2000000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Component sum 11B > 5B * 1.05 = 5.25B → use component sum
+    expect(cashFlow[2024].sale_of_investments).toBe(11000000000);
+  });
+
+  it('sale_of_investments includes ProceedsFromSaleOfDebtSecurities as aggregate tag', () => {
+    const saleField = CASHFLOW_TAXONOMY.find(f => f.field === 'sale_of_investments');
+    expect(saleField).toBeDefined();
+    expect(saleField.tags).toContain('ProceedsFromSaleOfDebtSecurities');
+  });
+
+  it('purchase_of_investments includes PaymentsToAcquireOtherInvestments as aggregate tag', () => {
+    const purchaseField = CASHFLOW_TAXONOMY.find(f => f.field === 'purchase_of_investments');
+    expect(purchaseField).toBeDefined();
+    expect(purchaseField.tags).toContain('PaymentsToAcquireOtherInvestments');
+  });
+
+  it('purchase_of_investments component sum includes equity investments component', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      purchase_of_investments: null,
+      purchase_of_investments_afs: -4000000000,
+      purchase_of_investments_htm: -2000000000,
+      purchase_of_investments_sti: -1000000000,
+      purchase_of_investments_equity: -3000000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // abs(4B) + abs(2B) + abs(1B) + abs(3B) = 10B → stored as positive or negative per convention
+    // Since purchase_of_investments was null, sign convention defaults to positive componentSum
+    expect(Math.abs(cashFlow[2024].purchase_of_investments)).toBe(10000000000);
+  });
+
+  it('both investment summation paths preserve sign convention', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      sale_of_investments: null,
+      sale_of_investments_afs: 5000000000,
+      sale_of_investments_maturity: 0,
+      sale_of_investments_sti: 0,
+      sale_of_investments_equity: 1000000000,
+      purchase_of_investments: -100,  // existing negative
+      purchase_of_investments_afs: -4000000000,
+      purchase_of_investments_htm: -2000000000,
+      purchase_of_investments_sti: 0,
+      purchase_of_investments_equity: -1000000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Sale should be positive (proceeds)
+    expect(cashFlow[2024].sale_of_investments).toBe(6000000000);
+    // Purchase should be negative (was negative before override)
+    expect(cashFlow[2024].purchase_of_investments).toBe(-7000000000);
+  });
+
+  // Plan 11: New tag additions
+  it('sale_of_investments includes ProceedsFromSaleMaturityAndCollectionsOfInvestments as aggregate tag', () => {
+    const saleField = CASHFLOW_TAXONOMY.find(f => f.field === 'sale_of_investments');
+    expect(saleField).toBeDefined();
+    expect(saleField.tags).toContain('ProceedsFromSaleMaturityAndCollectionsOfInvestments');
+  });
+
+  it('sale_of_investments includes ProceedsFromSaleOfLongtermInvestments as aggregate tag', () => {
+    const saleField = CASHFLOW_TAXONOMY.find(f => f.field === 'sale_of_investments');
+    expect(saleField).toBeDefined();
+    expect(saleField.tags).toContain('ProceedsFromSaleOfLongtermInvestments');
+  });
+
+  it('purchase_of_investments includes PaymentsToAcquireLongtermInvestments as aggregate tag', () => {
+    const purchaseField = CASHFLOW_TAXONOMY.find(f => f.field === 'purchase_of_investments');
+    expect(purchaseField).toBeDefined();
+    expect(purchaseField.tags).toContain('PaymentsToAcquireLongtermInvestments');
+  });
+
+  it('purchase_of_investments_equity includes PaymentsToAcquireEquitySecuritiesFvNi', () => {
+    const equityField = CASHFLOW_TAXONOMY.find(f => f.field === 'purchase_of_investments_equity');
+    expect(equityField).toBeDefined();
+    expect(equityField.tags).toContain('PaymentsToAcquireEquitySecuritiesFvNi');
+  });
+
+  it('sale_of_investments_equity includes ProceedsFromSaleOfEquitySecuritiesFvNi', () => {
+    const equityField = CASHFLOW_TAXONOMY.find(f => f.field === 'sale_of_investments_equity');
+    expect(equityField).toBeDefined();
+    expect(equityField.tags).toContain('ProceedsFromSaleOfEquitySecuritiesFvNi');
+  });
+
+  it('sale_of_investments_afs includes ProceedsFromSaleOfAvailableForSaleSecuritiesEquity', () => {
+    const afsField = CASHFLOW_TAXONOMY.find(f => f.field === 'sale_of_investments_afs');
+    expect(afsField).toBeDefined();
+    expect(afsField.tags).toContain('ProceedsFromSaleOfAvailableForSaleSecuritiesEquity');
+  });
+
+  it('sale_of_investments_maturity includes HTM and short-term maturity tags', () => {
+    const matField = CASHFLOW_TAXONOMY.find(f => f.field === 'sale_of_investments_maturity');
+    expect(matField).toBeDefined();
+    expect(matField.tags).toContain('ProceedsFromSaleAndMaturityOfHeldToMaturitySecurities');
+    expect(matField.tags).toContain('ProceedsFromSaleOfHeldToMaturitySecurities');
+    expect(matField.tags).toContain('ProceedsFromMaturitiesPrepaymentsAndCallsOfShorttermInvestments');
+  });
+
+  it('sale_of_investments_other field exists for catch-all other investment proceeds', () => {
+    const otherField = CASHFLOW_TAXONOMY.find(f => f.field === 'sale_of_investments_other');
+    expect(otherField).toBeDefined();
+    expect(otherField.tags).toContain('ProceedsFromSaleAndMaturityOfOtherInvestments');
+    expect(otherField.tags).toContain('ProceedsFromSaleOfOtherInvestments');
+  });
+
+  it('sale_of_investments component sum includes sale_of_investments_other', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      sale_of_investments: null,
+      sale_of_investments_afs: 5000000000,
+      sale_of_investments_maturity: 3000000000,
+      sale_of_investments_sti: 0,
+      sale_of_investments_equity: 0,
+      sale_of_investments_other: 2000000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // 5B + 3B + 0 + 0 + 2B = 10B
+    expect(cashFlow[2024].sale_of_investments).toBe(10000000000);
+  });
+
+  it('sale_of_investments_sti includes ProceedsFromSaleMaturityAndCollectionOfShorttermInvestments', () => {
+    const stiField = CASHFLOW_TAXONOMY.find(f => f.field === 'sale_of_investments_sti');
+    expect(stiField).toBeDefined();
+    expect(stiField.tags).toContain('ProceedsFromSaleMaturityAndCollectionOfShorttermInvestments');
+  });
+
+  it('purchase_of_investments_afs includes PaymentsToAcquireAvailableForSaleSecuritiesEquity', () => {
+    const afsField = CASHFLOW_TAXONOMY.find(f => f.field === 'purchase_of_investments_afs');
+    expect(afsField).toBeDefined();
+    expect(afsField.tags).toContain('PaymentsToAcquireAvailableForSaleSecuritiesEquity');
+  });
+});
+
+// ─── Debt tag coverage and summation ─────────────────────────────────────────
+
+describe('Debt tag coverage and summation', () => {
+  it('short_term_debt component summation includes notes_payable_current alongside commercial_paper and short_term_borrowings', () => {
+    // When short_term_debt aggregate tag (DebtCurrent) is null but component fields exist
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      short_term_debt: null,
+      commercial_paper: 6000000000,
+      short_term_borrowings: 2000000000,
+      notes_payable_current: 3000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // 6B + 2B + 3B = 11B
+    expect(balance[2024].short_term_debt).toBe(11000000000);
+  });
+
+  it('short_term_debt summation result = commercial_paper + short_term_borrowings + notes_payable_current when all present', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      short_term_debt: 5000000000,  // aggregate is lower than component sum
+      commercial_paper: 4000000000,
+      short_term_borrowings: 3000000000,
+      notes_payable_current: 2000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Component sum 9B > aggregate 5B → use component sum
+    expect(balance[2024].short_term_debt).toBe(9000000000);
+  });
+
+  it('long_term_debt resolves from ConvertibleDebt tag when primary tags are null', () => {
+    const ltDebtField = BALANCE_TAXONOMY.find(f => f.field === 'long_term_debt');
+    expect(ltDebtField).toBeDefined();
+    expect(ltDebtField.tags).toContain('ConvertibleDebt');
+    expect(ltDebtField.tags).toContain('ConvertibleLongTermNotesPayable');
+  });
+
+  it('short_term_debt resolves from NotesPayable tag as additional fallback', () => {
+    const stdField = BALANCE_TAXONOMY.find(f => f.field === 'short_term_debt');
+    expect(stdField).toBeDefined();
+    expect(stdField.tags).toContain('NotesPayable');
+    expect(stdField.tags).toContain('BankOverdrafts');
+  });
+
+  it('component summation does NOT double-count when DebtCurrent already includes components', () => {
+    // If DebtCurrent (15.6B) already includes all sub-components, component sum should NOT override
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      short_term_debt: 15600000000,  // DebtCurrent, already comprehensive
+      commercial_paper: 6000000000,
+      short_term_borrowings: 4000000000,
+      notes_payable_current: null,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Component sum 10B < aggregate 15.6B → keep aggregate
+    expect(balance[2024].short_term_debt).toBe(15600000000);
+  });
+});
+
 // ─── TTM Q4 Bug: When latest filing is 10-K, TTM should equal annual ────────
 // Bug: findLatestQuarter only looks at 10-Q filings (Q1/Q2/Q3), so when the
 // latest data is a 10-K (Q4/FY), TTM uses stale Q3 data instead of annual values.
@@ -746,5 +1168,631 @@ describe('TTM Q4 bug: TTM should equal annual when 10-K is latest filing', () =>
     const ttm = computeTTM(facts, { fy: 2025, fp: 'FY', end: '2025-12-31' });
     expect(ttm.quarter).toContain('FY');
     expect(ttm.quarter).toContain('2025');
+  });
+});
+
+// ─── Residual Other computation ───────────────────────────────────────────
+
+describe('Residual Other computation: OtherCurrentLiabilities', () => {
+  it('computes OtherCL when 8/8 named CL items present (coverage >= 95%)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 20000000000,
+      accounts_payable: 5000000000,
+      accrued_liabilities: 3000000000,
+      short_term_debt: 2000000000,
+      current_portion_lt_debt: 1000000000,
+      operating_lease_liability_current: 500000000,
+      finance_lease_liability_current: 200000000,
+      deferred_revenue_current: 1500000000,
+      taxes_payable: 800000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // named sum = 5+3+2+1+0.5+0.2+1.5+0.8 = 14B, residual = 20 - 14 = 6B
+    expect(balance[2024].other_current_liabilities).toBe(6000000000);
+  });
+
+  it('does NOT compute OtherCL when coverage < 95% (6/8 items)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 20000000000,
+      accounts_payable: 5000000000,
+      accrued_liabilities: 3000000000,
+      short_term_debt: 2000000000,
+      current_portion_lt_debt: 1000000000,
+      operating_lease_liability_current: 500000000,
+      finance_lease_liability_current: 200000000,
+      // missing: deferred_revenue_current, taxes_payable (6/8 = 75%)
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_liabilities).toBeUndefined();
+  });
+
+  it('sets OtherCL to null when residual is negative (overcounting guard)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 10000000000,
+      accounts_payable: 5000000000,
+      accrued_liabilities: 3000000000,
+      short_term_debt: 2000000000,
+      current_portion_lt_debt: 1000000000,
+      operating_lease_liability_current: 500000000,
+      finance_lease_liability_current: 200000000,
+      deferred_revenue_current: 1500000000,
+      taxes_payable: 800000000,
+      // named sum = 14B > current_liabilities 10B → negative residual
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_liabilities).toBeUndefined();
+  });
+
+  it('preserves existing XBRL value for OtherCL (no-overwrite)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_liabilities: 20000000000,
+      other_current_liabilities: 999000000, // existing XBRL value
+      accounts_payable: 5000000000,
+      accrued_liabilities: 3000000000,
+      short_term_debt: 2000000000,
+      current_portion_lt_debt: 1000000000,
+      operating_lease_liability_current: 500000000,
+      finance_lease_liability_current: 200000000,
+      deferred_revenue_current: 1500000000,
+      taxes_payable: 800000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_liabilities).toBe(999000000);
+  });
+});
+
+describe('Residual Other computation: OtherNonCurrentAssets', () => {
+  it('computes OtherNCA when 5/5 named NCA items present (coverage >= 95%)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      assets: 100000000000,
+      current_assets: 40000000000,
+      // noncurrent_assets will be derived as 100 - 40 = 60B
+      property_plant_equipment: 20000000000, // post-ROU-merge (no operating_lease_rou_asset to merge)
+      goodwill: 10000000000,
+      intangible_assets: 5000000000,
+      long_term_investments: 8000000000,
+      deferred_tax_assets: 2000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // noncurrent_assets = 100 - 40 = 60B
+    // named sum = 20 + 10 + 5 + 8 + 2 = 45B
+    // residual = 60 - 45 = 15B
+    expect(balance[2024].other_noncurrent_assets).toBe(15000000000);
+  });
+
+  it('does NOT compute OtherNCA when coverage < 95% (3/5 items)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      assets: 100000000000,
+      current_assets: 40000000000,
+      property_plant_equipment: 20000000000,
+      goodwill: 10000000000,
+      intangible_assets: 5000000000,
+      // missing: long_term_investments, deferred_tax_assets (3/5 = 60%)
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_noncurrent_assets).toBeUndefined();
+  });
+
+  it('sets OtherNCA to null when residual is negative (overcounting guard)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      assets: 50000000000,
+      current_assets: 40000000000,
+      // noncurrent_assets = 10B
+      property_plant_equipment: 5000000000,
+      goodwill: 3000000000,
+      intangible_assets: 2000000000,
+      long_term_investments: 4000000000,
+      deferred_tax_assets: 1000000000,
+      // named sum = 15B > noncurrent_assets 10B → negative
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_noncurrent_assets).toBeUndefined();
+  });
+
+  it('preserves existing XBRL value for OtherNCA (no-overwrite)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      assets: 100000000000,
+      current_assets: 40000000000,
+      other_noncurrent_assets: 888000000, // existing XBRL value
+      property_plant_equipment: 20000000000,
+      goodwill: 10000000000,
+      intangible_assets: 5000000000,
+      long_term_investments: 8000000000,
+      deferred_tax_assets: 2000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_noncurrent_assets).toBe(888000000);
+  });
+});
+
+describe('Residual Other computation: OtherNonCurrentLiabilities', () => {
+  it('computes OtherNCL when 6/6 named NCL items present (coverage >= 95%)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      liabilities: 50000000000,
+      current_liabilities: 15000000000,
+      // noncurrent_liabilities will be derived as 50 - 15 = 35B
+      long_term_debt: 10000000000,
+      operating_lease_liability_noncurrent: 4000000000,
+      finance_lease_liability_noncurrent: 1000000000,
+      deferred_tax_liabilities: 3000000000,
+      pension_liabilities: 2000000000,
+      deferred_revenue_noncurrent: 500000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // noncurrent_liabilities = 50 - 15 = 35B
+    // named sum = 10 + 4 + 1 + 3 + 2 + 0.5 = 20.5B
+    // residual = 35 - 20.5 = 14.5B
+    expect(balance[2024].other_noncurrent_liabilities).toBe(14500000000);
+  });
+
+  it('does NOT compute OtherNCL when coverage < 95% (3/6 items)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      liabilities: 50000000000,
+      current_liabilities: 15000000000,
+      long_term_debt: 10000000000,
+      operating_lease_liability_noncurrent: 4000000000,
+      finance_lease_liability_noncurrent: 1000000000,
+      // missing: deferred_tax_liabilities, pension_liabilities, deferred_revenue_noncurrent (3/6 = 50%)
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_noncurrent_liabilities).toBeUndefined();
+  });
+
+  it('sets OtherNCL to null when residual is negative (overcounting guard)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      liabilities: 20000000000,
+      current_liabilities: 15000000000,
+      // noncurrent_liabilities = 5B
+      long_term_debt: 3000000000,
+      operating_lease_liability_noncurrent: 2000000000,
+      finance_lease_liability_noncurrent: 1000000000,
+      deferred_tax_liabilities: 1500000000,
+      pension_liabilities: 500000000,
+      deferred_revenue_noncurrent: 200000000,
+      // named sum = 8.2B > noncurrent_liabilities 5B → negative
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_noncurrent_liabilities).toBeUndefined();
+  });
+
+  it('preserves existing XBRL value for OtherNCL (no-overwrite)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      liabilities: 50000000000,
+      current_liabilities: 15000000000,
+      other_noncurrent_liabilities: 777000000, // existing XBRL value
+      long_term_debt: 10000000000,
+      operating_lease_liability_noncurrent: 4000000000,
+      finance_lease_liability_noncurrent: 1000000000,
+      deferred_tax_liabilities: 3000000000,
+      pension_liabilities: 2000000000,
+      deferred_revenue_noncurrent: 500000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_noncurrent_liabilities).toBe(777000000);
+  });
+});
+
+describe('Residual Other computation: OtherCurrentAssets', () => {
+  it('computes OtherCA when 5/5 named CA items present (coverage >= 95%)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_assets: 30000000000,
+      cash: 10000000000,
+      short_term_investments: 5000000000,
+      accounts_receivable: 4000000000,
+      inventory: 3000000000,
+      prepaid_expenses: 1000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // named sum = 10 + 5 + 4 + 3 + 1 = 23B
+    // residual = 30 - 23 = 7B
+    expect(balance[2024].other_current_assets).toBe(7000000000);
+  });
+
+  it('does NOT compute OtherCA when coverage < 95% (3/5 items)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_assets: 30000000000,
+      cash: 10000000000,
+      short_term_investments: 5000000000,
+      accounts_receivable: 4000000000,
+      // missing: inventory, prepaid_expenses (3/5 = 60%)
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_assets).toBeUndefined();
+  });
+
+  it('sets OtherCA to null when residual is negative (overcounting guard)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_assets: 15000000000,
+      cash: 10000000000,
+      short_term_investments: 5000000000,
+      accounts_receivable: 4000000000,
+      inventory: 3000000000,
+      prepaid_expenses: 1000000000,
+      // named sum = 23B > current_assets 15B → negative
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_assets).toBeUndefined();
+  });
+
+  it('preserves existing XBRL value for OtherCA (no-overwrite)', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {
+      current_assets: 30000000000,
+      other_current_assets: 666000000, // existing XBRL value
+      cash: 10000000000,
+      short_term_investments: 5000000000,
+      accounts_receivable: 4000000000,
+      inventory: 3000000000,
+      prepaid_expenses: 1000000000,
+    }};
+    const cashFlow = { 2024: {} };
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(balance[2024].other_current_assets).toBe(666000000);
+  });
+});
+
+// ─── Plan 07: Per-field tag additions for gap closure ───────────────────
+
+describe('Plan 07: accounts_receivable broader fallback tag', () => {
+  it('should include AccountsNotesAndLoansReceivableNetCurrent as last fallback', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'accounts_receivable');
+    expect(field).toBeDefined();
+    expect(field.tags).toContain('AccountsNotesAndLoansReceivableNetCurrent');
+  });
+
+  it('should prefer narrow AccountsReceivableNetCurrent over broader fallback', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'accounts_receivable');
+    const narrowIdx = field.tags.indexOf('AccountsReceivableNetCurrent');
+    const broadIdx = field.tags.indexOf('AccountsNotesAndLoansReceivableNetCurrent');
+    expect(narrowIdx).toBeLessThan(broadIdx);
+  });
+
+  it('should resolve accounts_receivable via broad fallback when narrow tags absent', () => {
+    extractAnnualFact.mockReset();
+    extractAnnualFact.mockImplementation((_facts, tag, _unit) => {
+      if (tag === 'AccountsNotesAndLoansReceivableNetCurrent') return { 2024: 8500000000 };
+      return null;
+    });
+
+    const taxonomy = [
+      { field: 'accounts_receivable', unit: 'USD', tags: [
+        'AccountsReceivableNetCurrent',
+        'ReceivablesNetCurrent',
+        'AccountsReceivableNet',
+        'AccountsNotesAndLoansReceivableNetCurrent',
+      ]},
+    ];
+
+    const { fieldData } = extractSection({}, taxonomy, 'restated');
+    expect(fieldData.accounts_receivable[2024]).toBe(8500000000);
+  });
+});
+
+describe('Plan 07: deferred_revenue_current additional tags', () => {
+  it('should include CustomerDepositsCurrent tag', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'deferred_revenue_current');
+    expect(field).toBeDefined();
+    expect(field.tags).toContain('CustomerDepositsCurrent');
+  });
+
+  it('should include DeferredIncomeCurrent tag', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'deferred_revenue_current');
+    expect(field.tags).toContain('DeferredIncomeCurrent');
+  });
+
+  it('should prefer DeferredRevenueCurrent over new fallbacks', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'deferred_revenue_current');
+    const primaryIdx = field.tags.indexOf('DeferredRevenueCurrent');
+    const depositsIdx = field.tags.indexOf('CustomerDepositsCurrent');
+    const deferredIncIdx = field.tags.indexOf('DeferredIncomeCurrent');
+    expect(primaryIdx).toBeLessThan(depositsIdx);
+    expect(primaryIdx).toBeLessThan(deferredIncIdx);
+  });
+});
+
+describe('Plan 07: short_term_investments additional tags', () => {
+  it('should include OtherShortTermInvestments tag', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'short_term_investments');
+    expect(field).toBeDefined();
+    expect(field.tags).toContain('OtherShortTermInvestments');
+  });
+
+  it('should include HeldToMaturitySecuritiesCurrent tag', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'short_term_investments');
+    expect(field.tags).toContain('HeldToMaturitySecuritiesCurrent');
+  });
+});
+
+describe('Plan 07: minority_interest additional tag', () => {
+  it('should include RedeemableNoncontrollingInterest as fallback', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'minority_interest');
+    expect(field).toBeDefined();
+    expect(field.tags).toContain('RedeemableNoncontrollingInterest');
+  });
+
+  it('should prefer MinorityInterest over redeemable NCI', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'minority_interest');
+    const primaryIdx = field.tags.indexOf('MinorityInterest');
+    const redeemableIdx = field.tags.indexOf('RedeemableNoncontrollingInterest');
+    expect(primaryIdx).toBeLessThan(redeemableIdx);
+  });
+});
+
+describe('Plan 07: common_stock additional tag', () => {
+  it('should include CommonStockValueOutstanding as fallback', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'common_stock');
+    expect(field).toBeDefined();
+    expect(field.tags).toContain('CommonStockValueOutstanding');
+  });
+
+  it('should prefer CommonStockValue over CommonStockValueOutstanding', () => {
+    const field = BALANCE_TAXONOMY.find(f => f.field === 'common_stock');
+    const primaryIdx = field.tags.indexOf('CommonStockValue');
+    const outstandingIdx = field.tags.indexOf('CommonStockValueOutstanding');
+    expect(primaryIdx).toBeLessThan(outstandingIdx);
+  });
+});
+
+// ─── Plan 08: net_change_in_cash excludes FX ─────────────────
+
+describe('net_change_in_cash derivation (Plan 08)', () => {
+  it('excludes FX effect from net_change_in_cash', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      net_cash_flow_from_operating_activities: 91652000000,
+      net_cash_flow_from_investing_activities: -35523000000,
+      net_cash_flow_from_financing_activities: -61362000000,
+      effect_of_exchange_rate: -287000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Should be Op + Inv + Fin WITHOUT FX
+    // 91652 + (-35523) + (-61362) = -5233 (in millions: -5233000000)
+    expect(cashFlow[2024].net_change_in_cash).toBe(-5233000000);
+  });
+
+  it('does not derive when net_change_in_cash already set', () => {
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      net_change_in_cash: -999000000,
+      net_cash_flow_from_operating_activities: 91652000000,
+      net_cash_flow_from_investing_activities: -35523000000,
+      net_cash_flow_from_financing_activities: -61362000000,
+      effect_of_exchange_rate: -287000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Should keep the pre-existing value
+    expect(cashFlow[2024].net_change_in_cash).toBe(-999000000);
+  });
+
+  it('getDerivedFormula excludes fx_effect', () => {
+    const formula = getDerivedFormula('net_change_in_cash');
+    expect(formula).not.toContain('fx');
+    expect(formula).toContain('operating_cf');
+    expect(formula).toContain('investing_cf');
+    expect(formula).toContain('financing_cf');
+  });
+});
+
+// ─── Plan 09: D&A Component Broadening ──────────────────────
+
+describe('Plan 09: D&A component broadening via computeDerivedFields', () => {
+  it('should include ROU amortization in D&A when it increases the total', () => {
+    // SFM scenario: DDA = $140M ≈ depreciation_only = $139M (components are separate)
+    // ROU amort = $134M, finance lease = $1M → sum = $140M + $134M + $1M = $275M
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      depreciation_amortization: 140000000,
+      depreciation_only: 139000000,  // Close to DDA → components are separate
+      _da_rou_amort: 134000000,
+      _da_finance_lease_amort: 1000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // D&A should be sum: 140M + 134M + 1M = 275M
+    expect(cashFlow[2024].depreciation_amortization).toBe(275000000);
+    // Internal fields should be cleaned up
+    expect(cashFlow[2024]._da_rou_amort).toBeUndefined();
+  });
+
+  it('should include accretion expense in D&A when tagged separately', () => {
+    // NEE scenario: D&A ≈ depreciation_only (no amort intangibles in recent years)
+    // DDA = $5.46B, depreciation_only = $5.4B, accretion = $177M
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      depreciation_amortization: 5462000000,
+      depreciation_only: 5400000000,  // Close to DDA → accretion is separate
+      _da_accretion_expense: 177000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    expect(cashFlow[2024].depreciation_amortization).toBe(5639000000);
+    expect(cashFlow[2024]._da_accretion_expense).toBeUndefined();
+  });
+
+  it('should include finance lease amortization in D&A component sum', () => {
+    // MSFT scenario: Depreciation = $15.2B, AmortIntangibles = $4.8B,
+    // FinanceLease = $1.8B → sum = $21.8B
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      depreciation_only: 15200000000,
+      amortization_of_intangibles: 4800000000,
+      _da_finance_lease_amort: 1800000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Component sum: 15.2B + 4.8B (from depreciation_only + amort) + 1.8B (finance lease) = 21.8B
+    expect(cashFlow[2024].depreciation_amortization).toBe(21800000000);
+    expect(cashFlow[2024]._da_finance_lease_amort).toBeUndefined();
+  });
+
+  it('should sum multiple D&A components together', () => {
+    // Company with all D&A components — depreciation_only ≈ DDA means components are separate
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      depreciation_amortization: 100000000,
+      depreciation_only: 98000000,  // Close to DDA → components are separate
+      _da_rou_amort: 50000000,
+      _da_finance_lease_amort: 20000000,
+      _da_accretion_expense: 10000000,
+      _da_financing_costs_amort: 5000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Sum: 100M + 50M + 20M + 10M + 5M = 185M
+    expect(cashFlow[2024].depreciation_amortization).toBe(185000000);
+  });
+
+  it('should NOT add components when primary DDA already includes them', () => {
+    // AMZN scenario: DDA = $52.8B >> depreciation_only ($32B) + amort ($838M) = $32.8B
+    // The gap ($20B) means DDA already includes lease/accretion items
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      depreciation_amortization: 52800000000,
+      depreciation_only: 32000000000,
+      amortization_of_intangibles: 838000000,
+      _da_finance_lease_amort: 3900000000,  // Already embedded in DDA
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Should NOT add finance lease — DDA already includes it
+    // baseDa = max(52.8B, 32B+838M) = 52.8B
+    // narrowDa = 32B + 838M = 32.838B
+    // 52.8B > 32.838B * 1.10 (36.1B) → guard blocks addition
+    expect(cashFlow[2024].depreciation_amortization).toBe(52800000000);
+  });
+
+  it('should preserve existing D&A when no component fields exist', () => {
+    // Normal company: only primary D&A, no component fields
+    const years = [2024];
+    const income = { 2024: {} };
+    const balance = { 2024: {} };
+    const cashFlow = { 2024: {
+      depreciation_amortization: 500000000,
+    }};
+
+    computeDerivedFields(years, income, balance, cashFlow);
+
+    // Should remain unchanged
+    expect(cashFlow[2024].depreciation_amortization).toBe(500000000);
+  });
+
+  it('should have new D&A component tags in CASHFLOW_TAXONOMY', () => {
+    const rouField = CASHFLOW_TAXONOMY.find(f => f.field === '_da_rou_amort');
+    expect(rouField).toBeDefined();
+    expect(rouField.tags).toContain('OperatingLeaseRightOfUseAssetAmortizationExpense');
+
+    const finLeaseField = CASHFLOW_TAXONOMY.find(f => f.field === '_da_finance_lease_amort');
+    expect(finLeaseField).toBeDefined();
+    expect(finLeaseField.tags).toContain('FinanceLeaseRightOfUseAssetAmortization');
+
+    const accretionField = CASHFLOW_TAXONOMY.find(f => f.field === '_da_accretion_expense');
+    expect(accretionField).toBeDefined();
+    expect(accretionField.tags).toContain('AccretionExpense');
+    expect(accretionField.tags).toContain('AccretionExpenseIncludingAssetRetirementObligations');
+
+    const financingField = CASHFLOW_TAXONOMY.find(f => f.field === '_da_financing_costs_amort');
+    expect(financingField).toBeDefined();
+    expect(financingField.tags).toContain('AmortizationOfFinancingCosts');
   });
 });

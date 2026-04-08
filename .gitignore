@@ -31,12 +31,10 @@ dist-ssr
 knowledge/
 
 # Validation data (cached API responses, reports, bundled engines — local only)
+validation/cache/
 validation/data/
 validation/reports/
 validation/scripts/bundled-engines.mjs
-# GSD planning artifacts — tracked in git (user preference)
-# .planning/
-
 # Hidden gstack runtime folder (recreated by skills)
 .gstack/
 

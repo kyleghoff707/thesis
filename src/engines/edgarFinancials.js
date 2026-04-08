@@ -183,11 +183,14 @@ const BALANCE_TAXONOMY = [
     'MarketableSecuritiesCurrent',
     'AvailableForSaleSecuritiesCurrent',
     'DebtSecuritiesAvailableForSaleCurrent',
+    'OtherShortTermInvestments',              // CPRT and others
+    'HeldToMaturitySecuritiesCurrent',        // HTM classified as current
   ]},
   { field: 'accounts_receivable', unit: 'USD', tags: [
     'AccountsReceivableNetCurrent',
     'ReceivablesNetCurrent',
     'AccountsReceivableNet',
+    'AccountsNotesAndLoansReceivableNetCurrent',  // broader — includes notes receivable (BA, WMS)
   ]},
   // Expanded receivables detail
   { field: 'accounts_receivable_gross', unit: 'USD', tags: [
@@ -309,11 +312,24 @@ const BALANCE_TAXONOMY = [
     'EmployeeRelatedLiabilitiesCurrent',
   ]},
   { field: 'short_term_debt', unit: 'USD', tags: [
-    'ShortTermBorrowings',
     'DebtCurrent',
+    'ShortTermBorrowings',
     'CommercialPaper',
     'LineOfCredit',
     'ShortTermBankLoansAndNotesPayable',
+    'NotesPayable',
+    'BankOverdrafts',
+  ]},
+  // Component fields for short-term debt summation
+  { field: 'commercial_paper', unit: 'USD', tags: [
+    'CommercialPaper',
+  ]},
+  { field: 'short_term_borrowings', unit: 'USD', tags: [
+    'ShortTermBorrowings',
+  ]},
+  { field: 'notes_payable_current', unit: 'USD', tags: [
+    'NotesPayable',
+    'NotesPayableRelatedPartiesCurrentAndNoncurrent',
   ]},
   { field: 'current_portion_lt_debt', unit: 'USD', tags: [
     'LongTermDebtCurrent',
@@ -329,6 +345,8 @@ const BALANCE_TAXONOMY = [
   { field: 'deferred_revenue_current', unit: 'USD', tags: [
     'DeferredRevenueCurrent',
     'ContractWithCustomerLiabilityCurrent',
+    'CustomerDepositsCurrent',               // retail companies (COST, CPRT)
+    'DeferredIncomeCurrent',                  // variant used by some filers
   ]},
   { field: 'taxes_payable', unit: 'USD', tags: [
     'TaxesPayableCurrent',
@@ -347,6 +365,9 @@ const BALANCE_TAXONOMY = [
     'LongTermDebtNoncurrent',
     'LongTermDebt',
     'LongTermLineOfCredit',
+    // Convertible debt
+    'ConvertibleDebt',
+    'ConvertibleLongTermNotesPayable',
     // REIT-specific
     'SecuredDebt',
     'UnsecuredDebt',
@@ -395,6 +416,7 @@ const BALANCE_TAXONOMY = [
   { field: 'common_stock', unit: 'USD', tags: [
     'CommonStockValue',
     'CommonStocksIncludingAdditionalPaidInCapital',
+    'CommonStockValueOutstanding',            // variant used by some filers
   ]},
   { field: 'additional_paid_in_capital', unit: 'USD', tags: [
     'AdditionalPaidInCapitalCommonStock',
@@ -427,6 +449,7 @@ const BALANCE_TAXONOMY = [
     'MinorityInterest',
     'NoncontrollingInterestInEquity',
     'RedeemableNoncontrollingInterestEquityCarryingAmount',
+    'RedeemableNoncontrollingInterest',       // some companies report redeemable NCI separately
   ]},
   { field: 'preferred_stock', unit: 'USD', tags: [
     'PreferredStockValue',
@@ -471,6 +494,26 @@ const CASHFLOW_TAXONOMY = [
   // INTU, MSFT file this instead of reporting amort within DDA
   { field: '_amort_adjustment', unit: 'USD', tags: [
     'AdjustmentForAmortization',
+  ]},
+  // Additional D&A component tags — MS includes these in its broadest D&A figure.
+  // Extracted separately; computeDerivedFields sums them into D&A when they increase
+  // the total beyond the primary D&A tag. Key companies: SFM (ROU ~$146M), NEE (accretion ~$177M),
+  // MSFT (finance lease ~$1.8B), NKE (ROU amort when tagged separately).
+  { field: '_da_rou_amort', unit: 'USD', tags: [
+    'OperatingLeaseRightOfUseAssetAmortizationExpense',
+  ]},
+  { field: '_da_finance_lease_amort', unit: 'USD', tags: [
+    'FinanceLeaseRightOfUseAssetAmortization',
+  ]},
+  { field: '_da_accretion_expense', unit: 'USD', tags: [
+    'AccretionExpense',
+    'AccretionExpenseIncludingAssetRetirementObligations',
+    'AssetRetirementObligationAccretionExpense',
+  ]},
+  { field: '_da_financing_costs_amort', unit: 'USD', tags: [
+    'AmortizationOfFinancingCostsAndDiscounts',
+    'AmortizationOfFinancingCosts',
+    'AmortizationOfDebtDiscountPremium',
   ]},
   { field: 'stock_based_compensation', unit: 'USD', tags: [
     'ShareBasedCompensation',
@@ -518,11 +561,14 @@ const CASHFLOW_TAXONOMY = [
   { field: 'purchase_of_investments', unit: 'USD', tags: [
     'PaymentsToAcquireInvestments',
     'PaymentsToAcquireMarketableSecurities',
+    'PaymentsToAcquireOtherInvestments',
+    'PaymentsToAcquireLongtermInvestments',          // DAL, CRM, MLI, XPEL — long-term investment purchases
   ]},
   // Component fields for companies that report AFS/HTM/STI separately (JPM, WFC, MET, AAPL)
   { field: 'purchase_of_investments_afs', unit: 'USD', tags: [
     'PaymentsToAcquireAvailableForSaleSecuritiesDebt',
     'PaymentsToAcquireAvailableForSaleSecurities',
+    'PaymentsToAcquireAvailableForSaleSecuritiesEquity', // BRK-B, MET — equity AFS
   ]},
   { field: 'purchase_of_investments_htm', unit: 'USD', tags: [
     'PaymentsToAcquireHeldToMaturitySecurities',
@@ -531,23 +577,47 @@ const CASHFLOW_TAXONOMY = [
   { field: 'purchase_of_investments_sti', unit: 'USD', tags: [
     'PaymentsToAcquireShortTermInvestments',
   ]},
+  { field: 'purchase_of_investments_equity', unit: 'USD', tags: [
+    'PaymentsToAcquireEquityMethodInvestments',
+    'PaymentsToAcquireEquitySecurities',
+    'PaymentsToAcquireEquitySecuritiesFvNi',            // NVDA, AMT, BRK-B, MET — FV-NI equity securities
+  ]},
   // Investment sales: aggregate tag (first-match) then component fields for summation
   { field: 'sale_of_investments', unit: 'USD', tags: [
     'ProceedsFromSaleOfInvestments',
     'ProceedsFromSaleAndMaturityOfMarketableSecurities',
+    'ProceedsFromSaleAndMaturityOfAvailableForSaleSecurities',
+    'ProceedsFromSaleOfDebtSecurities',
+    'ProceedsFromSaleMaturityAndCollectionsOfInvestments',  // broad aggregate — 12 companies (BA, DAL, CRM, AMZN, EQIX, etc.)
+    'ProceedsFromSaleOfLongtermInvestments',                // DAL, NEE, CRM — long-term investment sales
   ]},
   // Component fields for companies that report sale + maturity separately
   { field: 'sale_of_investments_afs', unit: 'USD', tags: [
     'ProceedsFromSaleOfAvailableForSaleSecuritiesDebt',
     'ProceedsFromSaleOfAvailableForSaleSecurities',
+    'ProceedsFromSaleOfAvailableForSaleSecuritiesEquity',  // INTU, BRK-B, MET — equity AFS sales
   ]},
   { field: 'sale_of_investments_maturity', unit: 'USD', tags: [
     'ProceedsFromMaturitiesPrepaymentsAndCallsOfAvailableForSaleSecurities',
     'ProceedsFromMaturitiesPrepaymentsAndCallsOfHeldToMaturitySecurities',
+    'ProceedsFromSaleAndMaturityOfHeldToMaturitySecurities',  // MNST, TSCO, LEN, EW
+    'ProceedsFromSaleOfHeldToMaturitySecurities',             // CPRT, TSCO, LEN, CMG
+    'ProceedsFromMaturitiesPrepaymentsAndCallsOfShorttermInvestments', // NKE, ODFL, COST, NEM
   ]},
   { field: 'sale_of_investments_sti', unit: 'USD', tags: [
     'ProceedsFromSaleOfShortTermInvestments',
     'ProceedsFromSaleAndMaturityOfShortTermInvestments',
+    'ProceedsFromSaleMaturityAndCollectionOfShorttermInvestments', // DAL, MLI, MET, ULTA
+  ]},
+  { field: 'sale_of_investments_equity', unit: 'USD', tags: [
+    'ProceedsFromSaleOfEquitySecurities',
+    'ProceedsFromSaleOfEquityMethodInvestments',
+    'ProceedsFromSaleOfEquitySecuritiesFvNi',              // NVDA, AMT, BRK-B, MET — FV-NI equity sales
+  ]},
+  // Other investment proceeds (catch-all for companies with non-standard tags)
+  { field: 'sale_of_investments_other', unit: 'USD', tags: [
+    'ProceedsFromSaleAndMaturityOfOtherInvestments',       // AMAT, AAPL, NEE, LEN, EW, EQIX, V, GOOGL
+    'ProceedsFromSaleOfOtherInvestments',                  // EQIX, V
   ]},
   { field: 'purchase_of_business', unit: 'USD', tags: [
     'PaymentsToAcquireBusinessesNetOfCashAcquired',
@@ -806,23 +876,31 @@ function getDerivedFormula(field, inc, bal, cf) {
     case 'total_debt_with_leases': return 'total_debt + operating_lease_liabilities';
     case 'net_debt': return 'total_debt - cash';
     case 'payables_and_accrued': return 'accounts_payable + accrued_liabilities';
+    case 'short_term_debt': return 'commercial_paper + short_term_borrowings + notes_payable_current';
     case 'short_term_debt_and_leases': return 'short_term_debt + current_portion_lt_debt + finance_lease_liability_current';
     case 'lt_debt_and_leases_noncurrent': return 'long_term_debt + finance_lease_liability_noncurrent';
     case 'working_capital': return 'current_assets - current_liabilities';
     case 'invested_capital': return 'equity + long_term_debt - cash';
     case 'net_tangible_assets': return 'equity - goodwill - intangible_assets';
     case 'total_capitalization': return 'equity + total_debt';
+    case 'other_current_liabilities': return 'current_liabilities - accounts_payable - accrued_liabilities - short_term_debt - current_portion_lt_debt - operating_lease_current - finance_lease_current - deferred_revenue_current - taxes_payable';
+    case 'other_noncurrent_assets': return 'noncurrent_assets - property_plant_equipment - goodwill - intangible_assets - long_term_investments - deferred_tax_assets';
+    case 'other_noncurrent_liabilities': return 'noncurrent_liabilities - long_term_debt - operating_lease_noncurrent - finance_lease_noncurrent - deferred_tax_liabilities - pension_liabilities - deferred_revenue_noncurrent';
+    case 'other_current_assets': return 'current_assets - cash - short_term_investments - accounts_receivable - inventory - prepaid_expenses';
+    case 'other_income_expense': return 'income_before_tax - operating_income_loss - interest_income + interest_expense';
 
     // Cash Flow
     case 'depreciation_amortization':
       if (cf.depreciation_only != null) return 'depreciation_only + amortization_of_intangibles';
       return null;
     case 'free_cash_flow': return 'operating_cash_flow - |capital_expenditures|';
+    case 'sale_of_investments': return 'AFS_proceeds + maturity_proceeds + STI_proceeds + equity_proceeds';
+    case 'purchase_of_investments': return '|AFS_payments| + |HTM_payments| + |STI_payments| + |equity_payments|';
     case 'net_investments': return 'sale_of_investments - |purchase_of_investments|';
     case 'net_debt_issuance': return '(proceeds_lt_debt + proceeds_st_debt) - (repayments_lt_debt + repayments_st_debt)';
     case 'net_common_stock': return 'proceeds_from_stock_issuance - |share_repurchases|';
     case 'change_in_working_capital': return 'change_in_receivables + change_in_inventory + change_in_payables + change_in_other_wc';
-    case 'net_change_in_cash': return 'operating_cf + investing_cf + financing_cf + fx_effect';
+    case 'net_change_in_cash': return 'operating_cf + investing_cf + financing_cf';
     case 'capital_expenditures_net': return '-|capital_expenditures| + sale_of_ppe';
     case 'purchase_sale_of_business_net': return 'sale_of_business - |purchase_of_business|';
     case 'net_lt_debt_issuance': return 'proceeds_from_lt_debt - |repayments_of_lt_debt|';
@@ -942,6 +1020,15 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       inc.effective_tax_rate = (inc.income_tax / inc.income_before_tax) * 100;
     }
 
+    // Residual "Other Income/Expense" — simpler formula, fewer error amplification concerns
+    if (inc.other_income_expense == null &&
+        inc.income_before_tax != null && inc.operating_income_loss != null) {
+      const interestIncome = inc.interest_income ?? 0;
+      const interestExpense = inc.interest_expense ?? 0;
+      inc.other_income_expense = inc.income_before_tax - inc.operating_income_loss
+                                  - interestIncome + interestExpense;
+    }
+
     // ── Balance Sheet Derived ──
 
     // Cash & Marketable Securities combined (matches R1 Toolbox "Cash, Cash Equivalents, & Marketable Securities")
@@ -1002,6 +1089,21 @@ function computeDerivedFields(years, income, balance, cashFlow) {
     // Liabilities nor LiabilitiesNoncurrent tags exist — 31+ companies)
     if (bal.liabilities == null && bal.liabilities_and_equity != null && bal.equity != null) {
       bal.liabilities = bal.liabilities_and_equity - bal.equity - (bal.minority_interest ?? 0);
+    }
+
+    // Short-term debt component summation: sum commercial_paper + short_term_borrowings + notes_payable_current
+    // when aggregate (DebtCurrent) is null or the component sum exceeds it.
+    // Note: does NOT include current_portion_lt_debt (tracked separately to avoid double-counting in total_debt).
+    {
+      const components = [
+        bal.commercial_paper,
+        bal.short_term_borrowings,
+        bal.notes_payable_current,
+      ].filter(v => v != null && v > 0);
+      const componentSum = components.reduce((s, v) => s + v, 0);
+      if (componentSum > 0 && (bal.short_term_debt == null || componentSum > bal.short_term_debt)) {
+        bal.short_term_debt = componentSum;
+      }
     }
 
     // Total Debt = Traditional Debt + Finance/Capital Lease Obligations (matches Morningstar)
@@ -1098,9 +1200,91 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       bal.net_tangible_assets = (bal.equity ?? 0) - (bal.goodwill ?? 0) - (bal.intangible_assets ?? 0);
     }
 
-    // NOTE: Residual "Other" BS derivations (OtherCL, OtherNCL, OtherNCA) were attempted
-    // but reverted — named items aren't accurate enough. Residual computation amplifies
-    // tag-level errors (e.g., OtherCL went 28→64 DIFF). Blocked until named items reach ~100%.
+    // ── Residual "Other" Fields (Gated) ──
+    // MS DataID 23151 confirmed formula for OtherCurrentLiabilities.
+    // Only compute when 95%+ of named items are non-null for this company-year.
+    // This prevents B7 error amplification from incomplete named item extraction.
+
+    // OtherCurrentLiabilities = CL - sum(8 named CL items)
+    if (bal.other_current_liabilities == null && bal.current_liabilities != null) {
+      const clNamedItems = [
+        bal.accounts_payable,
+        bal.accrued_liabilities,
+        bal.short_term_debt,
+        bal.current_portion_lt_debt,
+        bal.operating_lease_liability_current,
+        bal.finance_lease_liability_current,
+        bal.deferred_revenue_current,
+        bal.taxes_payable,
+      ];
+      const clCoverage = clNamedItems.filter(v => v != null).length / clNamedItems.length;
+      if (clCoverage >= 0.95) {
+        const namedSum = clNamedItems.reduce((sum, v) => sum + (v ?? 0), 0);
+        const residual = bal.current_liabilities - namedSum;
+        if (residual >= 0) {
+          bal.other_current_liabilities = residual;
+        }
+      }
+    }
+
+    // OtherNonCurrentAssets = noncurrent_assets - sum(5 named NCA items)
+    // PP&E already includes ROU (merged at line ~968), so do NOT subtract operating_lease_rou_asset
+    if (bal.other_noncurrent_assets == null && bal.noncurrent_assets != null) {
+      const ncaNamedItems = [
+        bal.property_plant_equipment,
+        bal.goodwill,
+        bal.intangible_assets,
+        bal.long_term_investments,
+        bal.deferred_tax_assets,
+      ];
+      const ncaCoverage = ncaNamedItems.filter(v => v != null).length / ncaNamedItems.length;
+      if (ncaCoverage >= 0.95) {
+        const namedSum = ncaNamedItems.reduce((sum, v) => sum + (v ?? 0), 0);
+        const residual = bal.noncurrent_assets - namedSum;
+        if (residual >= 0) {
+          bal.other_noncurrent_assets = residual;
+        }
+      }
+    }
+
+    // OtherNonCurrentLiabilities = noncurrent_liabilities - sum(6 named NCL items)
+    if (bal.other_noncurrent_liabilities == null && bal.noncurrent_liabilities != null) {
+      const nclNamedItems = [
+        bal.long_term_debt,
+        bal.operating_lease_liability_noncurrent,
+        bal.finance_lease_liability_noncurrent,
+        bal.deferred_tax_liabilities,
+        bal.pension_liabilities,
+        bal.deferred_revenue_noncurrent,
+      ];
+      const nclCoverage = nclNamedItems.filter(v => v != null).length / nclNamedItems.length;
+      if (nclCoverage >= 0.95) {
+        const namedSum = nclNamedItems.reduce((sum, v) => sum + (v ?? 0), 0);
+        const residual = bal.noncurrent_liabilities - namedSum;
+        if (residual >= 0) {
+          bal.other_noncurrent_liabilities = residual;
+        }
+      }
+    }
+
+    // OtherCurrentAssets = current_assets - sum(5 named CA items)
+    if (bal.other_current_assets == null && bal.current_assets != null) {
+      const caNamedItems = [
+        bal.cash,
+        bal.short_term_investments,
+        bal.accounts_receivable,
+        bal.inventory,
+        bal.prepaid_expenses,
+      ];
+      const caCoverage = caNamedItems.filter(v => v != null).length / caNamedItems.length;
+      if (caCoverage >= 0.95) {
+        const namedSum = caNamedItems.reduce((sum, v) => sum + (v ?? 0), 0);
+        const residual = bal.current_assets - namedSum;
+        if (residual >= 0) {
+          bal.other_current_assets = residual;
+        }
+      }
+    }
 
     // Total Capitalization = Equity + Total Debt (traditional)
     if (bal.total_capitalization == null && bal.equity != null) {
@@ -1112,6 +1296,10 @@ function computeDerivedFields(years, income, balance, cashFlow) {
     // D&A enhancement: MS always uses the BROADEST available D&A figure.
     // extractSection uses first-tag-wins, but for some companies (CRM, WFC),
     // a lower-priority tag is broader. Pick the largest across all D&A sources.
+    //
+    // Phase 1: Pick the best single-tag D&A value (existing logic)
+    // Phase 2: Try component sum with lease amort + accretion (Plan 09 addition)
+    //   SFM: ROU amort ~$146M doubles D&A, NEE: accretion ~$177M, MSFT: finance lease ~$1.8B
     {
       const candidates = [
         cf.depreciation_amortization,       // Primary: DDA or D&A (first-tag-wins)
@@ -1125,6 +1313,43 @@ function computeDerivedFields(years, income, balance, cashFlow) {
         const amort = Math.max(cf._amort_adjustment ?? 0, cf.amortization_of_intangibles ?? 0);
         candidates.push(cf.depreciation_only + amort);
       }
+
+      // Phase 2: Extended D&A component summation (Plan 09)
+      // MS includes ROU amortization, finance lease amortization, accretion expense,
+      // and financing cost amortization in its broadest D&A number.
+      //
+      // GUARD against double-counting: Some companies (AMZN, CRM, DAL) already include
+      // lease/accretion items in their primary DDA tag. Only add component extras when
+      // the primary DDA is close to just depreciation_only + amort (i.e., the extras
+      // are genuinely separate line items, not already embedded).
+      //
+      // Heuristic: If DDA > depreciation_only + amort + components, then components
+      // are already included in DDA. Only add when DDA ≈ depreciation_only + amort.
+      const baseDa = candidates.length > 0 ? Math.max(...candidates) : 0;
+      const rouAmort = cf._da_rou_amort ?? 0;
+      const finLeaseAmort = cf._da_finance_lease_amort ?? 0;
+      const accretionExp = cf._da_accretion_expense ?? 0;
+      const financingAmort = cf._da_financing_costs_amort ?? 0;
+      const componentExtras = rouAmort + finLeaseAmort + accretionExp + financingAmort;
+
+      if (componentExtras > 0 && cf.depreciation_only != null) {
+        // Compute what D&A would be if components were separate (not embedded)
+        const amort = Math.max(cf._amort_adjustment ?? 0, cf.amortization_of_intangibles ?? 0);
+        const narrowDa = cf.depreciation_only + amort;
+        // If the primary D&A is within 3% of the narrow sum (dep + amort),
+        // the components are genuinely separate and should be added.
+        // If primary D&A is much larger than narrow sum, components are already embedded.
+        // 3% threshold chosen empirically: SFM (DDA/narrowDa=1.007) passes,
+        // MSFT uses component path (no DDA tag → dep_only + amort wins), NEE similarly.
+        // EW (1.076), AMT, AMZN, EQIX, BOOT all blocked (components already in DDA).
+        if (baseDa <= narrowDa * 1.03) {
+          candidates.push(baseDa + componentExtras);
+        }
+      } else if (componentExtras > 0 && cf.depreciation_only == null) {
+        // No depreciation_only to check against — conservatively don't add components
+        // since we can't verify they're not already in the primary tag
+      }
+
       if (candidates.length > 0) {
         cf.depreciation_amortization = Math.max(...candidates);
       }
@@ -1132,6 +1357,10 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       delete cf._da_alt_da;
       delete cf._da_alt_accretion;
       delete cf._amort_adjustment;
+      delete cf._da_rou_amort;
+      delete cf._da_finance_lease_amort;
+      delete cf._da_accretion_expense;
+      delete cf._da_financing_costs_amort;
     }
 
 
@@ -1142,7 +1371,9 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       const afs = cf.sale_of_investments_afs;
       const maturity = cf.sale_of_investments_maturity;
       const sti = cf.sale_of_investments_sti;
-      const componentSum = (afs ?? 0) + (maturity ?? 0) + (sti ?? 0);
+      const equity = cf.sale_of_investments_equity;
+      const other = cf.sale_of_investments_other;
+      const componentSum = (afs ?? 0) + (maturity ?? 0) + (sti ?? 0) + (equity ?? 0) + (other ?? 0);
       // Use component sum if: (a) aggregate is null, or (b) components sum to more (aggregate is partial)
       if (componentSum > 0 && (cf.sale_of_investments == null || componentSum > cf.sale_of_investments * 1.05)) {
         cf.sale_of_investments = componentSum;
@@ -1154,7 +1385,9 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       const afs = cf.purchase_of_investments_afs;
       const htm = cf.purchase_of_investments_htm;
       const sti = cf.purchase_of_investments_sti;
-      const componentSum = (afs != null ? Math.abs(afs) : 0) + (htm != null ? Math.abs(htm) : 0) + (sti != null ? Math.abs(sti) : 0);
+      const equity = cf.purchase_of_investments_equity;
+      const componentSum = (afs != null ? Math.abs(afs) : 0) + (htm != null ? Math.abs(htm) : 0)
+        + (sti != null ? Math.abs(sti) : 0) + (equity != null ? Math.abs(equity) : 0);
       const currentAbs = cf.purchase_of_investments != null ? Math.abs(cf.purchase_of_investments) : 0;
       // Use component sum if: (a) aggregate is null, or (b) components sum to more
       if (componentSum > 0 && (cf.purchase_of_investments == null || componentSum > currentAbs * 1.05)) {
@@ -1209,14 +1442,16 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       }
     }
 
-    // Net change in cash = Op + Inv + Fin + FX
+    // Net change in cash = Op + Inv + Fin (excluding FX effect)
+    // MS "Change in Cash" = Op + Inv + Fin per DataID analysis.
+    // Verified: GOOGL 2021 MS=-5233M = Op(91652)+Inv(-35523)+Fin(-61362).
+    // Engine was adding FX(-287M) -> -5520M. MS excludes FX.
     if (cf.net_change_in_cash == null) {
       const op = cf.net_cash_flow_from_operating_activities;
       const inv = cf.net_cash_flow_from_investing_activities;
       const fin = cf.net_cash_flow_from_financing_activities;
-      const fx = cf.effect_of_exchange_rate ?? 0;
       if (op != null && inv != null && fin != null) {
-        cf.net_change_in_cash = op + inv + fin + fx;
+        cf.net_change_in_cash = op + inv + fin;
       }
     }
 
@@ -1254,10 +1489,9 @@ function computeDerivedFields(years, income, balance, cashFlow) {
       }
     }
 
-    // B7/B8: Residual "Other" categories — still blocked.
-    // Attempted twice (B7 and B8) — both caused accuracy regressions because
-    // errors in named items (especially sale/purchase of investments, D&A) get
-    // amplified into the residual. Will only work when named items are ~100% accurate.
+    // B7/B8: Residual "Other" CF categories — still blocked for cash flow.
+    // Balance sheet residuals (OtherCL, OtherNCA, OtherNCL, OtherCA) are now gated at 95% named item coverage.
+    // CF residuals remain higher risk due to investment/D&A error amplification.
 
     // Ending cash position = current year balance sheet cash (prefer broader definition including restricted cash)
     if (cf.ending_cash_position == null) {

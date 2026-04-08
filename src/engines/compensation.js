@@ -22,18 +22,66 @@ function sleep(ms) {
 // ─── Constants ──────────────────────────────────────────────
 
 const COMP_CACHE_V = 'v3';
-const FETCH_DELAY_MS = 120;
+
+// ─── SEC Fetch Wrapper ─────────────────────────────────────
+// All SEC requests route through secFetch for rate limiting + retry.
+// Replaces the old FETCH_DELAY_MS per-ticker delay with per-request pacing.
+
+let lastSecFetchTime = 0;
+const SEC_MIN_INTERVAL = 120; // 120ms between SEC requests (~8 req/sec)
+
+async function secFetch(url, opts = {}, retries = 3) {
+  let lastResponse = null;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    // Per-request rate limit
+    const now = Date.now();
+    const elapsed = now - lastSecFetchTime;
+    if (elapsed < SEC_MIN_INTERVAL) {
+      await sleep(SEC_MIN_INTERVAL - elapsed);
+    }
+    lastSecFetchTime = Date.now();
+
+    try {
+      const res = await fetch(url, opts);
+      lastResponse = res;
+      if (res.ok) return res;
+
+      // Retriable status codes
+      if (res.status === 403 || res.status === 429 || res.status === 503) {
+        const retryAfter = parseInt(res.headers?.get?.('Retry-After') || '0');
+        const delay = retryAfter > 0
+          ? retryAfter * 1000
+          : Math.min(1000 * Math.pow(2, attempt), 10000);
+        if (attempt < retries - 1) {
+          console.warn(`SEC ${res.status} for ${url.slice(0, 60)}... retry ${attempt + 1}/${retries} in ${delay}ms`);
+          await sleep(delay);
+          continue;
+        }
+      }
+
+      return res; // non-retriable error or last attempt
+    } catch (e) {
+      if (attempt < retries - 1) {
+        await sleep(1000 * Math.pow(2, attempt));
+        continue;
+      }
+      // Network error on last attempt: return a synthetic failed response
+      return lastResponse || new Response('', { status: 0 });
+    }
+  }
+  return lastResponse || new Response('', { status: 0 });
+}
 
 // SEC-mandated Summary Compensation Table column headers (Item 402)
 // Normalized to lowercase for fuzzy matching
 const EXEC_COLUMN_PATTERNS = [
-  { key: 'name', patterns: ['name'] },
+  { key: 'name', patterns: ['name', 'named executive', 'principal position'] },
   { key: 'year', patterns: ['year', 'fiscal year'] },
-  { key: 'salary', patterns: ['salary', 'base sal'] },
+  { key: 'salary', patterns: ['salary', 'base sal', 'base comp'] },
   { key: 'bonus', patterns: ['bonus'] },
-  { key: 'stockAwards', patterns: ['stock award'] },
+  { key: 'stockAwards', patterns: ['stock award', 'rsu', 'restricted stock'] },
   { key: 'optionAwards', patterns: ['option award'] },
-  { key: 'nonEquityIncentive', patterns: ['non-equity', 'non equity', 'incentive plan'] },
+  { key: 'nonEquityIncentive', patterns: ['non-equity', 'non equity', 'incentive plan', 'annual incentive', 'annual payout'] },
   { key: 'pensionChange', patterns: ['change in pension', 'pension value', 'nonqualified deferred', 'nqdc'] },
   { key: 'otherComp', patterns: ['all other', 'other comp'] },
   { key: 'total', patterns: ['total'] },
@@ -101,6 +149,7 @@ function cleanIxbrlFromDoc(doc) {
       els[i].remove();
     }
   }
+
 }
 
 // ─── Value Parsing ──────────────────────────────────────────
@@ -149,13 +198,28 @@ function normalizeText(text) {
 }
 
 function cellText(el) {
-  return (el.textContent || '')
+  let text = (el.textContent || '')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/g, '&')
     .replace(/\u00a0/g, ' ')
     .replace(/[\u200b\u200c\u200d\uFEFF]/g, '')  // strip zero-width chars
     .replace(/\s+/g, ' ')
     .trim();
+
+  // Fallback for visibility:hidden headers (KO, ULTA, DE, etc.):
+  // When textContent is empty but innerHTML has real text behind hidden CSS,
+  // extract text from innerHTML by stripping tags.
+  if (!text && el.innerHTML && el.innerHTML.length > 10) {
+    text = el.innerHTML
+      .replace(/<[^>]*>/g, ' ')        // strip HTML tags
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/\u00a0/g, ' ')
+      .replace(/[\u200b\u200c\u200d\uFEFF]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  return text;
 }
 
 // ─── DOM Helpers ────────────────────────────────────────────
@@ -258,7 +322,7 @@ function matchColumns(headerRow, patterns) {
   const contentPhysCols = physCols.filter(pc => !isSpacerCell(pc.cell));
   if (contentPhysCols.length < 4) return null;
 
-  const headerTexts = contentPhysCols.map(pc => normalizeText(pc.cell.textContent));
+  const headerTexts = contentPhysCols.map(pc => normalizeText(cellText(pc.cell)));
 
   const mapping = {};
   let matchCount = 0;
@@ -267,7 +331,7 @@ function matchColumns(headerRow, patterns) {
     for (let i = 0; i < headerTexts.length; i++) {
       const h = headerTexts[i];
       if (pats.some(p => h.includes(p))) {
-        mapping[key] = contentPhysCols[i].startCol; // physical position
+        mapping[key] = { physCol: contentPhysCols[i].startCol, contentIdx: i };
         matchCount++;
         break;
       }
@@ -411,6 +475,7 @@ function normalizeExecName(name) {
   return name
     .toLowerCase()
     .replace(/\(\d+\)/g, '')      // strip footnote refs "(1)", "(6)"
+    .replace(/\b(mr|mrs|ms|dr|jr|sr|ii|iii|iv)\b\.?\s*/g, '')  // strip honorifics/suffixes
     .replace(/[^a-z\s]/g, '')     // strip non-alpha except spaces
     .replace(/\s+/g, ' ')
     .trim()
@@ -451,6 +516,16 @@ function findExecMatch(execMap, name) {
             return existingKey;
           }
         }
+      }
+    }
+  }
+
+  // Last-name-only match (handles "Mr. Khosrowshahi" → normalized to just "khosrowshahi")
+  if (parts.length === 1) {
+    for (const [existingKey] of execMap) {
+      const existingParts = existingKey.split(' ');
+      if (existingParts.length >= 1 && existingParts[existingParts.length - 1] === parts[0]) {
+        return existingKey;
       }
     }
   }
@@ -516,6 +591,135 @@ function findSummaryCompensationTable(doc) {
     }
   }
 
+  // Pass 3.5: Anchor-based SCT detection for hidden-header filings (KO, ULTA, DE pattern)
+  // Stage A: Find "Summary Compensation Table" text in document, check nearby tables
+  // Stage B: Detect (a)(b)(c) label row pattern that SEC mandates above data rows
+  // Stage C: Merge $-split cell pairs for column mapping
+  const bodyText = (doc.body?.textContent || '').toLowerCase();
+  const sctTextIdx = bodyText.indexOf('summary compensation table');
+  if (sctTextIdx > -1) {
+    // Build proximity scores for each table relative to the SCT text position
+    const tableProximity = allTables.map((table, idx) => {
+      // Approximate table position by its textContent's position in body text
+      const tableTextStart = bodyText.indexOf(normalizeText(table.textContent).slice(0, 50));
+      const distance = tableTextStart > -1 ? Math.abs(tableTextStart - sctTextIdx) : Infinity;
+      return { table, idx, distance };
+    });
+    tableProximity.sort((a, b) => a.distance - b.distance);
+
+    // Check the 10 closest tables for SCT data patterns
+    for (const { table } of tableProximity.slice(0, 10)) {
+      const rows = getDirectRows(table);
+      if (rows.length < 5) continue;
+
+      // Stage B: Look for SEC-mandated label row: (a) (b) (c) (d) ...
+      let labelRowIdx = -1;
+      for (let r = 0; r < Math.min(rows.length, 15); r++) {
+        const content = getContentCells(rows[r]);
+        const labelCells = content.filter(c => /^\([a-z]\)$/.test(cellText(c).trim()));
+        if (labelCells.length >= 4) {
+          labelRowIdx = r;
+          break;
+        }
+      }
+
+      // Find a data row (after label row if found, or scan from start)
+      const scanStart = labelRowIdx > -1 ? labelRowIdx + 1 : 0;
+      for (let r = scanStart; r < Math.min(rows.length, scanStart + 15); r++) {
+        const allCells = getDirectCells(rows[r]);
+        if (allCells.length < 5) continue;
+
+        // Stage C: Merge $-split cell pairs. Build a list of "value cells" by
+        // skipping $ signs and spacers, keeping names, years, and numbers.
+        const valueCells = [];
+        for (let c = 0; c < allCells.length; c++) {
+          const text = cellText(allCells[c]).trim();
+          if (!text || text === '$' || text === '($)') continue; // skip $ and spacer cells
+          if (/^\u00a0+$/.test(text) || /^[\u200b\u200c\u200d]+$/.test(text)) continue; // zero-width
+          if (text === '&nbsp;' || text === '\u00a0' || /^(&nbsp;\s*)+$/i.test(text)) continue; // literal &nbsp;
+          valueCells.push({ cell: allCells[c], text });
+        }
+        if (valueCells.length < 5) continue;
+
+        // Check: first value cell is a name, second is a year, rest are numbers
+        const cleanName = valueCells[0].text.replace(/\(\d+\)/g, '').trim();
+        const hasName = cleanName.length > 3 && cleanName.length < 60 && looksLikeName(cleanName);
+        const hasYear = /^20\d{2}$/.test(valueCells[1].text.trim());
+        if (!hasName || !hasYear) continue;
+
+        // Count numeric cells (3+ digit numbers = compensation values)
+        let numCount = 0;
+        for (let v = 2; v < valueCells.length; v++) {
+          const stripped = valueCells[v].text.replace(/[$,\s]/g, '');
+          if (/^\d{3,}$/.test(stripped) || stripped === '0') numCount++;
+        }
+        if (numCount < 3) continue;
+
+        // Found SCT data. Map value cells to SEC-mandated column order.
+        const mapping = {};
+        const keys = ['name', 'year', 'salary', 'bonus', 'stockAwards', 'optionAwards',
+                      'nonEquityIncentive', 'pensionChange', 'otherComp', 'total'];
+        for (let k = 0; k < keys.length && k < valueCells.length; k++) {
+          mapping[keys[k]] = { physCol: -1, contentIdx: k, _valueCell: true };
+        }
+        // Total is always the last value cell
+        if (valueCells.length > 2) {
+          mapping.total = { physCol: -1, contentIdx: valueCells.length - 1, _valueCell: true };
+        }
+
+        // Build a custom extractComp that uses valueCells instead of content cells
+        // Store the value-cell extraction mode in the mapping for parseSummaryCompensationTable
+        return { table, rows, mapping, headerEndIdx: r, _useValueCells: true };
+      }
+    }
+  }
+
+  // Pass 3 fallback (original): detect SCT by data pattern, scanning ALL tables
+  // Safety net for filings without "Summary Compensation Table" text nearby.
+  for (const table of allTables) {
+    const rows = getDirectRows(table);
+    if (rows.length < 5) continue;
+
+    // Look for a row that has: a name-like first cell, a year, and dollar/number values
+    for (let r = 0; r < Math.min(rows.length, 20); r++) {
+      const content = getContentCells(rows[r]);
+      if (content.length < 5) continue;
+
+      const c0 = cellText(content[0]);
+      const c1 = cellText(content[1]);
+
+      // Check: first cell is a name, second is a year
+      const cleanName = c0.replace(/\(\d+\)/g, '').trim();
+      const hasName = cleanName.length > 3 && looksLikeName(cleanName);
+      const hasYear = /^20\d{2}$/.test(c1.trim());
+      if (!hasName || !hasYear) continue;
+
+      // Check remaining cells for dollar values (handle $ in separate cells)
+      let dollarCount = 0;
+      for (let c = 2; c < content.length; c++) {
+        const val = cellText(content[c]).replace(/[$,\s]/g, '');
+        if (/^\d{3,}$/.test(val)) dollarCount++; // 3+ digit numbers = compensation values
+      }
+      if (dollarCount < 3) continue; // need at least salary + something + total
+
+      // Found a data row matching SCT pattern. Build positional mapping.
+      // SEC-mandated order: Name(0), Year(1), Salary(2), Bonus(3), StockAwards(4),
+      // OptionAwards(5), NonEquityIncentive(6), PensionChange(7), OtherComp(8), Total(last)
+      const mapping = {};
+      const keys = ['name', 'year', 'salary', 'bonus', 'stockAwards', 'optionAwards',
+                    'nonEquityIncentive', 'pensionChange', 'otherComp', 'total'];
+      for (let k = 0; k < keys.length && k < content.length; k++) {
+        mapping[keys[k]] = { physCol: -1, contentIdx: k };
+      }
+      // Override total to always be the last content column
+      if (content.length > 2) {
+        mapping.total = { physCol: -1, contentIdx: content.length - 1 };
+      }
+
+      return { table, rows, mapping, headerEndIdx: r };
+    }
+  }
+
   return null;
 }
 
@@ -523,7 +727,7 @@ function parseSummaryCompensationTable(doc) {
   const found = findSummaryCompensationTable(doc);
   if (!found) return [];
 
-  const { rows, mapping, headerEndIdx } = found;
+  const { rows, mapping, headerEndIdx, _useValueCells } = found;
   const executives = [];
   let currentName = null;
   let currentTitle = null;
@@ -531,25 +735,109 @@ function parseSummaryCompensationTable(doc) {
   let rowspanColspan = 0; // physical columns consumed by the rowspanned name cell
 
   // Helper: extract comp values from a row using physical column positions
+  // with content-ordinal fallback for tables with different spacer counts in header vs data
+  //
+  // Detect spacer mismatch: if the data row has a different number of content cells than
+  // the header, physical positions are unreliable — use content-ordinal instead.
+  // Cache header row total cell count for spacer mismatch detection
+  const headerTotalCells = getDirectCells(rows[headerEndIdx - 1]).length;
+
+  // Helper: get "value cells" from a row by filtering out $ signs and spacers
+  // Used by Pass 3.5's _useValueCells mode for $-split tables (KO pattern)
+  function getValueCells(row) {
+    const allCells = getDirectCells(row);
+    return allCells.filter(c => {
+      const text = cellText(c).trim();
+      if (!text) return false;
+      if (text === '$' || text === '($)') return false;
+      if (/^\u00a0+$/.test(text) || /^[\u200b\u200c\u200d]+$/.test(text)) return false;
+      // Filter &nbsp; entities that survive innerHTML fallback as literal text
+      if (text === '&nbsp;' || text === '\u00a0' || /^(&nbsp;\s*)+$/i.test(text)) return false;
+      return true;
+    });
+  }
+
   function extractCompByPhysicalPos(row, offset) {
+    // Value-cell mode (Pass 3.5): extract from merged cells, not physical positions
+    if (_useValueCells) {
+      const valCells = getValueCells(row);
+      const comp = {};
+      for (const { key } of EXEC_COLUMN_PATTERNS) {
+        if (key === 'name' || key === 'year') continue;
+        const pos = mapping[key];
+        if (pos !== undefined) {
+          // Total is always the LAST numeric value cell (row length varies due to &nbsp; ghosts)
+          if (key === 'total') {
+            for (let v = valCells.length - 1; v >= 2; v--) {
+              const val = parseCompValue(cellText(valCells[v]));
+              if (val != null) { comp.total = val; break; }
+            }
+          } else {
+            const idx = typeof pos === 'object' ? pos.contentIdx : pos;
+            const cell = valCells[idx];
+            if (cell) comp[key] = parseCompValue(cellText(cell));
+          }
+        }
+      }
+      let year = null;
+      if (mapping.year !== undefined) {
+        const idx = typeof mapping.year === 'object' ? mapping.year.contentIdx : mapping.year;
+        const yearCell = valCells[idx];
+        if (yearCell) year = parseYear(cellText(yearCell));
+      }
+      return { comp, year };
+    }
+
+    // Standard mode: physical positions with content-ordinal fallback
     const cellMap = buildPhysicalCellMap(row, offset);
+    const rowTotalCells = getDirectCells(row).length;
+    const useOrdinal = rowTotalCells !== headerTotalCells && offset === 0;
+    let contentCells = null;
+    if (useOrdinal) contentCells = getContentCells(row);
     const comp = {};
     for (const { key } of EXEC_COLUMN_PATTERNS) {
       if (key === 'name' || key === 'year') continue;
-      const physPos = mapping[key];
-      if (physPos !== undefined) {
-        const cell = cellMap.get(physPos);
+      const pos = mapping[key];
+      if (pos !== undefined) {
+        const physCol = typeof pos === 'object' ? pos.physCol : pos;
+        const contentIdx = typeof pos === 'object' ? pos.contentIdx : undefined;
+        let cell;
+        if (useOrdinal && contentIdx !== undefined) {
+          cell = contentCells[contentIdx] || null;
+        } else {
+          cell = cellMap.get(physCol);
+        }
         if (cell) {
           comp[key] = parseCompValue(cellText(cell));
         }
       }
     }
-    // Extract year by physical position
     let year = null;
     if (mapping.year !== undefined) {
-      const yearCell = cellMap.get(mapping.year);
+      const pos = mapping.year;
+      const physCol = typeof pos === 'object' ? pos.physCol : pos;
+      const contentIdx = typeof pos === 'object' ? pos.contentIdx : undefined;
+      let yearCell;
+      if (useOrdinal && contentIdx !== undefined) {
+        yearCell = contentCells[contentIdx] || null;
+      } else {
+        yearCell = cellMap.get(physCol);
+      }
       if (yearCell) year = parseYear(cellText(yearCell));
     }
+
+    // Universal total fallback: if total wasn't found by positional mapping,
+    // scan backwards from the last cell in the row for the last parseable number.
+    // SEC mandates total as the rightmost data column. Handles $-split tables
+    // where physical column positions don't align.
+    if (comp.total == null) {
+      const allCells = getDirectCells(row);
+      for (let c = allCells.length - 1; c >= 0; c--) {
+        const val = parseCompValue(cellText(allCells[c]));
+        if (val != null && val > 0) { comp.total = val; break; }
+      }
+    }
+
     return { comp, year };
   }
 
@@ -742,11 +1030,18 @@ function parseDirectorCompensationTable(doc) {
     // Use physical column positions for data extraction
     const cellMap = buildPhysicalCellMap(row);
     const comp = {};
+    let dirContentCells = null;
     for (const { key } of DIRECTOR_COLUMN_PATTERNS) {
       if (key === 'name') continue;
-      const physPos = mapping[key];
-      if (physPos !== undefined) {
-        const cell = cellMap.get(physPos);
+      const pos = mapping[key];
+      if (pos !== undefined) {
+        const physCol = typeof pos === 'object' ? pos.physCol : pos;
+        const contentIdx = typeof pos === 'object' ? pos.contentIdx : undefined;
+        let cell = cellMap.get(physCol);
+        if ((!cell || isSpacerCell(cell)) && contentIdx !== undefined) {
+          if (!dirContentCells) dirContentCells = getContentCells(row);
+          cell = dirContentCells[contentIdx] || null;
+        }
         if (cell) {
           comp[key] = parseCompValue(cellText(cell));
         }
@@ -819,7 +1114,7 @@ function filingArchiveUrl(cik, accessionNumber, filename) {
 async function findXbrlInstanceFile(filing) {
   try {
     const url = filingIndexUrl(filing.cik, filing.accessionNumber);
-    const res = await fetch(url);
+    const res = await secFetch(url);
     if (!res.ok) return null;
     const data = await res.json();
     const items = data?.directory?.item || [];
@@ -855,17 +1150,28 @@ function parseEcdXbrl(xmlText) {
   }
 
   // Extract fiscal year periods from contextRefs
-  // Formats vary: "From2024-09-29to2025-09-27", "P10_28_2024To10_26_2025", etc.
+  // Formats vary wildly across filing providers:
+  //   "From2024-09-29to2025-09-27"           (ISO with "to")
+  //   "P10_28_2024To10_26_2025"              (US date with underscores)
+  //   "Duration_1_1_2025_To_12_31_2025_xxx"  (Workiva/Donnelley underscore format)
   function extractYearFromContext(ctx) {
     // Look for the ending year in the context — the "to" date determines the fiscal year
-    // Try ISO format: "to2025-09-27" or "To10_26_2025"
+    // Try ISO format: "to2025-09-27"
     const isoMatch = ctx.match(/to(\d{4})-(\d{2})-(\d{2})/i);
     if (isoMatch) return parseInt(isoMatch[1]);
-    const usMatch = ctx.match(/To(\d{1,2})_(\d{1,2})_(\d{4})/i);
+    // US underscore format: "To10_26_2025" or "To_12_31_2025"
+    const usMatch = ctx.match(/To_?(\d{1,2})_(\d{1,2})_(\d{4})/i);
     if (usMatch) return parseInt(usMatch[3]);
-    // Fallback: find any 4-digit year
-    const years = ctx.match(/\b(20\d{2})\b/g);
-    if (years && years.length > 0) return parseInt(years[years.length - 1]);
+    // Workiva format: "Duration_M_D_YYYY_To_M_D_YYYY" — grab the last year after "To"
+    const workivaMatch = ctx.match(/To_\d{1,2}_\d{1,2}_(20\d{2})/i);
+    if (workivaMatch) return parseInt(workivaMatch[1]);
+    // Fallback: find any 4-digit year (no \b — underscores are word chars in regex)
+    const years = ctx.match(/(?:^|[^0-9])(20\d{2})(?:$|[^0-9])/g);
+    if (years && years.length > 0) {
+      // Extract just the year from the match (may have leading/trailing non-digit)
+      const lastMatch = years[years.length - 1].match(/(20\d{2})/);
+      if (lastMatch) return parseInt(lastMatch[1]);
+    }
     return null;
   }
 
@@ -1032,7 +1338,7 @@ async function fetchEcdXbrlFallback(filing) {
     if (!xmlFilename) return null;
 
     const url = filingArchiveUrl(filing.cik, filing.accessionNumber, xmlFilename);
-    const res = await fetch(url);
+    const res = await secFetch(url);
     if (!res.ok) return null;
 
     const xmlText = await res.text();
@@ -1052,7 +1358,7 @@ async function fetchAndParseProxy(filing) {
   if (cached) return cached;
 
   const url = filingHtmlUrl(filing.cik, filing.accessionNumber, filing.primaryDocument);
-  const res = await fetch(url);
+  const res = await secFetch(url);
   if (!res.ok) return null;
 
   const html = await res.text();
@@ -1079,6 +1385,10 @@ async function fetchAndParseProxy(filing) {
         console.warn(`Compensation: median total $${median} < $50K — likely garbled data, clearing for XBRL fallback`);
         executives = [];
       }
+    } else {
+      // All values null — column misalignment produced zero extractable numbers
+      console.warn('Compensation: all comp values null — likely column misalignment, clearing for XBRL fallback');
+      executives = [];
     }
   }
 
@@ -1115,9 +1425,18 @@ async function fetchAndParseProxy(filing) {
 
 // ─── Find DEF 14A Filings ───────────────────────────────────
 
+const PROXY_FORM_TYPES = new Set(['DEF 14A', 'DEFA14A', 'DEF 14C']);
+
 function findProxyFilings(allFilings, count = 2) {
-  return allFilings
+  // Prefer DEF 14A, fall back to DEFA14A/DEF 14C if no DEF 14A exists
+  const def14a = allFilings
     .filter(f => f.form === 'DEF 14A')
+    .sort((a, b) => b.filingDate.localeCompare(a.filingDate))
+    .slice(0, count);
+  if (def14a.length > 0) return def14a;
+
+  return allFilings
+    .filter(f => PROXY_FORM_TYPES.has(f.form))
     .sort((a, b) => b.filingDate.localeCompare(a.filingDate))
     .slice(0, count);
 }
@@ -1339,7 +1658,7 @@ export async function auditCompensation(companies, onProgress) {
         result.category = 'NO_CIK';
         result.issues.push('Could not resolve CIK from ticker');
         results.push(result);
-        await sleep(FETCH_DELAY_MS);
+        // pacing handled by secFetch
         continue;
       }
 
@@ -1353,21 +1672,21 @@ export async function auditCompensation(companies, onProgress) {
         result.category = 'NO_FILINGS';
         result.issues.push('No DEF 14A filings found in EDGAR submissions');
         results.push(result);
-        await sleep(FETCH_DELAY_MS);
+        // pacing handled by secFetch
         continue;
       }
 
       // Step 3: Fetch most recent proxy HTML
       const filing = allProxies[0];
       const url = filingHtmlUrl(filing.cik, filing.accessionNumber, filing.primaryDocument);
-      const res = await fetch(url);
+      const res = await secFetch(url);
 
       if (!res.ok) {
         result.status = 'FAIL';
         result.category = 'FETCH_FAILED';
         result.issues.push(`HTTP ${res.status} fetching proxy (${filing.primaryDocument})`);
         results.push(result);
-        await sleep(FETCH_DELAY_MS);
+        // pacing handled by secFetch
         continue;
       }
 
@@ -1446,7 +1765,7 @@ export async function auditCompensation(companies, onProgress) {
     }
 
     results.push(result);
-    if (i < companies.length - 1) await sleep(FETCH_DELAY_MS);
+    // pacing handled by secFetch
   }
 
   return results;
@@ -1475,7 +1794,7 @@ export async function fetchCompensation(ticker) {
   for (let i = 0; i < proxyFilings.length; i++) {
     const result = await fetchAndParseProxy(proxyFilings[i]);
     results.push(result);
-    if (i < proxyFilings.length - 1) await sleep(FETCH_DELAY_MS);
+    // pacing handled by secFetch
   }
 
   // Merge across filings
