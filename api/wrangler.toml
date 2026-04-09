@@ -1,0 +1,38 @@
+name = "thes1s-api"
+main = "src/index.js"
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "production"
+
+# D1 database — create with: wrangler d1 create thes1s
+[[d1_databases]]
+binding = "DB"
+database_name = "thes1s"
+database_id = "86cba902-d3d3-4f96-a941-94998bdc060e"
+
+# R2 bucket — create with: wrangler r2 bucket create thes1s-transcripts
+[[r2_buckets]]
+binding = "TRANSCRIPTS"
+bucket_name = "thes1s-transcripts"
+
+# Secrets (set via wrangler secret put):
+#   RESEND_API_KEY — for invite emails
+#   ADMIN_EMAIL — your email for the initial admin account
+#   SEC_USER_AGENT — e.g. "StockAnalyzer/1.0 kylehoff@example.com"
+
+# Workers Paid plan ($5/mo) — 5 cron triggers
+# Every 3hr: transcripts (6 AV calls per run, 48/day)
+# Daily 6AM: insider trades (50 tickers per run, 10-day rotation)
+# Monthly 1st 3AM: guru holdings (43 funds)
+# Monthly 1st 2AM: taxonomy refresh (S&P 500 changes)
+# Sunday 5AM: stale data cleanup
+[triggers]
+crons = [
+  "0 */3 * * *",
+  "0 6 * * *",
+  "0 3 1 * *",
+  "0 2 1 * *",
+  "0 5 * * SUN"
+]

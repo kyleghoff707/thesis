@@ -1,0 +1,144 @@
+-- Thes1s D1 Schema
+-- Auth + user data + shared data (gurus, insiders, taxonomy)
+
+-- ═══ Auth ═══════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  name TEXT,
+  role TEXT DEFAULT 'user',
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  token TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  expires_at TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+
+CREATE TABLE IF NOT EXISTS invite_tokens (
+  token TEXT PRIMARY KEY,
+  email TEXT NOT NULL,
+  created_by TEXT NOT NULL REFERENCES users(id),
+  created_at TEXT DEFAULT (datetime('now')),
+  used_at TEXT
+);
+
+-- ═══ User Data (per-user) ══════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS reports (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  ticker TEXT NOT NULL,
+  company_name TEXT,
+  current_stage INTEGER DEFAULT 1,
+  stage_approvals TEXT DEFAULT '{}',
+  notes TEXT DEFAULT '',
+  watchlist INTEGER DEFAULT 0,
+  competitors TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_reports_user ON reports(user_id);
+
+CREATE TABLE IF NOT EXISTS report_stages (
+  report_id TEXT NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+  stage TEXT NOT NULL,
+  data TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now')),
+  PRIMARY KEY (report_id, stage)
+);
+
+CREATE TABLE IF NOT EXISTS watchlists (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  name TEXT DEFAULT 'Default',
+  tickers TEXT DEFAULT '[]',
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_watchlists_user ON watchlists(user_id);
+
+CREATE TABLE IF NOT EXISTS user_settings (
+  user_id TEXT PRIMARY KEY REFERENCES users(id),
+  settings TEXT DEFAULT '{}',
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+-- ═══ Shared Data (populated by cron) ═══════════════════════════
+
+CREATE TABLE IF NOT EXISTS guru_holdings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  guru_cik TEXT NOT NULL,
+  guru_name TEXT NOT NULL,
+  fund_name TEXT NOT NULL,
+  report_date TEXT NOT NULL,
+  filing_date TEXT NOT NULL,
+  issuer TEXT NOT NULL,
+  cusip TEXT NOT NULL,
+  cusip6 TEXT NOT NULL,
+  ticker TEXT,
+  shares INTEGER NOT NULL,
+  value_usd INTEGER NOT NULL,
+  portfolio_pct REAL,
+  share_type TEXT,
+  action TEXT,
+  shares_change INTEGER DEFAULT 0,
+  pct_change REAL DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(guru_cik, report_date, cusip)
+);
+CREATE INDEX IF NOT EXISTS idx_guru_ticker ON guru_holdings(ticker);
+CREATE INDEX IF NOT EXISTS idx_guru_report ON guru_holdings(guru_cik, report_date);
+
+CREATE TABLE IF NOT EXISTS insider_trades (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  company_cik TEXT NOT NULL,
+  ticker TEXT NOT NULL,
+  accession_number TEXT NOT NULL,
+  owner_name TEXT NOT NULL,
+  owner_cik TEXT NOT NULL,
+  is_officer INTEGER DEFAULT 0,
+  is_director INTEGER DEFAULT 0,
+  officer_title TEXT,
+  transaction_date TEXT NOT NULL,
+  filing_date TEXT NOT NULL,
+  transaction_code TEXT NOT NULL,
+  is_open_market INTEGER DEFAULT 0,
+  is_derivative INTEGER DEFAULT 0,
+  shares REAL NOT NULL,
+  price_per_share REAL,
+  total_value REAL,
+  shares_owned_after REAL,
+  created_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(accession_number, owner_cik, transaction_date, transaction_code, shares)
+);
+CREATE INDEX IF NOT EXISTS idx_insider_ticker ON insider_trades(ticker);
+CREATE INDEX IF NOT EXISTS idx_insider_date ON insider_trades(transaction_date);
+
+CREATE TABLE IF NOT EXISTS company_assignments (
+  cik TEXT PRIMARY KEY,
+  ticker TEXT,
+  name TEXT,
+  sector TEXT NOT NULL,
+  industry_group TEXT NOT NULL,
+  industry TEXT NOT NULL,
+  thes1s_code TEXT,
+  sic_code TEXT,
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_assignments_ticker ON company_assignments(ticker);
+CREATE INDEX IF NOT EXISTS idx_assignments_industry ON company_assignments(industry);
+
+CREATE TABLE IF NOT EXISTS sync_status (
+  job_name TEXT PRIMARY KEY,
+  last_run TEXT,
+  last_offset INTEGER DEFAULT 0,
+  status TEXT DEFAULT 'idle',
+  items_processed INTEGER DEFAULT 0,
+  error TEXT
+);
