@@ -1,57 +1,91 @@
 import { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { idbSet, idbDelete, idbGetAll } from '../engines/cacheStore';
+import { userUrl } from '../engines/apiBase';
 
+const IS_DEV = import.meta.env.DEV;
 const STORAGE_KEY = 'stock-analyzer-reports';  // Keep for migration
 const IDB_STORE = 'reports';
-const REPORT_TTL = 10 * 365 * 24 * 60 * 60 * 1000;  // 10 years (effectively permanent)
+const REPORT_TTL = 10 * 365 * 24 * 60 * 60 * 1000;
+
+// API helpers (production only)
+async function apiFetch(path) {
+  const res = await fetch(userUrl(path), { credentials: 'include' });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+async function apiPost(path, body) {
+  const res = await fetch(userUrl(path), {
+    method: 'POST', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
+async function apiPut(path, body) {
+  const res = await fetch(userUrl(path), {
+    method: 'PUT', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
+async function apiDelete(path) {
+  await fetch(userUrl(path), { method: 'DELETE', credentials: 'include' });
+}
 
 export function useResearch() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Load reports from IndexedDB on mount, with localStorage migration
+  // Load reports on mount
   useEffect(() => {
     let cancelled = false;
 
     async function loadReports() {
       try {
-        // Try IndexedDB first
-        const idbReports = await idbGetAll(IDB_STORE);
+        if (!IS_DEV) {
+          // Production: load from server
+          const data = await apiFetch('/reports');
+          if (!cancelled && data?.reports) {
+            // Fetch full stage data for each report
+            const fullReports = await Promise.all(
+              data.reports.map(async (r) => {
+                const full = await apiFetch(`/reports/${r.id}`);
+                return full?.report || r;
+              })
+            );
+            setReports(fullReports);
+            setLoading(false);
+            return;
+          }
+        }
 
+        // Dev mode: IndexedDB with localStorage migration
+        const idbReports = await idbGetAll(IDB_STORE);
         if (!cancelled && idbReports.length > 0) {
           setReports(idbReports);
           setLoading(false);
           return;
         }
 
-        // If IndexedDB is empty, check localStorage for migration
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            // Migrate each report to IndexedDB
             for (const report of parsed) {
               await idbSet(IDB_STORE, report.id, report, REPORT_TTL);
             }
-            // Remove from localStorage after successful migration
             localStorage.removeItem(STORAGE_KEY);
-            console.log(`Migrated ${parsed.length} reports from localStorage to IndexedDB`);
-
-            if (!cancelled) {
-              setReports(parsed);
-              setLoading(false);
-              return;
-            }
+            if (!cancelled) { setReports(parsed); setLoading(false); return; }
           }
         }
 
-        // No reports found anywhere
-        if (!cancelled) {
-          setReports([]);
-          setLoading(false);
-        }
+        if (!cancelled) { setReports([]); setLoading(false); }
       } catch (err) {
         if (!cancelled) {
           console.warn('Failed to load reports:', err.message);
@@ -75,11 +109,7 @@ export function useResearch() {
       createdAt: now,
       updatedAt: now,
       currentStage: 1,
-      stageApprovals: {
-        onePager: null,
-        pitchDeck: null,
-        fullStory: null,
-      },
+      stageApprovals: { onePager: null, pitchDeck: null, fullStory: null },
       onePager: {},
       pitchDeck: null,
       fullStory: null,
@@ -88,9 +118,18 @@ export function useResearch() {
       competitors: { privateCompetitors: [] },
     };
     setReports(prev => [newReport, ...prev]);
-    idbSet(IDB_STORE, newReport.id, newReport, REPORT_TTL).catch(err =>
-      console.warn('Failed to save report to IndexedDB:', err.message)
-    );
+
+    if (IS_DEV) {
+      idbSet(IDB_STORE, newReport.id, newReport, REPORT_TTL).catch(err =>
+        console.warn('Failed to save report to IndexedDB:', err.message)
+      );
+    } else {
+      apiPost('/reports', { ticker: newReport.ticker, companyName: newReport.companyName })
+        .then(data => {
+          if (data?.id) newReport.id = data.id;
+        })
+        .catch(err => console.warn('Failed to save report to server:', err.message));
+    }
     return newReport;
   }, []);
 
@@ -101,12 +140,32 @@ export function useResearch() {
           ? { ...r, ...updates, updatedAt: new Date().toISOString().slice(0, 10) }
           : r
       );
-      // Fire-and-forget IndexedDB write for the updated report
       const updated = next.find(r => r.id === id);
       if (updated) {
-        idbSet(IDB_STORE, id, updated, REPORT_TTL).catch(err =>
-          console.warn('Failed to update report in IndexedDB:', err.message)
-        );
+        if (IS_DEV) {
+          idbSet(IDB_STORE, id, updated, REPORT_TTL).catch(err =>
+            console.warn('Failed to update report in IndexedDB:', err.message)
+          );
+        } else {
+          // Separate stage data from metadata
+          const stageKeys = ['onePager', 'pitchDeck', 'fullStory'];
+          const stageUpdates = {};
+          const metaUpdates = {};
+          for (const [k, v] of Object.entries(updates)) {
+            if (stageKeys.includes(k) && v) stageUpdates[k] = v;
+            else metaUpdates[k] = v;
+          }
+          if (Object.keys(metaUpdates).length > 0) {
+            apiPut(`/reports/${id}`, metaUpdates).catch(err =>
+              console.warn('Failed to update report on server:', err.message)
+            );
+          }
+          for (const [stage, data] of Object.entries(stageUpdates)) {
+            apiPut(`/reports/${id}/stages/${stage}`, data).catch(err =>
+              console.warn(`Failed to save ${stage} to server:`, err.message)
+            );
+          }
+        }
       }
       return next;
     });
@@ -114,9 +173,15 @@ export function useResearch() {
 
   const deleteReport = useCallback((id) => {
     setReports(prev => prev.filter(r => r.id !== id));
-    idbDelete(IDB_STORE, id).catch(err =>
-      console.warn('Failed to delete report from IndexedDB:', err.message)
-    );
+    if (IS_DEV) {
+      idbDelete(IDB_STORE, id).catch(err =>
+        console.warn('Failed to delete report from IndexedDB:', err.message)
+      );
+    } else {
+      apiDelete(`/reports/${id}`).catch(err =>
+        console.warn('Failed to delete report from server:', err.message)
+      );
+    }
   }, []);
 
   const getReport = useCallback((id) => {

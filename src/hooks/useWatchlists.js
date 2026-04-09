@@ -1,23 +1,77 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { userUrl } from '../engines/apiBase';
 
+const IS_DEV = import.meta.env.DEV;
 const STORAGE_KEY = 'stock-analyzer-watchlists';
 
-function load() {
+function loadLocal() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+  } catch { return []; }
 }
 
-function save(watchlists) {
+function saveLocal(watchlists) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(watchlists));
 }
 
+async function saveToServer(watchlists) {
+  // Map to server format: items[] → tickers[] (just ticker strings)
+  const mapped = watchlists.map(w => ({
+    id: w.id,
+    name: w.name,
+    tickers: (w.items || []).map(i => i.ticker),
+  }));
+  await fetch(userUrl('/watchlists'), {
+    method: 'PUT', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ watchlists: mapped }),
+  });
+}
+
 export function useWatchlists() {
-  const [watchlists, setWatchlists] = useState(load);
+  const [watchlists, setWatchlists] = useState([]);
+
+  // Load on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      if (!IS_DEV) {
+        try {
+          const res = await fetch(userUrl('/watchlists'), { credentials: 'include' });
+          if (res.ok) {
+            const data = await res.json();
+            if (!cancelled && data?.watchlists) {
+              // Map server format back to client format: tickers[] → items[]
+              const mapped = data.watchlists.map(w => ({
+                id: w.id,
+                name: w.name,
+                createdAt: w.created_at,
+                items: (w.tickers || []).map(t => typeof t === 'string' ? { ticker: t, companyName: '', addedAt: '' } : t),
+              }));
+              setWatchlists(mapped);
+              return;
+            }
+          }
+        } catch { /* fall through */ }
+      }
+
+      if (!cancelled) setWatchlists(loadLocal());
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  function persist(next) {
+    if (IS_DEV) {
+      saveLocal(next);
+    } else {
+      saveToServer(next).catch(err => console.warn('Failed to save watchlists:', err.message));
+    }
+  }
 
   const createWatchlist = useCallback((name) => {
     const wl = {
@@ -28,7 +82,7 @@ export function useWatchlists() {
     };
     setWatchlists(prev => {
       const next = [wl, ...prev];
-      save(next);
+      persist(next);
       return next;
     });
     return wl;
@@ -37,7 +91,7 @@ export function useWatchlists() {
   const deleteWatchlist = useCallback((id) => {
     setWatchlists(prev => {
       const next = prev.filter(w => w.id !== id);
-      save(next);
+      persist(next);
       return next;
     });
   }, []);
@@ -45,7 +99,7 @@ export function useWatchlists() {
   const renameWatchlist = useCallback((id, name) => {
     setWatchlists(prev => {
       const next = prev.map(w => w.id === id ? { ...w, name: name.trim() } : w);
-      save(next);
+      persist(next);
       return next;
     });
   }, []);
@@ -54,7 +108,6 @@ export function useWatchlists() {
     setWatchlists(prev => {
       const next = prev.map(w => {
         if (w.id !== watchlistId) return w;
-        // Don't add duplicates
         if (w.items.some(i => i.ticker === ticker.toUpperCase())) return w;
         return {
           ...w,
@@ -65,7 +118,7 @@ export function useWatchlists() {
           }],
         };
       });
-      save(next);
+      persist(next);
       return next;
     });
   }, []);
@@ -76,7 +129,7 @@ export function useWatchlists() {
         if (w.id !== watchlistId) return w;
         return { ...w, items: w.items.filter(i => i.ticker !== ticker) };
       });
-      save(next);
+      persist(next);
       return next;
     });
   }, []);
