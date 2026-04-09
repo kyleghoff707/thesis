@@ -1,6 +1,8 @@
 // Proxy routes — replaces Vite dev middleware for production
 // Handles CORS, custom headers, and server-side data processing
 
+import { getYahooFinance, yahooFallback } from '../lib/yahoo.js';
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -134,44 +136,7 @@ export async function handleProxy(request, env, path, url) {
 }
 
 // ─── Yahoo Finance helpers ─────────────────────────────────────
-
-let _yf = null;
-async function getYahooFinance() {
-  if (_yf) return _yf;
-  try {
-    const mod = await import('yahoo-finance2');
-    const YahooFinance = mod.default;
-    _yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
-    return _yf;
-  } catch {
-    throw new Error('yahoo-finance2 not available in this runtime');
-  }
-}
-
-// Manual crumb-based fallback for Yahoo v10 API
-async function yahooFallback(ticker, modules) {
-  // Fetch Yahoo homepage to get crumb + cookies
-  const homePage = await fetch('https://finance.yahoo.com/', {
-    headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' },
-  });
-  const cookies = homePage.headers.get('set-cookie') || '';
-  const html = await homePage.text();
-
-  // Extract crumb from embedded JSON
-  const crumbMatch = html.match(/"crumb"\s*:\s*"([^"]+)"/);
-  if (!crumbMatch) throw new Error('Could not extract Yahoo crumb');
-  const crumb = crumbMatch[1].replace(/\\u002F/g, '/');
-
-  // Fetch quoteSummary with crumb
-  const moduleStr = modules.join(',');
-  const res = await fetch(
-    `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=${moduleStr}&crumb=${encodeURIComponent(crumb)}`,
-    { headers: { Cookie: cookies, 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' } }
-  );
-  if (!res.ok) throw new Error(`Yahoo API returned ${res.status}`);
-  const data = await res.json();
-  return data.quoteSummary?.result?.[0] || {};
-}
+// Shared: imported from ../lib/yahoo.js
 
 // ─── Finviz HTML parser ────────────────────────────────────────
 // Extracts the snapshot table key/value pairs from Finviz HTML.

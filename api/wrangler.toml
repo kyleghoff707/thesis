@@ -26,13 +26,13 @@ bucket_name = "thes1s-transcripts"
 # Every 3hr: transcripts (6 AV calls per run, 48/day)
 # Daily 6AM: insider trades (50 tickers per run, 10-day rotation)
 # Monthly 1st 3AM: guru holdings (43 funds)
-# Monthly 1st 2AM: taxonomy refresh (S&P 500 changes)
+# Sunday 2AM: taxonomy refresh (IPOs, delistings, S&P 500, reclassifications)
 # Sunday 5AM: stale data cleanup
 [triggers]
 crons = [
   "0 */3 * * *",
   "0 6 * * *",
   "0 3 1 * *",
-  "0 2 1 * *",
+  "0 2 * * SUN",
   "0 5 * * SUN"
 ]

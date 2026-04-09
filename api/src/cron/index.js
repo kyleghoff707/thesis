@@ -4,7 +4,7 @@
 //   "0 */3 * * *"   — Every 3hr: transcript sync (6 AV calls per run)
 //   "0 6 * * *"     — Daily 6AM: insider trades sync (50 tickers per run)
 //   "0 3 1 * *"     — Monthly 1st 3AM: guru holdings sync (43 funds)
-//   "0 2 1 * *"     — Monthly 1st 2AM: taxonomy refresh
+//   "0 2 * * SUN"   — Sunday 2AM: taxonomy refresh (IPOs, delistings, S&P 500)
 //   "0 5 * * SUN"   — Sunday 5AM: stale data cleanup
 
 import { syncTranscripts } from './transcripts.js';
@@ -28,7 +28,7 @@ export async function handleCron(event, env) {
       case '0 3 1 * *':
         await syncGurus(env);
         break;
-      case '0 2 1 * *':
+      case '0 2 * * SUN':
         await refreshTaxonomy(env);
         break;
       case '0 5 * * SUN':

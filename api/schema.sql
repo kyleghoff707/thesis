@@ -129,10 +129,30 @@ CREATE TABLE IF NOT EXISTS company_assignments (
   industry TEXT NOT NULL,
   thes1s_code TEXT,
   sic_code TEXT,
+  exchange TEXT,
+  status TEXT DEFAULT 'active',
+  delisted_at TEXT,
+  confidence REAL DEFAULT 0.85,
+  yahoo_sector TEXT,
+  yahoo_industry TEXT,
+  is_sp500 INTEGER DEFAULT 0,
   updated_at TEXT DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_assignments_ticker ON company_assignments(ticker);
 CREATE INDEX IF NOT EXISTS idx_assignments_industry ON company_assignments(industry);
+CREATE INDEX IF NOT EXISTS idx_assignments_status ON company_assignments(status);
+CREATE INDEX IF NOT EXISTS idx_assignments_sp500 ON company_assignments(is_sp500);
+
+CREATE TABLE IF NOT EXISTS classification_queue (
+  cik TEXT PRIMARY KEY,
+  ticker TEXT,
+  name TEXT,
+  status TEXT DEFAULT 'pending',
+  exclude_reason TEXT,
+  retry_count INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
 
 CREATE TABLE IF NOT EXISTS sync_status (
   job_name TEXT PRIMARY KEY,

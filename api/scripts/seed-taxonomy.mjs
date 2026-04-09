@@ -28,7 +28,7 @@ let currentBatch = [];
 for (const [cik, data] of entries) {
   if (!data.ticker) continue;
 
-  const sql = `INSERT OR REPLACE INTO company_assignments (cik, ticker, name, sector, industry_group, industry, thes1s_code, sic_code) VALUES ('${esc(cik)}', '${esc(data.ticker)}', '${esc(data.name)}', '${esc(data.sector)}', '${esc(data.industryGroup)}', '${esc(data.industry)}', '${esc(data.thes1sCode)}', '${esc(data.sicCode || '')}');`;
+  const sql = `INSERT OR REPLACE INTO company_assignments (cik, ticker, name, sector, industry_group, industry, thes1s_code, sic_code, exchange, confidence, yahoo_sector, yahoo_industry, status) VALUES ('${esc(cik)}', '${esc(data.ticker)}', '${esc(data.name)}', '${esc(data.sector)}', '${esc(data.industryGroup)}', '${esc(data.industry)}', '${esc(data.thes1sCode)}', '${esc(data.sicCode || '')}', '${esc(data.exchange || '')}', ${data.confidence || 0.85}, '${esc(data.yahooSector || '')}', '${esc(data.yahooIndustry || '')}', 'active');`;
 
   currentBatch.push(sql);
 
