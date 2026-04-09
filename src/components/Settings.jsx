@@ -403,6 +403,24 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
           </>
         )}
 
+        {/* ── Replay Tour ── */}
+        {settings.tourCompleted && (
+          <div style={{ padding: '8px 0' }}>
+            <button
+              onClick={() => { updateSettings({ tourCompleted: false }); onClose(); }}
+              style={{
+                background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 6,
+                padding: '6px 12px', fontSize: 13, fontWeight: 500, color: C.textSecondary,
+                cursor: 'pointer', transition: 'all .15s', fontFamily: 'inherit',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSecondary; }}
+            >
+              Replay Product Tour
+            </button>
+          </div>
+        )}
+
         {/* ── About (divider only, no section header) ── */}
         <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 16 }}>

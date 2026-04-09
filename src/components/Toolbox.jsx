@@ -221,7 +221,7 @@ export default function Toolbox({ getReport, updateReport, settings }) {
       />
 
       {/* Generate / View button — contextual per pipeline stage */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8, marginBottom: 8 }}>
+      <div data-tour="generate-button" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8, marginBottom: 8 }}>
         <GenerateButton
           ticker={ticker}
           report={report}
@@ -237,7 +237,7 @@ export default function Toolbox({ getReport, updateReport, settings }) {
       )}
 
       {/* Tab navigation */}
-      <div style={{
+      <div data-tour="toolbox-tabs" style={{
         display: 'flex',
         gap: 0,
         borderBottom: `1px solid ${C.border}`,

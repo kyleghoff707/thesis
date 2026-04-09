@@ -5,6 +5,7 @@ const IS_DEV = import.meta.env.DEV;
 const STORAGE_KEY = 'stock-analyzer-settings';
 
 export const DEFAULT_SETTINGS = {
+  tourCompleted: false,
   defaultLayout: 'expanded',
   defaultVersion: 'restated',
   defaultView: 'annual',

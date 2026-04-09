@@ -415,6 +415,7 @@ export default function Watchlists({ onNewResearch }) {
         {/* Create new button */}
         {!showCreate && (
           <button
+            data-tour="watchlist-create"
             onClick={() => setShowCreate(true)}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,

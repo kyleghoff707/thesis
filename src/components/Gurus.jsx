@@ -198,7 +198,7 @@ export default function Gurus() {
       )}
 
       {/* ─── Tab bar ─── */}
-      <div style={{
+      <div data-tour="gurus-tabs" style={{
         display: 'flex', gap: 0, borderBottom: `1px solid ${C.border}`, marginBottom: 20,
       }}>
         {TABS.map(t => (

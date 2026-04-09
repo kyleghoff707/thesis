@@ -45,7 +45,7 @@ export default function CompanyHeader({ company, latest, moatScore, managementSc
   const changeColor = isPositive ? C.green : C.red;
 
   return (
-    <div style={{
+    <div data-tour="company-header" style={{
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'space-between',
@@ -113,7 +113,7 @@ export default function CompanyHeader({ company, latest, moatScore, managementSc
       </div>
 
       {/* Right: score badges */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginLeft: 24 }}>
+      <div data-tour="score-badges" style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginLeft: 24 }}>
         <ScoreBadge label="Rule #1 Score" score={ruleOneScore} large />
         <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
           <ScoreBadge label="Moat" score={moatScore} />

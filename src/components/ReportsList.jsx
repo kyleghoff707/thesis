@@ -171,6 +171,7 @@ export default function ReportsList({ reports, getReport, createReport }) {
         return (
           <div
             key={ticker}
+            data-tour={tickerObj === tickerData[0] ? 'report-card' : undefined}
             style={{
               border: '1px solid ' + C.border,
               borderRadius: 8,

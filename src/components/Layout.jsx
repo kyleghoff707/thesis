@@ -37,7 +37,7 @@ function GearIcon({ size = 16, color }) {
 
 const REPORT_STAGE_SUFFIXES = ['/one-pager', '/pitch-deck', '/full-story'];
 
-export default function Layout({ children, onNewResearch, onSettingsOpen, user, onLogout }) {
+export default function Layout({ children, onNewResearch, onSettingsOpen, user, onLogout, tourCompleted, onStartTour, onSectionTour, showHelpMenu, setShowHelpMenu, helpMenuRef }) {
   const navigate = useNavigate();
   const location = useLocation();
   const isOnReportStage = REPORT_STAGE_SUFFIXES.some(s => location.pathname.endsWith(s));
@@ -104,12 +104,13 @@ export default function Layout({ children, onNewResearch, onSettingsOpen, user, 
         </div>
 
         {/* Nav tabs */}
-        <div style={{ display: 'flex', alignItems: 'center', height: '100%', gap: 0 }}>
+        <div data-tour="nav-tabs" style={{ display: 'flex', alignItems: 'center', height: '100%', gap: 0 }}>
           {NAV_TABS.map(tab => (
             <NavLink
               key={tab.to}
               to={tab.to}
               end={tab.end}
+              data-tour={`nav-tab-${tab.to.slice(1)}`}
               style={({ isActive }) => {
                 let effectiveActive = isActive;
                 if (tab.to === '/research') effectiveActive = isActive && !isOnReportStage;
@@ -137,12 +138,13 @@ export default function Layout({ children, onNewResearch, onSettingsOpen, user, 
         </div>
 
         {/* Search bar — pushed right */}
-        <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
+        <div data-tour="search-bar" style={{ marginLeft: 'auto', flexShrink: 0 }}>
           <TickerSearch onSubmit={handleNewResearch} />
         </div>
 
         {/* Settings gear */}
         <button
+          data-tour="settings-gear"
           onClick={onSettingsOpen}
           title="Settings"
           style={{
@@ -165,6 +167,63 @@ export default function Layout({ children, onNewResearch, onSettingsOpen, user, 
         >
           <GearIcon size={16} color="currentColor" />
         </button>
+
+        {/* Help button — replay tour */}
+        {tourCompleted && (
+          <div ref={helpMenuRef} style={{ position: 'relative', flexShrink: 0, marginLeft: 4 }}>
+            <button
+              data-tour="help-button"
+              onClick={() => setShowHelpMenu(v => !v)}
+              title="Help"
+              style={{
+                width: 28, height: 28, borderRadius: 6,
+                border: `1px solid ${showHelpMenu ? C.accent : C.border}`,
+                background: showHelpMenu ? C.accentLight : 'transparent',
+                cursor: 'pointer', color: showHelpMenu ? C.accent : C.textMuted,
+                fontSize: 13, fontWeight: 700, lineHeight: 1,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all .15s', fontFamily: 'inherit',
+              }}
+              onMouseEnter={e => { if (!showHelpMenu) { e.currentTarget.style.background = C.bgHover; e.currentTarget.style.color = C.textSecondary; } }}
+              onMouseLeave={e => { if (!showHelpMenu) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.textMuted; } }}
+            >?</button>
+            {showHelpMenu && (
+              <div style={{
+                position: 'absolute', top: 36, right: 0, background: C.bgCard,
+                border: `1px solid ${C.border}`, borderRadius: 8,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.12)', minWidth: 180, zIndex: 1000,
+                overflow: 'hidden',
+              }}>
+                <button
+                  onClick={onSectionTour}
+                  style={{
+                    width: '100%', padding: '10px 14px', background: 'transparent',
+                    border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500,
+                    color: C.text, textAlign: 'left', fontFamily: 'inherit',
+                    transition: 'background .15s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  Tour this section
+                </button>
+                <button
+                  onClick={onStartTour}
+                  style={{
+                    width: '100%', padding: '10px 14px', background: 'transparent',
+                    border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500,
+                    color: C.text, textAlign: 'left', fontFamily: 'inherit',
+                    borderTop: `1px solid ${C.border}`, transition: 'background .15s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  Replay full tour
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* User avatar menu */}
         {user && (
