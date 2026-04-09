@@ -9,7 +9,7 @@ The user is NOT a programmer. Keep explanations in plain English.
 
 **Goal**: Reduce 40+ hours of manual Rule One research per company using AI-assisted analysis.
 
-**Status**: V1 complete — all 3 pipeline stages built and validated in-app. 12 specialized AI agents, wave-based orchestration, structured output schemas, quality validation, and in-app rendering for all stages. Currently a local desktop app (Tauri + Vite). Next phase: migrate to a deployed web application.
+**Status**: Deployed as invite-only web app at **thes1sinvesting.com**. Pipeline runs in-browser. Backend API at **api.thes1sinvesting.com** (Cloudflare Workers + D1 + R2). Auth, server-side storage, proxy routes, and 5 cron jobs all live.
 
 ### Branding
 - **Name**: Thes1s — "1" replaces the "i"
@@ -32,16 +32,58 @@ Thes1s is a professional AI-powered investment analyst team. The user is the por
 ---
 
 ## Tech Stack
-- **Desktop**: Tauri (native macOS `.app`) — to be replaced with web deployment
-- **Frontend**: Vite + React (functional components, hooks, inline styles with dark/light palette)
-- **Storage**: localStorage (reports, settings, watchlists), IndexedDB (EDGAR, guru, price, insider, compensation caches) via `cacheStore.js`
-- **AI**: Claude API direct from app (`VITE_CLAUDE_KEY` in `.env.local`)
+- **Frontend**: Vite + React on Cloudflare Pages (thes1sinvesting.com)
+- **Backend**: Cloudflare Workers ($5/mo paid plan) at api.thes1sinvesting.com
+- **Database**: Cloudflare D1 (SQLite) — auth, user data, guru holdings, insider trades, taxonomy
+- **Object Storage**: Cloudflare R2 — earnings call transcripts
+- **Auth**: Invite-only email/password login, HTTP-only session cookies, PBKDF2 hashing, Resend for invite emails. No public signup — admin sends invite links.
+- **Storage (production)**: Reports, watchlists, settings stored per-user in D1. Hooks use dual-path: dev=localStorage/IDB, prod=API.
+- **Storage (dev)**: localStorage (reports, settings, watchlists), IndexedDB (EDGAR, guru, price, insider, compensation caches) via `cacheStore.js`
+- **AI**: Claude API direct from browser (`VITE_CLAUDE_KEY` in `.env.local`, `dangerouslyAllowBrowser: true`). Pipeline engines use `knowledgeBundle.js` (Vite `?raw` imports) instead of Node.js `readFileSync`.
 - **Financial Data**: SEC EDGAR XBRL (all financials, 13F guru holdings, N-PORT, insiders, compensation — free), Yahoo Finance (prices, stock splits — free), Finviz (analyst estimates — free), GuruFocus (optional $25/mo API), Alpha Vantage (earnings transcripts — free 25 calls/day, 2-key failover)
 - **Charts**: Recharts
+- **Shared Package**: `packages/sec-parsers/` — parsing functions shared between frontend and Worker cron jobs (formatTranscript, parseForm4, parseInfoTable, gurusList)
 - **Deps**: recharts, @anthropic-ai/sdk, uuid, react-router-dom, turndown, turndown-plugin-gfm, yahoo-finance2, cheerio, idb, zod
-- **No server, no auth** — runs entirely locally. API calls go direct to external services. (This will change with web migration.)
+- **CORS**: All external API calls (SEC, Yahoo, Finviz) go through Worker proxy in production. Dev uses Vite proxy middleware. Centralized in `src/engines/apiBase.js`.
 
 For detailed API integration notes (CORS proxying, EDGAR XBRL details, parsing internals), see `knowledge/engineering/app-architecture.md`.
+
+---
+
+## Deployment
+
+| Component | URL | Platform |
+|-----------|-----|----------|
+| Frontend | thes1sinvesting.com | Cloudflare Pages |
+| API | api.thes1sinvesting.com | Cloudflare Workers |
+| D1 Database | thes1s (86cba902-d3d3-4f96-a941-94998bdc060e) | Cloudflare D1 |
+| R2 Bucket | thes1s-transcripts | Cloudflare R2 |
+
+### Deploy Commands
+```bash
+# Deploy frontend
+npm run build && npx wrangler pages deploy dist --project-name thes1s
+
+# Deploy Worker (from api/ directory)
+cd api && npx wrangler deploy
+
+# Seed taxonomy (run from project root)
+node api/scripts/seed-taxonomy.mjs
+
+# Set Worker secrets
+cd api && wrangler secret put ALPHA_VANTAGE_KEY
+cd api && wrangler secret put ALPHA_VANTAGE_KEY_2
+cd api && wrangler secret put RESEND_API_KEY
+```
+
+### Cron Jobs (5 triggers on Workers Paid plan)
+| Schedule | Job | Scope |
+|----------|-----|-------|
+| `0 */3 * * *` | Transcript sync (6 AV calls/run, 48/day) | S&P 500 only (is_sp500=1) |
+| `0 6 * * *` | Insider trades sync (50 tickers/run) | S&P 500 only |
+| `0 3 1 * *` | Guru holdings sync (43 funds) | Hardcoded GURUS list |
+| `0 2 1 * *` | Taxonomy refresh (ticker/name changes) | All companies |
+| `0 5 * * SUN` | Stale data cleanup | All tables |
 
 ---
 
@@ -290,12 +332,24 @@ Contains: `thes1s-taxonomy-tree.json` (12 sectors, 52 industry groups, 176 indus
 
 ```
 agents/               — 12 AI agents + orchestrator (configs, prompts, writing briefs, tests)
+api/                  — Cloudflare Worker backend
+├── src/
+│   ├── index.js      — Router + CORS + auth gate
+│   ├── middleware/    — Session cookie auth
+│   ├── routes/       — auth, user data CRUD, data (D1/R2), proxy (SEC/Yahoo/Finviz)
+│   └── cron/         — 5 cron jobs (transcripts, insiders, gurus, taxonomy, cleanup)
+├── schema.sql        — Full D1 schema (11 tables)
+├── scripts/          — Seed scripts (seed-taxonomy.mjs)
+└── wrangler.toml     — Worker config (D1, R2, cron triggers)
+packages/
+└── sec-parsers/      — Shared SEC parsing functions (used by frontend + Worker)
+    ├── formatTranscript.js, parseForm4.js, parseInfoTable.js, gurusList.js
 scripts/              — CLI runners (pipeline, full story, quality), data prep, PDF toolkit
 src/
-├── components/       — ~58 React components (Toolbox, report renderers, audit views)
+├── components/       — ~60 React components (Toolbox, report renderers, LoginPage, SignupPage)
 │   └── pitchDeck/    — AssumptionTracker, DeepDivePanel, IndustryCard
-├── engines/          — ~56 engine modules (EDGAR, scoring, AI pipeline, caching)
-├── hooks/            — ~20 React hooks (data fetching, report state, settings)
+├── engines/          — ~58 engine modules (EDGAR, scoring, AI pipeline, caching, apiBase, knowledgeBundle)
+├── hooks/            — ~22 React hooks (data fetching, report state, settings, useAuth)
 ├── schemas/          — 5 Zod schemas (reportSection, debateStep, dataPacket, progress, onePager)
 ├── data/             — Static lookup tables (taxonomy, tag classifications, display names)
 ├── App.jsx, main.jsx, theme.js
@@ -339,12 +393,14 @@ gstack/               — gstack skill artifacts (plans, QA reports, reviews, de
 
 | Command | What it does |
 |---------|-------------|
-| `npm run dev` | Vite dev server (localhost:5173) |
-| `npm run build` | Production build |
+| `npm run dev` | Vite dev server (localhost:5173) — uses Vite proxy, localStorage |
+| `npm run build` | Production build (bakes in VITE_API_URL from .env.local) |
 | `npm test` | Run vitest tests |
 | `npm run test:watch` | Run vitest in watch mode |
-| `npm run tauri:dev` | Desktop app with hot-reload |
-| `npm run tauri:build` | Package native macOS `.app` |
+| `cd api && npx wrangler dev` | Run Worker locally (localhost:8787) |
+| `cd api && npx wrangler deploy` | Deploy Worker to Cloudflare |
+| `npx wrangler pages deploy dist --project-name thes1s` | Deploy frontend to Cloudflare Pages |
+| `cd api && npx wrangler tail` | Stream live Worker logs to terminal |
 
 ---
 
