@@ -35,6 +35,10 @@ validation/cache/
 validation/data/
 validation/reports/
 validation/scripts/bundled-engines.mjs
+# Wrangler local state (D1 SQLite, etc.)
+.wrangler/
+api/.wrangler/
+
 # Hidden gstack runtime folder (recreated by skills)
 .gstack/
 
