@@ -48,14 +48,14 @@ function ReportStageLayout({ getReport, children }) {
 }
 
 // Authenticated app shell — rendered after login
-function AuthenticatedApp() {
+function AuthenticatedApp({ user, logout }) {
   const { isDark, toggleTheme } = useTheme();
   const { reports, createReport, updateReport, deleteReport, getReport } = useResearch();
   const { settings, updateSettings } = useSettings();
   const [showSettings, setShowSettings] = useState(false);
 
   return (
-    <Layout onNewResearch={createReport} onSettingsOpen={() => setShowSettings(true)}>
+    <Layout onNewResearch={createReport} onSettingsOpen={() => setShowSettings(true)} user={user} onLogout={logout}>
       <Routes>
         <Route path="/" element={<Navigate to="/research" replace />} />
         <Route path="/watchlists" element={<Watchlists onNewResearch={createReport} />} />
@@ -77,6 +77,7 @@ function AuthenticatedApp() {
           isDark={isDark}
           toggleTheme={toggleTheme}
           onClose={() => setShowSettings(false)}
+          user={user}
         />
       )}
     </Layout>
@@ -88,7 +89,7 @@ export default function App() {
 
   // Dev mode: skip auth gate (no Worker running locally by default)
   if (import.meta.env.DEV) {
-    return <AuthenticatedApp />;
+    return <AuthenticatedApp user={{ name: 'Dev User', email: 'dev@thes1sinvesting.com', role: 'admin' }} logout={() => {}} />;
   }
 
   // Production: auth gate
@@ -100,8 +101,8 @@ export default function App() {
     );
   }
 
-  // Signup route (invite link)
-  if (window.location.hash.includes('/signup')) {
+  // Signup route (invite link) — only show if not already logged in
+  if (window.location.hash.includes('/signup') && !user) {
     return <SignupPage onSignup={signup} />;
   }
 
@@ -109,5 +110,5 @@ export default function App() {
     return <LoginPage onLogin={login} />;
   }
 
-  return <AuthenticatedApp />;
+  return <AuthenticatedApp user={user} logout={logout} />;
 }

@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { C } from '../theme';
 import TickerSearch from './TickerSearch';
@@ -36,10 +37,26 @@ function GearIcon({ size = 16, color }) {
 
 const REPORT_STAGE_SUFFIXES = ['/one-pager', '/pitch-deck', '/full-story'];
 
-export default function Layout({ children, onNewResearch, onSettingsOpen }) {
+export default function Layout({ children, onNewResearch, onSettingsOpen, user, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
   const isOnReportStage = REPORT_STAGE_SUFFIXES.some(s => location.pathname.endsWith(s));
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef(null);
+
+  // Close user menu on outside click
+  useEffect(() => {
+    if (!showUserMenu) return;
+    function handleClick(e) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setShowUserMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showUserMenu]);
+
+  const userInitial = (user?.name || user?.email || '?')[0].toUpperCase();
 
   const handleNewResearch = (ticker) => {
     const report = onNewResearch(ticker);
@@ -148,6 +165,77 @@ export default function Layout({ children, onNewResearch, onSettingsOpen }) {
         >
           <GearIcon size={16} color="currentColor" />
         </button>
+
+        {/* User avatar menu */}
+        {user && (
+          <div ref={userMenuRef} style={{ position: 'relative', flexShrink: 0, marginLeft: 4 }}>
+            <button
+              onClick={() => setShowUserMenu(v => !v)}
+              title={user.name || user.email}
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                background: C.accent,
+                color: '#fff',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'inherit',
+                transition: 'opacity .15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            >
+              {userInitial}
+            </button>
+            {showUserMenu && (
+              <div style={{
+                position: 'absolute',
+                top: 36,
+                right: 0,
+                width: 220,
+                background: C.bgCard,
+                border: `1px solid ${C.border}`,
+                borderRadius: 8,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                zIndex: 1000,
+                overflow: 'hidden',
+              }}>
+                <div style={{ padding: '12px 14px', borderBottom: `1px solid ${C.border}` }}>
+                  {user.name && (
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 2 }}>{user.name}</div>
+                  )}
+                  <div style={{ fontSize: 12, color: C.textMuted }}>{user.email}</div>
+                </div>
+                <button
+                  onClick={() => { setShowUserMenu(false); onLogout(); }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: C.red || '#dc2626',
+                    textAlign: 'left',
+                    fontFamily: 'inherit',
+                    transition: 'background .15s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </nav>
 
       {/* Content */}

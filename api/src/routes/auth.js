@@ -38,6 +38,48 @@ async function verifyPassword(password, stored) {
   return computed === hashB64;
 }
 
+// ─── Invite email template ────────────────────────────────────
+
+function buildInviteEmail(signupUrl) {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:40px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+  <tr><td style="padding:32px 40px 24px;text-align:center;">
+    <img src="https://thes1sinvesting.com/logo.svg" alt="Thes1s" width="44" height="44" style="border-radius:8px;">
+    <h1 style="margin:16px 0 0;font-size:22px;font-weight:700;color:#1e293b;">You're invited to Thes1s</h1>
+  </td></tr>
+  <tr><td style="padding:0 40px 24px;">
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#475569;">
+      You've been invited to join <strong>Thes1s</strong> — an AI-powered investment research platform that performs Rule One stock analysis in minutes instead of hours.
+    </p>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#475569;">
+      Click the button below to create your account and get started.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+      <a href="${signupUrl}" style="display:inline-block;padding:14px 32px;background:#0f766e;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">
+        Create your account
+      </a>
+    </td></tr></table>
+  </td></tr>
+  <tr><td style="padding:20px 40px;border-top:1px solid #e2e8f0;">
+    <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.5;">
+      This invite expires in 7 days. If you didn't expect this email, you can safely ignore it.
+    </p>
+  </td></tr>
+  <tr><td style="padding:0 40px 24px;">
+    <p style="margin:0;font-size:12px;color:#cbd5e1;">Thes1s — AI-Powered Investment Research</p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
 // ─── Session cookie helpers ────────────────────────────────────
 
 function sessionCookie(token, maxAge) {
@@ -124,20 +166,18 @@ export async function handleAuth(request, env, path) {
     await env.DB.prepare('INSERT INTO invite_tokens (token, email, created_by) VALUES (?, ?, ?)')
       .bind(token, email.toLowerCase(), session.id).run();
 
-    // Send invite email via Resend
-    const RESEND_KEY = env.RESEND_API_KEY;
-    if (RESEND_KEY) {
+    // Send invite email via Brevo
+    const BREVO_KEY = env.BREVO_API_KEY;
+    if (BREVO_KEY) {
       const signupUrl = `${new URL(request.url).origin.replace('api.', '')}/#/signup?token=${token}`;
-      await fetch('https://api.resend.com/emails', {
+      await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+        headers: { 'api-key': BREVO_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: 'Thes1s <noreply@thes1s.com>',
-          to: [email],
+          sender: { name: 'Thes1s', email: 'noreply@thes1sinvesting.com' },
+          to: [{ email }],
           subject: 'You\'re invited to Thes1s',
-          html: `<p>You've been invited to use <strong>Thes1s</strong>, an AI-powered investment research tool.</p>
-                 <p><a href="${signupUrl}">Click here to create your account</a></p>
-                 <p>This link expires in 7 days.</p>`,
+          htmlContent: buildInviteEmail(signupUrl),
         }),
       });
     }

@@ -45,10 +45,11 @@ export default function SignupPage({ onSignup }) {
     setSubmitting(true);
     try {
       await onSignup(token, name, password);
+      window.location.hash = '#/';
     } catch (err) {
       setError(err.message);
+      setSubmitting(false);
     }
-    setSubmitting(false);
   }
 
   if (loading) {

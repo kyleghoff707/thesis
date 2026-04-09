@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { C } from '../theme';
 import { clearAllCaches } from '../engines/cache';
+import { authUrl } from '../engines/apiBase';
 
 function SettingSelect({ label, value, onChange, options }) {
   return (
@@ -105,7 +106,122 @@ function ClearCacheButton() {
   );
 }
 
-export default function Settings({ settings, updateSettings, isDark, toggleTheme, onClose }) {
+function InviteForm() {
+  const [email, setEmail] = useState('');
+  const [state, setState] = useState('idle'); // idle | sending | success | error
+  const [message, setMessage] = useState('');
+  const [signupLink, setSignupLink] = useState('');
+
+  const handleInvite = async () => {
+    if (!email.trim()) return;
+    setState('sending');
+    setMessage('');
+    setSignupLink('');
+    try {
+      const res = await fetch(authUrl('/invite'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setState('error');
+        setMessage(data.error || 'Failed to send invite');
+        return;
+      }
+      setState('success');
+      setMessage(`Invite sent to ${email.trim()}`);
+      const link = `${window.location.origin}/#/signup?token=${data.token}`;
+      setSignupLink(link);
+      setEmail('');
+      setTimeout(() => { setState('idle'); setMessage(''); setSignupLink(''); }, 15000);
+    } catch {
+      setState('error');
+      setMessage('Network error — try again');
+    }
+  };
+
+  return (
+    <div style={{ padding: '8px 0' }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <input
+          type="email"
+          placeholder="Email address"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleInvite()}
+          style={{
+            flex: 1, padding: '6px 10px', fontSize: 13, fontWeight: 500,
+            background: C.bgInput || C.bgCard, color: C.text,
+            border: `1px solid ${C.border}`, borderRadius: 6,
+            fontFamily: 'inherit', outline: 'none', transition: 'border-color .15s',
+          }}
+          onFocus={e => e.currentTarget.style.borderColor = C.accent}
+          onBlur={e => e.currentTarget.style.borderColor = C.border}
+        />
+        <button
+          onClick={handleInvite}
+          disabled={state === 'sending' || !email.trim()}
+          style={{
+            padding: '6px 14px', fontSize: 12, fontWeight: 600,
+            background: C.accent, color: '#fff', border: 'none', borderRadius: 6,
+            cursor: state === 'sending' ? 'wait' : 'pointer',
+            fontFamily: 'inherit', transition: 'all .15s', whiteSpace: 'nowrap',
+            opacity: (!email.trim() || state === 'sending') ? 0.6 : 1,
+          }}
+          onMouseEnter={e => { if (email.trim() && state !== 'sending') e.currentTarget.style.background = C.accentHover; }}
+          onMouseLeave={e => e.currentTarget.style.background = C.accent}
+        >
+          {state === 'sending' ? 'Sending...' : 'Send Invite'}
+        </button>
+      </div>
+      {message && (
+        <div style={{
+          fontSize: 12, marginTop: 6,
+          color: state === 'success' ? (C.green || '#16a34a') : (C.red || '#dc2626'),
+        }}>
+          {message}
+        </div>
+      )}
+      {signupLink && (
+        <div style={{ marginTop: 6 }}>
+          <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 3 }}>
+            Backup link (if email doesn't arrive):
+          </div>
+          <div style={{
+            display: 'flex', gap: 6, alignItems: 'center',
+          }}>
+            <input
+              readOnly
+              value={signupLink}
+              style={{
+                flex: 1, padding: '4px 8px', fontSize: 11,
+                background: C.bgInput || C.bgCard, color: C.textMuted,
+                border: `1px solid ${C.border}`, borderRadius: 4,
+                fontFamily: 'monospace', outline: 'none',
+              }}
+              onClick={e => e.target.select()}
+            />
+            <button
+              onClick={() => navigator.clipboard.writeText(signupLink)}
+              style={{
+                padding: '4px 8px', fontSize: 11, fontWeight: 500,
+                background: 'transparent', color: C.accent,
+                border: `1px solid ${C.border}`, borderRadius: 4,
+                cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+              }}
+            >
+              Copy
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function Settings({ settings, updateSettings, isDark, toggleTheme, onClose, user }) {
   return (
     <div
       onClick={onClose}
@@ -278,6 +394,14 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
         {/* ── Storage ── */}
         <SectionHeader label="Storage" />
         <ClearCacheButton />
+
+        {/* ── Invite Users (admin only) ── */}
+        {user?.role === 'admin' && (
+          <>
+            <SectionHeader label="Invite Users" />
+            <InviteForm />
+          </>
+        )}
 
         {/* ── About (divider only, no section header) ── */}
         <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>
