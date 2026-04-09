@@ -9,29 +9,22 @@
 import { cacheGet, cacheGetAsync, cacheSet } from './cache';
 import { formatCompanyName } from './formatCompanyName';
 import sp500Names from '../data/sp500-display-names.json';
+import { secBase, edgarBase } from './apiBase';
 
 // ─── SEC URL helpers ────────────────────────────────────────
 
-// In dev: route through Vite proxy (adds User-Agent header).
-// In Tauri production: call SEC directly (no CORS enforcement).
-const IS_DEV = import.meta.env.DEV;
+// Dev: Vite proxy. Production: Cloudflare Worker proxy.
 
 function secTickerMapUrl() {
-  return IS_DEV
-    ? '/api/sec/files/company_tickers.json'
-    : 'https://www.sec.gov/files/company_tickers.json';
+  return `${secBase()}/files/company_tickers.json`;
 }
 
 function secCompanyFactsUrl(cik) {
-  return IS_DEV
-    ? `/api/edgar/api/xbrl/companyfacts/CIK${cik}.json`
-    : `https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`;
+  return `${edgarBase()}/api/xbrl/companyfacts/CIK${cik}.json`;
 }
 
 function secSubmissionsUrl(cik) {
-  return IS_DEV
-    ? `/api/edgar/submissions/CIK${cik}.json`
-    : `https://data.sec.gov/submissions/CIK${cik}.json`;
+  return `${edgarBase()}/submissions/CIK${cik}.json`;
 }
 
 // ─── CIK Lookup ──────────────────────────────────────────────

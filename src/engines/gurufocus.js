@@ -9,6 +9,7 @@
 // Tauri production: Direct fetch (API mode preferred for reliability).
 
 import { cacheGetAsync, cacheSet } from './cache.js';
+import { API_BASE } from './apiBase.js';
 
 const isDev = import.meta.env.DEV;
 const CACHE_V = 'v1';

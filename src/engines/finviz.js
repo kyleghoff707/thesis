@@ -5,8 +5,8 @@
 // Tauri production: Direct fetch with browser headers, parse HTML with DOMParser.
 
 import { cacheGetAsync, cacheSet } from './cache.js';
+import { finvizUrl } from './apiBase.js';
 
-const isDev = import.meta.env.DEV;
 const CACHE_V = 'v1';
 
 function cacheKey(ticker) {
@@ -108,24 +108,12 @@ export async function fetchFinvizData(ticker) {
   try {
     let data;
 
-    if (isDev) {
-      // Dev: use Vite middleware (server-side fetch + cheerio parse)
-      const resp = await fetch(`/api/finviz/${encodeURIComponent(ticker.toUpperCase())}`);
-      if (!resp.ok) return null;
-      const raw = await resp.json();
-      if (raw.error) return null;
-      data = normalizeFinvizData(raw);
-    } else {
-      // Tauri production: direct fetch, parse with DOMParser
-      const resp = await fetch(`https://finviz.com/quote.ashx?t=${encodeURIComponent(ticker.toUpperCase())}&p=d`, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        },
-      });
-      if (!resp.ok) return null;
-      const html = await resp.text();
-      data = parseFinvizHtml(html);
-    }
+    // Dev: Vite middleware. Production: Cloudflare Worker proxy (parses HTML server-side).
+    const resp = await fetch(finvizUrl(encodeURIComponent(ticker.toUpperCase())));
+    if (!resp.ok) return null;
+    const raw = await resp.json();
+    if (raw.error) return null;
+    data = normalizeFinvizData(raw);
 
     // Sanity check — make sure we got at least some real data
     if (data.epsNext5Y == null && data.forwardPE == null && data.targetPrice == null) {

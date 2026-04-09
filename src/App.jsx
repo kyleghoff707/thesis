@@ -3,7 +3,10 @@ import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useTheme } from './hooks/useTheme';
 import { useResearch } from './hooks/useResearch';
 import { useSettings } from './hooks/useSettings';
+import { useAuth } from './hooks/useAuth';
 import Layout from './components/Layout';
+import LoginPage from './components/LoginPage';
+import SignupPage from './components/SignupPage';
 import ResearchEmpty from './components/ResearchEmpty';
 import Toolbox from './components/Toolbox';
 import Watchlists from './components/Watchlists';
@@ -44,7 +47,8 @@ function ReportStageLayout({ getReport, children }) {
   );
 }
 
-export default function App() {
+// Authenticated app shell — rendered after login
+function AuthenticatedApp() {
   const { isDark, toggleTheme } = useTheme();
   const { reports, createReport, updateReport, deleteReport, getReport } = useResearch();
   const { settings, updateSettings } = useSettings();
@@ -77,4 +81,33 @@ export default function App() {
       )}
     </Layout>
   );
+}
+
+export default function App() {
+  const { user, loading, login, logout, signup } = useAuth();
+
+  // Dev mode: skip auth gate (no Worker running locally by default)
+  if (import.meta.env.DEV) {
+    return <AuthenticatedApp />;
+  }
+
+  // Production: auth gate
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <p style={{ color: '#64748b' }}>Loading...</p>
+      </div>
+    );
+  }
+
+  // Signup route (invite link)
+  if (window.location.hash.includes('/signup')) {
+    return <SignupPage onSignup={signup} />;
+  }
+
+  if (!user) {
+    return <LoginPage onLogin={login} />;
+  }
+
+  return <AuthenticatedApp />;
 }

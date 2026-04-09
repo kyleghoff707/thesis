@@ -4,14 +4,13 @@
 
 import { cacheGetAsync, cacheSet } from './cache';
 import { fetchFilings, lookupCIK } from './edgar';
+import { secBase } from './apiBase';
 
-// ─── SEC URL helpers (same proxy pattern as gurus.js) ────────
-const IS_DEV = import.meta.env.DEV;
+// ─── SEC URL helpers ────────────────────────────────────────
 
 function secArchiveUrl(cik, accessionPath, suffix) {
   const cleanCik = String(cik).replace(/^0+/, '');
-  const base = IS_DEV ? '/api/sec' : 'https://www.sec.gov';
-  return `${base}/Archives/edgar/data/${cleanCik}/${accessionPath}/${suffix}`;
+  return `${secBase()}/Archives/edgar/data/${cleanCik}/${accessionPath}/${suffix}`;
 }
 
 function sleep(ms) {

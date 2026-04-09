@@ -3,20 +3,17 @@
 // for registered mutual funds/ETFs. Supplements 13F data with cash position visibility.
 
 import { cacheGet, cacheGetAsync, cacheSet, hydrateFromIDB } from './cache';
+import { edgarBase, secBase } from './apiBase';
 
-const IS_DEV = import.meta.env.DEV;
 const NPORT_CACHE_V = 'v1';
 
 function edgarSubmissionsUrl(cik) {
-  return IS_DEV
-    ? `/api/edgar/submissions/CIK${cik}.json`
-    : `https://data.sec.gov/submissions/CIK${cik}.json`;
+  return `${edgarBase()}/submissions/CIK${cik}.json`;
 }
 
 function secArchiveUrl(cik, accessionPath, suffix) {
   const cleanCik = cik.replace(/^0+/, '');
-  const base = IS_DEV ? '/api/sec' : 'https://www.sec.gov';
-  return `${base}/Archives/edgar/data/${cleanCik}/${accessionPath}/${suffix}`;
+  return `${secBase()}/Archives/edgar/data/${cleanCik}/${accessionPath}/${suffix}`;
 }
 
 function sleep(ms) {

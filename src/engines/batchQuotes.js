@@ -4,8 +4,7 @@
 // Uses per-ticker caching so tier switches don't refetch already-cached tickers.
 
 import { cacheGet, cacheSet } from './cache';
-
-const IS_DEV = import.meta.env.DEV;
+import { yahooQuotesUrl } from './apiBase';
 
 /**
  * Fetch batch quotes for an array of tickers.
@@ -32,9 +31,7 @@ export async function fetchBatchQuotes(tickers) {
     try {
       const sorted = [...uncached].sort();
       const tickerStr = sorted.join(',');
-      const url = IS_DEV
-        ? `/api/yahoo-quotes/${tickerStr}`
-        : `/api/yahoo-quotes/${tickerStr}`;
+      const url = yahooQuotesUrl(tickerStr);
 
       const res = await fetch(url);
       if (!res.ok) throw new Error(`Batch quotes failed: ${res.status}`);

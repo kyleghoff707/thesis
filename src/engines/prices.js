@@ -9,11 +9,9 @@
 // Tauri production: native webview doesn't enforce CORS, so direct calls work.
 
 import { getStoredPrices, storePrices, appendPrices, filterByRange, isStale } from './priceStore';
+import { yahooChartBase } from './apiBase';
 
-const isDev = import.meta.env.DEV;
-const BASE = isDev
-  ? '/api/yahoo/v8/finance/chart'
-  : 'https://query1.finance.yahoo.com/v8/finance/chart';
+const BASE = yahooChartBase();
 
 // Fetch daily OHLCV data for a ticker
 // range: '1y', '3y', '5y', '10y', '20y', 'max'
@@ -72,13 +70,8 @@ async function fetchFromYahoo(ticker, afterDate) {
 
   const url = `${BASE}/${ticker}?period1=${period1}&period2=${period2}&interval=1d&includeAdjustedClose=true`;
 
-  const fetchOptions = isDev ? {} : {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-    }
-  };
-
-  const res = await fetch(url, fetchOptions);
+  // Worker proxy handles User-Agent; no custom headers needed from browser.
+  const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Yahoo Finance API error: ${res.status} ${res.statusText}`);
   }

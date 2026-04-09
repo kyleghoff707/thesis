@@ -7,8 +7,8 @@
 //      For now, production falls back to direct v10 endpoint (Tauri webview may not need crumb).
 
 import { cacheGetAsync, cacheSet } from './cache.js';
+import { yahooSummaryUrl } from './apiBase.js';
 
-const isDev = import.meta.env.DEV;
 const CACHE_V = 'v1';
 
 function cacheKey(ticker) {
@@ -144,21 +144,15 @@ export async function fetchAnalystEstimates(ticker) {
   try {
     let result;
 
-    if (isDev) {
-      // Dev: use Vite middleware (yahoo-finance2 server-side)
-      const resp = await fetch(`/api/yahoo-summary/${encodeURIComponent(ticker.toUpperCase())}`);
-      if (!resp.ok) return null;
-      result = await resp.json();
-      if (result.error) return null;
-    } else {
-      // Tauri production: try direct v10 endpoint (native webview may bypass CORS/crumb)
-      const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ticker.toUpperCase())}?modules=earningsTrend,financialData,recommendationTrend,upgradeDowngradeHistory`;
-      const resp = await fetch(url);
-      if (!resp.ok) return null;
-      const json = await resp.json();
-      result = json?.quoteSummary?.result?.[0];
-      if (!result) return null;
-    }
+    // Dev: Vite middleware. Production: Cloudflare Worker proxy.
+    const url = yahooSummaryUrl(
+      encodeURIComponent(ticker.toUpperCase()),
+      'earningsTrend,financialData,recommendationTrend,upgradeDowngradeHistory'
+    );
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
+    result = await resp.json();
+    if (result.error) return null;
 
     const earningsTrend = result.earningsTrend ?? null;
     const financialData = result.financialData ?? null;

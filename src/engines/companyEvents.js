@@ -3,6 +3,7 @@
 
 import { cacheGet, cacheSet } from './cache';
 import { fetchFilings } from './edgar';
+import { yahooSummaryUrl } from './apiBase';
 
 // ─── Constants ──────────────────────────────────────────────
 
@@ -19,11 +20,7 @@ const NOTABLE_8K_ITEMS = {
 // ─── Yahoo Calendar Events ──────────────────────────────────
 
 async function fetchYahooCalendarEvents(ticker) {
-  const IS_DEV = import.meta.env.DEV;
-  // Fetch calendarEvents + assetProfile (for website, since EDGAR often has it empty)
-  const url = IS_DEV
-    ? `/api/yahoo-summary/${ticker}?modules=calendarEvents,assetProfile`
-    : `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=calendarEvents,assetProfile`;
+  const url = yahooSummaryUrl(ticker, 'calendarEvents,assetProfile');
 
   try {
     const res = await fetch(url);
@@ -222,14 +219,10 @@ export async function discoverIREventsUrl(website) {
   // cached === null means not in cache; cached === false means "we looked, found nothing"
   if (cached !== null) return cached || null;
 
-  const IS_DEV = import.meta.env.DEV;
   let url = null;
 
-  if (!IS_DEV) {
-    // In Tauri production, no CORS restrictions — try common pattern directly
-    const baseDomain = extractBaseDomain(website);
-    if (baseDomain) url = `https://investors.${baseDomain}`;
-  } else {
+  // In dev, Vite middleware probes IR pages. In production, try common pattern directly.
+  if (import.meta.env.DEV) {
     try {
       const res = await fetch(`/api/ir-events?website=${encodeURIComponent(website)}`);
       if (res.ok) {
@@ -239,6 +232,9 @@ export async function discoverIREventsUrl(website) {
     } catch {
       // Probe failed — url stays null
     }
+  } else {
+    const baseDomain = extractBaseDomain(website);
+    if (baseDomain) url = `https://investors.${baseDomain}`;
   }
 
   // Cache result: real URL or `false` for "not found" (falsy but not null, so cache hit works)

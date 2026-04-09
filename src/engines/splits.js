@@ -13,11 +13,9 @@
 
 import { lookupCIK, fetchCompanyFacts } from './edgar';
 import { cacheGet, cacheSet } from './cache';
+import { yahooChartBase } from './apiBase';
 
-const isDev = import.meta.env.DEV;
-const YAHOO_BASE = isDev
-  ? '/api/yahoo/v8/finance/chart'
-  : 'https://query1.finance.yahoo.com/v8/finance/chart';
+const YAHOO_BASE = yahooChartBase();
 
 // ─── Month abbreviation → last day of month ─────────────────────────
 const MONTH_LAST_DAY = {
@@ -43,15 +41,9 @@ export function parseYahooSplits(splitEvents) {
 
 async function fetchSplitsFromYahoo(ticker) {
   try {
-    const fetchOptions = isDev ? {} : {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-      }
-    };
-
     // Fetch full history to get all splits
     const url = `${YAHOO_BASE}/${ticker}?period1=0&period2=${Math.floor(Date.now() / 1000)}&interval=1mo`;
-    const res = await fetch(url, fetchOptions);
+    const res = await fetch(url);
     if (!res.ok) return [];
 
     const data = await res.json();

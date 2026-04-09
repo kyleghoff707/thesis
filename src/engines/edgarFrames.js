@@ -4,12 +4,10 @@
 // We filter by CIK to find our company's value.
 
 import { cacheGetAsync, cacheSet } from './cache';
-
-const IS_DEV = import.meta.env.DEV;
+import { edgarBase } from './apiBase';
 
 function framesUrl(tag, unit, cyYear) {
-  const base = IS_DEV ? '/api/edgar' : 'https://data.sec.gov';
-  return `${base}/api/xbrl/frames/us-gaap/${tag}/${unit}/CY${cyYear}.json`;
+  return `${edgarBase()}/api/xbrl/frames/us-gaap/${tag}/${unit}/CY${cyYear}.json`;
 }
 
 // The 9 most critical tags for Rule One scoring/valuation.

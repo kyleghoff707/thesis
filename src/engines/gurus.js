@@ -4,22 +4,31 @@
 
 import { cacheGetAsync, cacheSet, hydrateFromIDB } from './cache';
 import { getTickerSearchIndex } from './edgar';
+import { edgarBase, secBase } from './apiBase';
+import {
+  parseInfoTable as sharedParseInfoTable,
+  aggregateShareClasses as sharedAggregateShareClasses,
+  enrichHoldings as sharedEnrichHoldings,
+  computeChanges as sharedComputeChanges,
+  GURUS as sharedGURUS,
+} from '../../packages/sec-parsers/index.js';
 
-// ─── SEC URL helpers (same proxy pattern as edgar.js) ────────
-// In dev: route through Vite proxy (adds User-Agent header).
-// In Tauri production: call SEC directly (no CORS enforcement).
-const IS_DEV = import.meta.env.DEV;
+// Re-export shared functions so existing consumers import from here
+export const GURUS = sharedGURUS;
+export { sharedParseInfoTable as parseInfoTable };
+export { sharedAggregateShareClasses as aggregateShareClasses };
+export { sharedEnrichHoldings as enrichHoldings };
+export { sharedComputeChanges as computeChanges };
+
+// ─── SEC URL helpers ────────────────────────────────────────
 
 function edgarSubmissionsUrl(cik) {
-  return IS_DEV
-    ? `/api/edgar/submissions/CIK${cik}.json`
-    : `https://data.sec.gov/submissions/CIK${cik}.json`;
+  return `${edgarBase()}/submissions/CIK${cik}.json`;
 }
 
 function secArchiveUrl(cik, accessionPath, suffix) {
   const cleanCik = cik.replace(/^0+/, '');
-  const base = IS_DEV ? '/api/sec' : 'https://www.sec.gov';
-  return `${base}/Archives/edgar/data/${cleanCik}/${accessionPath}/${suffix}`;
+  return `${secBase()}/Archives/edgar/data/${cleanCik}/${accessionPath}/${suffix}`;
 }
 
 function sleep(ms) {
@@ -27,54 +36,8 @@ function sleep(ms) {
 }
 
 // ============================================================
-// Guru List — CIK numbers verified against live EDGAR data
-// ============================================================
-
-export const GURUS = [
-  { name: 'Bill Ackman', fund: 'Pershing Square Capital Management', cik: '0001336528' },
-  { name: 'Jeffrey Ubben', fund: 'ValueAct Holdings', cik: '0001418814' },
-  { name: 'Pat Dorsey', fund: 'Dorsey Asset Management', cik: '0001671657' },
-  { name: 'Michael Larson', fund: 'Bill & Melinda Gates Foundation Trust', cik: '0001166559' },
-  { name: 'Norbert Lou', fund: 'Punch Card Management', cik: '0001631664' },
-  { name: 'Bruce Berkowitz', fund: 'Fairholme Capital Management', cik: '0001056831', fundCik: '0001096344', seriesId: 'S000008484' },
-  { name: 'Alex Roepers', fund: 'Atlantic Investment Management', cik: '0001063296' },
-  { name: 'Fred Martin', fund: 'Disciplined Growth Investors', cik: '0001050442', fundCik: '0001936157', seriesId: 'S000093392' },
-  { name: 'Li Lu', fund: 'Himalaya Capital Management', cik: '0001709323' },
-  { name: 'Glenn Greenberg', fund: 'Brave Warrior Advisors', cik: '0001553733' },
-  { name: 'David Einhorn', fund: 'DME Capital Management', cik: '0001489933' },
-  { name: 'Ako Capital', fund: 'Ako Capital LLP', cik: '0001376879' },
-  { name: 'Stephen Mandel', fund: 'Lone Pine Capital', cik: '0001061165' },
-  { name: 'Terry Smith', fund: 'Fundsmith LLP', cik: '0001569205', fundCik: '0001558107', seriesId: 'S000097194' },
-  { name: 'David Rolfe', fund: 'Wedgewood Partners', cik: '0000859804', fundCik: '0001494928', seriesId: 'S000030032' },
-  { name: 'Mason Hawkins', fund: 'Southeastern Asset Management', cik: '0000807985', fundCik: '0000806636', seriesId: 'S000009311' },
-  { name: 'Greg Alexander', fund: 'Conifer Management', cik: '0001773994' },
-  { name: 'David Abrams', fund: 'Abrams Capital Management', cik: '0001358706' },
-  { name: 'Seth Klarman', fund: 'Baupost Group', cik: '0001061768' },
-  { name: 'Chuck Akre', fund: 'Akre Capital Management', cik: '0001112520', fundCik: '0000811030', seriesId: 'S000089351' },
-  { name: 'Francis Chou', fund: 'Chou Associates Management', cik: '0001389403' },
-  { name: 'Mohnish Pabrai', fund: 'Dalal Street LLC', cik: '0001549575' },
-  { name: 'Kahn Brothers', fund: 'Kahn Brothers Group', cik: '0001039565' },
-  { name: 'Wallace Weitz', fund: 'Weitz Investment Management', cik: '0000883965', fundCik: '0001257927', seriesId: 'S000003479' },
-  { name: 'Harry Burn', fund: 'Sound Shore Management', cik: '0000820124', fundCik: '0000764157', seriesId: 'S000004519' },
-  { name: 'Chris Davis', fund: 'Davis Selected Advisers', cik: '0001036325', fundCik: '0000071701', seriesId: 'S000003439' },
-  { name: 'Ronald Muhlenkamp', fund: 'Muhlenkamp & Co.', cik: '0001133219', fundCik: '0001511699', seriesId: 'S000046566' },
-  { name: 'Donald Yacktman', fund: 'Yacktman Asset Management', cik: '0000905567', fundCik: '0001089951', seriesId: 'S000037566' },
-  { name: 'Lindsell Train', fund: 'Lindsell Train Ltd', cik: '0001484150' },
-  { name: 'Carl Icahn', fund: 'Icahn Carl C', cik: '0000921669' },
-  { name: 'Prem Watsa', fund: 'Fairfax Financial Holdings', cik: '0000915191' },
-  { name: 'Nelson Peltz', fund: 'Trian Fund Management', cik: '0001345471' },
-  { name: 'Daniel Loeb', fund: 'Third Point LLC', cik: '0001040273' },
-  { name: 'Chris Hohn', fund: 'TCI Fund Management', cik: '0001647251' },
-  { name: 'Warren Buffett', fund: 'Berkshire Hathaway', cik: '0001067983' },
-  { name: 'Chris Bloomstran', fund: 'Semper Augustus Investments Group', cik: '0001115373' },
-  { name: 'Guy Spier', fund: 'Aquamarine Zurich AG', cik: '0001953324' },
-  { name: 'Tweedy Browne', fund: 'Tweedy, Browne Co. LLC', cik: '0000732905', fundCik: '0000896975', seriesId: 'S000001301' },
-  { name: 'William Von Mueffling', fund: 'Cantillon Capital Management', cik: '0001279936' },
-  { name: 'Michael Burry', fund: 'Scion Asset Management', cik: '0001649339' },
-  { name: 'David Tepper', fund: 'Appaloosa LP', cik: '0001656456' },
-  { name: 'Phil Town', fund: 'Rule One Fund', cik: '0002040263', fundCik: '0001396092', seriesId: 'S000065131' },
-  { name: 'Ray Dalio', fund: 'Bridgewater Associates', cik: '0001350694' },
-];
+// GURUS list, parseInfoTable, aggregateShareClasses, enrichHoldings, computeChanges
+// are imported from packages/sec-parsers/ (shared with Worker cron jobs).
 
 // ============================================================
 // Core filing fetch pipeline
@@ -192,9 +155,19 @@ async function getInfoTableUrl(cik, accessionNumber) {
   return secArchiveUrl(cik, accessionPath, infoFile.name);
 }
 
-// Parse the 13F infotable XML into holdings
-// Handles both namespaced (ns1:infoTable) and non-namespaced (infoTable) XML
-export function parseInfoTable(xmlText) {
+// parseInfoTable, aggregateShareClasses, enrichHoldings — removed, imported from packages/sec-parsers
+// computeChanges — removed, imported from packages/sec-parsers
+//
+// ─── LEGACY CODE BOUNDARY ─────────────────────────────────────
+// The following functions were moved to packages/sec-parsers/parseInfoTable.js.
+// This block is kept as a comment for git history reference only.
+// Actual implementations are now at packages/sec-parsers/.
+//
+// To find the old inline code, check git history for this file.
+// ─── END LEGACY ───────────────────────────────────────────────
+
+// Local copy for internal use. Uses browser's native DOMParser.
+function _parseInfoTable(xmlText) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(xmlText, 'text/xml');
 
@@ -257,7 +230,7 @@ export function parseInfoTable(xmlText) {
 
 // Aggregate holdings with the same issuer (first 6 CUSIP chars = issuer ID)
 // Merges share classes like GOOG/GOOGL, BRK.A/BRK.B, FOX/FOXA into single positions
-export function aggregateShareClasses(holdings) {
+function _aggregateShareClasses(holdings) {
   const byIssuer = new Map();
   const noCusip = [];
 
@@ -299,7 +272,7 @@ export function aggregateShareClasses(holdings) {
 }
 
 // Enrich raw holdings with portfolioPct and sort by value
-export function enrichHoldings(holdings) {
+function _enrichHoldings(holdings) {
   const totalValue = holdings.reduce((s, h) => s + h.value, 0);
   return {
     holdings: holdings
@@ -335,7 +308,7 @@ async function fetchInfoTableHoldings(cik, accessionNumber) {
   const xmlRes = await fetch(xmlUrl);
   if (!xmlRes.ok) return null;
   const xmlText = await xmlRes.text();
-  return parseInfoTable(xmlText);
+  return _parseInfoTable(xmlText);
 }
 
 // Fetch a single filing's holdings with per-filing cache (immutable once filed)
@@ -370,8 +343,8 @@ async function fetchSingleFiling(cik, filingMeta) {
 
   if (!raw) return { filing: filingMeta, holdings: [], totalValue: 0, positionCount: 0, error: 'No infotable XML' };
 
-  const aggregated = aggregateShareClasses(raw);
-  const { holdings, totalValue } = enrichHoldings(aggregated);
+  const aggregated = _aggregateShareClasses(raw);
+  const { holdings, totalValue } = _enrichHoldings(aggregated);
 
   const result = { filing: filingMeta, holdings, totalValue, positionCount: holdings.length };
   cacheSet(cacheKey, result, 'guru');
@@ -399,7 +372,7 @@ export async function fetchGuruFilings(guru, count = 2) {
 
 // Compare current vs previous holdings by CUSIP to determine quarter-over-quarter changes.
 // Returns enriched holdings with action, sharesChange, pctChange, etc.
-export function computeChanges(currentHoldings, previousHoldings) {
+function _computeChanges(currentHoldings, previousHoldings) {
   const prevByCusip = new Map();
   for (const h of previousHoldings) {
     prevByCusip.set(h.cusip, h);
@@ -471,7 +444,7 @@ export function computeGuruActivity(filingData) {
   const previous = filings.length > 1 ? filings[1] : null;
 
   const holdings = previous
-    ? computeChanges(current.holdings, previous.holdings)
+    ? _computeChanges(current.holdings, previous.holdings)
     : current.holdings.map(h => ({
         ...h, action: 'held', sharesChange: 0, pctChange: 0,
         previousShares: 0, previousValue: 0, portfolioPctChange: 0,

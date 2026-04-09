@@ -4,15 +4,14 @@
 
 import { cacheGetAsync, cacheSet } from './cache';
 import { fetchFilings, lookupCIK } from './edgar';
+import { secBase } from './apiBase';
 
-// ─── SEC URL helpers (same proxy pattern as insiders.js / filingMarkdown.js) ──
-const IS_DEV = import.meta.env.DEV;
+// ─── SEC URL helpers ────────────────────────────────────────
 
 function filingHtmlUrl(cik, accessionNumber, primaryDocument) {
   const cleanCik = String(cik).replace(/^0+/, '');
   const accPath = accessionNumber.replace(/-/g, '');
-  const base = IS_DEV ? '/api/sec' : 'https://www.sec.gov';
-  return `${base}/Archives/edgar/data/${cleanCik}/${accPath}/${primaryDocument}`;
+  return `${secBase()}/Archives/edgar/data/${cleanCik}/${accPath}/${primaryDocument}`;
 }
 
 function sleep(ms) {
@@ -1100,15 +1099,13 @@ function parseCeoPayRatio(doc) {
 function filingIndexUrl(cik, accessionNumber) {
   const cleanCik = String(cik).replace(/^0+/, '');
   const accPath = accessionNumber.replace(/-/g, '');
-  const base = IS_DEV ? '/api/sec' : 'https://www.sec.gov';
-  return `${base}/Archives/edgar/data/${cleanCik}/${accPath}/index.json`;
+  return `${secBase()}/Archives/edgar/data/${cleanCik}/${accPath}/index.json`;
 }
 
 function filingArchiveUrl(cik, accessionNumber, filename) {
   const cleanCik = String(cik).replace(/^0+/, '');
   const accPath = accessionNumber.replace(/-/g, '');
-  const base = IS_DEV ? '/api/sec' : 'https://www.sec.gov';
-  return `${base}/Archives/edgar/data/${cleanCik}/${accPath}/${filename}`;
+  return `${secBase()}/Archives/edgar/data/${cleanCik}/${accPath}/${filename}`;
 }
 
 async function findXbrlInstanceFile(filing) {

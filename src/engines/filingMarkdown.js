@@ -10,10 +10,10 @@
 import TurndownService from 'turndown';
 import { gfm } from 'turndown-plugin-gfm';
 import { cacheGetAsync, cacheSet } from './cache';
+import { secBase } from './apiBase';
 
 // ─── Config ─────────────────────────────────────────────────
 
-const IS_DEV = import.meta.env.DEV;
 const FILING_MD_CACHE_V = 'v1';
 const FETCH_DELAY_MS = 120; // rate limiting between sequential fetches
 
@@ -22,8 +22,7 @@ const FETCH_DELAY_MS = 120; // rate limiting between sequential fetches
 function filingHtmlUrl(cik, accessionNumber, primaryDocument) {
   const cleanCik = String(cik).replace(/^0+/, '');
   const accPath = accessionNumber.replace(/-/g, '');
-  const base = IS_DEV ? '/api/sec' : 'https://www.sec.gov';
-  return `${base}/Archives/edgar/data/${cleanCik}/${accPath}/${primaryDocument}`;
+  return `${secBase()}/Archives/edgar/data/${cleanCik}/${accPath}/${primaryDocument}`;
 }
 
 // ─── Turndown singleton ─────────────────────────────────────
