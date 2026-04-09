@@ -23,9 +23,9 @@ async function secFetch(url, env) {
 }
 
 export async function syncInsiders(env) {
-  // 1. Load S&P 500 tickers with CIKs
+  // 1. Load S&P 500 tickers with CIKs (only companies flagged as S&P 500)
   const { results: companies } = await env.DB.prepare(
-    'SELECT ticker, cik FROM company_assignments WHERE ticker IS NOT NULL ORDER BY ticker'
+    'SELECT ticker, cik FROM company_assignments WHERE ticker IS NOT NULL AND is_sp500 = 1 ORDER BY ticker'
   ).all();
 
   if (companies.length === 0) {

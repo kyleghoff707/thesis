@@ -49,9 +49,9 @@ export async function syncTranscripts(env) {
     return;
   }
 
-  // 2. Load S&P 500 tickers from D1
+  // 2. Load S&P 500 tickers from D1 (only companies flagged as S&P 500)
   const { results: companies } = await env.DB.prepare(
-    'SELECT ticker FROM company_assignments WHERE ticker IS NOT NULL ORDER BY ticker'
+    'SELECT ticker FROM company_assignments WHERE ticker IS NOT NULL AND is_sp500 = 1 ORDER BY ticker'
   ).all();
   const tickers = companies.map(c => c.ticker);
 
