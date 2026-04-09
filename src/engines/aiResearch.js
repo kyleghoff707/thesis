@@ -1,19 +1,20 @@
 // aiResearch.js — Claude API dispatch engine for AI agent sections
 // Dispatches a single agent via client.messages.parse() with structured output.
-// Uses dotenv directly (NOT nodeAdapter.js — its fetch patch strips SDK auth headers).
-
-import dotenv from 'dotenv';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
-dotenv.config({ path: resolve(process.cwd(), '.env.local') });
+//
+// Browser-compatible: uses knowledgeBundle.js for agent configs, prompts, and curriculum.
+// Node.js CLI: still works via scripts/run-pipeline.js which uses nodeAdapter.js.
 
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { ReportSectionSchema } from '../schemas/reportSection.js';
+import { AGENT_CONFIGS, AGENT_PROMPTS, CURRICULUM_MAP } from './knowledgeBundle.js';
 
 // ─── Client initialization ─────────────────────────────────────
 
-const client = new Anthropic({ apiKey: process.env.VITE_CLAUDE_KEY });
+const client = new Anthropic({
+  apiKey: import.meta.env.VITE_CLAUDE_KEY,
+  dangerouslyAllowBrowser: true,
+});
 
 // ─── Constants ──────────────────────────────────────────────────
 
@@ -27,53 +28,34 @@ const PRICING = {
   'claude-opus-4-6':     { input: 5.0, output: 25.0, cacheRead: 0.50, cacheWrite: 6.25, webSearch: 0.01 },
 };
 
-const AGENTS_DIR = resolve(process.cwd(), 'agents');
-
 // ─── Context assembly ───────────────────────────────────────────
 
-// Load and parse agent config.json
+// Load agent config from build-time bundle
 function loadAgentConfig(role) {
-  const configPath = resolve(AGENTS_DIR, role, 'config.json');
-  try {
-    return JSON.parse(readFileSync(configPath, 'utf8'));
-  } catch (err) {
-    throw new Error(`Failed to load agent config for "${role}": ${err.message}`);
-  }
+  const config = AGENT_CONFIGS[role];
+  if (!config) throw new Error(`Unknown agent role: "${role}"`);
+  return config;
 }
 
-// Load agent prompt.md, with optional stage-specific overlay appended
+// Load agent prompt with optional stage-specific overlay from build-time bundle
 function loadAgentPrompt(role, stage) {
-  const promptPath = resolve(AGENTS_DIR, role, 'prompt.md');
-  let basePrompt;
-  try {
-    basePrompt = readFileSync(promptPath, 'utf8');
-  } catch (err) {
-    throw new Error(`Failed to load agent prompt for "${role}": ${err.message}`);
-  }
+  const prompts = AGENT_PROMPTS[role];
+  if (!prompts) throw new Error(`No prompt found for agent "${role}"`);
 
+  const basePrompt = prompts.base;
   if (!stage) return basePrompt;
 
-  // Try to load stage-specific overlay (e.g. agents/{role}/prompts/fullStory.md)
-  const overlayPath = resolve(AGENTS_DIR, role, 'prompts', `${stage}.md`);
-  try {
-    const overlay = readFileSync(overlayPath, 'utf8');
-    return basePrompt + '\n\n---\n\n' + overlay;
-  } catch {
-    // No overlay for this stage — use base prompt only
-    return basePrompt;
-  }
+  // Append stage overlay if it exists (e.g. fullStory)
+  const overlay = prompts[stage];
+  if (overlay) return basePrompt + '\n\n---\n\n' + overlay;
+  return basePrompt;
 }
 
-// Load curriculum files, join with separator
+// Load curriculum files from build-time bundle, join with separator
 function loadCurriculum(curriculumPaths) {
   if (!curriculumPaths || curriculumPaths.length === 0) return '';
   return curriculumPaths.map(p => {
-    const fullPath = resolve(process.cwd(), p);
-    try {
-      return readFileSync(fullPath, 'utf8');
-    } catch {
-      return `[Curriculum file not found: ${p}]`;
-    }
+    return CURRICULUM_MAP[p] || `[Curriculum file not found: ${p}]`;
   }).join('\n\n---\n\n');
 }
 

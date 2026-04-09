@@ -3,20 +3,20 @@
 // filter, not a thesis — one Sonnet call with full DataPacket + curriculum
 // produces a concise, template-filled result in ~2 minutes.
 //
-// Uses dotenv directly (NOT nodeAdapter.js — its fetch patch strips SDK auth headers).
-
-import dotenv from 'dotenv';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
-dotenv.config({ path: resolve(process.cwd(), '.env.local') });
+// Browser-compatible: uses knowledgeBundle.js for file content (Vite ?raw imports).
+// Node.js CLI: still works via scripts/run-pipeline.js which uses nodeAdapter.js.
 
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { OnePagerOutputSchema } from '../schemas/onePagerOutput.js';
+import { onePagerCurriculum, onePagerTemplate, buffettWritingStyleGuide } from './knowledgeBundle.js';
 
 // ─── Client initialization ─────────────────────────────────────
 
-const client = new Anthropic({ apiKey: process.env.VITE_CLAUDE_KEY });
+const client = new Anthropic({
+  apiKey: import.meta.env.VITE_CLAUDE_KEY,
+  dangerouslyAllowBrowser: true,
+});
 
 // ─── Constants ──────────────────────────────────────────────────
 
@@ -33,27 +33,14 @@ const SECTION_META = [
   { key: 'overall_verdict', title: 'Overall Verdict', sectionNumber: 6 },
 ];
 
-// ─── Helpers ────────────────────────────────────────────────────
-
-// Load a file relative to process.cwd(), returns string
-function loadFile(relativePath) {
-  const fullPath = resolve(process.cwd(), relativePath);
-  try {
-    return readFileSync(fullPath, 'utf8');
-  } catch (err) {
-    console.warn(`Failed to load ${relativePath}: ${err.message}`);
-    return `[File not found: ${relativePath}]`;
-  }
-}
-
 // ─── Prompt construction ────────────────────────────────────────
 
 function buildSystemPrompt() {
   const role = `You are a Rule One investment analyst conducting a quick screening pass. Your job is to fill out a One Pager — a concise filter document that answers one question: Is this company worth deeper research? Be direct, cite specific numbers, and keep each section to 1-3 short paragraphs. This is a screening tool, not a thesis.`;
 
-  const curriculum = loadFile('knowledge/stage-1-one-pager/one-pager.md');
-  const writingGuide = loadFile('knowledge/research-references/buffett-writing-style-guide.md');
-  const template = loadFile('knowledge/stage-1-one-pager/template.md');
+  const curriculum = onePagerCurriculum;
+  const writingGuide = buffettWritingStyleGuide;
+  const template = onePagerTemplate;
 
   const outputInstructions = `Produce a JSON object with 6 keys matching the template sections. Each section must have: verdict (PASS/FAIL/WATCHLIST), confidence (HIGH/MEDIUM/LOW), verdictRationale (1-2 sentences), summary (2-3 sentences), narrative (1-3 SHORT paragraphs — this is a one pager, not an essay), redFlags (at least 1 item, even for PASS verdicts), and citations (array of {id, ref, text, source}). The overall_verdict section synthesizes all other sections into a final PASS/FAIL/WATCHLIST recommendation.`;
 

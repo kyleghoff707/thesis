@@ -3,25 +3,20 @@
 // pauses for PM feedback at checkpoints, tracks budget and cache stats.
 // This is code, not AI — deterministic dispatch coordination (per D-08).
 
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
 import { dispatchAgent } from './aiResearch.js';
 import { generateOnePager } from './onePagerGenerator.js';
 import { createCacheMonitor } from './cacheMonitor.js';
 import { createBudgetTracker, formatBudgetReport } from './contextBudget.js';
 import { DEBATE_SCHEMAS } from '../schemas/debateStep.js';
 import { MultiSectionSchema } from '../schemas/reportSection.js';
+import { DISPATCH_TABLE } from './knowledgeBundle.js';
 
-const AGENTS_DIR = resolve(process.cwd(), 'agents');
-
-// Load and validate dispatch table for a given stage
+// Load and validate dispatch table for a given stage (from build-time bundle)
 function loadDispatchTable(stage) {
-  const tablePath = resolve(AGENTS_DIR, 'orchestrator', 'dispatch-table.json');
-  const table = JSON.parse(readFileSync(tablePath, 'utf8'));
-  if (!table[stage]) {
+  if (!DISPATCH_TABLE[stage]) {
     throw new Error(`Unknown stage "${stage}" in dispatch-table.json`);
   }
-  return table[stage];
+  return DISPATCH_TABLE[stage];
 }
 
 // Build section assignment string from section numbers array
@@ -161,22 +156,24 @@ export async function runPipeline(stage, dataPacket, options = {}) {
       }
       console.log(`PSR reuse complete: ${inheritedPsrSections.length} sections inherited\n`);
 
-      // Write PSR summary indicating reuse (for UI status display)
-      try {
-        const { mkdirSync, writeFileSync } = await import('fs');
-        const { join } = await import('path');
-        const reportsDir = join(process.cwd(), '.thes1s', 'reports', dataPacket.ticker.toUpperCase());
-        mkdirSync(reportsDir, { recursive: true });
-        writeFileSync(join(reportsDir, 'psr-summary.json'), JSON.stringify({
-          agents: psrAgentResults,
-          completed: psrAgentResults.length,
-          failed: 0,
-          total: psrAgentResults.length,
-          reused: true,
-          reusedFrom: 'pitchDeck',
-          timestamp: new Date().toISOString(),
-        }, null, 2));
-      } catch { /* non-critical */ }
+      // Write PSR summary to disk (Node.js CLI only, skipped in browser)
+      if (typeof process !== 'undefined' && process.versions?.node) {
+        try {
+          const { mkdirSync, writeFileSync } = await import('fs');
+          const { join } = await import('path');
+          const reportsDir = join(process.cwd(), '.thes1s', 'reports', dataPacket.ticker.toUpperCase());
+          mkdirSync(reportsDir, { recursive: true });
+          writeFileSync(join(reportsDir, 'psr-summary.json'), JSON.stringify({
+            agents: psrAgentResults,
+            completed: psrAgentResults.length,
+            failed: 0,
+            total: psrAgentResults.length,
+            reused: true,
+            reusedFrom: 'pitchDeck',
+            timestamp: new Date().toISOString(),
+          }, null, 2));
+        } catch { /* non-critical */ }
+      }
     } else {
       // Fresh PSR dispatch — no Pitch Deck sections available or not fullStory stage
       const filingContent = dataPacket.filingContent || {};
@@ -260,26 +257,28 @@ export async function runPipeline(stage, dataPacket, options = {}) {
         }
         console.log(`PSR pre-processing complete: ${allSections.length} sections produced\n`);
 
-        // Write PSR summary to disk for checkpoint 1 UI display
-        try {
-          const { mkdirSync, writeFileSync } = await import('fs');
-          const { join } = await import('path');
-          const reportsDir = join(process.cwd(), '.thes1s', 'reports', dataPacket.ticker.toUpperCase());
-          mkdirSync(reportsDir, { recursive: true });
-          const transcriptKeys = Object.keys(dataPacket.transcriptContent || {});
-          writeFileSync(join(reportsDir, 'psr-summary.json'), JSON.stringify({
-            agents: psrAgentResults,
-            completed: psrAgentResults.filter(r => r.status === 'complete').length,
-            failed: psrAgentResults.filter(r => r.status === 'failed').length,
-            total: psrAgentResults.length,
-            transcripts: {
-              available: transcriptKeys.length > 0,
-              count: transcriptKeys.length,
-              keys: transcriptKeys,
-            },
-            timestamp: new Date().toISOString(),
-          }, null, 2));
-        } catch { /* non-critical */ }
+        // Write PSR summary to disk (Node.js CLI only, skipped in browser)
+        if (typeof process !== 'undefined' && process.versions?.node) {
+          try {
+            const { mkdirSync, writeFileSync } = await import('fs');
+            const { join } = await import('path');
+            const reportsDir = join(process.cwd(), '.thes1s', 'reports', dataPacket.ticker.toUpperCase());
+            mkdirSync(reportsDir, { recursive: true });
+            const transcriptKeys = Object.keys(dataPacket.transcriptContent || {});
+            writeFileSync(join(reportsDir, 'psr-summary.json'), JSON.stringify({
+              agents: psrAgentResults,
+              completed: psrAgentResults.filter(r => r.status === 'complete').length,
+              failed: psrAgentResults.filter(r => r.status === 'failed').length,
+              total: psrAgentResults.length,
+              transcripts: {
+                available: transcriptKeys.length > 0,
+                count: transcriptKeys.length,
+                keys: transcriptKeys,
+              },
+              timestamp: new Date().toISOString(),
+            }, null, 2));
+          } catch { /* non-critical */ }
+        }
       }
     }
   }

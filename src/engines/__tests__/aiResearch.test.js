@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { readFileSync } from 'fs';
 import mockResponses from './fixtures/mock-api-response.json';
 
 // Hoist the mock function so vi.mock factory can reference it
-const { __mockParse, __mockCreate } = vi.hoisted(() => {
+const { __mockParse, __mockCreate, __mockStream } = vi.hoisted(() => {
   const __mockParse = vi.fn();
   const __mockCreate = vi.fn();
-  return { __mockParse, __mockCreate };
+  const __mockStream = vi.fn();
+  return { __mockParse, __mockCreate, __mockStream };
 });
 
 // Mock the Anthropic SDK before importing aiResearch
@@ -14,49 +14,45 @@ vi.mock('@anthropic-ai/sdk', () => {
   return {
     default: class MockAnthropic {
       constructor() {
-        this.messages = { parse: __mockParse, create: __mockCreate };
+        this.messages = {
+          parse: __mockParse,
+          create: __mockCreate,
+          stream: __mockStream,
+        };
       }
     },
   };
 });
 
-// Mock fs.readFileSync for agent config/prompt loading
-vi.mock('fs', async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    ...actual,
-    readFileSync: vi.fn((path, encoding) => {
-      if (path.includes('config.json')) {
-        return JSON.stringify({
-          role: 'business-analyst',
-          model: 'sonnet',
-          curriculum: [],
-          dataPacketSlice: ['companyInfo'],
-          universalContext: false,
-        });
-      }
-      if (path.includes('prompts/fullStory.md')) {
-        // Only return overlay for management-evaluator (simulates overlay existing for one agent)
-        if (path.includes('management-evaluator')) {
-          return '## Full Story Overlay\nPromise tracking instructions here.';
-        }
-        // All other agents: throw ENOENT to simulate missing overlay
-        const err = new Error('ENOENT');
-        err.code = 'ENOENT';
-        throw err;
-      }
-      if (path.includes('prompt.md')) {
-        return 'You are a business analyst.';
-      }
-      // Fall through to actual for other files (like fixtures loaded by JSON import)
-      return actual.readFileSync(path, encoding);
-    }),
-  };
-});
-
-// Mock dotenv
-vi.mock('dotenv', () => ({
-  default: { config: vi.fn() },
+// Mock knowledgeBundle for agent config/prompt loading
+vi.mock('../knowledgeBundle.js', () => ({
+  AGENT_CONFIGS: {
+    'business-analyst': {
+      role: 'business-analyst',
+      model: 'sonnet',
+      curriculum: [],
+      dataPacketSlice: ['companyInfo'],
+      universalContext: false,
+    },
+    'management-evaluator': {
+      role: 'management-evaluator',
+      model: 'sonnet',
+      curriculum: [],
+      dataPacketSlice: ['companyInfo'],
+      universalContext: false,
+    },
+  },
+  AGENT_PROMPTS: {
+    'business-analyst': {
+      base: 'You are a business analyst.',
+    },
+    'management-evaluator': {
+      base: 'You are a business analyst.',
+      fullStory: '## Full Story Overlay\nPromise tracking instructions here.',
+    },
+  },
+  CURRICULUM_MAP: {},
+  DISPATCH_TABLE: {},
 }));
 
 // Mock zodOutputFormat helper
@@ -85,6 +81,16 @@ const {
   MODEL_MAP,
   PRICING,
 } = _testExports;
+
+// Make __mockStream delegate to __mockCreate so all existing test setups work.
+// dispatchAgent calls client.messages.stream(params).finalMessage() — this wraps
+// __mockCreate so tests that set up __mockCreate behavior get it through stream().
+beforeEach(() => {
+  __mockStream.mockReset();
+  __mockStream.mockImplementation((params) => ({
+    finalMessage: () => __mockCreate(params),
+  }));
+});
 
 // ─── extractWebSearchURLs ───────────────────────────────────────
 
@@ -386,7 +392,7 @@ describe('dispatchAgent', () => {
   beforeEach(() => {
     __mockParse.mockReset();
     __mockCreate.mockReset();
-    // Default calls have tools → create path
+    // Default calls return success response (stream delegates to create via global beforeEach)
     __mockCreate.mockResolvedValue(mockResponses.successResponse);
     __mockParse.mockResolvedValue(mockResponses.successResponse);
   });
@@ -483,7 +489,7 @@ describe('dispatchWithRetry', () => {
   });
 
   it('retries on max_tokens and succeeds on second attempt', async () => {
-    // Default call has tools → uses create
+    // Default call has tools → uses stream → delegates to create
     __mockCreate
       .mockResolvedValueOnce(mockResponses.maxTokensResponse)
       .mockResolvedValueOnce(mockResponses.successResponse);
@@ -658,11 +664,10 @@ describe('schema parameter', () => {
         content: { thesisPoints: [], overallThesis: 'Bull thesis' },
       },
     };
-    __mockParse.mockResolvedValue(debateResponse);
+    __mockCreate.mockResolvedValue(debateResponse);
 
     const customSchema = { _debate: true };
     const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
-    // maxSearches: 0 → structured output path; debate steps always have maxSearches: 0
     const result = await dispatchAgent('business-analyst', dataPacket, { schema: customSchema, maxSearches: 0 });
 
     // Section should be the debate output unchanged (no data parse, no tokenCost overwrite)
@@ -683,33 +688,32 @@ describe('web search gating', () => {
     __mockCreate.mockResolvedValue(mockResponses.successResponse);
   });
 
-  it('uses parse with output_config when maxSearches === 0 (no tools)', async () => {
+  it('passes empty tools and output_config when maxSearches === 0', async () => {
     const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
     await dispatchAgent('business-analyst', dataPacket, { maxSearches: 0 });
 
-    // No tools → parse path with output_config
-    const callArgs = __mockParse.mock.calls[0][0];
+    // stream is called with params — the delegation calls __mockCreate which receives params
+    const callArgs = __mockStream.mock.calls[0][0];
     expect(callArgs.tools).toEqual([]);
     expect(callArgs.output_config).toBeDefined();
   });
 
-  it('uses create without output_config when tools are present', async () => {
+  it('includes web search tool when tools are present', async () => {
     const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
     await dispatchAgent('business-analyst', dataPacket, { maxSearches: 3 });
 
-    // Tools present → create path without output_config
-    const callArgs = __mockCreate.mock.calls[0][0];
+    const callArgs = __mockStream.mock.calls[0][0];
     expect(callArgs.tools).toHaveLength(1);
     expect(callArgs.tools[0].type).toBe('web_search_20250305');
     expect(callArgs.tools[0].max_uses).toBe(3);
-    expect(callArgs.output_config).toBeUndefined();
+    expect(callArgs.output_config).toBeDefined();
   });
 
   it('sends web search tool with default max_uses when maxSearches is not specified', async () => {
     const dataPacket = { ticker: 'SFM', caveats: [], companyInfo: { name: 'Sprouts' } };
     await dispatchAgent('business-analyst', dataPacket);
 
-    const callArgs = __mockCreate.mock.calls[0][0];
+    const callArgs = __mockStream.mock.calls[0][0];
     expect(callArgs.tools).toHaveLength(1);
     expect(callArgs.tools[0].max_uses).toBe(5);
   });
