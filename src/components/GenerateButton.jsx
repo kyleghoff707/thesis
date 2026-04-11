@@ -99,10 +99,9 @@ export default function GenerateButton({ ticker, report, stageAvailability, gene
             onConfirm={() => {
               setShowDialog(false);
               if (onGenerate) onGenerate(state.stage, null, report?.id);
-              // Navigate to the report stage view so user sees live progress
-              if (reportId && state.stage) {
-                navigate(`/research/${reportId}/${state.stage}`);
-              }
+              // Don't navigate away — pipeline runs server-side.
+              // User stays on Research tab and sees progress via polling.
+              // They can navigate to the stage view when generation completes.
             }}
             onCancel={() => setShowDialog(false)}
           />

@@ -110,33 +110,27 @@ async function handleRun(request, env, user) {
   ).bind(runId, user.id, reportId || null, ticker, stage).run();
 
   // Launch Durable Object to execute the pipeline.
-  // DO's fetch() returns immediately (pipeline runs via ctx.waitUntil).
-  // If the DO can't even load (import error, missing binding), catch and return 500.
+  // DO's fetch() awaits the full pipeline (keeps DO alive for 5-15 min).
+  // We fire-and-forget the stub.fetch() so the user gets 202 immediately.
+  // If the DO errors, it writes the error to D1 pipeline_runs directly.
   const doId = env.PIPELINE_RUNNER.idFromName(runId);
   const stub = env.PIPELINE_RUNNER.get(doId);
 
-  try {
-    const doResponse = await stub.fetch(new Request('https://internal/run', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ runId, ticker, stage, userId: user.id, reportId }),
-    }));
-
-    if (!doResponse.ok) {
-      const errText = await doResponse.text().catch(() => 'Unknown DO error');
-      await env.DB.prepare(
-        `UPDATE pipeline_runs SET status = 'failed', error = ?,
-         updated_at = datetime('now') WHERE id = ?`
-      ).bind(errText, runId).run().catch(() => {});
-      return json({ error: 'Pipeline failed to start', runId }, 500);
-    }
-  } catch (err) {
+  // Fire and forget. The DO's fetch handler awaits runPipeline() internally,
+  // so this promise resolves only when the pipeline completes. We don't wait.
+  // Errors are caught and written to D1 by the DO's try/catch in runPipeline().
+  stub.fetch(new Request('https://internal/run', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ runId, ticker, stage, userId: user.id, reportId }),
+  })).catch(async (err) => {
+    // DO couldn't even start (missing binding, import error)
+    console.warn(`Pipeline DO launch error for ${runId}:`, err.message);
     await env.DB.prepare(
       `UPDATE pipeline_runs SET status = 'failed', error = ?,
        updated_at = datetime('now') WHERE id = ?`
-    ).bind(`Durable Object error: ${err.message}`, runId).run().catch(() => {});
-    return json({ error: 'Pipeline failed to start', runId }, 500);
-  }
+    ).bind(`DO launch failed: ${err.message}`, runId).run().catch(() => {});
+  });
 
   return json({ runId, status: 'queued', ticker, stage }, 202);
 }
