@@ -248,15 +248,9 @@ function titleCase(str) {
 
 // ─── Fetch Single Form 4 ────────────────────────────────────
 
-// Form 4 filings are stored under the FILER's CIK (the insider), not the company's CIK.
-// The accession number encodes the filer CIK: "0001214156-25-000055" → filer CIK "0001214156".
-function filerCikFromAccession(accessionNumber) {
-  const parts = accessionNumber.split('-');
-  if (parts.length >= 1) return parts[0];
-  return null;
-}
-
-async function findForm4Xml(filerCik, accessionNumber, primaryDocument) {
+// Find the Form 4 XML file using the company's CIK (not the accession prefix,
+// which may be a filing agent like Edgar Online, not the insider).
+async function findForm4Xml(companyCik, accessionNumber, primaryDocument) {
   const accPath = accessionNumber.replace(/-/g, '');
 
   // primaryDocument often has an XSLT prefix like "xslF345X05/wk-form4_1772148856.xml"
@@ -264,12 +258,12 @@ async function findForm4Xml(filerCik, accessionNumber, primaryDocument) {
   if (primaryDocument) {
     const basename = primaryDocument.includes('/') ? primaryDocument.split('/').pop() : primaryDocument;
     if (basename.endsWith('.xml')) {
-      return secArchiveUrl(filerCik, accPath, basename);
+      return secArchiveUrl(companyCik, accPath, basename);
     }
   }
 
-  // Fallback: try index.json to find the XML file (index.json is on www.sec.gov)
-  const indexUrl = secArchiveUrl(filerCik, accPath, 'index.json');
+  // Fallback: try index.json to find the XML file
+  const indexUrl = secArchiveUrl(companyCik, accPath, 'index.json');
   try {
     const res = await fetch(indexUrl);
     if (res.ok) {
@@ -278,7 +272,7 @@ async function findForm4Xml(filerCik, accessionNumber, primaryDocument) {
       const xmlFile = items.find(i =>
         /^(wk-form4|form4|doc4|primary_doc).*\.xml$/i.test(i.name)
       ) || items.find(i => i.name.endsWith('.xml') && !i.name.includes('-index'));
-      if (xmlFile) return secArchiveUrl(filerCik, accPath, xmlFile.name);
+      if (xmlFile) return secArchiveUrl(companyCik, accPath, xmlFile.name);
     }
   } catch { /* fall through */ }
 
@@ -290,11 +284,9 @@ async function fetchSingleForm4(filing) {
   const cached = await cacheGetAsync(cacheKey);
   if (cached) return cached;
 
-  // Extract filer CIK from accession number (Form 4 archives are under the insider's CIK)
-  const filerCik = filerCikFromAccession(filing.accessionNumber);
-  if (!filerCik) return [];
+  if (!filing.cik) return [];
 
-  const xmlUrl = await findForm4Xml(filerCik, filing.accessionNumber, filing.primaryDocument);
+  const xmlUrl = await findForm4Xml(filing.cik, filing.accessionNumber, filing.primaryDocument);
   if (!xmlUrl) return [];
 
   const res = await fetch(xmlUrl);
