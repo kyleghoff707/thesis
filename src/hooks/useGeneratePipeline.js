@@ -18,7 +18,7 @@ export function useGeneratePipeline(ticker) {
 
   // Clean up polling on unmount
   useEffect(() => {
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    return () => { if (pollRef.current) clearTimeout(pollRef.current); };
   }, []);
 
   const triggerGeneration = useCallback(async (stage, dataPacket, reportId) => {
@@ -106,12 +106,12 @@ export function useGeneratePipeline(ticker) {
 
       const { runId } = await res.json();
 
-      // Poll for progress every 3 seconds
+      // Poll for progress using recursive setTimeout (avoids overlapping requests)
       return new Promise((resolve) => {
         let consecutiveErrors = 0;
         const MAX_CONSECUTIVE_ERRORS = 20; // ~60s of offline = give up
 
-        pollRef.current = setInterval(async () => {
+        const poll = async () => {
           try {
             const statusRes = await fetch(`${API_BASE}/api/pipeline/status/${runId}`, {
               credentials: 'include',
@@ -119,22 +119,22 @@ export function useGeneratePipeline(ticker) {
             if (!statusRes.ok) {
               consecutiveErrors++;
               if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-                clearInterval(pollRef.current);
                 pollRef.current = null;
                 setGenerationError('Lost connection to server. Pipeline may still be running. Refresh to check.');
                 setGenerating(false);
                 resolve({ started: true, completed: false, error: true });
+                return;
               }
+              pollRef.current = setTimeout(poll, 3000);
               return;
             }
 
-            consecutiveErrors = 0; // Reset on success
+            consecutiveErrors = 0;
             const status = await statusRes.json();
             setProgress(status);
 
             // Terminal states: stop polling
             if (['completed', 'completed_with_errors', 'failed'].includes(status.status)) {
-              clearInterval(pollRef.current);
               pollRef.current = null;
 
               if (status.status === 'failed') {
@@ -142,7 +142,6 @@ export function useGeneratePipeline(ticker) {
                 setGenerating(false);
                 resolve({ started: true, completed: false, error: true });
               } else {
-                // Parse sections from the pipeline run
                 let sections = [];
                 try {
                   sections = status.sections_json ? JSON.parse(status.sections_json) : [];
@@ -152,18 +151,26 @@ export function useGeneratePipeline(ticker) {
                 setGenerating(false);
                 resolve({ started: true, completed: true, output: { sections } });
               }
+              return;
             }
+
+            // Schedule next poll
+            pollRef.current = setTimeout(poll, 3000);
           } catch {
             consecutiveErrors++;
             if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-              clearInterval(pollRef.current);
               pollRef.current = null;
               setGenerationError('Lost connection to server. Pipeline may still be running. Refresh to check.');
               setGenerating(false);
               resolve({ started: true, completed: false, error: true });
+              return;
             }
+            pollRef.current = setTimeout(poll, 3000);
           }
-        }, 3000);
+        };
+
+        // Start first poll
+        pollRef.current = setTimeout(poll, 1000);
       });
 
     } catch (e) {

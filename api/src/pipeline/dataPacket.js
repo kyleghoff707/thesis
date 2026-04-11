@@ -242,31 +242,21 @@ async function fetchCompanyInfoSEC(ticker) {
 }
 
 async function fetchEdgarFinancialsSEC(ticker) {
-  // This is the most complex engine — ~2000 lines in edgarFinancials.js
-  // For now, dynamically import the existing engine.
-  // It uses fetch() internally which works in Workers for SEC URLs.
-  // The engine uses apiBase.js for URL resolution — we need to handle that.
-  //
-  // TODO: This import chain pulls in apiBase.js, config.js, cacheStore.js
-  // which have browser dependencies. For now, we'll try the dynamic import
-  // and catch failures. Step 4 (engine adapter) will properly break the chain.
-  try {
-    const { fetchEdgarStatements } = await import('../../../src/engines/edgarFinancials.js');
-    return await fetchEdgarStatements(ticker);
-  } catch (err) {
-    // Expected to fail until Step 4 adapter is built
-    throw new Error(`edgarFinancials import failed (needs adapter): ${err.message}`);
-  }
+  // Import chain is now safe thanks to esbuild [alias] + [define] in wrangler.toml:
+  // - idb → shim/idb.js (no-op openDB)
+  // - import.meta.env.* → compile-time constants
+  // This lets edgarFinancials.js import cache.js/cacheStore.js/apiBase.js without error.
+  // Cache operations are no-ops in Workers (IS_NODE guard + no localStorage).
+  const { fetchEdgarStatements } = await import('../../../src/engines/edgarFinancials.js');
+  return await fetchEdgarStatements(ticker);
 }
 
 async function fetchCompensationSEC(ticker) {
-  // Similar to above — complex HTML parsing engine
-  try {
-    const { fetchCompensation } = await import('../../../src/engines/compensation.js');
-    return await fetchCompensation(ticker);
-  } catch (err) {
-    throw new Error(`compensation import failed (needs adapter): ${err.message}`);
-  }
+  // Import chain safe via esbuild aliases. DOMParser calls inside compensation.js
+  // will fail at runtime (no DOM in Workers), but safeCall() catches the error.
+  // Primary compensation source is D1 (cron-populated). This is the SEC fallback.
+  const { fetchCompensation } = await import('../../../src/engines/compensation.js');
+  return await fetchCompensation(ticker);
 }
 
 async function fetchFilingsSEC(ticker) {

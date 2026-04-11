@@ -684,7 +684,7 @@ export default function PitchDeck({ getReport, updateReport }) {
               setShowGenerateDialog(false);
               setGraceActive(true);
               setTimeout(() => setGraceActive(false), 5000);
-              triggerGeneration('pitch-deck').then(() => startPolling());
+              triggerGeneration('pitch-deck', null, report?.id);
             }}
             onCancel={() => setShowGenerateDialog(false)}
           />
@@ -764,7 +764,7 @@ export default function PitchDeck({ getReport, updateReport }) {
           stage="pitch-deck"
           onConfirm={() => {
             setShowGenerateDialog(false);
-            triggerGeneration('pitch-deck');
+            triggerGeneration('pitch-deck', null, report?.id);
           }}
           onCancel={() => setShowGenerateDialog(false)}
         />

@@ -88,21 +88,31 @@ for (const agent of AGENT_DIRS) {
 }
 output += '};\n\n';
 
-// Agent prompts (base + fullStory overlays)
+// Agent prompts (base + all stage overlays)
 output += '// ─── Agent Prompts ────────────────────────────────────────\n\n';
 output += 'export const AGENT_PROMPTS = {\n';
 for (const agent of AGENT_DIRS) {
   const basePath = join('agents', agent, 'prompt.md');
   const base = readFile(basePath);
-  const fullStoryPath = join('agents', agent, 'prompts', 'fullStory.md');
-  const fullStory = existsSync(join(ROOT, fullStoryPath)) ? readFile(fullStoryPath) : null;
+
+  // Scan for ALL stage overlay files in agents/{agent}/prompts/
+  const overlays = {};
+  const promptsDir = join(ROOT, 'agents', agent, 'prompts');
+  if (existsSync(promptsDir)) {
+    for (const file of readdirSync(promptsDir).filter(f => f.endsWith('.md'))) {
+      const stageName = file.replace('.md', ''); // e.g., 'fullStory', 'pitchDeck', 'onePager'
+      overlays[stageName] = readFile(join('agents', agent, 'prompts', file));
+    }
+  }
 
   if (base) {
-    console.log(`  prompt: ${agent} (base: ${base.length}${fullStory ? `, fullStory: ${fullStory.length}` : ''})`);
+    const overlayNames = Object.keys(overlays);
+    const overlayInfo = overlayNames.map(s => `${s}: ${overlays[s].length}`).join(', ');
+    console.log(`  prompt: ${agent} (base: ${base.length}${overlayInfo ? `, ${overlayInfo}` : ''})`);
     output += `  '${agent}': {\n`;
     output += `    base: \`${escapeForTemplate(base)}\`,\n`;
-    if (fullStory) {
-      output += `    fullStory: \`${escapeForTemplate(fullStory)}\`,\n`;
+    for (const [stage, content] of Object.entries(overlays)) {
+      output += `    ${stage}: \`${escapeForTemplate(content)}\`,\n`;
     }
     output += `  },\n`;
   }

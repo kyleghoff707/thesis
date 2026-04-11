@@ -98,7 +98,7 @@ export default function GenerateButton({ ticker, report, stageAvailability, gene
             stage={state.stage}
             onConfirm={() => {
               setShowDialog(false);
-              if (onGenerate) onGenerate(state.stage);
+              if (onGenerate) onGenerate(state.stage, null, report?.id);
               // Navigate to the report stage view so user sees live progress
               if (reportId && state.stage) {
                 navigate(`/research/${reportId}/${state.stage}`);

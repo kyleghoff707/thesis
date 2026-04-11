@@ -570,7 +570,7 @@ export default function FullStory({ getReport, updateReport }) {
               setShowGenerateDialog(false);
               setGraceActive(true);
               setTimeout(() => setGraceActive(false), 5000);
-              triggerGeneration('full-story').then(() => startPolling());
+              triggerGeneration('full-story', null, report?.id);
             }}
             onCancel={() => setShowGenerateDialog(false)}
           />

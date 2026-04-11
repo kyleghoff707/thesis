@@ -7,6 +7,21 @@ compatibility_flags = ["nodejs_compat"]
 [build]
 command = "node scripts/build-curriculum.mjs"
 
+# esbuild aliases — replace browser-only modules with Worker-compatible shims
+# Fixes the import chain: edgarFinancials → cache → cacheStore → idb (browser-only)
+[alias]
+"idb" = "./src/pipeline/shims/idb.js"
+
+# esbuild defines — replace Vite-only import.meta.env expressions at compile time
+# Fixes: apiBase.js, config.js which read import.meta.env at module level
+[define]
+"import.meta.env.DEV" = "false"
+"import.meta.env.VITE_API_URL" = "''"
+"import.meta.env.VITE_CLAUDE_KEY" = "'proxy'"
+"import.meta.env.VITE_ALPHA_VANTAGE_KEY" = "''"
+"import.meta.env.VITE_ALPHA_VANTAGE_KEY_2" = "''"
+"import.meta.env.VITE_EODHD_KEY" = "''"
+
 [vars]
 ENVIRONMENT = "production"
 STRIPE_PRICE_ID = "price_1TKW1QQ4VrAqDXtS0MtUDWBJ"

@@ -2,13 +2,17 @@
 
 ## Pipeline Migration
 
-### Queue-based fallback architecture
-**What:** Design Cloudflare Queues architecture where each wave is a queue message processed by a fresh Worker invocation.
-**Why:** If ctx.waitUntil() can't reliably run 15-minute pipelines (Step 0.5 verification), Queues guarantee execution regardless of wall-clock limits.
-**Pros:** Truly durable, no time limits, each wave is independently retriable.
-**Cons:** Adds complexity (Queue binding, message format, dead letter queue). ~4h extra work.
-**Context:** The current plan uses ctx.waitUntil() with wave checkpointing. The outside voice (eng review 2026-04-10) flagged wall-clock limits as a potential fatal issue. Step 0.5 verifies experimentally. If it fails, this Queue design is the fallback.
-**Depends on:** Step 0.5 verification result.
+### ~~Queue-based fallback architecture~~ RESOLVED
+Resolved by using Durable Objects instead of ctx.waitUntil(). DO has no wall-clock limit.
+ctx.waitUntil() verified to die at 30-60s. DO deployed in commit de710d4.
+
+### edgarFinancials DRY refactor
+**What:** Refactor edgarFinancials.js to separate the pure extraction logic (taxonomy, computeDerivedFields, buildTTM) from the cache/fetch layer. Export the pure functions from a cache-free module.
+**Why:** Currently the Worker uses esbuild [alias] + [define] to shim out browser dependencies (idb, import.meta.env). This works but is fragile. A proper separation would let both browser and Worker import the extraction core without shims.
+**Pros:** Eliminates shim dependency. Both environments use identical code. Easier to test extraction logic in isolation.
+**Cons:** Touching the most validated engine in the codebase (94.8% accuracy, 503 S&P 500 companies). Must run full regression suite after refactor.
+**Context:** The extraction core is ~73KB of pure functions (lines 21-1791 of edgarFinancials.js). Only the top-level fetch functions (fetchEdgarStatements, fetchEdgarQuarterly) use cache and apiBase. The refactor would move the pure core to a separate file and have both the browser and Worker fetch wrappers import it.
+**Depends on:** Pipeline migration stable in production. Run validation suite: `node validation/scripts/compare-morningstar.mjs` (must stay >= 94.0%).
 
 ### Separate pipeline Worker
 **What:** Split pipeline execution into its own Cloudflare Worker (e.g., pipeline.thes1sinvesting.com) separate from the main API Worker.
