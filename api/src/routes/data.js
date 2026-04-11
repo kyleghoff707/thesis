@@ -36,7 +36,7 @@ export async function handleData(request, env, path) {
 
   // ─── Gurus (D1) ──────────────────────────────────────────────
 
-  // GET /data/gurus — latest activity for all gurus
+  // GET /data/gurus — latest activity for all gurus (summary only)
   if (path === '/data/gurus') {
     const { results } = await env.DB.prepare(`
       SELECT guru_cik, guru_name, fund_name, report_date, filing_date,
@@ -47,6 +47,62 @@ export async function handleData(request, env, path) {
       ORDER BY total_value DESC
     `).all();
     return json({ gurus: results });
+  }
+
+  // GET /data/gurus/all — all guru holdings grouped into activities (for frontend)
+  if (path === '/data/gurus/all') {
+    const { results } = await env.DB.prepare(`
+      SELECT guru_cik, guru_name, fund_name, report_date, filing_date,
+             issuer, cusip, cusip6, ticker, shares, value_usd,
+             portfolio_pct, share_type, action, shares_change, pct_change
+      FROM guru_holdings
+      WHERE report_date = (
+        SELECT MAX(report_date) FROM guru_holdings gh2
+        WHERE gh2.guru_cik = guru_holdings.guru_cik
+      )
+      ORDER BY guru_cik, value_usd DESC
+    `).all();
+
+    const byGuru = new Map();
+    for (const row of results) {
+      if (!byGuru.has(row.guru_cik)) {
+        byGuru.set(row.guru_cik, {
+          guru: { name: row.guru_name, fund: row.fund_name, cik: row.guru_cik },
+          reportDate: row.report_date,
+          filingDate: row.filing_date,
+          holdings: [],
+          totalValue: 0,
+        });
+      }
+      const entry = byGuru.get(row.guru_cik);
+      entry.holdings.push({
+        issuer: row.issuer,
+        cusip: row.cusip,
+        cusip6: row.cusip6,
+        ticker: row.ticker,
+        shares: row.shares,
+        value: row.value_usd,
+        portfolioPct: row.portfolio_pct,
+        shareType: row.share_type,
+        action: row.action,
+        sharesChange: row.shares_change,
+        pctChange: row.pct_change,
+      });
+      entry.totalValue += row.value_usd;
+    }
+
+    const activities = Array.from(byGuru.values()).map(a => ({
+      ...a,
+      positionCount: a.holdings.length,
+      newBuys: a.holdings.filter(h => h.action === 'new').length,
+      added: a.holdings.filter(h => h.action === 'added').length,
+      reduced: a.holdings.filter(h => h.action === 'reduced').length,
+      soldOut: a.holdings.filter(h => h.action === 'sold').length,
+      held: a.holdings.filter(h => h.action === 'held').length,
+      filing: { reportDate: a.reportDate, filingDate: a.filingDate },
+    }));
+
+    return json({ activities });
   }
 
   // GET /data/gurus/:cik — single guru with holdings

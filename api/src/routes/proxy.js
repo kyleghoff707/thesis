@@ -18,7 +18,7 @@ export async function handleProxy(request, env, path, url) {
   // /proxy/sec/* → www.sec.gov/Archives/*
   if (path.startsWith('/proxy/sec/')) {
     const secPath = path.replace('/proxy/sec/', '');
-    const target = `https://www.sec.gov/Archives/${secPath}`;
+    const target = `https://www.sec.gov/${secPath}`;
     const res = await fetch(target, {
       headers: { 'User-Agent': env.SEC_USER_AGENT || SEC_UA },
     });

@@ -5,6 +5,8 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 ENVIRONMENT = "production"
+STRIPE_PRICE_ID = "price_1TKW1QQ4VrAqDXtS0MtUDWBJ"
+STRIPE_METER_EVENT_NAME = "api_requests"
 
 # D1 database — create with: wrangler d1 create thes1s
 [[d1_databases]]
@@ -28,6 +30,10 @@ bucket_name = "thes1s-transcripts"
 # Monthly 1st 3AM: guru holdings (43 funds)
 # Sunday 2AM: taxonomy refresh (IPOs, delistings, S&P 500, reclassifications)
 # Sunday 5AM: stale data cleanup
+# Observability — persists across deploys (dashboard settings get reset by wrangler deploy)
+[observability]
+enabled = true
+
 [triggers]
 crons = [
   "0 */3 * * *",

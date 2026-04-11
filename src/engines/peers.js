@@ -8,6 +8,7 @@
 
 import { getCompaniesForTier } from './thes1sClassification';
 import { getTickerSearchIndex } from './edgar';
+import { dataUrl } from './apiBase';
 
 // ─── Public API ─────────────────────────────────────────────
 
@@ -18,7 +19,21 @@ import { getTickerSearchIndex } from './edgar';
  * @param {{ sector, industryGroup, industry }} classification
  * @returns {Array<{ cik, name, ticker }>}
  */
-export function fetchPeersByTier(tier, classification) {
+export async function fetchPeersByTier(tier, classification, ticker) {
+  // Try D1 first (includes weekly-refreshed IPOs, reclassifications)
+  if (ticker && typeof window !== 'undefined') {
+    try {
+      const res = await fetch(dataUrl(`/taxonomy/peers/${ticker.toUpperCase()}?tier=${tier}`));
+      if (res.ok) {
+        const data = await res.json();
+        if (data.peers?.length > 0) {
+          return data.peers.map(p => ({ cik: p.cik, name: p.name, ticker: p.ticker || null }));
+        }
+      }
+    } catch { /* fall through to static JSON */ }
+  }
+
+  // Fallback: in-memory from static JSON (baked into build)
   if (!classification?.[tier]) return [];
   const companies = getCompaniesForTier(tier, classification[tier]);
   return companies.map(c => ({

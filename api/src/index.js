@@ -6,6 +6,8 @@ import { handleAuth } from './routes/auth.js';
 import { handleUser } from './routes/user.js';
 import { handleData } from './routes/data.js';
 import { handleProxy } from './routes/proxy.js';
+import { handleClaude } from './routes/claude.js';
+import { handleStripeWebhook, handleStripe } from './routes/stripe.js';
 import { handleCron } from './cron/index.js';
 import { authenticate } from './middleware/auth.js';
 
@@ -25,7 +27,7 @@ function getCorsHeaders(request) {
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, x-api-key, anthropic-version, anthropic-beta, x-claude-caller, x-claude-ticker',
     'Access-Control-Allow-Credentials': 'true',
   };
 }
@@ -66,6 +68,18 @@ export default {
       else if (path.startsWith('/auth/')) {
         response = await handleAuth(request, env, path);
       }
+      // Stripe webhook (no auth — verified by Stripe signature)
+      else if (path === '/stripe/webhook') {
+        response = await handleStripeWebhook(request, env);
+      }
+      // Public API proxies (no auth — SEC, Yahoo, Finviz are public APIs)
+      else if (path.startsWith('/proxy/') && !path.startsWith('/proxy/claude/')) {
+        response = await handleProxy(request, env, path, url);
+      }
+      // Shared data (no auth — cron-populated D1/R2, read-only, not user-specific)
+      else if (path.startsWith('/data/')) {
+        response = await handleData(request, env, path);
+      }
       // All other routes require authentication
       else {
         const user = await authenticate(request, env);
@@ -73,10 +87,10 @@ export default {
           response = json({ error: 'Unauthorized' }, 401);
         } else if (path.startsWith('/user/')) {
           response = await handleUser(request, env, path, user);
-        } else if (path.startsWith('/data/')) {
-          response = await handleData(request, env, path);
-        } else if (path.startsWith('/proxy/')) {
-          response = await handleProxy(request, env, path, url);
+        } else if (path.startsWith('/proxy/claude/')) {
+          response = await handleClaude(request, env, ctx, user);
+        } else if (path.startsWith('/stripe/')) {
+          response = await handleStripe(request, env, path, user);
         } else {
           response = json({ error: 'Not found' }, 404);
         }

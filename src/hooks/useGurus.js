@@ -19,24 +19,45 @@ export function useGurus() {
   const [nportLoading, setNportLoading] = useState(false);
   const [lastFetchedAt, setLastFetchedAt] = useState(null);
 
-  // Hydrate from IndexedDB cache on mount
+  // Hydrate from IndexedDB cache on mount, then auto-fetch from D1 if empty
   useEffect(() => {
+    let cancelled = false;
     async function hydrate() {
       const [cachedPortfolios, cachedActivities, cachedNport] = await Promise.all([
         loadCachedPortfolios(),
         loadCachedActivities(),
         loadCachedNportSummaries(GURUS),
       ]);
+      if (cancelled) return;
       if (cachedPortfolios.length > 0) setPortfolios(cachedPortfolios);
       if (cachedActivities.length > 0) {
         setActivities(cachedActivities);
-        // Use the most recent activity's filing date as lastFetchedAt proxy
         const dates = cachedActivities.map(a => a.filingDate).filter(Boolean).sort();
         if (dates.length > 0) setLastFetchedAt(new Date(dates[dates.length - 1]).getTime());
       }
       if (Object.keys(cachedNport).length > 0) setNportData(cachedNport);
+
+      // Auto-fetch from D1 if no cached data (fast — single API call)
+      if (cachedActivities.length === 0) {
+        setLoading(true);
+        try {
+          const results = await fetchAllWithChanges();
+          if (cancelled) return;
+          if (results.length > 0) {
+            setActivities(results);
+            setLastFetchedAt(Date.now());
+            setPortfolios(results.filter(a => a?.holdings).map(a => ({
+              guru: a.guru, filing: a.filing,
+              holdings: a.holdings, totalValue: a.totalValue,
+              positionCount: a.positionCount,
+            })));
+          }
+        } catch { /* silent — user can still click Load manually */ }
+        if (!cancelled) setLoading(false);
+      }
     }
     hydrate();
+    return () => { cancelled = true; };
   }, []);
 
   // Fetch N-PORT data for all gurus that have fundCik

@@ -80,22 +80,21 @@ export async function syncInsiders(env) {
         if (filingDates[j] <= lastDate) continue; // Already have this filing
 
         const accession = accessions[j];
-        const filerCik = accession.split('-')[0];
         const accPath = accession.replace(/-/g, '');
 
-        // Find the Form 4 XML file
+        // Find the Form 4 XML file (use company CIK — filing agent CIKs in accession prefixes don't host the files)
         let xmlUrl = null;
         const primaryDoc = primaryDocs[j];
         if (primaryDoc) {
           const basename = primaryDoc.includes('/') ? primaryDoc.split('/').pop() : primaryDoc;
           if (basename.endsWith('.xml')) {
-            xmlUrl = `https://www.sec.gov/Archives/edgar/data/${filerCik}/${accPath}/${basename}`;
+            xmlUrl = `https://www.sec.gov/Archives/edgar/data/${cleanCik}/${accPath}/${basename}`;
           }
         }
 
         if (!xmlUrl) {
           // Fallback: index.json
-          const indexUrl = `https://www.sec.gov/Archives/edgar/data/${filerCik}/${accPath}/index.json`;
+          const indexUrl = `https://www.sec.gov/Archives/edgar/data/${cleanCik}/${accPath}/index.json`;
           try {
             const indexRes = await secFetch(indexUrl, env);
             let indexData;
@@ -105,7 +104,7 @@ export async function syncInsiders(env) {
               /^(wk-form4|form4|doc4|primary_doc).*\.xml$/i.test(i.name)
             ) || items.find(i => i.name.endsWith('.xml') && !i.name.includes('-index'));
             if (xmlFile) {
-              xmlUrl = `https://www.sec.gov/Archives/edgar/data/${filerCik}/${accPath}/${xmlFile.name}`;
+              xmlUrl = `https://www.sec.gov/Archives/edgar/data/${cleanCik}/${accPath}/${xmlFile.name}`;
             }
           } catch { /* skip */ }
           await sleep(FETCH_DELAY_MS);

@@ -67,6 +67,9 @@ export async function syncTranscripts(env) {
   const expectedQuarters = getExpectedQuarters(QUARTERS_TO_KEEP);
   let callsMade = 0;
 
+  console.log(`Transcript sync: ${tickers.length} tickers, offset ${offset}, dailyCalls ${dailyCalls}, expected quarters: ${expectedQuarters.map(q => q.year + 'Q' + q.quarter).join(',')}`);
+  console.log(`Transcript sync: AV keys configured: key1=${!!env.ALPHA_VANTAGE_KEY}, key2=${!!env.ALPHA_VANTAGE_KEY_2}`);
+
   // 4. Process tickers starting from offset
   for (let i = 0; i < tickers.length && callsMade < CALLS_PER_RUN; i++) {
     const idx = (offset + i) % tickers.length;
@@ -83,12 +86,13 @@ export async function syncTranscripts(env) {
       const r2Key = `transcripts/${ticker}/${year}/Q${quarter}.json`;
       if (existingKeys.has(r2Key)) continue; // Already have it
 
-      // Fetch from Alpha Vantage
-      const avKey = callsMade % 2 === 0 ? env.ALPHA_VANTAGE_KEY : env.ALPHA_VANTAGE_KEY_2;
-      if (!avKey) {
-        console.warn('Transcript sync: no ALPHA_VANTAGE_KEY configured. Set via wrangler secret put.');
+      // Fetch from Alpha Vantage (alternate keys to spread rate limit)
+      const avKeys = [env.ALPHA_VANTAGE_KEY, env.ALPHA_VANTAGE_KEY_2].filter(Boolean);
+      if (avKeys.length === 0) {
+        console.warn('Transcript sync: no AV keys configured.');
         break;
       }
+      const avKey = avKeys[callsMade % avKeys.length];
 
       const quarterStr = `${year}Q${quarter}`;
       const url = `https://www.alphavantage.co/query?function=EARNINGS_CALL_TRANSCRIPT&symbol=${ticker}&quarter=${quarterStr}&apikey=${avKey}`;
@@ -97,9 +101,24 @@ export async function syncTranscripts(env) {
         const res = await fetch(url);
         const data = await res.json();
 
-        // Check for rate limit response
+        // Check for rate limit response — try the other key before giving up
         if (data.Note || data.Information) {
-          console.warn(`Transcript sync: AV rate limit hit after ${callsMade} calls. Stopping run.`);
+          if (avKeys.length > 1) {
+            const altKey = avKeys[(callsMade + 1) % avKeys.length];
+            const altUrl = `https://www.alphavantage.co/query?function=EARNINGS_CALL_TRANSCRIPT&symbol=${ticker}&quarter=${quarterStr}&apikey=${altKey}`;
+            const altRes = await fetch(altUrl);
+            const altData = await altRes.json();
+            if (!altData.Note && !altData.Information && altData.transcript?.length) {
+              const text = formatAlphaVantageTranscript(altData);
+              const stored = { text, meta: { source: 'alpha_vantage', quarter: quarterStr, year, quarterNum: quarter, fetchedAt: new Date().toISOString() } };
+              await env.TRANSCRIPTS.put(r2Key, JSON.stringify(stored));
+              console.log(`Stored transcript (alt key): ${ticker} ${quarterStr}`);
+              callsMade += 2; // Both keys used
+              continue;
+            }
+          }
+          console.warn(`Transcript sync: AV rate limit on all keys after ${callsMade} calls. Stopping run.`);
+          callsMade = CALLS_PER_RUN; // Force outer loop to exit too
           break;
         }
 

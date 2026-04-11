@@ -6,7 +6,7 @@
 // Keeps 5 years (20 quarters) of history.
 
 import { DOMParser } from '@xmldom/xmldom';
-import { parseInfoTable, aggregateShareClasses, enrichHoldings, computeChanges, GURUS } from '../../../packages/sec-parsers/index.js';
+import { parseInfoTable, aggregateShareClasses, enrichHoldings, computeChanges, GURUS, resolveIssuerTickers } from '../../../packages/sec-parsers/index.js';
 
 const SEC_UA = 'StockAnalyzer/1.0 kylehoff@example.com';
 const FETCH_DELAY_MS = 200;
@@ -77,8 +77,25 @@ async function getInfoTableUrl(cik, accession, env) {
   return `https://www.sec.gov/Archives/edgar/data/${cleanCik}/${accPath}/${infoFile.name}`;
 }
 
+// Fetch SEC's company_tickers.json and build a ticker index for CUSIP resolution
+async function fetchTickerIndex(env) {
+  try {
+    const res = await secFetch('https://www.sec.gov/files/company_tickers.json', env);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Object.values(data).map(e => ({ ticker: e.ticker, name: e.title || '' }));
+  } catch (err) {
+    console.warn('Ticker index fetch failed:', err.message);
+    return [];
+  }
+}
+
 export async function syncGurus(env) {
   let processed = 0;
+
+  // Build ticker index once for CUSIP→ticker resolution across all gurus
+  const tickerIndex = await fetchTickerIndex(env);
+  await sleep(FETCH_DELAY_MS);
 
   for (const guru of GURUS) {
     try {
@@ -124,9 +141,14 @@ export async function syncGurus(env) {
       // Compute changes if we have 2 filings
       const current = parsedFilings[0];
       const previous = parsedFilings.length > 1 ? parsedFilings[1] : null;
-      const holdings = previous
+      let holdings = previous
         ? computeChanges(current.holdings, previous.holdings)
         : current.holdings.map(h => ({ ...h, action: 'held', sharesChange: 0, pctChange: 0 }));
+
+      // Resolve CUSIP→ticker using SEC's company_tickers.json index
+      if (tickerIndex.length > 0) {
+        holdings = resolveIssuerTickers(holdings, tickerIndex);
+      }
 
       // Insert into D1
       for (const h of holdings) {

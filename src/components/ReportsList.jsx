@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { C } from '../theme';
+import { userUrl } from '../engines/apiBase';
 
 // Lock icon SVG (10px, scaled from StageNavBar pattern)
 function LockIcon() {
@@ -39,11 +40,11 @@ export default function ReportsList({ reports, getReport, createReport }) {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('/api/thes1s/reports');
+        const res = await fetch(userUrl('/reports'), { credentials: 'include' });
         if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
-          if (!cancelled) setTickerData(data.tickers || []);
+          if (!cancelled) setTickerData(data.reports || []);
         } else {
           if (!cancelled) setError('Failed to load reports');
         }

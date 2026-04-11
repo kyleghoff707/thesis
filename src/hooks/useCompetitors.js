@@ -62,7 +62,7 @@ export function useCompetitors(company) {
 
     (async () => {
       try {
-        const rawPeers = fetchPeersByTier(tier, classification);
+        const rawPeers = await fetchPeersByTier(tier, classification, company?.ticker);
         if (cancelledRef.current) return;
         const enriched = await enrichPeersWithTickers(rawPeers);
         if (cancelledRef.current) return;

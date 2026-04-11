@@ -3,6 +3,7 @@
 // Caches in IndexedDB — transcripts are immutable once published
 
 import { ALPHA_VANTAGE_KEY, ALPHA_VANTAGE_KEY_2 } from './config.js';
+import { dataUrl } from './apiBase.js';
 
 // Rotate between AV keys to double the daily rate limit (25 calls each)
 const AV_KEYS = [ALPHA_VANTAGE_KEY, ALPHA_VANTAGE_KEY_2].filter(Boolean);
@@ -46,6 +47,22 @@ export async function fetchTranscript(ticker, transcriptEntry) {
       fromCache: true,
       charCount: cached.text?.length || 0,
     };
+  }
+
+  // Try R2 (cron-cached transcripts — free, instant)
+  if (typeof window !== 'undefined') {
+    try {
+      const r2Url = dataUrl(`/transcripts/${ticker.toUpperCase()}/${year}/Q${quarter}`);
+      const r2Res = await fetch(r2Url);
+      if (r2Res.ok) {
+        const r2Data = await r2Res.json();
+        if (r2Data.data?.text) {
+          const result = { text: r2Data.data.text, meta: r2Data.data.meta || { source: 'r2', year, quarterNum: quarter } };
+          cacheSet(cacheKey, result, 'transcript');
+          return { found: true, text: result.text, meta: result.meta, fromCache: false, charCount: result.text.length };
+        }
+      }
+    } catch { /* fall through to Alpha Vantage */ }
   }
 
   // Try Alpha Vantage (try both keys if available)

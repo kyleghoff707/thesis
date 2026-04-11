@@ -15,6 +15,7 @@ import { computeFreeCashFlow } from './freeCashFlow.js';
 import { computeKeyMetrics } from './keyMetrics.js';
 import { computeMoatScore, computeManagementScore, computeRuleOneScore } from './ruleOneScore.js';
 import { findGurusOwning, loadCachedPortfolios, fetchAllGuruHoldings } from './gurus.js';
+import { dataUrl } from './apiBase.js';
 import { fetchInsiderTransactions, computeInsiderSummary } from './insiders.js';
 import { fetchCompensation } from './compensation.js';
 import { fetchPeersByTier } from './peers.js';
@@ -106,7 +107,7 @@ export async function assembleDataPacket(ticker) {
     safeCall(() => fetchGurusForTicker(ticker), 'gurus', errors),
     safeCall(() => fetchInsidersForTicker(ticker), 'insiders', errors),
     safeCall(() => fetchCompensation(ticker), 'compensation', errors),
-    safeCall(() => fetchPeersByTier('industry', classification), 'peers', errors),
+    safeCall(() => fetchPeersByTier('industry', classification, ticker), 'peers', errors),
     IS_NODE ? Promise.resolve(null) : safeCall(() => fetchAnalystEstimates(ticker), 'analystEstimates', errors, { retry: true }),
     IS_NODE ? Promise.resolve(null) : safeCall(() => fetchPrices(ticker, '10y'), 'prices', errors, { retry: true }),
     safeCall(() => fetchFilingList(ticker), 'filings', errors),
@@ -345,8 +346,35 @@ async function safeCall(fn, label, errors, { retry = false, backoffMs = 5000 } =
 // ─── Helper: Fetch gurus holding a ticker ───────────────────────
 
 async function fetchGurusForTicker(ticker) {
+  // Try D1 first in browser context (single targeted query)
+  if (typeof window !== 'undefined') {
+    try {
+      const res = await fetch(dataUrl(`/gurus/ticker/${ticker}`));
+      if (res.ok) {
+        const data = await res.json();
+        if (data.holders && data.holders.length > 0) {
+          return {
+            count: data.holders.length,
+            holdings: data.holders.map(h => ({
+              guru: { name: h.guru_name, cik: h.guru_cik, fund: h.fund_name },
+              positions: [{
+                issuer: h.issuer || ticker,
+                ticker,
+                shares: h.shares,
+                value: h.value_usd,
+                portfolioPct: h.portfolio_pct,
+                action: h.action,
+              }],
+              totalPortfolioValue: null,
+            })),
+          };
+        }
+      }
+    } catch { /* fall through to SEC EDGAR */ }
+  }
+
+  // Fallback: load all portfolios from cache/SEC
   let portfolios = await loadCachedPortfolios();
-  // If cache is empty or expired, fetch all 43 guru portfolios from SEC
   if (!portfolios || portfolios.filter(Boolean).length === 0) {
     portfolios = await fetchAllGuruHoldings();
   }

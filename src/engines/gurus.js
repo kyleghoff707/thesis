@@ -4,13 +4,15 @@
 
 import { cacheGetAsync, cacheSet, hydrateFromIDB } from './cache';
 import { getTickerSearchIndex } from './edgar';
-import { edgarBase, secBase } from './apiBase';
+import { edgarBase, secBase, dataUrl } from './apiBase';
 import {
   parseInfoTable as sharedParseInfoTable,
   aggregateShareClasses as sharedAggregateShareClasses,
   enrichHoldings as sharedEnrichHoldings,
   computeChanges as sharedComputeChanges,
   GURUS as sharedGURUS,
+  resolveIssuerTickers,
+  CUSIP_TICKER_OVERRIDES,
 } from '../../packages/sec-parsers/index.js';
 
 // Re-export shared functions so existing consumers import from here
@@ -573,8 +575,44 @@ export async function fetchGuruWithChanges(guru) {
   return activity;
 }
 
+// Fetch all guru activities from D1 (single API call).
+// Returns activities array or null if D1 is empty/unavailable.
+async function fetchActivitiesFromD1() {
+  try {
+    const res = await fetch(dataUrl('/gurus/all'));
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.activities || data.activities.length === 0) return null;
+    return data.activities;
+  } catch {
+    return null;
+  }
+}
+
 // Fetch all gurus with change detection
 export async function fetchAllWithChanges(onProgress) {
+  // Try D1 first (single HTTP call vs 200+ SEC EDGAR calls)
+  const d1Activities = await fetchActivitiesFromD1();
+  if (d1Activities && d1Activities.length > 0) {
+    // Resolve tickers (D1 cron doesn't resolve CUSIP → ticker)
+    for (const activity of d1Activities) {
+      if (activity.holdings?.some(h => !h.ticker && h.cusip)) {
+        activity.holdings = await resolveTickersForHoldings(activity.holdings);
+      }
+      // Cache to IndexedDB for offline use / Stock Lookup compat
+      if (activity.guru?.cik) {
+        cacheSet(`guru-activity:${GURU_CACHE_V}:${activity.guru.cik}`, activity, 'guru');
+        cacheSet(`guru:${activity.guru.cik}`, {
+          guru: activity.guru, filing: activity.filing,
+          holdings: activity.holdings, totalValue: activity.totalValue,
+          positionCount: activity.positionCount,
+        }, 'guru');
+      }
+    }
+    return d1Activities;
+  }
+
+  // Fallback: fetch from SEC EDGAR (200+ calls, ~5 min)
   const results = [];
   for (let i = 0; i < GURUS.length; i++) {
     const guru = GURUS[i];
@@ -807,24 +845,9 @@ function normalizeForAudit(s) {
 }
 
 // ============================================================
-// Ticker Resolution — fuzzy match issuer names to tickers
+// Ticker Resolution — wraps shared resolveIssuerTickers with
+// browser-side localStorage CUSIP cache for fast-path lookups
 // ============================================================
-
-// Static CUSIP prefix→ticker overrides for known edge cases that
-// can't be resolved by name matching (compound names, abbreviations,
-// companies not in EDGAR's company_tickers.json, etc.)
-const CUSIP_TICKER_OVERRIDES = {
-  '829933': 'SIRI',   // SiriusXM Holdings (13F: "SIRIUSXM" vs EDGAR: "Sirius XM")
-  '929740': 'WAB',    // Wabtec (13F: "WABTEC" vs EDGAR: "Westinghouse Air Brake Technologies")
-  '30231G': 'XOM',    // Exxon Mobil (13F: "ExxonMobil" one word vs EDGAR: "Exxon Mobil" two words)
-  '737630': 'PCH',    // PotlatchDeltic (compound name)
-  '302520': 'FNB',    // F.N.B. Corp (13F: "F N B CORP" with spaces between letters)
-  '200340': 'CMA',    // Comerica
-  '229899': 'CFR',    // Cullen/Frost Bankers (slash in EDGAR name)
-  '89214P': 'TOWN',   // TowneBank (13F adds "PORTSMOUTH VA" location suffix)
-  '03062T': 'CRMT',   // America's Car-Mart
-  '784117': 'SEIC',   // SEI Investments (13F: "Sei Invt Co Pa PV $0.01")
-};
 
 const CUSIP_TICKER_LS_KEY = 'sa-cusip-ticker-map:v2';
 
@@ -846,90 +869,8 @@ function saveCusipTickerMap(map) {
   try { localStorage.setItem(CUSIP_TICKER_LS_KEY, JSON.stringify(map)); } catch { /* full */ }
 }
 
-// Common SEC 13F abbreviations → full forms
-const SEC_ABBREVIATIONS = {
-  PETE: 'PETROLEUM', PETRO: 'PETROLEUM',
-  FINL: 'FINANCIAL', FIN: 'FINANCIAL',
-  FMRS: 'FARMERS',
-  MKT: 'MARKET', MKTS: 'MARKETS',
-  HLDGS: 'HOLDINGS', HLDG: 'HOLDING',
-  SVCS: 'SERVICES', SVC: 'SERVICE',
-  TECH: 'TECHNOLOGY', TECHS: 'TECHNOLOGIES',
-  INTL: 'INTERNATIONAL',
-  PHARMCL: 'PHARMACEUTICAL', PHARMA: 'PHARMACEUTICAL',
-  SOLUTN: 'SOLUTION', SOLUTNS: 'SOLUTIONS',
-  MGMT: 'MANAGEMENT',
-  AMER: 'AMERICA',
-  COMMUN: 'COMMUNICATIONS', COMMUNS: 'COMMUNICATIONS',
-  INDS: 'INDUSTRIES', IND: 'INDUSTRIES',
-  MFG: 'MANUFACTURING',
-  PPTY: 'PROPERTY', PPTYS: 'PROPERTIES',
-  RLTY: 'REALTY',
-  RES: 'RESOURCES',
-  ENTMT: 'ENTERTAINMENT',
-  DEV: 'DEVELOPMENT',
-  INVT: 'INVESTMENT', INVTS: 'INVESTMENTS',
-  SYS: 'SYSTEMS',
-  PRODS: 'PRODUCTS', PROD: 'PRODUCT',
-  THERA: 'THERAPEUTICS',
-  BIOSCIS: 'BIOSCIENCES', BIOSCI: 'BIOSCIENCE',
-  ENGR: 'ENERGY',
-  GRP: 'GROUP',
-  MTG: 'MORTGAGE',
-  BANCSHRS: 'BANCSHARES',
-  RESTAUR: 'RESTAURANT',
-  TRAV: 'TRAVELERS',
-  ELEC: 'ELECTRIC',
-  ELECTR: 'ELECTRONIC',
-  NATL: 'NATIONAL',
-  SOUTHN: 'SOUTHERN',
-  NORTHN: 'NORTHERN',
-  WESTN: 'WESTERN',
-  EASTN: 'EASTERN',
-  // Additional abbreviations found via ticker audit
-  LABS: 'LABORATORIES',
-  ASSOC: 'ASSOCIATES',
-  INDL: 'INDUSTRIAL',
-  INSTRS: 'INSTRUMENTS',
-  MNG: 'MINING',
-  BKG: 'BANKING',
-  BK: 'BANK',
-  COS: 'COMPANIES',
-  INS: 'INSURANCE',
-  MTNS: 'MOUNTAINS',
-  FAM: 'FAMILY',
-  SOL: 'SOLUTIONS',
-  ACCEP: 'ACCEPTANCE',
-  RIV: 'RIVER',
-  STR: 'STREET',
-  COMM: 'COMMERCE',
-  AMERN: 'AMERICAN',
-  FDS: 'FUNDS',
-  BANKERS: 'BANKERS',
-  CDA: 'CANADA',
-  WTR: 'WATER',
-};
-const SEC_ABBREV_RE = new RegExp(
-  '\\b(' + Object.keys(SEC_ABBREVIATIONS).join('|') + ')\\b', 'g'
-);
-
-function expandAbbreviations(name) {
-  return name.replace(SEC_ABBREV_RE, m => SEC_ABBREVIATIONS[m] || m);
-}
-
-// Strip common suffixes and normalize for fuzzy matching
-function normalizeIssuer(name) {
-  return expandAbbreviations((name || '').toUpperCase())
-    .replace(/\b(INC|INCORPORATED|CORP|CORPORATION|CO|COMPANY|LTD|LIMITED|LLC|LP|PLC|NV|SA|SE|AG|GROUP|HOLDINGS|ENTERPRISES|INTERNATIONAL|TECHNOLOGIES)\b/g, '')
-    .replace(/\b(CL\s*[A-C]|CLASS\s*[A-C]|SHS|COMMON|ORD|ORDINARY|NEW|THE)\b/g, '')
-    .replace(/[.\-]/g, ' ')
-    .replace(/[,/()&'"]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 // Resolve tickers for an array of holdings using the EDGAR ticker search index.
-// Checks a persistent CUSIP→ticker localStorage map first, then fuzzy matches.
+// Wraps the shared resolveIssuerTickers with browser-side localStorage CUSIP cache.
 export async function resolveTickersForHoldings(holdings) {
   let index;
   try {
@@ -939,81 +880,33 @@ export async function resolveTickersForHoldings(holdings) {
   }
   if (!index || index.length === 0) return holdings;
 
+  // Fast-path: check localStorage CUSIP cache before running fuzzy matching
   const cusipMap = loadCusipTickerMap();
-  let mapDirty = false;
-
-  // Build a normalized name→ticker lookup from the EDGAR index
-  const nameIndex = new Map();
-  for (const entry of index) {
-    const norm = normalizeIssuer(entry.name);
-    if (norm && !nameIndex.has(norm)) {
-      nameIndex.set(norm, entry.ticker);
-    }
-  }
-
-  const resolved = holdings.map(h => {
-    // Already has a ticker
+  const uncached = [];
+  const cachedResults = holdings.map((h, i) => {
     if (h.ticker) return h;
-
-    // Check CUSIP cache
     if (cusipMap[h.cusip]) return { ...h, ticker: cusipMap[h.cusip] };
-
-    // Tier 1.5: static CUSIP prefix overrides for known edge cases
-    const cusip6 = (h.cusip || '').slice(0, 6);
-    if (CUSIP_TICKER_OVERRIDES[cusip6]) {
-      const t = CUSIP_TICKER_OVERRIDES[cusip6];
-      cusipMap[h.cusip] = t;
-      mapDirty = true;
-      return { ...h, ticker: t };
-    }
-
-    // Tier 2: exact normalized name match
-    const normIssuer = normalizeIssuer(h.issuer);
-    let ticker = nameIndex.get(normIssuer) || null;
-
-    // Tier 3: startsWith match (catches "ALPHABET" matching "ALPHABET INC CL A")
-    if (!ticker) {
-      for (const [norm, t] of nameIndex) {
-        if (norm.startsWith(normIssuer) || normIssuer.startsWith(norm)) {
-          ticker = t;
-          break;
-        }
-      }
-    }
-
-    // Tier 4: token-overlap match (catches "BANK AMERICA" vs "BANK OF AMERICA",
-    // "DISNEY WALT" vs "WALT DISNEY", etc.)
-    if (!ticker && normIssuer.length > 2) {
-      const STOP_WORDS = new Set(['OF', 'AND', 'THE', 'IN', 'FOR', 'A', 'AN', 'N', 'DEL']);
-      const issuerTokens = normIssuer.split(' ').filter(t => t.length > 1 && !STOP_WORDS.has(t));
-      if (issuerTokens.length >= 1) {
-        let bestScore = 0;
-        let bestTicker = null;
-        for (const [norm, t] of nameIndex) {
-          const edgarTokens = norm.split(' ').filter(tk => tk.length > 1 && !STOP_WORDS.has(tk));
-          if (edgarTokens.length === 0) continue;
-          // At least one significant token must appear in both sides
-          const overlap = issuerTokens.filter(tk => edgarTokens.includes(tk)).length;
-          if (overlap === 0) continue;
-          const score = overlap / Math.max(issuerTokens.length, edgarTokens.length);
-          if (score > bestScore && score >= 0.5) {
-            bestScore = score;
-            bestTicker = t;
-          }
-        }
-        ticker = bestTicker;
-      }
-    }
-
-    if (ticker) {
-      cusipMap[h.cusip] = ticker;
-      mapDirty = true;
-      return { ...h, ticker };
-    }
-
+    uncached.push(i);
     return h;
   });
 
+  if (uncached.length === 0) return cachedResults;
+
+  // Run shared resolution on uncached holdings
+  const toResolve = uncached.map(i => cachedResults[i]);
+  const resolved = resolveIssuerTickers(toResolve, index);
+
+  // Merge results back and update cache
+  let mapDirty = false;
+  for (let j = 0; j < uncached.length; j++) {
+    const idx = uncached[j];
+    cachedResults[idx] = resolved[j];
+    if (resolved[j].ticker && !cusipMap[resolved[j].cusip]) {
+      cusipMap[resolved[j].cusip] = resolved[j].ticker;
+      mapDirty = true;
+    }
+  }
+
   if (mapDirty) saveCusipTickerMap(cusipMap);
-  return resolved;
+  return cachedResults;
 }
