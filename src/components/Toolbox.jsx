@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Navigate } from 'react-router-dom';
 import { C } from '../theme';
 import { formatCompanyName } from '../engines/formatCompanyName';
 import { useFinancials } from '../hooks/useFinancials';
@@ -159,7 +159,9 @@ export default function Toolbox({ getReport, updateReport, settings }) {
   }, [moat, management]);
 
   if (!report) {
-    return <div style={{ color: C.textSecondary }}>Report not found.</div>;
+    // On hard refresh, reports haven't loaded from D1 yet.
+    // Redirect to /research (list view) instead of showing a dead end.
+    return <Navigate to="/research" replace />;
   }
 
   // Build Moat rows (5 growth metrics)
