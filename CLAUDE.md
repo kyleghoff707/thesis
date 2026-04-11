@@ -42,9 +42,10 @@ Thes1s is a professional AI-powered investment analyst team. The user is the por
 - **AI**: Claude API direct from browser (`VITE_CLAUDE_KEY` in `.env.local`, `dangerouslyAllowBrowser: true`). Pipeline engines use `knowledgeBundle.js` (Vite `?raw` imports) instead of Node.js `readFileSync`.
 - **Financial Data**: SEC EDGAR XBRL (all financials, 13F guru holdings, N-PORT, insiders, compensation — free), Yahoo Finance (prices, stock splits — free), Finviz (analyst estimates — free), GuruFocus (optional $25/mo API), Alpha Vantage (earnings transcripts — free 25 calls/day, 2-key failover)
 - **Charts**: Recharts
-- **Shared Package**: `packages/sec-parsers/` — parsing functions shared between frontend and Worker cron jobs (formatTranscript, parseForm4, parseInfoTable, gurusList)
+- **Shared Package**: `packages/sec-parsers/` — parsing functions shared between frontend and Worker cron jobs (formatTranscript, parseForm4, parseInfoTable, gurusList, resolveIssuerTickers)
 - **Deps**: recharts, @anthropic-ai/sdk, uuid, react-router-dom, turndown, turndown-plugin-gfm, yahoo-finance2, cheerio, idb, zod
 - **CORS**: All external API calls (SEC, Yahoo, Finviz) go through Worker proxy in production. Dev uses Vite proxy middleware. Centralized in `src/engines/apiBase.js`.
+- **Data Pipeline Pattern**: Frontend tries D1/R2 first via `/data/` endpoints, falls back to SEC/AV on failure. All `/data/` and `/proxy/` routes (except `/proxy/claude/`) are public (before auth gate). Pipeline in Node.js skips D1 (`typeof window !== 'undefined'` guard) and goes straight to SEC.
 
 For detailed API integration notes (CORS proxying, EDGAR XBRL details, parsing internals), see `knowledge/engineering/app-architecture.md`.
 
@@ -82,8 +83,23 @@ cd api && wrangler secret put RESEND_API_KEY
 | `0 */3 * * *` | Transcript sync (6 AV calls/run, 48/day) | S&P 500 only (is_sp500=1) |
 | `0 6 * * *` | Insider trades sync (50 tickers/run) | S&P 500 only |
 | `0 3 1 * *` | Guru holdings sync (43 funds) | Hardcoded GURUS list |
-| `0 2 1 * *` | Taxonomy refresh (ticker/name changes) | All companies |
+| `0 2 * * SUN` | Taxonomy refresh (ticker/name changes) | All companies |
 | `0 5 * * SUN` | Stale data cleanup | All tables |
+
+### D1/R2 Data Pipeline (Frontend Integration)
+Frontend engines try Cloudflare-cached data first, fall back to SEC/AV:
+
+| Data | Storage | Frontend Engine | D1/R2 Endpoint | Fallback |
+|------|---------|----------------|----------------|----------|
+| Guru holdings | D1 `guru_holdings` | `gurus.js` → `fetchAllWithChanges()` | `GET /data/gurus/all` | SEC EDGAR 13F |
+| Insider trades | D1 `insider_trades` | `insiders.js` → `fetchInsiderTransactions()` | `GET /data/insiders/:ticker` | SEC EDGAR Form 4 |
+| Transcripts | R2 `thes1s-transcripts` | `transcripts.js` → `fetchTranscript()` | `GET /data/transcripts/:ticker/:year/Q:quarter` | Alpha Vantage |
+| Taxonomy/peers | D1 `company_assignments` | `peers.js` → `fetchPeersByTier()` | `GET /data/taxonomy/peers/:ticker` | Static JSON |
+| Financials, prices, compensation, analyst estimates | None | Direct fetch | N/A | SEC/Yahoo/Finviz |
+
+**Important**: Never extract CIK from SEC accession number prefixes — they're often filing agents (e.g., Edgar Online), not the company or insider. Always use the company CIK from EDGAR submissions or D1.
+
+**Important**: `wrangler deploy` resets dashboard-configured settings. All Worker config (observability, bindings, crons) must be in `api/wrangler.toml`.
 
 ---
 
