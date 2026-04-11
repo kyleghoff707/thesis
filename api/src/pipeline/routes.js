@@ -109,18 +109,34 @@ async function handleRun(request, env, user) {
      VALUES (?, ?, ?, ?, ?, 'queued', datetime('now'), datetime('now'))`
   ).bind(runId, user.id, reportId || null, ticker, stage).run();
 
-  // Launch Durable Object to execute the pipeline
+  // Launch Durable Object to execute the pipeline.
+  // DO's fetch() returns immediately (pipeline runs via ctx.waitUntil).
+  // If the DO can't even load (import error, missing binding), catch and return 500.
   const doId = env.PIPELINE_RUNNER.idFromName(runId);
   const stub = env.PIPELINE_RUNNER.get(doId);
 
-  // Fire and forget — DO runs independently
-  stub.fetch(new Request('https://internal/run', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ runId, ticker, stage, userId: user.id, reportId }),
-  })).catch(err => {
-    console.warn(`Pipeline DO launch error for ${runId}:`, err.message);
-  });
+  try {
+    const doResponse = await stub.fetch(new Request('https://internal/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ runId, ticker, stage, userId: user.id, reportId }),
+    }));
+
+    if (!doResponse.ok) {
+      const errText = await doResponse.text().catch(() => 'Unknown DO error');
+      await env.DB.prepare(
+        `UPDATE pipeline_runs SET status = 'failed', error = ?,
+         updated_at = datetime('now') WHERE id = ?`
+      ).bind(errText, runId).run().catch(() => {});
+      return json({ error: 'Pipeline failed to start', runId }, 500);
+    }
+  } catch (err) {
+    await env.DB.prepare(
+      `UPDATE pipeline_runs SET status = 'failed', error = ?,
+       updated_at = datetime('now') WHERE id = ?`
+    ).bind(`Durable Object error: ${err.message}`, runId).run().catch(() => {});
+    return json({ error: 'Pipeline failed to start', runId }, 500);
+  }
 
   return json({ runId, status: 'queued', ticker, stage }, 202);
 }

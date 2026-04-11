@@ -18,12 +18,12 @@ export class PipelineRunner extends DurableObject {
     if (request.method === 'POST' && url.pathname === '/run') {
       const params = await request.json();
 
-      // Run pipeline inline — DO has no wall-clock limit.
-      // The route handler fire-and-forgets the DO fetch call (.catch()),
-      // so this long-running await doesn't block the HTTP response to the user.
-      await this.runPipeline(params);
+      // Start pipeline in background. DO's ctx.waitUntil() works (unlike regular Workers,
+      // DOs have no wall-clock limit). Return immediately so the route handler gets a
+      // quick 200 and can return 202 to the user.
+      this.ctx.waitUntil(this.runPipeline(params));
 
-      return new Response(JSON.stringify({ status: 'completed' }), {
+      return new Response(JSON.stringify({ status: 'started' }), {
         headers: { 'Content-Type': 'application/json' },
       });
     }

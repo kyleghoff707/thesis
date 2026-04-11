@@ -29,3 +29,27 @@ ctx.waitUntil() verified to die at 30-60s. DO deployed in commit de710d4.
 **Cons:** $0.08/session-hour (negligible vs token costs). Beta API may evolve. Less deterministic than code-based orchestration.
 **Context:** Full feasibility analysis in gstack/research/managed-agents-migration-analysis.md. API docs: platform.claude.com/docs/en/managed-agents/. Pattern 1 (coordinator + custom tools) is production-stable. Multi-agent (callable_agents) is research preview. The three-layer architecture was designed specifically for this swap. When ready, the coordinator's system prompt encodes wave logic in natural language.
 **Depends on:** Pipeline migration shipped. Managed Agents API exits beta or stabilizes (expect ~3-4 months from April 2026).
+
+### TOCTOU race on concurrent pipeline limit
+**What:** Two rapid POST /api/pipeline/run requests can both pass the active-run check and both insert, creating two concurrent pipelines for the same user.
+**Why:** D1 SELECT and INSERT are separate queries with no transactional guarantee. D1 doesn't support SELECT FOR UPDATE.
+**Pros:** Prevents double-spend on concurrent pipeline runs.
+**Cons:** Low probability in practice (invite-only, few users). Fix options (partial unique index, DO-per-user lock) add complexity.
+**Context:** Adversarial review finding #8 (2026-04-11). The staleness timeout mitigates the worst case (stuck runs), but doesn't prevent the race itself.
+**Depends on:** Observing actual concurrent run issues in production.
+
+### DataPacket D1 row size limit
+**What:** pipeline_runs.data_packet_json stores the full DataPacket (~500KB-2MB). D1 may have row size limits.
+**Why:** If the row exceeds D1 limits, the checkpoint write fails silently (try/catch), losing resume data.
+**Pros:** Moving DataPacket to R2 removes the size concern entirely.
+**Cons:** Extra R2 read on resume. Slightly more complex code path.
+**Context:** Adversarial review finding #14 (2026-04-11). Monitor D1 write failures in production logs first.
+**Depends on:** Observing actual D1 write failures.
+
+### Wire server progress into GenerationStatusPanel
+**What:** PitchDeck.jsx's GenerationStatusPanel reads from usePitchDeck (browser-side polling). The server-side pipeline progress comes from useGeneratePipeline in a different JSON shape.
+**Why:** During server-side generation, the existing progress UI won't update correctly. Users see a stale or empty progress view.
+**Pros:** Real-time wave-by-wave progress during server-side generation.
+**Cons:** Need to map server progress shape ({ currentWave, totalWaves, progress }) to the existing UI shape.
+**Context:** The existing GenerationStatusPanel is well-built (timer, phase indicators, section status). Just needs a data adapter. Not a redesign.
+**Depends on:** First successful server-side pipeline run to verify the progress JSON shape.
