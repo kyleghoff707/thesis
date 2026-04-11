@@ -272,6 +272,27 @@ export default function Layout({ children, onNewResearch, onSettingsOpen, user, 
                   <div style={{ fontSize: 12, color: C.textMuted }}>{user.email}</div>
                 </div>
                 <button
+                  onClick={() => { setShowUserMenu(false); navigate('/billing'); }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: C.text,
+                    textAlign: 'left',
+                    fontFamily: 'inherit',
+                    transition: 'background .15s',
+                    borderBottom: `1px solid ${C.border}`,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  Usage & Billing
+                </button>
+                <button
                   onClick={() => { setShowUserMenu(false); onLogout(); }}
                   style={{
                     width: '100%',

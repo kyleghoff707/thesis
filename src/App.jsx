@@ -18,6 +18,7 @@ import OnePager from './components/OnePager';
 import PitchDeck from './components/PitchDeck';
 import FullStory from './components/FullStory';
 import ReportsList from './components/ReportsList';
+import BillingPage from './components/BillingPage';
 import StageNavBar from './components/StageNavBar';
 import ProductTour from './components/ProductTour';
 import { FULL_TOUR_STEPS, SECTION_TOUR_STEPS } from './components/tourSteps';
@@ -186,6 +187,7 @@ function AuthenticatedApp({ user, logout }) {
         <Route path="/reports" element={<ReportsList reports={reports} getReport={getReport} createReport={createReport} />} />
         <Route path="/gurus" element={<Gurus />} />
         <Route path="/gurus/:cik" element={<GuruPortfolio />} />
+        <Route path="/billing" element={<BillingPage user={user} />} />
         <Route path="/validation" element={<Validation />} />
       </Routes>
       {showSettings && (
