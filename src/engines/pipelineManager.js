@@ -92,14 +92,16 @@ function buildDebateContext(receivesContext, debateOutputs, allSections) {
 
 // Main pipeline entry point
 // stage: 'pitchDeck' | 'onePager' | 'fullStory'
-// options: { onWaveComplete, psrFindings, maxSearches }
+// options: { onWaveComplete, psrFindings, maxSearches, _dispatchOverrides }
 // onWaveComplete: async (waveNumber, results, budgetSummary, cacheSummary) => feedback string or null
+// _dispatchOverrides: DI overrides spread into every dispatchAgent call (Worker passes client, configs, etc.)
 // Returns: { sections, budget, cacheStats, errors }
 export async function runPipeline(stage, dataPacket, options = {}) {
   const stageConfig = loadDispatchTable(stage);
   const budget = createBudgetTracker();
   const cacheMonitor = createCacheMonitor();
   const errors = [];
+  const diOverrides = options._dispatchOverrides || {};
 
   // --- Single-call mode (One Pager — no multi-agent orchestration) ---
   if (stageConfig.mode === 'single-call') {
@@ -193,6 +195,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
             sectionAssignment: `Read the single 10-K filing provided in filingContent (${fyLabel}). Extract findings per the annual-reader schema.`,
             maxSearches: 0,
             maxTokens: 32768,
+            ...diOverrides,
           }),
         });
       }
@@ -207,6 +210,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
             sectionAssignment: `Read all ${quarterlyKeys.length} 10-Q filings provided in filingContent. Extract findings per the quarterly-reader schema.`,
             maxSearches: 0,
             maxTokens: 32768,
+            ...diOverrides,
           }),
         });
       }
@@ -224,6 +228,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
             sectionAssignment: `Read all ${transcriptKeys.length} earnings call transcripts provided in transcriptContent. Focus on: management guidance changes, tone shifts, promise tracking, forward-looking statements, and Q&A insights. Cross-reference management promises across quarters. Extract findings per the quarterly-reader schema.`,
             maxSearches: 0,
             maxTokens: 32768,
+            ...diOverrides,
           }),
         });
       }
@@ -318,6 +323,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
             psrFindings: psrFindingsForAgents,
             pmFeedback,
             maxTokens: step.role === 'judge' ? 4096 : 8192,
+            ...diOverrides,
           });
 
           if (result.error) {
@@ -364,6 +370,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
           pmFeedback,
           maxTokens: 16384,
           maxSearches: 0,
+          ...diOverrides,
         });
 
         if (synthesisResult.error) {
@@ -414,6 +421,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
             pmFeedback,
             maxSearches: options.maxSearches,
             ...(isMultiSection ? { schema: MultiSectionSchema, maxTokens: 32768 } : {}),
+            ...diOverrides,
           });
         })
       );
@@ -482,6 +490,7 @@ export async function runPipeline(stage, dataPacket, options = {}) {
       psrFindings: psrFindingsForAgents,
       pmFeedback,
       maxSearches: options.maxSearches,
+      ...diOverrides,
     });
 
     if (result.error) {

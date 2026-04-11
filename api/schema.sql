@@ -191,3 +191,27 @@ CREATE TABLE IF NOT EXISTS billing (
   billing_active INTEGER DEFAULT 0,
   updated_at TEXT DEFAULT (datetime('now'))
 );
+
+-- ═══ Pipeline Runs (server-side generation tracking) ═════
+
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  report_id TEXT,
+  ticker TEXT NOT NULL,
+  stage TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'queued',
+  current_wave INTEGER DEFAULT 0,
+  total_waves INTEGER,
+  progress TEXT,
+  sections_json TEXT,
+  data_packet_json TEXT,
+  error TEXT,
+  budget_json TEXT,
+  started_at TEXT,
+  completed_at TEXT,
+  updated_at TEXT DEFAULT (datetime('now')),
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+CREATE INDEX IF NOT EXISTS idx_pipeline_user_status ON pipeline_runs(user_id, status);

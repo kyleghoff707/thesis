@@ -437,17 +437,35 @@ async function dispatchWithRetry(callFn, agentRole, schema) {
 export async function dispatchAgent(agentRole, dataPacket, options = {}) {
   const startTime = Date.now();
 
+  // DI overrides: Worker passes its own client, configs, prompts, curriculum
+  const diClient = options._client || client;
+  const diConfigs = options._agentConfigs || AGENT_CONFIGS;
+  const diPrompts = options._agentPrompts || AGENT_PROMPTS;
+  const diCurriculum = options._curriculumMap || CURRICULUM_MAP;
+
   // 1. Load agent config, prompt, curriculum (stage overlay appended if present)
-  const config = loadAgentConfig(agentRole);
-  const prompt = loadAgentPrompt(agentRole, options.stage);
+  const config = diConfigs[agentRole];
+  if (!config) throw new Error(`Unknown agent role: "${agentRole}"`);
+
+  // Load prompt with optional stage overlay
+  const promptEntry = diPrompts[agentRole];
+  if (!promptEntry) throw new Error(`No prompt found for agent "${agentRole}"`);
+  let prompt = promptEntry.base;
+  if (options.stage && promptEntry[options.stage]) {
+    prompt = prompt + '\n\n---\n\n' + promptEntry[options.stage];
+  }
 
   // Load universal context files if agent requests them
   let universalContext = '';
   if (config.universalContext && config.universalContextFiles) {
-    universalContext = loadCurriculum(config.universalContextFiles);
+    universalContext = config.universalContextFiles.map(p =>
+      diCurriculum[p] || `[Curriculum file not found: ${p}]`
+    ).join('\n\n---\n\n');
   }
 
-  const curriculum = loadCurriculum(config.curriculum);
+  const curriculum = (config.curriculum || []).map(p =>
+    diCurriculum[p] || `[Curriculum file not found: ${p}]`
+  ).join('\n\n---\n\n');
   const dataSlice = sliceDataPacket(dataPacket, config.dataPacketSlice);
 
   // 2. Resolve model via MODEL_MAP (default to sonnet)
@@ -489,7 +507,11 @@ export async function dispatchAgent(agentRole, dataPacket, options = {}) {
     params.output_config = { format: zodOutputFormat(schema) };
 
     // Always use streaming to avoid 10-minute timeout on long API calls.
-    return client.messages.stream(params).finalMessage();
+    // Worker adapter may override to use non-streaming client.messages.create().
+    if (options._useNonStreaming) {
+      return diClient.messages.create(params);
+    }
+    return diClient.messages.stream(params).finalMessage();
   };
 
   // 7. Dispatch with retry handling
@@ -509,7 +531,7 @@ export async function dispatchAgent(agentRole, dataPacket, options = {}) {
     if (rawText.length > 100) {
       console.warn(`${agentRole}: extractResult failed, attempting repair call (${rawText.length} chars of text content)`);
       try {
-        const repairResponse = await client.messages.stream({
+        const repairParams = {
           model: MODEL_MAP.sonnet,
           max_tokens: 16384,
           tools: [],
@@ -518,7 +540,10 @@ export async function dispatchAgent(agentRole, dataPacket, options = {}) {
             role: 'user',
             content: `Extract the structured JSON from the following agent output. Return ONLY the JSON object matching the schema. Do not add commentary.\n\n${rawText.substring(0, 50000)}`,
           }],
-        }).finalMessage();
+        };
+        const repairResponse = options._useNonStreaming
+          ? await diClient.messages.create(repairParams)
+          : await diClient.messages.stream(repairParams).finalMessage();
 
         const repaired = extractResult(repairResponse, schema);
         if (repaired) {

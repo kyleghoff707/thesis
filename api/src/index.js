@@ -8,8 +8,12 @@ import { handleData } from './routes/data.js';
 import { handleProxy } from './routes/proxy.js';
 import { handleClaude } from './routes/claude.js';
 import { handleStripeWebhook, handleStripe } from './routes/stripe.js';
+import { handlePipeline } from './pipeline/routes.js';
 import { handleCron } from './cron/index.js';
 import { authenticate } from './middleware/auth.js';
+
+// Re-export Durable Object class for Cloudflare binding
+export { PipelineRunner } from './pipeline/PipelineRunner.js';
 
 // CORS headers for the frontend.
 // credentials: 'include' requires a specific origin (not *).
@@ -85,6 +89,8 @@ export default {
         const user = await authenticate(request, env);
         if (!user) {
           response = json({ error: 'Unauthorized' }, 401);
+        } else if (path.startsWith('/api/pipeline/')) {
+          response = await handlePipeline(request, env, path, user);
         } else if (path.startsWith('/user/')) {
           response = await handleUser(request, env, path, user);
         } else if (path.startsWith('/proxy/claude/')) {

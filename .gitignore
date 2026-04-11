@@ -59,3 +59,4 @@ src/engines/__tests__/fixtures/edgar-cache/
 .thes1s/
 .claude/worktrees/
 .council/
+api/src/pipeline/curriculumBundle.js

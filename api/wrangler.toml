@@ -3,6 +3,10 @@ main = "src/index.js"
 compatibility_date = "2025-04-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Build curriculum bundle before deploy (pipeline agent prompts + configs)
+[build]
+command = "node scripts/build-curriculum.mjs"
+
 [vars]
 ENVIRONMENT = "production"
 STRIPE_PRICE_ID = "price_1TKW1QQ4VrAqDXtS0MtUDWBJ"
@@ -19,7 +23,19 @@ database_id = "86cba902-d3d3-4f96-a941-94998bdc060e"
 binding = "TRANSCRIPTS"
 bucket_name = "thes1s-transcripts"
 
+# Durable Objects — PipelineRunner for server-side report generation
+# No wall-clock limit (ctx.waitUntil dies at ~30-60s, DO runs indefinitely)
+[durable_objects]
+bindings = [
+  { name = "PIPELINE_RUNNER", class_name = "PipelineRunner" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["PipelineRunner"]
+
 # Secrets (set via wrangler secret put):
+#   ANTHROPIC_API_KEY — Claude API key for pipeline agent dispatch
 #   RESEND_API_KEY — for invite emails
 #   ADMIN_EMAIL — your email for the initial admin account
 #   SEC_USER_AGENT — e.g. "StockAnalyzer/1.0 kylehoff@example.com"
