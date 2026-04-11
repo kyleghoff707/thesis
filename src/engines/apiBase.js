@@ -52,6 +52,11 @@ export function authUrl(path) {
   return `${API_BASE}/auth${path}`;
 }
 
+// Claude API proxy — dev calls Anthropic directly, prod goes through Worker
+export function claudeBaseUrl() {
+  return IS_DEV ? 'https://api.anthropic.com' : `${API_BASE}/proxy/claude`;
+}
+
 // User data endpoints
 export function userUrl(path) {
   return `${API_BASE}/user${path}`;

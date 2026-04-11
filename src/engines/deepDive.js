@@ -2,6 +2,9 @@
 // Returns { content, error } for all code paths; never throws.
 
 import { CLAUDE_KEY } from './config';
+import { claudeBaseUrl } from './apiBase.js';
+
+const IS_DEV = import.meta.env.DEV;
 
 const MAX_DEPTH = 3;
 
@@ -25,7 +28,7 @@ Provide 2-3 paragraphs of deeper analysis.`;
 
 // Generate a deep dive analysis for a notable claim
 export async function generateDeepDive({ claim, sectionContext, ticker, previousDives = [] }) {
-  if (!CLAUDE_KEY) {
+  if (IS_DEV && !CLAUDE_KEY) {
     return { content: null, error: 'Claude API key not configured.' };
   }
 
@@ -37,13 +40,19 @@ export async function generateDeepDive({ claim, sectionContext, ticker, previous
   const prompt = buildDeepDivePrompt(claim, sectionContext, ticker, previousDives, depth);
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch(`${claudeBaseUrl()}/v1/messages`, {
       method: 'POST',
+      credentials: IS_DEV ? 'omit' : 'include',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': CLAUDE_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
+        ...(IS_DEV ? {
+          'x-api-key': CLAUDE_KEY,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        } : {
+          'x-claude-caller': 'deepDive',
+          'x-claude-ticker': ticker,
+        }),
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',

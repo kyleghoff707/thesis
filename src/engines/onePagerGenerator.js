@@ -10,19 +10,25 @@ import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { OnePagerOutputSchema } from '../schemas/onePagerOutput.js';
 import { onePagerCurriculum, onePagerTemplate, buffettWritingStyleGuide } from './knowledgeBundle.js';
+import { claudeBaseUrl } from './apiBase.js';
 
 // ─── Client initialization ─────────────────────────────────────
 
+const IS_DEV = import.meta.env.DEV;
+
 const client = new Anthropic({
-  apiKey: import.meta.env.VITE_CLAUDE_KEY,
+  apiKey: IS_DEV ? import.meta.env.VITE_CLAUDE_KEY : 'proxy',
+  baseURL: claudeBaseUrl(),
   dangerouslyAllowBrowser: true,
+  ...(IS_DEV ? {} : {
+    defaultHeaders: { 'x-claude-caller': 'onePager' },
+    fetch: (url, init) => fetch(url, { ...init, credentials: 'include' }),
+  }),
 });
 
 // ─── Constants ──────────────────────────────────────────────────
 
-const PRICING = {
-  'claude-sonnet-4-6': { input: 3.0, output: 15.0, cacheRead: 0.30, cacheWrite: 3.75 },
-};
+import { MODEL_PRICING as PRICING, normalizeModel } from '../../packages/pricing/index.js';
 
 const SECTION_META = [
   { key: 'company_info', title: 'Company Information', sectionNumber: 1 },
@@ -129,11 +135,12 @@ export async function generateOnePager(dataPacket) {
     const outputTokens = apiUsage.output_tokens || 0;
     const cacheRead = apiUsage.cache_read_input_tokens || 0;
     const cacheWrite = apiUsage.cache_creation_input_tokens || 0;
+    const p = PRICING[normalizeModel(model)];
     const cost =
-      (inputTokens * 3.0 / 1_000_000) +
-      (outputTokens * 15.0 / 1_000_000) +
-      (cacheRead * 0.30 / 1_000_000) +
-      (cacheWrite * 3.75 / 1_000_000);
+      (inputTokens * p.input / 1_000_000) +
+      (outputTokens * p.output / 1_000_000) +
+      (cacheRead * p.cacheRead / 1_000_000) +
+      (cacheWrite * p.cacheWrite / 1_000_000);
     const usage = { inputTokens, outputTokens, cacheRead, cacheWrite, cost };
 
     // Transform to backward-compatible output format

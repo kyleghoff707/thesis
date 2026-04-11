@@ -8,12 +8,20 @@ import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { ReportSectionSchema } from '../schemas/reportSection.js';
 import { AGENT_CONFIGS, AGENT_PROMPTS, CURRICULUM_MAP } from './knowledgeBundle.js';
+import { claudeBaseUrl } from './apiBase.js';
 
 // ─── Client initialization ─────────────────────────────────────
 
+const IS_DEV = import.meta.env.DEV;
+
 const client = new Anthropic({
-  apiKey: import.meta.env.VITE_CLAUDE_KEY,
+  apiKey: IS_DEV ? import.meta.env.VITE_CLAUDE_KEY : 'proxy',
+  baseURL: claudeBaseUrl(),
   dangerouslyAllowBrowser: true,
+  ...(IS_DEV ? {} : {
+    defaultHeaders: { 'x-claude-caller': 'aiResearch' },
+    fetch: (url, init) => fetch(url, { ...init, credentials: 'include' }),
+  }),
 });
 
 // ─── Constants ──────────────────────────────────────────────────
@@ -23,10 +31,7 @@ const MODEL_MAP = {
   opus: 'claude-opus-4-6',
 };
 
-const PRICING = {
-  'claude-sonnet-4-6':   { input: 3.0, output: 15.0, cacheRead: 0.30, cacheWrite: 3.75, webSearch: 0.01 },
-  'claude-opus-4-6':     { input: 5.0, output: 25.0, cacheRead: 0.50, cacheWrite: 6.25, webSearch: 0.01 },
-};
+import { MODEL_PRICING as PRICING, normalizeModel } from '../../packages/pricing/index.js';
 
 // ─── Context assembly ───────────────────────────────────────────
 
@@ -249,7 +254,7 @@ function enrichCitationsWithURLs(section, webSearchURLs) {
 
 // Build usage summary from API response usage fields
 function buildUsage(apiUsage, model) {
-  const p = PRICING[model] || PRICING['claude-sonnet-4-6'];
+  const p = PRICING[normalizeModel(model)];
   const inputTokens = apiUsage.input_tokens || 0;
   const outputTokens = apiUsage.output_tokens || 0;
   const cacheRead = apiUsage.cache_read_input_tokens || 0;

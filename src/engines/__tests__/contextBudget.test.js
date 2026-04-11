@@ -8,6 +8,7 @@ import {
   createBudgetTracker,
   formatBudgetReport,
   MODEL_PRICING,
+  normalizeModel,
   _testExports,
 } from '../contextBudget.js';
 
@@ -241,14 +242,27 @@ describe('formatBudgetReport (actual usage)', () => {
 describe('exports', () => {
   it('should export MODEL_PRICING with corrected Opus pricing ($5/$25)', () => {
     expect(MODEL_PRICING).toBeDefined();
-    expect(MODEL_PRICING['claude-sonnet-4-20250514']).toBeDefined();
+    expect(MODEL_PRICING['claude-sonnet-4-6']).toBeDefined();
     expect(MODEL_PRICING['claude-opus-4-6']).toBeDefined();
-    expect(MODEL_PRICING['claude-sonnet-4-20250514'].input).toBe(3.0);
+    expect(MODEL_PRICING['claude-sonnet-4-6'].input).toBe(3.0);
     // Corrected Opus pricing: $5/$25 (not $15/$75)
     expect(MODEL_PRICING['claude-opus-4-6'].input).toBe(5.0);
     expect(MODEL_PRICING['claude-opus-4-6'].output).toBe(25.0);
     expect(MODEL_PRICING['claude-opus-4-6'].cacheRead).toBe(0.50);
     expect(MODEL_PRICING['claude-opus-4-6'].cacheWrite).toBe(6.25);
+  });
+
+  it('should normalize specific-version model IDs to base models', () => {
+    expect(normalizeModel('claude-sonnet-4-6')).toBe('claude-sonnet-4-6');
+    expect(normalizeModel('claude-sonnet-4-20250514')).toBe('claude-sonnet-4-6');
+    expect(normalizeModel('claude-opus-4-6')).toBe('claude-opus-4-6');
+    expect(normalizeModel('unknown-model')).toBe('claude-sonnet-4-6');
+    expect(normalizeModel(null)).toBe('claude-sonnet-4-6');
+  });
+
+  it('computeCost should handle versioned model IDs via normalizeModel', () => {
+    const result = computeCost(1000, 500, 'claude-sonnet-4-20250514');
+    expect(result.total).toBeGreaterThan(0);
   });
 
   it('should export estimateTokens and computeCost for backward compatibility', () => {

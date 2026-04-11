@@ -12,7 +12,10 @@
 // (edgarFinancials.js) extracts using the standard extractAnnualFact functions.
 
 import { CLAUDE_KEY } from './config';
+import { claudeBaseUrl } from './apiBase.js';
 import preClassifiedData from '../data/sp500-tag-classifications.json';
+
+const IS_DEV = import.meta.env.DEV;
 
 const classifications = preClassifiedData?.classifications || {};
 
@@ -182,13 +185,18 @@ export async function classifyTagsViaAI(orphanTagNames, allFieldDefs) {
     const batch = orphanTagNames.slice(i, i + AI_BATCH_SIZE);
 
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch(`${claudeBaseUrl()}/v1/messages`, {
         method: 'POST',
+        credentials: IS_DEV ? 'omit' : 'include',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': CLAUDE_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
+          ...(IS_DEV ? {
+            'x-api-key': CLAUDE_KEY,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true',
+          } : {
+            'x-claude-caller': 'companyAdapter',
+          }),
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
