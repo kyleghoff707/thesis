@@ -246,6 +246,10 @@ export async function handleAuth(request, env, path) {
     await env.DB.prepare('INSERT INTO user_settings (user_id) VALUES (?)')
       .bind(userId).run();
 
+    // Create billing row (inactive until Stripe setup)
+    await env.DB.prepare('INSERT INTO billing (user_id, monthly_limit_cents, billing_active) VALUES (?, 5000, 0)')
+      .bind(userId).run();
+
     return json(
       { user: { id: userId, email: invite.email, name: name || null, role: 'user' } },
       201,
@@ -269,6 +273,10 @@ export async function handleAuth(request, env, path) {
     // Create default watchlist + settings
     await env.DB.prepare('INSERT INTO watchlists (id, user_id) VALUES (?, ?)').bind(crypto.randomUUID(), userId).run();
     await env.DB.prepare('INSERT INTO user_settings (user_id) VALUES (?)').bind(userId).run();
+
+    // Create billing row (admin: active, no limit)
+    await env.DB.prepare('INSERT INTO billing (user_id, monthly_limit_cents, billing_active) VALUES (?, 999999, 1)')
+      .bind(userId).run();
 
     // Create session
     const token = crypto.randomUUID();

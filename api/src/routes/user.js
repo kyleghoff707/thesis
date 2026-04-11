@@ -136,6 +136,71 @@ export async function handleUser(request, env, path, user) {
     return json({ ok: true });
   }
 
+  // ─── Usage & Billing ─────────────────────────────────────────
+
+  // GET /user/billing — current month spend, limit, status
+  if (path === '/user/billing' && method === 'GET') {
+    const db = env.DB;
+    const isAdmin = user.role === 'admin';
+    const showAll = isAdmin && new URL(request.url).searchParams.get('all') === 'true';
+
+    const monthStart = new Date();
+    monthStart.setUTCDate(1);
+    monthStart.setUTCHours(0, 0, 0, 0);
+    const monthStartStr = monthStart.toISOString().replace('T', ' ').slice(0, 19);
+
+    if (showAll) {
+      // Admin: all users
+      const { results: users } = await db.prepare(`
+        SELECT u.id, u.email, u.name, u.role, b.monthly_limit_cents, b.billing_active,
+          b.stripe_customer_id,
+          COALESCE((SELECT SUM(cost_millicents) FROM api_usage WHERE user_id = u.id AND created_at >= ? AND status = 'completed'), 0) as spend_millicents
+        FROM users u LEFT JOIN billing b ON u.id = b.user_id
+        ORDER BY u.created_at
+      `).bind(monthStartStr).all();
+      return json({ users });
+    }
+
+    // Single user
+    const billing = await db.prepare(
+      'SELECT monthly_limit_cents, billing_active, stripe_customer_id FROM billing WHERE user_id = ?'
+    ).bind(user.id).first();
+
+    const usage = await db.prepare(`
+      SELECT COALESCE(SUM(cost_millicents), 0) as spend_millicents
+      FROM api_usage WHERE user_id = ? AND created_at >= ? AND status = 'completed'
+    `).bind(user.id, monthStartStr).first();
+
+    return json({
+      spendMillicents: usage?.spend_millicents || 0,
+      limitCents: billing?.monthly_limit_cents || 5000,
+      billingActive: billing?.billing_active || 0,
+      hasStripe: !!billing?.stripe_customer_id,
+    });
+  }
+
+  // GET /user/usage — recent API usage history
+  if (path === '/user/usage' && method === 'GET') {
+    const { results } = await env.DB.prepare(`
+      SELECT model, input_tokens, output_tokens, cost_millicents, caller, ticker, created_at
+      FROM api_usage WHERE user_id = ? AND status = 'completed'
+      ORDER BY created_at DESC LIMIT 20
+    `).bind(user.id).all();
+    return json({ usage: results });
+  }
+
+  // PUT /user/billing/limit — admin only, adjust user's spending limit
+  const limitMatch = path.match(/^\/user\/billing\/limit$/);
+  if (limitMatch && method === 'PUT') {
+    if (user.role !== 'admin') return json({ error: 'Admin access required' }, 403);
+    const { userId, limitCents } = await request.json();
+    if (!userId || limitCents === undefined) return json({ error: 'userId and limitCents required' }, 400);
+    await env.DB.prepare(
+      'UPDATE billing SET monthly_limit_cents = ?, updated_at = datetime(\'now\') WHERE user_id = ?'
+    ).bind(limitCents, userId).run();
+    return json({ ok: true });
+  }
+
   // ─── Settings ────────────────────────────────────────────────
 
   // GET /user/settings
