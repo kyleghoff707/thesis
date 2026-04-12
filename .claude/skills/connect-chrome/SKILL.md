@@ -1,1 +1,0 @@
-/Users/kylehoff/Desktop/stock-analyzer/.claude/skills/gstack/connect-chrome/SKILL.md

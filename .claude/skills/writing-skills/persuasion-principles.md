@@ -1,1 +1,0 @@
-/Users/kylehoff/.claude/skills/writing-skills/persuasion-principles.md

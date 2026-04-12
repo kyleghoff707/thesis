@@ -1,1 +1,0 @@
-/Users/kylehoff/Desktop/stock-analyzer/.claude/skills/gstack/plan-design-review/SKILL.md
