@@ -48,7 +48,7 @@ export async function handleUser(request, env, path, user) {
   // POST /user/reports — create new report
   if (path === '/user/reports' && method === 'POST') {
     const body = await request.json();
-    const id = crypto.randomUUID();
+    const id = body.id || crypto.randomUUID();
     await env.DB.prepare(
       'INSERT INTO reports (id, user_id, ticker, company_name) VALUES (?, ?, ?, ?)'
     ).bind(id, user.id, body.ticker, body.companyName || null).run();

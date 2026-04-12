@@ -59,7 +59,12 @@ export function useResearch() {
                 return full?.report || r;
               })
             );
-            setReports(fullReports);
+            // Merge: preserve any optimistically-created reports not yet on server
+            setReports(prev => {
+              const serverIds = new Set(fullReports.map(r => r.id));
+              const optimistic = prev.filter(r => !serverIds.has(r.id));
+              return [...optimistic, ...fullReports];
+            });
             setLoading(false);
             return;
           }
@@ -124,10 +129,7 @@ export function useResearch() {
         console.warn('Failed to save report to IndexedDB:', err.message)
       );
     } else {
-      apiPost('/reports', { ticker: newReport.ticker, companyName: newReport.companyName })
-        .then(data => {
-          if (data?.id) newReport.id = data.id;
-        })
+      apiPost('/reports', { id: newReport.id, ticker: newReport.ticker, companyName: newReport.companyName })
         .catch(err => console.warn('Failed to save report to server:', err.message));
     }
     return newReport;
