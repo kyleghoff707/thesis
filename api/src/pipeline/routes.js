@@ -13,10 +13,10 @@ function json(data, status = 200) {
   });
 }
 
-export async function handlePipeline(request, env, path, user) {
+export async function handlePipeline(request, env, path, user, ctx) {
   // POST /api/pipeline/run
   if (request.method === 'POST' && path === '/api/pipeline/run') {
-    return handleRun(request, env, user);
+    return handleRun(request, env, user, ctx);
   }
 
   // GET /api/pipeline/status/:runId
@@ -28,7 +28,7 @@ export async function handlePipeline(request, env, path, user) {
   return json({ error: 'Not found' }, 404);
 }
 
-async function handleRun(request, env, user) {
+async function handleRun(request, env, user, ctx) {
   let body;
   try {
     body = await request.json();
@@ -157,7 +157,10 @@ async function handleRun(request, env, user) {
   const doId = env.SESSION_EVENT_LOOP.idFromName(runId);
   const stub = env.SESSION_EVENT_LOOP.get(doId);
 
-  stub.fetch(new Request('https://internal/run', {
+  // ctx.waitUntil keeps the Worker alive long enough for the DO request to dispatch.
+  // Without it, the Worker isolate dies after sending the 202 response and the
+  // stub.fetch() request is silently dropped before reaching the DO.
+  const doPromise = stub.fetch(new Request('https://internal/run', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ sessionId, runId, ticker, stage, userId: user.id, reportId }),
@@ -168,6 +171,7 @@ async function handleRun(request, env, user) {
        updated_at = datetime('now') WHERE id = ?`
     ).bind(`Event loop failed: ${err.message}`, runId).run().catch(() => {});
   });
+  ctx.waitUntil(doPromise);
 
   return json({ runId, status: 'queued', ticker, stage }, 202);
 }

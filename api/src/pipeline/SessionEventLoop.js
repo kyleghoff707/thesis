@@ -24,12 +24,29 @@ export class SessionEventLoop extends DurableObject {
       return new Response('Not found', { status: 404 });
     }
 
-    const params = await request.json();
+    let params;
+    try {
+      params = await request.json();
+      console.log(`SessionEventLoop: starting for run ${params.runId}, session ${params.sessionId}`);
+    } catch (err) {
+      console.warn('SessionEventLoop: failed to parse request body:', err.message);
+      return new Response(JSON.stringify({ error: 'Invalid request' }), { status: 400 });
+    }
 
     // AWAIT the event loop. This keeps the DO alive for the full 5-15 min run.
     // The Worker route fire-and-forgets this stub.fetch() call so the HTTP
     // response to the user returns immediately (202).
-    await this.runEventLoop(params);
+    try {
+      await this.runEventLoop(params);
+    } catch (err) {
+      // Catch-all: if runEventLoop throws outside its own try/catch
+      console.warn(`SessionEventLoop: unhandled error in runEventLoop: ${err.message}`);
+      try {
+        await this.env.DB.prepare(
+          `UPDATE pipeline_runs SET status = 'failed', error = ?, updated_at = datetime('now') WHERE id = ?`
+        ).bind(`DO unhandled: ${err.message}`, params.runId).run();
+      } catch {}
+    }
 
     return new Response(JSON.stringify({ status: 'completed' }), {
       headers: { 'Content-Type': 'application/json' },
@@ -43,8 +60,12 @@ export class SessionEventLoop extends DurableObject {
     const allSections = [];
 
     try {
+      // Diagnostic logging
+      console.log(`Pipeline ${runId}: entering runEventLoop, session ${sessionId}`);
+
       // Update status to running
       await handleSaveProgress({ runId, wave: 0, status: 'assembling' }, this.env);
+      console.log(`Pipeline ${runId}: status updated to assembling`);
 
       // Poll session events (more reliable than SSE for Cloudflare Workers)
       await this.pollEventLoop(sessionId, runId, ticker, stage, userId, reportId, {

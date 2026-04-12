@@ -90,7 +90,7 @@ export default {
         if (!user) {
           response = json({ error: 'Unauthorized' }, 401);
         } else if (path.startsWith('/api/pipeline/')) {
-          response = await handlePipeline(request, env, path, user);
+          response = await handlePipeline(request, env, path, user, ctx);
         } else if (path.startsWith('/user/')) {
           response = await handleUser(request, env, path, user);
         } else if (path.startsWith('/proxy/claude/')) {

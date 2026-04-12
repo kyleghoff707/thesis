@@ -59,32 +59,25 @@ function formatCost(sections) {
 }
 
 export default function GenerationProgressPanel({ stage, ticker, generating, progress, completedSections, error, generationError }) {
-  // Elapsed timer
+  // Elapsed timer — uses server startedAt timestamp so it survives tab switches
   const [elapsed, setElapsed] = useState(0);
   const timerRef = useRef(null);
-  const startRef = useRef(null);
 
   useEffect(() => {
-    if (generating && !startRef.current) {
-      startRef.current = Date.now();
-      timerRef.current = setInterval(() => {
-        setElapsed(Math.floor((Date.now() - startRef.current) / 1000));
-      }, 1000);
-    }
-    if (!generating && timerRef.current) {
+    if (generating) {
+      // Use server timestamp if available, otherwise fall back to now
+      const serverStart = progress?.startedAt ? new Date(progress.startedAt).getTime() : null;
+      const startTime = serverStart || Date.now();
+
+      const tick = () => setElapsed(Math.floor((Date.now() - startTime) / 1000));
+      tick(); // immediate update
+      timerRef.current = setInterval(tick, 1000);
+    } else if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [generating]);
-
-  // Reset on new generation
-  useEffect(() => {
-    if (generating) {
-      startRef.current = Date.now();
-      setElapsed(0);
-    }
-  }, [generating, ticker]);
+  }, [generating, progress?.startedAt]);
 
   if (!generating && !progress) return null;
 
