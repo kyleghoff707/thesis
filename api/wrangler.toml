@@ -3,14 +3,10 @@ main = "src/index.js"
 compatibility_date = "2025-04-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Build curriculum bundle before deploy (pipeline agent prompts + configs)
-[build]
-command = "node scripts/build-curriculum.mjs"
-
 # esbuild aliases — replace browser-only modules with Worker-compatible shims
 # Fixes the import chain: edgarFinancials → cache → cacheStore → idb (browser-only)
 [alias]
-"idb" = "./src/pipeline/shims/idb.js"
+"idb" = "./src/shims/idb.js"
 
 # esbuild defines — replace Vite-only import.meta.env expressions at compile time
 # Fixes: apiBase.js, config.js which read import.meta.env at module level
@@ -38,14 +34,7 @@ database_id = "86cba902-d3d3-4f96-a941-94998bdc060e"
 binding = "TRANSCRIPTS"
 bucket_name = "thes1s-transcripts"
 
-# Durable Objects — SessionEventLoop for Managed Agent event processing
-# Lightweight keep-alive: streams session events, dispatches custom tool calls.
-# All orchestration logic lives in the coordinator's system prompt, not here.
-[durable_objects]
-bindings = [
-  { name = "SESSION_EVENT_LOOP", class_name = "SessionEventLoop" }
-]
-
+# Durable Objects — migration history (all classes deleted, kept for Cloudflare migration chain)
 [[migrations]]
 tag = "v1"
 new_classes = ["PipelineRunner"]
@@ -55,8 +44,12 @@ tag = "v2"
 deleted_classes = ["PipelineRunner"]
 new_classes = ["SessionEventLoop"]
 
+[[migrations]]
+tag = "v3"
+deleted_classes = ["SessionEventLoop"]
+
 # Secrets (set via wrangler secret put):
-#   ANTHROPIC_API_KEY — Claude API key for pipeline agent dispatch
+#   ANTHROPIC_API_KEY — Claude API key (pipeline rebuild pending)
 #   RESEND_API_KEY — for invite emails
 #   ADMIN_EMAIL — your email for the initial admin account
 #   SEC_USER_AGENT — e.g. "StockAnalyzer/1.0 kylehoff@example.com"

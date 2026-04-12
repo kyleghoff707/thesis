@@ -8,12 +8,8 @@ import { handleData } from './routes/data.js';
 import { handleProxy } from './routes/proxy.js';
 import { handleClaude } from './routes/claude.js';
 import { handleStripeWebhook, handleStripe } from './routes/stripe.js';
-import { handlePipeline } from './pipeline/routes.js';
 import { handleCron } from './cron/index.js';
 import { authenticate } from './middleware/auth.js';
-
-// Re-export Durable Object class for Cloudflare binding
-export { SessionEventLoop } from './pipeline/SessionEventLoop.js';
 
 // CORS headers for the frontend.
 // credentials: 'include' requires a specific origin (not *).
@@ -68,6 +64,36 @@ export default {
       if (path === '/health') {
         response = json({ status: 'ok', ts: new Date().toISOString() });
       }
+      // Diagnostic: test one AV transcript fetch + R2 store (no auth)
+      else if (path === '/health/test-transcript') {
+        const ticker = url.searchParams.get('ticker') || 'AAPL';
+        const quarter = url.searchParams.get('quarter') || '2025Q4';
+        const diag = { ticker, quarter, steps: {} };
+
+        const avKeys = [env.ALPHA_VANTAGE_KEY, env.ALPHA_VANTAGE_KEY_2].filter(Boolean);
+        diag.steps.keys = { count: avKeys.length };
+
+        const avUrl = `https://www.alphavantage.co/query?function=EARNINGS_CALL_TRANSCRIPT&symbol=${ticker}&quarter=${quarter}&apikey=${avKeys[0] || 'NONE'}`;
+        const res2 = await fetch(avUrl);
+        const data = await res2.json();
+        diag.steps.avResponse = {
+          status: res2.status,
+          keys: Object.keys(data),
+          hasNote: !!data.Note,
+          hasTranscript: !!data.transcript,
+          transcriptLength: Array.isArray(data.transcript) ? data.transcript.length : null,
+          notePreview: data.Note?.slice(0, 200),
+        };
+
+        try {
+          const listed = await env.TRANSCRIPTS.list({ prefix: `transcripts/${ticker}/`, limit: 10 });
+          diag.steps.r2List = { ok: true, count: listed.objects.length };
+        } catch (e) {
+          diag.steps.r2List = { ok: false, error: e.message };
+        }
+
+        response = json(diag);
+      }
       // Auth routes (no auth required)
       else if (path.startsWith('/auth/')) {
         response = await handleAuth(request, env, path);
@@ -90,7 +116,7 @@ export default {
         if (!user) {
           response = json({ error: 'Unauthorized' }, 401);
         } else if (path.startsWith('/api/pipeline/')) {
-          response = await handlePipeline(request, env, path, user, ctx);
+          response = json({ error: 'Pipeline is being rebuilt. Use local CLI for now.' }, 503);
         } else if (path.startsWith('/user/')) {
           response = await handleUser(request, env, path, user);
         } else if (path.startsWith('/proxy/claude/')) {

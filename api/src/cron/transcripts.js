@@ -67,11 +67,15 @@ export async function syncTranscripts(env) {
   const expectedQuarters = getExpectedQuarters(QUARTERS_TO_KEEP);
   let callsMade = 0;
 
+  let tickersVisited = 0;
+  let storedCount = 0;
+
   console.log(`Transcript sync: ${tickers.length} tickers, offset ${offset}, dailyCalls ${dailyCalls}, expected quarters: ${expectedQuarters.map(q => q.year + 'Q' + q.quarter).join(',')}`);
   console.log(`Transcript sync: AV keys configured: key1=${!!env.ALPHA_VANTAGE_KEY}, key2=${!!env.ALPHA_VANTAGE_KEY_2}`);
 
   // 4. Process tickers starting from offset
   for (let i = 0; i < tickers.length && callsMade < CALLS_PER_RUN; i++) {
+    tickersVisited++;
     const idx = (offset + i) % tickers.length;
     const ticker = tickers[idx];
 
@@ -103,27 +107,29 @@ export async function syncTranscripts(env) {
 
         // Check for rate limit response — try the other key before giving up
         if (data.Note || data.Information) {
+          callsMade++; // Count the actual call that was rate-limited
           if (avKeys.length > 1) {
-            const altKey = avKeys[(callsMade + 1) % avKeys.length];
+            const altKey = avKeys[(callsMade) % avKeys.length];
             const altUrl = `https://www.alphavantage.co/query?function=EARNINGS_CALL_TRANSCRIPT&symbol=${ticker}&quarter=${quarterStr}&apikey=${altKey}`;
             const altRes = await fetch(altUrl);
             const altData = await altRes.json();
+            callsMade++; // Count the retry call
             if (!altData.Note && !altData.Information && altData.transcript?.length) {
               const text = formatAlphaVantageTranscript(altData);
               const stored = { text, meta: { source: 'alpha_vantage', quarter: quarterStr, year, quarterNum: quarter, fetchedAt: new Date().toISOString() } };
               await env.TRANSCRIPTS.put(r2Key, JSON.stringify(stored));
               console.log(`Stored transcript (alt key): ${ticker} ${quarterStr}`);
-              callsMade += 2; // Both keys used
+              storedCount++;
               continue;
             }
           }
-          console.warn(`Transcript sync: AV rate limit on all keys after ${callsMade} calls. Stopping run.`);
-          callsMade = CALLS_PER_RUN; // Force outer loop to exit too
-          break;
+          console.warn(`Transcript sync: AV rate limit on all keys after ${callsMade} actual calls. Stopping run.`);
+          break; // Exit inner loop — outer loop check (callsMade < CALLS_PER_RUN) handles the rest
         }
 
         if (data['Error Message'] || !data.transcript || data.transcript.length === 0) {
           // No transcript available for this quarter (not an error, just not filed yet)
+          console.log(`Transcript sync: no transcript for ${ticker} ${quarterStr} (${data['Error Message'] ? 'error' : 'not available'})`);
           callsMade++;
           continue;
         }
@@ -143,6 +149,7 @@ export async function syncTranscripts(env) {
 
         await env.TRANSCRIPTS.put(r2Key, JSON.stringify(stored));
         console.log(`Stored transcript: ${ticker} ${quarterStr}`);
+        storedCount++;
         callsMade++;
       } catch (err) {
         console.warn(`Transcript fetch failed for ${ticker} ${quarterStr}: ${err.message}`);
@@ -166,15 +173,15 @@ export async function syncTranscripts(env) {
     }
   }
 
-  // 6. Update sync_status
-  const newOffset = (offset + CALLS_PER_RUN) % tickers.length;
+  // 6. Update sync_status — advance offset by tickers actually visited (not a fixed number)
+  const newOffset = (offset + Math.max(tickersVisited, 1)) % tickers.length;
   const newDailyCalls = dailyCalls + callsMade;
 
   await env.DB.prepare(
     'INSERT OR REPLACE INTO sync_status (job_name, last_run, last_offset, status, items_processed, error) VALUES (?, datetime(\'now\'), ?, \'complete\', ?, NULL)'
   ).bind('transcripts', newOffset, newDailyCalls).run();
 
-  console.log(`Transcript sync: ${callsMade} calls made, offset ${offset}→${newOffset}, daily total ${newDailyCalls}/${MAX_DAILY_CALLS}`);
+  console.log(`Transcript sync: ${callsMade} API calls, ${storedCount} stored, ${tickersVisited} tickers visited, offset ${offset}→${newOffset}, daily total ${newDailyCalls}/${MAX_DAILY_CALLS}`);
 }
 
 function parseR2Key(key) {
