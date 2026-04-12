@@ -36,7 +36,15 @@ export async function cleanupStale(env) {
   ).run();
   totalDeleted += inviteResult.meta?.changes || 0;
 
-  // 5. Old R2 transcripts (older than 2 years)
+  // 5. Orphan reports (no stages, older than 24h — gives active pipelines time to finish)
+  const orphanResult = await env.DB.prepare(
+    `DELETE FROM reports WHERE created_at < datetime('now', '-1 day')
+     AND NOT EXISTS (SELECT 1 FROM report_stages rs WHERE rs.report_id = reports.id)`
+  ).run();
+  const orphanDeleted = orphanResult.meta?.changes || 0;
+  totalDeleted += orphanDeleted;
+
+  // 6. Old R2 transcripts (older than 2 years)
   const cutoffYear = new Date().getFullYear() - 2;
   const listed = await env.TRANSCRIPTS.list({ limit: 1000 });
   let r2Deleted = 0;
@@ -53,5 +61,5 @@ export async function cleanupStale(env) {
     'INSERT OR REPLACE INTO sync_status (job_name, last_run, last_offset, status, items_processed, error) VALUES (?, datetime(\'now\'), 0, \'complete\', ?, NULL)'
   ).bind('cleanup', totalDeleted).run();
 
-  console.log(`Cleanup: ${guruDeleted} guru rows, ${insiderDeleted} insider rows, ${r2Deleted} R2 transcripts, ${totalDeleted} total deleted`);
+  console.log(`Cleanup: ${guruDeleted} guru rows, ${insiderDeleted} insider rows, ${orphanDeleted} orphan reports, ${r2Deleted} R2 transcripts, ${totalDeleted} total deleted`);
 }

@@ -104,6 +104,13 @@ async function handleRun(request, env, user) {
     }
   }
 
+  // Ensure report exists in D1 (created lazily — search only adds to React state)
+  if (reportId) {
+    await env.DB.prepare(
+      `INSERT OR IGNORE INTO reports (id, user_id, ticker) VALUES (?, ?, ?)`
+    ).bind(reportId, user.id, ticker).run();
+  }
+
   // Create pipeline run record
   const runId = crypto.randomUUID();
   await env.DB.prepare(

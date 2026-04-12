@@ -129,8 +129,8 @@ export function useResearch() {
         console.warn('Failed to save report to IndexedDB:', err.message)
       );
     } else {
-      apiPost('/reports', { id: newReport.id, ticker: newReport.ticker, companyName: newReport.companyName })
-        .catch(err => console.warn('Failed to save report to server:', err.message));
+      // Production: don't persist to D1 on search — report stays in-memory only.
+      // D1 row is created when pipeline generation starts (handleRun ensures it exists).
     }
     return newReport;
   }, []);
