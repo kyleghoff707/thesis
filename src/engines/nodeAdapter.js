@@ -265,7 +265,7 @@ if (IS_NODE) {
   // 3. Global localStorage shim (Map-backed)
   // cache.js and several engines use localStorage directly for
   // small-key caching. This prevents ReferenceError in Node.js.
-  if (typeof globalThis.localStorage === 'undefined') {
+  if (typeof globalThis.localStorage === 'undefined' || typeof globalThis.localStorage.getItem !== 'function') {
     const _store = new Map();
     globalThis.localStorage = {
       getItem(k) { return _store.get(k) ?? null; },

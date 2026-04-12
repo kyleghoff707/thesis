@@ -853,7 +853,7 @@ const CUSIP_TICKER_LS_KEY = 'sa-cusip-ticker-map:v2';
 
 // One-time migration: clear old cache key so stale/wrong mappings don't persist
 const CUSIP_MIGRATION_KEY = 'sa-cusip-ticker-migrated-v2';
-if (typeof localStorage !== 'undefined' && !localStorage.getItem(CUSIP_MIGRATION_KEY)) {
+if (typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function' && !localStorage.getItem(CUSIP_MIGRATION_KEY)) {
   try { localStorage.removeItem('sa-cusip-ticker-map'); } catch { /* ok */ }
   try { localStorage.setItem(CUSIP_MIGRATION_KEY, '1'); } catch { /* ok */ }
 }

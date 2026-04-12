@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 // Tests for dataExport.js — DataPacket assembly and caveats
 // Uses mock data to avoid external API calls
 

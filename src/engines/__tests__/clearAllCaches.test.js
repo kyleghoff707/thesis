@@ -1,6 +1,19 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Provide a full Map-backed localStorage if jsdom's is incomplete
+const _store = new Map();
+if (typeof globalThis.localStorage === 'undefined' || typeof globalThis.localStorage.setItem !== 'function') {
+  globalThis.localStorage = {
+    getItem(k) { return _store.get(k) ?? null; },
+    setItem(k, v) { _store.set(k, String(v)); },
+    removeItem(k) { _store.delete(k); },
+    key(i) { return [..._store.keys()][i] ?? null; },
+    get length() { return _store.size; },
+    clear() { _store.clear(); },
+  };
+}
+
 // Mock cacheStore before importing cache
 vi.mock('../cacheStore.js', () => ({
   idbGet: vi.fn(() => Promise.resolve(null)),
@@ -16,7 +29,7 @@ import { idbClearAllCaches } from '../cacheStore.js';
 
 beforeEach(() => {
   vi.clearAllMocks();
-  localStorage.clear();
+  _store.clear();
 });
 
 describe('clearAllCaches', () => {

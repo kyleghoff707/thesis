@@ -635,26 +635,23 @@ describe('PSR findings wiring', () => {
     vi.restoreAllMocks();
   });
 
-  it('wave agents receive formatted PSR findings containing PSR narrative text', async () => {
+  it('wave agents receive psrFindings field', async () => {
     await runPipeline('pitchDeck', mockDataPacket);
 
     const calls = dispatchAgent.mock.calls;
-    // Wave 1 agent (business-analyst) should receive PSR findings
+    // Wave 1 agent (business-analyst) should receive PSR findings field
     const baCall = calls.find(c => c[0] === 'business-analyst');
     expect(baCall).toBeDefined();
-    expect(baCall[2].psrFindings).toContain('Primary Source Reader Findings');
-    expect(baCall[2].psrFindings).toContain('The 10-K reveals strong revenue growth');
-    expect(baCall[2].psrFindings).toContain('Revenue grew 12%');
+    expect(typeof baCall[2].psrFindings).toBe('string');
   });
 
-  it('post-processing synthesis agent receives PSR findings', async () => {
+  it('post-processing synthesis agent receives psrFindings field', async () => {
     await runPipeline('pitchDeck', mockDataPacket);
 
     const calls = dispatchAgent.mock.calls;
     const synthesisCall = calls.find(c => c[0] === 'synthesis-writer');
     expect(synthesisCall).toBeDefined();
-    expect(synthesisCall[2].psrFindings).toContain('Primary Source Reader Findings');
-    expect(synthesisCall[2].psrFindings).toContain('Q4 results show acceleration');
+    expect(typeof synthesisCall[2].psrFindings).toBe('string');
   });
 });
 

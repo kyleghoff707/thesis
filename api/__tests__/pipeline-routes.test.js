@@ -1,4 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Mock coordinator to avoid real Anthropic API calls
+vi.mock('../src/pipeline/coordinator.js', () => ({
+  ensureCoordinatorAgent: vi.fn().mockResolvedValue('mock-agent-id'),
+  createSession: vi.fn().mockResolvedValue({ id: 'mock-session-id' }),
+  sendSessionEvent: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { handlePipeline } from '../src/pipeline/routes.js';
 
 // Mock D1 database
@@ -20,7 +28,7 @@ function createMockDB(overrides = {}) {
 function createMockEnv(dbOverrides = {}) {
   return {
     DB: createMockDB(dbOverrides),
-    PIPELINE_RUNNER: {
+    SESSION_EVENT_LOOP: {
       idFromName: vi.fn().mockReturnValue('mock-do-id'),
       get: vi.fn().mockReturnValue({
         fetch: vi.fn().mockResolvedValue(new Response('ok')),
@@ -108,8 +116,8 @@ describe('Pipeline Routes', () => {
       const env = createMockEnv();
       const req = mockRequest('POST', '/api/pipeline/run', { ticker: 'AAPL', stage: 'pitchDeck' });
       await handlePipeline(req, env, '/api/pipeline/run', mockUser);
-      expect(env.PIPELINE_RUNNER.idFromName).toHaveBeenCalled();
-      expect(env.PIPELINE_RUNNER.get).toHaveBeenCalled();
+      expect(env.SESSION_EVENT_LOOP.idFromName).toHaveBeenCalled();
+      expect(env.SESSION_EVENT_LOOP.get).toHaveBeenCalled();
     });
   });
 

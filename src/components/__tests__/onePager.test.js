@@ -39,8 +39,8 @@ describe('OnePager: stateToLabel', () => {
     expect(stateToLabel('DATA_ASSEMBLY')).toBe('Assembling data...');
   });
 
-  it('WAVE_1_RUNNING -> Generating sections...', () => {
-    expect(stateToLabel('WAVE_1_RUNNING')).toBe('Generating sections...');
+  it('WAVE_1_RUNNING -> Phase 1: Business Fundamentals...', () => {
+    expect(stateToLabel('WAVE_1_RUNNING')).toBe('Phase 1: Business Fundamentals...');
   });
 
   it('SYNTHESIS -> Writing synthesis...', () => {
