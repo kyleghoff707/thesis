@@ -71,6 +71,12 @@ new_classes = ["SessionEventLoop"]
 [observability]
 enabled = true
 
+[observability.logs]
+enabled = true
+
+[observability.traces]
+enabled = true
+
 [triggers]
 crons = [
   "0 */3 * * *",
