@@ -13,10 +13,15 @@ export async function handleUser(request, env, path, user) {
 
   // ─── Reports ─────────────────────────────────────────────────
 
-  // GET /user/reports — list user's reports
+  // GET /user/reports — list user's reports (only those with at least one generated stage)
   if (path === '/user/reports' && method === 'GET') {
     const { results } = await env.DB.prepare(
-      'SELECT id, ticker, company_name, current_stage, stage_approvals, watchlist, notes, created_at, updated_at FROM reports WHERE user_id = ? ORDER BY updated_at DESC'
+      `SELECT r.id, r.ticker, r.company_name, r.current_stage, r.stage_approvals,
+              r.watchlist, r.notes, r.created_at, r.updated_at
+       FROM reports r
+       WHERE r.user_id = ?
+         AND EXISTS (SELECT 1 FROM report_stages rs WHERE rs.report_id = r.id)
+       ORDER BY r.updated_at DESC`
     ).bind(user.id).all();
     return json({ reports: results.map(r => ({ ...r, stage_approvals: JSON.parse(r.stage_approvals || '{}') })) });
   }
