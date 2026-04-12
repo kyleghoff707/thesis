@@ -38,16 +38,22 @@ database_id = "86cba902-d3d3-4f96-a941-94998bdc060e"
 binding = "TRANSCRIPTS"
 bucket_name = "thes1s-transcripts"
 
-# Durable Objects — PipelineRunner for server-side report generation
-# No wall-clock limit (ctx.waitUntil dies at ~30-60s, DO runs indefinitely)
+# Durable Objects — SessionEventLoop for Managed Agent event processing
+# Lightweight keep-alive: streams session events, dispatches custom tool calls.
+# All orchestration logic lives in the coordinator's system prompt, not here.
 [durable_objects]
 bindings = [
-  { name = "PIPELINE_RUNNER", class_name = "PipelineRunner" }
+  { name = "SESSION_EVENT_LOOP", class_name = "SessionEventLoop" }
 ]
 
 [[migrations]]
 tag = "v1"
 new_classes = ["PipelineRunner"]
+
+[[migrations]]
+tag = "v2"
+deleted_classes = ["PipelineRunner"]
+new_classes = ["SessionEventLoop"]
 
 # Secrets (set via wrangler secret put):
 #   ANTHROPIC_API_KEY — Claude API key for pipeline agent dispatch

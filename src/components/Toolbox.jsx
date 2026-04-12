@@ -14,6 +14,7 @@ import { useInsiders } from '../hooks/useInsiders';
 import { useCompensation } from '../hooks/useCompensation';
 import CompanyHeader from './CompanyHeader';
 import GenerateButton from './GenerateButton';
+import GenerationProgressPanel from './GenerationProgressPanel';
 import { useGeneratePipeline } from '../hooks/useGeneratePipeline';
 import StockAtGlance from './StockAtGlance';
 import ScoreTable from './ScoreTable';
@@ -63,7 +64,7 @@ export default function Toolbox({ getReport, updateReport, settings }) {
   const { data: compData, loading: compLoading, error: compError } = useCompensation(ticker);
   const { activities: guruActivities } = useGurus();
   const { events: companyEvents, loading: eventsLoading, error: eventsError, irLink, irLinkIsDirect } = useCompanyEvents(ticker, company?.website, company?.name);
-  const { triggerGeneration, generating, generationError } = useGeneratePipeline(ticker);
+  const { triggerGeneration, generating, generationError, progress, liveSections } = useGeneratePipeline(ticker);
 
   // Stage availability for GenerateButton — re-fetches when ticker or generation state changes
   const [stageAvailability, setStageAvailability] = useState(null);
@@ -232,10 +233,23 @@ export default function Toolbox({ getReport, updateReport, settings }) {
           onGenerate={triggerGeneration}
         />
       </div>
-      {generationError && (
+      {generationError && !generating && (
         <div style={{ textAlign: 'right', fontSize: 12, color: C.red, marginBottom: 8 }}>
           {generationError}
         </div>
+      )}
+
+      {/* Generation progress panel — shows during pipeline runs */}
+      {(generating || progress) && (
+        <GenerationProgressPanel
+          stage={progress?.stage || 'onePager'}
+          ticker={ticker}
+          generating={generating}
+          progress={progress}
+          completedSections={liveSections}
+          error={progress?.error}
+          generationError={generationError}
+        />
       )}
 
       {/* Tab navigation */}

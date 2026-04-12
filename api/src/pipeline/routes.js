@@ -1,6 +1,8 @@
-// Pipeline routes — server-side report generation
-// POST /api/pipeline/run — start a pipeline run
-// GET /api/pipeline/status/:runId — poll progress
+// Pipeline routes — server-side report generation via Managed Agents.
+// POST /api/pipeline/run — start a pipeline run (creates session + event loop DO)
+// GET /api/pipeline/status/:runId — poll progress (reads D1)
+
+import { ensureCoordinatorAgent, createSession, sendSessionEvent } from './coordinator.js';
 
 const STALE_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -109,27 +111,55 @@ async function handleRun(request, env, user) {
      VALUES (?, ?, ?, ?, ?, 'queued', datetime('now'), datetime('now'))`
   ).bind(runId, user.id, reportId || null, ticker, stage).run();
 
-  // Launch Durable Object to execute the pipeline.
-  // DO's fetch() awaits the full pipeline (keeps DO alive for 5-15 min).
-  // We fire-and-forget the stub.fetch() so the user gets 202 immediately.
-  // If the DO errors, it writes the error to D1 pipeline_runs directly.
-  const doId = env.PIPELINE_RUNNER.idFromName(runId);
-  const stub = env.PIPELINE_RUNNER.get(doId);
+  // Create Managed Agent session and launch event loop DO.
+  // The coordinator agent dispatches analyst agents via custom tools.
+  // The event loop DO handles tool calls and keeps running for 5-15 min.
+  let sessionId;
+  try {
+    // Get or create the coordinator agent (cached by prompt hash)
+    const agentId = await ensureCoordinatorAgent(env);
 
-  // Fire and forget. The DO's fetch handler awaits runPipeline() internally,
-  // so this promise resolves only when the pipeline completes. We don't wait.
-  // Errors are caught and written to D1 by the DO's try/catch in runPipeline().
-  stub.fetch(new Request('https://internal/run', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ runId, ticker, stage, userId: user.id, reportId }),
-  })).catch(async (err) => {
-    // DO couldn't even start (missing binding, import error)
-    console.warn(`Pipeline DO launch error for ${runId}:`, err.message);
+    // Create a new session for this pipeline run
+    const session = await createSession(agentId, env);
+    sessionId = session.id;
+
+    // Send the initial message to start the coordinator
+    await sendSessionEvent(sessionId, {
+      type: 'user.message',
+      content: `Generate a ${stage} report for ${ticker}. Run ID: ${runId}. Report ID: ${reportId || 'none'}. User ID: ${user.id}.`,
+    }, env);
+
+    // Store session_id in D1 for debugging/recovery
+    await env.DB.prepare(
+      'UPDATE pipeline_runs SET session_id = ?, updated_at = datetime(\'now\') WHERE id = ?'
+    ).bind(sessionId, runId).run();
+
+  } catch (err) {
+    // Session creation failed — mark run as failed
+    console.warn(`Pipeline session creation failed for ${runId}:`, err.message);
     await env.DB.prepare(
       `UPDATE pipeline_runs SET status = 'failed', error = ?,
        updated_at = datetime('now') WHERE id = ?`
-    ).bind(`DO launch failed: ${err.message}`, runId).run().catch(() => {});
+    ).bind(`Session creation failed: ${err.message}`, runId).run().catch(() => {});
+    return json({ error: 'Failed to start pipeline session', detail: err.message }, 500);
+  }
+
+  // Fire-and-forget the event loop DO.
+  // DO's fetch() awaits the full event loop (keeps DO alive for 5-15 min).
+  // Errors are caught and written to D1 by the DO's try/catch.
+  const doId = env.SESSION_EVENT_LOOP.idFromName(runId);
+  const stub = env.SESSION_EVENT_LOOP.get(doId);
+
+  stub.fetch(new Request('https://internal/run', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId, runId, ticker, stage, userId: user.id, reportId }),
+  })).catch(async (err) => {
+    console.warn(`Pipeline event loop launch error for ${runId}:`, err.message);
+    await env.DB.prepare(
+      `UPDATE pipeline_runs SET status = 'failed', error = ?,
+       updated_at = datetime('now') WHERE id = ?`
+    ).bind(`Event loop failed: ${err.message}`, runId).run().catch(() => {});
   });
 
   return json({ runId, status: 'queued', ticker, stage }, 202);

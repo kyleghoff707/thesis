@@ -13,7 +13,7 @@ import { handleCron } from './cron/index.js';
 import { authenticate } from './middleware/auth.js';
 
 // Re-export Durable Object class for Cloudflare binding
-export { PipelineRunner } from './pipeline/PipelineRunner.js';
+export { SessionEventLoop } from './pipeline/SessionEventLoop.js';
 
 // CORS headers for the frontend.
 // credentials: 'include' requires a specific origin (not *).

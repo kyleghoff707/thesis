@@ -293,6 +293,8 @@ These patterns from the user's real analyses must be built into AI report genera
 
 ## Agent Pipeline
 
+**Pipeline Schematic**: `agents/pipeline-schematic.svg` — visual diagram of the agent team, wave orchestration, and data flow. **Any time there is a significant change to agents, agent architecture, orchestration, wave structure, or team composition, update this SVG to reflect the current state.** This is the quick-reference source of truth for how the pipeline works — it must always match reality.
+
 12 specialized AI agents with wave-based orchestration. Pipeline cost: ~$8-12/company for Pitch Deck, ~$28-30 for all 3 stages.
 
 | Agent | Role |

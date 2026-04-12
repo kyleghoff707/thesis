@@ -201,6 +201,7 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
   ticker TEXT NOT NULL,
   stage TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'queued',
+  session_id TEXT,
   current_wave INTEGER DEFAULT 0,
   total_waves INTEGER,
   progress TEXT,
@@ -215,3 +216,11 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 CREATE INDEX IF NOT EXISTS idx_pipeline_user_status ON pipeline_runs(user_id, status);
+
+-- Managed Agents coordinator cache
+CREATE TABLE IF NOT EXISTS managed_agents (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  agent_id TEXT NOT NULL,
+  prompt_hash TEXT NOT NULL UNIQUE,
+  created_at TEXT DEFAULT (datetime('now'))
+);

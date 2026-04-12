@@ -16,6 +16,7 @@ export function useGeneratePipeline(ticker) {
   const [generationError, setGenerationError] = useState(null);
   const [result, setResult] = useState(null);
   const [progress, setProgress] = useState(null);
+  const [liveSections, setLiveSections] = useState([]);
   const pollRef = useRef(null);
 
   // ─── Shared polling logic ────────────────────────────────
@@ -45,6 +46,14 @@ export function useGeneratePipeline(ticker) {
         consecutiveErrors = 0;
         const status = await statusRes.json();
         setProgress(status);
+
+        // Parse sections_json for live rendering (updates on every poll)
+        if (status.sections_json) {
+          try {
+            const parsed = JSON.parse(status.sections_json);
+            if (Array.isArray(parsed)) setLiveSections(parsed);
+          } catch {}
+        }
 
         // Terminal states: stop polling
         if (['completed', 'completed_with_errors', 'failed'].includes(status.status)) {
@@ -149,6 +158,7 @@ export function useGeneratePipeline(ticker) {
     setGenerationError(null);
     setResult(null);
     setProgress(null);
+    setLiveSections([]);
 
     // ─── Dev mode: POST to Vite middleware (CLI pipeline) ───
     if (IS_DEV) {
@@ -237,5 +247,5 @@ export function useGeneratePipeline(ticker) {
     }
   }, [ticker, startPolling]);
 
-  return { triggerGeneration, generating, generationError, result, progress };
+  return { triggerGeneration, generating, generationError, result, progress, liveSections };
 }
