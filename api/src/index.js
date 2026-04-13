@@ -64,36 +64,6 @@ export default {
       if (path === '/health') {
         response = json({ status: 'ok', ts: new Date().toISOString() });
       }
-      // Diagnostic: test one AV transcript fetch + R2 store (no auth)
-      else if (path === '/health/test-transcript') {
-        const ticker = url.searchParams.get('ticker') || 'AAPL';
-        const quarter = url.searchParams.get('quarter') || '2025Q4';
-        const diag = { ticker, quarter, steps: {} };
-
-        const avKeys = [env.ALPHA_VANTAGE_KEY, env.ALPHA_VANTAGE_KEY_2].filter(Boolean);
-        diag.steps.keys = { count: avKeys.length };
-
-        const avUrl = `https://www.alphavantage.co/query?function=EARNINGS_CALL_TRANSCRIPT&symbol=${ticker}&quarter=${quarter}&apikey=${avKeys[0] || 'NONE'}`;
-        const res2 = await fetch(avUrl);
-        const data = await res2.json();
-        diag.steps.avResponse = {
-          status: res2.status,
-          keys: Object.keys(data),
-          hasNote: !!data.Note,
-          hasTranscript: !!data.transcript,
-          transcriptLength: Array.isArray(data.transcript) ? data.transcript.length : null,
-          notePreview: data.Note?.slice(0, 200),
-        };
-
-        try {
-          const listed = await env.TRANSCRIPTS.list({ prefix: `transcripts/${ticker}/`, limit: 10 });
-          diag.steps.r2List = { ok: true, count: listed.objects.length };
-        } catch (e) {
-          diag.steps.r2List = { ok: false, error: e.message };
-        }
-
-        response = json(diag);
-      }
       // Auth routes (no auth required)
       else if (path.startsWith('/auth/')) {
         response = await handleAuth(request, env, path);
