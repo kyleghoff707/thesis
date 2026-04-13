@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { C } from '../theme';
 import Spinner from './Spinner';
 
-export default function ExportButtons({ ticker, stage }) {
+const IS_DEV = import.meta.env.DEV;
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+export default function ExportButtons({ ticker, stage, report }) {
   const [exporting, setExporting] = useState(null); // 'pdf' | 'docx' | null
   const [error, setError] = useState(null);
 
@@ -10,25 +13,59 @@ export default function ExportButtons({ ticker, stage }) {
     setExporting(format);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/thes1s/reports/${encodeURIComponent(ticker)}/export/${stage}/${format}`,
-        { method: 'POST' },
-      );
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || 'Export failed');
-        setExporting(null);
-        return;
+      if (IS_DEV) {
+        // Dev: use Python generators via Vite middleware
+        const res = await fetch(
+          `/api/thes1s/reports/${encodeURIComponent(ticker)}/export/${stage}/${format}`,
+          { method: 'POST' },
+        );
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || 'Export failed');
+          setExporting(null);
+          return;
+        }
+        const filename = stage + (format === 'pdf' ? '.pdf' : '.docx');
+        const downloadUrl = `/api/thes1s/reports/${encodeURIComponent(ticker)}/download/${filename}`;
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `${ticker}-${filename}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        // Production: call Worker export endpoint → proxies to Python export service
+        const reportId = report?.id;
+        if (!reportId) {
+          setError('No report ID available for export');
+          setExporting(null);
+          return;
+        }
+
+        const res = await fetch(`${API_BASE}/api/pipeline/export/${reportId}/${stage}/${format}`, {
+          credentials: 'include',
+        });
+
+        if (!res.ok) {
+          let errMsg = 'Export failed';
+          try { const data = await res.json(); errMsg = data.error || errMsg; } catch {}
+          setError(errMsg);
+          setExporting(null);
+          return;
+        }
+
+        // Download the file
+        const blob = await res.blob();
+        const ext = format === 'pdf' ? '.pdf' : '.docx';
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${ticker}-${stage}${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       }
-      // Trigger download
-      const filename = stage + (format === 'pdf' ? '.pdf' : '.docx');
-      const downloadUrl = `/api/thes1s/reports/${encodeURIComponent(ticker)}/download/${filename}`;
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = `${ticker}-${filename}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
     } catch (e) {
       setError(e.message);
     } finally {

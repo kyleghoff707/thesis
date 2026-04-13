@@ -1,0 +1,22 @@
+# Render deployment config for the Thes1s Export Service.
+# Deploy as a Web Service on Render's free tier.
+#
+# Setup:
+#   1. Create a new Web Service on render.com
+#   2. Connect your GitHub repo
+#   3. Set root directory to: export-service
+#   4. Build command: pip install -r requirements.txt
+#   5. Start command: gunicorn app:app --bind 0.0.0.0:$PORT
+#   6. Environment: Python 3
+#   7. Free tier is fine for this usage level
+
+services:
+  - type: web
+    name: thes1s-export
+    runtime: python
+    rootDir: export-service
+    buildCommand: pip install -r requirements.txt && apt-get update && apt-get install -y fonts-liberation
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"

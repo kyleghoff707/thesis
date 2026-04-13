@@ -23,7 +23,26 @@ export async function handleUser(request, env, path, user) {
          AND EXISTS (SELECT 1 FROM report_stages rs WHERE rs.report_id = r.id)
        ORDER BY r.updated_at DESC`
     ).bind(user.id).all();
-    return json({ reports: results.map(r => ({ ...r, stage_approvals: JSON.parse(r.stage_approvals || '{}') })) });
+    // Fetch which stages exist for each report
+    const reportIds = results.map(r => r.id);
+    const stageRows = reportIds.length > 0
+      ? (await env.DB.prepare(
+          `SELECT report_id, stage FROM report_stages WHERE report_id IN (${reportIds.map(() => '?').join(',')})`
+        ).bind(...reportIds).all()).results
+      : [];
+
+    // Build stages availability map per report
+    const stageMap = {};
+    for (const row of stageRows) {
+      if (!stageMap[row.report_id]) stageMap[row.report_id] = {};
+      stageMap[row.report_id][row.stage] = true;
+    }
+
+    return json({ reports: results.map(r => ({
+      ...r,
+      stage_approvals: JSON.parse(r.stage_approvals || '{}'),
+      stages: stageMap[r.id] || {},
+    })) });
   }
 
   // GET /user/reports/:id — get full report with stage data

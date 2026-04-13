@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { C } from '../theme';
 import { userUrl } from '../engines/apiBase';
 
+const IS_DEV = import.meta.env.DEV;
+
 // Lock icon SVG (10px, scaled from StageNavBar pattern)
 function LockIcon() {
   return (
@@ -40,13 +42,30 @@ export default function ReportsList({ reports, getReport, createReport }) {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(userUrl('/reports'), { credentials: 'include' });
-        if (cancelled) return;
-        if (res.ok) {
-          const data = await res.json();
-          if (!cancelled) setTickerData(data.reports || []);
+        if (IS_DEV) {
+          // Dev mode: derive ticker data from reports prop
+          if (!cancelled) {
+            const derived = (reports || [])
+              .filter(r => r.onePager && Object.keys(r.onePager).length > 0)
+              .map(r => ({
+                ticker: r.ticker,
+                stages: {
+                  onePager: !!(r.onePager && Object.keys(r.onePager).length > 0),
+                  pitchDeck: !!r.pitchDeck,
+                  fullStory: !!r.fullStory,
+                },
+              }));
+            setTickerData(derived);
+          }
         } else {
-          if (!cancelled) setError('Failed to load reports');
+          const res = await fetch(userUrl('/reports'), { credentials: 'include' });
+          if (cancelled) return;
+          if (res.ok) {
+            const data = await res.json();
+            if (!cancelled) setTickerData(data.reports || []);
+          } else {
+            if (!cancelled) setError('Failed to load reports');
+          }
         }
       } catch (e) {
         if (!cancelled) setError(e.message);
@@ -58,7 +77,7 @@ export default function ReportsList({ reports, getReport, createReport }) {
     fetchTickers();
 
     return () => { cancelled = true; };
-  }, []);
+  }, [reports]);
 
   // Find matching report by ticker
   function findReport(ticker) {

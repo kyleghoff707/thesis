@@ -31,10 +31,10 @@ from scripts.pdf.docx_helpers import (
 )
 
 
-def generate_one_pager_docx(ticker):
+def generate_one_pager_docx(ticker, base_dir=None):
     """Generate One Pager Word document for the given ticker."""
 
-    data = ReportData(ticker, 'one-pager')
+    data = ReportData(ticker, 'one-pager', base_dir=base_dir)
     company_name = data.get_company_name()
     verdict = data.get_overall_verdict()
 

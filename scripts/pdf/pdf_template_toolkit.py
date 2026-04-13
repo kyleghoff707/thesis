@@ -50,11 +50,20 @@ class ReportPDF(FPDF):
         self.report_subtitle = subtitle
 
         # ── Font Setup ──
-        # macOS system fonts (change paths for other OS)
-        self.add_font('ArialUni', '', '/System/Library/Fonts/Supplemental/Arial.ttf')
-        self.add_font('ArialUni', 'B', '/System/Library/Fonts/Supplemental/Arial Bold.ttf')
-        self.add_font('ArialUni', 'I', '/System/Library/Fonts/Supplemental/Arial Italic.ttf')
-        self.add_font('ArialUni', 'BI', '/System/Library/Fonts/Supplemental/Arial Bold Italic.ttf')
+        # Try macOS fonts first, then Linux (Liberation Sans = Arial-compatible)
+        import platform
+        if platform.system() == 'Darwin':
+            self.add_font('ArialUni', '', '/System/Library/Fonts/Supplemental/Arial.ttf')
+            self.add_font('ArialUni', 'B', '/System/Library/Fonts/Supplemental/Arial Bold.ttf')
+            self.add_font('ArialUni', 'I', '/System/Library/Fonts/Supplemental/Arial Italic.ttf')
+            self.add_font('ArialUni', 'BI', '/System/Library/Fonts/Supplemental/Arial Bold Italic.ttf')
+        else:
+            # Linux: use Liberation Sans (apt-get install fonts-liberation)
+            lib_dir = '/usr/share/fonts/truetype/liberation'
+            self.add_font('ArialUni', '', os.path.join(lib_dir, 'LiberationSans-Regular.ttf'))
+            self.add_font('ArialUni', 'B', os.path.join(lib_dir, 'LiberationSans-Bold.ttf'))
+            self.add_font('ArialUni', 'I', os.path.join(lib_dir, 'LiberationSans-Italic.ttf'))
+            self.add_font('ArialUni', 'BI', os.path.join(lib_dir, 'LiberationSans-BoldItalic.ttf'))
         # Monospace for code blocks (optional — comment out if not needed)
         # self.add_font('CourierNew', '', '/System/Library/Fonts/Supplemental/Courier New.ttf', uni=True)
 

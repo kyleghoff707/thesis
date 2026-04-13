@@ -52,7 +52,11 @@ function computePercentage(statuses, progressState) {
 export default function OnePager({ getReport, updateReport }) {
   const { id } = useParams();
   const report = getReport ? getReport(id) : null;
-  const { report: onePagerData, progress, loading, error } = useOnePager(report?.ticker);
+  // Production: report.onePager is loaded from D1 via useResearch → GET /user/reports/:id.
+  // Dev: useOnePager fetches from Vite middleware. Use report.onePager if available (production),
+  // fall back to useOnePager for dev mode and progress polling.
+  const { report: hookData, progress, loading, error } = useOnePager(report?.ticker);
+  const onePagerData = report?.onePager || hookData;
 
   // Grace period: show spinner for 5s after mount to let pipeline write progress.json
   const [graceActive, setGraceActive] = useState(true);
@@ -61,17 +65,20 @@ export default function OnePager({ getReport, updateReport }) {
     return () => clearTimeout(timer);
   }, []);
 
-  // Live elapsed timer — ticks every second while pipeline is active
-  const [elapsed, setElapsed] = useState(0);
+  // Live elapsed timer — ticks every second while pipeline is active.
+  // Initialize from startedAt immediately to avoid reset flash on remount.
+  const startMs = progress?.startedAt ? new Date(progress.startedAt).getTime() : null;
+  const [elapsed, setElapsed] = useState(() =>
+    startMs && progress?.state !== 'COMPLETE' ? Math.floor((Date.now() - startMs) / 1000) : 0
+  );
   useEffect(() => {
-    if (!progress?.startedAt || progress.state === 'COMPLETE') return;
-    const startMs = new Date(progress.startedAt).getTime();
+    if (!startMs || progress?.state === 'COMPLETE') return;
     setElapsed(Math.floor((Date.now() - startMs) / 1000));
     const interval = setInterval(() => {
       setElapsed(Math.floor((Date.now() - startMs) / 1000));
     }, 1000);
     return () => clearInterval(interval);
-  }, [progress?.startedAt, progress?.state]);
+  }, [startMs, progress?.state]);
 
   // Scroll spy for active section tracking (shared hook, D-07/D-09)
   const sectionKeysForSpy = onePagerData?.sectionKeys || onePagerData?.sections?.map(s => s.key) || [];
@@ -231,7 +238,7 @@ export default function OnePager({ getReport, updateReport }) {
             <span style={{ fontSize: 11, fontWeight: 600, color: C.red }}>Rejected</span>
           )}
           {onePagerData && isComplete && (
-            <ExportButtons ticker={report?.ticker} stage="one-pager" />
+            <ExportButtons ticker={report?.ticker} stage="one-pager" report={report} />
           )}
         </div>
       </div>

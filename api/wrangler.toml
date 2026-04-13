@@ -22,6 +22,9 @@ compatibility_flags = ["nodejs_compat"]
 ENVIRONMENT = "production"
 STRIPE_PRICE_ID = "price_1TKW1QQ4VrAqDXtS0MtUDWBJ"
 STRIPE_METER_EVENT_NAME = "api_requests"
+MA_ONE_PAGER_AGENT_ID = "agent_011CZzuB5TVsiPgnQZZJscmy"
+MA_ENVIRONMENT_ID = "env_015GFMSSrnuhL1zwDYWyMfaz"
+EXPORT_SERVICE_URL = ""  # Set after deploying the export service on Render
 
 # D1 database — create with: wrangler d1 create thes1s
 [[d1_databases]]

@@ -202,13 +202,14 @@ def _build_scorecard_rows(data):
 # MAIN GENERATOR
 # =========================================================================
 
-def generate_one_pager(ticker):
+def generate_one_pager(ticker, base_dir=None):
     """Build the full visual PDF for a One Pager."""
-    proj = os.path.join(os.path.dirname(__file__), '..', '..')
-    report_dir = os.path.join(proj, '.thes1s', 'reports', ticker)
+    if base_dir is None:
+        base_dir = os.path.join(os.path.dirname(__file__), '..', '..')
+    report_dir = os.path.join(base_dir, '.thes1s', 'reports', ticker)
 
     # Load data through the unified reader
-    data = ReportData(ticker, 'one-pager')
+    data = ReportData(ticker, 'one-pager', base_dir=base_dir)
     company_name = data.get_company_name()
     overall_verdict = data.get_overall_verdict()
 

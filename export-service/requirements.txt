@@ -1,0 +1,6 @@
+flask==3.1.1
+flask-cors==5.0.1
+gunicorn==23.0.0
+fpdf2==2.8.3
+python-docx==1.1.2
+matplotlib==3.10.3

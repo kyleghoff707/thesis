@@ -8,6 +8,7 @@ import { handleData } from './routes/data.js';
 import { handleProxy } from './routes/proxy.js';
 import { handleClaude } from './routes/claude.js';
 import { handleStripeWebhook, handleStripe } from './routes/stripe.js';
+import { handlePipeline } from './routes/pipeline.js';
 import { handleCron } from './cron/index.js';
 import { authenticate } from './middleware/auth.js';
 
@@ -86,7 +87,7 @@ export default {
         if (!user) {
           response = json({ error: 'Unauthorized' }, 401);
         } else if (path.startsWith('/api/pipeline/')) {
-          response = json({ error: 'Pipeline is being rebuilt. Use local CLI for now.' }, 503);
+          response = await handlePipeline(request, env, path, user);
         } else if (path.startsWith('/user/')) {
           response = await handleUser(request, env, path, user);
         } else if (path.startsWith('/proxy/claude/')) {
