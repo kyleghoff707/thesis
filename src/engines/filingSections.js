@@ -8,33 +8,37 @@
 
 // ─── Section Header Patterns ────────────────────────────────────
 
+// Item separator pattern — matches period, colon, whitespace, em-dash, en-dash, hyphen
+// Some filers use "Item 1." others "Item 1—" (Costco) or "Item 1:" etc.
+const SEP = '[.:\\s\\-\\u2013\\u2014]';
+
 // 10-K focused map: 4 sections the pipeline uses for annual filings
 export const SECTION_MAP_10K = {
-  'Business': /^(?:#{1,3}\s*)?Item\s*1[.:\s]\s*Business/im,
-  'Risk Factors': /^(?:#{1,3}\s*)?Item\s*1A[.:\s]\s*Risk\s*Factors/im,
-  'MD&A': /^(?:#{1,3}\s*)?Item\s*7[.:\s]\s*Management[''\u2019]?s?\s*Discussion/im,
-  'Financial Statements': /^(?:#{1,3}\s*)?Item\s*8[.:\s]\s*Financial\s*Statements/im,
+  'Business': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*1${SEP}\\s*Business`, 'im'),
+  'Risk Factors': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*1A${SEP}\\s*Risk\\s*Factors`, 'im'),
+  'MD&A': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*7${SEP}\\s*Management[''\\u2019]?s?\\s*Discussion`, 'im'),
+  'Financial Statements': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*8${SEP}\\s*Financial\\s*Statements`, 'im'),
 };
 
 // 10-Q focused map: 3 sections with 10-Q item numbers
 // Item 1 = Financial Statements (not Business), Item 2 = MD&A (not Properties)
 export const SECTION_MAP_10Q = {
-  'Financial Statements': /^(?:#{1,3}\s*)?Item\s*1[.:\s]\s*Financial\s*Statements/im,
-  'MD&A': /^(?:#{1,3}\s*)?Item\s*2[.:\s]\s*Management[''\u2019]?s?\s*Discussion/im,
-  'Risk Factors': /^(?:#{1,3}\s*)?Item\s*1A[.:\s]\s*Risk\s*Factors/im,
+  'Financial Statements': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*1${SEP}\\s*Financial\\s*Statements`, 'im'),
+  'MD&A': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*2${SEP}\\s*Management[''\\u2019]?s?\\s*Discussion`, 'im'),
+  'Risk Factors': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*1A${SEP}\\s*Risk\\s*Factors`, 'im'),
 };
 
 // Backward-compatible full map — includes all legacy sections (10-K items)
 export const SECTION_MAP = {
-  'Business': /^(?:#{1,3}\s*)?Item\s*1[.:\s]\s*Business/im,
-  'Risk Factors': /^(?:#{1,3}\s*)?Item\s*1A[.:\s]\s*Risk\s*Factors/im,
-  'MD&A': /^(?:#{1,3}\s*)?Item\s*7[.:\s]\s*Management[''\u2019]?s?\s*Discussion/im,
-  'Financial Statements': /^(?:#{1,3}\s*)?Item\s*8[.:\s]\s*Financial\s*Statements/im,
-  'Controls': /^(?:#{1,3}\s*)?Item\s*9A[.:\s]\s*Controls/im,
-  'Properties': /^(?:#{1,3}\s*)?Item\s*2[.:\s]\s*Properties/im,
-  'Legal': /^(?:#{1,3}\s*)?Item\s*3[.:\s]\s*Legal/im,
-  'Executive Compensation': /^(?:#{1,3}\s*)?Item\s*11[.:\s]\s*Executive\s*Comp/im,
-  'Market Risk': /^(?:#{1,3}\s*)?Item\s*7A[.:\s]\s*Quantitative.*Market\s*Risk/im,
+  'Business': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*1${SEP}\\s*Business`, 'im'),
+  'Risk Factors': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*1A${SEP}\\s*Risk\\s*Factors`, 'im'),
+  'MD&A': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*7${SEP}\\s*Management[''\\u2019]?s?\\s*Discussion`, 'im'),
+  'Financial Statements': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*8${SEP}\\s*Financial\\s*Statements`, 'im'),
+  'Controls': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*9A${SEP}\\s*Controls`, 'im'),
+  'Properties': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*2${SEP}\\s*Properties`, 'im'),
+  'Legal': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*3${SEP}\\s*Legal`, 'im'),
+  'Executive Compensation': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*11${SEP}\\s*Executive\\s*Comp`, 'im'),
+  'Market Risk': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*7A${SEP}\\s*Quantitative.*Market\\s*Risk`, 'im'),
 };
 
 // ─── Section Extraction ─────────────────────────────────────────
@@ -67,7 +71,7 @@ export function extractSection(markdown, sectionName, sectionMap = SECTION_MAP) 
   if (!pattern) {
     try {
       const escaped = sectionName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      pattern = new RegExp('^(?:#{1,3}\\s*)?(?:Item\\s*\\w+[.:\\s]\\s*)?' + escaped.replace(/\s+/g, '\\s+'), 'im');
+      pattern = new RegExp('^(?:#{1,3}\\s*)?(?:Item\\s*\\w+[.:\\s\\-\\u2013\\u2014]\\s*)?' + escaped.replace(/\s+/g, '\\s+'), 'im');
     } catch {
       return null;
     }

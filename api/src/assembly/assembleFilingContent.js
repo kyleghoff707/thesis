@@ -8,6 +8,7 @@
 // cheerio provides the HTML manipulation; Turndown uses its built-in
 // domino DOM for the markdown conversion.
 
+import '../shims/domino-polyfill.js';  // Must be before Turndown — sets up DOMParser for Workers
 import * as cheerio from 'cheerio';
 import TurndownService from 'turndown';
 import { gfm } from 'turndown-plugin-gfm';
@@ -16,7 +17,7 @@ import { formatAlphaVantageTranscript } from '../../../packages/sec-parsers/form
 
 // ─── Config ─────────────────────────────────────────────────
 
-const SEC_UA = 'Thes1s/1.0 (thes1sinvesting.com)';
+const SEC_UA = 'Thes1s/1.0 kylehoff@thes1sinvesting.com';
 const MAX_10K = 5;
 const MAX_10Q = 4;
 const MAX_TRANSCRIPTS = 4;

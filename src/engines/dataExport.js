@@ -20,9 +20,6 @@ import { fetchInsiderTransactions, computeInsiderSummary } from './insiders.js';
 import { fetchCompensation } from './compensation.js';
 import { fetchPeersByTier } from './peers.js';
 import { fetchPeerFrameData, computePeerMetrics, computePeerScores } from './peerMetrics.js';
-import { fetchAnalystEstimates } from './analystEstimates.js';
-import { fetchFinvizData } from './finviz.js';
-import { fetchPrices, latestPrice } from './prices.js';
 import { fetchBatchQuotes } from './batchQuotes.js';
 import { ALPHA_VANTAGE_KEY, ALPHA_VANTAGE_KEY_2 } from './config.js';
 
@@ -108,8 +105,6 @@ export async function assembleDataPacket(ticker) {
     safeCall(() => fetchInsidersForTicker(ticker), 'insiders', errors),
     safeCall(() => fetchCompensation(ticker), 'compensation', errors),
     safeCall(() => fetchPeersByTier('industry', classification, ticker), 'peers', errors),
-    IS_NODE ? Promise.resolve(null) : safeCall(() => fetchAnalystEstimates(ticker), 'analystEstimates', errors, { retry: true }),
-    IS_NODE ? Promise.resolve(null) : safeCall(() => fetchPrices(ticker, '10y'), 'prices', errors, { retry: true }),
     safeCall(() => fetchFilingList(ticker), 'filings', errors),
   ]);
 
@@ -117,61 +112,7 @@ export async function assembleDataPacket(ticker) {
   const insiders = step3[1].value ?? null;
   const compensation = step3[2].value ?? null;
   const peers = step3[3].value ?? null;
-  let analystEstimates = step3[4].value ?? null;
-  let prices = step3[5].value ?? null;
-  const filings = step3[6].value ?? null;
-
-  // Yahoo enrichment removed from DataPacket assembly (Phase 6.3 — A1).
-  // Yahoo crumb auth causes 30-60s timeouts in Node.js, blocking the pipeline.
-  // Price fallback uses EODHD (fast, reliable in Node.js).
-  let yahooQuoteData = null;
-
-  // EODHD price fallback for Node.js (Phase 6.3 — replaces Yahoo quote)
-  // Alpha Vantage reserved for transcripts only (25 calls/day free tier).
-  if (!prices && IS_NODE) {
-    try {
-      const eodhKey = process.env.VITE_EODHD_KEY;
-      if (eodhKey) {
-        const url = `https://eodhd.com/api/real-time/${encodeURIComponent(ticker)}.US?api_token=${eodhKey}&fmt=json`;
-        const res = await fetch(url);
-        if (res.ok) {
-          const q = await res.json();
-          if (q?.close) {
-            prices = [{
-              date: new Date(q.timestamp * 1000).toISOString().split('T')[0],
-              close: q.close,
-              change: q.change ?? null,
-              changePct: q.change_p ?? null,
-            }];
-          }
-        }
-      }
-    } catch (e) {
-      errors.push(`eodhPriceFallback: ${e.message}`);
-    }
-  }
-
-  // Finviz fallback for analystEstimates — always try in Node.js (Yahoo skipped),
-  // also try in browser if Yahoo failed
-  if (!analystEstimates) {
-    try {
-      const finviz = await fetchFinvizData(ticker);
-      if (finviz?.epsNext5Y != null) {
-        analystEstimates = {
-          earningsTrend: null,
-          financialData: null,
-          recommendationTrend: null,
-          growthRate: finviz.epsNext5Y,
-          priceTargets: finviz.targetPrice ? { mean: finviz.targetPrice } : null,
-          recommendation: finviz.recom ? { score: finviz.recom } : null,
-          _source: 'finviz-fallback',
-          _fetchedAt: Date.now(),
-        };
-      }
-    } catch (e) {
-      errors.push(`analystEstimates-finviz-fallback: ${e.message}`);
-    }
-  }
+  const filings = step3[4].value ?? null;
 
   // ── Step 4: Dependent data (depends on previous steps) ──
 
@@ -235,10 +176,6 @@ export async function assembleDataPacket(ticker) {
 
   const derivedDebtMetrics = deriveDebtMetrics(statements, fcf);
 
-  // ── Derive current price ──
-
-  const currentPrice = prices ? latestPrice(prices) : null;
-
   // ── Build transcript availability summary ──
   // Alpha Vantage is the sole transcript source (2-key failover).
   // We report key availability; actual transcripts are fetched on-demand per quarter.
@@ -247,18 +184,6 @@ export async function assembleDataPacket(ticker) {
   const transcriptAvailability = hasAVKeys
     ? { available: true, source: 'alpha_vantage' }
     : null;
-
-  // ── Wire Yahoo quote data into keyMetrics price ratios ──
-
-  if (yahooQuoteData && keyMetrics?.metrics) {
-    const latestYear = statements?.years?.[0];
-    if (latestYear && keyMetrics.metrics[latestYear]) {
-      const yearMetrics = keyMetrics.metrics[latestYear];
-      if (!yearMetrics.price) yearMetrics.price = {};
-      if (yahooQuoteData.pe != null) yearMetrics.price.peRatio = yahooQuoteData.pe;
-      if (yahooQuoteData.priceToBook != null) yearMetrics.price.priceToBook = yahooQuoteData.priceToBook;
-    }
-  }
 
   // ── TTM field aliases + BVPS derivation ──
 
@@ -282,7 +207,6 @@ export async function assembleDataPacket(ticker) {
     ticker: ticker.toUpperCase(),
     companyInfo,
     classification,
-    currentPrice,
     financials: statements ? trimFinancials(statements, 10) : null,
     ttm,
     growthRates,
@@ -300,8 +224,6 @@ export async function assembleDataPacket(ticker) {
     compensation,
     peers,
     peerMetrics: peerMetrics || null,
-    analystEstimates,
-    prices: prices ? { data: prices, currentPrice } : null,
     transcriptAvailability,
     filings,
     caveats: buildCaveats(classification),
