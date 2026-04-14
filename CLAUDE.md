@@ -9,7 +9,7 @@ The user is NOT a programmer. Keep explanations in plain English.
 
 **Goal**: Reduce 40+ hours of manual Rule One research per company using AI-assisted analysis.
 
-**Status**: Deployed as invite-only web app at **thes1sinvesting.com**. Pipeline runs in-browser. Backend API at **api.thes1sinvesting.com** (Cloudflare Workers + D1 + R2). Auth, server-side storage, proxy routes, and 5 cron jobs all live.
+**Status**: Deployed as invite-only web app at **thes1sinvesting.com**. One Pager pipeline live via Managed Agents. Pitch Deck pipeline blocked on `callable_agents` (multiagent Research Preview access requested). Backend API at **api.thes1sinvesting.com** (Cloudflare Workers + D1 + R2). Auth, server-side storage, proxy routes, 5 cron jobs, and pipeline dispatch all live.
 
 ### Branding
 - **Name**: Thes1s — "1" replaces the "i"
@@ -35,17 +35,17 @@ Thes1s is a professional AI-powered investment analyst team. The user is the por
 - **Frontend**: Vite + React on Cloudflare Pages (thes1sinvesting.com)
 - **Backend**: Cloudflare Workers ($5/mo paid plan) at api.thes1sinvesting.com
 - **Database**: Cloudflare D1 (SQLite) — auth, user data, guru holdings, insider trades, taxonomy
-- **Object Storage**: Cloudflare R2 — earnings call transcripts
+- **Object Storage**: Cloudflare R2 — earnings call transcripts + cached filing markdown (`filings-md/` prefix)
 - **Auth**: Invite-only email/password login, HTTP-only session cookies, PBKDF2 hashing, Resend for invite emails. No public signup — admin sends invite links.
 - **Storage (production)**: Reports, watchlists, settings stored per-user in D1. Hooks use dual-path: dev=localStorage/IDB, prod=API.
 - **Storage (dev)**: localStorage (reports, settings, watchlists), IndexedDB (EDGAR, guru, price, insider, compensation caches) via `cacheStore.js`
-- **AI**: Claude API direct from browser (`VITE_CLAUDE_KEY` in `.env.local`, `dangerouslyAllowBrowser: true`). Pipeline engines use `knowledgeBundle.js` (Vite `?raw` imports) instead of Node.js `readFileSync`.
+- **AI**: Claude Managed Agents (Anthropic-hosted agent loop + tool execution sandbox). One Pager = single agent session. Pitch Deck = coordinator with `callable_agents` dispatching 10 specialist agents (blocked on multiagent Research Preview). Worker creates sessions via `/v1/sessions`, sends DataPacket as message, polls events for completion. Old in-browser Claude API calls removed.
 - **Financial Data**: SEC EDGAR XBRL (all financials, 13F guru holdings, N-PORT, insiders, compensation — free), Yahoo Finance (prices, stock splits — free), Finviz (analyst estimates — free), GuruFocus (optional $25/mo API), Alpha Vantage (earnings transcripts — free 25 calls/day, 2-key failover)
 - **Charts**: Recharts
 - **Shared Package**: `packages/sec-parsers/` — parsing functions shared between frontend and Worker cron jobs (formatTranscript, parseForm4, parseInfoTable, gurusList, resolveIssuerTickers)
 - **Deps**: recharts, @anthropic-ai/sdk, uuid, react-router-dom, turndown, turndown-plugin-gfm, yahoo-finance2, cheerio, idb, zod
 - **CORS**: All external API calls (SEC, Yahoo, Finviz) go through Worker proxy in production. Dev uses Vite proxy middleware. Centralized in `src/engines/apiBase.js`.
-- **Data Pipeline Pattern**: Frontend tries D1/R2 first via `/data/` endpoints, falls back to SEC/AV on failure. All `/data/` and `/proxy/` routes (except `/proxy/claude/`) are public (before auth gate). Pipeline in Node.js skips D1 (`typeof window !== 'undefined'` guard) and goes straight to SEC.
+- **Data Pipeline Pattern**: Frontend tries D1/R2 first via `/data/` endpoints, falls back to SEC/AV on failure. All `/data/` and `/proxy/` routes (except `/proxy/claude/`) are public (before auth gate). Worker-side assembly (`assembleDataPacket.js`) imports the same frontend engines but installs a fetch interceptor to rewrite self-referencing proxy URLs to direct SEC/EDGAR endpoints, then overrides gurus/insiders/transcripts with D1/R2 bindings.
 
 For detailed API integration notes (CORS proxying, EDGAR XBRL details, parsing internals), see `knowledge/engineering/app-architecture.md`.
 
@@ -107,6 +107,10 @@ Frontend engines try Cloudflare-cached data first, fall back to SEC/AV:
 **When debugging or modifying any engine, API integration, scoring algorithm, CORS proxy, validation system, or parser** — read `knowledge/engineering/app-architecture.md` first.
 
 **When debugging or modifying the XBRL extraction engine, taxonomy, provenance, industry overlays, or coverage systems** — read `gstack/plans/gstack-xbrl-engine-strategy-eng-plan-20260318.md` first.
+
+**SVG flow diagrams** — `api/src/assembly/` contains visual diagrams of the DataPacket assembly and PSR filing pre-fetch flows. The user references these when debugging pipeline errors. **Any time you change the assembly or filing content mechanics, update the corresponding SVG to reflect the current state.** These must always match reality:
+- `datapacket-assembly-flow.svg` — DataPacket assembly (fetch interceptor, engine stages, D1/R2 overrides)
+- `filing-content-assembly-flow.svg` — PSR filing pre-fetch (R2 cache, SEC fetch, cheerio, Turndown, section extraction, transcripts)
 
 ### Three-Layer XBRL Engine (`edgarFinancials.js`)
 
@@ -291,34 +295,71 @@ These patterns from the user's real analyses must be built into AI report genera
 
 ---
 
-## Agent Pipeline
+## Agent Pipeline (Managed Agents v2)
 
-**Pipeline Schematic**: `agents/pipeline-schematic.svg` — visual diagram of the agent team, wave orchestration, and data flow. **Any time there is a significant change to agents, agent architecture, orchestration, wave structure, or team composition, update this SVG to reflect the current state.** This is the quick-reference source of truth for how the pipeline works — it must always match reality.
+**NEVER build custom orchestration.** Workers, Durable Objects, and hand-rolled dispatch all failed (v1). Managed Agents handles the agent loop, tool execution, and session lifecycle. The Worker's only job is: assemble data → create session → send message → poll for completion.
 
-12 specialized AI agents with wave-based orchestration. Pipeline cost: ~$8-12/company for Pitch Deck, ~$28-30 for all 3 stages.
+### Architecture
 
-| Agent | Role |
-|-------|------|
-| business-analyst | Meaning & Simple Predictability |
-| competitor-evaluator | Market Position & Barriers/Moats |
-| financial-analyst | FCF, ROE/ROIC, Balance Sheet |
-| management-evaluator | Management Quality |
-| risk-analyst | PEST Risks |
-| valuation-specialist | Valuation & FGR |
-| synthesis-writer | Polish & Final Synthesis |
-| annual-reader | Annual report preprocessing |
-| quarterly-reader | Quarterly report preprocessing |
-| primary-source-reader | SEC filing extraction |
-| data-assembler | Data staging (code-driven) |
+- **One Pager**: Single Managed Agent session. Agent uses `web_search` to research the company. No DataPacket needed. ~4 min, ~$1-2/run. **Live on production.**
+- **Pitch Deck**: Coordinator agent dispatches 10 specialist agents via `callable_agents` in 5 waves. Worker assembles DataPacket + filing content, sends to coordinator as message. **Blocked on multiagent Research Preview access.**
+- **Full Story**: Adversarial debate flow (bull → bear → rebuttal → judge). Agent prompts written, not yet wired.
 
-Key engines: `aiResearch.js` (Claude API dispatch), `pipelineManager.js` (wave orchestration), `critic.js` (quality validation), `onePagerGenerator.js` (single-call One Pager), `dataExport.js` (DataPacket assembly).
+### Managed Agents IDs
+
+| ID | Agent | Stage |
+|----|-------|-------|
+| `agent_011CZzuB5TVsiPgnQZZJscmy` | One Pager Analyst | One Pager |
+| `agent_011Ca37DJEQBPbm6rKET3fMs` | Pitch Deck Coordinator | Pitch Deck |
+| `agent_011Ca2vuGcG4jEp4WBAfnu95` | Annual Reader (PSR) | Pitch Deck / Full Story |
+| `agent_011Ca2vq6XvSuuwDyRYt9oLM` | Quarterly Reader (PSR) | Pitch Deck / Full Story |
+| `agent_011Ca1vzUNKzbzdQmX2aJqU2` | Business Analyst | Pitch Deck |
+| `agent_011Ca2r7WPEjx8FwemeqETCA` | Competitor Evaluator — Market Position | Pitch Deck |
+| `agent_011Ca2r9Do9mLtdBnf7QdEnM` | Competitor Evaluator — Moats | Pitch Deck |
+| `agent_011Ca2sv9peUvMA7G1kzdFQP` | Financial Analyst | Pitch Deck |
+| `agent_011Ca2thF4fQLKtVVHVgYy3e` | Management Evaluator | Pitch Deck |
+| `agent_011Ca2u5UMz9E1fN514pAvid` | Risk Analyst | Pitch Deck |
+| `agent_011Ca2tZSVn2RTTxYa37YS8b` | Valuation Specialist | Pitch Deck |
+| `agent_011Ca31BD7pZ1Dz9ngZyUtXM` | Synthesis Writer | Pitch Deck |
+| `env_015GFMSSrnuhL1zwDYWyMfaz` | Environment (thes1s-dev) | All |
+
+### Pitch Deck Wave Structure
+
+| Wave | Agents | Dependencies |
+|------|--------|-------------|
+| 0 — PSR | Annual Reader, Quarterly Reader | Filing content from DataPacket |
+| 1 — Business Context | Business Analyst, Competitor (Market Position) | PSR outputs |
+| 2 — Deep Analysis | Competitor (Moats), Financial Analyst, Management Evaluator | Wave 1 (Moats needs Section 3) |
+| 3 — Risk & Valuation | Risk Analyst, Valuation Specialist | Wave 2 outputs |
+| 4 — Synthesis | Synthesis Writer | All 10 section outputs |
+
+### Worker-Side Data Assembly
+
+Two assembly modules prepare data for the coordinator. Each has an SVG flow diagram for debugging — **keep these diagrams updated when changing assembly mechanics.**
+
+| Module | Diagram | What it does |
+|--------|---------|-------------|
+| `api/src/assembly/assembleDataPacket.js` | `datapacket-assembly-flow.svg` | Imports frontend engines, installs fetch interceptor (rewrites self-referencing proxy URLs to direct SEC/EDGAR), overrides gurus/insiders/transcripts with D1/R2 |
+| `api/src/assembly/assembleFilingContent.js` | `filing-content-assembly-flow.svg` | Fetches SEC filing HTML, cleans iXBRL with cheerio, converts to markdown via Turndown, extracts sections, fetches transcripts from R2 with AV fallback. R2 caching for filing markdown. |
+
+**DataPacket assembly flow**: Fetch interceptor → 5-stage engine chain (core financials → computed metrics → external data → dependent data → composite scores) → D1/R2 overrides → return.
+
+**Filing content assembly flow**: Select filings (5 10-Ks + 4 10-Qs) → R2 cache check → SEC EDGAR fetch → cheerio iXBRL cleanup → Turndown markdown → section extraction (`fileSections.js`, pure regex) → truncation (40K/15K) → R2 cache write. Transcripts from R2 with Alpha Vantage fallback.
+
+### Agent Prompts (`agents-v2/`)
+
+Each agent has `prompt.md` (readable) + `managed-agent.yaml` (Console-ready config). Prompts are self-contained — each merges 7+ curriculum/knowledge files with full Rule One methodology. No old v1 prompts modified.
+
+### Pipeline Routes (`api/src/routes/pipeline.js`)
+
+| Route | What it does |
+|-------|-------------|
+| `POST /api/pipeline/run` | Create session, send message, return runId. One Pager live; Pitch Deck returns 501 pending callable_agents. |
+| `GET /api/pipeline/status/:runId` | Poll session events, save report on completion |
+| `POST /api/pipeline/assemble-data/:ticker` | Assemble DataPacket (add `?includeFilings=true` for filing content) |
+| `GET /api/pipeline/events/:runId` | Proxy session event log (observability) |
 
 Full Story uses adversarial debate: Bull → Bear → Rebuttal → Judge.
-
-### Known V1 Limitations
-- Sensitivity tables: schema exists, not yet wired into agent output or UI
-- Cost optimization: PSR agents re-read filings fresh per stage instead of reusing findings
-- Content quality: citation URL laundering, DataPacket path fabrication by agents
 
 ---
 
@@ -349,16 +390,29 @@ Contains: `thes1s-taxonomy-tree.json` (12 sectors, 52 industry groups, 176 indus
 ## Source Structure
 
 ```
-agents/               — 12 AI agents + orchestrator (configs, prompts, writing briefs, tests)
+agents-v2/            — Managed Agents prompts + YAML configs (v2 pipeline)
+├── one-pager/        — Single agent, live on production
+├── coordinator-pitchdeck/ — Coordinator prompt (waiting on callable_agents)
+├── business-analyst-pitchdeck/, financial-analyst-pitchdeck/, etc. — 7 PD section agents
+├── business-analyst-fullstory/, financial-analyst-fullstory/, etc. — 7 FS agents
+├── annual-reader/, quarterly-reader/ — 2 PSR agents (shared across stages)
+├── TODO.md           — Migration task tracking
+└── UX-MIGRATION-LOG.md — Frontend integration patterns + fixes
+agents/               — V1 agents (archived, not used by Managed Agents pipeline)
 api/                  — Cloudflare Worker backend
 ├── src/
 │   ├── index.js      — Router + CORS + auth gate
 │   ├── middleware/    — Session cookie auth
-│   ├── routes/       — auth, user data CRUD, data (D1/R2), proxy (SEC/Yahoo/Finviz)
+│   ├── routes/       — auth, user data CRUD, data (D1/R2), proxy (SEC/Yahoo/Finviz), pipeline (Managed Agents)
+│   ├── assembly/     — DataPacket + filing content assembly for pipeline
+│   │   ├── assembleDataPacket.js      — Imports frontend engines, fetch interceptor, D1/R2 overrides
+│   │   ├── assembleFilingContent.js   — SEC filing HTML → cheerio → Turndown → sections + transcripts
+│   │   ├── datapacket-assembly-flow.svg    — Visual diagram (KEEP UPDATED when assembly changes)
+│   │   └── filing-content-assembly-flow.svg — Visual diagram (KEEP UPDATED when PSR pre-fetch changes)
 │   └── cron/         — 5 cron jobs (transcripts, insiders, gurus, taxonomy, cleanup)
-├── schema.sql        — Full D1 schema (11 tables)
+├── schema.sql        — Full D1 schema
 ├── scripts/          — Seed scripts (seed-taxonomy.mjs)
-└── wrangler.toml     — Worker config (D1, R2, cron triggers)
+└── wrangler.toml     — Worker config (D1, R2, cron triggers, Managed Agent IDs)
 packages/
 └── sec-parsers/      — Shared SEC parsing functions (used by frontend + Worker)
     ├── formatTranscript.js, parseForm4.js, parseInfoTable.js, gurusList.js
@@ -367,6 +421,9 @@ src/
 ├── components/       — ~60 React components (Toolbox, report renderers, LoginPage, SignupPage)
 │   └── pitchDeck/    — AssumptionTracker, DeepDivePanel, IndustryCard
 ├── engines/          — ~58 engine modules (EDGAR, scoring, AI pipeline, caching, apiBase, knowledgeBundle)
+│   ├── dataExport.js       — DataPacket assembly (frontend version, also imported by Worker)
+│   ├── filingMarkdown.js   — Filing HTML→markdown (browser version, DOMParser-based)
+│   └── fileSections.js     — Section extraction (pure regex, shared by browser + Worker)
 ├── hooks/            — ~22 React hooks (data fetching, report state, settings, useAuth)
 ├── schemas/          — 5 Zod schemas (reportSection, debateStep, dataPacket, progress, onePager)
 ├── data/             — Static lookup tables (taxonomy, tag classifications, display names)
