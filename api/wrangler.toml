@@ -11,8 +11,12 @@ compatibility_flags = ["nodejs_compat"]
 # esbuild defines — replace Vite-only import.meta.env expressions at compile time
 # Fixes: apiBase.js, config.js which read import.meta.env at module level
 [define]
+# General define — handles dynamic bracket access (e.g. import.meta.env[key] in config.js).
+# Without this, import.meta.env is undefined in Workers and bracket access throws.
+# Specific defines below take precedence for exact dot-notation expressions.
+"import.meta.env" = "{}"
 "import.meta.env.DEV" = "false"
-"import.meta.env.VITE_API_URL" = "''"
+"import.meta.env.VITE_API_URL" = "'https://api.thes1sinvesting.com'"
 "import.meta.env.VITE_CLAUDE_KEY" = "'proxy'"
 "import.meta.env.VITE_ALPHA_VANTAGE_KEY" = "''"
 "import.meta.env.VITE_ALPHA_VANTAGE_KEY_2" = "''"

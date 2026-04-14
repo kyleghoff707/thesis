@@ -1,0 +1,278 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1600" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#475569"/>
+    </marker>
+    <marker id="arrow-teal" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#0f766e"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626"/>
+    </marker>
+    <marker id="arrow-amber" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#d97706"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="1600" fill="#0f172a" rx="12"/>
+
+  <!-- Title -->
+  <text x="600" y="45" text-anchor="middle" fill="#f1f5f9" font-size="22" font-weight="700">DataPacket Assembly Flow</text>
+  <text x="600" y="70" text-anchor="middle" fill="#94a3b8" font-size="13">What happens when POST /api/pipeline/assemble-data/:ticker is called</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- LAYER 1: User Request -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <!-- User trigger -->
+  <rect x="420" y="95" width="360" height="50" rx="25" fill="#1e293b" stroke="#0f766e" stroke-width="2"/>
+  <text x="600" y="125" text-anchor="middle" fill="#2dd4bf" font-size="14" font-weight="600">User clicks "Generate Pitch Deck" for COST</text>
+
+  <!-- Arrow down -->
+  <line x1="600" y1="145" x2="600" y2="175" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Frontend fetch -->
+  <rect x="380" y="175" width="440" height="44" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="600" y="195" text-anchor="middle" fill="#cbd5e1" font-size="12">Browser Console / Frontend</text>
+  <text x="600" y="210" text-anchor="middle" fill="#94a3b8" font-size="11">fetch('https://api.thes1sinvesting.com/api/pipeline/assemble-data/COST', { credentials: 'include' })</text>
+
+  <!-- Arrow down -->
+  <line x1="600" y1="219" x2="600" y2="250" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- LAYER 2: Worker Entry -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <!-- Worker box -->
+  <rect x="60" y="250" width="1080" height="1300" rx="10" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+  <text x="120" y="275" fill="#64748b" font-size="11" font-weight="600" letter-spacing="2">CLOUDFLARE WORKER (api.thes1sinvesting.com)</text>
+
+  <!-- index.js routing -->
+  <rect x="380" y="290" width="440" height="40" rx="6" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+  <text x="420" y="310" fill="#94a3b8" font-size="11">api/src/index.js</text>
+  <text x="640" y="310" fill="#cbd5e1" font-size="11">→ authenticate(cookie) → handlePipeline()</text>
+
+  <line x1="600" y1="330" x2="600" y2="355" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- pipeline.js routing -->
+  <rect x="350" y="355" width="500" height="40" rx="6" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+  <text x="390" y="375" fill="#94a3b8" font-size="11">api/src/routes/pipeline.js</text>
+  <text x="660" y="375" fill="#cbd5e1" font-size="11">→ path matches /assemble-data/:ticker → handleAssembleData()</text>
+
+  <line x1="600" y1="395" x2="600" y2="425" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- LAYER 3: Assembly Module -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <rect x="100" y="425" width="1000" height="1100" rx="8" fill="#0f172a" stroke="#0f766e" stroke-width="2"/>
+  <text x="160" y="450" fill="#2dd4bf" font-size="12" font-weight="600">api/src/assembly/assembleDataPacket.js</text>
+
+  <!-- Step A: Install fetch interceptor -->
+  <rect x="140" y="465" width="920" height="155" rx="6" fill="#1e293b" stroke="#d97706" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="180" y="488" fill="#fbbf24" font-size="12" font-weight="600">STEP A: Install Fetch Interceptor</text>
+  <text x="180" y="508" fill="#94a3b8" font-size="11">globalThis.fetch = createInterceptedFetch(origFetch, userAgent)</text>
+
+  <!-- Interceptor rules table -->
+  <text x="180" y="535" fill="#cbd5e1" font-size="11" font-weight="500">URL Rewrite Rules:</text>
+
+  <rect x="200" y="545" width="260" height="22" rx="3" fill="#0f172a"/>
+  <text x="210" y="560" fill="#dc2626" font-size="10">api.thes1sinvesting.com/proxy/sec/*</text>
+  <text x="470" y="560" fill="#475569" font-size="10">→</text>
+  <rect x="485" y="545" width="200" height="22" rx="3" fill="#0f172a"/>
+  <text x="495" y="560" fill="#22c55e" font-size="10">www.sec.gov/* + User-Agent</text>
+
+  <rect x="200" y="572" width="260" height="22" rx="3" fill="#0f172a"/>
+  <text x="210" y="587" fill="#dc2626" font-size="10">api.thes1sinvesting.com/proxy/edgar/*</text>
+  <text x="470" y="587" fill="#475569" font-size="10">→</text>
+  <rect x="485" y="572" width="200" height="22" rx="3" fill="#0f172a"/>
+  <text x="495" y="587" fill="#22c55e" font-size="10">data.sec.gov/* + User-Agent</text>
+
+  <rect x="200" y="599" width="260" height="22" rx="3" fill="#0f172a"/>
+  <text x="210" y="614" fill="#dc2626" font-size="10">api.thes1sinvesting.com/proxy/finviz/*</text>
+  <text x="470" y="614" fill="#475569" font-size="10">→</text>
+  <rect x="485" y="599" width="200" height="22" rx="3" fill="#0f172a"/>
+  <text x="495" y="614" fill="#22c55e" font-size="10">finviz.com (fetch + parse HTML)</text>
+
+  <!-- Arrow down -->
+  <line x1="600" y1="625" x2="600" y2="650" stroke="#0f766e" stroke-width="2" marker-end="url(#arrow-teal)"/>
+
+  <!-- Step B: Call _assembleDataPacket -->
+  <rect x="140" y="650" width="920" height="640" rx="6" fill="#1e293b" stroke="#0f766e" stroke-width="1.5"/>
+  <text x="180" y="675" fill="#2dd4bf" font-size="12" font-weight="600">STEP B: _assembleDataPacket(ticker)</text>
+  <text x="520" y="675" fill="#64748b" font-size="11">← imported from src/engines/dataExport.js (29-file bundle)</text>
+
+  <!-- Stage 1 -->
+  <rect x="170" y="695" width="860" height="90" rx="5" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <text x="195" y="715" fill="#f1f5f9" font-size="12" font-weight="600">Stage 1 — Core Financial Data</text>
+  <text x="420" y="715" fill="#64748b" font-size="10">(sequential — everything else depends on this)</text>
+
+  <rect x="200" y="725" width="380" height="24" rx="4" fill="#1e293b"/>
+  <text x="215" y="741" fill="#cbd5e1" font-size="10">fetchEdgarStatements(ticker)</text>
+  <text x="480" y="741" fill="#64748b" font-size="10">→ XBRL extraction (85 fields)</text>
+
+  <rect x="200" y="753" width="380" height="24" rx="4" fill="#1e293b"/>
+  <text x="215" y="769" fill="#cbd5e1" font-size="10">fetchCompanyInfo(ticker)</text>
+  <text x="430" y="769" fill="#64748b" font-size="10">→ name, SIC, sector, employees</text>
+
+  <!-- External call indicators for Stage 1 -->
+  <rect x="690" y="725" width="320" height="52" rx="4" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+  <text x="710" y="743" fill="#94a3b8" font-size="10">Intercepted fetch calls:</text>
+  <text x="710" y="758" fill="#22c55e" font-size="10">→ data.sec.gov/api/xbrl/companyfacts/...</text>
+  <text x="710" y="773" fill="#22c55e" font-size="10">→ data.sec.gov/submissions/CIK...</text>
+
+  <!-- Classification (computed locally) -->
+  <rect x="620" y="725" width="50" height="24" rx="3" fill="#0f766e"/>
+  <text x="645" y="741" text-anchor="middle" fill="#f0fdfa" font-size="8" font-weight="600">LOCAL</text>
+  <rect x="620" y="753" width="50" height="24" rx="3" fill="#2563eb"/>
+  <text x="645" y="769" text-anchor="middle" fill="#eff6ff" font-size="8" font-weight="600">SEC</text>
+
+  <!-- Stage 2 -->
+  <rect x="170" y="800" width="860" height="100" rx="5" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <text x="195" y="820" fill="#f1f5f9" font-size="12" font-weight="600">Stage 2 — Computed Metrics</text>
+  <text x="415" y="820" fill="#64748b" font-size="10">(parallel — pure math, no I/O)</text>
+  <rect x="780" y="808" width="50" height="18" rx="3" fill="#0f766e"/>
+  <text x="805" y="821" text-anchor="middle" fill="#f0fdfa" font-size="8" font-weight="600">LOCAL</text>
+
+  <rect x="200" y="830" width="170" height="22" rx="4" fill="#1e293b"/>
+  <text x="210" y="845" fill="#cbd5e1" font-size="10">computeAllGrowthRates()</text>
+  <rect x="380" y="830" width="160" height="22" rx="4" fill="#1e293b"/>
+  <text x="390" y="845" fill="#cbd5e1" font-size="10">computeReturnMetrics()</text>
+  <rect x="550" y="830" width="150" height="22" rx="4" fill="#1e293b"/>
+  <text x="560" y="845" fill="#cbd5e1" font-size="10">computeDebtMetrics()</text>
+
+  <rect x="200" y="858" width="170" height="22" rx="4" fill="#1e293b"/>
+  <text x="210" y="873" fill="#cbd5e1" font-size="10">computeFreeCashFlow()</text>
+  <rect x="380" y="858" width="160" height="22" rx="4" fill="#1e293b"/>
+  <text x="390" y="873" fill="#cbd5e1" font-size="10">computeKeyMetrics()</text>
+
+  <text x="560" y="873" fill="#64748b" font-size="10">All take Stage 1 financials as input</text>
+
+  <!-- Stage 3 -->
+  <rect x="170" y="915" width="860" height="145" rx="5" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <text x="195" y="935" fill="#f1f5f9" font-size="12" font-weight="600">Stage 3 — External Data</text>
+  <text x="390" y="935" fill="#64748b" font-size="10">(parallel — independent of each other)</text>
+
+  <!-- Left column: things that call external APIs -->
+  <rect x="200" y="948" width="230" height="22" rx="4" fill="#1e293b"/>
+  <text x="210" y="963" fill="#cbd5e1" font-size="10">fetchGurusForTicker(ticker)</text>
+  <rect x="440" y="948" width="50" height="22" rx="3" fill="#2563eb"/>
+  <text x="465" y="963" text-anchor="middle" fill="#eff6ff" font-size="8" font-weight="600">SEC</text>
+  <text x="500" y="963" fill="#64748b" font-size="10">13F filings (overridden by D1 later)</text>
+
+  <rect x="200" y="975" width="230" height="22" rx="4" fill="#1e293b"/>
+  <text x="210" y="990" fill="#cbd5e1" font-size="10">fetchInsidersForTicker(ticker)</text>
+  <rect x="440" y="975" width="50" height="22" rx="3" fill="#2563eb"/>
+  <text x="465" y="990" text-anchor="middle" fill="#eff6ff" font-size="8" font-weight="600">SEC</text>
+  <text x="500" y="990" fill="#64748b" font-size="10">Form 4 (overridden by D1 later)</text>
+
+  <rect x="200" y="1002" width="230" height="22" rx="4" fill="#1e293b"/>
+  <text x="210" y="1017" fill="#cbd5e1" font-size="10">fetchCompensation(ticker)</text>
+  <rect x="440" y="1002" width="50" height="22" rx="3" fill="#2563eb"/>
+  <text x="465" y="1017" text-anchor="middle" fill="#eff6ff" font-size="8" font-weight="600">SEC</text>
+  <text x="500" y="1017" fill="#64748b" font-size="10">DEF 14A proxy statements</text>
+
+  <rect x="200" y="1029" width="230" height="22" rx="4" fill="#1e293b"/>
+  <text x="210" y="1044" fill="#cbd5e1" font-size="10">fetchPeersByTier(classification)</text>
+  <rect x="440" y="1029" width="50" height="22" rx="3" fill="#0f766e"/>
+  <text x="465" y="1044" text-anchor="middle" fill="#f0fdfa" font-size="8" font-weight="600">LOCAL</text>
+  <text x="500" y="1044" fill="#64748b" font-size="10">In-memory taxonomy lookup</text>
+
+  <!-- Right column: skipped or fallback -->
+  <rect x="700" y="948" width="230" height="22" rx="4" fill="#1e293b" stroke="#475569" stroke-dasharray="4,2"/>
+  <text x="710" y="963" fill="#64748b" font-size="10">fetchAnalystEstimates()</text>
+  <rect x="940" y="948" width="70" height="22" rx="3" fill="#374151"/>
+  <text x="975" y="963" text-anchor="middle" fill="#9ca3af" font-size="8" font-weight="600">SKIPPED</text>
+
+  <rect x="700" y="975" width="230" height="22" rx="4" fill="#1e293b" stroke="#475569" stroke-dasharray="4,2"/>
+  <text x="710" y="990" fill="#64748b" font-size="10">fetchPrices()</text>
+  <rect x="940" y="975" width="70" height="22" rx="3" fill="#374151"/>
+  <text x="975" y="990" text-anchor="middle" fill="#9ca3af" font-size="8" font-weight="600">SKIPPED</text>
+
+  <text x="710" y="1020" fill="#64748b" font-size="10" font-style="italic">IS_NODE = true → Yahoo engines</text>
+  <text x="710" y="1035" fill="#64748b" font-size="10" font-style="italic">skipped (crumb auth broken)</text>
+
+  <rect x="700" y="1044" width="230" height="22" rx="4" fill="#1e293b"/>
+  <text x="710" y="1059" fill="#cbd5e1" font-size="10">fetchFinvizData(ticker) ← fallback</text>
+  <rect x="940" y="1044" width="70" height="22" rx="3" fill="#7c3aed"/>
+  <text x="975" y="1059" text-anchor="middle" fill="#f5f3ff" font-size="8" font-weight="600">FINVIZ</text>
+
+  <!-- Stage 4 -->
+  <rect x="170" y="1075" width="860" height="55" rx="5" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <text x="195" y="1095" fill="#f1f5f9" font-size="12" font-weight="600">Stage 4 — Dependent Data</text>
+  <text x="400" y="1095" fill="#64748b" font-size="10">(needs Stage 3 peers + Stage 1 financials)</text>
+  <rect x="200" y="1105" width="250" height="20" rx="4" fill="#1e293b"/>
+  <text x="210" y="1119" fill="#cbd5e1" font-size="10">computePeerScores(peerCIKs, year)</text>
+  <rect x="460" y="1105" width="50" height="20" rx="3" fill="#2563eb"/>
+  <text x="485" y="1119" text-anchor="middle" fill="#eff6ff" font-size="8" font-weight="600">SEC</text>
+
+  <!-- Stage 5 -->
+  <rect x="170" y="1145" width="860" height="55" rx="5" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <text x="195" y="1165" fill="#f1f5f9" font-size="12" font-weight="600">Stage 5 — Composite Scores</text>
+  <text x="420" y="1165" fill="#64748b" font-size="10">(needs Stage 2 growth + returns)</text>
+  <rect x="780" y="1153" width="50" height="18" rx="3" fill="#0f766e"/>
+  <text x="805" y="1166" text-anchor="middle" fill="#f0fdfa" font-size="8" font-weight="600">LOCAL</text>
+  <rect x="200" y="1175" width="180" height="20" rx="4" fill="#1e293b"/>
+  <text x="210" y="1189" fill="#cbd5e1" font-size="10">computeMoatScore()</text>
+  <rect x="390" y="1175" width="210" height="20" rx="4" fill="#1e293b"/>
+  <text x="400" y="1189" fill="#cbd5e1" font-size="10">computeManagementScore()</text>
+  <rect x="610" y="1175" width="200" height="20" rx="4" fill="#1e293b"/>
+  <text x="620" y="1189" fill="#cbd5e1" font-size="10">computeRuleOneScore()</text>
+
+  <!-- End of _assembleDataPacket -->
+
+  <!-- Arrow down from Step B -->
+  <line x1="600" y1="1295" x2="600" y2="1315" stroke="#0f766e" stroke-width="2" marker-end="url(#arrow-teal)"/>
+
+  <!-- Step C: D1/R2 Overrides -->
+  <rect x="140" y="1315" width="920" height="110" rx="6" fill="#1e293b" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="180" y="1340" fill="#60a5fa" font-size="12" font-weight="600">STEP C: D1/R2 Overrides</text>
+  <text x="420" y="1340" fill="#64748b" font-size="11">(parallel — direct bindings, no HTTP)</text>
+
+  <rect x="200" y="1355" width="260" height="26" rx="4" fill="#0f172a"/>
+  <text x="215" y="1373" fill="#cbd5e1" font-size="10">overrideGurus(packet, ticker, env.DB)</text>
+  <rect x="470" y="1355" width="40" height="26" rx="3" fill="#2563eb"/>
+  <text x="490" y="1373" text-anchor="middle" fill="#eff6ff" font-size="8" font-weight="600">D1</text>
+  <text x="520" y="1373" fill="#94a3b8" font-size="10">SELECT * FROM guru_holdings WHERE ticker = ?</text>
+
+  <rect x="200" y="1385" width="260" height="26" rx="4" fill="#0f172a"/>
+  <text x="215" y="1403" fill="#cbd5e1" font-size="10">overrideInsiders(packet, ticker, env.DB)</text>
+  <rect x="470" y="1385" width="40" height="26" rx="3" fill="#2563eb"/>
+  <text x="490" y="1403" text-anchor="middle" fill="#eff6ff" font-size="8" font-weight="600">D1</text>
+  <text x="520" y="1403" fill="#94a3b8" font-size="10">SELECT * FROM insider_trades WHERE ticker = ?</text>
+
+  <rect x="200" y="1415" width="260" height="26" rx="4" fill="#0f172a"/>
+  <text x="215" y="1433" fill="#cbd5e1" font-size="10">overrideTranscripts(packet, ticker, env.TRANSCRIPTS)</text>
+  <rect x="470" y="1415" width="40" height="26" rx="3" fill="#f59e0b"/>
+  <text x="490" y="1433" text-anchor="middle" fill="#1e293b" font-size="8" font-weight="600">R2</text>
+  <text x="520" y="1433" fill="#94a3b8" font-size="10">list objects under transcripts/{ticker}/</text>
+
+  <!-- Arrow down to return -->
+  <line x1="600" y1="1445" x2="600" y2="1470" stroke="#0f766e" stroke-width="2" marker-end="url(#arrow-teal)"/>
+
+  <!-- Step D: Restore fetch + Return -->
+  <rect x="300" y="1470" width="600" height="40" rx="6" fill="#1e293b" stroke="#0f766e" stroke-width="1.5"/>
+  <text x="600" y="1495" text-anchor="middle" fill="#2dd4bf" font-size="12" font-weight="600">STEP D: Restore globalThis.fetch → Return DataPacket JSON</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- Legend -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <rect x="100" y="1535" width="1000" height="50" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+
+  <rect x="130" y="1550" width="40" height="18" rx="3" fill="#0f766e"/>
+  <text x="180" y="1564" fill="#94a3b8" font-size="10">LOCAL (pure math)</text>
+
+  <rect x="310" y="1550" width="40" height="18" rx="3" fill="#2563eb"/>
+  <text x="360" y="1564" fill="#94a3b8" font-size="10">SEC / D1 (external data)</text>
+
+  <rect x="520" y="1550" width="40" height="18" rx="3" fill="#7c3aed"/>
+  <text x="570" y="1564" fill="#94a3b8" font-size="10">FINVIZ (analyst estimates)</text>
+
+  <rect x="730" y="1550" width="40" height="18" rx="3" fill="#f59e0b"/>
+  <text x="780" y="1564" fill="#94a3b8" font-size="10">R2 (transcripts)</text>
+
+  <rect x="900" y="1550" width="40" height="18" rx="3" fill="#374151"/>
+  <text x="950" y="1564" fill="#94a3b8" font-size="10">SKIPPED (Yahoo)</text>
+</svg>

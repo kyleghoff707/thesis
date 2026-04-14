@@ -90,6 +90,22 @@ export function useResearch() {
           }
         }
 
+        // Dev: auto-seed from .thes1s reports if no data exists
+        if (IS_DEV) {
+          try {
+            const res = await fetch('/seed-reports.json');
+            if (res.ok) {
+              const seed = await res.json();
+              if (Array.isArray(seed) && seed.length > 0) {
+                for (const report of seed) {
+                  await idbSet(IDB_STORE, report.id, report, REPORT_TTL);
+                }
+                if (!cancelled) { setReports(seed); setLoading(false); return; }
+              }
+            }
+          } catch { /* no seed file — that's fine */ }
+        }
+
         if (!cancelled) { setReports([]); setLoading(false); }
       } catch (err) {
         if (!cancelled) {

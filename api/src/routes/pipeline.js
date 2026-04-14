@@ -1,7 +1,10 @@
 // Pipeline routes — Managed Agents integration for report generation.
 // POST /api/pipeline/run — create session, send message, return runId
+// POST /api/pipeline/assemble-data/:ticker — assemble DataPacket for agent consumption
 // GET /api/pipeline/status/:runId — poll session events, save on completion
 // GET /api/pipeline/events/:runId — proxy session event log (observability)
+
+import { assembleDataPacket } from '../assembly/assembleDataPacket.js';
 
 const ANTHROPIC_API = 'https://api.anthropic.com';
 const BETA_HEADER = 'managed-agents-2026-04-01';
@@ -34,6 +37,12 @@ export async function handlePipeline(request, env, path, user) {
     return handleExport(env, user, exportMatch[1], exportMatch[2], exportMatch[3]);
   }
 
+  // POST /api/pipeline/assemble-data/:ticker — assemble DataPacket for a ticker
+  const assembleMatch = path.match(/^\/api\/pipeline\/assemble-data\/([A-Za-z0-9.-]+)$/);
+  if (request.method === 'POST' && assembleMatch) {
+    return handleAssembleData(env, user, assembleMatch[1]);
+  }
+
   // Diagnostic: test session creation (temporary — remove after debugging)
   if (request.method === 'GET' && path === '/api/pipeline/test') {
     try {
@@ -60,9 +69,9 @@ async function handleRun(request, env, user) {
   if (!ticker || !stage) return json({ error: 'ticker and stage are required' }, 400);
   if (!/^[A-Z][A-Z0-9.-]{0,9}$/.test(ticker.toUpperCase())) return json({ error: 'Invalid ticker format' }, 400);
 
-  // Only One Pager supported via Managed Agents for now
-  if (stage !== 'onePager') {
-    return json({ error: `Stage "${stage}" is not yet available via Managed Agents. Use local CLI.` }, 501);
+  const SUPPORTED_STAGES = ['onePager', 'pitchDeck'];
+  if (!SUPPORTED_STAGES.includes(stage)) {
+    return json({ error: `Stage "${stage}" is not yet available via Managed Agents.` }, 501);
   }
 
   // Concurrent limit: 1 per user
@@ -105,6 +114,48 @@ async function handleRun(request, env, user) {
       'INSERT OR IGNORE INTO reports (id, user_id, ticker) VALUES (?, ?, ?)'
     ).bind(reportId, user.id, ticker).run();
   }
+
+  // ── Stage: Pitch Deck ──────────────────────────────────────
+  // Assemble DataPacket first. Coordinator agent not yet configured —
+  // returns the assembled DataPacket for inspection/testing.
+  if (stage === 'pitchDeck') {
+    const runId = crypto.randomUUID();
+    await env.DB.prepare(
+      `INSERT INTO pipeline_runs (id, user_id, report_id, ticker, stage, status, session_id, started_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 'running', NULL, datetime('now'), datetime('now'))`
+    ).bind(runId, user.id, reportId || null, ticker.toUpperCase(), stage).run();
+
+    try {
+      const dataPacket = await assembleDataPacket(ticker.toUpperCase(), env);
+
+      // TODO: Create Pitch Deck coordinator session with env.MA_PITCH_DECK_AGENT_ID
+      // TODO: Send DataPacket slices to coordinator as initial message
+      // TODO: Poll session events for completion (same as One Pager)
+      // For now, return the assembled DataPacket so we can verify assembly works
+
+      const fields = Object.keys(dataPacket).filter(k => k !== 'ticker' && k !== 'assembledAt' && k !== 'errors');
+      const populated = fields.filter(k => dataPacket[k] != null);
+
+      await env.DB.prepare(
+        `UPDATE pipeline_runs SET status = 'completed_with_errors', error = 'DataPacket assembled — coordinator agent not yet configured', updated_at = datetime('now') WHERE id = ?`
+      ).bind(runId).run();
+
+      return json({
+        runId, status: 'assembled', ticker: ticker.toUpperCase(), stage,
+        message: 'DataPacket assembled successfully. Pitch Deck coordinator agent not yet configured — agent dispatch coming next.',
+        dataPacketSummary: { populated: populated.length, total: fields.length, nullFields: fields.filter(k => dataPacket[k] == null) },
+        errors: dataPacket.errors || [],
+        dataPacket,
+      }, 200);
+    } catch (err) {
+      await env.DB.prepare(
+        `UPDATE pipeline_runs SET status = 'failed', error = ?, updated_at = datetime('now') WHERE id = ?`
+      ).bind(`DataPacket assembly failed: ${err.message}`, runId).run();
+      return json({ runId, error: 'DataPacket assembly failed', detail: err.message }, 500);
+    }
+  }
+
+  // ── Stage: One Pager ───────────────────────────────────────
 
   // Create Managed Agent session
   let sessionId;
@@ -323,6 +374,43 @@ async function handleExport(env, user, reportId, stage, format) {
     });
   } catch (err) {
     return json({ error: `Export service unreachable: ${err.message}` }, 503);
+  }
+}
+
+// ─── POST /api/pipeline/assemble-data/:ticker ──────────────
+
+async function handleAssembleData(env, user, ticker) {
+  const upperTicker = ticker.toUpperCase();
+  if (!/^[A-Z][A-Z0-9.-]{0,9}$/.test(upperTicker)) {
+    return json({ error: 'Invalid ticker format' }, 400);
+  }
+
+  const startedAt = Date.now();
+  try {
+    const dataPacket = await assembleDataPacket(upperTicker, env);
+    const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+
+    // Summary of populated vs null fields for quick debugging
+    const fields = Object.keys(dataPacket).filter(k => k !== 'ticker' && k !== 'assembledAt' && k !== 'errors');
+    const populated = fields.filter(k => dataPacket[k] != null);
+    const nullFields = fields.filter(k => dataPacket[k] == null);
+
+    return json({
+      ticker: upperTicker,
+      assembledAt: dataPacket.assembledAt,
+      elapsedSeconds: parseFloat(elapsed),
+      populated: populated.length,
+      nullFields,
+      errors: dataPacket.errors || [],
+      dataPacket,
+    });
+  } catch (err) {
+    const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+    return json({
+      error: 'DataPacket assembly failed',
+      detail: err.message,
+      elapsedSeconds: parseFloat(elapsed),
+    }, 500);
   }
 }
 
