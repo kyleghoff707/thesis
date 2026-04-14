@@ -6,6 +6,7 @@
 
 import { assembleDataPacket } from '../assembly/assembleDataPacket.js';
 import { assembleFilingContent } from '../assembly/assembleFilingContent.js';
+import { startWave, checkWave, assembleFinalSections, TOTAL_WAVES } from '../assembly/pitchDeckDispatch.js';
 
 const ANTHROPIC_API = 'https://api.anthropic.com';
 const BETA_HEADER = 'managed-agents-2026-04-01';
@@ -119,19 +120,16 @@ async function handleRun(request, env, user) {
   }
 
   // ── Stage: Pitch Deck ──────────────────────────────────────
-  // Assemble DataPacket first. Coordinator agent not yet configured —
-  // returns the assembled DataPacket for inspection/testing.
+  // Worker-side wave dispatch: assemble DataPacket + filing content,
+  // kick off Wave 0 (PSR agents), store state in D1. Client polls
+  // /status/:runId which advances waves as each completes.
   if (stage === 'pitchDeck') {
     const runId = crypto.randomUUID();
-    await env.DB.prepare(
-      `INSERT INTO pipeline_runs (id, user_id, report_id, ticker, stage, status, session_id, started_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, 'running', NULL, datetime('now'), datetime('now'))`
-    ).bind(runId, user.id, reportId || null, ticker.toUpperCase(), stage).run();
 
     try {
+      // 1. Assemble DataPacket + filing content
       const dataPacket = await assembleDataPacket(ticker.toUpperCase(), env);
 
-      // Assemble filing content (SEC filing markdown + transcripts)
       let filingResult = { filingContent: {}, transcriptContent: {}, errors: [], stats: {} };
       try {
         filingResult = await assembleFilingContent(ticker.toUpperCase(), dataPacket, env);
@@ -144,31 +142,43 @@ async function handleRun(request, env, user) {
         dataPacket.errors = [...(dataPacket.errors || []), ...filingResult.errors];
       }
 
-      // TODO: Create Pitch Deck coordinator session with env.MA_PITCH_DECK_AGENT_ID
-      // TODO: Send DataPacket slices to coordinator as initial message
-      // TODO: Poll session events for completion (same as One Pager)
-      // For now, return the assembled DataPacket so we can verify assembly works
+      // 2. Kick off Wave 0 (PSR agents)
+      const companyName = dataPacket.companyInfo?.name || ticker.toUpperCase();
+      const wave0 = await startWave(0, ticker.toUpperCase(), companyName, dataPacket, {}, env);
 
-      const fields = Object.keys(dataPacket).filter(k => k !== 'ticker' && k !== 'assembledAt' && k !== 'errors');
-      const populated = fields.filter(k => dataPacket[k] != null);
+      // 3. Store run state in D1
+      const waveState = {
+        currentWave: 0,
+        dispatches: wave0.dispatches,
+        collectedOutputs: {},
+        totalUsage: { input: 0, output: 0 },
+        errors: [...(dataPacket.errors || []), ...wave0.errors],
+      };
 
       await env.DB.prepare(
-        `UPDATE pipeline_runs SET status = 'completed_with_errors', error = 'DataPacket assembled — coordinator agent not yet configured', updated_at = datetime('now') WHERE id = ?`
-      ).bind(runId).run();
+        `INSERT INTO pipeline_runs (id, user_id, report_id, ticker, stage, status, current_wave, total_waves, progress, data_packet_json, started_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, 'running', 0, ?, ?, ?, datetime('now'), datetime('now'))`
+      ).bind(
+        runId, user.id, reportId || null, ticker.toUpperCase(), stage,
+        TOTAL_WAVES,
+        JSON.stringify(waveState),
+        JSON.stringify(dataPacket),
+      ).run();
 
       return json({
-        runId, status: 'assembled', ticker: ticker.toUpperCase(), stage,
-        message: 'DataPacket assembled successfully. Pitch Deck coordinator agent not yet configured — agent dispatch coming next.',
-        dataPacketSummary: { populated: populated.length, total: fields.length, nullFields: fields.filter(k => dataPacket[k] == null) },
-        filingStats: filingResult.stats,
-        errors: dataPacket.errors || [],
-        dataPacket,
+        runId, status: 'running', ticker: ticker.toUpperCase(), stage,
+        currentWave: 0, totalWaves: TOTAL_WAVES,
+        message: `Wave 0 dispatched (${wave0.dispatches.length} PSR agents). Poll /status/${runId} to advance.`,
       }, 200);
     } catch (err) {
-      await env.DB.prepare(
-        `UPDATE pipeline_runs SET status = 'failed', error = ?, updated_at = datetime('now') WHERE id = ?`
-      ).bind(`DataPacket assembly failed: ${err.message}`, runId).run();
-      return json({ runId, error: 'DataPacket assembly failed', detail: err.message }, 500);
+      // Record failure even if we couldn't create the run yet
+      try {
+        await env.DB.prepare(
+          `INSERT INTO pipeline_runs (id, user_id, report_id, ticker, stage, status, error, started_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, 'failed', ?, datetime('now'), datetime('now'))`
+        ).bind(runId, user.id, reportId || null, ticker.toUpperCase(), stage, `Assembly failed: ${err.message}`).run();
+      } catch {}
+      return json({ runId, error: 'Pitch Deck assembly failed', detail: err.message }, 500);
     }
   }
 
@@ -212,7 +222,7 @@ async function handleRun(request, env, user) {
 
 async function handleStatus(env, user, runId) {
   const run = await env.DB.prepare(
-    `SELECT id, ticker, stage, status, session_id, report_id, sections_json, error, budget_json, started_at, updated_at
+    `SELECT id, ticker, stage, status, session_id, report_id, sections_json, error, budget_json, progress, current_wave, total_waves, data_packet_json, started_at, updated_at
      FROM pipeline_runs WHERE id = ? AND user_id = ?`
   ).bind(runId, user.id).first();
 
@@ -223,18 +233,25 @@ async function handleStatus(env, user, runId) {
     return json({
       status: run.status, sections_json: run.sections_json || null,
       error: run.error, budget: run.budget_json ? JSON.parse(run.budget_json) : null,
+      currentWave: run.current_wave, totalWaves: run.total_waves,
     });
   }
 
-  // Staleness check
-  if (Date.now() - new Date(run.updated_at).getTime() > STALE_TIMEOUT_MS) {
+  // Staleness check — pitch deck gets 60 min (10 agents × ~5 min each)
+  const staleMs = run.stage === 'pitchDeck' ? 60 * 60 * 1000 : STALE_TIMEOUT_MS;
+  if (Date.now() - new Date(run.updated_at).getTime() > staleMs) {
     await env.DB.prepare(
       `UPDATE pipeline_runs SET status = 'failed', error = 'Timed out', updated_at = datetime('now') WHERE id = ?`
     ).bind(runId).run();
-    return json({ status: 'failed', error: 'Timed out (no progress for 15 minutes)' });
+    return json({ status: 'failed', error: 'Timed out' });
   }
 
-  // Poll session events from Managed Agents (read-only)
+  // ── Pitch Deck: wave-driven advancement ───────────────────
+  if (run.stage === 'pitchDeck') {
+    return handlePitchDeckStatus(env, user, run);
+  }
+
+  // ── One Pager: single-session polling ─────────────────────
   if (!run.session_id) return json({ status: run.status });
 
   try {
@@ -260,12 +277,10 @@ async function handleStatus(env, user, runId) {
       if (result.sections) {
         const sectionsJson = JSON.stringify(result.sections);
 
-        // Save to pipeline_runs
         await env.DB.prepare(
           `UPDATE pipeline_runs SET status = 'completed', sections_json = ?, completed_at = datetime('now'), updated_at = datetime('now') WHERE id = ?`
-        ).bind(sectionsJson, runId).run();
+        ).bind(sectionsJson, run.id).run();
 
-        // Save to report_stages if we have a report ID
         if (run.report_id) {
           const stageData = JSON.stringify({
             sections: result.sections, errors: [], generatedAt: new Date().toISOString(),
@@ -276,7 +291,6 @@ async function handleStatus(env, user, runId) {
           ).bind(run.report_id, run.stage, stageData).run();
         }
 
-        // Log cost
         const usage = events.filter(e => e.type === 'span.model_request_end' && e.model_usage);
         let totalInput = 0, totalOutput = 0;
         for (const u of usage) {
@@ -294,19 +308,18 @@ async function handleStatus(env, user, runId) {
         return json({ status: 'completed', sections_json: sectionsJson, error: null, budget: { totalInput, totalOutput, costDollars } });
       }
 
-      // Session completed but couldn't parse output
       await env.DB.prepare(
         `UPDATE pipeline_runs SET status = 'failed', error = 'Could not parse agent output', updated_at = datetime('now') WHERE id = ?`
-      ).bind(runId).run();
+      ).bind(run.id).run();
       return json({ status: 'failed', error: 'Agent completed but output could not be parsed' });
     }
 
-    // Still running — derive progress from events
+    // Still running
     const searches = events.filter(e => e.type === 'agent.tool_use' && e.name === 'web_search');
     const thinking = events.filter(e => e.type === 'agent.thinking');
     await env.DB.prepare(
       `UPDATE pipeline_runs SET updated_at = datetime('now') WHERE id = ?`
-    ).bind(runId).run();
+    ).bind(run.id).run();
 
     return json({
       status: 'running',
@@ -315,6 +328,118 @@ async function handleStatus(env, user, runId) {
 
   } catch {
     return json({ status: 'running' });
+  }
+}
+
+// ─── Pitch Deck Status: Wave Advancement ───────────────────
+
+async function handlePitchDeckStatus(env, user, run) {
+  let waveState;
+  try {
+    waveState = JSON.parse(run.progress);
+  } catch {
+    return json({ status: 'failed', error: 'Corrupt wave state' });
+  }
+
+  const { currentWave, dispatches, collectedOutputs, totalUsage, errors } = waveState;
+
+  // Check if current wave's sessions are all complete
+  const waveResult = await checkWave(dispatches, env);
+  totalUsage.input += waveResult.usage.input;
+  totalUsage.output += waveResult.usage.output;
+  if (waveResult.errors.length > 0) errors.push(...waveResult.errors);
+
+  if (!waveResult.allDone) {
+    // Wave still running — update timestamp and return progress
+    await env.DB.prepare(
+      `UPDATE pipeline_runs SET updated_at = datetime('now') WHERE id = ?`
+    ).bind(run.id).run();
+
+    return json({
+      status: 'running',
+      currentWave, totalWaves: TOTAL_WAVES,
+      progress: { wave: currentWave, agentsRunning: dispatches.length, agentsDone: Object.keys(waveResult.outputs).length },
+    });
+  }
+
+  // Wave complete — collect outputs
+  Object.assign(collectedOutputs, waveResult.outputs);
+
+  const nextWave = currentWave + 1;
+
+  // All waves done? Assemble final report.
+  if (nextWave >= TOTAL_WAVES) {
+    const sections = assembleFinalSections(collectedOutputs);
+    const sectionsJson = JSON.stringify(sections);
+    const costDollars = (totalUsage.input * 3 / 1e6) + (totalUsage.output * 15 / 1e6);
+    const budgetJson = JSON.stringify({ totalInput: totalUsage.input, totalOutput: totalUsage.output, costDollars });
+
+    await env.DB.prepare(
+      `UPDATE pipeline_runs SET status = 'completed', current_wave = ?, sections_json = ?, budget_json = ?, completed_at = datetime('now'), updated_at = datetime('now') WHERE id = ?`
+    ).bind(nextWave, sectionsJson, budgetJson, run.id).run();
+
+    if (run.report_id) {
+      const stageData = JSON.stringify({
+        sections, errors, generatedAt: new Date().toISOString(),
+      });
+      await env.DB.prepare(
+        `INSERT INTO report_stages (report_id, stage, data) VALUES (?, ?, ?)
+         ON CONFLICT(report_id, stage) DO UPDATE SET data = excluded.data`
+      ).bind(run.report_id, run.stage, stageData).run();
+    }
+
+    try {
+      await env.DB.prepare(
+        `INSERT INTO api_usage (user_id, model, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, web_searches, cost_millicents, status, caller, ticker)
+         VALUES (?, 'claude-sonnet-4-6', ?, ?, 0, 0, 0, ?, 'completed', 'pitch-deck-managed', ?)`
+      ).bind(user.id, totalUsage.input, totalUsage.output, Math.round(costDollars * 1000), run.ticker).run();
+    } catch {}
+
+    return json({
+      status: 'completed', sections_json: sectionsJson, error: null,
+      currentWave: nextWave, totalWaves: TOTAL_WAVES,
+      budget: { totalInput: totalUsage.input, totalOutput: totalUsage.output, costDollars },
+    });
+  }
+
+  // Start next wave
+  let dataPacket;
+  try {
+    dataPacket = JSON.parse(run.data_packet_json);
+  } catch {
+    await env.DB.prepare(
+      `UPDATE pipeline_runs SET status = 'failed', error = 'Corrupt DataPacket', updated_at = datetime('now') WHERE id = ?`
+    ).bind(run.id).run();
+    return json({ status: 'failed', error: 'Corrupt DataPacket in D1' });
+  }
+
+  const companyName = dataPacket.companyInfo?.name || run.ticker;
+
+  try {
+    const nextResult = await startWave(nextWave, run.ticker, companyName, dataPacket, collectedOutputs, env);
+    if (nextResult.errors.length > 0) errors.push(...nextResult.errors);
+
+    // Update wave state in D1
+    waveState.currentWave = nextWave;
+    waveState.dispatches = nextResult.dispatches;
+    waveState.collectedOutputs = collectedOutputs;
+    waveState.totalUsage = totalUsage;
+    waveState.errors = errors;
+
+    await env.DB.prepare(
+      `UPDATE pipeline_runs SET current_wave = ?, progress = ?, updated_at = datetime('now') WHERE id = ?`
+    ).bind(nextWave, JSON.stringify(waveState), run.id).run();
+
+    return json({
+      status: 'running',
+      currentWave: nextWave, totalWaves: TOTAL_WAVES,
+      progress: { wave: nextWave, agentsDispatched: nextResult.dispatches.length, completedAgents: Object.keys(collectedOutputs).length },
+    });
+  } catch (err) {
+    await env.DB.prepare(
+      `UPDATE pipeline_runs SET status = 'failed', error = ?, updated_at = datetime('now') WHERE id = ?`
+    ).bind(`Wave ${nextWave} dispatch failed: ${err.message}`, run.id).run();
+    return json({ status: 'failed', error: `Wave ${nextWave} dispatch failed`, detail: err.message });
   }
 }
 

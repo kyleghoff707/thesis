@@ -30,6 +30,18 @@ MA_ONE_PAGER_AGENT_ID = "agent_011CZzuB5TVsiPgnQZZJscmy"
 MA_ENVIRONMENT_ID = "env_015GFMSSrnuhL1zwDYWyMfaz"
 EXPORT_SERVICE_URL = ""  # Set after deploying the export service on Render
 
+# Pitch Deck agent IDs (Worker-side wave dispatch)
+MA_PD_ANNUAL_READER = "agent_011Ca2vuGcG4jEp4WBAfnu95"
+MA_PD_QUARTERLY_READER = "agent_011Ca2vq6XvSuuwDyRYt9oLM"
+MA_PD_BUSINESS_ANALYST = "agent_011Ca1vzUNKzbzdQmX2aJqU2"
+MA_PD_COMPETITOR_MARKET = "agent_011Ca2r7WPEjx8FwemeqETCA"
+MA_PD_COMPETITOR_MOATS = "agent_011Ca2r9Do9mLtdBnf7QdEnM"
+MA_PD_FINANCIAL_ANALYST = "agent_011Ca2sv9peUvMA7G1kzdFQP"
+MA_PD_MANAGEMENT_EVALUATOR = "agent_011Ca2thF4fQLKtVVHVgYy3e"
+MA_PD_RISK_ANALYST = "agent_011Ca2u5UMz9E1fN514pAvid"
+MA_PD_VALUATION_SPECIALIST = "agent_011Ca2tZSVn2RTTxYa37YS8b"
+MA_PD_SYNTHESIS_WRITER = "agent_011Ca31BD7pZ1Dz9ngZyUtXM"
+
 # D1 database — create with: wrangler d1 create thes1s
 [[d1_databases]]
 binding = "DB"
