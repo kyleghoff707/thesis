@@ -5,6 +5,7 @@
 // GET /api/pipeline/events/:runId — proxy session event log (observability)
 
 import { assembleDataPacket } from '../assembly/assembleDataPacket.js';
+import { assembleFilingContent } from '../assembly/assembleFilingContent.js';
 
 const ANTHROPIC_API = 'https://api.anthropic.com';
 const BETA_HEADER = 'managed-agents-2026-04-01';
@@ -40,7 +41,9 @@ export async function handlePipeline(request, env, path, user) {
   // POST /api/pipeline/assemble-data/:ticker — assemble DataPacket for a ticker
   const assembleMatch = path.match(/^\/api\/pipeline\/assemble-data\/([A-Za-z0-9.-]+)$/);
   if (request.method === 'POST' && assembleMatch) {
-    return handleAssembleData(env, user, assembleMatch[1]);
+    const url = new URL(request.url);
+    const includeFilings = url.searchParams.get('includeFilings') === 'true';
+    return handleAssembleData(env, user, assembleMatch[1], includeFilings);
   }
 
   // Diagnostic: test session creation (temporary — remove after debugging)
@@ -128,6 +131,19 @@ async function handleRun(request, env, user) {
     try {
       const dataPacket = await assembleDataPacket(ticker.toUpperCase(), env);
 
+      // Assemble filing content (SEC filing markdown + transcripts)
+      let filingResult = { filingContent: {}, transcriptContent: {}, errors: [], stats: {} };
+      try {
+        filingResult = await assembleFilingContent(ticker.toUpperCase(), dataPacket, env);
+      } catch (e) {
+        filingResult.errors.push(`filing-content: ${e.message}`);
+      }
+      dataPacket.filingContent = filingResult.filingContent;
+      dataPacket.transcriptContent = filingResult.transcriptContent;
+      if (filingResult.errors.length > 0) {
+        dataPacket.errors = [...(dataPacket.errors || []), ...filingResult.errors];
+      }
+
       // TODO: Create Pitch Deck coordinator session with env.MA_PITCH_DECK_AGENT_ID
       // TODO: Send DataPacket slices to coordinator as initial message
       // TODO: Poll session events for completion (same as One Pager)
@@ -144,6 +160,7 @@ async function handleRun(request, env, user) {
         runId, status: 'assembled', ticker: ticker.toUpperCase(), stage,
         message: 'DataPacket assembled successfully. Pitch Deck coordinator agent not yet configured — agent dispatch coming next.',
         dataPacketSummary: { populated: populated.length, total: fields.length, nullFields: fields.filter(k => dataPacket[k] == null) },
+        filingStats: filingResult.stats,
         errors: dataPacket.errors || [],
         dataPacket,
       }, 200);
@@ -379,7 +396,7 @@ async function handleExport(env, user, reportId, stage, format) {
 
 // ─── POST /api/pipeline/assemble-data/:ticker ──────────────
 
-async function handleAssembleData(env, user, ticker) {
+async function handleAssembleData(env, user, ticker, includeFilings = false) {
   const upperTicker = ticker.toUpperCase();
   if (!/^[A-Z][A-Z0-9.-]{0,9}$/.test(upperTicker)) {
     return json({ error: 'Invalid ticker format' }, 400);
@@ -388,6 +405,23 @@ async function handleAssembleData(env, user, ticker) {
   const startedAt = Date.now();
   try {
     const dataPacket = await assembleDataPacket(upperTicker, env);
+
+    // Optionally assemble filing content (SEC filing markdown + transcripts)
+    let filingStats = null;
+    if (includeFilings) {
+      try {
+        const filingResult = await assembleFilingContent(upperTicker, dataPacket, env);
+        dataPacket.filingContent = filingResult.filingContent;
+        dataPacket.transcriptContent = filingResult.transcriptContent;
+        filingStats = filingResult.stats;
+        if (filingResult.errors.length > 0) {
+          dataPacket.errors = [...(dataPacket.errors || []), ...filingResult.errors];
+        }
+      } catch (e) {
+        dataPacket.errors = [...(dataPacket.errors || []), `filing-content: ${e.message}`];
+      }
+    }
+
     const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
 
     // Summary of populated vs null fields for quick debugging
@@ -401,6 +435,7 @@ async function handleAssembleData(env, user, ticker) {
       elapsedSeconds: parseFloat(elapsed),
       populated: populated.length,
       nullFields,
+      filingStats,
       errors: dataPacket.errors || [],
       dataPacket,
     });

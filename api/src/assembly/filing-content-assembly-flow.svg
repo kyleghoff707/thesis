@@ -1,0 +1,300 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1850" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#475569"/>
+    </marker>
+    <marker id="arrow-teal" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#0f766e"/>
+    </marker>
+    <marker id="arrow-amber" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#d97706"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="1850" fill="#0f172a" rx="12"/>
+
+  <!-- Title -->
+  <text x="600" y="45" text-anchor="middle" fill="#f1f5f9" font-size="22" font-weight="700">PSR Filing Content Pre-Fetch Flow</text>
+  <text x="600" y="70" text-anchor="middle" fill="#94a3b8" font-size="13">What happens when assembleFilingContent(ticker, dataPacket, env) is called</text>
+  <text x="600" y="90" text-anchor="middle" fill="#64748b" font-size="11">Runs after DataPacket assembly -- feeds filing text + transcripts to annual-reader and quarterly-reader agents</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- LAYER 1: Trigger Context -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <rect x="280" y="110" width="640" height="50" rx="25" fill="#1e293b" stroke="#0f766e" stroke-width="2"/>
+  <text x="600" y="140" text-anchor="middle" fill="#2dd4bf" font-size="14" font-weight="600">Pitch Deck pipeline: POST /api/pipeline/run  { stage: 'pitchDeck' }</text>
+
+  <line x1="600" y1="160" x2="600" y2="188" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- pipeline.js context -->
+  <rect x="220" y="188" width="760" height="48" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="260" y="210" fill="#94a3b8" font-size="11">api/src/routes/pipeline.js</text>
+  <text x="260" y="226" fill="#cbd5e1" font-size="11">const dataPacket = await assembleDataPacket(ticker, env);  // already done (see datapacket-assembly-flow.svg)</text>
+
+  <line x1="600" y1="236" x2="600" y2="258" stroke="#0f766e" stroke-width="2" marker-end="url(#arrow-teal)"/>
+
+  <rect x="220" y="258" width="760" height="32" rx="6" fill="#0f172a" stroke="#0f766e" stroke-width="1.5"/>
+  <text x="600" y="279" text-anchor="middle" fill="#2dd4bf" font-size="12" font-weight="600">const filingResult = await assembleFilingContent(ticker, dataPacket, env);</text>
+
+  <line x1="600" y1="290" x2="600" y2="320" stroke="#0f766e" stroke-width="2" marker-end="url(#arrow-teal)"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- LAYER 2: Assembly Module -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <rect x="60" y="320" width="1080" height="1470" rx="10" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+  <text x="120" y="345" fill="#64748b" font-size="11" font-weight="600" letter-spacing="2">CLOUDFLARE WORKER  —  api/src/assembly/assembleFilingContent.js</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- STEP 1: Filing Selection -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <rect x="100" y="365" width="1000" height="170" rx="6" fill="#0f172a" stroke="#d97706" stroke-width="1.5"/>
+  <text x="140" y="390" fill="#fbbf24" font-size="12" font-weight="600">STEP 1: Select Filings from DataPacket</text>
+  <text x="480" y="390" fill="#64748b" font-size="11">selectFilings(dataPacket.filings)</text>
+
+  <!-- Input -->
+  <rect x="130" y="405" width="440" height="45" rx="5" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="155" y="423" fill="#cbd5e1" font-size="11" font-weight="500">Input: dataPacket.filings[]</text>
+  <text x="155" y="440" fill="#94a3b8" font-size="10">{ form, filingDate, accessionNumber, primaryDocument }  (no CIK -- use companyInfo.cik)</text>
+
+  <!-- Filter rules -->
+  <rect x="600" y="405" width="470" height="45" rx="5" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="625" y="423" fill="#cbd5e1" font-size="11" font-weight="500">Filter Rules</text>
+  <text x="625" y="440" fill="#94a3b8" font-size="10">Skip .xml primaryDocuments  |  Ignore 8-K, DEF 14A (only 10-K / 10-Q)</text>
+
+  <!-- Output boxes -->
+  <rect x="130" y="465" width="440" height="55" rx="5" fill="#0f172a" stroke="#0f766e" stroke-width="1.5"/>
+  <text x="350" y="485" text-anchor="middle" fill="#2dd4bf" font-size="12" font-weight="600">5 most recent 10-Ks</text>
+  <text x="350" y="505" text-anchor="middle" fill="#94a3b8" font-size="10">Annual reports -- Business, Risk Factors, MD&amp;A, Financial Statements</text>
+
+  <rect x="600" y="465" width="470" height="55" rx="5" fill="#0f172a" stroke="#0f766e" stroke-width="1.5"/>
+  <text x="835" y="485" text-anchor="middle" fill="#2dd4bf" font-size="12" font-weight="600">4 most recent 10-Qs</text>
+  <text x="835" y="505" text-anchor="middle" fill="#94a3b8" font-size="10">Quarterly reports -- Financial Statements, MD&amp;A, Risk Factors</text>
+
+  <line x1="600" y1="540" x2="600" y2="565" stroke="#0f766e" stroke-width="2" marker-end="url(#arrow-teal)"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- STEP 2: Process Each Filing (batched) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <rect x="100" y="565" width="1000" height="625" rx="6" fill="#0f172a" stroke="#0f766e" stroke-width="2"/>
+  <text x="140" y="590" fill="#2dd4bf" font-size="12" font-weight="600">STEP 2: Process Each Filing</text>
+  <text x="400" y="590" fill="#64748b" font-size="11">(batches of 3 via Promise.allSettled -- up to 9 filings total)</text>
+
+  <!-- ─── Substep 2a: R2 Cache Check ─── -->
+  <rect x="130" y="610" width="940" height="80" rx="5" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="160" y="633" fill="#fbbf24" font-size="11" font-weight="600">2a. R2 Cache Check</text>
+  <rect x="355" y="621" width="30" height="18" rx="3" fill="#f59e0b"/>
+  <text x="370" y="634" text-anchor="middle" fill="#1e293b" font-size="8" font-weight="600">R2</text>
+
+  <text x="160" y="653" fill="#cbd5e1" font-size="10">env.TRANSCRIPTS.get('filings-md/{accessionNumber}.md')</text>
+  <text x="160" y="670" fill="#94a3b8" font-size="10">Filings are immutable -- cached permanently. Cache HIT skips Steps 2b-2d, jumps to 2e.</text>
+
+  <!-- Cache hit arrow (skip path) -->
+  <rect x="830" y="630" width="100" height="26" rx="13" fill="#0f766e" stroke="#22c55e" stroke-width="1"/>
+  <text x="880" y="648" text-anchor="middle" fill="#f0fdfa" font-size="10" font-weight="600">CACHE HIT</text>
+  <line x1="930" y1="643" x2="1050" y2="643" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <line x1="1050" y1="643" x2="1050" y2="987" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arrow-teal)"/>
+  <text x="1058" y="820" fill="#22c55e" font-size="9" transform="rotate(90,1058,820)">skip to 2e</text>
+
+  <!-- Cache miss continues down -->
+  <rect x="720" y="630" width="100" height="26" rx="13" fill="#1e293b" stroke="#dc2626" stroke-width="1"/>
+  <text x="770" y="648" text-anchor="middle" fill="#fca5a5" font-size="10" font-weight="600">CACHE MISS</text>
+
+  <line x1="600" y1="690" x2="600" y2="715" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ─── Substep 2b: Fetch from SEC EDGAR ─── -->
+  <rect x="130" y="715" width="940" height="90" rx="5" fill="#1e293b" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="160" y="738" fill="#60a5fa" font-size="11" font-weight="600">2b. Fetch HTML from SEC EDGAR</text>
+  <rect x="400" y="726" width="40" height="18" rx="3" fill="#2563eb"/>
+  <text x="420" y="739" text-anchor="middle" fill="#eff6ff" font-size="8" font-weight="600">SEC</text>
+
+  <text x="160" y="758" fill="#cbd5e1" font-size="10">URL: https://www.sec.gov/Archives/edgar/data/{cik}/{accPath}/{primaryDoc}</text>
+  <text x="160" y="775" fill="#94a3b8" font-size="10">CIK from dataPacket.companyInfo.cik  |  Direct fetch with User-Agent: 'Thes1s/1.0'  |  No proxy needed (Worker-side)</text>
+  <text x="160" y="792" fill="#94a3b8" font-size="10">10-Ks can be 5-30MB HTML.  .txt filings pass through as-is (normalize line endings only).</text>
+
+  <line x1="600" y1="805" x2="600" y2="825" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ─── Substep 2c: iXBRL Cleanup (cheerio) ─── -->
+  <rect x="130" y="825" width="940" height="110" rx="5" fill="#1e293b" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="160" y="848" fill="#a78bfa" font-size="11" font-weight="600">2c. Clean iXBRL Markup</text>
+  <text x="345" y="848" fill="#64748b" font-size="11">cleanEdgarHtml(html)  --  cheerio (replaces browser DOMParser)</text>
+  <rect x="750" y="836" width="80" height="18" rx="3" fill="#7c3aed"/>
+  <text x="790" y="849" text-anchor="middle" fill="#f5f3ff" font-size="8" font-weight="600">REWRITTEN</text>
+
+  <rect x="160" y="860" width="430" height="22" rx="3" fill="#0f172a"/>
+  <text x="175" y="875" fill="#dc2626" font-size="10">REMOVE: ix:hidden, ix:header, ix:references</text>
+  <text x="600" y="875" fill="#94a3b8" font-size="10">(machine-only metadata)</text>
+
+  <rect x="160" y="886" width="430" height="22" rx="3" fill="#0f172a"/>
+  <text x="175" y="901" fill="#fbbf24" font-size="10">UNWRAP: ix:nonfraction, ix:nonnumeric, ix:fraction, ix:continuation</text>
+  <text x="600" y="901" fill="#94a3b8" font-size="10">(keep text, strip tag)</text>
+
+  <rect x="160" y="912" width="430" height="22" rx="3" fill="#0f172a"/>
+  <text x="175" y="927" fill="#dc2626" font-size="10">REMOVE: script, style, link, meta + all style/class attrs</text>
+  <text x="600" y="927" fill="#94a3b8" font-size="10">(clean HTML for Turndown)</text>
+
+  <line x1="600" y1="935" x2="600" y2="955" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ─── Substep 2d: Turndown Markdown Conversion + R2 Cache Write ─── -->
+  <rect x="130" y="955" width="640" height="80" rx="5" fill="#1e293b" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="160" y="978" fill="#a78bfa" font-size="11" font-weight="600">2d. Convert to Markdown + Cache</text>
+  <text x="440" y="978" fill="#64748b" font-size="11">convertToMarkdown(cleanHtml)</text>
+
+  <text x="160" y="998" fill="#cbd5e1" font-size="10">Turndown + GFM plugin (uses built-in domino DOM server-side)</text>
+  <text x="160" y="1013" fill="#94a3b8" font-size="10">Custom table rule (pipe-delimited)  |  Font tag unwrap  |  Empty link cleanup  |  Blank line collapse</text>
+
+  <!-- R2 cache write box -->
+  <rect x="790" y="955" width="280" height="80" rx="5" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="820" y="978" fill="#fbbf24" font-size="11" font-weight="600">Cache in R2</text>
+  <rect x="920" y="966" width="30" height="18" rx="3" fill="#f59e0b"/>
+  <text x="935" y="979" text-anchor="middle" fill="#1e293b" font-size="8" font-weight="600">R2</text>
+  <text x="820" y="998" fill="#cbd5e1" font-size="10">env.TRANSCRIPTS.put(</text>
+  <text x="830" y="1013" fill="#94a3b8" font-size="10">'filings-md/{accession}.md',</text>
+  <text x="830" y="1028" fill="#94a3b8" font-size="10">markdown)</text>
+
+  <line x1="770" y1="995" x2="790" y2="995" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow-amber)"/>
+
+  <line x1="600" y1="1035" x2="600" y2="1055" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ─── Substep 2e: Section Extraction ─── -->
+  <rect x="130" y="1055" width="940" height="110" rx="5" fill="#1e293b" stroke="#0f766e" stroke-width="1.5"/>
+  <text x="160" y="1078" fill="#2dd4bf" font-size="11" font-weight="600">2e. Extract Sections + Truncate</text>
+  <text x="420" y="1078" fill="#64748b" font-size="11">extractAllSections(markdown, formType)</text>
+  <rect x="720" y="1066" width="70" height="18" rx="3" fill="#0f766e"/>
+  <text x="755" y="1079" text-anchor="middle" fill="#f0fdfa" font-size="8" font-weight="600">REUSED</text>
+
+  <text x="160" y="1098" fill="#94a3b8" font-size="10">Imported from: src/engines/fileSections.js  (pure regex -- Worker-safe, no changes needed)</text>
+
+  <!-- 10-K sections -->
+  <rect x="160" y="1110" width="440" height="46" rx="4" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <text x="180" y="1128" fill="#cbd5e1" font-size="10" font-weight="500">10-K sections (SECTION_MAP_10K):</text>
+  <text x="180" y="1148" fill="#94a3b8" font-size="10">Business  |  Risk Factors  |  MD&amp;A  |  Financial Statements</text>
+
+  <!-- 10-Q sections -->
+  <rect x="620" y="1110" width="420" height="46" rx="4" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <text x="640" y="1128" fill="#cbd5e1" font-size="10" font-weight="500">10-Q sections (SECTION_MAP_10Q):</text>
+  <text x="640" y="1148" fill="#94a3b8" font-size="10">Financial Statements  |  MD&amp;A  |  Risk Factors</text>
+
+  <!-- Truncation callout -->
+  <rect x="350" y="1160" width="500" height="3" rx="1" fill="#d97706"/>
+  <text x="600" y="1180" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="600">TRUNCATION: 10-K sections capped at 40,000 chars  |  10-Q sections capped at 15,000 chars</text>
+
+  <!-- End of Step 2 -->
+
+  <line x1="600" y1="1195" x2="600" y2="1225" stroke="#0f766e" stroke-width="2" marker-end="url(#arrow-teal)"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- STEP 3: Transcript Fetching -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <rect x="100" y="1225" width="1000" height="340" rx="6" fill="#0f172a" stroke="#f59e0b" stroke-width="2"/>
+  <text x="140" y="1250" fill="#fbbf24" font-size="12" font-weight="600">STEP 3: Fetch Transcripts (4 most recent quarters)</text>
+
+  <!-- 3a: R2 list -->
+  <rect x="130" y="1270" width="940" height="70" rx="5" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="160" y="1293" fill="#fbbf24" font-size="11" font-weight="600">3a. List R2 transcripts</text>
+  <rect x="350" y="1281" width="30" height="18" rx="3" fill="#f59e0b"/>
+  <text x="365" y="1294" text-anchor="middle" fill="#1e293b" font-size="8" font-weight="600">R2</text>
+
+  <text x="160" y="1313" fill="#cbd5e1" font-size="10">env.TRANSCRIPTS.list({ prefix: 'transcripts/{ticker}/' })</text>
+  <text x="160" y="1328" fill="#94a3b8" font-size="10">R2 key pattern: transcripts/COST/2024/Q4.json  |  Stored by cron job (api/src/cron/transcripts.js)</text>
+
+  <!-- 3b: Parse + sort + fetch -->
+  <rect x="130" y="1350" width="440" height="70" rx="5" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="160" y="1373" fill="#fbbf24" font-size="11" font-weight="600">3b. Fetch from R2 (primary path)</text>
+  <text x="160" y="1393" fill="#cbd5e1" font-size="10">Sort by year/quarter desc, take 4 most recent</text>
+  <text x="160" y="1408" fill="#94a3b8" font-size="10">Parse JSON: { text, meta } -- return .text field</text>
+
+  <!-- 3c: AV fallback -->
+  <rect x="600" y="1350" width="470" height="105" rx="5" fill="#1e293b" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="630" y="1373" fill="#60a5fa" font-size="11" font-weight="600">3c. Alpha Vantage Fallback</text>
+  <text x="875" y="1373" fill="#64748b" font-size="10">(only if R2 has &lt; 4 transcripts)</text>
+
+  <text x="630" y="1393" fill="#cbd5e1" font-size="10">alphavantage.co/query?function=EARNINGS_CALL_TRANSCRIPT</text>
+  <text x="630" y="1408" fill="#94a3b8" font-size="10">&amp;symbol={ticker}&amp;quarter={year}Q{q}&amp;apikey={key}</text>
+  <text x="630" y="1428" fill="#94a3b8" font-size="10">Key rotation: key1 / key2 alternated per call</text>
+
+  <!-- formatTranscript callout -->
+  <rect x="630" y="1435" width="310" height="18" rx="3" fill="#0f172a" stroke="#0f766e" stroke-width="1"/>
+  <text x="645" y="1448" fill="#2dd4bf" font-size="10">formatAlphaVantageTranscript(data)</text>
+  <rect x="950" y="1435" width="70" height="18" rx="3" fill="#0f766e"/>
+  <text x="985" y="1448" text-anchor="middle" fill="#f0fdfa" font-size="8" font-weight="600">REUSED</text>
+
+  <!-- Reused module callout -->
+  <text x="160" y="1445" fill="#94a3b8" font-size="10">Key format: transcript-Q{n}-{year}</text>
+
+  <!-- AV to R2 cache -->
+  <line x1="770" y1="1455" x2="770" y2="1490" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow-amber)"/>
+  <rect x="680" y="1490" width="260" height="30" rx="4" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+  <text x="700" y="1510" fill="#fbbf24" font-size="10">AV results cached in R2 for future runs</text>
+  <rect x="650" y="1494" width="24" height="18" rx="3" fill="#f59e0b"/>
+  <text x="662" y="1507" text-anchor="middle" fill="#1e293b" font-size="7" font-weight="600">R2</text>
+
+  <!-- Source note -->
+  <text x="160" y="1510" fill="#64748b" font-size="10" font-style="italic">Imported from: packages/sec-parsers/formatTranscript.js</text>
+  <text x="160" y="1525" fill="#64748b" font-size="10" font-style="italic">(pure function -- Worker-safe, no changes needed)</text>
+
+  <!-- Step 3 end -->
+
+  <line x1="600" y1="1570" x2="600" y2="1600" stroke="#0f766e" stroke-width="2" marker-end="url(#arrow-teal)"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- STEP 4: Return -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <rect x="100" y="1600" width="1000" height="140" rx="6" fill="#0f172a" stroke="#0f766e" stroke-width="2"/>
+  <text x="140" y="1625" fill="#2dd4bf" font-size="12" font-weight="600">STEP 4: Return to pipeline.js -- merge into DataPacket</text>
+
+  <!-- Return shape -->
+  <rect x="130" y="1640" width="520" height="88" rx="5" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="155" y="1660" fill="#f1f5f9" font-size="11" font-weight="600">filingContent</text>
+  <text x="155" y="1678" fill="#94a3b8" font-size="10">'10-K-2024-09-28': { form, filingDate, sections: { Business, Risk Factors, ... }, charCount }</text>
+  <text x="155" y="1693" fill="#94a3b8" font-size="10">'10-Q-2024-06-30': { form, filingDate, sections: { Financial Statements, MD&amp;A, ... }, charCount }</text>
+  <text x="155" y="1708" fill="#64748b" font-size="10">up to 5 annual + 4 quarterly entries</text>
+
+  <rect x="670" y="1640" width="400" height="88" rx="5" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="695" y="1660" fill="#f1f5f9" font-size="11" font-weight="600">transcriptContent</text>
+  <text x="695" y="1678" fill="#94a3b8" font-size="10">'transcript-Q4-2024': 'full markdown...'</text>
+  <text x="695" y="1693" fill="#94a3b8" font-size="10">'transcript-Q3-2024': 'full markdown...'</text>
+  <text x="695" y="1708" fill="#64748b" font-size="10">up to 4 quarterly transcripts</text>
+
+  <!-- Plus errors + stats -->
+  <text x="600" y="1733" text-anchor="middle" fill="#64748b" font-size="10">+ errors[]  +  stats: { filingsFetched, transcriptsFetched, elapsedMs }</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- Timing Estimate -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <rect x="100" y="1760" width="490" height="70" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="130" y="1783" fill="#f1f5f9" font-size="11" font-weight="600">Timing</text>
+  <text x="130" y="1800" fill="#94a3b8" font-size="10">First run: ~10-20s (SEC downloads bottleneck, 10-Ks are 5-30MB HTML)</text>
+  <text x="130" y="1815" fill="#22c55e" font-size="10">Cached runs: ~3-5s (R2 markdown retrieval, no SEC fetch)</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- Legend -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <rect x="610" y="1760" width="490" height="70" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+
+  <rect x="640" y="1776" width="30" height="14" rx="3" fill="#2563eb"/>
+  <text x="680" y="1788" fill="#94a3b8" font-size="10">SEC EDGAR / Alpha Vantage</text>
+
+  <rect x="640" y="1796" width="30" height="14" rx="3" fill="#f59e0b"/>
+  <text x="680" y="1808" fill="#94a3b8" font-size="10">R2 (cache + transcripts)</text>
+
+  <rect x="840" y="1776" width="30" height="14" rx="3" fill="#7c3aed"/>
+  <text x="880" y="1788" fill="#94a3b8" font-size="10">REWRITTEN (cheerio + Turndown)</text>
+
+  <rect x="840" y="1796" width="30" height="14" rx="3" fill="#0f766e"/>
+  <text x="880" y="1808" fill="#94a3b8" font-size="10">REUSED (fileSections.js, formatTranscript.js)</text>
+</svg>
