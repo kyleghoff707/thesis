@@ -46,6 +46,13 @@ export async function handlePipeline(request, env, path, user) {
     return handleAssembleData(env, user, assembleMatch[1], includeFilings);
   }
 
+  // POST /api/pipeline/assemble-filings/:ticker — filing content only (no DataPacket re-run)
+  // Accepts { filings, cik } in POST body — call after assemble-data to stay within CPU limits.
+  const filingsMatch = path.match(/^\/api\/pipeline\/assemble-filings\/([A-Za-z0-9.-]+)$/);
+  if (request.method === 'POST' && filingsMatch) {
+    return handleAssembleFilings(request, env, user, filingsMatch[1]);
+  }
+
   // Diagnostic: test session creation (temporary — remove after debugging)
   if (request.method === 'GET' && path === '/api/pipeline/test') {
     try {
@@ -397,6 +404,50 @@ async function handleAssembleData(env, user, ticker, includeFilings = false) {
     const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
     return json({
       error: 'DataPacket assembly failed',
+      detail: err.message,
+      elapsedSeconds: parseFloat(elapsed),
+    }, 500);
+  }
+}
+
+// ─── POST /api/pipeline/assemble-filings/:ticker ────────────
+// Separate endpoint for filing content assembly — avoids re-running
+// the full DataPacket (which consumes ~20s of CPU on its own).
+// Accepts POST body: { filings: [...], cik: "..." }
+
+async function handleAssembleFilings(request, env, user, ticker) {
+  const upperTicker = ticker.toUpperCase();
+  if (!/^[A-Z][A-Z0-9.-]{0,9}$/.test(upperTicker)) {
+    return json({ error: 'Invalid ticker format' }, 400);
+  }
+
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'Invalid JSON body' }, 400); }
+
+  const { filings, cik } = body;
+  if (!filings || !cik) {
+    return json({ error: 'filings array and cik are required in POST body' }, 400);
+  }
+
+  const startedAt = Date.now();
+  try {
+    // Build a minimal dataPacket-like object with just what assembleFilingContent needs
+    const minPacket = { filings, companyInfo: { cik } };
+    const result = await assembleFilingContent(upperTicker, minPacket, env);
+    const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+
+    return json({
+      ticker: upperTicker,
+      elapsedSeconds: parseFloat(elapsed),
+      filingContent: result.filingContent,
+      transcriptContent: result.transcriptContent,
+      stats: result.stats,
+      errors: result.errors,
+    });
+  } catch (err) {
+    const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+    return json({
+      error: 'Filing content assembly failed',
       detail: err.message,
       elapsedSeconds: parseFloat(elapsed),
     }, 500);

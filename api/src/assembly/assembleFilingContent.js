@@ -21,9 +21,11 @@ const SEC_UA = 'Thes1s/1.0 kylehoff@thes1sinvesting.com';
 const MAX_10K = 5;
 const MAX_10Q = 4;
 const MAX_TRANSCRIPTS = 4;
-const BATCH_SIZE = 3;
+const BATCH_SIZE = 1;           // Sequential — cheerio+Turndown is CPU-heavy, batching risks 30s limit
 const SECTION_LIMIT_10K = 40_000;
 const SECTION_LIMIT_10Q = 15_000;
+const MAX_HTML_BYTES = 5_000_000; // 5MB cap — bank 10-Ks can be 10MB+, Turndown chokes on them
+const CPU_BUDGET_MS = 25_000;     // Stop processing new filings after 25s to stay under 30s CPU limit
 
 // ─── Main API ───────────────────────────────────────────────
 
@@ -49,8 +51,15 @@ export async function assembleFilingContent(ticker, dataPacket, env) {
   const allFilings = [...tenKs, ...tenQs];
   let filingsFetched = 0;
 
-  // Process in batches of BATCH_SIZE
+  // Process sequentially with CPU budget — cheerio+Turndown is expensive.
+  // Workers have a 30s CPU limit; we stop at CPU_BUDGET_MS to leave headroom.
   for (let i = 0; i < allFilings.length; i += BATCH_SIZE) {
+    // CPU budget check — stop before we hit the 30s limit
+    if (Date.now() - startTime > CPU_BUDGET_MS) {
+      errors.push(`filing-budget: processed ${filingsFetched}/${allFilings.length} filings before CPU budget`);
+      break;
+    }
+
     const batch = allFilings.slice(i, i + BATCH_SIZE);
     const results = await Promise.allSettled(
       batch.map(f => processFiling(f, cik, env, errors))
@@ -160,8 +169,15 @@ async function processFiling(filing, cik, env, errors) {
       return null;
     }
 
-    const html = await res.text();
+    let html = await res.text();
     const ext = filing.primaryDocument.split('.').pop()?.toLowerCase();
+
+    // Cap oversized HTML — bank/conglomerate 10-Ks can be 10MB+
+    // Turndown+cheerio CPU cost scales with document size
+    if (html.length > MAX_HTML_BYTES) {
+      errors.push(`filing ${accession}: HTML truncated from ${(html.length/1e6).toFixed(1)}MB to ${(MAX_HTML_BYTES/1e6).toFixed(1)}MB`);
+      html = html.slice(0, MAX_HTML_BYTES);
+    }
 
     if (ext === 'txt') {
       markdown = html.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
