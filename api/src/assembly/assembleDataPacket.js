@@ -73,10 +73,11 @@ function createInterceptedFetch(origFetch, userAgent) {
       return origFetch(directUrl, withHeaders(opts, { 'User-Agent': userAgent, 'Accept': 'application/json' }));
     }
 
-    // Finviz proxy → fetch HTML directly + parse (proxy does HTML→JSON conversion)
+    // Finviz proxy → skip (fragile API, agents have web search for analyst estimates)
     if (urlStr.startsWith(`${PROXY_BASE}/proxy/finviz/`)) {
-      const ticker = urlStr.replace(`${PROXY_BASE}/proxy/finviz/`, '');
-      return fetchFinvizDirect(origFetch, ticker);
+      return new Response(JSON.stringify({ error: 'Finviz skipped in Worker' }), {
+        status: 503, headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // Yahoo proxies → skip (IS_NODE already skips Yahoo in dataExport.js)
@@ -99,47 +100,6 @@ function withHeaders(opts, extraHeaders) {
     ...opts,
     headers: { ...(opts.headers || {}), ...extraHeaders },
   };
-}
-
-// ─── Finviz Direct Fetch + Parse ──────────────────────────────
-// Replicates what the Worker proxy does: fetch HTML, regex-parse
-// the snapshot table, return a JSON Response object.
-
-async function fetchFinvizDirect(origFetch, ticker) {
-  try {
-    const res = await origFetch(`https://finviz.com/quote.ashx?t=${ticker}&p=d`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-      },
-    });
-    if (!res.ok) {
-      return new Response(JSON.stringify({ error: `Finviz ${res.status}` }), {
-        status: res.status, headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    const html = await res.text();
-    const data = parseFinvizSnapshot(html);
-    return new Response(JSON.stringify(data), {
-      status: 200, headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 502, headers: { 'Content-Type': 'application/json' },
-    });
-  }
-}
-
-// Same regex parser as api/src/routes/proxy.js — extract Finviz snapshot table
-function parseFinvizSnapshot(html) {
-  const data = {};
-  const regex = /<td[^>]*class="snapshot-td2-cp"[^>]*>([^<]+)<\/td>\s*<td[^>]*class="snapshot-td2"[^>]*>(?:<[^>]+>)*([^<]+)/g;
-  let match;
-  while ((match = regex.exec(html)) !== null) {
-    const label = match[1].trim();
-    const value = match[2].trim();
-    if (label && value) data[label] = value;
-  }
-  return data;
 }
 
 // ─── D1 Override: Gurus ────────────────────────────────────────

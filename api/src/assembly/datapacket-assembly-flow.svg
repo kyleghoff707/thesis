@@ -92,8 +92,8 @@
   <rect x="200" y="599" width="260" height="22" rx="3" fill="#0f172a"/>
   <text x="210" y="614" fill="#dc2626" font-size="10">api.thes1sinvesting.com/proxy/finviz/*</text>
   <text x="470" y="614" fill="#475569" font-size="10">→</text>
-  <rect x="485" y="599" width="200" height="22" rx="3" fill="#0f172a"/>
-  <text x="495" y="614" fill="#22c55e" font-size="10">finviz.com (fetch + parse HTML)</text>
+  <rect x="485" y="599" width="200" height="22" rx="3" fill="#374151"/>
+  <text x="495" y="614" fill="#9ca3af" font-size="10">503 immediately (fragile, skipped)</text>
 
   <!-- Arrow down -->
   <line x1="600" y1="625" x2="600" y2="650" stroke="#0f766e" stroke-width="2" marker-end="url(#arrow-teal)"/>
@@ -193,10 +193,10 @@
   <text x="710" y="1020" fill="#64748b" font-size="10" font-style="italic">IS_NODE = true → Yahoo engines</text>
   <text x="710" y="1035" fill="#64748b" font-size="10" font-style="italic">skipped (crumb auth broken)</text>
 
-  <rect x="700" y="1044" width="230" height="22" rx="4" fill="#1e293b"/>
-  <text x="710" y="1059" fill="#cbd5e1" font-size="10">fetchFinvizData(ticker) ← fallback</text>
-  <rect x="940" y="1044" width="70" height="22" rx="3" fill="#7c3aed"/>
-  <text x="975" y="1059" text-anchor="middle" fill="#f5f3ff" font-size="8" font-weight="600">FINVIZ</text>
+  <rect x="700" y="1044" width="230" height="22" rx="4" fill="#1e293b" stroke="#475569" stroke-dasharray="4,2"/>
+  <text x="710" y="1059" fill="#64748b" font-size="10">fetchFinvizData(ticker)</text>
+  <rect x="940" y="1044" width="70" height="22" rx="3" fill="#374151"/>
+  <text x="975" y="1059" text-anchor="middle" fill="#9ca3af" font-size="8" font-weight="600">SKIPPED</text>
 
   <!-- Stage 4 -->
   <rect x="170" y="1075" width="860" height="55" rx="5" fill="#0f172a" stroke="#334155" stroke-width="1"/>
@@ -261,18 +261,15 @@
 
   <rect x="100" y="1535" width="1000" height="50" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1"/>
 
-  <rect x="130" y="1550" width="40" height="18" rx="3" fill="#0f766e"/>
-  <text x="180" y="1564" fill="#94a3b8" font-size="10">LOCAL (pure math)</text>
+  <rect x="150" y="1550" width="40" height="18" rx="3" fill="#0f766e"/>
+  <text x="200" y="1564" fill="#94a3b8" font-size="10">LOCAL (pure math)</text>
 
-  <rect x="310" y="1550" width="40" height="18" rx="3" fill="#2563eb"/>
-  <text x="360" y="1564" fill="#94a3b8" font-size="10">SEC / D1 (external data)</text>
+  <rect x="370" y="1550" width="40" height="18" rx="3" fill="#2563eb"/>
+  <text x="420" y="1564" fill="#94a3b8" font-size="10">SEC / D1 (external data)</text>
 
-  <rect x="520" y="1550" width="40" height="18" rx="3" fill="#7c3aed"/>
-  <text x="570" y="1564" fill="#94a3b8" font-size="10">FINVIZ (analyst estimates)</text>
+  <rect x="610" y="1550" width="40" height="18" rx="3" fill="#f59e0b"/>
+  <text x="660" y="1564" fill="#94a3b8" font-size="10">R2 (transcripts)</text>
 
-  <rect x="730" y="1550" width="40" height="18" rx="3" fill="#f59e0b"/>
-  <text x="780" y="1564" fill="#94a3b8" font-size="10">R2 (transcripts)</text>
-
-  <rect x="900" y="1550" width="40" height="18" rx="3" fill="#374151"/>
-  <text x="950" y="1564" fill="#94a3b8" font-size="10">SKIPPED (Yahoo)</text>
+  <rect x="810" y="1550" width="40" height="18" rx="3" fill="#374151"/>
+  <text x="860" y="1564" fill="#94a3b8" font-size="10">SKIPPED (Yahoo + Finviz)</text>
 </svg>
