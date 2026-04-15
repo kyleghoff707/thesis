@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { C } from '../theme';
 import Spinner from './Spinner';
 import ConfirmGenerateDialog from './ConfirmGenerateDialog';
+import { useAssembleData } from '../hooks/useAssembleData';
 
 // Determine button state from report + stage availability + generating flag
 // Pure function — exported via _testExports for testing
@@ -38,6 +39,8 @@ export default function GenerateButton({ ticker, report, stageAvailability, gene
   const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [assembling, setAssembling] = useState(false);
+  const { assemble, phase: assemblyPhase, progress: assemblyProgress, error: assemblyError } = useAssembleData();
 
   const reportId = report?.id;
   const state = getButtonState(ticker, report, stageAvailability, generating);
@@ -92,16 +95,40 @@ export default function GenerateButton({ ticker, report, stageAvailability, gene
         >
           {state.label}
         </button>
+        {assembling && assemblyProgress?.detail && (
+          <div style={{ marginTop: 8, fontSize: 12, color: C.textSecondary }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Spinner size={10} />
+              {assemblyProgress.detail}
+            </span>
+          </div>
+        )}
+        {assemblyError && (
+          <div style={{ marginTop: 8, fontSize: 12, color: '#ef4444' }}>
+            {assemblyError}
+          </div>
+        )}
         {showDialog && (
           <ConfirmGenerateDialog
             ticker={ticker}
             stage={state.stage}
-            onConfirm={() => {
+            onConfirm={async () => {
               setShowDialog(false);
-              if (onGenerate) onGenerate(state.stage, null, report?.id);
-              // Don't navigate away — pipeline runs server-side.
-              // User stays on Research tab and sees progress via polling.
-              // They can navigate to the stage view when generation completes.
+              if (!onGenerate) return;
+
+              if (state.stage === 'pitch-deck') {
+                setAssembling(true);
+                try {
+                  const payload = await assemble(ticker);
+                  setAssembling(false);
+                  onGenerate(state.stage, payload, report?.id);
+                } catch {
+                  setAssembling(false);
+                  // assemblyError is already set by the hook
+                }
+              } else {
+                onGenerate(state.stage, null, report?.id);
+              }
             }}
             onCancel={() => setShowDialog(false)}
           />
