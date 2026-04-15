@@ -32,6 +32,19 @@ if (!childrenProto[Symbol.iterator]) {
   };
 }
 
+// ─── Patch NodeList to support .forEach() ────────────────────
+// Browser NodeList has .forEach(), .entries(), etc. Domino's NodeList extends
+// Array in ES6 mode but querySelectorAll may return a plain NodeList without
+// Array methods. Patch it to be safe.
+const dummyList = dummyDoc.querySelectorAll('div');
+const nodeListProto = Object.getPrototypeOf(dummyList);
+if (nodeListProto && !nodeListProto.forEach) {
+  nodeListProto.forEach = Array.prototype.forEach;
+}
+if (nodeListProto && !nodeListProto[Symbol.iterator]) {
+  nodeListProto[Symbol.iterator] = Array.prototype[Symbol.iterator];
+}
+
 // ─── DOMParser polyfill ──────────────────────────────────────
 class DominoDOMParser {
   parseFromString(html, mimeType) {
