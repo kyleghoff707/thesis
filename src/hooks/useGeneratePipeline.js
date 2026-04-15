@@ -201,7 +201,12 @@ export function useGeneratePipeline(ticker) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ ticker, stage: pipelineStage, reportId }),
+        body: JSON.stringify({
+          ticker,
+          stage: pipelineStage,
+          reportId,
+          ...(dataPacket && { payload: dataPacket }),
+        }),
       });
 
       if (res.status === 409) {
