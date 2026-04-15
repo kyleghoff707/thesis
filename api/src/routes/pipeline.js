@@ -38,7 +38,8 @@ export async function handlePipeline(request, env, path, user) {
     return handleExport(env, user, exportMatch[1], exportMatch[2], exportMatch[3]);
   }
 
-  // POST /api/pipeline/assemble-data/:ticker — assemble DataPacket for a ticker
+  // POST /api/pipeline/assemble-data/:ticker — DEBUG/ADMIN ONLY
+  // Server-side DataPacket assembly. NOT used by production pipeline (browser assembles).
   const assembleMatch = path.match(/^\/api\/pipeline\/assemble-data\/([A-Za-z0-9.-]+)$/);
   if (request.method === 'POST' && assembleMatch) {
     const url = new URL(request.url);
@@ -46,8 +47,8 @@ export async function handlePipeline(request, env, path, user) {
     return handleAssembleData(env, user, assembleMatch[1], includeFilings);
   }
 
-  // POST /api/pipeline/assemble-filings/:ticker — filing content only (no DataPacket re-run)
-  // Accepts { filings, cik } in POST body — call after assemble-data to stay within CPU limits.
+  // POST /api/pipeline/assemble-filings/:ticker — DEBUG/ADMIN ONLY
+  // Server-side filing assembly. NOT used by production pipeline (browser assembles).
   const filingsMatch = path.match(/^\/api\/pipeline\/assemble-filings\/([A-Za-z0-9.-]+)$/);
   if (request.method === 'POST' && filingsMatch) {
     return handleAssembleFilings(request, env, user, filingsMatch[1]);
