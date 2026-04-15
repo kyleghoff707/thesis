@@ -41,7 +41,9 @@
 - [ ] Add MCP tools to agent configs (valuation-specialist gets calculators, competitor-evaluator gets compare_companies, etc.)
 
 ## Full Story (Final Stage)
-- [ ] Create Full Story agents in Console
+- [x] Create Full Story agent prompts (7 specialist agents + coordinator)
+- [ ] Create Full Story agents in Console (get agent IDs)
+- [ ] Update coordinator-fullstory callable_agents with real agent IDs
 - [ ] Wire debate flow (sequential 4-step: bull → bear → rebuttal → judge)
 - [ ] Apply UX fixes from migration log
 - [ ] Add Full Story PDF/DOCX to export service
