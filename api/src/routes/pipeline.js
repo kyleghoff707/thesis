@@ -126,15 +126,49 @@ async function handleRun(request, env, user) {
   }
 
   // ── Stage: Pitch Deck ──────────────────────────────────────
-  // Blocked on callable_agents (Managed Agents multiagent Research Preview).
-  // DataPacket + filing content assembly works. Coordinator prompt ready at
-  // agents-v2/coordinator-pitchdeck/. When access is granted: create coordinator
-  // session with callable_agents, send DataPacket as message, poll like One Pager.
+  // Browser assembles DataPacket + filing content, sends as payload.
+  // Worker relays to the Pitch Deck coordinator Managed Agent session.
   if (stage === 'pitchDeck') {
-    return json({
-      error: 'Pitch Deck generation requires multiagent callable_agents (Research Preview). Access requested — waiting on approval.',
-      detail: 'DataPacket assembly and PSR filing pre-fetch are ready. Use POST /api/pipeline/assemble-data/:ticker?includeFilings=true to verify.',
-    }, 501);
+    const payload = body.payload;
+    if (!payload?.dataPacket) {
+      return json({ error: 'payload.dataPacket is required for Pitch Deck generation' }, 400);
+    }
+
+    const coordinatorAgent = env.MA_PD_COORDINATOR || 'agent_011Ca37DJEQBPbm6rKET3fMs';
+
+    // Create Managed Agent session for Pitch Deck coordinator
+    let sessionId;
+    try {
+      const session = await anthropicFetch(`${ANTHROPIC_API}/v1/sessions`, 'POST', {
+        agent: coordinatorAgent,
+        environment_id: env.MA_ENVIRONMENT_ID,
+      }, env);
+      sessionId = session.id;
+    } catch (err) {
+      return json({ error: 'Failed to create Pitch Deck agent session', detail: err.message }, 500);
+    }
+
+    // Build and send the initial message with DataPacket + filing content
+    const messageText = buildPitchDeckMessage(ticker, payload);
+    try {
+      await anthropicFetch(`${ANTHROPIC_API}/v1/sessions/${sessionId}/events`, 'POST', {
+        events: [{
+          type: 'user.message',
+          content: [{ type: 'text', text: messageText }],
+        }],
+      }, env);
+    } catch (err) {
+      return json({ error: 'Failed to send message to Pitch Deck agent', detail: err.message }, 500);
+    }
+
+    // Create pipeline run record
+    const runId = crypto.randomUUID();
+    await env.DB.prepare(
+      `INSERT INTO pipeline_runs (id, user_id, report_id, ticker, stage, status, session_id, started_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 'running', ?, datetime('now'), datetime('now'))`
+    ).bind(runId, user.id, reportId || null, ticker.toUpperCase(), stage, sessionId).run();
+
+    return json({ runId, status: 'running', ticker: ticker.toUpperCase(), stage }, 200);
   }
 
   // ── Stage: One Pager ───────────────────────────────────────
@@ -452,6 +486,38 @@ async function handleAssembleFilings(request, env, user, ticker) {
       elapsedSeconds: parseFloat(elapsed),
     }, 500);
   }
+}
+
+// ─── Pitch Deck Message Builder ─────────────────────────────
+
+function buildPitchDeckMessage(ticker, payload) {
+  const { dataPacket, filingContent, assembledAt } = payload;
+  const companyName = dataPacket.companyInfo?.name || dataPacket.ticker || ticker;
+  const timestamp = assembledAt || new Date().toISOString();
+
+  let text = `# Pitch Deck Research: ${ticker.toUpperCase()}\nCompany: ${companyName}\nAssembled: ${timestamp}\n\n`;
+
+  // DataPacket as compact JSON
+  text += `## DataPacket\n\n\`\`\`json\n${JSON.stringify(dataPacket)}\n\`\`\`\n\n`;
+
+  // Filing content sections
+  if (filingContent && Array.isArray(filingContent)) {
+    text += `## Filing Content\n\n`;
+    for (const filing of filingContent) {
+      const label = filing.label || filing.type || 'Filing';
+      const period = filing.period || filing.fiscalYear || '';
+      text += `### ${label}${period ? ` (${period})` : ''}\n\n`;
+      if (filing.sections && typeof filing.sections === 'object') {
+        for (const [sectionName, sectionText] of Object.entries(filing.sections)) {
+          text += `#### ${sectionName}\n\n${sectionText}\n\n`;
+        }
+      } else if (filing.markdown) {
+        text += `${filing.markdown}\n\n`;
+      }
+    }
+  }
+
+  return text;
 }
 
 // ─── Helpers ────────────────────────────────────────────────
