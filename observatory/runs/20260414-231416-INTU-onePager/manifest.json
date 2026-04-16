@@ -1,0 +1,30 @@
+{
+  "runId": "20260414-231416-INTU-onePager",
+  "timestamp": "2026-04-15T06:14:16.960Z",
+  "completedAt": "2026-04-15T06:18:05.402Z",
+  "controlVariables": {
+    "ticker": "INTU",
+    "stage": "onePager",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "183a7f12ea730661",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": null,
+  "actualVerdict": "PASS",
+  "verdictMatch": null,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 228.442,
+    "totalCost": 0,
+    "totalTokens": 0,
+    "totalInputTokens": 0,
+    "totalOutputTokens": 0,
+    "toolUses": 0,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 0,
+    "sectionsExpected": 6,
+    "errorsCount": 0
+  },
+  "agentFiles": []
+}

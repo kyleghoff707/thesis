@@ -1,0 +1,27 @@
+{
+  "runId": "20260414-230229-COST-onePager",
+  "timestamp": "2026-04-15T06:02:29.867Z",
+  "completedAt": "2026-04-15T06:08:08.338Z",
+  "controlVariables": {
+    "ticker": "COST",
+    "stage": "onePager",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "082a3b2f7d6b4240",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": null,
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": null,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 338.472,
+    "totalCost": 0,
+    "totalInputTokens": 0,
+    "totalOutputTokens": 0,
+    "sectionsProduced": 6,
+    "sectionsExpected": 6,
+    "errorsCount": 0
+  },
+  "agentFiles": []
+}

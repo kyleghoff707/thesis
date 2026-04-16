@@ -59,4 +59,7 @@ src/engines/__tests__/fixtures/edgar-cache/
 .thes1s/
 .claude/worktrees/
 .council/
+
+# Observatory — Obsidian workspace config (vault content is tracked)
+observatory/.obsidian/
 api/src/pipeline/curriculumBundle.js

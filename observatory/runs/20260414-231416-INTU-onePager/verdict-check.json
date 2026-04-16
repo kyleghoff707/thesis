@@ -1,0 +1,10 @@
+{
+  "runId": "20260414-231416-INTU-onePager",
+  "ticker": "INTU",
+  "expectedVerdict": null,
+  "expectedSource": null,
+  "actualVerdict": "PASS",
+  "match": null,
+  "sectionVerdicts": {},
+  "verdictDistribution": {}
+}

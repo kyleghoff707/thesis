@@ -13,61 +13,172 @@ Generate a Rule One One Pager investment screening for **$0**.
 
 The ticker symbol is `$0`. Uppercase it and store as `TICKER`.
 
-- If `$0` is empty, print usage: `/generate:one-pager TICKER` and stop.
+- If `$0` is empty, print usage: `/generate-one-pager TICKER` and stop.
+- Create output directory: `.thes1s/reports/{TICKER}/`
 
-## Step 2: Generate One Pager
+## Step 2: Assemble DataPacket
 
-Run the single-call generator via CLI:
+Run the data assembly script (no AI calls — just EDGAR/SEC/Finviz data fetching):
 
 ```bash
-node --loader ./scripts/node-esm-loader.js scripts/run-pipeline.js {TICKER} onePager
+node --loader ./scripts/node-esm-loader.js scripts/assemble-data.js {TICKER}
 ```
 
-This assembles the DataPacket (financial data, company info, growth rates, valuation) and runs the One Pager through the standard pipeline infrastructure with budget tracking and cache monitoring. The One Pager uses a single Claude Sonnet API call internally. Output is written to `.thes1s/reports/{TICKER}/one-pager.json`.
+This writes the DataPacket to `.thes1s/reports/{TICKER}/data-packet.json`.
 
-**Monitor CLI output for:**
-- DataPacket assembly time and field count
-- Generation time and cost (should be under $1, under 3 minutes)
-- Per-section verdicts (PASS/FAIL/WATCHLIST) and confidence levels
-- Overall verdict
+If assembly fails, print the error and stop.
 
-**Troubleshooting:**
-- If "Failed to assemble DataPacket" — check network connectivity for EDGAR/Yahoo APIs
-- If "Structured output parsing failed" — check `.env.local` has `VITE_CLAUDE_KEY` set
-- If generation is slow — the DataPacket may be large; this is normal for data-rich companies
+After assembly, read `.thes1s/reports/{TICKER}/data-packet.json` and note the field count and any errors.
 
-## Step 3: Review Results
+## Step 3: Read Agent Prompt and DataPacket
 
-Read the output file: `.thes1s/reports/{TICKER}/one-pager.json`
+1. Read the One Pager agent prompt: `agents-v2/one-pager/prompt.md`
+2. Read the DataPacket: `.thes1s/reports/{TICKER}/data-packet.json`
+
+## Step 3.5: Initialize Observatory Capture
+
+Run the observatory init script to start tracking this pipeline run:
+
+```bash
+node scripts/observatory-init.js {TICKER} onePager .thes1s/reports/{TICKER}/data-packet.json
+```
+
+Capture the **last line of output** — that is the `RUN_ID`. You will need it in Step 5.5.
+
+If this fails, print a warning and continue — observatory is non-blocking.
+
+## Step 4: Dispatch One Pager Subagent
+
+Dispatch a single Claude Code subagent via the **Agent tool** with:
+
+- **System context (concatenated in this order):**
+  1. The full contents of `agents-v2/one-pager/prompt.md`
+  2. A reminder about the output format: "Output ONLY a valid JSON object with the 6 section keys described in your prompt. No surrounding text, no markdown fences — just the raw JSON object."
+
+- **User message:**
+  ```
+  Analyze {TICKER} and produce the complete One Pager screening.
+
+  ## DataPacket
+
+  {full DataPacket JSON}
+
+  ## Assignment
+
+  Produce the One Pager for {TICKER}. Follow your prompt instructions exactly. Use web search for current information. Be concise — each section 1-3 short paragraphs. Cite specific numbers from the DataPacket and from your web searches.
+  ```
+
+**Subagent model:** Use Sonnet (cost-efficient for a screening document).
+
+Wait for the subagent to complete.
+
+## Step 5: Extract and Save Output
+
+The subagent's response should contain a JSON object with 6 keys (company_info, minimum_standards, meaning, growth_metrics, valuation_summary, overall_verdict).
+
+**JSON extraction (handle CC subagent output variability):**
+
+1. Look for a JSON code block (```json ... ```) in the response
+2. If not found, look for a raw JSON object (starts with `{`, ends with `}`)
+3. If not found, look for JSON between the first `{` and last `}` in the response
+4. Parse the extracted JSON
+
+**If JSON extraction fails:**
+Retry once — dispatch the subagent again with the same prompt plus: "Your previous response could not be parsed as JSON. Output ONLY the raw JSON object — no markdown fences, no explanation text, no preamble. Start your response with { and end with }."
+
+If retry also fails, print the error and stop.
+
+**Transform to output format:**
+
+Once parsed, wrap the 6-section output into the canonical one-pager format:
+
+```json
+{
+  "ticker": "{TICKER}",
+  "companyName": "{from company_info section or DataPacket}",
+  "stage": "onePager",
+  "generatedAt": "{ISO timestamp}",
+  "overallVerdict": "{from overall_verdict.verdict}",
+  "sectionKeys": ["company_info", "minimum_standards", "meaning", "growth_metrics", "valuation_summary", "overall_verdict"],
+  "sections": [
+    {
+      "key": "company_info",
+      "title": "Company Information",
+      "sectionNumber": 1,
+      "status": "{pass/fail/review based on verdict}",
+      "confidence": "{from section}",
+      "verdict": "{from section}",
+      "verdictRationale": "{from section}",
+      "summary": "{from section}",
+      "data": "{}",
+      "narrative": "{from section}",
+      "citations": [],
+      "tables": [],
+      "charts": [],
+      "redFlags": [],
+      "primarySourceInsights": [],
+      "crossCuttingFindings": [],
+      "questions": [],
+      "modelUsed": null,
+      "tokenCost": null
+    }
+  ]
+}
+```
+
+For each of the 6 sections, map the subagent's output fields (verdict, confidence, verdictRationale, summary, narrative, redFlags, citations) into the canonical schema above. Set `status` based on verdict: PASS → "pass", FAIL → "fail", WATCHLIST → "review".
+
+Write to `.thes1s/reports/{TICKER}/one-pager.json`.
+
+## Step 5.5: Finalize Observatory Capture
+
+After the subagent completes, its result includes a `<usage>` block with token and timing data:
+```
+<usage>total_tokens: NNNNN
+tool_uses: NN
+duration_ms: NNNNNN</usage>
+```
+
+Parse these three values from the subagent result. Then run the observatory finalize script:
+
+```bash
+node scripts/observatory-finalize.js {RUN_ID} .thes1s/reports/{TICKER}/one-pager.json --verdict {OVERALL_VERDICT} --tokens {TOTAL_TOKENS} --tool-uses {TOOL_USES} --duration {DURATION_SECONDS}
+```
+
+Where:
+- `{RUN_ID}` is from Step 3.5
+- `{OVERALL_VERDICT}` is the verdict extracted in Step 5 (PASS, FAIL, or WATCHLIST)
+- `{TOTAL_TOKENS}` is `total_tokens` from the usage block
+- `{TOOL_USES}` is `tool_uses` from the usage block
+- `{DURATION_SECONDS}` is `duration_ms` from the usage block divided by 1000 (convert to seconds)
+
+If this fails, print a warning and continue — observatory is non-blocking.
+
+## Step 6: Generate PDF
+
+Generate the Thes1s-branded PDF report:
+
+```bash
+python3 scripts/pdf/generate_one_pager_pdf.py {TICKER}
+```
+
+This reads `.thes1s/reports/{TICKER}/one-pager.json` + `data-packet.json` and produces a branded PDF in the same directory. If it fails, print a warning and continue — the JSON output is the primary artifact.
+
+## Step 7: Review Results
 
 Print a summary:
 - **Overall Verdict:** PASS / FAIL / WATCHLIST
-- **Sections:** 6/6 (company_info, minimum_standards, meaning, growth_metrics, valuation_summary, overall_verdict)
 - **Per-section verdicts** and confidence levels
 - **Red flags:** total count and any critical ones
-- **Cost:** from CLI output (token usage and estimated cost)
-
-## Step 4: Quality Check (Optional)
-
-Run the critic.js quality validator on the output:
-
-```bash
-node --import ./scripts/node-esm-loader.js -e "
-  import { validateStage } from './src/engines/critic.js';
-  import { readFileSync } from 'fs';
-  const report = JSON.parse(readFileSync('.thes1s/reports/{TICKER}/one-pager.json', 'utf8'));
-  const quality = validateStage(report.sections, null);
-  console.log('Quality score:', quality.overallScore, '/ 100');
-  console.log('Passed:', quality.overallPassed);
-"
-```
-
-Quality scoring is informational, not blocking. The One Pager is a screening document — depth comes in the Pitch Deck.
+- **Output path:** `.thes1s/reports/{TICKER}/one-pager.json`
+- **PDF path:** `.thes1s/reports/{TICKER}/` (if generated)
 
 ## Constraints
 
-### Contamination Boundary (CRITICAL)
+### No API Calls
+All AI work runs as a Claude Code subagent. Never call `run-pipeline.js`, `onePagerGenerator.js`, or the Claude API directly.
 
+### Contamination Boundary (CRITICAL)
 During generation, NEVER read from any of these paths:
 - `knowledge/stage-1-one-pager/examples/`
 - `knowledge/stage-2-pitch-deck/examples/`

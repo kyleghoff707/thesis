@@ -1,0 +1,4 @@
+{
+  "_comment": "Hand-curated expected verdicts for RL-style calibration. User provides these based on their own Rule One analysis and guru activity.",
+  "verdicts": {}
+}

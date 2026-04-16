@@ -15,6 +15,14 @@ import { pathToFileURL, fileURLToPath } from 'url';
 
 const EXTENSIONS = ['.js', '.mjs', '.jsx', '/index.js', '/index.mjs'];
 
+// Vite ?raw suffix — strip before resolve, flag for text loading
+function stripRawSuffix(specifier) {
+  if (specifier.endsWith('?raw')) {
+    return { specifier: specifier.slice(0, -4), isRaw: true };
+  }
+  return { specifier, isRaw: false };
+}
+
 // Pre-load: patch import.meta.env with process.env values (Vite compatibility)
 // This is picked up by the initialize hook
 export async function initialize() {
@@ -24,22 +32,38 @@ export async function initialize() {
 }
 
 export async function resolve(specifier, context, nextResolve) {
+  // Handle ?raw imports (Vite syntax) — strip suffix, resolve, tag URL
+  const { specifier: cleanSpec, isRaw } = stripRawSuffix(specifier);
+
   // Handle JSON imports: add the import attribute automatically
-  if (specifier.endsWith('.json')) {
-    const result = await nextResolve(specifier, {
+  if (cleanSpec.endsWith('.json')) {
+    const result = await nextResolve(cleanSpec, {
       ...context,
       importAttributes: { ...context.importAttributes, type: 'json' },
     });
     return { ...result, importAttributes: { type: 'json' } };
   }
 
+  // Handle .md (and other text) imports — resolve to file URL with ?raw tag
+  if (isRaw && cleanSpec.startsWith('.')) {
+    const parentPath = context.parentURL ? fileURLToPath(context.parentURL) : process.cwd();
+    const parentDir = parentPath.endsWith('/') ? parentPath : pathResolve(parentPath, '..');
+    const candidate = pathResolve(parentDir, cleanSpec);
+    if (existsSync(candidate)) {
+      return {
+        shortCircuit: true,
+        url: pathToFileURL(candidate).href + '?raw',
+      };
+    }
+  }
+
   // Handle extension-less relative imports
-  if (specifier.startsWith('.') && !extname(specifier)) {
+  if (cleanSpec.startsWith('.') && !extname(cleanSpec)) {
     const parentPath = context.parentURL ? fileURLToPath(context.parentURL) : process.cwd();
     const parentDir = parentPath.endsWith('/') ? parentPath : pathResolve(parentPath, '..');
 
     for (const ext of EXTENSIONS) {
-      const candidate = pathResolve(parentDir, specifier + ext);
+      const candidate = pathResolve(parentDir, cleanSpec + ext);
       if (existsSync(candidate)) {
         return {
           shortCircuit: true,
@@ -49,10 +73,21 @@ export async function resolve(specifier, context, nextResolve) {
     }
   }
 
-  return nextResolve(specifier, context);
+  return nextResolve(cleanSpec, context);
 }
 
 export async function load(url, context, nextLoad) {
+  // Handle ?raw imports — return file contents as a default-exported string
+  if (url.includes('?raw')) {
+    const filePath = fileURLToPath(url.replace('?raw', ''));
+    const source = readFileSync(filePath, 'utf8');
+    return {
+      shortCircuit: true,
+      format: 'module',
+      source: `export default ${JSON.stringify(source)};`,
+    };
+  }
+
   // Auto-load JSON files with json type if not already set
   if (url.endsWith('.json')) {
     const filePath = fileURLToPath(url);
@@ -78,9 +113,9 @@ export async function load(url, context, nextLoad) {
         const envShim = `
 if (!import.meta.env) {
   import.meta.env = {
-    DEV: false,
-    PROD: true,
-    MODE: 'production',
+    DEV: true,
+    PROD: false,
+    MODE: 'development',
     ...Object.fromEntries(
       Object.entries(process.env).filter(([k]) => k.startsWith('VITE_'))
     ),
