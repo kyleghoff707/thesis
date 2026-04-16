@@ -1,0 +1,25 @@
+{
+  "runId": "20260415-205824-UBER-pitchDeck",
+  "ticker": "UBER",
+  "expectedVerdict": null,
+  "expectedSource": null,
+  "actualVerdict": "WATCHLIST",
+  "match": null,
+  "sectionVerdicts": {
+    "radar": "WATCHLIST",
+    "simple_predictable": "WATCHLIST",
+    "market_position": "WATCHLIST",
+    "barriers_moats": "WATCHLIST",
+    "fcf": "PASS",
+    "management": "PASS",
+    "roe_roic_debt": "WATCHLIST",
+    "balance_sheet": "WATCHLIST",
+    "pest": "FAIL",
+    "valuation": "WATCHLIST"
+  },
+  "verdictDistribution": {
+    "WATCHLIST": 7,
+    "PASS": 2,
+    "FAIL": 1
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "runId": "20260415-204131-LULU-pitchDeck",
+  "ticker": "LULU",
+  "expectedVerdict": null,
+  "expectedSource": null,
+  "actualVerdict": "WATCHLIST",
+  "match": null,
+  "sectionVerdicts": {
+    "radar": "WATCHLIST",
+    "simple_predictable": "PASS",
+    "market_position": "WATCHLIST",
+    "barriers_moats": "WATCHLIST",
+    "fcf": "WATCHLIST",
+    "management": "FAIL",
+    "roe_roic_debt": "PASS",
+    "balance_sheet": "PASS",
+    "pest": "FAIL",
+    "valuation": "WATCHLIST"
+  },
+  "verdictDistribution": {
+    "WATCHLIST": 5,
+    "PASS": 3,
+    "FAIL": 2
+  }
+}

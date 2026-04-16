@@ -45,6 +45,7 @@ for (let i = 2; i < args.length; i++) {
   if (args[i] === '--output-tokens' && args[i + 1]) { cliOutputTokens = parseInt(args[++i]); }
   if (args[i] === '--tool-uses' && args[i + 1]) { cliToolUses = parseInt(args[++i]); }
   if (args[i] === '--duration' && args[i + 1]) { cliDuration = parseFloat(args[++i]); }
+  if (args[i] === '--model' && args[i + 1]) { cliModel = args[++i]; }
 }
 
 const runDir = join(RUNS_DIR, runId);
@@ -147,7 +148,7 @@ try {
   const matchStr = manifest.expectedVerdict
     ? (manifest.verdictMatch ? 'MATCH' : 'MISMATCH')
     : 'no expected verdict';
-  const costStr = (cliCost || 0).toFixed(2);
+  const costStr = estimatedCost.toFixed(2);
   const durMin = (totalSeconds / 60).toFixed(0);
 
   // Read orchestrator for failure count
@@ -177,5 +178,5 @@ try {
 const matchIcon = manifest.verdictMatch === true ? 'MATCH' : manifest.verdictMatch === false ? 'MISMATCH' : '-';
 console.log(`\nObservatory: finalized run ${runId}`);
 console.log(`  Verdict: ${overallVerdict || 'unknown'} (expected: ${manifest.expectedVerdict || 'not set'}) — ${matchIcon}`);
-console.log(`  Sections: ${sections.length} | Cost: $${(cliCost || 0).toFixed(2)} | Duration: ${(totalSeconds / 60).toFixed(0)}min`);
+console.log(`  Sections: ${sections.length} | Cost: $${estimatedCost.toFixed(2)} | Duration: ${(totalSeconds / 60).toFixed(0)}min`);
 console.log(`  Output: observatory/runs/${runId}/`);

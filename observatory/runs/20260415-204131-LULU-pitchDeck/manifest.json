@@ -1,0 +1,30 @@
+{
+  "runId": "20260415-204131-LULU-pitchDeck",
+  "timestamp": "2026-04-16T03:41:31.669Z",
+  "completedAt": "2026-04-16T04:59:45.615Z",
+  "controlVariables": {
+    "ticker": "LULU",
+    "stage": "pitchDeck",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "d56510fb64547787",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": null,
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": null,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 3450,
+    "totalCost": 7.394399999999999,
+    "totalTokens": 948000,
+    "totalInputTokens": 568800,
+    "totalOutputTokens": 379200,
+    "toolUses": 200,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 10,
+    "sectionsExpected": 11,
+    "errorsCount": 0
+  },
+  "agentFiles": []
+}

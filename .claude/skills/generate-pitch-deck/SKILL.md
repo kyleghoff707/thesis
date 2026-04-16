@@ -33,7 +33,7 @@ AGENT_REGISTRY:
 
   quarterly-reader:
     prompt: agents-v2/quarterly-reader/prompt.md
-    model: opus
+    model: sonnet
     sections: [psr_quarterly]
     wave: 0
     dpFields: [companyInfo, classification, financials, ttm, filings, caveats]
@@ -75,14 +75,14 @@ AGENT_REGISTRY:
 
   risk-analyst:
     prompt: agents-v2/risk-analyst-pitchdeck/prompt.md
-    model: opus
+    model: sonnet
     sections: [pest]
     wave: 3
     dpFields: [companyInfo, classification, financials, ttm, growthRates, peers, insiders, caveats]
 
   valuation-specialist:
     prompt: agents-v2/valuation-specialist-pitchdeck/prompt.md
-    model: opus
+    model: sonnet
     sections: [valuation]
     wave: 3
     dpFields: [companyInfo, classification, financials, ttm, growthRates, returnMetrics, fcf, keyMetrics, caveats]
@@ -316,7 +316,13 @@ Read the v2 prompts:
 - `agents-v2/business-analyst-pitchdeck/prompt.md`
 - `agents-v2/competitor-evaluator-market-position-pitchdeck/prompt.md`
 
-### 4b: Dispatch Agents Sequentially
+### 4b: PARALLEL DISPATCH -- Wave 1 Agents (Single Message)
+
+> **CRITICAL: Send ALL Agent tool calls for this wave in a SINGLE message.**
+> Do NOT wait for one agent to finish before dispatching the next.
+> Both agents in this wave are independent — no shared state between them.
+
+Dispatch BOTH agents simultaneously (2 Agent tool calls in a single message):
 
 **Agent 1: business-analyst** -- Sections: radar (S1), simple_predictable (S2)
 
@@ -327,8 +333,6 @@ Dispatch via Agent tool with:
 4. One Pager summary for context
 5. Task instruction: "Analyze {TICKER} and produce Pitch Deck sections 1 (Radar) and 2 (Simple & Predictable). The DataPacket and PSR findings are provided. Use web search for current information. Return a JSON array containing both section objects matching the ReportSectionSchema defined in your prompt."
 
-Wait for completion. Extract JSON. Save to `.thes1s/reports/{TICKER}/sections/radar.json` and `.thes1s/reports/{TICKER}/sections/simple_predictable.json`.
-
 **Agent 2: competitor-market-position** -- Section: market_position (S3)
 
 Dispatch via Agent tool with:
@@ -338,7 +342,7 @@ Dispatch via Agent tool with:
 4. Sections 1-2 summaries (from business-analyst output)
 5. Task instruction: "Analyze {TICKER}'s competitive position and produce section 3 (Market Position). Screen 15+ industry peers. Include market share ceiling analysis. Return a single JSON object matching ReportSectionSchema."
 
-Wait for completion. Extract JSON. Save to `.thes1s/reports/{TICKER}/sections/market_position.json`.
+After BOTH agents return, extract JSON from each. Save to `.thes1s/reports/{TICKER}/sections/radar.json`, `.thes1s/reports/{TICKER}/sections/simple_predictable.json`, and `.thes1s/reports/{TICKER}/sections/market_position.json`.
 
 Log:
 ```
@@ -346,6 +350,28 @@ Step 4: Wave 1 -- Business Fundamentals
   business-analyst: radar (S1), simple_predictable (S2)
   competitor-market-position: market_position (S3)
   All 3 sections complete.
+```
+
+#### Observatory Recording (non-blocking)
+
+For each agent that completed in this wave, record its performance. Extract verdict, confidence, red flag count, and citation count from the saved section JSON files. If any recording command fails, print a warning and continue.
+
+```bash
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role business-analyst --wave 1 --stage pitchDeck \
+  --sections "radar,simple_predictable" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role competitor-market-position --wave 1 --stage pitchDeck \
+  --sections "market_position" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+node scripts/observatory-record-event.js {RUN_ID} dispatch \
+  --wave 1 --stage "Business Fundamentals" \
+  --agents "business-analyst,competitor-market-position" --parallel true --duration {WAVE_DURATION_SECONDS}
 ```
 
 ### 4c: Collect and Validate Wave 1 Outputs
@@ -398,7 +424,13 @@ Red Flags: {list}
 {aggregated}
 ```
 
-### 6c: Dispatch Agents Sequentially
+### 6c: PARALLEL DISPATCH -- Wave 2 Agents (Single Message)
+
+> **CRITICAL: Send ALL 3 Agent tool calls for this wave in a SINGLE message.**
+> Do NOT wait for one agent to finish before dispatching the next.
+> All 3 agents in this wave are independent — no shared state between them.
+
+Dispatch ALL 3 agents simultaneously (3 Agent tool calls in a single message):
 
 **Agent 1: competitor-moats** -- Section: barriers_moats (S4)
 
@@ -412,8 +444,6 @@ Dispatch via Agent tool with:
 5. One Pager verdict and summary
 6. Task instruction: "Validate {TICKER}'s competitive moats and produce section 4 (Barriers & Moats). You receive Section 3 (Market Position) findings as input -- use them as your competitive landscape foundation. Return a single JSON object matching ReportSectionSchema."
 
-Wait for completion. Extract and save.
-
 **Agent 2: financial-analyst** -- Sections: fcf (S5), roe_roic_debt (S7), balance_sheet (S8)
 
 Dispatch via Agent tool with:
@@ -423,8 +453,6 @@ Dispatch via Agent tool with:
 4. Wave 1 context + S4 barriers_moats output
 5. Supplementary context
 6. Task instruction: "Analyze {TICKER}'s financials and produce sections 5 (FCF), 7 (ROE/ROIC/ROA & Debt), and 8 (Balance Sheet). Include dual Owner Earnings (Rule One + Graham). Return a JSON array containing all three section objects matching ReportSectionSchema."
-
-Wait for completion. Extract and save each section separately.
 
 **Agent 3: management-evaluator** -- Section: management (S6)
 
@@ -436,7 +464,7 @@ Dispatch via Agent tool with:
 5. Supplementary context
 6. Task instruction: "Evaluate {TICKER}'s management team and produce section 6 (Management). Assess CEO track record, insider ownership, compensation alignment, and Guru ownership context (context only -- NOT a buy signal). Return a single JSON object matching ReportSectionSchema."
 
-Wait for completion. Extract and save.
+After ALL 3 agents return, extract JSON from each and save sections separately.
 
 Log:
 ```
@@ -445,6 +473,35 @@ Step 6: Wave 2 -- Deep Analysis
   financial-analyst: fcf (S5), roe_roic_debt (S7), balance_sheet (S8)
   management-evaluator: management (S6)
   All 5 sections complete.
+```
+
+#### Observatory Recording (non-blocking)
+
+```bash
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role competitor-moats --wave 2 --stage pitchDeck \
+  --sections "barriers_moats" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role financial-analyst --wave 2 --stage pitchDeck \
+  --sections "fcf,roe_roic_debt,balance_sheet" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role management-evaluator --wave 2 --stage pitchDeck \
+  --sections "management" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+node scripts/observatory-record-event.js {RUN_ID} dispatch \
+  --wave 2 --stage "Deep Analysis" \
+  --agents "competitor-moats,financial-analyst,management-evaluator" --parallel true --duration {WAVE_DURATION_SECONDS}
+```
+
+Log:
 ```
 
 ### 6d: Validate Wave 2 Outputs
@@ -493,7 +550,13 @@ Collect Wave 1 AND Wave 2 section summaries, verdicts, red flags, and cross-cutt
 [One Pager findings]
 ```
 
-### 8c: Dispatch Agents Sequentially
+### 8c: PARALLEL DISPATCH -- Wave 3 Agents (Single Message)
+
+> **CRITICAL: Send BOTH Agent tool calls for this wave in a SINGLE message.**
+> Do NOT wait for one agent to finish before dispatching the next.
+> Both agents in this wave are independent — no shared state between them.
+
+Dispatch BOTH agents simultaneously (2 Agent tool calls in a single message):
 
 **Agent 1: risk-analyst** -- Section: pest (S9)
 
@@ -505,8 +568,6 @@ Dispatch via Agent tool with:
 5. Supplementary context
 6. Task instruction: "Conduct a comprehensive PEST risk analysis for {TICKER}. Produce section 9 (PEST Risks). Apply the 3-red-flag minimum per PEST category. Assess FGR vulnerability. Your bias is bearish -- demolish the bull case or fail trying. Return a single JSON object matching ReportSectionSchema."
 
-Wait for completion. Extract and save.
-
 **Agent 2: valuation-specialist** -- Section: valuation (S10)
 
 Dispatch via Agent tool with:
@@ -517,7 +578,7 @@ Dispatch via Agent tool with:
 5. Supplementary context
 6. Task instruction: "Produce the complete valuation analysis for {TICKER} as section 10 (Valuation). Derive FGR using all 5 inputs with evidence. Run all four methods (MOS, PBT, Ten Cap, Equity Bond) with buy price RANGES. Include sensitivity tables. The FGR derivation must be in the section's `data` field with structure: `{ fgrDerivation: { inputs: [...], proposedRange: { low, high }, weightedAverage } }`. Return a single JSON object matching ReportSectionSchema."
 
-Wait for completion. Extract and save.
+After BOTH agents return, extract JSON from each and save.
 
 Log:
 ```
@@ -525,6 +586,26 @@ Step 8: Wave 3 -- Risk & Valuation
   risk-analyst: pest (S9)
   valuation-specialist: valuation (S10)
   Both sections complete.
+```
+
+#### Observatory Recording (non-blocking)
+
+```bash
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role risk-analyst --wave 3 --stage pitchDeck \
+  --sections "pest" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role valuation-specialist --wave 3 --stage pitchDeck \
+  --sections "valuation" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+node scripts/observatory-record-event.js {RUN_ID} dispatch \
+  --wave 3 --stage "Risk & Valuation" \
+  --agents "risk-analyst,valuation-specialist" --parallel true --duration {WAVE_DURATION_SECONDS}
 ```
 
 ## Step 9: FGR Derivation Sub-Workflow
@@ -619,6 +700,20 @@ Log:
 ```
 Step 11: Wave 4 -- Synthesis Writer dispatched
   Overall verdict: {verdict} ({confidence})
+```
+
+#### Observatory Recording (non-blocking)
+
+```bash
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role synthesis-writer --wave 4 --stage pitchDeck \
+  --sections "overall_verdict" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {OVERALL_VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+node scripts/observatory-record-event.js {RUN_ID} dispatch \
+  --wave 4 --stage "Synthesis" \
+  --agents "synthesis-writer" --parallel false --duration {WAVE_DURATION_SECONDS}
 ```
 
 ## Step 12: Assemble Final Report
@@ -842,6 +937,16 @@ Where:
 
 If this fails, print a warning and continue -- observatory is non-blocking.
 
+## Step 15.5: Observatory Wiki Synthesis (non-blocking)
+
+Run wiki synthesis to update agent profiles, ticker pages, and pattern pages:
+
+```bash
+node --loader ./scripts/node-esm-loader.js scripts/observatory-synthesize.js {RUN_ID}
+```
+
+If this fails, print a warning and continue -- wiki synthesis can be run manually later.
+
 ## Step 16: Generate PDF
 
 Generate the Thes1s-branded Pitch Deck PDF:
@@ -989,7 +1094,7 @@ Each wave receives context from all prior waves:
 The pipeline runs end-to-end without stopping. Log wave results between waves for observability, but do not pause for PM input.
 
 ### Agent Model Selection
-**Model assignments are controlled variables** (from managed-agent.yaml configs). When dispatching each agent via the Agent tool, use the `model` parameter from the Agent Registry above. Defaults: quarterly-reader, risk-analyst, and valuation-specialist use **opus**; all others use **sonnet**. The observatory tracks which model each agent used so DOE experiments can measure the effect of model swaps on quality and cost.
+**Model assignments are controlled variables** (from managed-agent.yaml configs). When dispatching each agent via the Agent tool, use the `model` parameter from the Agent Registry above. Defaults: all agents use **sonnet**. (Sprint 1 used opus for quarterly-reader, risk-analyst, valuation-specialist — switched to all-sonnet for Sprint 2 experiment per DOE.) The observatory tracks which model each agent used so DOE experiments can measure the effect of model swaps on quality and cost.
 
 ### Progress Display
 ```

@@ -1,0 +1,30 @@
+{
+  "runId": "20260415-213506-UBER-fullStory",
+  "timestamp": "2026-04-16T04:35:06.653Z",
+  "completedAt": "2026-04-16T04:45:07.911Z",
+  "controlVariables": {
+    "ticker": "UBER",
+    "stage": "fullStory",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "b9803557785b6fb6",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": null,
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": null,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 900,
+    "totalCost": 1.092,
+    "totalTokens": 140000,
+    "totalInputTokens": 84000,
+    "totalOutputTokens": 56000,
+    "toolUses": 30,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 6,
+    "sectionsExpected": 6,
+    "errorsCount": 0
+  },
+  "agentFiles": []
+}

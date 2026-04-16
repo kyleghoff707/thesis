@@ -135,6 +135,25 @@ For each of the 6 sections, map the subagent's output fields (verdict, confidenc
 
 Write to `.thes1s/reports/{TICKER}/one-pager.json`.
 
+#### Observatory Recording (non-blocking)
+
+Record the one-pager agent's performance. Extract verdict, confidence, and section metrics from the saved one-pager JSON.
+
+```bash
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role one-pager --wave 0 --stage onePager \
+  --sections "company_info,minimum_standards,meaning,growth_metrics,valuation_summary,overall_verdict" \
+  --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {OVERALL_VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+node scripts/observatory-record-event.js {RUN_ID} dispatch \
+  --wave 0 --stage "One Pager" \
+  --agents "one-pager" --parallel false --duration {SECONDS_ELAPSED}
+```
+
+If this fails, print a warning and continue -- observatory recording is non-blocking.
+
 ## Step 5.5: Finalize Observatory Capture
 
 After the subagent completes, its result includes a `<usage>` block with token and timing data:
@@ -158,6 +177,16 @@ Where:
 - `{DURATION_SECONDS}` is `duration_ms` from the usage block divided by 1000 (convert to seconds)
 
 If this fails, print a warning and continue — observatory is non-blocking.
+
+## Step 5.6: Observatory Wiki Synthesis (non-blocking)
+
+Run wiki synthesis to update agent profiles, ticker pages, and pattern pages:
+
+```bash
+node --loader ./scripts/node-esm-loader.js scripts/observatory-synthesize.js {RUN_ID}
+```
+
+If this fails, print a warning and continue -- wiki synthesis can be run manually later.
 
 ## Step 6: Generate PDF
 

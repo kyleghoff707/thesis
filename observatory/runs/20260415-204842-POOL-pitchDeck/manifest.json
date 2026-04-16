@@ -1,0 +1,30 @@
+{
+  "runId": "20260415-204842-POOL-pitchDeck",
+  "timestamp": "2026-04-16T03:48:42.943Z",
+  "completedAt": "2026-04-16T05:17:37.836Z",
+  "controlVariables": {
+    "ticker": "POOL",
+    "stage": "pitchDeck",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "95633dcf17d2a403",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": null,
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": null,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 3600,
+    "totalCost": 6.24,
+    "totalTokens": 800000,
+    "totalInputTokens": 480000,
+    "totalOutputTokens": 320000,
+    "toolUses": 200,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 10,
+    "sectionsExpected": 11,
+    "errorsCount": 0
+  },
+  "agentFiles": []
+}

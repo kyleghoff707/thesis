@@ -28,7 +28,7 @@ AGENT_REGISTRY:
 
   risk-analyst:
     prompt: agents-v2/risk-analyst-fullstory/prompt.md
-    model: opus
+    model: sonnet
     sections: [event_analysis]
     phase: 1
     debateRole: bear (Phase 2, Step 2)
@@ -219,6 +219,9 @@ Step 3: Context prepared
 
 ## Step 4: Phase 1 -- Deep Analysis (5 Agents in Parallel)
 
+> **CRITICAL: Send ALL 5 Agent tool calls in a SINGLE message.**
+> Do NOT dispatch agents one at a time. All 5 are independent — no shared state.
+
 Dispatch all 5 section agents **simultaneously** via 5 Agent tool calls in a single message.
 
 **For each agent, the prompt is concatenated as:**
@@ -323,6 +326,47 @@ Step 4: Phase 1 -- Deep Analysis complete
   S4 Management Checklist:    {verdict} ({confidence}) | {citation_count} citations | {red_flag_count} red flags
   S5 Valuation Confirmation:  {verdict} ({confidence}) | {citation_count} citations | {red_flag_count} red flags
   Phase 1: {completed}/5 sections complete
+```
+
+#### Observatory Recording (non-blocking)
+
+For each Phase 1 agent, record its performance. Extract verdict, confidence, red flags, and citations from saved section JSONs. If any recording fails, print a warning and continue.
+
+```bash
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role risk-analyst --wave 1 --stage fullStory \
+  --sections "event_analysis" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role business-analyst --wave 1 --stage fullStory \
+  --sections "meaning_checklist" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role competitor-evaluator --wave 1 --stage fullStory \
+  --sections "moat_checklist" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role management-evaluator --wave 1 --stage fullStory \
+  --sections "management_checklist" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role valuation-specialist --wave 1 --stage fullStory \
+  --sections "valuation_confirmation" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+node scripts/observatory-record-event.js {RUN_ID} dispatch \
+  --wave 1 --stage "Deep Analysis" \
+  --agents "risk-analyst,business-analyst,competitor-evaluator,management-evaluator,valuation-specialist" \
+  --parallel true --duration {PHASE_DURATION_SECONDS}
 ```
 
 ## Step 5: Log Phase 1 Results
@@ -547,6 +591,53 @@ Print Phase 2 summary:
 ================================================================
 ```
 
+#### Observatory Recording — Debate Phase (non-blocking)
+
+For each debate step agent, record its performance. If any recording fails, print a warning and continue.
+
+```bash
+# After Bull (synthesis-writer)
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role synthesis-writer-bull --wave 2 --stage fullStory \
+  --sections "debate_bull" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+# After Bear (risk-analyst)
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role risk-analyst-bear --wave 2 --stage fullStory \
+  --sections "debate_bear" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+# After Rebuttal (synthesis-writer)
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role synthesis-writer-rebuttal --wave 2 --stage fullStory \
+  --sections "debate_rebuttal" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+# After Judge (financial-analyst)
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role financial-analyst-judge --wave 2 --stage fullStory \
+  --sections "debate_judge" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+# After Compose (synthesis-writer)
+node scripts/observatory-record-agent.js {RUN_ID} \
+  --role synthesis-writer-compose --wave 2 --stage fullStory \
+  --sections "inversion_rebuttal" --model claude-sonnet-4-6 \
+  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+
+# Phase dispatch record
+node scripts/observatory-record-event.js {RUN_ID} dispatch \
+  --wave 2 --stage "Adversarial Debate" \
+  --agents "synthesis-writer,risk-analyst,synthesis-writer,financial-analyst,synthesis-writer" \
+  --parallel false --duration {PHASE_DURATION_SECONDS}
+```
+
 ## Step 8: Assemble Final Report
 
 Collect all 6 sections + debate steps:
@@ -723,6 +814,16 @@ Where:
 
 If this fails, print a warning and continue -- observatory is non-blocking.
 
+## Step 9.5: Observatory Wiki Synthesis (non-blocking)
+
+Run wiki synthesis to update agent profiles, ticker pages, and pattern pages:
+
+```bash
+node --loader ./scripts/node-esm-loader.js scripts/observatory-synthesize.js {RUN_ID}
+```
+
+If this fails, print a warning and continue -- wiki synthesis can be run manually later.
+
 ## Step 10: Generate PDF
 
 Generate the Thes1s-branded Full Story PDF. The PDF reader expects `full-story-api.json`, so copy the output file first:
@@ -851,7 +952,7 @@ Two agents play multiple roles:
 Only the Bear (Phase 2, Step 2) has web search. Phase 1 agents also have web search (their prompts state this). Bull, Rebuttal, Judge, and Compose do NOT use web search -- they work with existing evidence.
 
 ### Agent Model Selection
-**Model assignments are controlled variables** (from managed-agent.yaml configs). When dispatching each agent via the Agent tool, use the `model` parameter from the Agent Registry above. Default: risk-analyst uses **opus**; all others use **sonnet**. The observatory tracks which model each agent used so DOE experiments can measure the effect of model swaps on quality and cost.
+**Model assignments are controlled variables** (from managed-agent.yaml configs). When dispatching each agent via the Agent tool, use the `model` parameter from the Agent Registry above. Default: all agents use **sonnet**. (Sprint 1 used opus for risk-analyst — switched to all-sonnet for Sprint 2 experiment per DOE.) The observatory tracks which model each agent used so DOE experiments can measure the effect of model swaps on quality and cost.
 
 ### Progress Display
 ```

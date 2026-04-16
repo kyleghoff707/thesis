@@ -1,0 +1,30 @@
+{
+  "runId": "20260415-205824-UBER-pitchDeck",
+  "timestamp": "2026-04-16T03:58:24.585Z",
+  "completedAt": "2026-04-16T04:34:35.489Z",
+  "controlVariables": {
+    "ticker": "UBER",
+    "stage": "pitchDeck",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "b9803557785b6fb6",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": null,
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": null,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 1500,
+    "totalCost": 2.34,
+    "totalTokens": 300000,
+    "totalInputTokens": 180000,
+    "totalOutputTokens": 120000,
+    "toolUses": 85,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 10,
+    "sectionsExpected": 11,
+    "errorsCount": 0
+  },
+  "agentFiles": []
+}

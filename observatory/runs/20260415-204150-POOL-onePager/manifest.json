@@ -1,0 +1,30 @@
+{
+  "runId": "20260415-204150-POOL-onePager",
+  "timestamp": "2026-04-16T03:41:50.942Z",
+  "completedAt": "2026-04-16T03:47:33.246Z",
+  "controlVariables": {
+    "ticker": "POOL",
+    "stage": "onePager",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "95633dcf17d2a403",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": null,
+  "actualVerdict": "PASS",
+  "verdictMatch": null,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 245,
+    "totalCost": 0.7719894,
+    "totalTokens": 98973,
+    "totalInputTokens": 59384,
+    "totalOutputTokens": 39589,
+    "toolUses": 24,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 6,
+    "sectionsExpected": 6,
+    "errorsCount": 0
+  },
+  "agentFiles": []
+}
