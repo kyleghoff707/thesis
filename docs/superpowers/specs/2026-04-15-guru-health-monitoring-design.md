@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-15
 **Status:** Draft
-**Scope:** Backend-only (Worker cron + D1 + Resend email)
+**Scope:** Backend-only (Worker cron + D1 + Brevo email)
 
 ---
 
@@ -18,7 +18,7 @@ None of these scenarios produce errors. They degrade data quality silently.
 
 ## Solution
 
-Add a health check pass to the existing monthly guru sync cron (`0 3 1 * *`). After the normal sync loop completes, run three detection checks against all 43 gurus. Store health status in a new `guru_health` D1 table. When issues are detected, send a single email digest via Resend.
+Add a health check pass to the existing monthly guru sync cron (`0 3 1 * *`). After the normal sync loop completes, run three detection checks against all 43 gurus. Store health status in a new `guru_health` D1 table. When issues are detected, send a single email digest via Brevo.
 
 No new cron triggers. No frontend changes. No changes to the GURUS list structure.
 
@@ -148,7 +148,7 @@ Query for all gurus needing alerts:
 SELECT * FROM guru_health WHERE status != 'ok' AND alert_sent_at IS NULL
 ```
 
-If the result set is non-empty, send one Resend email:
+If the result set is non-empty, send one Brevo email:
 
 - **To:** `kyleghoff707@gmail.com`
 - **From:** same sender as invite emails
@@ -183,7 +183,7 @@ One email per month max (cron is monthly). No spam.
 
 | File | Change |
 |------|--------|
-| `api/src/cron/guruHealth.js` | **New.** Exports `checkGuruHealth(env, healthSignals)`. Contains detection logic, D1 upserts, and Resend email. |
+| `api/src/cron/guruHealth.js` | **New.** Exports `checkGuruHealth(env, healthSignals)`. Contains detection logic, D1 upserts, and Brevo email. |
 | `api/src/cron/gurus.js` | **Modified.** Cache SEC filed name + empty filing flag during sync loop. Call `checkGuruHealth()` after loop completes. |
 | `api/schema.sql` | **Modified.** Add `guru_health` table definition. |
 
@@ -194,22 +194,22 @@ No changes to:
 
 ---
 
-## Resend Integration
+## Brevo Integration
 
-The Worker already has `RESEND_API_KEY` as a secret and sends invite emails. The health alert uses the same pattern:
+The Worker already has `BREVO_API_KEY` as a secret and sends invite emails via `api.brevo.com/v3/smtp/email`. The health alert uses the same pattern:
 
 ```js
-await fetch('https://api.resend.com/emails', {
+await fetch('https://api.brevo.com/v3/smtp/email', {
   method: 'POST',
   headers: {
-    'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+    'api-key': env.BREVO_API_KEY,
     'Content-Type': 'application/json',
   },
   body: JSON.stringify({
-    from: 'Thes1s <noreply@thes1sinvesting.com>',
-    to: 'kyleghoff707@gmail.com',
+    sender: { name: 'Thes1s', email: 'noreply@thes1sinvesting.com' },
+    to: [{ email: 'kyleghoff707@gmail.com' }],
     subject: `Thes1s Guru Health Alert — ${issues.length} issue(s) detected`,
-    text: emailBody,
+    textContent: emailBody,
   }),
 });
 ```
@@ -233,7 +233,7 @@ cd api && npx wrangler d1 execute thes1s --remote --command "CREATE TABLE IF NOT
 | Guru never had holdings in D1 (new to list) | `last_report_date` is NULL → status is `'ok'`, no stale alert. Picks up normally once their first filing syncs. |
 | Multiple issues for one guru | Most severe wins: `empty_filing` > `name_drift` > `stale` |
 | SEC submissions endpoint down | `secName` is null → name drift check skipped, other checks still run |
-| Resend API fails | `console.warn`, `alert_sent_at` stays NULL → retries next month |
+| Brevo API fails | `console.warn`, `alert_sent_at` stays NULL → retries next month |
 | Guru legitimately winds down | Add note via D1 console. Alert fires once, then `alert_sent_at` prevents repeats |
 | Name drift is just formatting (e.g., "LLC" vs "L.L.C.") | Comparison is case-insensitive and trimmed. Minor formatting diffs may still trigger — acceptable, user investigates once and it won't re-alert |
 
