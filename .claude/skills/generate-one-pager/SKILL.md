@@ -15,6 +15,11 @@ The ticker symbol is `$0`. Uppercase it and store as `TICKER`.
 
 - If `$0` is empty, print usage: `/generate-one-pager TICKER` and stop.
 - Create output directory: `.thes1s/reports/{TICKER}/`
+- **Clean start:** Remove stale data from prior runs:
+  ```bash
+  rm -rf .thes1s/reports/{TICKER}/sections/
+  rm -rf .thes1s/reports/{TICKER}/quality/
+  ```
 
 ## Step 2: Assemble DataPacket
 
@@ -164,7 +169,20 @@ python3 scripts/pdf/generate_one_pager_pdf.py {TICKER}
 
 This reads `.thes1s/reports/{TICKER}/one-pager.json` + `data-packet.json` and produces a branded PDF in the same directory. If it fails, print a warning and continue — the JSON output is the primary artifact.
 
-## Step 7: Review Results
+## Step 7: Auto-Archive
+
+Archive this run's outputs using the observatory RUN_ID from Step 3.5:
+
+```bash
+mkdir -p .thes1s/reports/{TICKER}/archive/{RUN_ID}
+cp .thes1s/reports/{TICKER}/one-pager.json .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
+cp .thes1s/reports/{TICKER}/data-packet.json .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
+cp .thes1s/reports/{TICKER}/*.pdf .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
+```
+
+This preserves the run's output so future runs on the same ticker don't overwrite it. Non-blocking — if it fails, continue.
+
+## Step 8: Review Results
 
 Print a summary:
 - **Overall Verdict:** PASS / FAIL / WATCHLIST

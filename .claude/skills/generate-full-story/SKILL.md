@@ -113,6 +113,11 @@ Phase 1 agents dispatch **in parallel** (5 Agent tool calls in a single message)
 The ticker symbol is `$0`. Uppercase it and store as `TICKER`.
 
 - If `$0` is empty, print usage: `/generate-full-story TICKER` and stop.
+- **Clean start:** Remove stale section data from prior runs (but preserve pitch-deck.json and data-packet.json which this stage reads):
+  ```bash
+  rm -rf .thes1s/reports/{TICKER}/sections/
+  rm -rf .thes1s/reports/{TICKER}/quality/
+  ```
 - Create output directories:
   - `.thes1s/reports/{TICKER}/`
   - `.thes1s/reports/{TICKER}/sections/`
@@ -729,7 +734,21 @@ python3 scripts/pdf/generate_full_story_pdf.py {TICKER}
 
 This produces a branded PDF with checklist tables, debate rendering, and evidence sections. If it fails, print a warning and continue — the JSON output is the primary artifact.
 
-## Step 11: Print Final Summary
+## Step 11: Auto-Archive
+
+Archive this run's outputs using the observatory RUN_ID from Step 2:
+
+```bash
+mkdir -p .thes1s/reports/{TICKER}/archive/{RUN_ID}
+cp .thes1s/reports/{TICKER}/full-story.json .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
+cp .thes1s/reports/{TICKER}/full-story-api.json .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
+cp .thes1s/reports/{TICKER}/sections/debate-*.json .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
+cp .thes1s/reports/{TICKER}/*.pdf .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
+```
+
+This preserves the run's output so future runs on the same ticker don't overwrite it. Non-blocking — if it fails, continue.
+
+## Step 12: Print Final Summary
 
 ```
 ================================================================

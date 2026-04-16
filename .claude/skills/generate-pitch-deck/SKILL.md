@@ -114,6 +114,13 @@ Agents within the same wave dispatch **in parallel** (multiple Agent tool calls 
 The ticker symbol is `$0`. Uppercase it and store as `TICKER`.
 
 - If `$0` is empty, print usage: `/generate-pitch-deck TICKER` and stop.
+- **Clean start:** Remove stale data from prior runs to prevent contamination:
+  ```bash
+  rm -rf .thes1s/reports/{TICKER}/sections/
+  rm -rf .thes1s/reports/{TICKER}/filings-md/
+  rm -rf .thes1s/reports/{TICKER}/transcripts/
+  rm -rf .thes1s/reports/{TICKER}/quality/
+  ```
 - Create output directories:
   - `.thes1s/reports/{TICKER}/`
   - `.thes1s/reports/{TICKER}/sections/`
@@ -845,7 +852,21 @@ python3 scripts/pdf/generate_pitch_deck_pdf.py {TICKER}
 
 This reads `.thes1s/reports/{TICKER}/pitch-deck.json` + `data-packet.json` and produces a branded PDF with charts, tables, and section narratives. If it fails, print a warning and continue — the JSON output is the primary artifact.
 
-## Step 17: Print Final Summary
+## Step 17: Auto-Archive
+
+Archive this run's outputs using the observatory RUN_ID from Step 2.5:
+
+```bash
+mkdir -p .thes1s/reports/{TICKER}/archive/{RUN_ID}
+cp .thes1s/reports/{TICKER}/pitch-deck.json .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
+cp .thes1s/reports/{TICKER}/data-packet.json .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
+cp .thes1s/reports/{TICKER}/sections/*.json .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
+cp .thes1s/reports/{TICKER}/*.pdf .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
+```
+
+This preserves the run's output so future runs on the same ticker don't overwrite it. Non-blocking — if it fails, continue.
+
+## Step 18: Print Final Summary
 
 ```
 ================================================================

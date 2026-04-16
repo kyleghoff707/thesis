@@ -80,10 +80,7 @@ Stage 3 (Full Story):  {sectionCount} sections + debate
 Output: .thes1s/reports/{TICKER}/
 ```
 
-Then remind:
-```
-Archive this run? Copy .thes1s/reports/{TICKER}/ to Desktop before the next run overwrites it.
-```
+Each stage auto-archives its outputs to `.thes1s/reports/{TICKER}/archive/{RUN_ID}/` so prior runs are preserved.
 
 ## Constraints
 
