@@ -63,6 +63,7 @@ export const PROXY_MAP = {
   '/api/yahoo/': 'https://query1.finance.yahoo.com/',
   '/api/finviz/': 'https://finviz.com/',
   '/api/alpha/': 'https://www.alphavantage.co/',
+  '/data/': 'https://api.thes1sinvesting.com/data/',
 };
 
 /**

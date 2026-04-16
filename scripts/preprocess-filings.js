@@ -36,9 +36,9 @@ async function main() {
     process.exit(1);
   }
 
-  // Select filings to process: most recent 5 10-Ks + 8 10-Qs (full business cycle)
+  // Select filings to process: most recent 5 10-Ks + 4 10-Qs (matches production)
   const annuals = filings.filter(f => f.form === '10-K').slice(0, 5);
-  const quarterly = filings.filter(f => f.form === '10-Q').slice(0, 8);
+  const quarterly = filings.filter(f => f.form === '10-Q').slice(0, 4);
   const toProcess = [...annuals, ...quarterly];
 
   console.log(`Pre-processing ${annuals.length} 10-Ks (max 5) and ${quarterly.length} 10-Qs (max 8) for ${ticker}...`);

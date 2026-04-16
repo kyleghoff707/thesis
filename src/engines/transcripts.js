@@ -50,20 +50,19 @@ export async function fetchTranscript(ticker, transcriptEntry) {
   }
 
   // Try R2 (cron-cached transcripts — free, instant)
-  if (typeof window !== 'undefined') {
-    try {
-      const r2Url = dataUrl(`/transcripts/${ticker.toUpperCase()}/${year}/Q${quarter}`);
-      const r2Res = await fetch(r2Url);
-      if (r2Res.ok) {
-        const r2Data = await r2Res.json();
-        if (r2Data.data?.text) {
-          const result = { text: r2Data.data.text, meta: r2Data.data.meta || { source: 'r2', year, quarterNum: quarter } };
-          cacheSet(cacheKey, result, 'transcript');
-          return { found: true, text: result.text, meta: result.meta, fromCache: false, charCount: result.text.length };
-        }
+  // Works in browser (relative URL) and Node.js (nodeAdapter resolves /data/ to production API)
+  try {
+    const r2Url = dataUrl(`/transcripts/${ticker.toUpperCase()}/${year}/Q${quarter}`);
+    const r2Res = await fetch(r2Url);
+    if (r2Res.ok) {
+      const r2Data = await r2Res.json();
+      if (r2Data.data?.text) {
+        const result = { text: r2Data.data.text, meta: r2Data.data.meta || { source: 'r2', year, quarterNum: quarter } };
+        cacheSet(cacheKey, result, 'transcript');
+        return { found: true, text: result.text, meta: result.meta, fromCache: false, charCount: result.text.length };
       }
-    } catch { /* fall through to Alpha Vantage */ }
-  }
+    }
+  } catch { /* fall through to Alpha Vantage */ }
 
   // Try Alpha Vantage (try both keys if available)
   let text = null;

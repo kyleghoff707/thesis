@@ -19,7 +19,6 @@
 
 import '../src/engines/nodeAdapter.js';
 import { assembleDataPacket } from '../src/engines/dataExport.js';
-import { fetchAllGuruHoldings, findGurusOwning, resolveTickersForHoldings } from '../src/engines/gurus.js';
 import { fetchTranscript } from '../src/engines/transcripts.js';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
@@ -75,47 +74,9 @@ try {
 }
 done2();
 
-// ── Step 3: Pre-Fetch Guru Holdings ─────────────────────────
-log('\n=== Step 3: Guru Pre-Fetch ===');
-const done3 = timed('guruPrefetch');
-let guruSummary = { count: 0, holdings: [] };
-try {
-  const portfolios = await fetchAllGuruHoldings((done, total, name) => {
-    if (done % 10 === 0 || done === total) log(`  ${done}/${total} gurus (${name})`);
-  });
-  const valid = portfolios.filter(p => p.holdings?.length > 0);
-  log(`  ${valid.length}/${portfolios.length} portfolios with holdings`);
-
-  // Resolve CUSIP -> ticker
-  let resolved = 0;
-  for (const p of valid) {
-    if (p.holdings?.some(h => !h.ticker && h.cusip)) {
-      p.holdings = await resolveTickersForHoldings(p.holdings);
-      resolved++;
-    }
-  }
-  if (resolved > 0) log(`  Resolved tickers for ${resolved} portfolios`);
-
-  const holdings = findGurusOwning(portfolios, ticker);
-  guruSummary = {
-    count: holdings.length,
-    holdings: holdings.map(h => ({
-      name: h.guru.name,
-      value: h.positions.reduce((s, p) => s + (p.value || 0), 0),
-    })),
-  };
-  for (const h of guruSummary.holdings) {
-    log(`  ${h.name}: $${(h.value / 1e6).toFixed(1)}M`);
-  }
-  if (guruSummary.count === 0) log('  No gurus hold this ticker');
-} catch (e) {
-  log(`  Guru fetch failed: ${e.message} (non-fatal)`);
-}
-done3();
-
-// ── Step 4: Assemble DataPacket ─────────────────────────────
-log('\n=== Step 4: DataPacket Assembly ===');
-const done4 = timed('assembly');
+// ── Step 3: Assemble DataPacket (includes guru data) ────────
+log('\n=== Step 3: DataPacket Assembly ===');
+const done3 = timed('assembly');
 const packet = await assembleDataPacket(ticker);
 const outputPath = join(reportDir, 'data-packet.json');
 writeFileSync(outputPath, JSON.stringify(packet, null, 2));
@@ -127,11 +88,25 @@ log(`  Financials: ${packet.financials?.years?.length || 0} years`);
 log(`  Gurus: ${packet.gurus?.count ?? 0}`);
 log(`  Errors: ${packet.errors?.length || 0}`);
 if (packet.errors) packet.errors.forEach(e => log(`    - ${e}`));
-done4();
 
-// ── Step 5: Transcript Pre-Fetch ────────────────────────────
-log('\n=== Step 5: Transcript Pre-Fetch ===');
-const done5 = timed('transcripts');
+// Extract guru summary from DataPacket (no separate fetch needed —
+// assembleDataPacket already calls the guru engine internally)
+const guruSummary = {
+  count: packet.gurus?.count ?? packet.gurus?.holdings?.length ?? 0,
+  holdings: (packet.gurus?.holdings || []).map(h => ({
+    name: h.guru?.name || h.name || '?',
+    value: h.positions?.reduce((s, p) => s + (p.value || 0), 0) ?? h.value ?? 0,
+  })),
+};
+for (const h of guruSummary.holdings) {
+  log(`  Guru: ${h.name}: $${(h.value / 1e6).toFixed(1)}M`);
+}
+if (guruSummary.count === 0) log('  No gurus hold this ticker');
+done3();
+
+// ── Step 4: Transcript Pre-Fetch ────────────────────────────
+log('\n=== Step 4: Transcript Pre-Fetch ===');
+const done4 = timed('transcripts');
 const transcriptDir = join(reportDir, 'transcripts');
 mkdirSync(transcriptDir, { recursive: true });
 
@@ -166,11 +141,11 @@ for (const q of quarters) {
   }
 }
 log(`  Transcripts: ${savedTranscripts}/${quarters.length}`);
-done5();
+done4();
 
-// ── Step 6: Pre-Process Filings ─────────────────────────────
-log('\n=== Step 6: Filing Pre-Processing ===');
-const done6 = timed('filingPreprocess');
+// ── Step 5: Pre-Process Filings ─────────────────────────────
+log('\n=== Step 5: Filing Pre-Processing ===');
+const done5 = timed('filingPreprocess');
 try {
   const out = execSync(
     `node --loader ./scripts/node-esm-loader.js scripts/preprocess-filings.js ${ticker}`,
@@ -181,11 +156,11 @@ try {
 } catch (e) {
   log(`  Warning: ${e.message?.slice(0, 80)} (non-fatal)`);
 }
-done6();
+done5();
 
-// ── Step 7: Data Quality Checkpoint ─────────────────────────
-log('\n=== Step 7: Data Quality Checkpoint ===');
-const done7 = timed('qualityCheck');
+// ── Step 6: Data Quality Checkpoint ─────────────────────────
+log('\n=== Step 6: Data Quality Checkpoint ===');
+const done6 = timed('qualityCheck');
 let checkpointVerdict = 'UNKNOWN';
 try {
   const out = execSync(
@@ -209,7 +184,7 @@ try {
   }
 }
 log(`  Verdict: ${checkpointVerdict}`);
-done7();
+done6();
 
 // ── Summary ─────────────────────────────────────────────────
 const totalMs = Date.now() - totalStart;
