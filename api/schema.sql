@@ -95,6 +95,20 @@ CREATE TABLE IF NOT EXISTS guru_holdings (
 CREATE INDEX IF NOT EXISTS idx_guru_ticker ON guru_holdings(ticker);
 CREATE INDEX IF NOT EXISTS idx_guru_report ON guru_holdings(guru_cik, report_date);
 
+-- ═══ Guru Health Monitoring ═══════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS guru_health (
+  guru_cik TEXT PRIMARY KEY,
+  guru_name TEXT NOT NULL,
+  fund_name TEXT NOT NULL,
+  last_report_date TEXT,
+  last_checked_at TEXT NOT NULL,
+  sec_filed_name TEXT,
+  status TEXT DEFAULT 'ok',
+  alert_sent_at TEXT,
+  notes TEXT
+);
+
 CREATE TABLE IF NOT EXISTS insider_trades (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   company_cik TEXT NOT NULL,

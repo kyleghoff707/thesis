@@ -7,6 +7,7 @@
 
 import { DOMParser } from '@xmldom/xmldom';
 import { parseInfoTable, aggregateShareClasses, enrichHoldings, computeChanges, GURUS, resolveIssuerTickers } from '../../../packages/sec-parsers/index.js';
+import { checkGuruHealth } from './guruHealth.js';
 
 const SEC_UA = 'StockAnalyzer/1.0 kylehoff@example.com';
 const FETCH_DELAY_MS = 200;
@@ -21,11 +22,12 @@ async function secFetch(url, env) {
 async function getRecent13Fs(cik, env) {
   const paddedCik = cik.padStart(10, '0');
   const res = await secFetch(`https://data.sec.gov/submissions/CIK${paddedCik}.json`, env);
-  if (!res.ok) return [];
+  if (!res.ok) return { filings: [], secName: null };
 
   let data;
-  try { data = await res.json(); } catch { return []; }
+  try { data = await res.json(); } catch { return { filings: [], secName: null }; }
 
+  const secName = data.name || null;
   const recent = data.filings?.recent || {};
   const forms = recent.form || [];
   const filingDates = recent.filingDate || [];
@@ -51,9 +53,11 @@ async function getRecent13Fs(cik, env) {
   }
 
   // Sort by report date desc, take the 2 most recent
-  return Array.from(byReport.values())
+  const filings = Array.from(byReport.values())
     .sort((a, b) => b.reportDate.localeCompare(a.reportDate))
     .slice(0, 2);
+
+  return { filings, secName };
 }
 
 // Find the infotable XML URL from a filing's index
@@ -92,16 +96,24 @@ async function fetchTickerIndex(env) {
 
 export async function syncGurus(env) {
   let processed = 0;
+  const healthSignals = new Map();
 
   // Build ticker index once for CUSIP→ticker resolution across all gurus
   const tickerIndex = await fetchTickerIndex(env);
   await sleep(FETCH_DELAY_MS);
 
   for (const guru of GURUS) {
+    let secName = null;
+    let emptyFiling = false;
+
     try {
-      const filingMetas = await getRecent13Fs(guru.cik, env);
+      const result = await getRecent13Fs(guru.cik, env);
+      const filingMetas = result.filings;
+      secName = result.secName;
+
       if (filingMetas.length === 0) {
         console.warn(`Guru sync: ${guru.name} — no 13F-HR filings found`);
+        healthSignals.set(guru.cik, { secName, emptyFiling: false });
         await sleep(FETCH_DELAY_MS);
         continue;
       }
@@ -114,6 +126,7 @@ export async function syncGurus(env) {
 
       if (existing.n > 0) {
         // Already have latest quarter
+        healthSignals.set(guru.cik, { secName, emptyFiling: false });
         await sleep(FETCH_DELAY_MS);
         continue;
       }
@@ -170,12 +183,15 @@ export async function syncGurus(env) {
         } catch { /* ignore duplicates */ }
       }
 
+      emptyFiling = parsedFilings.length > 0 && parsedFilings[0].holdings.length === 0;
+
       processed++;
       console.log(`Guru sync: ${guru.name} — ${holdings.length} holdings for ${current.meta.reportDate}`);
     } catch (err) {
       console.warn(`Guru sync failed for ${guru.name}: ${err.message}`);
     }
 
+    healthSignals.set(guru.cik, { secName, emptyFiling });
     await sleep(FETCH_DELAY_MS);
   }
 
@@ -183,6 +199,13 @@ export async function syncGurus(env) {
   await env.DB.prepare(
     "DELETE FROM guru_holdings WHERE report_date < date('now', '-5 years')"
   ).run();
+
+  // Run health checks (stale filings, name drift, empty filings)
+  try {
+    await checkGuruHealth(env, healthSignals);
+  } catch (err) {
+    console.warn('Guru health check failed:', err.message);
+  }
 
   await env.DB.prepare(
     'INSERT OR REPLACE INTO sync_status (job_name, last_run, last_offset, status, items_processed, error) VALUES (?, datetime(\'now\'), 0, \'complete\', ?, NULL)'
