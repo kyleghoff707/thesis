@@ -5,19 +5,19 @@
 
 ## Agents
 
-_No agents pages yet._
+_No agent profiles yet. Pages will be created after the first pipeline run._
 
 ## Tickers
 
-- [[tickers/COST]] — COST — Costco Wholesale Corporation
+_No ticker pages yet. Pages will be created after the first pipeline run._
 
 ## Failure Modes
 
-_No failure modes pages yet._
+_No failure modes cataloged yet._
 
 ## Patterns
 
-- [[patterns/verdict-accuracy]] — Verdict Accuracy
+_No patterns identified yet._
 
 ## Prompt Versions
 
@@ -26,4 +26,3 @@ _No failure modes pages yet._
 ## Experiments
 
 - [[experiments/doe-log]] — Formal DOE experiment tracking
-
