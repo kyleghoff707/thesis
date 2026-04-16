@@ -34,9 +34,9 @@ Thes1s is a professional AI-powered investment analyst team. The user is the por
 ## Tech Stack
 - **Frontend**: Vite + React on Cloudflare Pages (thes1sinvesting.com)
 - **Backend**: Cloudflare Workers ($5/mo paid plan) at api.thes1sinvesting.com
-- **Database**: Cloudflare D1 (SQLite) — auth, user data, guru holdings, insider trades, taxonomy
+- **Database**: Cloudflare D1 (SQLite) — auth, user data, guru holdings, guru health monitoring, insider trades, taxonomy
 - **Object Storage**: Cloudflare R2 — earnings call transcripts + cached filing markdown (`filings-md/` prefix)
-- **Auth**: Invite-only email/password login, HTTP-only session cookies, PBKDF2 hashing, Resend for invite emails. No public signup — admin sends invite links.
+- **Auth**: Invite-only email/password login, HTTP-only session cookies, PBKDF2 hashing, Brevo for transactional emails (invites, guru health alerts). No public signup — admin sends invite links.
 - **Storage (production)**: Reports, watchlists, settings stored per-user in D1. Hooks use dual-path: dev=localStorage/IDB, prod=API.
 - **Storage (dev)**: localStorage (reports, settings, watchlists), IndexedDB (EDGAR, guru, price, insider, compensation caches) via `cacheStore.js`
 - **AI**: Claude Managed Agents (Anthropic-hosted agent loop + tool execution sandbox). One Pager = single agent session. Pitch Deck = coordinator with `callable_agents` dispatching 10 specialist agents (blocked on multiagent Research Preview). Worker creates sessions via `/v1/sessions`, sends DataPacket as message, polls events for completion. Old in-browser Claude API calls removed.
@@ -74,7 +74,7 @@ node api/scripts/seed-taxonomy.mjs
 # Set Worker secrets
 cd api && wrangler secret put ALPHA_VANTAGE_KEY
 cd api && wrangler secret put ALPHA_VANTAGE_KEY_2
-cd api && wrangler secret put RESEND_API_KEY
+cd api && wrangler secret put BREVO_API_KEY
 ```
 
 ### Cron Jobs (5 triggers on Workers Paid plan)
@@ -82,7 +82,7 @@ cd api && wrangler secret put RESEND_API_KEY
 |----------|-----|-------|
 | `0 */3 * * *` | Transcript sync (6 AV calls/run, 48/day) | S&P 500 only (is_sp500=1) |
 | `0 6 * * *` | Insider trades sync (50 tickers/run) | S&P 500 only |
-| `0 3 1 * *` | Guru holdings sync (43 funds) | Hardcoded GURUS list |
+| `0 3 1 * *` | Guru holdings sync (43 funds) + health check | Hardcoded GURUS list |
 | `0 2 * * SUN` | Taxonomy refresh (ticker/name changes) | All companies |
 | `0 5 * * SUN` | Stale data cleanup | All tables |
 
@@ -450,7 +450,7 @@ api/                  — Cloudflare Worker backend
 │   │   ├── assembleFilingContent.js   — SEC filing HTML → cheerio → Turndown → sections + transcripts
 │   │   ├── datapacket-assembly-flow.svg    — Visual diagram (KEEP UPDATED when assembly changes)
 │   │   └── filing-content-assembly-flow.svg — Visual diagram (KEEP UPDATED when PSR pre-fetch changes)
-│   └── cron/         — 5 cron jobs (transcripts, insiders, gurus, taxonomy, cleanup)
+│   └── cron/         — 5 cron jobs (transcripts, insiders, gurus+guruHealth, taxonomy, cleanup)
 ├── schema.sql        — Full D1 schema
 ├── scripts/          — Seed scripts (seed-taxonomy.mjs)
 └── wrangler.toml     — Worker config (D1, R2, cron triggers, Managed Agent IDs)
