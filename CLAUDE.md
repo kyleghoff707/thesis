@@ -361,6 +361,47 @@ Each agent has `prompt.md` (readable) + `managed-agent.yaml` (Console-ready conf
 
 Full Story uses adversarial debate: Bull → Bear → Rebuttal → Judge.
 
+### Claude Code Subagent Development (Sprint — Apr 2026)
+
+While waiting for Managed Agents `callable_agents` approval, agent team optimization runs locally via Claude Code subagents. The skills ARE the orchestration — Claude Code reads them and dispatches subagents directly.
+
+**CRITICAL CONSTRAINT: Every change made during this development phase MUST translate to production Managed Agents.** No Claude-Code-specific patterns. The only safe changes are: prompt wording, prompt structure/flow, agent team composition, and model assignments. Do NOT build infrastructure that relies on Claude Code capabilities unavailable in Managed Agents.
+
+**Execution path:** `/analyze {TICKER}` → Claude Code reads skill → chains One Pager → Pitch Deck → Full Story. Each stage dispatches v2 agents (`agents-v2/`) as Claude Code subagents. `run-pipeline.js` is NOT used (v1 agents, direct API calls).
+
+**Skills (4 total):**
+| Skill | Stage | Agents | Parallel |
+|-------|-------|--------|----------|
+| `/generate-one-pager` | One Pager | 1 (sonnet) | N/A |
+| `/generate-pitch-deck` | Pitch Deck | 10 (7 sonnet, 3 opus) | Within waves |
+| `/generate-full-story` | Full Story | 7 (6 sonnet, 1 opus) | Phase 1 parallel, Phase 2 sequential |
+| `/analyze` | All 3 stages | Chains above | Sequential stages |
+
+**Model assignments** are controlled variables from `managed-agent.yaml` configs, specified in each skill's Agent Registry. Opus: quarterly-reader, risk-analyst (PD+FS), valuation-specialist (PD). All others: Sonnet.
+
+**Clean-start:** Each skill clears stale `sections/`, `filings-md/`, `transcripts/`, `quality/` before running. Working dir `.thes1s/reports/{TICKER}/` always overwrites; outputs auto-archived to `.thes1s/reports/{TICKER}/archive/{RUN_ID}/`.
+
+### Observatory (Pipeline Observability Wiki)
+
+Karpathy Wiki LLM pattern for tracking agent team behavior across pipeline runs. Lives at `observatory/` (project root, git-tracked, doubles as Obsidian vault).
+
+**Three layers:**
+1. **Raw Sources** (`observatory/runs/`) — immutable per-run data: manifest.json, per-agent records, orchestrator decisions, verdict checks
+2. **Wiki** (`observatory/agents/`, `tickers/`, `failure-modes/`, `patterns/`, `experiments/`) — LLM-maintained markdown with `[[wikilinks]]` and YAML frontmatter, updated after each run
+3. **Schema** (`observatory/CLAUDE.md`) — governance rules for wiki maintenance
+
+**Key files:**
+| File | Purpose |
+|------|---------|
+| `scripts/observatory-init.js` | Create run capture directory before pipeline starts |
+| `scripts/observatory-finalize.js` | Write manifest, verdict-check, log entry after pipeline completes |
+| `scripts/observatory-synthesize.js` | LLM wiki synthesis (Sonnet, ~$0.02/run) |
+| `scripts/observatory-lint.js` | 8-check wiki consistency validator |
+| `scripts/observatory-query.js` | CLI: `--verdict-accuracy`, `--agent`, `--ticker`, `--cost-by-agent`, `--diff` |
+| `observatory/known-verdicts.json` | Hand-curated expected verdicts for RL-style calibration |
+
+**Sprint goal:** Run 30+ pipelines against known-verdict companies. Compare agent verdicts to user's known-correct verdicts. Use observatory wiki to find patterns in agent behavior, diagnose conservatism bias (LULU WATCHLIST problem), and optimize prompts through targeted DOE experiments.
+
 ---
 
 ## Knowledge Base
@@ -416,7 +457,17 @@ api/                  — Cloudflare Worker backend
 packages/
 └── sec-parsers/      — Shared SEC parsing functions (used by frontend + Worker)
     ├── formatTranscript.js, parseForm4.js, parseInfoTable.js, gurusList.js
-scripts/              — CLI runners (pipeline, full story, quality), data prep, PDF toolkit
+observatory/          — Pipeline observability wiki (Obsidian vault, git-tracked)
+├── CLAUDE.md         — Wiki governance schema (Layer 3)
+├── index.md, log.md  — Content catalog + chronological record
+├── runs/             — Immutable per-run data (manifest, agents, orchestrator, verdict-check)
+├── agents/           — Agent behavioral profiles (wiki pages)
+├── tickers/          — Per-company run history (wiki pages)
+├── failure-modes/    — Failure pattern taxonomy (wiki pages)
+├── patterns/         — Cross-run correlations (wiki pages)
+├── prompt-versions/  — Prompt change log with measured impact
+└── experiments/      — DOE experiment tracking
+scripts/              — CLI runners (pipeline, full story, quality), data prep, PDF toolkit, observatory CLI
 src/
 ├── components/       — ~60 React components (Toolbox, report renderers, LoginPage, SignupPage)
 │   └── pitchDeck/    — AssumptionTracker, DeepDivePanel, IndustryCard
@@ -425,7 +476,7 @@ src/
 │   ├── filingMarkdown.js   — Filing HTML→markdown (browser version, DOMParser-based)
 │   └── fileSections.js     — Section extraction (pure regex, shared by browser + Worker)
 ├── hooks/            — ~22 React hooks (data fetching, report state, settings, useAuth)
-├── schemas/          — 5 Zod schemas (reportSection, debateStep, dataPacket, progress, onePager)
+├── schemas/          — 6 Zod schemas (reportSection, debateStep, dataPacket, progress, onePager, observatory)
 ├── data/             — Static lookup tables (taxonomy, tag classifications, display names)
 ├── App.jsx, main.jsx, theme.js
 validation/           — 3-layer validation system (scripts, data, reports)
