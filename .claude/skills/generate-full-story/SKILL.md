@@ -108,6 +108,21 @@ Phase 1 agents dispatch **in parallel** (5 Agent tool calls in a single message)
 
 ---
 
+## CRITICAL RULE: DataPacket Slicing
+
+> **You MUST NOT pass the full DataPacket file path to agents.** Instead, use the slicing script:
+>
+> ```bash
+> node scripts/slice-datapacket.js {TICKER} {agent-role}
+> ```
+>
+> This outputs only the fields that agent needs (per the Agent Registry `dpFields`).
+> Embed the output as a fenced JSON block in the agent's prompt. One bash call per agent.
+>
+> **Why this matters:** The full DataPacket is 200KB. Passing it all wastes agent context
+> and reduces output quality. The slicing script handles field extraction automatically —
+> do NOT try to manually extract fields or tell the agent to "read the file yourself."
+
 ## CRITICAL RULE: Full-Fidelity Output Saving
 
 > **NEVER summarize, abbreviate, or reconstruct agent output when saving to disk.**
@@ -201,7 +216,7 @@ Read the Pitch Deck from `.thes1s/reports/{TICKER}/pitch-deck.json`.
 
 For each Phase 1 agent, prepare two context blocks:
 
-**DataPacket slice:** Extract only the fields listed in `dpFields` from the Agent Registry. Format as a fenced JSON block.
+**DataPacket slice:** Run `node scripts/slice-datapacket.js {TICKER} {agent-role}` for each agent. Embed the output as a fenced JSON block. See CRITICAL RULE: DataPacket Slicing above.
 
 **Pitch Deck inheritance:** Extract the relevant Pitch Deck sections per the PD_INHERITANCE_MAP. For each inherited PD section, include:
 - The section's `summary`, `verdict`, `confidence`, `verdictRationale`

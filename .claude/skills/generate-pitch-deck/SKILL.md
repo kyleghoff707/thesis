@@ -109,6 +109,21 @@ Agents within the same wave dispatch **in parallel** (multiple Agent tool calls 
 
 ---
 
+## CRITICAL RULE: DataPacket Slicing
+
+> **You MUST NOT pass the full DataPacket file path to agents.** Instead, use the slicing script:
+>
+> ```bash
+> node scripts/slice-datapacket.js {TICKER} {agent-role}
+> ```
+>
+> This outputs only the fields that agent needs (per the Agent Registry `dpFields`).
+> Embed the output as a fenced JSON block in the agent's prompt. One bash call per agent.
+>
+> **Why this matters:** The full DataPacket is 200KB. Passing it all wastes agent context
+> and reduces output quality. The slicing script handles field extraction automatically —
+> do NOT try to manually extract fields or tell the agent to "read the file yourself."
+
 ## CRITICAL RULE: Full-Fidelity Output Saving
 
 > **NEVER summarize, abbreviate, or reconstruct agent output when saving to disk.**
