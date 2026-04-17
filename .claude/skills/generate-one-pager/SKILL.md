@@ -50,7 +50,7 @@ node scripts/observatory-init.js {TICKER} onePager .thes1s/reports/{TICKER}/data
 
 Capture the **last line of output** — that is the `RUN_ID`. You will need it in Step 5.5.
 
-If this fails, print a warning and continue — observatory is non-blocking.
+If this fails, retry once. Observatory tracking is required for every run.
 
 ## Step 4: Dispatch One Pager Subagent
 
@@ -135,7 +135,7 @@ For each of the 6 sections, map the subagent's output fields (verdict, confidenc
 
 Write to `.thes1s/reports/{TICKER}/one-pager.json`.
 
-#### Observatory Recording (non-blocking)
+#### Observatory Recording (REQUIRED)
 
 Record the one-pager agent's performance. Extract verdict, confidence, and section metrics from the saved one-pager JSON.
 
@@ -152,9 +152,9 @@ node scripts/observatory-record-event.js {RUN_ID} dispatch \
   --agents "one-pager" --parallel false --duration {SECONDS_ELAPSED}
 ```
 
-If this fails, print a warning and continue -- observatory recording is non-blocking.
+You MUST run this step. If the command errors, retry once before continuing.
 
-## Step 5.5: Finalize Observatory Capture
+## Step 5.5: Finalize Observatory Capture (REQUIRED)
 
 After the subagent completes, its result includes a `<usage>` block with token and timing data:
 ```
@@ -176,9 +176,9 @@ Where:
 - `{TOOL_USES}` is `tool_uses` from the usage block
 - `{DURATION_SECONDS}` is `duration_ms` from the usage block divided by 1000 (convert to seconds)
 
-If this fails, print a warning and continue — observatory is non-blocking.
+You MUST run this step. If the command errors, retry once before continuing.
 
-## Step 5.6: Observatory Wiki Synthesis (non-blocking)
+## Step 5.6: Observatory Wiki Synthesis (REQUIRED)
 
 Run wiki synthesis to update agent profiles, ticker pages, and pattern pages:
 
@@ -186,7 +186,7 @@ Run wiki synthesis to update agent profiles, ticker pages, and pattern pages:
 node --loader ./scripts/node-esm-loader.js scripts/observatory-synthesize.js {RUN_ID}
 ```
 
-If this fails, print a warning and continue -- wiki synthesis can be run manually later.
+You MUST run this step. If the command errors, retry once before continuing.
 
 ## Step 6: Generate PDF
 
@@ -209,7 +209,7 @@ cp .thes1s/reports/{TICKER}/data-packet.json .thes1s/reports/{TICKER}/archive/{R
 cp .thes1s/reports/{TICKER}/*.pdf .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
 ```
 
-This preserves the run's output so future runs on the same ticker don't overwrite it. Non-blocking — if it fails, continue.
+This preserves the run's output so future runs on the same ticker don't overwrite it. If archive fails, print the error but do not skip — the archive preserves run data for comparison.
 
 ## Step 8: Review Results
 

@@ -103,3 +103,131 @@
 
 ## [2026-04-16] wiki-update | 2 pages updated
 - Updated: [[tickers/POOL]], [[patterns/verdict-accuracy]]
+
+## [2026-04-16] run | NKE onePager | 20260416-073716-NKE-onePager
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $0.77 | Duration: 4min | Sections: 6/6
+- Failures: none
+
+## [2026-04-16] wiki-update | 3 pages updated
+- Updated: [[tickers/NKE]], [[agents/one-pager]], [[patterns/verdict-accuracy]]
+
+## [2026-04-16] run | UBER onePager | 20260416-073658-UBER-onePager
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $0.75 | Duration: 4min | Sections: 6/6
+- Failures: none
+
+## [2026-04-16] run | POOL onePager | 20260416-073647-POOL-onePager
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $0.73 | Duration: 4min | Sections: 6/6
+- Failures: none
+
+## [2026-04-16] wiki-update | 3 pages updated
+- Updated: [[tickers/UBER]], [[agents/one-pager]], [[patterns/verdict-accuracy]]
+
+## [2026-04-16] wiki-update | 3 pages updated
+- Updated: [[tickers/POOL]], [[agents/one-pager]], [[patterns/verdict-accuracy]]
+
+## [2026-04-16] run | SFM onePager | 20260416-073723-SFM-onePager
+- Verdict: PASS (expected: BUY) — MISMATCH
+- Cost: $0.91 | Duration: 5min | Sections: 6/6
+- Failures: none
+
+## [2026-04-16] wiki-update | 3 pages updated
+- Updated: [[tickers/SFM]], [[agents/one-pager]], [[patterns/verdict-accuracy]]
+
+## [2026-04-16] run | LULU onePager | 20260416-073658-LULU-onePager
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $0.80 | Duration: 5min | Sections: 6/6
+- Failures: none
+
+## [2026-04-16] wiki-update | 3 pages updated
+- Updated: [[tickers/LULU]], [[agents/one-pager]], [[patterns/verdict-accuracy]]
+
+## [2026-04-16] run | POOL pitchDeck | 20260416-074532-POOL-pitchDeck
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $3.90 | Duration: 60min | Sections: 10/11
+- Failures: none
+
+## [2026-04-16] wiki-update | 2 pages updated
+- Updated: [[tickers/POOL]], [[patterns/verdict-accuracy]]
+
+## [2026-04-16] run | UBER pitchDeck | 20260416-074526-UBER-pitchDeck
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $9.36 | Duration: 80min | Sections: 10/11
+- Failures: none
+
+## [2026-04-16] run | NKE pitchDeck | 20260416-074337-NKE-pitchDeck
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $8.93 | Duration: 47min | Sections: 10/11
+- Failures: none
+
+## [2026-04-16] wiki-update | 2 pages updated
+- Updated: [[tickers/NKE]], [[patterns/verdict-accuracy]]
+
+## [2026-04-16] run | UBER fullStory | 20260416-083535-UBER-fullStory
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $3.90 | Duration: 77min | Sections: 5/6
+- Failures: none
+
+## [2026-04-16] run | SFM pitchDeck | 20260416-074720-SFM-pitchDeck
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $6.24 | Duration: 70min | Sections: 10/11
+- Failures: none
+
+## [2026-04-16] run | LULU pitchDeck | 20260416-074734-LULU-pitchDeck
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $7.02 | Duration: 90min | Sections: 10/11
+- Failures: none
+
+## [2026-04-16] wiki-update | 2 pages updated
+- Updated: [[tickers/LULU]], [[patterns/verdict-accuracy]]
+
+## [2026-04-16] run | POOL fullStory | 20260416-083203-POOL-fullStory
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $3.12 | Duration: 90min | Sections: 6/6
+- Failures: none
+
+## [2026-04-16] wiki-update | 2 pages updated
+- Updated: [[tickers/POOL]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] run | SFM fullStory | 20260416-112225-SFM-fullStory
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $3.90 | Duration: 100min | Sections: 6/6
+- Failures: none
+
+## [2026-04-17] run | LULU fullStory | 20260416-115440-LULU-fullStory
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $3.90 | Duration: 60min | Sections: 6/6
+- Failures: none
+
+## [2026-04-17] run | NKE fullStory | 20260416-084749-NKE-fullStory
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $7.10 | Duration: 90min | Sections: 6/6
+- Failures: none
+
+## [2026-04-17] wiki-update | 12 pages updated
+- Updated: [[tickers/UBER]], [[agents/annual-reader]], [[agents/quarterly-reader]], [[agents/business-analyst]], [[agents/competitor-market-position]], [[agents/competitor-moats]], [[agents/financial-analyst]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/synthesis-writer]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] wiki-update | 9 pages updated
+- Updated: [[tickers/UBER]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst]], [[agents/synthesis-writer]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] post-mortem | Sprint 2 debrief — 5 tickers, 15 runs, 4 key learnings
+
+**EXP-001 result:** REJECTED. All-sonnet produced identical verdict distribution to mixed opus/sonnet (89% → 93% WATCHLIST). Model is not the driver. See [[experiments/doe-log]] and [[patterns/model-independence]].
+
+### 4 Methodology Learnings
+
+1. **Model independence** ([[patterns/model-independence]]): Opus vs Sonnet makes zero difference on verdicts. Conservatism is prompt-driven, not model-driven. Sonnet is the correct default (cheaper, same output).
+
+2. **Valuation drives verdict** ([[patterns/valuation-drives-verdict]]): Business quality sections mostly PASS (POOL had 7/10 PASS). Overall verdict follows valuation, not quality. This is actually correct Rule One behavior — great company at wrong price = WATCHLIST.
+
+3. **Debate downgrades verdict** ([[patterns/debate-downgrades-verdict]]): Full story adversarial debate has structural asymmetry — bear mandated to demolish, bull merely summarizes. SFM went PASS → WATCHLIST through debate. Verdicts can only stay flat or downgrade, never upgrade.
+
+4. **Orchestrator truncation is systemic** ([[patterns/orchestrator-truncation]]): 4/5 full stories had data loss in Sprint 2. UBER and LULU critical (stub outputs), POOL and SFM moderate (1-line debate summaries). Only NKE produced complete output (237K). This is now confirmed as a pattern, not a one-off.
+
+### Mechanical Issues Persisting from Sprint 1
+
+- **Parallel dispatch fix did NOT work** — LULU pitch deck went from 58min to 90min. UBER from 25min to 80min. Headers renamed but orchestrators still dispatch sequentially.
+- **Observatory recording only works for one-pager** — pitch deck and full story agent files still empty. Recording steps not being executed.
+- **Wiki synthesis inconsistent** — some ticker pages incomplete or stale

@@ -196,7 +196,7 @@ node scripts/observatory-init.js {TICKER} pitchDeck .thes1s/reports/{TICKER}/dat
 
 Capture the **last line of output** -- that is the `RUN_ID`. You will need it in Step 15.
 
-If this fails, print a warning and continue -- observatory is non-blocking.
+If this fails, retry once. Observatory tracking is required for every run.
 
 ## Step 3: Wave 0 -- Primary Source Reading (Annual + Quarterly)
 
@@ -352,9 +352,9 @@ Step 4: Wave 1 -- Business Fundamentals
   All 3 sections complete.
 ```
 
-#### Observatory Recording (non-blocking)
+#### Observatory Recording (REQUIRED)
 
-For each agent that completed in this wave, record its performance. Extract verdict, confidence, red flag count, and citation count from the saved section JSON files. If any recording command fails, print a warning and continue.
+For each agent that completed in this wave, record its performance. Extract verdict, confidence, red flag count, and citation count from the saved section JSON files. You MUST run this step. If the command errors, retry once before continuing.
 
 ```bash
 node scripts/observatory-record-agent.js {RUN_ID} \
@@ -475,7 +475,7 @@ Step 6: Wave 2 -- Deep Analysis
   All 5 sections complete.
 ```
 
-#### Observatory Recording (non-blocking)
+#### Observatory Recording (REQUIRED)
 
 ```bash
 node scripts/observatory-record-agent.js {RUN_ID} \
@@ -588,7 +588,7 @@ Step 8: Wave 3 -- Risk & Valuation
   Both sections complete.
 ```
 
-#### Observatory Recording (non-blocking)
+#### Observatory Recording (REQUIRED)
 
 ```bash
 node scripts/observatory-record-agent.js {RUN_ID} \
@@ -702,7 +702,7 @@ Step 11: Wave 4 -- Synthesis Writer dispatched
   Overall verdict: {verdict} ({confidence})
 ```
 
-#### Observatory Recording (non-blocking)
+#### Observatory Recording (REQUIRED)
 
 ```bash
 node scripts/observatory-record-agent.js {RUN_ID} \
@@ -935,9 +935,9 @@ Where:
 - `{OVERALL_VERDICT}` is the final verdict (PASS, FAIL, or WATCHLIST)
 - Token/tool/duration values are best-effort estimates from subagent usage blocks
 
-If this fails, print a warning and continue -- observatory is non-blocking.
+You MUST run this step. If the command errors, retry once before continuing.
 
-## Step 15.5: Observatory Wiki Synthesis (non-blocking)
+## Step 15.5: Observatory Wiki Synthesis (REQUIRED)
 
 Run wiki synthesis to update agent profiles, ticker pages, and pattern pages:
 
@@ -945,7 +945,7 @@ Run wiki synthesis to update agent profiles, ticker pages, and pattern pages:
 node --loader ./scripts/node-esm-loader.js scripts/observatory-synthesize.js {RUN_ID}
 ```
 
-If this fails, print a warning and continue -- wiki synthesis can be run manually later.
+You MUST run this step. If the command errors, retry once before continuing. Wiki synthesis is part of the pipeline — run it now.
 
 ## Step 16: Generate PDF
 
@@ -969,7 +969,7 @@ cp .thes1s/reports/{TICKER}/sections/*.json .thes1s/reports/{TICKER}/archive/{RU
 cp .thes1s/reports/{TICKER}/*.pdf .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
 ```
 
-This preserves the run's output so future runs on the same ticker don't overwrite it. Non-blocking — if it fails, continue.
+This preserves the run's output so future runs on the same ticker don't overwrite it. You MUST run this step. If the command errors, retry once before continuing.
 
 ## Step 18: Print Final Summary
 

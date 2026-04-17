@@ -1,6 +1,6 @@
 ---
 type: doe-log
-lastUpdated: 2026-04-16T14:30:00Z
+lastUpdated: 2026-04-17T02:00:00Z
 experimentCount: 1
 tags: [experiments, doe]
 ---
@@ -17,9 +17,9 @@ tags: [experiments, doe]
 - **Treatment:** All agents use sonnet across all 3 stages. Zero opus assignments.
 - **Metric:** Verdict distribution (BUY/WATCHLIST/FAIL), FGR ranges, buy price calculations, section-level verdicts on risk/valuation sections specifically. Also: cost per run (sonnet is cheaper than opus).
 - **Control runs:** Sprint 1 — 20260415-* (LULU, POOL, UBER — 9 runs total, all mixed opus/sonnet)
-- **Treatment runs:** Sprint 2 — pending (will use same tickers for direct comparison)
-- **Result:** _Pending — awaiting Sprint 2 runs_
-- **Decision:** _Pending_
+- **Treatment runs:** Sprint 2 — 20260416-* (LULU, POOL, UBER, SFM, NKE — 15 runs, all sonnet)
+- **Result:** No effect. Sprint 1: 8/9 WATCHLIST (89%). Sprint 2: 14/15 WATCHLIST (93%). Verdict distribution unchanged. Conservatism persists across both models.
+- **Decision:** REJECT hypothesis. Model choice (opus vs sonnet) is not the driver. The conservatism is in the **prompts**, not the model. Future experiments should target prompt wording, verdict thresholds, and risk-agent weighting.
 
 ### Rationale
 Sprint 1 produced 8/9 WATCHLIST verdicts. Price-conditional analysis shows LULU was within margin ($162.74 vs $160 target) and POOL was correctly above target ($218 vs $180). The question is whether opus on risk-analyst (explicitly told to "demolish the bull case") and valuation-specialist produces systematically lower FGRs and buy prices than sonnet would. If sonnet produces similar FGRs, the conservatism is in the prompts, not the model. If sonnet produces higher FGRs, the model choice was a contributing factor.

@@ -159,7 +159,7 @@ node scripts/observatory-init.js {TICKER} fullStory .thes1s/reports/{TICKER}/dat
 
 Capture the **last line of output** -- that is the `RUN_ID`. You will need it in Step 9.
 
-If this fails, print a warning and continue -- observatory is non-blocking.
+If this fails, retry once. Observatory tracking is required for every run.
 
 ## Step 3: Read Agent Prompts and Prepare Context
 
@@ -328,9 +328,9 @@ Step 4: Phase 1 -- Deep Analysis complete
   Phase 1: {completed}/5 sections complete
 ```
 
-#### Observatory Recording (non-blocking)
+#### Observatory Recording (REQUIRED)
 
-For each Phase 1 agent, record its performance. Extract verdict, confidence, red flags, and citations from saved section JSONs. If any recording fails, print a warning and continue.
+For each Phase 1 agent, record its performance. Extract verdict, confidence, red flags, and citations from saved section JSONs. You MUST run every recording command. If a command errors, retry it once before continuing.
 
 ```bash
 node scripts/observatory-record-agent.js {RUN_ID} \
@@ -591,9 +591,9 @@ Print Phase 2 summary:
 ================================================================
 ```
 
-#### Observatory Recording — Debate Phase (non-blocking)
+#### Observatory Recording — Debate Phase (REQUIRED)
 
-For each debate step agent, record its performance. If any recording fails, print a warning and continue.
+For each debate step agent, record its performance. You MUST run every recording command. If a command errors, retry it once before continuing.
 
 ```bash
 # After Bull (synthesis-writer)
@@ -812,9 +812,9 @@ Where:
 - `{OVERALL_VERDICT}` is the final verdict (PASS, FAIL, or WATCHLIST)
 - Token/tool/duration values are best-effort estimates from subagent usage blocks
 
-If this fails, print a warning and continue -- observatory is non-blocking.
+You MUST run this step. If the command errors, retry once before continuing.
 
-## Step 9.5: Observatory Wiki Synthesis (non-blocking)
+## Step 9.5: Observatory Wiki Synthesis (REQUIRED)
 
 Run wiki synthesis to update agent profiles, ticker pages, and pattern pages:
 
@@ -822,7 +822,7 @@ Run wiki synthesis to update agent profiles, ticker pages, and pattern pages:
 node --loader ./scripts/node-esm-loader.js scripts/observatory-synthesize.js {RUN_ID}
 ```
 
-If this fails, print a warning and continue -- wiki synthesis can be run manually later.
+Wiki synthesis is part of the pipeline -- run it now. If the command errors, retry once before continuing.
 
 ## Step 10: Generate PDF
 
@@ -847,7 +847,7 @@ cp .thes1s/reports/{TICKER}/sections/debate-*.json .thes1s/reports/{TICKER}/arch
 cp .thes1s/reports/{TICKER}/*.pdf .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
 ```
 
-This preserves the run's output so future runs on the same ticker don't overwrite it. Non-blocking — if it fails, continue.
+This preserves the run's output so future runs on the same ticker don't overwrite it. You MUST run this step. If the command errors, retry once before continuing.
 
 ## Step 12: Print Final Summary
 

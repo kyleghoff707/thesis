@@ -1,17 +1,29 @@
 # Observatory Index
 
 > Pipeline observability wiki for Thes1s agent team optimization.
-> Updated automatically after each pipeline run.
 
 ## Agents
 
-_No agents pages yet._
+- [[agents/annual-reader]] — Behavioral Summary
+- [[agents/business-analyst]] — Behavioral Summary
+- [[agents/competitor-evaluator]] — Behavioral Summary
+- [[agents/competitor-market-position]] — Behavioral Summary
+- [[agents/competitor-moats]] — Behavioral Summary
+- [[agents/financial-analyst]] — Behavioral Summary
+- [[agents/management-evaluator]] — Behavioral Summary
+- [[agents/one-pager]] — Behavioral Summary
+- [[agents/quarterly-reader]] — Behavioral Summary
+- [[agents/risk-analyst]] — Behavioral Summary
+- [[agents/synthesis-writer]] — Behavioral Summary
+- [[agents/valuation-specialist]] — Behavioral Summary
 
 ## Tickers
 
 - [[tickers/LULU]] — Run History
+- [[tickers/NKE]] — Run History
 - [[tickers/POOL]] — Run History
-- [[tickers/UBER]] — UBER — Uber Technologies, Inc.
+- [[tickers/SFM]] — Run History
+- [[tickers/UBER]] — Run History
 
 ## Failure Modes
 
@@ -19,6 +31,10 @@ _No agents pages yet._
 
 ## Patterns
 
+- [[patterns/debate-downgrades-verdict]] — Observation
+- [[patterns/model-independence]] — Observation
+- [[patterns/orchestrator-truncation]] — Observation
+- [[patterns/valuation-drives-verdict]] — Observation
 - [[patterns/verdict-accuracy]] — Observation
 
 ## Prompt Versions
