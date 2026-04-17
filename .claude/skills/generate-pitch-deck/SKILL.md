@@ -109,6 +109,27 @@ Agents within the same wave dispatch **in parallel** (multiple Agent tool calls 
 
 ---
 
+## CRITICAL RULE: Full-Fidelity Output Saving
+
+> **NEVER summarize, abbreviate, or reconstruct agent output when saving to disk.**
+>
+> When an agent returns its result, the COMPLETE JSON output must be written to the section file
+> using the Write tool. Do NOT create a new JSON object from memory with just key/verdict/summary fields.
+> Do NOT write "stub" sections with short summaries to "keep things moving."
+>
+> **The correct save process:**
+> 1. Extract the JSON from the agent response (see JSON Extraction Fallback Chain)
+> 2. Write the COMPLETE extracted JSON to disk using the Write tool — every field the agent produced
+> 3. Verify the saved file is at least 5KB for section files, 2KB for debate steps
+> 4. If a file is under these thresholds, you have likely saved a stub — go back to the agent response and re-extract the full output
+>
+> Agent outputs typically contain: narrative (500-2000 words), citations (20-30), redFlags (5-10),
+> data objects (checklists, tables, sensitivity matrices), tables, and charts arrays.
+> A valid section file is 10-50KB. If your saved file is under 5KB, something went wrong.
+>
+> **This rule is non-negotiable.** Saving stubs destroys the pipeline output and invalidates
+> the entire run. The PDF generator, quality checks, and observatory all read these files.
+
 ## Step 1: Validate Input, Gate Check, and Set Up
 
 The ticker symbol is `$0`. Uppercase it and store as `TICKER`.
@@ -342,7 +363,9 @@ Dispatch via Agent tool with:
 4. Sections 1-2 summaries (from business-analyst output)
 5. Task instruction: "Analyze {TICKER}'s competitive position and produce section 3 (Market Position). Screen 15+ industry peers. Include market share ceiling analysis. Return a single JSON object matching ReportSectionSchema."
 
-After BOTH agents return, extract JSON from each. Save to `.thes1s/reports/{TICKER}/sections/radar.json`, `.thes1s/reports/{TICKER}/sections/simple_predictable.json`, and `.thes1s/reports/{TICKER}/sections/market_position.json`.
+After BOTH agents return, extract the COMPLETE JSON from each agent's response and write it to disk using the Write tool. Save the full agent output — not a summary, not a reconstruction from memory. See CRITICAL RULE above.
+
+Save to: `.thes1s/reports/{TICKER}/sections/radar.json`, `.thes1s/reports/{TICKER}/sections/simple_predictable.json`, `.thes1s/reports/{TICKER}/sections/market_position.json`. Each file should be 10-50KB. If any file is under 5KB, you saved a stub — re-extract from the agent response.
 
 Log:
 ```
@@ -464,7 +487,7 @@ Dispatch via Agent tool with:
 5. Supplementary context
 6. Task instruction: "Evaluate {TICKER}'s management team and produce section 6 (Management). Assess CEO track record, insider ownership, compensation alignment, and Guru ownership context (context only -- NOT a buy signal). Return a single JSON object matching ReportSectionSchema."
 
-After ALL 3 agents return, extract JSON from each and save sections separately.
+After ALL 3 agents return, extract the COMPLETE JSON from each agent's response and write it to disk using the Write tool. Save the full agent output — not a summary, not a reconstruction from memory. See CRITICAL RULE above. Each file should be 10-50KB. If any file is under 5KB, you saved a stub.
 
 Log:
 ```

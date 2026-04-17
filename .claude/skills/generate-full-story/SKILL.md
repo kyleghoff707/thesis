@@ -108,6 +108,28 @@ Phase 1 agents dispatch **in parallel** (5 Agent tool calls in a single message)
 
 ---
 
+## CRITICAL RULE: Full-Fidelity Output Saving
+
+> **NEVER summarize, abbreviate, or reconstruct agent output when saving to disk.**
+>
+> When an agent returns its result, the COMPLETE JSON output must be written to the section file
+> using the Write tool. Do NOT create a new JSON object from memory with just key/verdict/summary fields.
+> Do NOT write "stub" sections with short summaries to "keep things moving."
+>
+> **The correct save process:**
+> 1. Extract the JSON from the agent response (see JSON Extraction Fallback Chain)
+> 2. Write the COMPLETE extracted JSON to disk using the Write tool — every field the agent produced
+> 3. Verify the saved file is at least 5KB for section files, 2KB for debate steps
+> 4. If a file is under these thresholds, you have likely saved a stub — go back to the agent response and re-extract the full output
+>
+> Agent outputs typically contain: narrative (500-2000 words), citations (20-30), redFlags (5-10),
+> data objects (checklists, tables, sensitivity matrices), tables, and charts arrays.
+> A valid section file is 10-50KB. A valid debate-step file is 5-30KB.
+> If your saved file is under these sizes, something went wrong.
+>
+> **This rule is non-negotiable.** Saving stubs destroys the pipeline output and invalidates
+> the entire run. The PDF generator, quality checks, and observatory all read these files.
+
 ## Step 1: Validate Input and Gate Check
 
 The ticker symbol is `$0`. Uppercase it and store as `TICKER`.
@@ -313,7 +335,7 @@ After all 5 agents return:
 1. **Extract JSON** from each agent response using the fallback chain (see "JSON Extraction Fallback Chain" below)
 2. **Validate** each section has required fields: `key`, `title`, `sectionNumber`, `status`, `confidence`, `verdict`, `verdictRationale`, `summary`, `narrative` (>= 200 chars), `citations`, `redFlags` (>= 1)
 3. **Check narrative length** -- if < 200 chars, apply Narrative Recovery (see below)
-4. **Save** each section to `.thes1s/reports/{TICKER}/sections/{section_key}.json`
+4. **Save the COMPLETE extracted JSON** to `.thes1s/reports/{TICKER}/sections/{section_key}.json` using the Write tool. Do NOT reconstruct a summary from memory. Write the full agent output as-is. See CRITICAL RULE above. Each file should be 10-50KB. If any file is under 5KB, you saved a stub — re-extract from the agent response.
 
 **Retry logic:** If an agent fails entirely, wait 30 seconds and retry once. If retry fails, log the error and continue.
 
@@ -453,7 +475,7 @@ You do NOT have web search. Work with the evidence from the completed sections.
 Return your output as the Bull Thesis JSON format (Step 1) defined in your prompt.
 ```
 
-Wait for completion. Extract JSON. Save to `.thes1s/reports/{TICKER}/sections/debate-step-1-bull.json`.
+Wait for completion. Extract the COMPLETE JSON from the agent response and write it to disk — not a 1-line summary, the full output. Save to `.thes1s/reports/{TICKER}/sections/debate-step-1-bull.json`.
 
 Log:
 ```
@@ -481,7 +503,7 @@ Each inversion must cite specific evidence (URLs, DataPacket, SEC filings). Clas
 Return your output as the Bear Debate Step JSON format (Step 2 / Format B) defined in your prompt.
 ```
 
-Wait for completion. Extract JSON. Save to `.thes1s/reports/{TICKER}/sections/debate-step-2-bear.json`.
+Wait for completion. Extract the COMPLETE JSON from the agent response and write it to disk — not a 1-line summary, the full output. Save to `.thes1s/reports/{TICKER}/sections/debate-step-2-bear.json`.
 
 Log:
 ```
@@ -508,7 +530,7 @@ Rate each rebuttal honestly: strong, moderate, or weak. If the bear has a genuin
 Return your output as the Bull Rebuttal JSON format (Step 3) defined in your prompt.
 ```
 
-Wait for completion. Extract JSON. Save to `.thes1s/reports/{TICKER}/sections/debate-step-3-rebuttal.json`.
+Wait for completion. Extract the COMPLETE JSON from the agent response and write it to disk — not a 1-line summary, the full output. Save to `.thes1s/reports/{TICKER}/sections/debate-step-3-rebuttal.json`.
 
 Log:
 ```
@@ -537,7 +559,7 @@ You do NOT have web search. Judge based on evidence presented by both sides and 
 Return your output as the JudgeVerdictSchema JSON format (Step 4) defined in your prompt.
 ```
 
-Wait for completion. Extract JSON. Save to `.thes1s/reports/{TICKER}/sections/debate-step-4-judge.json`.
+Wait for completion. Extract the COMPLETE JSON from the agent response and write it to disk — not a 1-line summary, the full output. Save to `.thes1s/reports/{TICKER}/sections/debate-step-4-judge.json`.
 
 Log:
 ```
@@ -565,7 +587,7 @@ The narrative must be 600+ words. Synthesize, do NOT concatenate.
 Return your output as the Composition ReportSectionSchema JSON format defined in your prompt (key: "inversion_rebuttal", sectionNumber: 6).
 ```
 
-Wait for completion. Extract JSON. Validate as ReportSectionSchema. Save to `.thes1s/reports/{TICKER}/sections/inversion_rebuttal.json`.
+Wait for completion. Extract the COMPLETE JSON from the agent response. Validate as ReportSectionSchema. Write the full output to `.thes1s/reports/{TICKER}/sections/inversion_rebuttal.json` — not a summary. This file should be 10-50KB. See CRITICAL RULE above.
 
 Log:
 ```
