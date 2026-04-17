@@ -231,3 +231,48 @@
 - **Parallel dispatch fix did NOT work** — LULU pitch deck went from 58min to 90min. UBER from 25min to 80min. Headers renamed but orchestrators still dispatch sequentially.
 - **Observatory recording only works for one-pager** — pitch deck and full story agent files still empty. Recording steps not being executed.
 - **Wiki synthesis inconsistent** — some ticker pages incomplete or stale
+
+## [2026-04-17] wiki-update | 16 pages updated
+- Updated: [[tickers/LULU]], [[agents/annual-reader-fy2022]], [[agents/annual-reader-fy2023]], [[agents/annual-reader-fy2024]], [[agents/annual-reader-fy2025]], [[agents/annual-reader-fy2026]], [[agents/quarterly-reader]], [[agents/business-analyst]], [[agents/competitor-market-position]], [[agents/competitor-moats]], [[agents/financial-analyst]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/synthesis-writer]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] wiki-update | 12 pages updated
+- Updated: [[tickers/LULU]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst-judge]], [[agents/risk-analyst-bear]], [[agents/synthesis-writer-bull]], [[agents/synthesis-writer-compose]], [[agents/synthesis-writer-rebuttal]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] wiki-update | 12 pages updated
+- Updated: [[tickers/NKE]], [[agents/annual-reader]], [[agents/quarterly-reader]], [[agents/business-analyst]], [[agents/competitor-market-position]], [[agents/competitor-moats]], [[agents/financial-analyst]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/synthesis-writer]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] wiki-update | 16 pages updated
+- Updated: [[tickers/SFM]], [[agents/annual-reader-fy2021]], [[agents/annual-reader-fy2022]], [[agents/annual-reader-fy2023]], [[agents/annual-reader-fy2024]], [[agents/annual-reader-fy2025]], [[agents/quarterly-reader]], [[agents/business-analyst]], [[agents/competitor-market-position]], [[agents/competitor-moats]], [[agents/financial-analyst]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/synthesis-writer]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] wiki-update | 12 pages updated
+- Updated: [[tickers/NKE]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst-judge]], [[agents/risk-analyst-bear]], [[agents/synthesis-writer-bull]], [[agents/synthesis-writer-compose]], [[agents/synthesis-writer-rebuttal]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] wiki-update | 12 pages updated
+- Updated: [[tickers/SFM]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst-judge]], [[agents/risk-analyst-bear]], [[agents/synthesis-writer-bull]], [[agents/synthesis-writer-compose]], [[agents/synthesis-writer-rebuttal]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] sprint-3-prep | 7 changes for Sprint 3 — reduce conservatism-bias
+
+### Mechanical Changes (4)
+
+**MC-1: Observatory recording REQUIRED** — Removed all "non-blocking" language from observatory steps in all 3 skills. Changed to "MUST run" + retry-once. Sprint 2 showed 0/5 pitch deck + 0/5 full story agent recordings because orchestrators deprioritized optional steps.
+- Regression signal: agent files empty in `observatory/runs/*/agents/` for pitch deck or full story runs
+
+**MC-2: Full-fidelity output saving CRITICAL RULE** — Added prominent rule block at top of pitch-deck and full-story skills banning stub saves. Minimum size thresholds: 5KB for sections, 2KB for debate steps. Sprint 2 had 4/5 full stories truncated (LULU 2KB, UBER 3.3KB, POOL/SFM debate steps 1-line).
+- Regression signal: section files under 5KB, debate-step files under 2KB, full-story.json under 50KB
+
+**MC-3: DataPacket slicing script** — Created `scripts/slice-datapacket.js` so orchestrators can slice with one bash call instead of manual field extraction. All 5 Sprint 2 orchestrators independently skipped slicing due to cognitive load. Added CRITICAL RULE to both skills.
+- Regression signal: orchestrator passes full DataPacket file path to agents instead of embedding sliced JSON
+
+**MC-4: DataPacket slicing CRITICAL RULE** — Added "MUST NOT pass the full DataPacket file path" mandate to pitch-deck and full-story skills. Script handles extraction automatically.
+- Regression signal: agents receive 200KB DataPacket instead of 40-130KB slices
+
+### Methodology Changes (3) — EXP-002
+
+**MT-1: "Conservative bias is non-negotiable" → "Evidence-based analysis is non-negotiable"** — Changed in valuation-specialist (PD+FS) prompt.md + managed-agent.yaml. Removes the mandate to "round down" when uncertain.
+- Regression signal: FGR ranges stay at Sprint 2 levels (LULU 6-10%) instead of rising
+
+**MT-2: FGR Attack Methodology → FGR Stress Test** — Changed in risk-analyst (PD+FS) prompt.md + managed-agent.yaml. Risk analyst now assesses both directions (too conservative AND too aggressive) instead of only constructing downside counter-arguments.
+- Regression signal: risk analyst still only attacks FGR downward without considering upside
+
+**MT-3: "Optimism is the enemy of good investing" removed (5 instances)** — Replaced across valuation-specialist, risk-analyst, financial-analyst, synthesis-writer (PD+FS). New language: "The goal is accuracy, not conservatism. An FGR that is too low is just as wrong as one that is too high."
+- Regression signal: any agent output containing "optimism is the enemy" (would indicate stale prompt)
