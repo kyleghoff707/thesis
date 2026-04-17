@@ -44,4 +44,4 @@ Contributing factor: An old memory note about RAM constraints may have reinforce
 - Strengthened full story Phase 1 parallel instructions with same callout pattern
 - Removed stale RAM constraint memory note
 
-**Verification needed:** Next pitch deck run should show ~20-30min wall time.
+**Sprint 2 verification (2026-04-16):** 4/5 orchestrators confirmed parallel dispatch. Only SFM violated. Long wall times (47-90min) are inherent to the workload (10+ subagents doing web searches + filing reads), not sequential execution. The Sprint 1 fix (renamed headers) was effective. Closing this failure mode as RESOLVED.

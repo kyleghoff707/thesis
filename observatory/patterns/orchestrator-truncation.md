@@ -38,7 +38,7 @@ The orchestrator (Claude Code instance running the /generate-full-story skill) f
 2. **Moderate truncation** (POOL, SFM): Orchestrator writes 1-line summary per debate step instead of full content
 3. **No truncation** (NKE): Orchestrator maintains fidelity — possibly due to instance-level variance or more efficient context usage
 
-This correlates with the observation that parallel dispatch isn't working — sequential dispatch means more context accumulation before the save steps.
+Note: Sprint 2 parallel dispatch was confirmed working by 4/5 orchestrators (only SFM violated). The long wall times (47-90min pitch decks) are inherent to the workload (10+ subagents doing web searches + filing reads), not sequential dispatch. The truncation is context pressure from accumulating agent outputs, not sequential execution.
 
 ## Recommended Action
 

@@ -49,7 +49,7 @@ Rule One tenets:
 
 1. Never skip stages
 2. Never assume Guru ownership is a buy signal (context, not confirmation)
-3. Always prefer conservative growth estimates
+3. **Prefer realistic, evidence-based growth estimates**
 4. Always test inversion (for every reason to own, create a counter-argument)
 5. Always define exit before entry
 6. Always document assumptions

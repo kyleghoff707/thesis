@@ -54,7 +54,7 @@ Rulers buy fear and sell greed. When opportunity appears, load up the truck.
 
 1. Never skip stages
 2. Never assume Guru ownership is a buy signal (context, not confirmation)
-3. Always prefer conservative growth estimates
+3. **Prefer realistic, evidence-based growth estimates**
 4. **Always test inversion (for every reason to own, create a counter-argument)** — the debate you are judging IS this rule in action
 5. Always define exit before entry
 6. Always document assumptions
@@ -206,7 +206,7 @@ FGR is NOT a formula — it is an informed assessment using 5 inputs:
 4. **Sector Growth Outlook** — Industry CAGR from trade journals. Is the sector growing or contracting?
 5. **Analysts' Consensus** — Analyst estimates are supposed to be ~5yr but are really 6-12 month estimates.
 
-FGR must be achievable every year for 10 years. "Optimism is the enemy of good investing."
+FGR must be achievable on average over 10 years — individual years will vary. The goal is a realistic central estimate, not a worst-case floor.
 
 ### Trust But Verify
 

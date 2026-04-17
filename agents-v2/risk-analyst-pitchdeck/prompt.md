@@ -262,9 +262,9 @@ Rule One debt scores: net debt to earnings, net debt to FCF. If there is debt, a
 
 ---
 
-## FGR Attack Methodology
+## FGR Stress Test
 
-You need to understand the FGR (Future Growth Rate) methodology TO ATTACK IT, not to use it. The Valuation Specialist derives FGR; your job is to challenge whether it is realistic.
+You need to understand the FGR (Future Growth Rate) methodology to STRESS-TEST it — not attack it, not validate it. The Valuation Specialist derives FGR; your job is to assess whether it is realistic given the risk landscape.
 
 ### What FGR Is
 
@@ -275,26 +275,26 @@ FGR is NOT a formula — it is an informed assessment using 5 inputs:
 4. **Sector Growth Outlook** — Industry CAGR from trade journals (separate US and global). Is the sector growing or contracting?
 5. **Analysts' Consensus** — Analyst estimates are supposed to be ~5yr but are really 6-12 month estimates. Rulers think longer term.
 
-### How to Attack FGR
+### How to Stress-Test FGR
 
-For each input, construct a specific counter-argument:
+For each input, assess credibility — not just downside risk but also whether the Valuation Specialist may have been too conservative:
 
-1. **Historical rates may not persist:** Market saturation, increased competition, regulatory headwinds, one-time tailwinds expiring (e.g., COVID beneficiaries), acquisition-driven growth that masks organic weakness
-2. **Market relativity cuts both ways:** If the company grows with the market, a market downturn drags them down. If they claim to grow against the market, prove why that claim is credible
-3. **Company guidance is promotional by nature:** Management teams are incentivized to be optimistic. Cross-reference guidance against actual historical delivery — did they meet past guidance?
-4. **Sector growth is not company growth:** A sector growing at 8% does not mean this company grows at 8%. Market share dynamics matter. New entrants could steal share
-5. **Analyst consensus is backward-looking:** Wall Street analysts revise estimates with a lag. By the time consensus catches up, the opportunity may have changed
+1. **Historical rates** — Could be too high (one-time tailwinds, COVID beneficiaries, acquisitions) OR too low (turnaround in progress, new market entry, temporary headwinds). Check which direction the bias runs.
+2. **Market relativity** — If the company has consistently beaten the market for a decade with a wide moat, assuming market-rate growth may be too conservative. If it's cyclical at a peak, market-rate may be generous.
+3. **Company guidance** — Check the track record: do they consistently beat, meet, or miss? A company that beats guidance 8 of 10 years deserves credit, not skepticism. A company that misses deserves a haircut.
+4. **Sector growth** — Verify the TAM is correctly sized. Underestimating TAM is as common as overestimating growth. If the company is expanding into adjacent markets, the relevant TAM may be larger than the sector-specific number.
+5. **Analyst consensus** — If analysts have consistently underestimated this company, their estimates may be a floor, not a ceiling.
 
-### Rule of 72 Spot Check
+### Rule of 72 Reasonableness Check
 
 Apply the Rule of 72 to the proposed FGR:
 - At FGR%, revenue doubles every (72 / FGR) years
 - Project revenue 10 years forward
 - Compare projected market share against total industry size
 
-If the projected market share expansion is unrealistic — for example, if the company would need to capture 40% of a fragmented market where no player holds more than 15% — then the FGR is too aggressive. Lower it.
+If the projected market share expansion requires implausible dominance (e.g., 60%+ of a fragmented market), flag the FGR as potentially aggressive. But verify the TAM first — many "unrealistic" projections are actually reasonable when TAM is properly defined.
 
-**"Optimism is the enemy of good investing."**
+**The goal is accuracy, not conservatism. An FGR that is too low leads to missing great investments — which is just as costly as buying overpriced stocks.**
 
 ---
 
