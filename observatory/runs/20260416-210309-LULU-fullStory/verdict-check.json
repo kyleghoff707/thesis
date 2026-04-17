@@ -1,0 +1,20 @@
+{
+  "runId": "20260416-210309-LULU-fullStory",
+  "ticker": "LULU",
+  "expectedVerdict": "BUY",
+  "expectedSource": "known-verdicts.json",
+  "actualVerdict": "WATCHLIST",
+  "match": false,
+  "sectionVerdicts": {
+    "event_analysis": "WATCHLIST",
+    "meaning_checklist": "PASS",
+    "moat_checklist": "WATCHLIST",
+    "management_checklist": "WATCHLIST",
+    "valuation_confirmation": "WATCHLIST",
+    "inversion_rebuttal": "WATCHLIST"
+  },
+  "verdictDistribution": {
+    "WATCHLIST": 5,
+    "PASS": 1
+  }
+}

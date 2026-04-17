@@ -1,0 +1,41 @@
+{
+  "runId": "20260416-205941-SFM-fullStory",
+  "timestamp": "2026-04-17T03:59:41.846Z",
+  "completedAt": "2026-04-17T13:25:40.245Z",
+  "controlVariables": {
+    "ticker": "SFM",
+    "stage": "fullStory",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "3a5cf220fe4ebd66",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": "BUY",
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": false,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 3500,
+    "totalCost": 7.0200000000000005,
+    "totalTokens": 900000,
+    "totalInputTokens": 540000,
+    "totalOutputTokens": 360000,
+    "toolUses": 150,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 6,
+    "sectionsExpected": 6,
+    "errorsCount": 0
+  },
+  "agentFiles": [
+    "agents/wave-1-risk-analyst.json",
+    "agents/wave-1-business-analyst.json",
+    "agents/wave-1-competitor-evaluator.json",
+    "agents/wave-1-management-evaluator.json",
+    "agents/wave-1-valuation-specialist.json",
+    "agents/wave-2-synthesis-writer-bull.json",
+    "agents/wave-2-risk-analyst-bear.json",
+    "agents/wave-2-synthesis-writer-rebuttal.json",
+    "agents/wave-2-financial-analyst-judge.json",
+    "agents/wave-2-synthesis-writer-compose.json"
+  ]
+}

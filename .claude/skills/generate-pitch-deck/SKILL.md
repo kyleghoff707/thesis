@@ -394,18 +394,37 @@ Step 4: Wave 1 -- Business Fundamentals
 
 For each agent that completed in this wave, record its performance. Extract verdict, confidence, red flag count, and citation count from the saved section JSON files. You MUST run this step. If the command errors, retry once before continuing.
 
+**Per-agent usage parsing — applies to every record-agent call in this skill (Waves 1-4):**
+
+Each subagent's result includes a `<usage>` block like:
+
+```
+<usage>total_tokens: 24500
+tool_uses: 8
+duration_ms: 187000</usage>
+```
+
+For each agent, parse that block and pass the values:
+- `{AGENT_TOTAL_TOKENS}` — total_tokens from the usage block
+- `{SECONDS_ELAPSED}` — duration_ms / 1000
+- `{AGENT_WEB_SEARCHES}` — number of `web_search` tool calls the subagent made. If you can see per-tool-call detail from observing the subagent's execution, count web_search explicitly. Otherwise estimate: `max(0, tool_uses - 2)` for Wave 0 PSR readers (most tool uses are filing reads), `max(0, tool_uses - 1)` for analysis agents (one DataPacket read, rest are usually web_search).
+
+The script auto-computes `usage.cost` from tokens (Sonnet: $3/M input, $15/M output, 60/40 split when only total is given; Opus: $15/M input, $75/M output) plus web searches ($0.01 each — Managed Agents production billing). **This per-agent cost is the instrument the DOE log uses to attribute cost deltas to specific prompt changes.** If any record-agent call omits `--tokens` or `--web-searches`, that agent's cost will silently record as $0 and break cost-sensitivity analysis.
+
 ```bash
 node scripts/observatory-record-agent.js {RUN_ID} \
   --role business-analyst --wave 1 --stage pitchDeck \
   --sections "radar,simple_predictable" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 node scripts/observatory-record-agent.js {RUN_ID} \
   --role competitor-market-position --wave 1 --stage pitchDeck \
   --sections "market_position" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 node scripts/observatory-record-event.js {RUN_ID} dispatch \
   --wave 1 --stage "Business Fundamentals" \
@@ -520,19 +539,22 @@ node scripts/observatory-record-agent.js {RUN_ID} \
   --role competitor-moats --wave 2 --stage pitchDeck \
   --sections "barriers_moats" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 node scripts/observatory-record-agent.js {RUN_ID} \
   --role financial-analyst --wave 2 --stage pitchDeck \
   --sections "fcf,roe_roic_debt,balance_sheet" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 node scripts/observatory-record-agent.js {RUN_ID} \
   --role management-evaluator --wave 2 --stage pitchDeck \
   --sections "management" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 node scripts/observatory-record-event.js {RUN_ID} dispatch \
   --wave 2 --stage "Deep Analysis" \
@@ -604,7 +626,7 @@ Dispatch via Agent tool with:
 3. PSR findings
 4. Full Wave 1+2 context
 5. Supplementary context
-6. Task instruction: "Conduct a comprehensive PEST risk analysis for {TICKER}. Produce section 9 (PEST Risks). Apply the 3-red-flag minimum per PEST category. Assess FGR vulnerability. Your bias is bearish -- demolish the bull case or fail trying. Return a single JSON object matching ReportSectionSchema."
+6. Task instruction: "Conduct a comprehensive PEST risk analysis for {TICKER}. Produce section 9 (PEST Risks). Apply the 3-red-flag minimum per PEST category. Assess FGR vulnerability. Your bias is analytical-bearish — pressure-test the bull case with the strongest evidence-based challenges you can find. Each risk must be classified by severity (thesis-killing / material but manageable / speculative or already priced in). Return a single JSON object matching ReportSectionSchema."
 
 **Agent 2: valuation-specialist** -- Section: valuation (S10)
 
@@ -633,13 +655,15 @@ node scripts/observatory-record-agent.js {RUN_ID} \
   --role risk-analyst --wave 3 --stage pitchDeck \
   --sections "pest" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 node scripts/observatory-record-agent.js {RUN_ID} \
   --role valuation-specialist --wave 3 --stage pitchDeck \
   --sections "valuation" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 node scripts/observatory-record-event.js {RUN_ID} dispatch \
   --wave 3 --stage "Risk & Valuation" \
@@ -747,7 +771,8 @@ node scripts/observatory-record-agent.js {RUN_ID} \
   --role synthesis-writer --wave 4 --stage pitchDeck \
   --sections "overall_verdict" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {OVERALL_VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 node scripts/observatory-record-event.js {RUN_ID} dispatch \
   --wave 4 --stage "Synthesis" \
@@ -756,7 +781,9 @@ node scripts/observatory-record-event.js {RUN_ID} dispatch \
 
 ## Step 12: Assemble Final Report
 
-Collect all 10 sections + synthesis + checkpoints + FGR derivation:
+Collect all **11 sections** (S1-S10 analysis + S11 synthesis/overall_verdict) + checkpoints + FGR derivation.
+
+**CRITICAL — 11 sections, not 10.** The synthesis-writer's output is a full ReportSectionSchema object with `key: "overall_verdict"` and `sectionNumber: 11`. Put it in the `sections` array as the 11th element. Do NOT flatten it into top-level fields only — the PDF generator, React components, and observatory all expect `overall_verdict` to be a real section inside `sections[]`. (This was the Sprint 3 10/11 bug: the old template said "10 ReportSectionSchema objects" and the orchestrator faithfully produced 10, pushing synthesis into top-level convenience fields instead. Those top-level fields still exist below as MIRRORS of section 11's values, but the array is the source of truth.)
 
 ```json
 {
@@ -765,12 +792,26 @@ Collect all 10 sections + synthesis + checkpoints + FGR derivation:
   "stage": "pitchDeck",
   "generatedAt": "{ISO timestamp}",
   "sections": [
-    /* 10 ReportSectionSchema objects ordered by sectionNumber (1-10) */
+    /* 11 ReportSectionSchema objects ordered by sectionNumber:
+         S1  radar              (business-analyst)
+         S2  simple_predictable (business-analyst)
+         S3  market_position    (competitor-market-position)
+         S4  barriers_moats     (competitor-moats)
+         S5  fcf                (financial-analyst)
+         S6  management         (management-evaluator)
+         S7  roe_roic_debt      (financial-analyst)
+         S8  balance_sheet      (financial-analyst)
+         S9  pest               (risk-analyst)
+         S10 valuation          (valuation-specialist)
+         S11 overall_verdict    (synthesis-writer)  ← MUST BE IN THE ARRAY
+       The synthesis-writer's JSON output is already a ReportSectionSchema object
+       with sectionNumber: 11, key: "overall_verdict". Append it to sections[] —
+       do not drop it, do not put it elsewhere only. */
   ],
-  "overallVerdict": "{PASS|FAIL|WATCHLIST from synthesis-writer}",
-  "verdictRationale": "{from synthesis-writer}",
-  "synthesisNarrative": "{executive summary narrative from synthesis-writer}",
-  "sectionKeys": ["radar", "simple_predictable", "market_position", "barriers_moats", "fcf", "management", "roe_roic_debt", "balance_sheet", "pest", "valuation"],
+  "overallVerdict": "{MIRROR of sections[10].verdict — PASS|FAIL|WATCHLIST}",
+  "verdictRationale": "{MIRROR of sections[10].verdictRationale}",
+  "synthesisNarrative": "{MIRROR of sections[10].narrative — executive summary}",
+  "sectionKeys": ["radar", "simple_predictable", "market_position", "barriers_moats", "fcf", "management", "roe_roic_debt", "balance_sheet", "pest", "valuation", "overall_verdict"],
   "onePagerVerdict": "{verdict from gate check}",
   "fgrDerivation": {
     "finalLow": 0.10,
@@ -960,6 +1001,84 @@ node --import ./scripts/node-esm-loader.js -e "
 
 **Budget tracking is observational** -- never blocks execution.
 
+## Step 14.4: Section Count Contract Check (REQUIRED)
+
+**This exists because Sprint 3 had a silent schema drift** — the old template said "10 sections" but synthesis-writer emitted `sectionNumber: 11` and observatory expected 11. All 3 Sprint 3 pitch decks reported `10/11` and no orchestrator ever investigated because the finalize output was informational, not blocking.
+
+Before running the event sweep and finalize, verify the assembly matches the contract:
+
+```bash
+node -e "
+const r = JSON.parse(require('fs').readFileSync('.thes1s/reports/{TICKER}/pitch-deck.json','utf8'));
+const sections = r.sections || [];
+const maxSectionNumber = sections.reduce((m,s) => Math.max(m, s.sectionNumber || 0), 0);
+console.log('sections.length:', sections.length);
+console.log('max sectionNumber in array:', maxSectionNumber);
+console.log('has overall_verdict in sections:', sections.some(s => s.key === 'overall_verdict'));
+if (sections.length !== 11 || maxSectionNumber !== 11 || !sections.some(s => s.key === 'overall_verdict')) {
+  console.error('CONTRACT VIOLATION: pitch deck must have 11 sections with overall_verdict as section 11');
+  process.exit(1);
+}
+console.log('✓ contract check passed');
+"
+```
+
+**If this fails:** Do NOT proceed to finalize. Go back to Step 12 and append the synthesis-writer's output (`.thes1s/reports/{TICKER}/sections/overall_verdict.json`) as the 11th element in `sections[]`. Also record a format-violation:
+
+```bash
+node scripts/observatory-record-event.js {RUN_ID} format-violation \
+  --agent synthesis-writer --violation "overall_verdict excluded from sections[] during assembly (Sprint 3 10/11 bug repeated)" --fix-applied true
+```
+
+## Step 14.5: Pre-Finalize Event Sweep (REQUIRED)
+
+**This step exists because orchestrators systematically under-report their own problem-solving.** When an agent stalls and you re-dispatch, when output needs renaming, when JSON requires fallback extraction — your default mode is "silent cleanup to keep the pipeline moving," not "log it for future-me." That bias produces empty `retries: []`, `stallsDetected: []`, `formatViolations: []` arrays in the observatory, which makes the agent prompts look cleaner than they actually are. DOE experiments reading empty telemetry will conclude "these prompts produce clean output" when in fact the orchestrator was smoothing over mess.
+
+Before running observatory-finalize, retrospectively sweep this run for every event the in-the-moment mode missed. Answer each yes/no honestly. **When in doubt, log it — the cost of a false positive is one extra row in a JSON array; the cost of a false negative is a corrupted DOE conclusion.**
+
+For each `yes`, run the corresponding `observatory-record-event.js` command. The cheat-sheet is in [Retry Logic](#retry-logic), [Log Format Violations](#required-log-format-violations), and below.
+
+```
+Retries:
+  [ ] Did any agent timeout, stall, or fail and get re-dispatched?          → retry (+ stall if >15min before intervention)
+  [ ] Did any agent require a second prompt to produce valid JSON?           → retry, reason: "JSON parse failed"
+  [ ] Did any agent require a second prompt for a full narrative?            → retry, reason: "narrative stub"
+  [ ] Did you trim any agent's context/prompt and re-dispatch?               → retry, reason: "trimmed prompt to avoid timeout"
+
+Stalls:
+  [ ] Did any sonnet agent run longer than ~15min?                           → stall
+  [ ] Did any opus agent run longer than ~25min?                             → stall
+  [ ] Did any "Stream idle timeout" or partial-response error occur?         → stall, resolution: "idle timeout — trimmed and re-dispatched" (or similar)
+
+Format violations:
+  [ ] Did any agent use markdown fences despite being told not to?           → format-violation
+  [ ] Did any agent wrap JSON in preamble text ("Now I have...")?            → format-violation
+  [ ] Did any agent return an array when an object was expected?             → format-violation
+  [ ] Did any agent return multiple JSON objects instead of one?             → format-violation
+  [ ] Did any agent return partial drafts with "..." before the real JSON?   → format-violation
+  [ ] Did the extracted key not match the expected key?                      → format-violation
+  [ ] Did you rename any saved file (wrong extension, wrong path, wrong case)? → format-violation
+  [ ] Did any agent save to a wrong directory (project root vs sections/)?   → format-violation
+  [ ] Did any agent use the Write tool when the protocol said "return JSON"? → format-violation
+  [ ] Did you use the JSON extraction fallback chain at all for any agent?   → format-violation (for each)
+
+Data gaps:
+  [ ] Did any agent flag missing DataPacket fields (DEF 14A, transcripts)?   → data-gap
+  [ ] Did the DataPacket slice step get skipped for any agent?               → data-gap, description: "slice skipped for {agent}"
+  [ ] Were any filings missing from filingContent (proxy, missing years)?    → data-gap
+  [ ] Were any transcripts missing from the expected set?                    → data-gap
+```
+
+**How to verify your sweep is complete:**
+
+```bash
+cat observatory/runs/{RUN_ID}/orchestrator.json
+```
+
+Look at the four arrays: `retries`, `stallsDetected`, `formatViolations`, `dataGaps`. Ask yourself: "Does this honestly reflect what happened during the run, or does it look cleaner than reality?" If the run had ANY mid-wave problem-solving and these arrays are still empty, you haven't logged enough.
+
+This step is retrospective on purpose — logging during the wave competes with the "get it done" mode. Logging now, one step before finalize, fits natural bookkeeping.
+
 ## Step 15: Finalize Observatory Capture
 
 Parse the `<usage>` block from the overall session (aggregate across all subagent calls if available). Then run:
@@ -1082,13 +1201,52 @@ After every subagent completes, extract JSON from the response using this chain:
 - Split into individual section objects by `key` field
 - Save each to its own file
 
+### REQUIRED: Log Format Violations
+
+**This is load-bearing observability — not optional cleanup.** The orchestrator's default instinct is to silently fix agent output and keep moving. That bias corrupts the observatory's format-violation metric, which the DOE uses to measure prompt quality. Log every deviation from clean output, even if you fix it in one line.
+
+Whenever the fallback chain triggers ANY of these, run the record-event command BEFORE proceeding:
+
+```bash
+# Fallback extraction used (not the happy path — agent output had markdown fences, preamble, or raw JSON instead of the expected fenced block)
+node scripts/observatory-record-event.js {RUN_ID} format-violation \
+  --agent {AGENT_ROLE} --violation "fallback extraction required: {describe: markdown fences | preamble text | raw JSON without fences | first-to-last brace | etc}" --fix-applied true
+
+# Key mismatch (agent returned "pest_risks" when schema expected "pest"; agent saved "market-position.json" when expected "market_position.json"; etc)
+node scripts/observatory-record-event.js {RUN_ID} format-violation \
+  --agent {AGENT_ROLE} --violation "key mismatch: returned '{actual}' expected '{expected}'" --fix-applied true
+
+# Agent returned multiple JSON objects or an array when a single object was expected (or vice versa)
+node scripts/observatory-record-event.js {RUN_ID} format-violation \
+  --agent {AGENT_ROLE} --violation "shape mismatch: {describe — multiple objects, array vs object, partial drafts, etc}" --fix-applied true
+
+# Agent saved to wrong path (project root instead of sections/, wrong filename, etc)
+node scripts/observatory-record-event.js {RUN_ID} format-violation \
+  --agent {AGENT_ROLE} --violation "filesystem violation: saved to {wrong path} instead of {expected path}" --fix-applied true
+
+# Agent wrote output directly via Write tool instead of returning JSON in response (or vice versa)
+node scripts/observatory-record-event.js {RUN_ID} format-violation \
+  --agent {AGENT_ROLE} --violation "protocol violation: used Write tool instead of response body (or vice versa)" --fix-applied true
+```
+
+If JSON parsing required the retry prompt at step 5, log a retry too (see Retry Logic below).
+
 ## Narrative Recovery
 
 After extracting section JSON, check each section's `narrative` field:
 - If `narrative.length < 200`: The agent likely produced a stub.
   1. Search the agent's full response text for substantial prose (markdown with ## headings, > 200 chars)
-  2. If found, inject it into the section's `narrative` field and re-save
-  3. If no recoverable narrative found, retry the agent once with: "Your previous output had a {length}-char narrative stub. The narrative field MUST contain your FULL analysis (500+ words). Write the complete narrative."
+  2. If found, inject it into the section's `narrative` field and re-save. **Log a format-violation:**
+     ```bash
+     node scripts/observatory-record-event.js {RUN_ID} format-violation \
+       --agent {AGENT_ROLE} --violation "narrative stub in JSON, recovered {length} chars of prose from response body" --fix-applied true
+     ```
+  3. If no recoverable narrative found, retry the agent once with: "Your previous output had a {length}-char narrative stub. The narrative field MUST contain your FULL analysis (500+ words). Write the complete narrative." **Log the retry:**
+     ```bash
+     node scripts/observatory-record-event.js {RUN_ID} retry \
+       --agent {AGENT_ROLE} --wave {N} --reason "narrative stub ({length} chars) — full narrative required" --attempt 1 --resolved false
+     ```
+     After the retry completes, re-run with `--resolved true` if the retry succeeded.
   4. If retry also produces a stub, save with a warning and continue
 
 ## Retry Logic
@@ -1098,6 +1256,23 @@ If any agent fails entirely (rate limit, timeout, error):
 2. Re-dispatch with the same prompt
 3. If the retry also fails, log the error, save partial output with `status: "failed"`, and continue
 4. Do NOT retry more than once -- the PM can re-run individual sections at checkpoints
+
+### REQUIRED: Log Every Retry and Stall
+
+**When you retry, log it. When you trim a prompt to avoid a timeout, log it. When an agent runs >15min and you kill it, log it.** Silent workarounds corrupt the observatory's orchestrator telemetry.
+
+```bash
+# Agent retry (any reason — timeout, rate limit, parse failure, stub narrative, key mismatch that can't be auto-fixed, etc)
+node scripts/observatory-record-event.js {RUN_ID} retry \
+  --agent {AGENT_ROLE} --wave {N} --reason "{short reason: timeout | rate-limit | JSON parse failed | narrative stub | schema violation | ...}" --attempt 1 --resolved {true|false}
+
+# Stall detected (agent running unusually long before you intervened — timeout, idle stream, partial response, etc)
+# "Unusually long" = >15min for sonnet agents, >25min for opus agents.
+node scripts/observatory-record-event.js {RUN_ID} stall \
+  --agent {AGENT_ROLE} --wave {N} --duration {seconds_before_intervention} --resolution "{how you resolved: retried with trimmed prompt | killed and re-dispatched | timed out | ...}"
+```
+
+Retry and stall are NOT redundant. Log both if both apply: stall captures "how long it ran before intervention," retry captures "what happened after intervention."
 
 ## Constraints
 

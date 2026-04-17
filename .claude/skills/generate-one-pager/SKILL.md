@@ -35,10 +35,20 @@ If assembly fails, print the error and stop.
 
 After assembly, read `.thes1s/reports/{TICKER}/data-packet.json` and note the field count and any errors.
 
-## Step 3: Read Agent Prompt and DataPacket
+## Step 3: Read Agent Prompt and Slice DataPacket
 
 1. Read the One Pager agent prompt: `agents-v2/one-pager/prompt.md`
-2. Read the DataPacket: `.thes1s/reports/{TICKER}/data-packet.json`
+2. Slice the DataPacket to only the fields the one-pager analyst needs (EXP-005):
+
+   ```bash
+   node scripts/slice-datapacket.js {TICKER} one-pager > /tmp/{TICKER}-one-pager-slice.json
+   ```
+
+   This keeps: companyInfo, classification, financials, ttm, growthRates, returnMetrics, debtMetrics, fcf, keyMetrics, gurus, caveats. It drops: insiders, filings, compensation, peers, peerMetrics, ruleOneScore.
+
+   Narrative context (business model, catalysts, management commentary) should come from web search, not DataPacket fields.
+
+   Expect ~35% size reduction vs. full DataPacket.
 
 ## Step 3.5: Initialize Observatory Capture
 
@@ -64,13 +74,17 @@ Dispatch a single Claude Code subagent via the **Agent tool** with:
   ```
   Analyze {TICKER} and produce the complete One Pager screening.
 
-  ## DataPacket
+  ## DataPacket (sliced — core Rule One metrics only)
 
-  {full DataPacket JSON}
+  {contents of /tmp/{TICKER}-one-pager-slice.json}
 
   ## Assignment
 
-  Produce the One Pager for {TICKER}. Follow your prompt instructions exactly. Use web search for current information. Be concise — each section 1-3 short paragraphs. Cite specific numbers from the DataPacket and from your web searches.
+  Produce the One Pager for {TICKER}. Follow your prompt instructions exactly.
+
+  This DataPacket is intentionally sliced — it contains the numeric core (financials, growth rates, return metrics, FCF, key ratios, company info) plus guru holdings (Rule One "meaning" signal). It does NOT include insiders, filings, compensation, peers, or peer metrics. For narrative context (business model, catalysts, management commentary, competitive landscape), use web search — that's a first-class source for this stage.
+
+  Be concise — each section 1-3 short paragraphs. Cite specific numbers from the DataPacket and specific claims from your web searches.
   ```
 
 **Subagent model:** Use Sonnet (cost-efficient for a screening document).
@@ -137,22 +151,68 @@ Write to `.thes1s/reports/{TICKER}/one-pager.json`.
 
 #### Observatory Recording (REQUIRED)
 
-Record the one-pager agent's performance. Extract verdict, confidence, and section metrics from the saved one-pager JSON.
+**First: parse the subagent's `<usage>` block.** The Agent tool result includes a usage block like:
+
+```
+<usage>total_tokens: 90220
+tool_uses: 17
+duration_ms: 202720</usage>
+```
+
+Extract `TOTAL_TOKENS`, `TOOL_USES`, and `DURATION_SECONDS` (= duration_ms / 1000). Also count how many of those tool uses were `web_search` calls — if the subagent's tool-call stream is visible to you, count web_search explicitly; if only the aggregate is available, estimate web_search count as `tool_uses - 3` (subtract ~3 for DataPacket read + agent prompt read + Write). Call this `WEB_SEARCHES`.
+
+Then record the agent with all the usage data:
 
 ```bash
 node scripts/observatory-record-agent.js {RUN_ID} \
   --role one-pager --wave 0 --stage onePager \
   --sections "company_info,minimum_standards,meaning,growth_metrics,valuation_summary,overall_verdict" \
   --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {OVERALL_VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --duration {DURATION_SECONDS} --verdict {OVERALL_VERDICT} --confidence {CONFIDENCE} \
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {TOTAL_TOKENS} --web-searches {WEB_SEARCHES}
 
 node scripts/observatory-record-event.js {RUN_ID} dispatch \
   --wave 0 --stage "One Pager" \
-  --agents "one-pager" --parallel false --duration {SECONDS_ELAPSED}
+  --agents "one-pager" --parallel false --duration {DURATION_SECONDS}
 ```
 
+**Why --tokens and --web-searches matter:** The script auto-computes `usage.cost` from tokens (Sonnet: $3/M input, $15/M output, 60/40 split if only total given) plus web searches ($0.01 each in Managed Agents production). This is the production-cost proxy EXP-005 uses to measure whether DataPacket slicing actually saves money. If you don't pass these flags, `usage.cost` stays 0 and cost-sensitivity analysis across runs is broken.
+
 You MUST run this step. If the command errors, retry once before continuing.
+
+## Step 5.4: Pre-Finalize Event Sweep (REQUIRED)
+
+**Orchestrators systematically under-report their own problem-solving.** If the subagent's first response didn't parse cleanly, if you ran the retry prompt, if the output needed any fallback extraction — log it. The observatory's `formatViolations` array is only useful if it honestly reflects what happened. Silent cleanup produces empty arrays that make the one-pager agent prompt look cleaner than it is.
+
+Sweep this run before finalize. Answer honestly:
+
+```
+Format violations:
+  [ ] Did the subagent's output require markdown-fence stripping?            → format-violation
+  [ ] Did the subagent's output contain preamble text before the JSON?       → format-violation
+  [ ] Did the subagent emit multiple JSON objects (drafts + final)?          → format-violation
+  [ ] Did the extracted JSON have a key mismatch vs. expected schema?        → format-violation
+  [ ] Did you use any step past #1 of the JSON extraction fallback chain?    → format-violation
+
+Retries:
+  [ ] Did you dispatch the retry prompt at Step 5 because JSON parse failed? → retry
+  [ ] Did you dispatch a second time for any other reason?                   → retry
+```
+
+For each `yes`:
+
+```bash
+# Format violation
+node scripts/observatory-record-event.js {RUN_ID} format-violation \
+  --agent one-pager --violation "{describe what deviated from clean output}" --fix-applied true
+
+# Retry
+node scripts/observatory-record-event.js {RUN_ID} retry \
+  --agent one-pager --wave 0 --reason "{short reason}" --attempt 1 --resolved {true|false}
+```
+
+If there were no violations or retries, skip this step — but verify by checking that the subagent output was a single clean JSON object matching the schema on first attempt. If in doubt, log.
 
 ## Step 5.5: Finalize Observatory Capture (REQUIRED)
 

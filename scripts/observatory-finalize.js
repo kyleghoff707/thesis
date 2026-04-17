@@ -103,6 +103,9 @@ const estimatedCost = cliCost || (cliTokens
   ? (cliTokens * 0.6 * 3 / 1_000_000) + (cliTokens * 0.4 * 15 / 1_000_000)
   : 0);
 
+const sectionsExpected = manifest.controlVariables.stage === 'pitchDeck' ? 11
+  : manifest.controlVariables.stage === 'all' ? 23 : 6;
+
 manifest.pipelineMetrics = {
   totalWallTimeSeconds: totalSeconds,
   totalCost: estimatedCost,
@@ -112,12 +115,39 @@ manifest.pipelineMetrics = {
   toolUses: cliToolUses || 0,
   model: cliModel || manifest.controlVariables.models?.default || 'claude-sonnet-4-6',
   sectionsProduced: sections.length,
-  sectionsExpected: manifest.controlVariables.stage === 'pitchDeck' ? 11
-    : manifest.controlVariables.stage === 'all' ? 23 : 6,
+  sectionsExpected,
   errorsCount: 0,
 };
 
 writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+
+// Section count drift detection — auto-record a format-violation event when
+// sections.length !== sectionsExpected. Previously the count was recorded silently
+// in the manifest and orchestrators ignored the "X/Y" informational output.
+// Sprint 3 had all 3 pitch decks silently reporting 10/11 because the assembly
+// template excluded overall_verdict from sections[]. Making the mismatch loud
+// via the format-violation stream ensures future drift gets surfaced, not buried.
+if (sections.length !== sectionsExpected) {
+  const orchPath = join(runDir, 'orchestrator.json');
+  let orch;
+  try {
+    orch = JSON.parse(readFileSync(orchPath, 'utf8'));
+  } catch {
+    orch = { runId, dispatches: [], retries: [], stallsDetected: [], formatViolations: [], dataGaps: [] };
+  }
+  orch.formatViolations = orch.formatViolations || [];
+  orch.formatViolations.push({
+    agent: 'orchestrator',
+    violation: `section count drift: produced ${sections.length}, expected ${sectionsExpected}. ` +
+      `Inspect sections[] in the output file — likely the synthesis/overall_verdict ` +
+      `section was dropped or duplicated during assembly.`,
+    original: null,
+    corrected: null,
+    fixApplied: false,
+  });
+  writeFileSync(orchPath, JSON.stringify(orch, null, 2));
+  console.warn(`Observatory: section count drift detected — ${sections.length}/${sectionsExpected} — recorded as format-violation`);
+}
 
 // Build verdict check
 const sectionVerdicts = {};

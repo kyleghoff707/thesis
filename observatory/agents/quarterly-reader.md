@@ -1,19 +1,20 @@
 ---
 type: agent-profile
 agentRole: quarterly-reader
-lastUpdated: 2026-04-17T02:02:08.734Z
-runCount: 5
+lastUpdated: 2026-04-17T04:03:05.931Z
+runCount: 7
 avgCost: 0.00
-avgDuration: 539
+avgDuration: 495
 verdictDistribution:
-  WATCHLIST: 2
+  WATCHLIST: 3
   PASS: 3
+  N/A: 1
 tags: [agent, quarterly-reader]
 ---
 
 ## Behavioral Summary
 
-Agent **quarterly-reader** has been observed across 5 run(s). Average duration: 539s. Average cost: $0.00.
+Agent **quarterly-reader** has been observed across 7 run(s). Average duration: 495s. Average cost: $0.00.
 
 ## Run History
 
@@ -24,6 +25,8 @@ Agent **quarterly-reader** has been observed across 5 run(s). Average duration: 
 | 20260416-074532-POOL-pitchDeck | POOL | pitchDeck | 0 | 607s | 1 | PASS |
 | 20260416-074720-SFM-pitchDeck | SFM | pitchDeck | 0 | 571s | 1 | PASS |
 | 20260416-074734-LULU-pitchDeck | LULU | pitchDeck | 0 | 481s | 1 | WATCHLIST |
+| 20260416-194956-POOL-pitchDeck | POOL | pitchDeck | 0 | 280s | 1 | WATCHLIST |
+| 20260416-195056-LULU-pitchDeck | LULU | pitchDeck | 0 | 492s | 1 | N/A |
 
 ## Failure Modes
 

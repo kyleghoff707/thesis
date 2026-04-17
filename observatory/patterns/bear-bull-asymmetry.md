@@ -32,4 +32,4 @@ In practice, every company has one or more compelling bear arguments. Warren Buf
 
 ## Status
 
-PARKED — monitoring for now. Will revisit after FGR conservatism experiments (higher leverage). See [[patterns/valuation-drives-verdict]] and [[experiments/doe-log]].
+**ACTIVE — Sprint 4 EXP-003 treatment.** Full package shipped combining softened bear mandate (EXP-TBD-A), Bull + Rebuttal web search (EXP-TBD-B), materiality filter on judge (EXP-TBD-C), symmetric rebuttal framing, symmetric judge rubric, and residual conservatism softening. See [[experiments/doe-log]] EXP-003 for full diff and expected effects. EXP-TBD-D (weight debate by section verdicts) parked for Sprint 5 if EXP-003 is insufficient — structural shift, too blunt to combine with A-F without confounding attribution.

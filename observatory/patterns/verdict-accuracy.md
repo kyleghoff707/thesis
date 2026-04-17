@@ -1,27 +1,28 @@
 ---
 type: pattern
 pattern: verdict-accuracy
-lastUpdated: 2026-04-17T02:02:12.554Z
+lastUpdated: 2026-04-17T14:19:37.062Z
 confidence: high
-runsSampled: 24
+runsSampled: 34
 tags: [pattern, verdict, accuracy]
 ---
 
 ## Observation
 
-Overall verdict accuracy: **0%** (0/15 runs matched expected verdict).
+Overall verdict accuracy: **0%** (0/24 runs matched expected verdict).
 
-Total runs analyzed: 24
+Total runs analyzed: 34
 
 ## Per-Ticker Breakdown
 
 | Ticker | Runs | Expected | Actual Verdicts | Accuracy |
 |--------|------|----------|----------------|----------|
-| [[tickers/LULU]] | 6 | BUY | WATCHLIST | 0/6 |
-| [[tickers/POOL]] | 6 | BUY | PASS, WATCHLIST | 0/6 |
+| [[tickers/LULU]] | 9 | BUY | WATCHLIST | 0/9 |
+| [[tickers/POOL]] | 9 | BUY | PASS, WATCHLIST | 0/9 |
 | [[tickers/UBER]] | 6 | BUY | WATCHLIST | 0/6 |
 | [[tickers/NKE]] | 3 | BUY | WATCHLIST | 0/3 |
-| [[tickers/SFM]] | 3 | BUY | PASS, WATCHLIST | 0/3 |
+| [[tickers/SFM]] | 6 | BUY | PASS, WATCHLIST | 0/6 |
+| [[tickers/TSCO]] | 1 | - | WATCHLIST | no expected |
 
 ## Evidence
 
@@ -49,6 +50,16 @@ Total runs analyzed: 24
 - 20260416-084749-NKE-fullStory: WATCHLIST vs BUY → MISMATCH
 - 20260416-112225-SFM-fullStory: WATCHLIST vs BUY → MISMATCH
 - 20260416-115440-LULU-fullStory: WATCHLIST vs BUY → MISMATCH
+- 20260416-194150-POOL-onePager: WATCHLIST vs BUY → MISMATCH
+- 20260416-194200-SFM-onePager: PASS vs BUY → MISMATCH
+- 20260416-194202-LULU-onePager: WATCHLIST vs BUY → MISMATCH
+- 20260416-194956-POOL-pitchDeck: WATCHLIST vs BUY → MISMATCH
+- 20260416-195002-SFM-pitchDeck: WATCHLIST vs BUY → MISMATCH
+- 20260416-195056-LULU-pitchDeck: WATCHLIST vs BUY → MISMATCH
+- 20260416-205941-SFM-fullStory: WATCHLIST vs BUY → MISMATCH
+- 20260416-210309-LULU-fullStory: WATCHLIST vs BUY → MISMATCH
+- 20260416-210339-POOL-fullStory: WATCHLIST vs BUY → MISMATCH
+- 20260417-071237-TSCO-onePager: WATCHLIST vs none → no expected
 
 ## Hypothesis
 

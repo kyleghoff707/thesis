@@ -115,7 +115,7 @@ Section 6 (Inversion & Rebuttal) is produced through 4 sequential debate steps +
 | **4** | Financial Analyst | **Judge** | No | Bull + Bear + Rebuttal | `exchanges[]` (scored Strong Bull/Strong Bear/Unresolved) + `overallVerdict` (direction + investmentImplication) |
 | **Compose** | Synthesis Writer | **Compose** | No | All 4 debate outputs + S1-S5 | Final S6 as `ReportSectionSchema` — cohesive Buffett-style narrative |
 
-**Web search rule (D-07):** Only the Bear has web search. The Bear researches short-seller theses, negative analyst coverage, and bear cases. Everyone else works with existing evidence from S1-S5.
+**Web search rule (D-07, EXP-003 symmetric update):** Bull, Bear, and Rebuttal all have web search — symmetric evidentiary tooling to prevent debate framework bias toward caution. Bear researches short-seller theses, negative analyst coverage, and bear cases. Bull researches positive catalysts, insider buying, guru activity, analyst upgrades. Rebuttal verifies bear citations and finds already-priced-in context. Judge and Compose do NOT have web search — Judge is a neutral arbiter, Compose is assembly-only. Prior table rows show the outdated pre-EXP-003 state; this D-07 rule is authoritative.
 
 **Debate output flows into the composed S6.** The Synthesis Writer weaves all 4 perspectives into a single narrative — thesis → antithesis → synthesis. The verdict must follow the Judge's direction.
 

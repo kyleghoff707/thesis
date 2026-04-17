@@ -1,19 +1,19 @@
 ---
 type: agent-profile
 agentRole: one-pager
-lastUpdated: 2026-04-16T14:46:46.051Z
-runCount: 5
+lastUpdated: 2026-04-17T14:19:37.062Z
+runCount: 9
 avgCost: 0.00
-avgDuration: 259
+avgDuration: 256
 verdictDistribution:
-  WATCHLIST: 24
-  PASS: 6
+  WATCHLIST: 42
+  PASS: 12
 tags: [agent, one-pager]
 ---
 
 ## Behavioral Summary
 
-Agent **one-pager** has been observed across 5 run(s). Average duration: 259s. Average cost: $0.00.
+Agent **one-pager** has been observed across 9 run(s). Average duration: 256s. Average cost: $0.00.
 
 ## Run History
 
@@ -24,6 +24,10 @@ Agent **one-pager** has been observed across 5 run(s). Average duration: 259s. A
 | 20260416-073658-UBER-onePager | UBER | onePager | 0 | 227s | 6 | WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST |
 | 20260416-073716-NKE-onePager | NKE | onePager | 0 | 256s | 6 | WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST |
 | 20260416-073723-SFM-onePager | SFM | onePager | 0 | 302s | 6 | PASS, PASS, PASS, PASS, PASS, PASS |
+| 20260416-194150-POOL-onePager | POOL | onePager | 0 | 202s | 6 | WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST |
+| 20260416-194200-SFM-onePager | SFM | onePager | 0 | 195s | 6 | PASS, PASS, PASS, PASS, PASS, PASS |
+| 20260416-194202-LULU-onePager | LULU | onePager | 0 | 407s | 6 | WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST |
+| 20260417-071237-TSCO-onePager | TSCO | onePager | 0 | 203s | 6 | WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST |
 
 ## Failure Modes
 

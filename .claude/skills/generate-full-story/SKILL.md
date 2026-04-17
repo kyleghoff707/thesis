@@ -369,36 +369,58 @@ Step 4: Phase 1 -- Deep Analysis complete
 
 For each Phase 1 agent, record its performance. Extract verdict, confidence, red flags, and citations from saved section JSONs. You MUST run every recording command. If a command errors, retry it once before continuing.
 
+**Per-agent usage parsing — applies to every record-agent call in this skill (Phase 1 + Phase 2 debate steps):**
+
+Each subagent's result includes a `<usage>` block like:
+
+```
+<usage>total_tokens: 24500
+tool_uses: 8
+duration_ms: 187000</usage>
+```
+
+For each agent, parse that block and pass the values:
+- `{AGENT_TOTAL_TOKENS}` — total_tokens from the usage block
+- `{SECONDS_ELAPSED}` — duration_ms / 1000
+- `{AGENT_WEB_SEARCHES}` — number of `web_search` tool calls the subagent made. Count explicitly if you can observe per-tool-call detail. Otherwise estimate by role: **(EXP-003 update: Bull, Bear, AND Rebuttal now all have web search.)** Bull/Bear/Rebuttal debate steps — estimate `max(0, tool_uses - 1)` (one input read). Judge and Compose have NO web search — pass `0`. Phase 1 analysis agents typically run 3-6 web searches (estimate `max(0, tool_uses - 1)` for one DataPacket read).
+
+The script auto-computes `usage.cost` from tokens (Sonnet: $3/M input, $15/M output, 60/40 split when only total is given; Opus: $15/M input, $75/M output) plus web searches ($0.01 each — Managed Agents production billing). **This per-agent cost is the instrument the DOE log uses to attribute cost deltas to specific prompt changes.** If any record-agent call omits `--tokens` or `--web-searches`, that agent's cost will silently record as $0 and break cost-sensitivity analysis.
+
 ```bash
 node scripts/observatory-record-agent.js {RUN_ID} \
   --role risk-analyst --wave 1 --stage fullStory \
   --sections "event_analysis" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 node scripts/observatory-record-agent.js {RUN_ID} \
   --role business-analyst --wave 1 --stage fullStory \
   --sections "meaning_checklist" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 node scripts/observatory-record-agent.js {RUN_ID} \
   --role competitor-evaluator --wave 1 --stage fullStory \
   --sections "moat_checklist" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 node scripts/observatory-record-agent.js {RUN_ID} \
   --role management-evaluator --wave 1 --stage fullStory \
   --sections "management_checklist" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 node scripts/observatory-record-agent.js {RUN_ID} \
   --role valuation-specialist --wave 1 --stage fullStory \
   --sections "valuation_confirmation" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 node scripts/observatory-record-event.js {RUN_ID} dispatch \
   --wave 1 --stage "Deep Analysis" \
@@ -485,7 +507,7 @@ Your role is Step 1: Bull Thesis. Synthesize the strongest possible investment t
 Extract 5-7 thesis points covering meaning, moat, management, valuation, and events.
 Each point must cite the source section. Write a compelling overallThesis summary.
 
-You do NOT have web search. Work with the evidence from the completed sections.
+You HAVE web search for this role (EXP-003: symmetric evidentiary tooling with the Bear). Use it to surface positive catalysts, insider buying, guru activity, analyst upgrades, and validating third-party signals. Primary job is still distilling the section findings — web search is for sharpening and validating, not inventing a thesis the sections don't support.
 
 Return your output as the Bull Thesis JSON format (Step 1) defined in your prompt.
 ```
@@ -511,7 +533,7 @@ You are the BEAR in the Full Story Section 6 adversarial debate for {TICKER} ({C
 
 Your role is Step 2: Bear Inversion. The bull has presented their thesis above. Attack EVERY thesis point with cited counter-evidence.
 
-Use web search aggressively -- search for short-seller theses, negative analyst coverage, bear cases, and recent bad news. This is the ONLY debate step with web search.
+Use web search for short-seller theses, negative analyst coverage, bear cases, and recent bad news. The Bull also has web search now (EXP-003) — your evidence advantage is no longer structural, it's in the quality and materiality of what you find. A bear point that doesn't survive a web-search-armed rebuttal wasn't a strong bear point to begin with.
 
 Each inversion must cite specific evidence (URLs, DataPacket, SEC filings). Classify severity as thesis_killer, significant, or minor.
 
@@ -638,35 +660,40 @@ node scripts/observatory-record-agent.js {RUN_ID} \
   --role synthesis-writer-bull --wave 2 --stage fullStory \
   --sections "debate_bull" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 # After Bear (risk-analyst)
 node scripts/observatory-record-agent.js {RUN_ID} \
   --role risk-analyst-bear --wave 2 --stage fullStory \
   --sections "debate_bear" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 # After Rebuttal (synthesis-writer)
 node scripts/observatory-record-agent.js {RUN_ID} \
   --role synthesis-writer-rebuttal --wave 2 --stage fullStory \
   --sections "debate_rebuttal" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 # After Judge (financial-analyst)
 node scripts/observatory-record-agent.js {RUN_ID} \
   --role financial-analyst-judge --wave 2 --stage fullStory \
   --sections "debate_judge" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 # After Compose (synthesis-writer)
 node scripts/observatory-record-agent.js {RUN_ID} \
   --role synthesis-writer-compose --wave 2 --stage fullStory \
   --sections "inversion_rebuttal" --model claude-sonnet-4-6 \
   --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH}
+  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
+  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
 
 # Phase dispatch record
 node scripts/observatory-record-event.js {RUN_ID} dispatch \
@@ -836,6 +863,59 @@ Step 8: Report assembled
   Output: .thes1s/reports/{TICKER}/full-story.md
 ```
 
+## Step 8.5: Pre-Finalize Event Sweep (REQUIRED)
+
+**This step exists because orchestrators systematically under-report their own problem-solving.** When an agent stalls and you re-dispatch, when output needs renaming, when JSON requires fallback extraction, when a debate step's output is written from orchestrator memory instead of re-dispatching — your default mode is "silent cleanup to keep the pipeline moving," not "log it for future-me." That bias produces empty `retries: []`, `stallsDetected: []`, `formatViolations: []` arrays in the observatory, which makes the agent prompts look cleaner than they actually are. DOE experiments reading empty telemetry will conclude "these prompts produce clean output" when in fact the orchestrator was smoothing over mess.
+
+Before running observatory-finalize, retrospectively sweep this run for every event the in-the-moment mode missed. Answer each yes/no honestly. **When in doubt, log it — the cost of a false positive is one extra row in a JSON array; the cost of a false negative is a corrupted DOE conclusion.**
+
+For each `yes`, run the corresponding `observatory-record-event.js` command. The cheat-sheet is in [Retry Logic](#retry-logic), [Log Format Violations](#required-log-format-violations), and below.
+
+```
+Retries:
+  [ ] Did any agent timeout, stall, or fail and get re-dispatched?          → retry (+ stall if >15min before intervention)
+  [ ] Did any agent require a second prompt to produce valid JSON?           → retry, reason: "JSON parse failed"
+  [ ] Did any agent require a second prompt for a full narrative?            → retry, reason: "narrative stub"
+  [ ] Did you trim any agent's context/prompt and re-dispatch?               → retry, reason: "trimmed prompt to avoid timeout"
+  [ ] Did you write a debate step's output from orchestrator memory          → retry, reason: "orchestrator wrote from memory vs re-dispatch"
+       instead of re-dispatching the agent?                                     (AND format-violation: "protocol violation — orchestrator as agent")
+
+Stalls:
+  [ ] Did any sonnet agent run longer than ~15min?                           → stall
+  [ ] Did any opus agent run longer than ~25min?                             → stall
+  [ ] Did any "Stream idle timeout" or partial-response error occur?         → stall, resolution: "idle timeout — trimmed and re-dispatched" (or similar)
+
+Format violations:
+  [ ] Did any agent use markdown fences despite being told not to?           → format-violation
+  [ ] Did any agent wrap JSON in preamble text ("Now I have...")?            → format-violation
+  [ ] Did any agent return an array when an object was expected?             → format-violation
+  [ ] Did any agent return multiple JSON objects instead of one?             → format-violation
+  [ ] Did any agent return partial drafts with "..." before the real JSON?   → format-violation
+  [ ] Did the extracted key not match the expected key?                      → format-violation
+  [ ] Did you rename any saved file (wrong extension, wrong path, wrong case)? → format-violation
+  [ ] Did any agent save to a wrong directory (project root vs sections/)?   → format-violation
+  [ ] Did any debate step output end up < 2KB (stub) or get written from     → format-violation
+       orchestrator memory?                                                       (AND retry as noted above)
+  [ ] Did you use the JSON extraction fallback chain at all for any agent?   → format-violation (for each)
+
+Data gaps:
+  [ ] Did any agent flag missing DataPacket fields?                          → data-gap
+  [ ] Did the DataPacket slice step get skipped for any agent (especially    → data-gap, description: "slice skipped for {agent}"
+       the Bear in the debate)?
+  [ ] Were any Pitch Deck inheritance sections missing/empty when Phase 1    → data-gap
+       agents were dispatched?
+```
+
+**How to verify your sweep is complete:**
+
+```bash
+cat observatory/runs/{RUN_ID}/orchestrator.json
+```
+
+Look at the four arrays: `retries`, `stallsDetected`, `formatViolations`, `dataGaps`. Ask yourself: "Does this honestly reflect what happened during the run, or does it look cleaner than reality?" If the run had ANY mid-wave problem-solving and these arrays are still empty, you haven't logged enough.
+
+This step is retrospective on purpose — logging during the wave competes with the "get it done" mode. Logging now, one step before finalize, fits natural bookkeeping.
+
 ## Step 9: Finalize Observatory Capture
 
 Parse the `<usage>` block from the overall session (aggregate across all subagent calls if available). Then run:
@@ -941,13 +1021,52 @@ After every subagent completes, extract JSON from the response using this chain:
 5. If all parsing fails, retry once -- dispatch the same agent with the original prompt plus: "Your previous response could not be parsed as JSON. Output ONLY the raw JSON -- no markdown fences, no commentary. Start with `{` or `[` and end with `}` or `]`."
 6. If retry also fails, create a minimal section with `status: "failed"` and save the raw response text in a `.thes1s/reports/{TICKER}/sections/{key}-raw.txt` file for debugging.
 
+### REQUIRED: Log Format Violations
+
+**This is load-bearing observability — not optional cleanup.** The orchestrator's default instinct is to silently fix agent output and keep moving. That bias corrupts the observatory's format-violation metric, which the DOE uses to measure prompt quality. Log every deviation from clean output, even if you fix it in one line.
+
+Whenever the fallback chain triggers ANY of these, run the record-event command BEFORE proceeding:
+
+```bash
+# Fallback extraction used (not the happy path — agent output had markdown fences, preamble, or raw JSON instead of the expected fenced block)
+node scripts/observatory-record-event.js {RUN_ID} format-violation \
+  --agent {AGENT_ROLE} --violation "fallback extraction required: {describe: markdown fences | preamble text | raw JSON without fences | first-to-last brace | etc}" --fix-applied true
+
+# Key mismatch (agent returned "pest_risks" when schema expected "pest"; agent saved "market-position.json" when expected "market_position.json"; etc)
+node scripts/observatory-record-event.js {RUN_ID} format-violation \
+  --agent {AGENT_ROLE} --violation "key mismatch: returned '{actual}' expected '{expected}'" --fix-applied true
+
+# Agent returned multiple JSON objects or an array when a single object was expected (or vice versa)
+node scripts/observatory-record-event.js {RUN_ID} format-violation \
+  --agent {AGENT_ROLE} --violation "shape mismatch: {describe — multiple objects, array vs object, partial drafts, etc}" --fix-applied true
+
+# Agent saved to wrong path (project root instead of sections/, wrong filename, etc)
+node scripts/observatory-record-event.js {RUN_ID} format-violation \
+  --agent {AGENT_ROLE} --violation "filesystem violation: saved to {wrong path} instead of {expected path}" --fix-applied true
+
+# Agent wrote output directly via Write tool instead of returning JSON in response (or vice versa)
+node scripts/observatory-record-event.js {RUN_ID} format-violation \
+  --agent {AGENT_ROLE} --violation "protocol violation: used Write tool instead of response body (or vice versa)" --fix-applied true
+```
+
+If JSON parsing required the retry prompt at step 5, log a retry too (see Retry Logic below).
+
 ## Narrative Recovery
 
 After extracting section JSON, check each section's `narrative` field:
 - If `narrative.length < 200`: The agent likely produced a stub.
   1. Search the agent's full response text for substantial prose (markdown with ## headings, > 200 chars)
-  2. If found, inject it into the section's `narrative` field and re-save
-  3. If no recoverable narrative found, retry the agent once with: "Your previous output had a {length}-char narrative stub. The narrative field MUST contain your FULL analysis (500+ words). Write the complete narrative."
+  2. If found, inject it into the section's `narrative` field and re-save. **Log a format-violation:**
+     ```bash
+     node scripts/observatory-record-event.js {RUN_ID} format-violation \
+       --agent {AGENT_ROLE} --violation "narrative stub in JSON, recovered {length} chars of prose from response body" --fix-applied true
+     ```
+  3. If no recoverable narrative found, retry the agent once with: "Your previous output had a {length}-char narrative stub. The narrative field MUST contain your FULL analysis (500+ words). Write the complete narrative." **Log the retry:**
+     ```bash
+     node scripts/observatory-record-event.js {RUN_ID} retry \
+       --agent {AGENT_ROLE} --wave {N} --reason "narrative stub ({length} chars) — full narrative required" --attempt 1 --resolved false
+     ```
+     After the retry completes, re-run with `--resolved true` if the retry succeeded.
   4. If retry also produces a stub, save with a warning and continue
 
 ## Retry Logic
@@ -957,6 +1076,25 @@ If any agent fails entirely (rate limit, timeout, error):
 2. Re-dispatch with the same prompt
 3. If the retry also fails, log the error, save partial output with `status: "failed"`, and continue
 4. Do NOT retry more than once -- the PM can re-run individual sections manually
+
+### REQUIRED: Log Every Retry and Stall
+
+**When you retry, log it. When you trim a prompt to avoid a timeout, log it. When an agent runs >15min and you kill it, log it.** Silent workarounds corrupt the observatory's orchestrator telemetry.
+
+```bash
+# Agent retry (any reason — timeout, rate limit, parse failure, stub narrative, key mismatch that can't be auto-fixed, etc)
+node scripts/observatory-record-event.js {RUN_ID} retry \
+  --agent {AGENT_ROLE} --wave {N} --reason "{short reason: timeout | rate-limit | JSON parse failed | narrative stub | schema violation | ...}" --attempt 1 --resolved {true|false}
+
+# Stall detected (agent running unusually long before you intervened — timeout, idle stream, partial response, etc)
+# "Unusually long" = >15min for sonnet agents, >25min for opus agents.
+node scripts/observatory-record-event.js {RUN_ID} stall \
+  --agent {AGENT_ROLE} --wave {N} --duration {seconds_before_intervention} --resolution "{how you resolved: retried with trimmed prompt | killed and re-dispatched | timed out | ...}"
+```
+
+Retry and stall are NOT redundant. Log both if both apply: stall captures "how long it ran before intervention," retry captures "what happened after intervention."
+
+**Full Story has an additional anti-pattern to watch for:** when a debate step (Bear, Rebuttal, Compose) stalls, the orchestrator's instinct is to write the debate step output directly from its own context using the Write tool instead of re-dispatching the agent. **This is a retry AND a protocol violation — log both.**
 
 ## Constraints
 
@@ -985,8 +1123,8 @@ Two agents play multiple roles:
 - **Risk Analyst** -- Phase 1 (S1: Event Analysis) + Phase 2 Step 2 (Bear). When dispatching as Bear, the message MUST explicitly state: "Your role is Step 2: Bear Inversion" so the agent activates Format B output.
 - **Synthesis Writer** -- Phase 2 Steps 1, 3, and Compose. Each dispatch MUST explicitly state which role: "Your role is Step 1: Bull Thesis" or "Your role is Step 3: Bull Rebuttal" or "Your role is Compose (Final Call)".
 
-### Web Search Rule
-Only the Bear (Phase 2, Step 2) has web search. Phase 1 agents also have web search (their prompts state this). Bull, Rebuttal, Judge, and Compose do NOT use web search -- they work with existing evidence.
+### Web Search Rule (updated EXP-003 — symmetric tooling)
+Phase 1 agents all have web search (their prompts state this). In Phase 2: Bull, Bear, and Rebuttal all have web search. Judge and Compose do NOT — the Judge is a neutral arbiter judging presented evidence, and Compose is assembly-only. Bull/Bear symmetry is deliberate: the bear's evidence advantage was the core structural bias. Judge still adjudicates claims without its own research — its impartiality is the integrity of the debate.
 
 ### Agent Model Selection
 **Model assignments are controlled variables** (from managed-agent.yaml configs). When dispatching each agent via the Agent tool, use the `model` parameter from the Agent Registry above. Default: all agents use **sonnet**. (Sprint 1 used opus for risk-analyst — switched to all-sonnet for Sprint 2 experiment per DOE.) The observatory tracks which model each agent used so DOE experiments can measure the effect of model swaps on quality and cost.

@@ -1,0 +1,32 @@
+{
+  "runId": "20260417-071237-TSCO-onePager",
+  "timestamp": "2026-04-17T14:12:37.075Z",
+  "completedAt": "2026-04-17T14:19:31.190Z",
+  "controlVariables": {
+    "ticker": "TSCO",
+    "stage": "onePager",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "365a3a86601cc8fe",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": null,
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": null,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 203,
+    "totalCost": 0.703716,
+    "totalTokens": 90220,
+    "totalInputTokens": 54132,
+    "totalOutputTokens": 36088,
+    "toolUses": 17,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 6,
+    "sectionsExpected": 6,
+    "errorsCount": 0
+  },
+  "agentFiles": [
+    "agents/wave-0-one-pager.json"
+  ]
+}

@@ -276,3 +276,156 @@
 
 **MT-3: "Optimism is the enemy of good investing" removed (5 instances)** — Replaced across valuation-specialist, risk-analyst, financial-analyst, synthesis-writer (PD+FS). New language: "The goal is accuracy, not conservatism. An FGR that is too low is just as wrong as one that is too high."
 - Regression signal: any agent output containing "optimism is the enemy" (would indicate stale prompt)
+
+## [2026-04-17] run | POOL onePager | 20260416-194150-POOL-onePager
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $0.89 | Duration: 3min | Sections: 6/6
+- Failures: none
+
+## [2026-04-17] run | SFM onePager | 20260416-194200-SFM-onePager
+- Verdict: PASS (expected: BUY) — MISMATCH
+- Cost: $1.15 | Duration: 3min | Sections: 6/6
+- Failures: none
+
+## [2026-04-17] wiki-update | 3 pages updated
+- Updated: [[tickers/POOL]], [[agents/one-pager]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] wiki-update | 3 pages updated
+- Updated: [[tickers/SFM]], [[agents/one-pager]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] run | LULU onePager | 20260416-194202-LULU-onePager
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $0.00 | Duration: 7min | Sections: 6/6
+- Failures: none
+
+## [2026-04-17] wiki-update | 3 pages updated
+- Updated: [[tickers/LULU]], [[agents/one-pager]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] run | SFM pitchDeck | 20260416-195002-SFM-pitchDeck
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $10.92 | Duration: 50min | Sections: 10/11
+- Failures: none
+
+## [2026-04-17] wiki-update | 10 pages updated
+- Updated: [[tickers/SFM]], [[agents/business-analyst]], [[agents/competitor-market-position]], [[agents/competitor-moats]], [[agents/financial-analyst]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/synthesis-writer]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] run | LULU pitchDeck | 20260416-195056-LULU-pitchDeck
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $7.80 | Duration: 42min | Sections: 10/11
+- Failures: none
+
+## [2026-04-17] wiki-update | 12 pages updated
+- Updated: [[tickers/LULU]], [[agents/annual-reader]], [[agents/quarterly-reader]], [[agents/business-analyst]], [[agents/competitor-market-position]], [[agents/competitor-moats]], [[agents/financial-analyst]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/synthesis-writer]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] run | POOL pitchDeck | 20260416-194956-POOL-pitchDeck
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $12.48 | Duration: 27min | Sections: 10/11
+- Failures: none
+
+## [2026-04-17] wiki-update | 12 pages updated
+- Updated: [[tickers/POOL]], [[agents/annual-reader]], [[agents/quarterly-reader]], [[agents/business-analyst]], [[agents/competitor-market-position]], [[agents/competitor-moats]], [[agents/financial-analyst]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/synthesis-writer]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] run | SFM fullStory | 20260416-205941-SFM-fullStory
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $7.02 | Duration: 58min | Sections: 6/6
+- Failures: none
+
+## [2026-04-17] wiki-update | 12 pages updated
+- Updated: [[tickers/SFM]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst-judge]], [[agents/risk-analyst-bear]], [[agents/synthesis-writer-bull]], [[agents/synthesis-writer-compose]], [[agents/synthesis-writer-rebuttal]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] run | LULU fullStory | 20260416-210309-LULU-fullStory
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $4.68 | Duration: 33min | Sections: 6/6
+- Failures: none
+
+## [2026-04-17] wiki-update | 12 pages updated
+- Updated: [[tickers/LULU]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst-judge]], [[agents/risk-analyst-bear]], [[agents/synthesis-writer-bull]], [[agents/synthesis-writer-compose]], [[agents/synthesis-writer-rebuttal]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] run | POOL fullStory | 20260416-210339-POOL-fullStory
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $5.46 | Duration: 25min | Sections: 6/6
+- Failures: none
+
+## [2026-04-17] wiki-update | 12 pages updated
+- Updated: [[tickers/POOL]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst-judge]], [[agents/risk-analyst-bear]], [[agents/synthesis-writer-bull]], [[agents/synthesis-writer-compose]], [[agents/synthesis-writer-rebuttal]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] run | TSCO onePager | 20260417-071237-TSCO-onePager
+- Verdict: WATCHLIST (expected: not set) — no expected verdict
+- Cost: $0.70 | Duration: 3min | Sections: 6/6
+- Failures: none
+
+## [2026-04-17] wiki-update | 3 pages updated
+- Updated: [[tickers/TSCO]], [[agents/one-pager]], [[patterns/verdict-accuracy]]
+
+## [2026-04-17] sprint-4-prep | 2 mechanical changes for Sprint 4
+
+**MC-5: Orchestrator event-logging — reactive code blocks + retrospective sweep** — All 3 pipeline skills (one-pager, pitch-deck, full-story) updated to force observatory event logging into orchestrator behavior. Root cause (all 3 Sprint 3 orchestrators converged on same diagnosis in verbatim debriefs): narrative prose instructions get weighted less than code blocks; orchestrators in "get it done" mode treat mid-wave problem-solving as silent cleanup rather than loggable telemetry. Silent success looks like clean telemetry — but the empty `retries: []`, `stallsDetected: []`, `formatViolations: []` arrays in Sprint 3 actually hid 3+ retries, 2+ stalls, and 6+ format violations per full story run. DOE experiments reading cleaner-than-reality telemetry would conclude "prompts produce clean output" when the orchestrator was smoothing over mess.
+
+**Two-layer fix:**
+- *Reactive layer:* Explicit `node scripts/observatory-record-event.js` code blocks injected inline at the JSON Extraction Fallback Chain, Narrative Recovery, and Retry Logic sections of pitch-deck and full-story skills. Each trigger point now has a ready-to-run command next to the narrative description. Verification counts: 10 event-log code blocks each in pitch-deck and full-story; 2 in the lighter-weight one-pager.
+- *Retrospective layer:* New "Pre-Finalize Event Sweep" step inserted before `observatory-finalize.js` in all 3 skills. Enumerates each event class (retry, stall, format-violation, data-gap) as an explicit yes/no checklist the orchestrator must answer honestly before sealing the run. Fits natural end-of-pipeline bookkeeping mode better than "log during the wave" mid-dispatch.
+
+Regression signal: if Sprint 4 pitch deck or full story runs complete with empty arrays across all four orchestrator event types, either the sweep is being skipped OR every agent genuinely produced clean output on first attempt. Cross-check against `observatory/runs/*/agents/*.json` toolUses for retry signals. TSCO one-pager smoke test (20260417-071237) completed with no violations or retries logged — plausible for a clean single-agent run but confirm by reading the TSCO orchestrator.json against the run transcript.
+
+**MC-6: One-pager DataPacket slicing (EXP-005 implementation)** — [scripts/slice-datapacket.js](../scripts/slice-datapacket.js#L42) `one-pager` registry entry tightened from 16 fields to 11 (drops insiders/filings/compensation/peers/peerMetrics/ruleOneScore; keeps gurus per user direction). [.claude/skills/generate-one-pager/SKILL.md](../.claude/skills/generate-one-pager/SKILL.md) Step 3 now runs the slice; Step 4 embeds sliced JSON with a prompt-level note directing agent to web search for narrative context. Measured: 137KB → 90KB (34% reduction, ~12K tokens saved per run). See [[experiments/doe-log]] EXP-005.
+
+TSCO smoke test (20260417-071237-TSCO-onePager): $0.70, 3min, 6/6 sections — on par with Sprint 3 one-pager baseline ($0.73-1.15, 3-5min). First data point suggests the slice didn't degrade output quality or meaningfully change cost in Claude Code subagent mode (as expected — web search is free here). Production cost delta (where web search is $0.01/call) will require reading `toolUses` from `observatory/runs/20260417-071237-TSCO-onePager/agents/one-pager.json`.
+
+**MC-7: Pitch deck 10/11 schema drift — fix contract, add drift detection** — The persistent "10/11 sections" pattern across all 3 Sprint 3 pitch decks was a schema drift between three artifacts (all 3 Sprint 3 orchestrators independently converged on this diagnosis in verbatim debriefs):
+- Pitch-deck SKILL.md Step 12 template said `sections: [/* 10 objects */]` with synthesis flattened into top-level `overallVerdict`/`verdictRationale`/`synthesisNarrative` fields
+- Synthesis-writer agent self-declares `sectionNumber: 11, key: "overall_verdict"`
+- observatory-finalize.js line 115 hardcoded `sectionsExpected: 11` for pitchDeck stage
+- PDF generators at [scripts/pdf/*.py](../scripts/pdf/) already call `data.get_section('overall_verdict')` — they expect it in sections[] not top-level
+
+The skill template was the root lie: it said 10, everything else said 11. Orchestrators in "follow the recipe" mode produced 10, the validator reported "10/11", and no run ever investigated because the count was printed as ambient info, not a blocker. 3 silent replications across Sprint 3.
+
+**Two-part fix:**
+- [generate-pitch-deck/SKILL.md Step 12](../.claude/skills/generate-pitch-deck/SKILL.md) — template rewritten to say `11 ReportSectionSchema objects` with the full section list enumerated S1-S11, and a CRITICAL warning explaining the Sprint 3 bug. The top-level `overallVerdict`/`verdictRationale`/`synthesisNarrative` fields are preserved as explicit MIRRORS of section 11 (consumers that skim top-level still work), but the `sections[]` array is now the source of truth.
+- [generate-pitch-deck/SKILL.md Step 14.4](../.claude/skills/generate-pitch-deck/SKILL.md) — new "Section Count Contract Check" step before finalize. Runs a one-liner that asserts `sections.length === 11 && max(sectionNumber) === 11 && some(key === 'overall_verdict')`; exits non-zero and instructs the orchestrator to go back and fix Step 12 if any condition fails.
+- [scripts/observatory-finalize.js:130-150](../scripts/observatory-finalize.js#L130-L150) — section count drift now auto-logs a format-violation event (`agent: "orchestrator", violation: "section count drift: produced X, expected Y"`) when `sections.length !== sectionsExpected`. Makes future drift loud via the same stream as all other format violations, instead of burying it in manifest.pipelineMetrics.
+
+Regression signal: Sprint 4 pitch decks should report `11/11 sections` in log.md. If any Sprint 4 pitch deck reports `10/11` or `12/11`, the contract check at Step 14.4 should have already blocked it — so an "N/11 where N≠11" run means either the check was skipped OR a new drift mode emerged.
+
+**MC-8: Per-agent usage data — token/cost/web-search capture** — TSCO smoke-test post-mortem surfaced that every agent record's `usage` block was storing zero for inputTokens, outputTokens, cost, AND webSearches despite the subagent producing a valid `<usage>` block. Root cause (TSCO agent debrief, verbatim): "I passed exactly what the skill's Step 5 code block shows. Nothing more. That's my reasoning — I followed the literal template, didn't question it, and assumed the per-agent observability gap was intentional because manifest.json already holds aggregate cost." The skill's record-agent template omitted `--tokens`, `--cost`, `--web-searches`, so the script's flag parsers never fired.
+
+**Two-part fix:**
+- [scripts/observatory-record-agent.js](../scripts/observatory-record-agent.js) — added `--web-searches N` flag, added auto-compute of `--cost` from tokens + web_searches (Sonnet: $3/M input + $15/M output + $0.01/search; Opus: $15/M + $75/M; 60/40 split when only total tokens given). Populates `usage.webSearches` with the flag value.
+- Every record-agent invocation across all 3 skills now passes `--tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}`. One-pager: 1 call. Pitch-deck: 7 calls (Waves 1-4). Full-story: 10 calls (Phase 1 + 5 debate steps). Each skill has a shared "Per-Agent Usage Parsing" reference explaining how to extract values from each subagent's `<usage>` block, including how to estimate web_search count by role when only `tool_uses` total is visible.
+
+Regression signal: Sprint 4 per-agent records should have non-zero `usage.cost` and `usage.webSearches`. `usage.cost == 0` for any non-zero-token agent means the orchestrator omitted `--tokens`. Cross-check via `cat observatory/runs/{RUN_ID}/agents/*.json | jq '.usage'`. This is specifically the instrument EXP-005 needs — without web_search count, the one-pager slicing impact on production cost cannot be measured.
+
+## [2026-04-17] sprint-4-prep | EXP-003 — symmetric debate framework
+
+Sprint 3 showed full-story verdicts exactly mirrored pitch deck verdicts for all 3 tickers (LULU/POOL/SFM) with no upgrades and no downgrades. Business quality sections recognized the quality (POOL: 4 PASS, SFM: 5 PASS of 10), but valuation + PEST always vetoed the overall verdict. Pattern [[patterns/bear-bull-asymmetry]] identified the debate framework as the remaining high-leverage lever. Audit found 6 structural asymmetries across 5 agent prompts + 3 skills + 1 coordinator. EXP-003 treats all 6 simultaneously — full rationale and per-lever breakdown in [[experiments/doe-log]] EXP-003 and [[prompt-versions/changelog]].
+
+**Six treated asymmetries:**
+1. **Web search asymmetry (A)** — Bear had web search in every role (PEST pitch deck + Phase 1 event analysis + Phase 2 Bear debate); Bull and Rebuttal had none. Fix: Bull and Rebuttal now have web search with directed search menus (Bull: positive catalysts, insider buying, guru activity, analyst upgrades, third-party validation; Rebuttal: verify bear citations, find already-priced-in context, surface counter-evidence, check materiality).
+2. **Mandate asymmetry (C)** — "demolish or fail trying" × 3, "make reader genuinely uncomfortable," "lead with what keeps you up at night" all softened to "pressure-test with evidence," "surface material concerns clearly and specifically," "lead with the most material, evidence-backed risk." Keeps the rigor, removes the performance mandate.
+3. **Volume asymmetry** — unchanged structurally (bear still addresses every point with evidence); web search symmetry evens the evidence base.
+4. **Judge rubric asymmetry (B)** — the actual scoring bug. Strong Bull required bear to be weak; Strong Bear only required bull unable to rebut. Overall Bear verdict triggered by "any thesis_killer item is Strong Bear" while Bull required majority AND zero thesis_killers. Fix: made Strong Bull/Strong Bear definitions symmetric (both require specific evidence + opposing side's weakness); overall Bear now requires ≥2 thesis-killer items that are BOTH newly-discovered AND unrebutted (was: any single thesis_killer sufficient).
+5. **Materiality filter (D)** — new. Judge now classifies each bear point on two axes before scoring: severity (thesis-killing / material but manageable / speculative or already priced in) × novelty (newly-discovered / already-priced-in / known-and-managed). Only (thesis-killing OR material) AND (newly-discovered OR not-yet-priced-in) bear points carry significant verdict weight. Addresses the "every company has legitimate bear cases but most aren't disqualifying" problem.
+6. **Rebuttal framing asymmetry (E)** — Rebuttal previously mandated honest acknowledgment when bear was strong. Fix: symmetric mandate — must also honestly flag when bear attack is weak, speculative, already priced in, or immaterial. "Performative fairness" out; accurate characterization in both directions in.
+7. **Residual conservatism (F)** — Sprint 3 EXP-002 leftovers. Three instances of "Always prefer conservative growth estimates/assumptions" in risk-analyst prompts softened to "Lean toward conservative ... when evidence is genuinely mixed — conservatism is a tiebreaker, not a ceiling" (per user direction to keep risk-analyst's natural bearish disposition without the blanket override).
+
+**Files changed:** 9 total.
+- Prompts (5): [risk-analyst-fullstory/prompt.md](../agents-v2/risk-analyst-fullstory/prompt.md) (6 edits), [risk-analyst-pitchdeck/prompt.md](../agents-v2/risk-analyst-pitchdeck/prompt.md) (4 edits), [synthesis-writer-fullstory/prompt.md](../agents-v2/synthesis-writer-fullstory/prompt.md) (4 edits), [financial-analyst-fullstory/prompt.md](../agents-v2/financial-analyst-fullstory/prompt.md) (2 edits — rubric + materiality filter), [coordinator-fullstory/prompt.md](../agents-v2/coordinator-fullstory/prompt.md) (2 edits — D-07 web search rule updated for production parity)
+- Skills (2): [generate-full-story/SKILL.md](../.claude/skills/generate-full-story/SKILL.md) (Web Search Rule updated + per-role instructions + web_searches estimation heuristics), [generate-pitch-deck/SKILL.md](../.claude/skills/generate-pitch-deck/SKILL.md) (PEST dispatch instruction cleaned)
+- Architecture (1): [agents-v2/ORCHESTRATION.md](../agents-v2/ORCHESTRATION.md) — D-07 architecture doc updated
+- Observatory: [doe-log.md](experiments/doe-log.md) EXP-003 with full control/treatment matrix, [changelog.md](prompt-versions/changelog.md) detailed entry, [bear-bull-asymmetry.md](patterns/bear-bull-asymmetry.md) status ACTIVE
+
+**Known open item:** managed-agent.yaml files (production config for Managed Agents) still contain old prompt text. User confirmed managed-agents-to-claude-code-skill parity sync is deferred to end of sprints — tracked for post-sprint work.
+
+**Sprint 4 expected results:**
+- Full-story verdict distribution shifts — expecting at least 1 PASS across POOL/SFM/LULU where pitch deck already produced 4-5 PASS sections
+- Judge `exchangeScores.direction` histogram — expecting more Strong Bull entries relative to Sprint 3's 0
+- FGR ranges and calculated buy prices — expecting modest continued rise vs Sprint 3 as the bear→synthesis cascade is less pessimistic
+- Combined with MC-7 price-conditional matching (not yet wired — future work), verdict accuracy vs known-verdicts should finally register non-zero
+- Cost impact: Bull + Rebuttal web search adds ~$0.02-0.08/run in production (2-4 searches × $0.01 × 2 roles), minimal in Claude Code subagent mode where web search is free
+
+**Regression signals:**
+- If Sprint 4 full-story verdicts still exactly mirror pitch deck verdicts 3/3, EXP-003 didn't move the needle — parked EXP-G (weight debate by section verdicts) becomes next lever
+- If Bull starts surfacing pump-coverage noise (Seeking Alpha hype, low-quality sources), tighten Bull's search prompts in Sprint 5
+- If Judge materiality classifications are consistently "newly-discovered" (bear always wins the novelty axis), the filter isn't constraining — need to sharpen the "already priced in" criteria
+- Any `"optimism is the enemy"` appearance in Sprint 4 agent output means prompt caching or stale agent dispatch — verify skill file on disk vs what subagent received
+
+**Deferred to Sprint 5+:** EXP-004 (wonderful-company premium — flat 50% MOS → quality-weighted), EXP-G (structural: weight debate outcome by pitch deck section verdicts). Both parked, tracked in patterns/ and doe-log.

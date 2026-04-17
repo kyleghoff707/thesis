@@ -1,12 +1,33 @@
 ---
 type: prompt-changelog
-lastUpdated: 2026-04-17T03:00:00Z
+lastUpdated: 2026-04-17T18:00:00Z
 tags: [prompts, changelog]
 ---
 
 # Prompt Version Changelog
 
 > Reverse chronological record of all agent prompt changes with measured impact.
+
+---
+
+## 2026-04-17 — 3 agents: symmetric debate framework (EXP-003) — Sprint 4
+
+- **Change**: Attacked 6 structural asymmetries in the bear/bull debate simultaneously. Softened Bear's adversarial-performance language; gave Bull + Rebuttal web search; fixed asymmetric judge rubric; added materiality filter (severity × novelty classification) to judge; added symmetric rebuttal honesty mandate; softened residual "Always prefer conservative" Sprint 3 leftovers in risk-analyst prompts.
+- **Agents affected**: synthesis-writer (FS Bull/Rebuttal roles), financial-analyst (FS Judge), risk-analyst (PD+FS)
+- **Motivation**: Sprint 3 full-story verdicts exactly matched pitch deck verdicts for all 3 tickers (no downgrades, no upgrades). Business quality sections (4-5 PASS on POOL/SFM) consistently recognized, but valuation/PEST sections veto overall verdict. Patterns [[patterns/bear-bull-asymmetry]] and [[patterns/valuation-drives-verdict]] identified the debate framework's structural symmetry toward caution as highest-leverage lever remaining after EXP-002. See [[experiments/doe-log]] EXP-003.
+- **Key rewrites**:
+  - risk-analyst-fullstory: "demolish the bull case or fail trying" × 3 → "pressure-test with evidence / find the strongest evidence-based challenge"; "make the reader genuinely uncomfortable" → "surface material, evidence-backed concerns clearly and specifically"; "Lead with what keeps you up at night" → "Lead with the most material, evidence-backed risk"
+  - risk-analyst-pitchdeck: "demolish — or fail trying" → "pressure-test with the strongest evidence-based challenges"
+  - synthesis-writer-fullstory Bull: "You do NOT have web search" → "You HAVE web search" + directed search menu (positive catalysts, insider buying, guru activity, analyst upgrades, third-party validation)
+  - synthesis-writer-fullstory Rebuttal: "You do NOT have web search" → "You HAVE web search" + directed search menu (verify bear citations, find already-priced-in context, surface counter-evidence, check materiality)
+  - synthesis-writer-fullstory Rebuttal honesty: added symmetric mandate — honest acknowledgment required when bear attack is weak (not just when it's strong)
+  - financial-analyst-fullstory Judge: Strong Bull/Strong Bear definitions made symmetric (both require specific evidence + opposing side's weakness); added materiality filter (severity: thesis-killing/material/immaterial × novelty: newly-discovered/already-priced-in/known-and-managed); overall Bear verdict now requires ≥2 thesis-killer items that are BOTH newly-discovered AND unrebutted (was: any single thesis_killer sufficient)
+  - risk-analyst prompts (3 instances): "Always prefer conservative growth estimates/assumptions" → "Lean toward conservative ... when evidence is genuinely mixed — conservatism is a tiebreaker, not a ceiling"
+- **Skill-level changes**: generate-full-story SKILL.md "Web Search Rule" updated (Bull/Bear/Rebuttal all have web search; Judge/Compose still do not); per-agent web_searches estimation heuristics updated for Bull/Rebuttal.
+- **Before runs**: Sprint 3 — 20260416-194*-* + 20260416-195*-* + 20260416-205*-* + 20260416-210*-* (9 runs, 0% verdict accuracy, full-story matched pitch deck 100%)
+- **After runs**: Sprint 4 — pending
+- **Impact**: _Pending — expecting at least 1 PASS across POOL/SFM/LULU and higher Strong Bull count in judge exchange scores_
+- **Sprint 4 goal**: Introduce symmetry into debate framework so wonderful-company pitch deck results can translate into PASS/WATCHLIST-near-BUY in full story.
 
 ---
 

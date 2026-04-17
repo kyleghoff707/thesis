@@ -31,8 +31,15 @@ const REGISTRY = {
   // Full Story agents (same field mappings where roles overlap)
   'competitor-evaluator':       ['companyInfo', 'classification', 'ruleOneScore', 'peers', 'peerMetrics', 'financials', 'ttm', 'growthRates', 'caveats'],
 
-  // One Pager (single agent, gets everything)
-  'one-pager':                  ['companyInfo', 'classification', 'financials', 'ttm', 'growthRates', 'returnMetrics', 'debtMetrics', 'fcf', 'keyMetrics', 'ruleOneScore', 'peers', 'peerMetrics', 'gurus', 'insiders', 'compensation', 'caveats'],
+  // One Pager — core Rule One minimum standards + valuation inputs + guru signal.
+  // Keeps gurus (2.4KB, Rule One "meaning" signal — guru ownership is real context).
+  // Drops insiders/filings/compensation/peers/peerMetrics/ruleOneScore:
+  // - Insider/peer/mgmt analysis is pitch-deck territory
+  // - Filings are read by annual-reader/quarterly-reader in pitch deck
+  // - ruleOneScore is a pre-computed composite; one-pager judges from raw data
+  // - Narrative context (business model, catalysts, management commentary)
+  //   is better sourced via web search than via DataPacket
+  'one-pager':                  ['companyInfo', 'classification', 'financials', 'ttm', 'growthRates', 'returnMetrics', 'debtMetrics', 'fcf', 'keyMetrics', 'gurus', 'caveats'],
 };
 
 const args = process.argv.slice(2);

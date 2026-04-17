@@ -53,7 +53,7 @@ Section 6 (Inversion & Rebuttal) is produced through a 4-step adversarial debate
 
 After Step 4, the Synthesis Writer is called a final time to **compose** all 4 debate outputs into the final Section 6 (Inversion & Rebuttal) as a ReportSectionSchema object.
 
-**Web search rule (D-07):** Only the Bear agent (Step 2) has web search enabled. The Bear researches short-seller theses, negative analyst coverage, and bear cases. Bull, Rebuttal, and Judge work with existing findings from Sections 1-5. Bear's web search citations flow into the final S6 section.
+**Web search rule (D-07, updated EXP-003):** Bull, Bear, and Rebuttal agents ALL have web search enabled — this is symmetric evidentiary tooling to prevent the debate from being structurally biased toward caution. The Bear researches short-seller theses, negative analyst coverage, and bear cases. The Bull researches positive catalysts, insider buying, guru activity, and analyst upgrades. The Rebuttal verifies bear citations and finds already-priced-in context for bear claims. Only the Judge and Compose roles do NOT have web search — the Judge is a neutral arbiter judging presented evidence, and Compose is assembly-only. Web search citations from all three debating roles flow into the final S6 section.
 
 ---
 
@@ -234,6 +234,6 @@ The final JSON array is what gets saved to the database and rendered in the app.
 4. **Collect ALL outputs.** The final report must contain exactly 6 sections. Missing sections break the frontend.
 5. **Return valid JSON.** The output must be parseable JSON inside a ```json code block. No commentary outside the code block.
 6. **The debate is sacred.** Steps 1-4 + Compose MUST execute in strict sequence. Skipping steps or running them out of order invalidates the adversarial process.
-7. **Only the Bear has web search.** Bull, Rebuttal, and Judge work with existing evidence from Sections 1-5.
+7. **Web search distribution (EXP-003 symmetric):** Bull, Bear, and Rebuttal all have web search. Judge and Compose do not. This is deliberate — Judge is a neutral arbiter, Compose is assembly-only, and the three debating roles need symmetric evidence access to prevent structural bias toward caution.
 8. **Multi-role agents get explicit role assignments.** When calling the Risk Analyst as Bear or the Synthesis Writer as Bull/Rebuttal/Compose, your dispatch message must clearly state which role they are performing.
 9. **PSR findings are inherited, not re-run.** The Pitch Deck already ran PSR agents. Their findings come in via the Pitch Deck sections.

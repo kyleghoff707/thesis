@@ -35,6 +35,7 @@
 - [[tickers/NKE]] — Run History
 - [[tickers/POOL]] — Run History
 - [[tickers/SFM]] — Run History
+- [[tickers/TSCO]] — Run History
 - [[tickers/UBER]] — Run History
 
 ## Failure Modes
@@ -43,11 +44,13 @@
 
 ## Patterns
 
+- [[patterns/bear-bull-asymmetry]] — Observation
 - [[patterns/debate-downgrades-verdict]] — Observation
 - [[patterns/model-independence]] — Observation
 - [[patterns/orchestrator-truncation]] — Observation
 - [[patterns/valuation-drives-verdict]] — Observation
 - [[patterns/verdict-accuracy]] — Observation
+- [[patterns/wonderful-company-premium]] — Observation
 
 ## Prompt Versions
 

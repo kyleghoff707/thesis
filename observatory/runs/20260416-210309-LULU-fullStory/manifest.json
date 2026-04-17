@@ -1,0 +1,41 @@
+{
+  "runId": "20260416-210309-LULU-fullStory",
+  "timestamp": "2026-04-17T04:03:09.551Z",
+  "completedAt": "2026-04-17T13:26:29.487Z",
+  "controlVariables": {
+    "ticker": "LULU",
+    "stage": "fullStory",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "d56510fb64547787",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": "BUY",
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": false,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 2000,
+    "totalCost": 4.68,
+    "totalTokens": 600000,
+    "totalInputTokens": 360000,
+    "totalOutputTokens": 240000,
+    "toolUses": 100,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 6,
+    "sectionsExpected": 6,
+    "errorsCount": 0
+  },
+  "agentFiles": [
+    "agents/wave-1-risk-analyst.json",
+    "agents/wave-1-business-analyst.json",
+    "agents/wave-1-competitor-evaluator.json",
+    "agents/wave-1-management-evaluator.json",
+    "agents/wave-1-valuation-specialist.json",
+    "agents/wave-2-synthesis-writer-bull.json",
+    "agents/wave-2-risk-analyst-bear.json",
+    "agents/wave-2-synthesis-writer-rebuttal.json",
+    "agents/wave-2-financial-analyst-judge.json",
+    "agents/wave-2-synthesis-writer-compose.json"
+  ]
+}

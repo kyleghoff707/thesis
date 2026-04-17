@@ -103,10 +103,10 @@ You also receive Sections 1-5 findings for reference — use these to verify cla
 
 ### Scoring Each Exchange
 
-For every bear inversion point and its corresponding bull rebuttal, score:
+For every bear inversion point and its corresponding bull rebuttal, score both sides **symmetrically** — the evidentiary bar is the same for Strong Bull and Strong Bear. Do not reward bearish framing more than bullish framing.
 
 **bullStrength** — How strong is the bull's position (original thesis point + rebuttal)?
-- **strong:** Evidence-backed, well-reasoned, specific numbers and citations that directly address the bear's concern
+- **strong:** Specific, cited evidence (numbers, dates, named sources, primary filings) that directly addresses the bear's concern. Quantified positive signals — insider buys, guru adds, beat rates, validating third-party data.
 - **moderate:** Plausible argument but has gaps — relies on assumptions, lacks specific counter-evidence, or acknowledges the concern without fully resolving it
 - **weak:** Hand-waving, no evidence, generic defense, or the bull conceded the point (rebuttalStrength: "weak" with honest: true)
 
@@ -115,20 +115,36 @@ For every bear inversion point and its corresponding bull rebuttal, score:
 - **moderate:** Reasonable concern with some evidence, but partially speculative or based on future projections rather than current data
 - **weak:** Generic risk that applies to any company, no specific evidence, fear-based rather than evidence-based
 
-**Exchange verdict:**
-- **Strong Bull:** Bull presented stronger evidence AND bear's counter-argument was weak or generic. The thesis point stands.
-- **Strong Bear:** Bear presented specific, cited evidence that the bull could not adequately rebut. The thesis point is challenged.
-- **Unresolved:** Both sides presented reasonable arguments without clear evidence advantage. This is a genuine risk that requires monitoring — not a diplomatic tie to avoid making a call.
+### Materiality Filter (REQUIRED before scoring)
 
-**One sentence of reasoning** explaining WHY one side won, citing the specific evidence each side presented. This reasoning is what the PM reads to understand the judge's logic.
+**Before scoring each exchange, classify the bear point on two axes.** Most "bear wins" are actually bear points that lose one of these filters but get counted as Strong Bear anyway — this is the source of unresolved downward bias.
+
+**1. Severity:**
+- **thesis-killing:** If true, invalidates the entire investment thesis by itself (fraud, structural market collapse, regulatory ban, insolvency risk)
+- **material but manageable:** Real risk that affects returns but does not invalidate the investment (margin compression cycle, competitive pressure in one segment, management transition)
+- **immaterial or speculative:** Technically-true concern with minimal impact on thesis economics (a 2% revenue-exposure risk when thesis rests on 60% of revenue; a regulatory threat that requires a 5-step hypothetical chain)
+
+**2. Novelty:**
+- **newly-discovered:** Evidence the market has not yet priced in (brand-new short-seller report, freshly filed lawsuit, recent regulatory action)
+- **already priced in:** Risk that has been publicly reported for 12+ months without invalidating the thesis (longstanding competitive concern, well-known cyclical pressure) — the current price already reflects the market's discount for this
+- **known and managed:** Risk that management has explicitly addressed with specific mitigations (e.g., concentration risk that management is actively diversifying away)
+
+**Only a bear point that is (thesis-killing OR material) AND (newly-discovered OR not-yet-priced-in) should carry significant verdict weight.** Speculative or already-priced-in bear points can still be scored Strong Bear on evidence quality, but they should NOT alone move the overall verdict toward Bear.
+
+**Exchange verdict:**
+- **Strong Bull:** Bull presented specific, cited evidence AND the bear's attack was weak, speculative, already-priced-in, or immaterial to thesis economics. The thesis point stands.
+- **Strong Bear:** Bear presented specific, cited evidence that the bull could not adequately rebut AND the materiality filter shows the risk is (thesis-killing OR material) AND (newly-discovered OR not-yet-priced-in). The thesis point is genuinely challenged.
+- **Unresolved:** Both sides presented reasonable arguments without clear evidence advantage, OR the bear evidence is strong but the materiality filter downgrades its weight. This is a genuine risk that requires monitoring — not a diplomatic tie to avoid making a call.
+
+**One sentence of reasoning** explaining WHY one side won, citing the specific evidence each side presented AND the materiality classification. This reasoning is what the PM reads to understand the judge's logic.
 
 ### Producing the Overall Verdict
 
 After scoring all exchanges:
 
 **direction** — Bull (thesis holds), Bear (thesis broken), or Mixed (some concerns unresolved)
-- **Bull:** Majority of exchanges are Strong Bull, no thesis_killer severity items survived as Strong Bear
-- **Bear:** Majority of exchanges are Strong Bear, OR any thesis_killer severity item is Strong Bear
+- **Bull:** Majority of exchanges are Strong Bull, AND no thesis-killing + newly-discovered items survived as Strong Bear (OR any that did were adequately rebutted in a subsequent exchange)
+- **Bear:** Majority of exchanges are Strong Bear, OR at least TWO independently thesis-killing + newly-discovered items survived as Strong Bear and went unrebutted. **A single thesis-killer alone is not sufficient for a Bear verdict unless it is both newly-discovered AND the bull explicitly could not rebut with any evidence** — a bear point that is technically true but widely known and already priced in does NOT flip the verdict.
 - **Mixed:** Neither side dominates, significant unresolved items, or split between Strong Bull and Strong Bear across different dimensions
 
 **unresolvedCount** — How many exchanges ended Unresolved. This is a key risk metric:

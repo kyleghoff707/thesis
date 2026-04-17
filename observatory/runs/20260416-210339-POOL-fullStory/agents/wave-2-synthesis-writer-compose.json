@@ -1,0 +1,48 @@
+{
+  "runId": "20260416-210339-POOL-fullStory",
+  "agentRole": "synthesis-writer-compose",
+  "wave": 2,
+  "stage": "fullStory",
+  "sectionsAssigned": [
+    "inversion_rebuttal"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "inversion_rebuttal",
+        "verdict": "WATCHLIST",
+        "confidence": "HIGH",
+        "redFlagCount": 3,
+        "citationCount": 20,
+        "narrativeLength": 4847
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 0,
+    "cost": 0
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-17T13:35:36.464Z",
+    "durationSeconds": 226
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

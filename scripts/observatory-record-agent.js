@@ -16,10 +16,11 @@
 //   --citations N           Number of citations in output
 //   --red-flags N           Number of red flags identified
 //   --narrative-length N    Character count of narrative text
-//   --tokens N              Total tokens (optional, often unavailable from CC subagents)
-//   --input-tokens N        Input tokens (optional)
-//   --output-tokens N       Output tokens (optional)
-//   --cost COST             Cost in USD (optional)
+//   --tokens N              Total tokens (parse from subagent's <usage> block)
+//   --input-tokens N        Input tokens (optional, otherwise estimated as 60% of total)
+//   --output-tokens N       Output tokens (optional, otherwise estimated as 40% of total)
+//   --cost COST             Cost in USD (optional — auto-computed from tokens + web searches if omitted)
+//   --web-searches N        Web search tool calls (critical for production cost estimate — Anthropic bills $0.01 each)
 //   --retry-count N         Number of retries needed
 //   --retry-reasons "r1,r2" Comma-separated retry reasons
 //
@@ -49,7 +50,8 @@ if (!runId || runId.startsWith('--')) {
 let role = null, wave = null, stage = null, sections = [];
 let model = 'claude-sonnet-4-6', duration = 0, verdict = null, confidence = null;
 let citations = 0, redFlags = 0, narrativeLength = 0;
-let tokens = 0, inputTokens = 0, outputTokens = 0, cost = 0;
+let tokens = 0, inputTokens = 0, outputTokens = 0, cost = 0, webSearches = 0;
+let cliCostProvided = false;
 let retryCount = 0, retryReasons = [];
 
 for (let i = 1; i < args.length; i++) {
@@ -67,9 +69,25 @@ for (let i = 1; i < args.length; i++) {
   if (args[i] === '--tokens' && args[i + 1]) { tokens = parseInt(args[++i]); }
   if (args[i] === '--input-tokens' && args[i + 1]) { inputTokens = parseInt(args[++i]); }
   if (args[i] === '--output-tokens' && args[i + 1]) { outputTokens = parseInt(args[++i]); }
-  if (args[i] === '--cost' && args[i + 1]) { cost = parseFloat(args[++i]); }
+  if (args[i] === '--cost' && args[i + 1]) { cost = parseFloat(args[++i]); cliCostProvided = true; }
+  if (args[i] === '--web-searches' && args[i + 1]) { webSearches = parseInt(args[++i]); }
   if (args[i] === '--retry-count' && args[i + 1]) { retryCount = parseInt(args[++i]); }
   if (args[i] === '--retry-reasons' && args[i + 1]) { retryReasons = args[++i].split(',').map(s => s.trim()).filter(Boolean); }
+}
+
+// Auto-compute cost when not explicitly provided.
+// Sonnet pricing: $3/M input, $15/M output. Opus: $15/M input, $75/M output.
+// Web search: Anthropic bills $0.01 per call ($10/1000).
+// When only --tokens is given, split 60/40 input/output (same as observatory-finalize.js).
+const effectiveInputTokens = inputTokens || (tokens ? Math.round(tokens * 0.6) : 0);
+const effectiveOutputTokens = outputTokens || (tokens ? Math.round(tokens * 0.4) : 0);
+const isOpus = /opus/i.test(model);
+const inputRate = isOpus ? 15 : 3;
+const outputRate = isOpus ? 75 : 15;
+if (!cliCostProvided) {
+  cost = (effectiveInputTokens * inputRate / 1_000_000)
+       + (effectiveOutputTokens * outputRate / 1_000_000)
+       + (webSearches * 0.01);
 }
 
 if (!role || wave === null || !stage) {
@@ -108,12 +126,12 @@ const record = {
     })),
   },
   usage: {
-    inputTokens: inputTokens || (tokens ? Math.round(tokens * 0.6) : 0),
-    outputTokens: outputTokens || (tokens ? Math.round(tokens * 0.4) : 0),
+    inputTokens: effectiveInputTokens,
+    outputTokens: effectiveOutputTokens,
     cacheRead: 0,
     cacheWrite: 0,
-    webSearches: 0,
-    cost: cost || 0,
+    webSearches,
+    cost,
   },
   timing: {
     startedAt: null,
