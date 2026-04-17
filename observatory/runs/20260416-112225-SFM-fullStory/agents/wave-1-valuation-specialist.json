@@ -1,0 +1,48 @@
+{
+  "runId": "20260416-112225-SFM-fullStory",
+  "agentRole": "valuation-specialist",
+  "wave": 1,
+  "stage": "fullStory",
+  "sectionsAssigned": [
+    "valuation_confirmation"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "valuation_confirmation",
+        "verdict": "WATCHLIST",
+        "confidence": "MEDIUM",
+        "redFlagCount": 5,
+        "citationCount": 20,
+        "narrativeLength": 5000
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 0,
+    "cost": 0
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-17T02:01:49.099Z",
+    "durationSeconds": 5536
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

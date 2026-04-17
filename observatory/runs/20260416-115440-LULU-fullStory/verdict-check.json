@@ -1,0 +1,19 @@
+{
+  "runId": "20260416-115440-LULU-fullStory",
+  "ticker": "LULU",
+  "expectedVerdict": "BUY",
+  "expectedSource": "known-verdicts.json",
+  "actualVerdict": "WATCHLIST",
+  "match": false,
+  "sectionVerdicts": {
+    "event_analysis": "N/A",
+    "meaning_checklist": "N/A",
+    "moat_checklist": "N/A",
+    "management_checklist": "N/A",
+    "valuation_confirmation": "N/A",
+    "inversion_rebuttal": "N/A"
+  },
+  "verdictDistribution": {
+    "N/A": 6
+  }
+}

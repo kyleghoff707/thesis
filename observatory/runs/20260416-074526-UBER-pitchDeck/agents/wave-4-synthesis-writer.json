@@ -1,0 +1,48 @@
+{
+  "runId": "20260416-074526-UBER-pitchDeck",
+  "agentRole": "synthesis-writer",
+  "wave": 4,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "overall_verdict"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "overall_verdict",
+        "verdict": "WATCHLIST",
+        "confidence": "HIGH",
+        "redFlagCount": 5,
+        "citationCount": 10,
+        "narrativeLength": 4000
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 0,
+    "cost": 0
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-17T01:40:44.634Z",
+    "durationSeconds": 204
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "runId": "20260416-074734-LULU-pitchDeck",
+  "timestamp": "2026-04-16T14:47:34.394Z",
+  "completedAt": "2026-04-16T18:54:03.265Z",
+  "controlVariables": {
+    "ticker": "LULU",
+    "stage": "pitchDeck",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "d56510fb64547787",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": "BUY",
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": false,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 5400,
+    "totalCost": 7.0200000000000005,
+    "totalTokens": 900000,
+    "totalInputTokens": 540000,
+    "totalOutputTokens": 360000,
+    "toolUses": 300,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 10,
+    "sectionsExpected": 11,
+    "errorsCount": 0
+  },
+  "agentFiles": [
+    "agents/wave-0-annual-reader-fy2022.json",
+    "agents/wave-0-annual-reader-fy2023.json",
+    "agents/wave-0-annual-reader-fy2024.json",
+    "agents/wave-0-annual-reader-fy2025.json",
+    "agents/wave-0-annual-reader-fy2026.json",
+    "agents/wave-0-quarterly-reader.json",
+    "agents/wave-1-business-analyst.json",
+    "agents/wave-1-competitor-market-position.json",
+    "agents/wave-2-competitor-moats.json",
+    "agents/wave-2-financial-analyst.json",
+    "agents/wave-2-management-evaluator.json",
+    "agents/wave-3-risk-analyst.json",
+    "agents/wave-3-valuation-specialist.json",
+    "agents/wave-4-synthesis-writer.json"
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "runId": "20260416-083203-POOL-fullStory",
+  "agentRole": "synthesis-writer-bull",
+  "wave": 2,
+  "stage": "fullStory",
+  "sectionsAssigned": [
+    "debate_bull"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "debate_bull",
+        "verdict": "PASS",
+        "confidence": "HIGH",
+        "redFlagCount": 0,
+        "citationCount": 7,
+        "narrativeLength": 4000
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 20114,
+    "outputTokens": 13409,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 0,
+    "cost": 0
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-17T02:02:34.450Z",
+    "durationSeconds": 47
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

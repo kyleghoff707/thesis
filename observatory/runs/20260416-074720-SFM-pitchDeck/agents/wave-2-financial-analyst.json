@@ -1,0 +1,66 @@
+{
+  "runId": "20260416-074720-SFM-pitchDeck",
+  "agentRole": "financial-analyst",
+  "wave": 2,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "fcf",
+    "roe_roic_debt",
+    "balance_sheet"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 3,
+    "sections": [
+      {
+        "key": "fcf",
+        "verdict": "PASS",
+        "confidence": "HIGH",
+        "redFlagCount": 12,
+        "citationCount": 30,
+        "narrativeLength": 6000
+      },
+      {
+        "key": "roe_roic_debt",
+        "verdict": "PASS",
+        "confidence": "HIGH",
+        "redFlagCount": 12,
+        "citationCount": 30,
+        "narrativeLength": 6000
+      },
+      {
+        "key": "balance_sheet",
+        "verdict": "PASS",
+        "confidence": "HIGH",
+        "redFlagCount": 12,
+        "citationCount": 30,
+        "narrativeLength": 6000
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 0,
+    "cost": 0
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-17T02:01:28.834Z",
+    "durationSeconds": 443
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

@@ -1,19 +1,31 @@
 # Observatory Index
 
 > Pipeline observability wiki for Thes1s agent team optimization.
+> Updated automatically after each pipeline run.
 
 ## Agents
 
+- [[agents/annual-reader-fy2021]] — Behavioral Summary
+- [[agents/annual-reader-fy2022]] — Behavioral Summary
+- [[agents/annual-reader-fy2023]] — Behavioral Summary
+- [[agents/annual-reader-fy2024]] — Behavioral Summary
+- [[agents/annual-reader-fy2025]] — Behavioral Summary
+- [[agents/annual-reader-fy2026]] — Behavioral Summary
 - [[agents/annual-reader]] — Behavioral Summary
 - [[agents/business-analyst]] — Behavioral Summary
 - [[agents/competitor-evaluator]] — Behavioral Summary
 - [[agents/competitor-market-position]] — Behavioral Summary
 - [[agents/competitor-moats]] — Behavioral Summary
+- [[agents/financial-analyst-judge]] — Behavioral Summary
 - [[agents/financial-analyst]] — Behavioral Summary
 - [[agents/management-evaluator]] — Behavioral Summary
 - [[agents/one-pager]] — Behavioral Summary
 - [[agents/quarterly-reader]] — Behavioral Summary
+- [[agents/risk-analyst-bear]] — Behavioral Summary
 - [[agents/risk-analyst]] — Behavioral Summary
+- [[agents/synthesis-writer-bull]] — Behavioral Summary
+- [[agents/synthesis-writer-compose]] — Behavioral Summary
+- [[agents/synthesis-writer-rebuttal]] — Behavioral Summary
 - [[agents/synthesis-writer]] — Behavioral Summary
 - [[agents/valuation-specialist]] — Behavioral Summary
 

@@ -1,0 +1,32 @@
+{
+  "runId": "20260416-073723-SFM-onePager",
+  "timestamp": "2026-04-16T14:37:23.780Z",
+  "completedAt": "2026-04-16T14:46:06.380Z",
+  "controlVariables": {
+    "ticker": "SFM",
+    "stage": "onePager",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "3a5cf220fe4ebd66",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": "BUY",
+  "actualVerdict": "PASS",
+  "verdictMatch": false,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 302,
+    "totalCost": 0.9057204000000001,
+    "totalTokens": 116118,
+    "totalInputTokens": 69671,
+    "totalOutputTokens": 46447,
+    "toolUses": 18,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 6,
+    "sectionsExpected": 6,
+    "errorsCount": 0
+  },
+  "agentFiles": [
+    "agents/wave-0-one-pager.json"
+  ]
+}

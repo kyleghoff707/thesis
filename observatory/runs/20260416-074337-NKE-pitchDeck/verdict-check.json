@@ -1,0 +1,24 @@
+{
+  "runId": "20260416-074337-NKE-pitchDeck",
+  "ticker": "NKE",
+  "expectedVerdict": "BUY",
+  "expectedSource": "known-verdicts.json",
+  "actualVerdict": "WATCHLIST",
+  "match": false,
+  "sectionVerdicts": {
+    "radar": "WATCHLIST",
+    "simple_predictable": "WATCHLIST",
+    "market_position": "WATCHLIST",
+    "barriers_moats": "WATCHLIST",
+    "fcf": "WATCHLIST",
+    "management": "WATCHLIST",
+    "roe_roic_debt": "WATCHLIST",
+    "balance_sheet": "WATCHLIST",
+    "pest_risks": "FAIL",
+    "valuation": "WATCHLIST"
+  },
+  "verdictDistribution": {
+    "WATCHLIST": 9,
+    "FAIL": 1
+  }
+}

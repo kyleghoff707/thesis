@@ -1,0 +1,45 @@
+{
+  "runId": "20260416-074720-SFM-pitchDeck",
+  "timestamp": "2026-04-16T14:47:20.265Z",
+  "completedAt": "2026-04-16T18:21:38.955Z",
+  "controlVariables": {
+    "ticker": "SFM",
+    "stage": "pitchDeck",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "3a5cf220fe4ebd66",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": "BUY",
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": false,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 4200,
+    "totalCost": 6.24,
+    "totalTokens": 800000,
+    "totalInputTokens": 480000,
+    "totalOutputTokens": 320000,
+    "toolUses": 200,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 10,
+    "sectionsExpected": 11,
+    "errorsCount": 0
+  },
+  "agentFiles": [
+    "agents/wave-0-annual-reader-fy2021.json",
+    "agents/wave-0-annual-reader-fy2022.json",
+    "agents/wave-0-annual-reader-fy2023.json",
+    "agents/wave-0-annual-reader-fy2024.json",
+    "agents/wave-0-annual-reader-fy2025.json",
+    "agents/wave-0-quarterly-reader.json",
+    "agents/wave-1-business-analyst.json",
+    "agents/wave-1-competitor-market-position.json",
+    "agents/wave-2-competitor-moats.json",
+    "agents/wave-2-financial-analyst.json",
+    "agents/wave-2-management-evaluator.json",
+    "agents/wave-3-risk-analyst.json",
+    "agents/wave-3-valuation-specialist.json",
+    "agents/wave-4-synthesis-writer.json"
+  ]
+}

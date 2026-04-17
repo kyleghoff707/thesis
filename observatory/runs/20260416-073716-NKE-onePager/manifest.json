@@ -1,0 +1,32 @@
+{
+  "runId": "20260416-073716-NKE-onePager",
+  "timestamp": "2026-04-16T14:37:16.350Z",
+  "completedAt": "2026-04-16T14:42:34.467Z",
+  "controlVariables": {
+    "ticker": "NKE",
+    "stage": "onePager",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "048d5531d367b2bb",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": "BUY",
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": false,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 256,
+    "totalCost": 0.7673094000000001,
+    "totalTokens": 98373,
+    "totalInputTokens": 59024,
+    "totalOutputTokens": 39349,
+    "toolUses": 30,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 6,
+    "sectionsExpected": 6,
+    "errorsCount": 0
+  },
+  "agentFiles": [
+    "agents/wave-0-one-pager.json"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "runId": "20260416-083203-POOL-fullStory",
+  "dispatches": [
+    {
+      "wave": 1,
+      "stage": "Deep Analysis",
+      "agents": [
+        "risk-analyst",
+        "business-analyst",
+        "competitor-evaluator",
+        "management-evaluator",
+        "valuation-specialist"
+      ],
+      "parallel": true,
+      "durationSeconds": 2597
+    },
+    {
+      "wave": 2,
+      "stage": "Adversarial Debate",
+      "agents": [
+        "synthesis-writer-bull",
+        "risk-analyst-bear",
+        "synthesis-writer-rebuttal",
+        "financial-analyst-judge",
+        "synthesis-writer-compose"
+      ],
+      "parallel": false,
+      "durationSeconds": 4893
+    }
+  ],
+  "retries": [],
+  "stallsDetected": [],
+  "formatViolations": [],
+  "dataGaps": []
+}

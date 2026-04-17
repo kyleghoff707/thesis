@@ -1,0 +1,63 @@
+{
+  "runId": "20260416-074734-LULU-pitchDeck",
+  "dispatches": [
+    {
+      "wave": 0,
+      "stage": "Primary Source Reading",
+      "agents": [
+        "annual-reader-fy2022",
+        "annual-reader-fy2023",
+        "annual-reader-fy2024",
+        "annual-reader-fy2025",
+        "annual-reader-fy2026",
+        "quarterly-reader"
+      ],
+      "parallel": true,
+      "durationSeconds": 481
+    },
+    {
+      "wave": 1,
+      "stage": "Business Fundamentals",
+      "agents": [
+        "business-analyst",
+        "competitor-market-position"
+      ],
+      "parallel": true,
+      "durationSeconds": 465
+    },
+    {
+      "wave": 2,
+      "stage": "Deep Analysis",
+      "agents": [
+        "competitor-moats",
+        "financial-analyst",
+        "management-evaluator"
+      ],
+      "parallel": true,
+      "durationSeconds": 620
+    },
+    {
+      "wave": 3,
+      "stage": "Risk & Valuation",
+      "agents": [
+        "risk-analyst",
+        "valuation-specialist"
+      ],
+      "parallel": true,
+      "durationSeconds": 400
+    },
+    {
+      "wave": 4,
+      "stage": "Synthesis",
+      "agents": [
+        "synthesis-writer"
+      ],
+      "parallel": false,
+      "durationSeconds": 2484
+    }
+  ],
+  "retries": [],
+  "stallsDetected": [],
+  "formatViolations": [],
+  "dataGaps": []
+}

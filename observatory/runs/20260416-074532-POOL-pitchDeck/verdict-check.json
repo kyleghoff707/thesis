@@ -1,0 +1,24 @@
+{
+  "runId": "20260416-074532-POOL-pitchDeck",
+  "ticker": "POOL",
+  "expectedVerdict": "BUY",
+  "expectedSource": "known-verdicts.json",
+  "actualVerdict": "WATCHLIST",
+  "match": false,
+  "sectionVerdicts": {
+    "radar": "WATCHLIST",
+    "simple_predictable": "PASS",
+    "market_position": "PASS",
+    "barriers_moats": "PASS",
+    "fcf": "WATCHLIST",
+    "management": "PASS",
+    "roe_roic_debt": "PASS",
+    "balance_sheet": "PASS",
+    "pest": "WATCHLIST",
+    "valuation": "WATCHLIST"
+  },
+  "verdictDistribution": {
+    "WATCHLIST": 4,
+    "PASS": 6
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "runId": "20260416-074526-UBER-pitchDeck",
+  "timestamp": "2026-04-16T14:45:26.464Z",
+  "completedAt": "2026-04-16T15:34:31.354Z",
+  "controlVariables": {
+    "ticker": "UBER",
+    "stage": "pitchDeck",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "b9803557785b6fb6",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": "BUY",
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": false,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 4800,
+    "totalCost": 9.36,
+    "totalTokens": 1200000,
+    "totalInputTokens": 720000,
+    "totalOutputTokens": 480000,
+    "toolUses": 350,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 10,
+    "sectionsExpected": 11,
+    "errorsCount": 0
+  },
+  "agentFiles": [
+    "agents/wave-0-annual-reader.json",
+    "agents/wave-0-quarterly-reader.json",
+    "agents/wave-1-business-analyst.json",
+    "agents/wave-1-competitor-market-position.json",
+    "agents/wave-2-competitor-moats.json",
+    "agents/wave-2-financial-analyst.json",
+    "agents/wave-2-management-evaluator.json",
+    "agents/wave-3-risk-analyst.json",
+    "agents/wave-3-valuation-specialist.json",
+    "agents/wave-4-synthesis-writer.json"
+  ]
+}

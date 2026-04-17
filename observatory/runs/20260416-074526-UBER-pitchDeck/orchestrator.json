@@ -1,0 +1,59 @@
+{
+  "runId": "20260416-074526-UBER-pitchDeck",
+  "dispatches": [
+    {
+      "wave": 0,
+      "stage": "PSR",
+      "agents": [
+        "annual-reader",
+        "quarterly-reader"
+      ],
+      "parallel": true,
+      "durationSeconds": 693
+    },
+    {
+      "wave": 1,
+      "stage": "Business Fundamentals",
+      "agents": [
+        "business-analyst",
+        "competitor-market-position"
+      ],
+      "parallel": true,
+      "durationSeconds": 675
+    },
+    {
+      "wave": 2,
+      "stage": "Deep Analysis",
+      "agents": [
+        "competitor-moats",
+        "financial-analyst",
+        "management-evaluator"
+      ],
+      "parallel": true,
+      "durationSeconds": 405
+    },
+    {
+      "wave": 3,
+      "stage": "Risk & Valuation",
+      "agents": [
+        "risk-analyst",
+        "valuation-specialist"
+      ],
+      "parallel": true,
+      "durationSeconds": 477
+    },
+    {
+      "wave": 4,
+      "stage": "Synthesis",
+      "agents": [
+        "synthesis-writer"
+      ],
+      "parallel": false,
+      "durationSeconds": 204
+    }
+  ],
+  "retries": [],
+  "stallsDetected": [],
+  "formatViolations": [],
+  "dataGaps": []
+}

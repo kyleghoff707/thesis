@@ -1,0 +1,32 @@
+{
+  "runId": "20260416-073658-UBER-onePager",
+  "timestamp": "2026-04-16T14:36:58.062Z",
+  "completedAt": "2026-04-16T14:44:23.795Z",
+  "controlVariables": {
+    "ticker": "UBER",
+    "stage": "onePager",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "3fa6008d943ba9a7",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": "BUY",
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": false,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 227,
+    "totalCost": 0.7465067999999999,
+    "totalTokens": 95706,
+    "totalInputTokens": 57424,
+    "totalOutputTokens": 38282,
+    "toolUses": 23,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 6,
+    "sectionsExpected": 6,
+    "errorsCount": 0
+  },
+  "agentFiles": [
+    "agents/wave-0-one-pager.json"
+  ]
+}

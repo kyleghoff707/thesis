@@ -1,0 +1,20 @@
+{
+  "runId": "20260416-083203-POOL-fullStory",
+  "ticker": "POOL",
+  "expectedVerdict": "BUY",
+  "expectedSource": "known-verdicts.json",
+  "actualVerdict": "WATCHLIST",
+  "match": false,
+  "sectionVerdicts": {
+    "event_analysis": "WATCHLIST",
+    "meaning_checklist": "PASS",
+    "moat_checklist": "PASS",
+    "management_checklist": "PASS",
+    "valuation_confirmation": "WATCHLIST",
+    "inversion_rebuttal": "WATCHLIST"
+  },
+  "verdictDistribution": {
+    "WATCHLIST": 3,
+    "PASS": 3
+  }
+}

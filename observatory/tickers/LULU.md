@@ -1,50 +1,60 @@
 ---
 type: ticker-page
 ticker: LULU
-companyName: lululemon athletica inc.
-lastUpdated: 2026-04-16T14:01:30.310Z
-runCount: 3
+companyName: LULU
+lastUpdated: 2026-04-17T02:01:52.460Z
+runCount: 6
 expectedVerdict: not set
-verdictHistory: [WATCHLIST, WATCHLIST, WATCHLIST]
-verdictAccuracy: N/A
-tags: [ticker, LULU, consumer-cyclical]
+verdictHistory: [WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST]
+verdictAccuracy: 0.00
+tags: [ticker, LULU]
 ---
 
 ## Run History
 
-| Run ID | Stage | Verdict | Expected | Match | Cost | Duration | Sections | Notes |
-|--------|-------|---------|----------|-------|------|----------|----------|-------|
-| 20260415-203246-LULU-onePager | onePager | WATCHLIST | — | — | $0.69 | 4min | 6/6 | No errors, no retries |
-| 20260415-204131-LULU-pitchDeck | pitchDeck | WATCHLIST | — | — | $7.39 | 58min | 10/11 | 1 section missing |
-| 20260415-220013-LULU-fullStory | fullStory | WATCHLIST | — | — | $7.41 | 55min | 6/6 | No errors, no retries |
+| Run ID | Stage | Verdict | Expected | Match | Cost | Duration | Sections |
+|--------|-------|---------|----------|-------|------|----------|----------|
+| 20260415-203246-LULU-onePager | onePager | WATCHLIST | - | - | $0.69 | 4min | 6/6 |
+| 20260415-204131-LULU-pitchDeck | pitchDeck | WATCHLIST | - | - | $7.39 | 58min | 10/11 |
+| 20260415-220013-LULU-fullStory | fullStory | WATCHLIST | - | - | $7.41 | 55min | 6/6 |
+| 20260416-073658-LULU-onePager | onePager | WATCHLIST | BUY | MISMATCH | $0.80 | 5min | 6/6 |
+| 20260416-074734-LULU-pitchDeck | pitchDeck | WATCHLIST | BUY | MISMATCH | $7.02 | 90min | 10/11 |
+| 20260416-115440-LULU-fullStory | fullStory | WATCHLIST | BUY | MISMATCH | $3.90 | 60min | 6/6 |
 
 ## Verdict Stability
 
-All 3 runs across all 3 pipeline stages (onePager, pitchDeck, fullStory) returned WATCHLIST. Verdict is highly stable across stage variation. No contradictions observed.
-
-However, no expected verdict has been set for LULU, so accuracy cannot be computed. Once an expected verdict (e.g. BUY, PASS, FAIL) is defined, historical accuracy can be back-filled across all three runs.
-
-Notable: the pitchDeck stage completed only 10/11 sections, which may indicate a minor truncation or assembly issue. Despite this, the verdict aligned with the other two stages, suggesting the missing section did not materially affect the output.
-
-Across the broader run context, LULU's WATCHLIST verdicts are consistent with the pattern seen in [[tickers/POOL]] (fullStory also WATCHLIST) and [[tickers/UBER]] (all stages WATCHLIST), suggesting a possible system-wide conservatism bias rather than a LULU-specific signal. More data — and an established expected verdict — are needed to distinguish between genuine WATCHLIST conviction and a model-level default tendency.
+All 6 runs returned WATCHLIST.
 
 ## Agent Performance
 
-No agent-level data has been recorded for any LULU run to date. Agent-level recording was not enabled during runs 20260415-203246-LULU-onePager, 20260415-204131-LULU-pitchDeck, or 20260415-220013-LULU-fullStory. This limits the ability to attribute verdict outcomes or cost drivers to specific agents.
-
-Once agent recording is enabled, the following agents are expected to appear in LULU runs and should be monitored: [[agents/business-analyst]], [[agents/financial-analyst]], [[agents/valuation-specialist]], [[agents/synthesis-writer]].
+| Agent | Runs | Avg Duration |
+|-------|------|--------------|
+| [[agents/one-pager]] | 1 | 274s |
+| [[agents/annual-reader-fy2022]] | 1 | 217s |
+| [[agents/annual-reader-fy2023]] | 1 | 324s |
+| [[agents/annual-reader-fy2024]] | 1 | 513s |
+| [[agents/annual-reader-fy2025]] | 1 | 287s |
+| [[agents/annual-reader-fy2026]] | 1 | 359s |
+| [[agents/quarterly-reader]] | 1 | 481s |
+| [[agents/business-analyst]] | 2 | 2054s |
+| [[agents/competitor-market-position]] | 1 | 359s |
+| [[agents/competitor-moats]] | 1 | 620s |
+| [[agents/financial-analyst]] | 1 | 500s |
+| [[agents/management-evaluator]] | 2 | 329s |
+| [[agents/risk-analyst]] | 2 | 2256s |
+| [[agents/valuation-specialist]] | 2 | 331s |
+| [[agents/synthesis-writer]] | 1 | 2484s |
+| [[agents/competitor-evaluator]] | 1 | 4111s |
+| [[agents/financial-analyst-judge]] | 1 | 41s |
+| [[agents/risk-analyst-bear]] | 1 | 185s |
+| [[agents/synthesis-writer-bull]] | 1 | 64s |
+| [[agents/synthesis-writer-compose]] | 1 | 54s |
+| [[agents/synthesis-writer-rebuttal]] | 1 | 66s |
 
 ## DataPacket Notes
 
-No data gaps (`dataGaps: []`) were recorded in any of the three LULU runs. No format violations or retries were observed in the onePager or fullStory stages. The pitchDeck stage completed 10/11 sections — the cause of the missing section has not been identified and warrants investigation in future runs.
+_No data gaps recorded._
 
 ## Control Variable Sensitivity
 
-Insufficient data for formal sensitivity analysis. No prompt version changes, model swaps, or wave-order variations have been tested against LULU yet. The three runs represent a single pass through three pipeline stages (onePager → pitchDeck → fullStory) rather than controlled variation of any single variable.
-
-Observations available so far:
-- **Stage variation**: All three stages produced WATCHLIST — stage type does not appear to drive verdict divergence for LULU.
-- **Cost variation**: onePager ($0.69) vs. pitchDeck/fullStory (~$7.40) reflects expected stage-level scope differences, not anomalous behavior.
-- **Duration variation**: pitchDeck (58min) and fullStory (55min) are comparable; onePager (4min) is expected to be faster.
-
-Formal sensitivity testing (e.g. model swap, prompt version change) is recommended once an expected verdict is established. See [[experiments/doe-log]] for any related experiments.
+_Insufficient data for sensitivity analysis (need multiple runs with different configurations)._

@@ -1,7 +1,7 @@
 ---
 type: pattern
 pattern: verdict-accuracy
-lastUpdated: 2026-04-17T01:41:17.731Z
+lastUpdated: 2026-04-17T02:02:12.554Z
 confidence: high
 runsSampled: 24
 tags: [pattern, verdict, accuracy]

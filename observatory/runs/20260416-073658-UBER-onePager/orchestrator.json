@@ -1,0 +1,18 @@
+{
+  "runId": "20260416-073658-UBER-onePager",
+  "dispatches": [
+    {
+      "wave": 0,
+      "stage": "One Pager",
+      "agents": [
+        "one-pager"
+      ],
+      "parallel": false,
+      "durationSeconds": 227
+    }
+  ],
+  "retries": [],
+  "stallsDetected": [],
+  "formatViolations": [],
+  "dataGaps": []
+}

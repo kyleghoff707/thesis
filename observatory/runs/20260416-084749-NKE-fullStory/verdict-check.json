@@ -1,0 +1,19 @@
+{
+  "runId": "20260416-084749-NKE-fullStory",
+  "ticker": "NKE",
+  "expectedVerdict": "BUY",
+  "expectedSource": "known-verdicts.json",
+  "actualVerdict": "WATCHLIST",
+  "match": false,
+  "sectionVerdicts": {
+    "event_analysis": "WATCHLIST",
+    "meaning_checklist": "WATCHLIST",
+    "moat_checklist": "WATCHLIST",
+    "management_checklist": "WATCHLIST",
+    "valuation_confirmation": "WATCHLIST",
+    "inversion_rebuttal": "WATCHLIST"
+  },
+  "verdictDistribution": {
+    "WATCHLIST": 6
+  }
+}

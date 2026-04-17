@@ -1,0 +1,35 @@
+{
+  "runId": "20260416-084749-NKE-fullStory",
+  "dispatches": [
+    {
+      "wave": 1,
+      "stage": "Deep Analysis",
+      "agents": [
+        "risk-analyst",
+        "business-analyst",
+        "competitor-evaluator",
+        "management-evaluator",
+        "valuation-specialist"
+      ],
+      "parallel": true,
+      "durationSeconds": 2949
+    },
+    {
+      "wave": 2,
+      "stage": "Adversarial Debate",
+      "agents": [
+        "synthesis-writer",
+        "risk-analyst",
+        "synthesis-writer",
+        "financial-analyst",
+        "synthesis-writer"
+      ],
+      "parallel": false,
+      "durationSeconds": 1113
+    }
+  ],
+  "retries": [],
+  "stallsDetected": [],
+  "formatViolations": [],
+  "dataGaps": []
+}
