@@ -591,3 +591,23 @@ Process:
 Methodology:
 - No methodology changes expected. Verdicts should track price gap, not analyst conservatism.
 - FGR analyst behavior monitored; tuning lever identified only if a clear bottleneck emerges
+
+## [2026-04-18] sprint-5-prep | PSR parallelization (pitch deck Step 3)
+
+PM observed actual pitch deck wall time ~90 min vs observatory-reported 25-60 min — ~30 min of orchestrator overhead (re-reading skills, JSON extraction, observatory bash calls, PDF generation, archive) that the manifest doesn't capture. Brainstormed speed-up options; PM selected the lowest-risk one for Sprint 5 and held the rest for later.
+
+**Change shipped:** [generate-pitch-deck/SKILL.md Step 3](../.claude/skills/generate-pitch-deck/SKILL.md) — PSR Wave 0 dispatch is now fully parallel. Annual readers (one per 10-K, up to 5) and quarterly batches (one per 4 10-Qs) all dispatch in a SINGLE message. Prior model dispatched annual first, waited for all to complete, then dispatched quarterly with annual findings as context. New model removes that gate.
+
+Specifics:
+- Quarterly readers no longer receive annual findings as input. They extract their own quarterly evidence (trends, guidance changes, transcript commitments, short-term promise tracking).
+- Cross-period reconciliation (matching annual long-term promises to quarterly short-term execution) moves to Step 3c merge step. Adds a `promiseReconciliation[]` array to `psrFindings`: per-promise status (honored / abandoned / contradicted / unmentioned) with quarterly evidence.
+- Strong CRITICAL block at Step 3b explicitly demanding parallel single-message dispatch and naming the anti-pattern ("Do NOT dispatch annual readers, wait for them to finish, then dispatch quarterly readers").
+- Agent prompts unchanged — annual-reader/quarterly-reader cross-references describe complementary roles, not runtime sequence.
+
+Expected wall-time savings: ~10 min per pitch deck (annual reader run is the gating step; quarterly now runs concurrently instead of waiting).
+
+**Held for later:** PSR cache on re-runs, inherited inter-wave context compression, larger quarterly batches, Wave 1+2 dependency collapse, agent prompt cleanup. PM verdict: parallelization is the only low-risk option this sprint. Agent prompt cleanup (the largest remaining lever) is held for Sprint 6 and will apply to ALL agents, not just PSR.
+
+**Sprint 5 acceptance signal:** observatory `dispatch` event for Wave 0 should show `parallel: true` with all annual + quarterly agents in one record. If a Sprint 5 pitch deck shows two separate Wave 0 dispatches (annual then quarterly), the orchestrator regressed — investigate immediately.
+
+**Diagnostic gap noted but not fixed:** observatory under-reports wall time. Pre-/post-pipeline timestamp comparison written to manifest would close the gap; deferred until needed for cost-sensitivity analysis.

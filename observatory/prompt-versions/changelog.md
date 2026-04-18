@@ -10,6 +10,20 @@ tags: [prompts, changelog]
 
 ---
 
+## 2026-04-18 — Sprint 5 prep: pitch-deck Step 3 — PSR parallelization
+
+PM observed pitch deck wall time ~90 min vs observatory-reported 25-60 min. PSR dispatch (annual then quarterly) was the largest unforced-sequential gating step.
+
+- **Skill affected**: generate-pitch-deck Step 3 (Wave 0 PSR)
+- **Change**: Annual readers + quarterly readers now dispatch in a SINGLE parallel message. Quarterly readers no longer receive annual findings as context — they extract independently. Cross-period reconciliation (annual long-term promises ↔ quarterly short-term execution) moves to merge step (3c) with new `promiseReconciliation[]` field.
+- **CRITICAL block** added explicitly demanding parallel single-message dispatch and naming the anti-pattern. Lesson from Sprint 1 sequential-dispatch failures applied: orchestrators need explicit DEMAND, not implication.
+- **Agent prompts**: unchanged. annual-reader/quarterly-reader cross-references describe complementary roles (long-term vs short-term promise tracking), not runtime sequence dependency.
+- **Expected wall-time savings**: ~10 min per pitch deck.
+- **Sprint 5 acceptance signal**: Wave 0 `dispatch` event should show `parallel: true` with all annual + quarterly agents in one record. If two separate Wave 0 dispatches appear, orchestrator regressed.
+- **Held for Sprint 6**: agent prompt cleanup (will apply to all agents, not just PSR).
+
+---
+
 ## 2026-04-18 — Sprint 5 prep: 3 skill orchestrator prompts — non-essential prose stripped
 
 PM directive: orchestrator skills had grown to 2,758 lines total and were potentially overloading the orchestrators. Cleanup applied per the doctrine "tell LLMs exactly what to do and not to do — extra explanation isn't needed; LLMs take shortcuts when given the opportunity."

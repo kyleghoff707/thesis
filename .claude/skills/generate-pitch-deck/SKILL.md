@@ -159,7 +159,7 @@ node scripts/observatory-init.js {TICKER} pitchDeck .thes1s/reports/{TICKER}/dat
 
 Capture the **last line of output** as `RUN_ID`. Retry once on failure.
 
-## Step 3: Wave 0 — Primary Source Reading
+## Step 3: Wave 0 — Primary Source Reading (PARALLEL)
 
 Read the DataPacket from `.thes1s/reports/{TICKER}/data-packet.json`.
 
@@ -168,11 +168,23 @@ Read the DataPacket from `.thes1s/reports/{TICKER}/data-packet.json`.
 - `agents-v2/annual-reader/prompt.md`
 - `agents-v2/quarterly-reader/prompt.md`
 
-### 3b: Dispatch Annual Readers (One Per 10-K)
+### 3b: PARALLEL DISPATCH — All PSR Agents (Single Message)
 
-Identify all 10-K filings from `.thes1s/reports/{TICKER}/filings-md/`. Sort chronologically, oldest first. Up to 5.
+> **CRITICAL: Send ALL PSR Agent tool calls in a SINGLE message.**
+> Up to 5 annual readers (one per 10-K) PLUS 1-N quarterly batches — ALL in one parallel dispatch.
+> Annual readers and quarterly readers are independent. Quarterly readers do NOT receive annual findings — they extract their own quarterly evidence (trends, guidance changes, transcript commitments). Cross-period reconciliation (matching annual long-term promises to quarterly short-term execution) happens at the merge step (3c), NOT inside the agents.
+> Sequential annual-then-quarterly dispatch costs ~10 minutes of wall time and provides zero quality benefit.
+> Anti-pattern to avoid: dispatching annual readers, waiting for them to finish, then dispatching quarterly readers. Do NOT do this.
 
-For each 10-K, dispatch a subagent via the Agent tool with:
+Identify all 10-K filings from `.thes1s/reports/{TICKER}/filings-md/`. Sort chronologically, oldest first. Up to 5. Identify all 10-Q filings, sort chronologically, split into batches of 4.
+
+In a single message, dispatch:
+- **One Agent call per 10-K** (annual reader)
+- **One Agent call per 10-Q batch** (quarterly reader)
+
+#### Annual Reader Dispatch (one per 10-K)
+
+For each 10-K, the prompt is concatenated as:
 1. Full contents of `agents-v2/annual-reader/prompt.md`
 2. DataPacket slice: `companyInfo`, `classification`, `financials` (this year + prior year), `ttm`, `filings`, `caveats` — fenced JSON
 3. All sections from that year's 10-K filing:
@@ -191,33 +203,33 @@ For each 10-K, dispatch a subagent via the Agent tool with:
 ### Financial Statements
 {sections['Financial Statements']}
 ```
-4. If NOT the first year, brief summary of prior year's key findings
+4. If NOT the first year, brief summary of prior year's key findings (intra-annual context — annual reader processes its own years chronologically)
 5. Task: "Read {TICKER}'s FY{year} 10-K filing provided above. This is year {N} of {total}. Extract: (1) Business model changes, (2) New/changed risk factors, (3) Management's financial discussion, (4) Financial data cross-validation against DataPacket — flag discrepancies with severity (low <1%, medium 1-5%, high >5%), (5) Acquisition disclosures, (6) Management promises and strategic priorities. Return as JSON matching your prompt's output format."
 
-**Dispatch all annual readers in parallel** — one Agent call per 10-K, all in a single message. After all complete, merge outputs chronologically. If an agent fails entirely, wait 30 seconds and retry once.
+#### Quarterly Reader Dispatch (one per batch, max 4 10-Qs per batch)
 
-### 3c: Dispatch Quarterly Readers
-
-After annual readers complete, batch up to 4 10-Qs per dispatch. For each batch:
+For each batch, the prompt is concatenated as:
 1. Full contents of `agents-v2/quarterly-reader/prompt.md`
-2. DataPacket slice: same fields as 3b
+2. DataPacket slice: same fields as annual reader
 3. All sections from each 10-Q in the batch
-4. Annual reader findings summary
-5. Earnings transcripts from `.thes1s/reports/{TICKER}/transcripts/`:
+4. Earnings transcripts from `.thes1s/reports/{TICKER}/transcripts/`:
 ```
 ## Earnings Call Transcript: Q{N} FY{YYYY}
 {full transcript text}
 ```
    If no transcripts: "## Earnings Call Transcripts: UNAVAILABLE — flag as data gap."
-6. Task: "Read {TICKER}'s quarterly SEC filings covering Q{start} through Q{end}. Cross-reference transcripts against 10-Q filings. Extract quarterly trends, guidance changes, promise tracking, and cross-validate financials. Return as JSON matching your prompt's output format."
+5. Task: "Read {TICKER}'s quarterly SEC filings covering Q{start} through Q{end}. Cross-reference transcripts against 10-Q filings. Extract quarterly trends, guidance changes, short-term promise tracking (quarter-to-quarter), and cross-validate financials. You run in parallel with the annual reader — cross-period reconciliation between annual long-term promises and your quarterly evidence happens at the merge step, not in your output. Return as JSON matching your prompt's output format."
 
-### 3d: Collect and Save PSR Outputs
+If an agent fails entirely, wait 30 seconds and retry once.
 
-After all PSR agents complete:
+### 3c: Collect, Merge, and Reconcile PSR Outputs
+
+After all PSR agents return:
 1. Extract JSON from each agent response (see JSON Extraction Fallback Chain)
-2. Merge annual reader outputs into `annual-reader-insights.json` (combine per-year findings, aggregate discrepancies, compile strategic themes and management promises). Write to `.thes1s/reports/{TICKER}/sections/annual-reader-insights.json`.
-3. Merge quarterly reader outputs into `quarterly-reader-insights.json`. Write to same dir.
-4. Build combined `psrFindings` for downstream agents:
+2. Merge annual reader outputs into `annual-reader-insights.json` (combine per-year findings, aggregate discrepancies, compile strategic themes and long-term management promises). Write to `.thes1s/reports/{TICKER}/sections/annual-reader-insights.json`.
+3. Merge quarterly reader outputs into `quarterly-reader-insights.json` (combine per-batch findings, aggregate guidance evolution, compile short-term promise tracking). Write to same dir.
+4. **Cross-period reconciliation** (this used to happen implicitly inside the quarterly reader; now it happens here): walk the annual `managementPromises[]` and check whether quarterly `guidanceEvolution` honors, abandons, or contradicts each long-term promise. Add a `promiseReconciliation[]` array per promise: `{ promise, source, status: "honored|abandoned|contradicted|unmentioned", quarterlyEvidence }`.
+5. Build combined `psrFindings` for downstream agents:
 ```json
 {
   "annualInsights": { /* merged */ },
@@ -225,6 +237,7 @@ After all PSR agents complete:
   "discrepancies": [ /* combined */ ],
   "managementPromises": [ /* from annual */ ],
   "guidanceEvolution": { /* from quarterly */ },
+  "promiseReconciliation": [ /* annual ↔ quarterly cross-check */ ],
   "recentMomentum": "..."
 }
 ```
