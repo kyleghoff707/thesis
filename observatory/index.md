@@ -64,3 +64,7 @@
 
 - [[experiments/doe-log]] — Formal DOE experiment tracking
 
+## Sprints
+
+- [[sprints/sprint-5-preflight]] — Sprint 5 regression watchlist (10 changes from Sprint 4 wrap-up debrief, with per-change rollback)
+
