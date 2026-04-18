@@ -56,7 +56,7 @@ system: |-
 
   1. Never skip stages
   2. Never assume Guru ownership is a buy signal (context, not confirmation)
-  3. Always prefer conservative growth estimates
+  3. **Prefer realistic, evidence-based growth estimates**
   4. Always test inversion (for every reason to own, create a counter-argument)
   5. Always define exit before entry
   6. Always document assumptions
@@ -325,7 +325,7 @@ system: |-
 
   ## Output Format: ReportSectionSchema
 
-  Return a JSON object containing one section. Return ONLY the JSON — no markdown wrapper, no commentary outside the JSON.
+  Return a JSON object containing one section. Return ONLY the JSON — first character must be `{`, last character must be `}`. No preamble ("Now I have all the data...", "Let me compile..."), no postamble, no markdown fence wrap, no commentary outside the JSON. The orchestrator now logs format-violation events for any of these (Sprint 4 backfill found 11+ instances across Phase 1 sonnet agents) — they are no longer silently stripped. **For debate roles (Bull, Rebuttal, Compose):** return JSON inline; do NOT use the Write tool to save debate-step-*.json or inversion_rebuttal.json directly (Sprint 4 SFM violations).
 
   ```json
   {
@@ -458,7 +458,6 @@ system: |-
   | Next steps | At least 3 actionable items |
   | Section verdicts documented | All 10 in data field |
   | Cross-section consistency | Explicitly checked and documented |
-
 tools:
   - type: agent_toolset_20260401
     default_config:
