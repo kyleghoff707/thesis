@@ -1,12 +1,44 @@
 ---
 type: prompt-changelog
-lastUpdated: 2026-04-17T18:00:00Z
+lastUpdated: 2026-04-18T06:00:00Z
 tags: [prompts, changelog]
 ---
 
 # Prompt Version Changelog
 
 > Reverse chronological record of all agent prompt changes with measured impact.
+
+---
+
+## 2026-04-18 — Sprint 5 prep: 17 agents — no-preamble rule + Bull source-quality gate
+
+Two coordinated prompt fixes responding to Sprint 4 fullStory backfill findings (the three Claude instances surfaced 41 format-violation instances + 3 Bull factual-error class events on LULU after the original orchestrators skipped Step 8.5).
+
+### Change 1: Bull source-quality gate (synthesis-writer-fullstory only)
+
+- **Agents affected**: synthesis-writer (Bull role in fullStory)
+- **Motivation**: EXP-003 gave Bull web search for the first time. Sprint 4 LULU surfaced 3 Bull factual/methodology errors that Rebuttal had to concede: (T5) used Phil Town/Burry guru ownership as a thesis-strength point — Rule One Operating Rule #2 explicitly says guru ownership is context, not confirmation; (T4) made unsupported forward-math claims about China's near-term contribution; (T3) omitted On Holding's 62.8% gross margin as competitive signal. Sprint 4 POOL surfaced 2 more: Wells Fargo target direction error ($275 raise vs actual $215 cut) sourced via aggregator paraphrase, and ibtimes.com.au (low-quality content aggregator) cited for Berkshire 13F speculation.
+- **Key rewrites**:
+  - Added "Source quality gate" paragraph: prefer primary sources (SEC filings, company press releases, earnings transcripts, analyst firm direct publications dated within 90 days); avoid content aggregators (ibtimes, *.fool summaries, generic Seeking Alpha listicles, undated "10 stocks Buffett is buying" articles); when citing analyst price targets, name firm + date + direction explicitly
+  - Added "Guru ownership rule": guru ownership is context not confirmation per Rule One Operating Rule #2; cannot be used as a thesis-strength point in itself
+- **Before runs**: Sprint 4 — 20260417-175335-LULU-fullStory (3 Bull errors), 20260417-192126-POOL-fullStory (3 Bull errors)
+- **After runs**: Sprint 5 — pending
+- **Impact**: _Pending — Sprint 5 fullStory Bull thesis points should not contain guru-ownership-as-conviction or aggregator-sourced analyst-action claims. Rebuttal `rebuttalStrength: "weak"` count on Bull-error class points should drop._
+
+### Change 2: No-preamble rule (17 agent prompts)
+
+- **Agents affected**: business-analyst (PD+FS), competitor-evaluator-market-position-pitchdeck, competitor-evaluator-moats-pitchdeck, competitor-evaluator-fullstory, financial-analyst (PD+FS), management-evaluator (PD+FS), risk-analyst (PD+FS), valuation-specialist (PD+FS), synthesis-writer (PD+FS), annual-reader, quarterly-reader, one-pager
+- **Motivation**: Sprint 4 backfill surfaced 41 format-violation instances of "preamble text before JSON" ("Now I have all the data needed. Let me compile…", "I now have enough data… Let me compile") across nearly every Phase 1 sonnet agent. The existing instruction "no commentary outside the JSON" wasn't being parsed as forbidding pre-output narration. MC-5 Pre-Finalize Event Sweep now logs these (was silently stripped Sprint 1-3).
+- **Key rewrites**:
+  - All 14 agents with "Return ONLY the JSON — no markdown wrapper, no commentary [outside the JSON]." line: appended explicit "first character must be `{` or `[`, last character must be `}` or `]`. No preamble (...examples...), no postamble, no markdown fence wrap, no commentary outside the JSON. The orchestrator now logs format-violation events for any of these (Sprint 4 backfill found 11+ instances across Phase 1 sonnet agents) — they are no longer silently stripped."
+  - annual-reader, quarterly-reader, one-pager (no existing "Return ONLY" line): added "Output discipline" paragraph after `## Output Format` header with same rule + agent-specific notes (annual-reader: 5 FY preambles per run; quarterly-reader: unary-plus prefix invalid JSON; one-pager: two-JSON-objects emission)
+  - synthesis-writer-fullstory (multi-role file): added top-level "Output discipline" applies-to-all-roles paragraph after the inheritance summary, plus Write-tool prohibition for debate roles (Sprint 4 SFM Bear + Compose violations)
+  - financial-analyst-fullstory (Judge): added explicit schema requirement — top-level `overallDirection` (not nested under `overallVerdict`); per-exchange `pointNumber`, `judgeScore`, `severityFromBear` (Sprint 4 LULU + SFM had silent assembly bugs from missing these fields)
+  - risk-analyst-fullstory (Bear) + synthesis-writer-pitchdeck (debate roles): added "do NOT use Write tool to save debate-step-*.json directly; return JSON inline"
+- **Before runs**: Sprint 4 — 20260417-175437-SFM-pitchDeck (13 violations), 20260417-185013-SFM-fullStory (13 + 2 dataGaps), 20260417-192126-POOL-fullStory (3), 20260417-175335-LULU-fullStory (8 incl. silent assembly bug)
+- **After runs**: Sprint 5 — pending
+- **Impact**: _Pending — expecting `formatViolations` count to drop from 11+ per pitchDeck/fullStory run to <3. Judge `exchanges[].judgeScore` and `pointNumber` should populate consistently (no more 11/11 null fields)._
+- **Production parity**: All edits in `agents-v2/` prompt content — translates 1:1 to Managed Agents.
 
 ---
 

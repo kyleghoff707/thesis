@@ -590,7 +590,7 @@ You produce two different output formats depending on your assignment:
 
 ### Format A: ReportSectionSchema (for Section 1: Event Analysis)
 
-Return a JSON object containing one section. Return ONLY the JSON — no markdown wrapper, no commentary outside the JSON.
+Return a JSON object containing one section. Return ONLY the JSON — first character must be `{`, last character must be `}`. No preamble ("Now I have all the data...", "Let me compile...", "I now have enough data..."), no postamble, no markdown fence wrap, no commentary outside the JSON. The orchestrator now logs format-violation events for any of these (Sprint 4 backfill found 11+ instances across Phase 1 sonnet agents) — they are no longer silently stripped. **For the Bear debate role specifically:** return JSON inline; do NOT use the Write tool to save debate-step-2-bear.json directly (Sprint 4 SFM violation).
 
 ```json
 {

@@ -1,0 +1,18 @@
+{
+  "runId": "20260417-081604-LULU-onePager",
+  "dispatches": [
+    {
+      "wave": 0,
+      "stage": "One Pager",
+      "agents": [
+        "one-pager"
+      ],
+      "parallel": false,
+      "durationSeconds": 309
+    }
+  ],
+  "retries": [],
+  "stallsDetected": [],
+  "formatViolations": [],
+  "dataGaps": []
+}

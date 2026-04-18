@@ -865,56 +865,39 @@ Step 8: Report assembled
 
 ## Step 8.5: Pre-Finalize Event Sweep (REQUIRED)
 
-**This step exists because orchestrators systematically under-report their own problem-solving.** When an agent stalls and you re-dispatch, when output needs renaming, when JSON requires fallback extraction, when a debate step's output is written from orchestrator memory instead of re-dispatching — your default mode is "silent cleanup to keep the pipeline moving," not "log it for future-me." That bias produces empty `retries: []`, `stallsDetected: []`, `formatViolations: []` arrays in the observatory, which makes the agent prompts look cleaner than they actually are. DOE experiments reading empty telemetry will conclude "these prompts produce clean output" when in fact the orchestrator was smoothing over mess.
+**Orchestrators systematically under-report their own problem-solving** — silent fixes look like clean output, which corrupts DOE conclusions. The fullStory "clean run" bias is the worst offender (no API timeouts to force logging), and frame-bucketing makes you read mid-debate corrections as "intended mechanic" rather than "agent output deviation." Two-part sweep: scripted file-evidence checks, then a residual checklist for orchestrator-memory items the script cannot see.
 
-Before running observatory-finalize, retrospectively sweep this run for every event the in-the-moment mode missed. Answer each yes/no honestly. **When in doubt, log it — the cost of a false positive is one extra row in a JSON array; the cost of a false negative is a corrupted DOE conclusion.**
-
-For each `yes`, run the corresponding `observatory-record-event.js` command. The cheat-sheet is in [Retry Logic](#retry-logic), [Log Format Violations](#required-log-format-violations), and below.
-
-```
-Retries:
-  [ ] Did any agent timeout, stall, or fail and get re-dispatched?          → retry (+ stall if >15min before intervention)
-  [ ] Did any agent require a second prompt to produce valid JSON?           → retry, reason: "JSON parse failed"
-  [ ] Did any agent require a second prompt for a full narrative?            → retry, reason: "narrative stub"
-  [ ] Did you trim any agent's context/prompt and re-dispatch?               → retry, reason: "trimmed prompt to avoid timeout"
-  [ ] Did you write a debate step's output from orchestrator memory          → retry, reason: "orchestrator wrote from memory vs re-dispatch"
-       instead of re-dispatching the agent?                                     (AND format-violation: "protocol violation — orchestrator as agent")
-
-Stalls:
-  [ ] Did any sonnet agent run longer than ~15min?                           → stall
-  [ ] Did any opus agent run longer than ~25min?                             → stall
-  [ ] Did any "Stream idle timeout" or partial-response error occur?         → stall, resolution: "idle timeout — trimmed and re-dispatched" (or similar)
-
-Format violations:
-  [ ] Did any agent use markdown fences despite being told not to?           → format-violation
-  [ ] Did any agent wrap JSON in preamble text ("Now I have...")?            → format-violation
-  [ ] Did any agent return an array when an object was expected?             → format-violation
-  [ ] Did any agent return multiple JSON objects instead of one?             → format-violation
-  [ ] Did any agent return partial drafts with "..." before the real JSON?   → format-violation
-  [ ] Did the extracted key not match the expected key?                      → format-violation
-  [ ] Did you rename any saved file (wrong extension, wrong path, wrong case)? → format-violation
-  [ ] Did any agent save to a wrong directory (project root vs sections/)?   → format-violation
-  [ ] Did any debate step output end up < 2KB (stub) or get written from     → format-violation
-       orchestrator memory?                                                       (AND retry as noted above)
-  [ ] Did you use the JSON extraction fallback chain at all for any agent?   → format-violation (for each)
-
-Data gaps:
-  [ ] Did any agent flag missing DataPacket fields?                          → data-gap
-  [ ] Did the DataPacket slice step get skipped for any agent (especially    → data-gap, description: "slice skipped for {agent}"
-       the Bear in the debate)?
-  [ ] Were any Pitch Deck inheritance sections missing/empty when Phase 1    → data-gap
-       agents were dispatched?
-```
-
-**How to verify your sweep is complete:**
+**Part 1 — Scripted file-evidence sweep.** Run this verbatim:
 
 ```bash
-cat observatory/runs/{RUN_ID}/orchestrator.json
+node scripts/observatory-sweep-debate.js {RUN_ID} {TICKER}
 ```
 
-Look at the four arrays: `retries`, `stallsDetected`, `formatViolations`, `dataGaps`. Ask yourself: "Does this honestly reflect what happened during the run, or does it look cleaner than reality?" If the run had ANY mid-wave problem-solving and these arrays are still empty, you haven't logged enough.
+Detects (from saved debate artifacts): bull weak-strength concessions, bull factual errors acknowledged in rebuttal narratives, judge schema drift (missing judgeScore/pointNumber), missing-or-miscounted scoreboard, stub debate-step files (<2KB), markdown-fence wrap survival. Prints `logged N events (...)` summary. Cannot see what's not in the files — that's Part 2.
 
-This step is retrospective on purpose — logging during the wave competes with the "get it done" mode. Logging now, one step before finalize, fits natural bookkeeping.
+**Part 2 — Orchestrator-memory checklist.** Answer honestly. **When in doubt, log it.**
+
+```
+[ ] Did any agent timeout, stall, or fail and get re-dispatched?          → retry (+ stall if >15min)
+[ ] Did any "Stream idle timeout" or partial-response error occur?         → stall
+[ ] Did you trim any agent's context/prompt and re-dispatch?               → retry, reason: "trimmed prompt to avoid timeout"
+[ ] Did you write a debate step's output from orchestrator memory          → retry, reason: "orchestrator wrote from memory"
+     instead of re-dispatching the agent?                                     (AND format-violation: "protocol violation — orchestrator as agent")
+[ ] Did any agent use the Write tool when protocol said "return JSON"?     → format-violation
+[ ] Did any agent wrap JSON in preamble text ("Now I have...") in the      → format-violation
+     stream you observed (gone after extraction)?
+[ ] Did you use the JSON extraction fallback chain for any agent?          → format-violation per agent
+[ ] Did the rebuttal acknowledge any factual concession the script's       → format-violation per concession
+     regex missed (Bull conceding to Bear with phrasing other than
+     "factual error" / "the bear correctly caught")?
+[ ] Did any agent flag missing DataPacket fields?                          → data-gap
+[ ] Were any Pitch Deck inheritance sections missing/empty when Phase 1    → data-gap
+     agents were dispatched?
+```
+
+For each `yes`, run the corresponding `observatory-record-event.js` command (see [Retry Logic](#retry-logic) and [Log Format Violations](#required-log-format-violations) for syntax).
+
+**Verify:** `cat observatory/runs/{RUN_ID}/orchestrator.json` — does it honestly reflect the run, or look cleaner than reality?
 
 ## Step 9: Finalize Observatory Capture
 

@@ -1,19 +1,19 @@
 ---
 type: agent-profile
 agentRole: risk-analyst
-lastUpdated: 2026-04-17T13:35:44.621Z
-runCount: 17
-avgCost: 0.00
-avgDuration: 1010
+lastUpdated: 2026-04-18T05:34:57.931Z
+runCount: 24
+avgCost: 0.61
+avgDuration: 1237
 verdictDistribution:
   FAIL: 4
-  WATCHLIST: 13
+  WATCHLIST: 19
 tags: [agent, risk-analyst]
 ---
 
 ## Behavioral Summary
 
-Agent **risk-analyst** has been observed across 17 run(s). Average duration: 1010s. Average cost: $0.00.
+Agent **risk-analyst** has been observed across 24 run(s). Average duration: 1237s. Average cost: $0.61.
 
 ## Run History
 
@@ -36,6 +36,13 @@ Agent **risk-analyst** has been observed across 17 run(s). Average duration: 101
 | 20260416-205941-SFM-fullStory | SFM | fullStory | 1 | 299s | 1 | WATCHLIST |
 | 20260416-210309-LULU-fullStory | LULU | fullStory | 1 | 390s | 1 | WATCHLIST |
 | 20260416-210339-POOL-fullStory | POOL | fullStory | 1 | 300s | 1 | WATCHLIST |
+| 20260417-082354-LULU-pitchDeck | LULU | pitchDeck | 3 | 9987s | 1 | WATCHLIST |
+| 20260417-175335-LULU-fullStory | LULU | fullStory | 1 | 278s | 1 | WATCHLIST |
+| 20260417-175437-SFM-pitchDeck | SFM | pitchDeck | 3 | 518s | 1 | WATCHLIST |
+| 20260417-183135-POOL-pitchDeck | POOL | pitchDeck | 3 | 564s | 1 | WATCHLIST |
+| 20260417-185013-SFM-fullStory | SFM | fullStory | 1 | 382s | 1 | WATCHLIST |
+| 20260417-185013-SFM-fullStory | SFM | fullStory | 2 | 375s | 1 | ? |
+| 20260417-192126-POOL-fullStory | POOL | fullStory | 1 | 401s | 1 | WATCHLIST |
 
 ## Failure Modes
 
@@ -43,7 +50,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.00 per run.
+Average cost: $0.61 per run.
 
 ## Quality Trends
 

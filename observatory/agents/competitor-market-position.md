@@ -1,19 +1,19 @@
 ---
 type: agent-profile
 agentRole: competitor-market-position
-lastUpdated: 2026-04-17T04:03:05.931Z
-runCount: 8
-avgCost: 0.00
-avgDuration: 438
+lastUpdated: 2026-04-18T02:20:48.198Z
+runCount: 11
+avgCost: 0.31
+avgDuration: 627
 verdictDistribution:
-  WATCHLIST: 3
-  PASS: 5
+  WATCHLIST: 4
+  PASS: 7
 tags: [agent, competitor-market-position]
 ---
 
 ## Behavioral Summary
 
-Agent **competitor-market-position** has been observed across 8 run(s). Average duration: 438s. Average cost: $0.00.
+Agent **competitor-market-position** has been observed across 11 run(s). Average duration: 627s. Average cost: $0.31.
 
 ## Run History
 
@@ -27,6 +27,9 @@ Agent **competitor-market-position** has been observed across 8 run(s). Average 
 | 20260416-194956-POOL-pitchDeck | POOL | pitchDeck | 1 | 368s | 1 | PASS |
 | 20260416-195002-SFM-pitchDeck | SFM | pitchDeck | 1 | 322s | 1 | PASS |
 | 20260416-195056-LULU-pitchDeck | LULU | pitchDeck | 1 | 432s | 1 | WATCHLIST |
+| 20260417-082354-LULU-pitchDeck | LULU | pitchDeck | 1 | 2425s | 1 | WATCHLIST |
+| 20260417-175437-SFM-pitchDeck | SFM | pitchDeck | 1 | 595s | 1 | PASS |
+| 20260417-183135-POOL-pitchDeck | POOL | pitchDeck | 1 | 376s | 1 | PASS |
 
 ## Failure Modes
 
@@ -34,7 +37,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.00 per run.
+Average cost: $0.31 per run.
 
 ## Quality Trends
 

@@ -94,6 +94,8 @@ For each upstream section (S1-S5), you receive:
 
 You inherit all of this. You do NOT need to recompute anything. Your job is to synthesize, defend, and compose.
 
+**Output discipline (applies to ALL roles below).** Every role returns ONLY the JSON object specified in its Output Format subsection. First character must be `{`, last character must be `}`. No preamble ("Now I have all the data...", "Let me compile..."), no postamble, no markdown fence wrap, no commentary. Return JSON inline — do NOT use the Write tool to save debate-step-*.json or inversion_rebuttal.json directly (Sprint 4 SFM Bear and Compose violations). The orchestrator now logs format-violation events for any of these — they are no longer silently stripped.
+
 ---
 
 ## Role 1: Bull Thesis (Step 1)
@@ -109,6 +111,10 @@ You inherit all of this. You do NOT need to recompute anything. Your job is to s
 - **Confirming long-term thesis narratives** — reviews from respected investors who hold, shareholder letters referencing the company, industry analyst bull cases
 
 The primary job is still distilling the findings from Sections 1-5 into a coherent thesis. Web search is for sharpening and validating — not inventing. Do not use web search to manufacture a thesis the sections don't support.
+
+**Source quality gate (added Sprint 5 after EXP-003 surfaced Bull factual errors).** Prefer primary sources: SEC filings, company press releases, earnings call transcripts, analyst firm publications dated within the last 90 days. Avoid content aggregators (ibtimes, *.fool summary pieces, generic Seeking Alpha listicles, undated "10 stocks Buffett is buying" articles) — they are second-derivative and frequently misreport target prices, ownership data, and analyst actions. When citing analyst price targets, name the firm AND the date AND the direction explicitly (e.g. "Wells Fargo cut PT to $215 on April 8, 2026" — never paraphrase as "Wells Fargo raised target to $275" without verifying the underlying release).
+
+**Guru ownership rule (Rule One Operating Rule #2).** Guru ownership is **context, not confirmation.** Do NOT use guru ownership percentages, 13F filings, or insider buying as a thesis-strength point in itself. It can support a thesis built on business fundamentals; it cannot be the thesis. A bull thesis point that reads "Phil Town holds 26%, Burry holds 26%, therefore conviction" violates this rule and the rebuttal will (correctly) concede it.
 
 ### Bull Thesis Process
 

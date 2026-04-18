@@ -1,21 +1,22 @@
 ---
 type: agent-profile
 agentRole: synthesis-writer-rebuttal
-lastUpdated: 2026-04-17T13:35:44.623Z
-runCount: 7
-avgCost: 0.00
-avgDuration: 397
+lastUpdated: 2026-04-18T05:33:49.521Z
+runCount: 9
+avgCost: 0.23
+avgDuration: 375
 verdictDistribution:
   PASS: 1
-  WATCHLIST: 3
+  WATCHLIST: 4
   REBUTTAL: 2
   NA: 1
+  MIXED: 1
 tags: [agent, synthesis-writer-rebuttal]
 ---
 
 ## Behavioral Summary
 
-Agent **synthesis-writer-rebuttal** has been observed across 7 run(s). Average duration: 397s. Average cost: $0.00.
+Agent **synthesis-writer-rebuttal** has been observed across 9 run(s). Average duration: 375s. Average cost: $0.23.
 
 ## Run History
 
@@ -28,6 +29,8 @@ Agent **synthesis-writer-rebuttal** has been observed across 7 run(s). Average d
 | 20260416-205941-SFM-fullStory | SFM | fullStory | 2 | 129s | 1 | REBUTTAL |
 | 20260416-210309-LULU-fullStory | LULU | fullStory | 2 | 174s | 1 | REBUTTAL |
 | 20260416-210339-POOL-fullStory | POOL | fullStory | 2 | 189s | 1 | NA |
+| 20260417-175335-LULU-fullStory | LULU | fullStory | 2 | 329s | 1 | WATCHLIST |
+| 20260417-192126-POOL-fullStory | POOL | fullStory | 2 | 268s | 1 | MIXED |
 
 ## Failure Modes
 
@@ -35,7 +38,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.00 per run.
+Average cost: $0.23 per run.
 
 ## Quality Trends
 

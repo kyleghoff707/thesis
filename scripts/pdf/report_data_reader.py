@@ -60,6 +60,10 @@ class ReportData:
         if stage == 'pitch-deck' and not self.report:
             self.report = self._load_json(os.path.join(self.report_dir, 'pitch-deck.json'))
 
+        # Fallback for full-story stage: try full-story.json
+        if stage == 'full-story' and not self.report:
+            self.report = self._load_json(os.path.join(self.report_dir, 'full-story.json'))
+
         # Load data packet (shared financial data for charts)
         self.data_packet = self._load_json(os.path.join(self.report_dir, 'data-packet.json'))
 

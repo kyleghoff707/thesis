@@ -1,12 +1,12 @@
 ---
 type: agent-profile
 agentRole: management-evaluator
-lastUpdated: 2026-04-17T13:35:44.621Z
-runCount: 16
-avgCost: 0.00
-avgDuration: 609
+lastUpdated: 2026-04-18T05:34:57.931Z
+runCount: 22
+avgCost: 0.30
+avgDuration: 662
 verdictDistribution:
-  WATCHLIST: 12
+  WATCHLIST: 18
   PASS: 2
   FAIL: 2
 tags: [agent, management-evaluator]
@@ -14,7 +14,7 @@ tags: [agent, management-evaluator]
 
 ## Behavioral Summary
 
-Agent **management-evaluator** has been observed across 16 run(s). Average duration: 609s. Average cost: $0.00.
+Agent **management-evaluator** has been observed across 22 run(s). Average duration: 662s. Average cost: $0.30.
 
 ## Run History
 
@@ -36,6 +36,12 @@ Agent **management-evaluator** has been observed across 16 run(s). Average durat
 | 20260416-205941-SFM-fullStory | SFM | fullStory | 1 | 319s | 1 | WATCHLIST |
 | 20260416-210309-LULU-fullStory | LULU | fullStory | 1 | 390s | 1 | WATCHLIST |
 | 20260416-210339-POOL-fullStory | POOL | fullStory | 1 | 356s | 1 | WATCHLIST |
+| 20260417-082354-LULU-pitchDeck | LULU | pitchDeck | 2 | 2826s | 1 | WATCHLIST |
+| 20260417-175335-LULU-fullStory | LULU | fullStory | 1 | 340s | 1 | WATCHLIST |
+| 20260417-175437-SFM-pitchDeck | SFM | pitchDeck | 2 | 548s | 1 | WATCHLIST |
+| 20260417-183135-POOL-pitchDeck | POOL | pitchDeck | 2 | 354s | 1 | WATCHLIST |
+| 20260417-185013-SFM-fullStory | SFM | fullStory | 1 | 376s | 1 | WATCHLIST |
+| 20260417-192126-POOL-fullStory | POOL | fullStory | 1 | 383s | 1 | WATCHLIST |
 
 ## Failure Modes
 
@@ -43,7 +49,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.00 per run.
+Average cost: $0.30 per run.
 
 ## Quality Trends
 

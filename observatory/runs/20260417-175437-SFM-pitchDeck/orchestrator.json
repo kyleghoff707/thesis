@@ -1,0 +1,155 @@
+{
+  "runId": "20260417-175437-SFM-pitchDeck",
+  "dispatches": [
+    {
+      "wave": 0,
+      "stage": "PSR",
+      "agents": [
+        "annual-reader-FY2021",
+        "annual-reader-FY2022",
+        "annual-reader-FY2023",
+        "annual-reader-FY2024",
+        "annual-reader-FY2025",
+        "quarterly-reader"
+      ],
+      "parallel": true,
+      "durationSeconds": 540
+    },
+    {
+      "wave": 1,
+      "stage": "Business Fundamentals",
+      "agents": [
+        "business-analyst",
+        "competitor-market-position"
+      ],
+      "parallel": true,
+      "durationSeconds": 595
+    },
+    {
+      "wave": 2,
+      "stage": "Deep Analysis",
+      "agents": [
+        "competitor-moats",
+        "financial-analyst",
+        "management-evaluator"
+      ],
+      "parallel": true,
+      "durationSeconds": 548
+    },
+    {
+      "wave": 3,
+      "stage": "Risk & Valuation",
+      "agents": [
+        "risk-analyst",
+        "valuation-specialist"
+      ],
+      "parallel": true,
+      "durationSeconds": 518
+    },
+    {
+      "wave": 4,
+      "stage": "Synthesis",
+      "agents": [
+        "synthesis-writer"
+      ],
+      "parallel": false,
+      "durationSeconds": 410
+    }
+  ],
+  "retries": [],
+  "stallsDetected": [],
+  "formatViolations": [
+    {
+      "agent": "annual-reader-FY2021",
+      "violation": "preamble text before JSON (Now I have all the data... Let me compile)",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    },
+    {
+      "agent": "annual-reader-FY2022",
+      "violation": "preamble text before JSON (Now I have all the data... Let me compile)",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    },
+    {
+      "agent": "annual-reader-FY2023",
+      "violation": "preamble text before JSON (Now I have all the data... Let me compile)",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    },
+    {
+      "agent": "annual-reader-FY2024",
+      "violation": "preamble text before JSON (Now I have all the data... Let me compile)",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    },
+    {
+      "agent": "annual-reader-FY2025",
+      "violation": "preamble text before JSON (Now I have all the data... Let me compile)",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    },
+    {
+      "agent": "quarterly-reader",
+      "violation": "preamble text before JSON (Now I have all the data... Let me compile)",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    },
+    {
+      "agent": "business-analyst",
+      "violation": "preamble text before JSON (I now have enough data... Let me compile)",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    },
+    {
+      "agent": "competitor-market-position",
+      "violation": "preamble and postamble commentary around JSON; also saved file under wrong filename (market-position.json instead of market_position.json)",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    },
+    {
+      "agent": "competitor-moats",
+      "violation": "preamble/commentary before/after JSON",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    },
+    {
+      "agent": "financial-analyst",
+      "violation": "preamble/commentary before/after JSON",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    },
+    {
+      "agent": "management-evaluator",
+      "violation": "preamble/commentary before/after JSON",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    },
+    {
+      "agent": "risk-analyst",
+      "violation": "saved to pest_risks.json instead of pest.json; key was 'pest_risks' instead of 'pest'; orchestrator renamed",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    },
+    {
+      "agent": "valuation-specialist",
+      "violation": "preamble commentary before and after JSON",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    }
+  ],
+  "dataGaps": []
+}

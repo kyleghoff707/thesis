@@ -1,0 +1,18 @@
+{
+  "runId": "20260417-182604-POOL-onePager",
+  "dispatches": [
+    {
+      "wave": 0,
+      "stage": "One Pager",
+      "agents": [
+        "one-pager"
+      ],
+      "parallel": false,
+      "durationSeconds": 206
+    }
+  ],
+  "retries": [],
+  "stallsDetected": [],
+  "formatViolations": [],
+  "dataGaps": []
+}

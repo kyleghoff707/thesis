@@ -1,0 +1,32 @@
+{
+  "runId": "20260417-182604-POOL-onePager",
+  "timestamp": "2026-04-18T01:26:04.736Z",
+  "completedAt": "2026-04-18T01:30:40.172Z",
+  "controlVariables": {
+    "ticker": "POOL",
+    "stage": "onePager",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "95633dcf17d2a403",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": "BUY",
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": false,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 206,
+    "totalCost": 0.7354854000000001,
+    "totalTokens": 94293,
+    "totalInputTokens": 56576,
+    "totalOutputTokens": 37717,
+    "toolUses": 17,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 6,
+    "sectionsExpected": 6,
+    "errorsCount": 0
+  },
+  "agentFiles": [
+    "agents/wave-0-one-pager.json"
+  ]
+}

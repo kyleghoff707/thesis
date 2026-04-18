@@ -1,19 +1,19 @@
 ---
 type: agent-profile
 agentRole: one-pager
-lastUpdated: 2026-04-17T14:19:37.062Z
-runCount: 9
-avgCost: 0.00
-avgDuration: 256
+lastUpdated: 2026-04-18T01:30:42.812Z
+runCount: 12
+avgCost: 0.22
+avgDuration: 263
 verdictDistribution:
-  WATCHLIST: 42
-  PASS: 12
+  WATCHLIST: 54
+  PASS: 18
 tags: [agent, one-pager]
 ---
 
 ## Behavioral Summary
 
-Agent **one-pager** has been observed across 9 run(s). Average duration: 256s. Average cost: $0.00.
+Agent **one-pager** has been observed across 12 run(s). Average duration: 263s. Average cost: $0.22.
 
 ## Run History
 
@@ -28,6 +28,9 @@ Agent **one-pager** has been observed across 9 run(s). Average duration: 256s. A
 | 20260416-194200-SFM-onePager | SFM | onePager | 0 | 195s | 6 | PASS, PASS, PASS, PASS, PASS, PASS |
 | 20260416-194202-LULU-onePager | LULU | onePager | 0 | 407s | 6 | WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST |
 | 20260417-071237-TSCO-onePager | TSCO | onePager | 0 | 203s | 6 | WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST |
+| 20260417-081604-LULU-onePager | LULU | onePager | 0 | 309s | 6 | WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST |
+| 20260417-174638-SFM-onePager | SFM | onePager | 0 | 336s | 6 | PASS, PASS, PASS, PASS, PASS, PASS |
+| 20260417-182604-POOL-onePager | POOL | onePager | 0 | 206s | 6 | WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST |
 
 ## Failure Modes
 
@@ -35,7 +38,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.00 per run.
+Average cost: $0.22 per run.
 
 ## Quality Trends
 

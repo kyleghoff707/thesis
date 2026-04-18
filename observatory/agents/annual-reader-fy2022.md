@@ -1,26 +1,24 @@
 ---
 type: agent-profile
-agentRole: annual-reader-fy2022
-lastUpdated: 2026-04-17T02:02:08.734Z
-runCount: 3
-avgCost: 0.00
-avgDuration: 309
+agentRole: annual-reader-FY2022
+lastUpdated: 2026-04-18T02:20:48.197Z
+runCount: 1
+avgCost: 1.10
+avgDuration: 282
 verdictDistribution:
-  PASS: 3
-tags: [agent, annual-reader-fy2022]
+  N/A: 1
+tags: [agent, annual-reader-FY2022]
 ---
 
 ## Behavioral Summary
 
-Agent **annual-reader-fy2022** has been observed across 3 run(s). Average duration: 309s. Average cost: $0.00.
+Agent **annual-reader-FY2022** has been observed across 1 run(s). Average duration: 282s. Average cost: $1.10.
 
 ## Run History
 
 | Run ID | Ticker | Stage | Wave | Duration | Sections | Verdict |
 |--------|--------|-------|------|----------|----------|---------|
-| 20260416-074532-POOL-pitchDeck | POOL | pitchDeck | 0 | 451s | 1 | PASS |
-| 20260416-074720-SFM-pitchDeck | SFM | pitchDeck | 0 | 259s | 1 | PASS |
-| 20260416-074734-LULU-pitchDeck | LULU | pitchDeck | 0 | 217s | 1 | PASS |
+| 20260417-183135-POOL-pitchDeck | POOL | pitchDeck | 0 | 282s | 1 | N/A |
 
 ## Failure Modes
 
@@ -28,7 +26,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.00 per run.
+Average cost: $1.10 per run.
 
 ## Quality Trends
 

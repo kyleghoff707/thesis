@@ -1,0 +1,41 @@
+{
+  "runId": "20260417-082354-LULU-pitchDeck",
+  "timestamp": "2026-04-17T15:23:54.161Z",
+  "completedAt": "2026-04-18T00:52:59.853Z",
+  "controlVariables": {
+    "ticker": "LULU",
+    "stage": "pitchDeck",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "d56510fb64547787",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": "BUY",
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": false,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 34200,
+    "totalCost": 9.75,
+    "totalTokens": 1250000,
+    "totalInputTokens": 750000,
+    "totalOutputTokens": 500000,
+    "toolUses": 270,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 11,
+    "sectionsExpected": 11,
+    "errorsCount": 0
+  },
+  "agentFiles": [
+    "agents/wave-0-annual-reader.json",
+    "agents/wave-0-quarterly-reader.json",
+    "agents/wave-1-business-analyst.json",
+    "agents/wave-1-competitor-market-position.json",
+    "agents/wave-2-competitor-moats.json",
+    "agents/wave-2-financial-analyst.json",
+    "agents/wave-2-management-evaluator.json",
+    "agents/wave-3-risk-analyst.json",
+    "agents/wave-3-valuation-specialist.json",
+    "agents/wave-4-synthesis-writer.json"
+  ]
+}

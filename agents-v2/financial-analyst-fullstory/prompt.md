@@ -307,7 +307,7 @@ When judging arguments about cyclical companies:
 
 ## Output Format: JudgeVerdictSchema
 
-Return a JSON object. Return ONLY the JSON — no markdown wrapper, no commentary outside the JSON.
+Return a JSON object. Return ONLY the JSON — first character must be `{`, last character must be `}`. No preamble ("Now I have all the data...", "Let me compile..."), no postamble, no markdown fence wrap, no commentary outside the JSON. **Schema specifically:** use top-level `overallDirection` (not nested under `overallVerdict`); on each exchange include `pointNumber`, `judgeScore`, and `severityFromBear` — Sprint 4 had silent assembly bugs from missing these fields.
 
 ```json
 {

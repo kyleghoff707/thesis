@@ -2,10 +2,10 @@
 type: ticker-page
 ticker: LULU
 companyName: LULU
-lastUpdated: 2026-04-17T13:26:33.071Z
-runCount: 9
+lastUpdated: 2026-04-18T05:33:44.493Z
+runCount: 12
 expectedVerdict: not set
-verdictHistory: [WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST]
+verdictHistory: [WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST, WATCHLIST]
 verdictAccuracy: 0.00
 tags: [ticker, LULU]
 ---
@@ -23,37 +23,40 @@ tags: [ticker, LULU]
 | 20260416-194202-LULU-onePager | onePager | WATCHLIST | BUY | MISMATCH | $0.00 | 7min | 6/6 |
 | 20260416-195056-LULU-pitchDeck | pitchDeck | WATCHLIST | BUY | MISMATCH | $7.80 | 42min | 10/11 |
 | 20260416-210309-LULU-fullStory | fullStory | WATCHLIST | BUY | MISMATCH | $4.68 | 33min | 6/6 |
+| 20260417-081604-LULU-onePager | onePager | WATCHLIST | BUY | MISMATCH | $0.70 | 5min | 6/6 |
+| 20260417-082354-LULU-pitchDeck | pitchDeck | WATCHLIST | BUY | MISMATCH | $9.75 | 570min | 11/11 |
+| 20260417-175335-LULU-fullStory | fullStory | WATCHLIST | BUY | MISMATCH | $7.57 | 30min | 6/6 |
 
 ## Verdict Stability
 
-All 9 runs returned WATCHLIST.
+All 12 runs returned WATCHLIST.
 
 ## Agent Performance
 
 | Agent | Runs | Avg Duration |
 |-------|------|--------------|
-| [[agents/one-pager]] | 2 | 341s |
+| [[agents/one-pager]] | 3 | 330s |
 | [[agents/annual-reader-fy2022]] | 1 | 217s |
 | [[agents/annual-reader-fy2023]] | 1 | 324s |
 | [[agents/annual-reader-fy2024]] | 1 | 513s |
 | [[agents/annual-reader-fy2025]] | 1 | 287s |
 | [[agents/annual-reader-fy2026]] | 1 | 359s |
-| [[agents/quarterly-reader]] | 2 | 487s |
-| [[agents/business-analyst]] | 4 | 1233s |
-| [[agents/competitor-market-position]] | 2 | 396s |
-| [[agents/competitor-moats]] | 2 | 732s |
-| [[agents/financial-analyst]] | 2 | 672s |
-| [[agents/management-evaluator]] | 4 | 473s |
-| [[agents/risk-analyst]] | 4 | 1353s |
-| [[agents/valuation-specialist]] | 4 | 390s |
-| [[agents/synthesis-writer]] | 2 | 1345s |
-| [[agents/competitor-evaluator]] | 2 | 2251s |
-| [[agents/financial-analyst-judge]] | 2 | 99s |
-| [[agents/risk-analyst-bear]] | 2 | 472s |
-| [[agents/synthesis-writer-bull]] | 2 | 103s |
-| [[agents/synthesis-writer-compose]] | 2 | 166s |
-| [[agents/synthesis-writer-rebuttal]] | 2 | 120s |
-| [[agents/annual-reader]] | 1 | 492s |
+| [[agents/quarterly-reader]] | 3 | 498s |
+| [[agents/business-analyst]] | 6 | 959s |
+| [[agents/competitor-market-position]] | 3 | 1072s |
+| [[agents/competitor-moats]] | 3 | 1480s |
+| [[agents/financial-analyst]] | 3 | 499s |
+| [[agents/management-evaluator]] | 6 | 843s |
+| [[agents/risk-analyst]] | 6 | 2613s |
+| [[agents/valuation-specialist]] | 6 | 871s |
+| [[agents/synthesis-writer]] | 3 | 989s |
+| [[agents/competitor-evaluator]] | 3 | 1627s |
+| [[agents/financial-analyst-judge]] | 3 | 159s |
+| [[agents/risk-analyst-bear]] | 3 | 403s |
+| [[agents/synthesis-writer-bull]] | 3 | 147s |
+| [[agents/synthesis-writer-compose]] | 3 | 216s |
+| [[agents/synthesis-writer-rebuttal]] | 3 | 190s |
+| [[agents/annual-reader]] | 2 | 406s |
 
 ## DataPacket Notes
 

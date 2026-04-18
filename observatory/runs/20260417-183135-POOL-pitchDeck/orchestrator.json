@@ -1,0 +1,71 @@
+{
+  "runId": "20260417-183135-POOL-pitchDeck",
+  "dispatches": [
+    {
+      "wave": 0,
+      "stage": "PSR",
+      "agents": [
+        "annual-reader-FY2021",
+        "annual-reader-FY2022",
+        "annual-reader-FY2023",
+        "annual-reader-FY2024",
+        "annual-reader-FY2025",
+        "quarterly-reader"
+      ],
+      "parallel": true,
+      "durationSeconds": 669
+    },
+    {
+      "wave": 1,
+      "stage": "Business Fundamentals",
+      "agents": [
+        "business-analyst",
+        "competitor-market-position"
+      ],
+      "parallel": true,
+      "durationSeconds": 396
+    },
+    {
+      "wave": 2,
+      "stage": "Deep Analysis",
+      "agents": [
+        "competitor-moats",
+        "financial-analyst",
+        "management-evaluator"
+      ],
+      "parallel": true,
+      "durationSeconds": 558
+    },
+    {
+      "wave": 3,
+      "stage": "Risk & Valuation",
+      "agents": [
+        "risk-analyst",
+        "valuation-specialist"
+      ],
+      "parallel": true,
+      "durationSeconds": 564
+    },
+    {
+      "wave": 4,
+      "stage": "Synthesis",
+      "agents": [
+        "synthesis-writer"
+      ],
+      "parallel": false,
+      "durationSeconds": 428
+    }
+  ],
+  "retries": [],
+  "stallsDetected": [],
+  "formatViolations": [
+    {
+      "agent": "quarterly-reader",
+      "violation": "emitted invalid JSON with unary-plus prefix (: +0.01); orchestrator sed-fixed before parse",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    }
+  ],
+  "dataGaps": []
+}

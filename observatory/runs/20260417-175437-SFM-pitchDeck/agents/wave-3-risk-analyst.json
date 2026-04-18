@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-175437-SFM-pitchDeck",
+  "agentRole": "risk-analyst",
+  "wave": 3,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "pest"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "pest",
+        "verdict": "WATCHLIST",
+        "confidence": "MEDIUM",
+        "redFlagCount": 6,
+        "citationCount": 18,
+        "narrativeLength": 9161
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 69049,
+    "outputTokens": 46033,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 12,
+    "cost": 1.017642
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T01:41:07.532Z",
+    "durationSeconds": 518
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

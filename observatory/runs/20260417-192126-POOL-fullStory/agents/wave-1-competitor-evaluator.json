@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-192126-POOL-fullStory",
+  "agentRole": "competitor-evaluator",
+  "wave": 1,
+  "stage": "fullStory",
+  "sectionsAssigned": [
+    "moat_checklist"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "moat_checklist",
+        "verdict": "PASS",
+        "confidence": "HIGH",
+        "redFlagCount": 4,
+        "citationCount": 30,
+        "narrativeLength": 57633
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 69068,
+    "outputTokens": 46045,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 28,
+    "cost": 1.1778790000000001
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T02:29:28.205Z",
+    "durationSeconds": 423
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

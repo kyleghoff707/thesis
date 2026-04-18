@@ -1,18 +1,18 @@
 ---
 type: agent-profile
 agentRole: valuation-specialist
-lastUpdated: 2026-04-17T13:35:44.622Z
-runCount: 16
-avgCost: 0.00
-avgDuration: 928
+lastUpdated: 2026-04-18T05:34:57.931Z
+runCount: 22
+avgCost: 0.59
+avgDuration: 933
 verdictDistribution:
-  WATCHLIST: 16
+  WATCHLIST: 22
 tags: [agent, valuation-specialist]
 ---
 
 ## Behavioral Summary
 
-Agent **valuation-specialist** has been observed across 16 run(s). Average duration: 928s. Average cost: $0.00.
+Agent **valuation-specialist** has been observed across 22 run(s). Average duration: 933s. Average cost: $0.59.
 
 ## Run History
 
@@ -34,6 +34,12 @@ Agent **valuation-specialist** has been observed across 16 run(s). Average durat
 | 20260416-205941-SFM-fullStory | SFM | fullStory | 1 | 320s | 1 | WATCHLIST |
 | 20260416-210309-LULU-fullStory | LULU | fullStory | 1 | 390s | 1 | WATCHLIST |
 | 20260416-210339-POOL-fullStory | POOL | fullStory | 1 | 289s | 1 | WATCHLIST |
+| 20260417-082354-LULU-pitchDeck | LULU | pitchDeck | 3 | 3333s | 1 | WATCHLIST |
+| 20260417-175335-LULU-fullStory | LULU | fullStory | 1 | 335s | 1 | WATCHLIST |
+| 20260417-175437-SFM-pitchDeck | SFM | pitchDeck | 3 | 464s | 1 | WATCHLIST |
+| 20260417-183135-POOL-pitchDeck | POOL | pitchDeck | 3 | 449s | 1 | WATCHLIST |
+| 20260417-185013-SFM-fullStory | SFM | fullStory | 1 | 702s | 1 | WATCHLIST |
+| 20260417-192126-POOL-fullStory | POOL | fullStory | 1 | 397s | 1 | WATCHLIST |
 
 ## Failure Modes
 
@@ -41,7 +47,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.00 per run.
+Average cost: $0.59 per run.
 
 ## Quality Trends
 

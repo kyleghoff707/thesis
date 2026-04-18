@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-082354-LULU-pitchDeck",
+  "agentRole": "competitor-moats",
+  "wave": 2,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "barriers_moats"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "barriers_moats",
+        "verdict": "WATCHLIST",
+        "confidence": "HIGH",
+        "redFlagCount": 5,
+        "citationCount": 23,
+        "narrativeLength": 7000
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 82370,
+    "outputTokens": 54914,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 10,
+    "cost": 1.1708200000000002
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-17T17:05:45.915Z",
+    "durationSeconds": 2976
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

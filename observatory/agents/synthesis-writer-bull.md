@@ -1,21 +1,22 @@
 ---
 type: agent-profile
 agentRole: synthesis-writer-bull
-lastUpdated: 2026-04-17T13:35:44.622Z
-runCount: 7
-avgCost: 0.00
-avgDuration: 90
+lastUpdated: 2026-04-18T05:33:49.521Z
+runCount: 9
+avgCost: 0.23
+avgDuration: 126
 verdictDistribution:
   PASS: 2
   WATCHLIST: 2
-  BULL: 2
+  BULL: 3
   NA: 1
+  NEUTRAL: 1
 tags: [agent, synthesis-writer-bull]
 ---
 
 ## Behavioral Summary
 
-Agent **synthesis-writer-bull** has been observed across 7 run(s). Average duration: 90s. Average cost: $0.00.
+Agent **synthesis-writer-bull** has been observed across 9 run(s). Average duration: 126s. Average cost: $0.23.
 
 ## Run History
 
@@ -28,6 +29,8 @@ Agent **synthesis-writer-bull** has been observed across 7 run(s). Average durat
 | 20260416-205941-SFM-fullStory | SFM | fullStory | 2 | 105s | 1 | BULL |
 | 20260416-210309-LULU-fullStory | LULU | fullStory | 2 | 141s | 1 | BULL |
 | 20260416-210339-POOL-fullStory | POOL | fullStory | 2 | 102s | 1 | NA |
+| 20260417-175335-LULU-fullStory | LULU | fullStory | 2 | 235s | 1 | NEUTRAL |
+| 20260417-192126-POOL-fullStory | POOL | fullStory | 2 | 273s | 1 | BULL |
 
 ## Failure Modes
 
@@ -35,7 +38,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.00 per run.
+Average cost: $0.23 per run.
 
 ## Quality Trends
 

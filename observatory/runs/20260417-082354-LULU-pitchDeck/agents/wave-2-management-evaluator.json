@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-082354-LULU-pitchDeck",
+  "agentRole": "management-evaluator",
+  "wave": 2,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "management"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "management",
+        "verdict": "WATCHLIST",
+        "confidence": "MEDIUM",
+        "redFlagCount": 6,
+        "citationCount": 22,
+        "narrativeLength": 7111
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 80251,
+    "outputTokens": 53500,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 5,
+    "cost": 1.093253
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-17T17:05:46.004Z",
+    "durationSeconds": 2826
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

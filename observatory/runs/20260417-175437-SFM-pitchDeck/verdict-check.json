@@ -1,0 +1,25 @@
+{
+  "runId": "20260417-175437-SFM-pitchDeck",
+  "ticker": "SFM",
+  "expectedVerdict": "BUY",
+  "expectedSource": "known-verdicts.json",
+  "actualVerdict": "WATCHLIST",
+  "match": false,
+  "sectionVerdicts": {
+    "radar": "PASS",
+    "simple_predictable": "PASS",
+    "market_position": "PASS",
+    "barriers_moats": "WATCHLIST",
+    "fcf": "PASS",
+    "management": "WATCHLIST",
+    "roe_roic_debt": "PASS",
+    "balance_sheet": "PASS",
+    "pest": "WATCHLIST",
+    "valuation": "WATCHLIST",
+    "overall_verdict": "WATCHLIST"
+  },
+  "verdictDistribution": {
+    "PASS": 6,
+    "WATCHLIST": 5
+  }
+}

@@ -362,6 +362,8 @@ You receive the following fields from the DataPacket:
 
 You produce structured JSON findings consumed by ALL downstream agents. Your output is NOT a report section — it is raw extracted intelligence.
 
+**Output discipline.** Return ONLY the JSON object below — first character must be `{`, last character must be `}`. No preamble ("Now I have all the data...", "Let me compile..."), no postamble, no markdown fence wrap, no commentary. Do NOT emit invalid JSON tokens like `+0.01` (use `0.01` — Sprint 4 POOL pitchDeck quarterly-reader emitted unary-plus prefix that broke parse). The orchestrator now logs format-violation events for any of these — no longer silently stripped.
+
 ```json
 {
   "agentRole": "quarterly-reader",

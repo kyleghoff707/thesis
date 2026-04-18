@@ -1,0 +1,57 @@
+{
+  "runId": "20260417-183135-POOL-pitchDeck",
+  "agentRole": "business-analyst",
+  "wave": 1,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "radar",
+    "simple_predictable"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 2,
+    "sections": [
+      {
+        "key": "radar",
+        "verdict": "WATCHLIST",
+        "confidence": "HIGH",
+        "redFlagCount": 10,
+        "citationCount": 30,
+        "narrativeLength": 52200
+      },
+      {
+        "key": "simple_predictable",
+        "verdict": "WATCHLIST",
+        "confidence": "HIGH",
+        "redFlagCount": 10,
+        "citationCount": 30,
+        "narrativeLength": 52200
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 60691,
+    "outputTokens": 40460,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 31,
+    "cost": 1.098973
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T01:51:57.641Z",
+    "durationSeconds": 396
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

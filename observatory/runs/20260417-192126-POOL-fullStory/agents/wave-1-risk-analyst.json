@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-192126-POOL-fullStory",
+  "agentRole": "risk-analyst",
+  "wave": 1,
+  "stage": "fullStory",
+  "sectionsAssigned": [
+    "event_analysis"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "event_analysis",
+        "verdict": "WATCHLIST",
+        "confidence": "HIGH",
+        "redFlagCount": 6,
+        "citationCount": 18,
+        "narrativeLength": 45333
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 59474,
+    "outputTokens": 39649,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 15,
+    "cost": 0.923157
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T02:29:28.123Z",
+    "durationSeconds": 401
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

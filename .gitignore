@@ -58,6 +58,7 @@ src/engines/__tests__/fixtures/edgar-cache/
 # Node adapter file cache (runtime, regenerated on demand)
 .thes1s/
 .claude/worktrees/
+.claude/scheduled_tasks.lock
 .council/
 
 # Observatory — Obsidian workspace config (vault content is tracked)

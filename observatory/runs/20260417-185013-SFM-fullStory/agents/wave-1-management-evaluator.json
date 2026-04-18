@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-185013-SFM-fullStory",
+  "agentRole": "management-evaluator",
+  "wave": 1,
+  "stage": "fullStory",
+  "sectionsAssigned": [
+    "management_checklist"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "management_checklist",
+        "verdict": "WATCHLIST",
+        "confidence": "MEDIUM",
+        "redFlagCount": 6,
+        "citationCount": 18,
+        "narrativeLength": 13000
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 70699,
+    "outputTokens": 47132,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 20,
+    "cost": 1.119077
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T02:04:05.097Z",
+    "durationSeconds": 376
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

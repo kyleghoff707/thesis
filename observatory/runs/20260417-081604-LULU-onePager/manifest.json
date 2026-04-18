@@ -1,0 +1,32 @@
+{
+  "runId": "20260417-081604-LULU-onePager",
+  "timestamp": "2026-04-17T15:16:04.035Z",
+  "completedAt": "2026-04-17T15:22:56.127Z",
+  "controlVariables": {
+    "ticker": "LULU",
+    "stage": "onePager",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "7ddf542d80f11a1a",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": "BUY",
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": false,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 309,
+    "totalCost": 0.6975384000000001,
+    "totalTokens": 89428,
+    "totalInputTokens": 53657,
+    "totalOutputTokens": 35771,
+    "toolUses": 16,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 6,
+    "sectionsExpected": 6,
+    "errorsCount": 0
+  },
+  "agentFiles": [
+    "agents/wave-0-one-pager.json"
+  ]
+}

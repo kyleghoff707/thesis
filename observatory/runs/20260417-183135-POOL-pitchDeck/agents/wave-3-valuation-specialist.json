@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-183135-POOL-pitchDeck",
+  "agentRole": "valuation-specialist",
+  "wave": 3,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "valuation"
+  ],
+  "input": {
+    "model": "claude-opus-4-7",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "valuation",
+        "verdict": "WATCHLIST",
+        "confidence": "HIGH",
+        "redFlagCount": 6,
+        "citationCount": 20,
+        "narrativeLength": 51400
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 127139,
+    "outputTokens": 84760,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 15,
+    "cost": 8.414085
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T02:12:16.433Z",
+    "durationSeconds": 449
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

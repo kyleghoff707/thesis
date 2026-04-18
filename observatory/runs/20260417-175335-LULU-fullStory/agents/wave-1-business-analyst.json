@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-175335-LULU-fullStory",
+  "agentRole": "business-analyst",
+  "wave": 1,
+  "stage": "fullStory",
+  "sectionsAssigned": [
+    "meaning_checklist"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "meaning_checklist",
+        "verdict": "WATCHLIST",
+        "confidence": "HIGH",
+        "redFlagCount": 5,
+        "citationCount": 18,
+        "narrativeLength": 7000
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 55919,
+    "outputTokens": 37279,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 5,
+    "cost": 0.776942
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T01:01:06.713Z",
+    "durationSeconds": 329
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

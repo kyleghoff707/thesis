@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-082354-LULU-pitchDeck",
+  "agentRole": "annual-reader",
+  "wave": 0,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "annual-reader-FY2026"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "annual-reader-FY2026",
+        "verdict": "INFO",
+        "confidence": "HIGH",
+        "redFlagCount": 0,
+        "citationCount": 0,
+        "narrativeLength": 40000
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 72000,
+    "outputTokens": 48000,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 0,
+    "cost": 0.9359999999999999
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-17T15:34:31.074Z",
+    "durationSeconds": 320
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

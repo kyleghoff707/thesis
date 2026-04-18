@@ -218,7 +218,11 @@ When assessing management, use these Buffett criteria:
 
 ## Output Format
 
-Produce a JSON object with 6 keys matching the One Pager sections. Each section must include:
+Produce a JSON object with 6 keys matching the One Pager sections.
+
+**Output discipline.** Return ONLY ONE JSON object — first character must be `{`, last character must be `}`. No preamble ("Now I have all the data...", "Let me compile final calculations..."), no postamble, no markdown fence wrap, no commentary. Do NOT emit two copies of the JSON (Sprint 4 SFM one-pager emitted indented + compact copies; orchestrator used the last one but logged the violation). The orchestrator now logs format-violation events — no longer silently stripped.
+
+Each section must include:
 
 ```json
 {

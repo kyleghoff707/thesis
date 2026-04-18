@@ -40,7 +40,11 @@
 
 ## Failure Modes
 
+- [[failure-modes/data-gaps]] — Definition
+- [[failure-modes/format-violations]] — Definition
+- [[failure-modes/retries]] — Definition
 - [[failure-modes/sequential-dispatch]] — Definition
+- [[failure-modes/stalls]] — Definition
 
 ## Patterns
 

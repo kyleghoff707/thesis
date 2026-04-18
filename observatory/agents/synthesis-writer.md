@@ -1,18 +1,18 @@
 ---
 type: agent-profile
 agentRole: synthesis-writer
-lastUpdated: 2026-04-17T04:03:05.932Z
-runCount: 9
-avgCost: 0.00
-avgDuration: 559
+lastUpdated: 2026-04-18T05:34:57.931Z
+runCount: 14
+avgCost: 0.25
+avgDuration: 474
 verdictDistribution:
-  WATCHLIST: 9
+  WATCHLIST: 13
 tags: [agent, synthesis-writer]
 ---
 
 ## Behavioral Summary
 
-Agent **synthesis-writer** has been observed across 9 run(s). Average duration: 559s. Average cost: $0.00.
+Agent **synthesis-writer** has been observed across 14 run(s). Average duration: 474s. Average cost: $0.25.
 
 ## Run History
 
@@ -27,6 +27,11 @@ Agent **synthesis-writer** has been observed across 9 run(s). Average duration: 
 | 20260416-194956-POOL-pitchDeck | POOL | pitchDeck | 4 | 388s | 1 | WATCHLIST |
 | 20260416-195002-SFM-pitchDeck | SFM | pitchDeck | 4 | 523s | 1 | WATCHLIST |
 | 20260416-195056-LULU-pitchDeck | LULU | pitchDeck | 4 | 205s | 1 | WATCHLIST |
+| 20260417-082354-LULU-pitchDeck | LULU | pitchDeck | 4 | 277s | 1 | WATCHLIST |
+| 20260417-175437-SFM-pitchDeck | SFM | pitchDeck | 4 | 410s | 1 | WATCHLIST |
+| 20260417-183135-POOL-pitchDeck | POOL | pitchDeck | 4 | 428s | 1 | WATCHLIST |
+| 20260417-185013-SFM-fullStory | SFM | fullStory | 2 | 178s | 1 | ? |
+| 20260417-185013-SFM-fullStory | SFM | fullStory | 3 | 306s | 1 | WATCHLIST |
 
 ## Failure Modes
 
@@ -34,7 +39,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.00 per run.
+Average cost: $0.25 per run.
 
 ## Quality Trends
 

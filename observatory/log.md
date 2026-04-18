@@ -429,3 +429,87 @@ Sprint 3 showed full-story verdicts exactly mirrored pitch deck verdicts for all
 - Any `"optimism is the enemy"` appearance in Sprint 4 agent output means prompt caching or stale agent dispatch — verify skill file on disk vs what subagent received
 
 **Deferred to Sprint 5+:** EXP-004 (wonderful-company premium — flat 50% MOS → quality-weighted), EXP-G (structural: weight debate outcome by pitch deck section verdicts). Both parked, tracked in patterns/ and doe-log.
+
+## [2026-04-17] run | LULU onePager | 20260417-081604-LULU-onePager
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $0.70 | Duration: 5min | Sections: 6/6
+- Failures: none
+
+## [2026-04-17] wiki-update | 3 pages updated
+- Updated: [[tickers/LULU]], [[agents/one-pager]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] run | LULU pitchDeck | 20260417-082354-LULU-pitchDeck
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $9.75 | Duration: 570min | Sections: 11/11
+- Failures: 10
+
+## [2026-04-18] wiki-update | 15 pages updated
+- Updated: [[tickers/LULU]], [[agents/annual-reader]], [[agents/quarterly-reader]], [[agents/business-analyst]], [[agents/competitor-market-position]], [[agents/competitor-moats]], [[agents/financial-analyst]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/synthesis-writer]], [[failure-modes/format-violations]], [[failure-modes/retries]], [[failure-modes/stalls]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] run | SFM onePager | 20260417-174638-SFM-onePager
+- Verdict: PASS (expected: BUY) — MISMATCH
+- Cost: $0.74 | Duration: 6min | Sections: 6/6
+- Failures: 2
+
+## [2026-04-18] wiki-update | 4 pages updated
+- Updated: [[tickers/SFM]], [[agents/one-pager]], [[failure-modes/format-violations]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] run | LULU fullStory | 20260417-175335-LULU-fullStory
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $7.57 | Duration: 30min | Sections: 6/6
+- Failures: none
+
+## [2026-04-18] wiki-update | 12 pages updated
+- Updated: [[tickers/LULU]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst-judge]], [[agents/risk-analyst-bear]], [[agents/synthesis-writer-bull]], [[agents/synthesis-writer-compose]], [[agents/synthesis-writer-rebuttal]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] run | POOL onePager | 20260417-182604-POOL-onePager
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $0.74 | Duration: 3min | Sections: 6/6
+- Failures: none
+
+## [2026-04-18] wiki-update | 3 pages updated
+- Updated: [[tickers/POOL]], [[agents/one-pager]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] run | SFM pitchDeck | 20260417-175437-SFM-pitchDeck
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $12.07 | Duration: 44min | Sections: 11/11
+- Failures: 13
+
+## [2026-04-18] wiki-update | 13 pages updated
+- Updated: [[tickers/SFM]], [[agents/annual-reader]], [[agents/quarterly-reader]], [[agents/business-analyst]], [[agents/competitor-market-position]], [[agents/competitor-moats]], [[agents/financial-analyst]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/synthesis-writer]], [[failure-modes/format-violations]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] run | POOL pitchDeck | 20260417-183135-POOL-pitchDeck
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $13.23 | Duration: 44min | Sections: 11/11
+- Failures: 1
+
+## [2026-04-18] wiki-update | 17 pages updated
+- Updated: [[tickers/POOL]], [[agents/annual-reader-FY2021]], [[agents/annual-reader-FY2022]], [[agents/annual-reader-FY2023]], [[agents/annual-reader-FY2024]], [[agents/annual-reader-FY2025]], [[agents/quarterly-reader]], [[agents/business-analyst]], [[agents/competitor-market-position]], [[agents/competitor-moats]], [[agents/financial-analyst]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/synthesis-writer]], [[failure-modes/format-violations]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] run | SFM fullStory | 20260417-185013-SFM-fullStory
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $7.98 | Duration: 31min | Sections: 6/6
+- Failures: none
+
+## [2026-04-18] wiki-update | 9 pages updated
+- Updated: [[tickers/SFM]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst]], [[agents/synthesis-writer]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] run | POOL fullStory | 20260417-192126-POOL-fullStory
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $9.39 | Duration: 29min | Sections: 6/6
+- Failures: 1
+
+## [2026-04-18] wiki-update | 13 pages updated
+- Updated: [[tickers/POOL]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst-judge]], [[agents/risk-analyst-bear]], [[agents/synthesis-writer-bull]], [[agents/synthesis-writer-compose]], [[agents/synthesis-writer-rebuttal]], [[failure-modes/format-violations]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] wiki-update | 13 pages updated
+- Updated: [[tickers/LULU]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst-judge]], [[agents/risk-analyst-bear]], [[agents/synthesis-writer-bull]], [[agents/synthesis-writer-compose]], [[agents/synthesis-writer-rebuttal]], [[failure-modes/format-violations]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] wiki-update | 13 pages updated
+- Updated: [[tickers/POOL]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst-judge]], [[agents/risk-analyst-bear]], [[agents/synthesis-writer-bull]], [[agents/synthesis-writer-compose]], [[agents/synthesis-writer-rebuttal]], [[failure-modes/format-violations]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] wiki-update | 10 pages updated
+- Updated: [[tickers/SFM]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst]], [[agents/synthesis-writer]], [[failure-modes/format-violations]], [[failure-modes/data-gaps]]
+
+## [2026-04-18] wiki-update | 11 pages updated
+- Updated: [[tickers/SFM]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst]], [[agents/synthesis-writer]], [[failure-modes/format-violations]], [[failure-modes/data-gaps]], [[patterns/verdict-accuracy]]

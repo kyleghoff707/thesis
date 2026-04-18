@@ -1,0 +1,33 @@
+{
+  "runId": "20260417-174638-SFM-onePager",
+  "dispatches": [
+    {
+      "wave": 0,
+      "stage": "One Pager",
+      "agents": [
+        "one-pager"
+      ],
+      "parallel": false,
+      "durationSeconds": 336
+    }
+  ],
+  "retries": [],
+  "stallsDetected": [],
+  "formatViolations": [
+    {
+      "agent": "one-pager",
+      "violation": "preamble text before JSON (Key final calculations narrative)",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    },
+    {
+      "agent": "one-pager",
+      "violation": "subagent emitted two JSON objects (indented + compact); used last compact copy",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    }
+  ],
+  "dataGaps": []
+}

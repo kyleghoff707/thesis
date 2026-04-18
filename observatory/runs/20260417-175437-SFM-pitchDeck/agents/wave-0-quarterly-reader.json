@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-175437-SFM-pitchDeck",
+  "agentRole": "quarterly-reader",
+  "wave": 0,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "psr_quarterly"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "psr_quarterly",
+        "verdict": null,
+        "confidence": null,
+        "redFlagCount": 0,
+        "citationCount": 10,
+        "narrativeLength": 40000
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 87016,
+    "outputTokens": 58010,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 0,
+    "cost": 1.131198
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T01:05:10.571Z",
+    "durationSeconds": 373
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

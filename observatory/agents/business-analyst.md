@@ -1,19 +1,19 @@
 ---
 type: agent-profile
 agentRole: business-analyst
-lastUpdated: 2026-04-17T13:35:44.621Z
-runCount: 16
-avgCost: 0.00
-avgDuration: 1120
+lastUpdated: 2026-04-18T05:34:57.930Z
+runCount: 22
+avgCost: 0.29
+avgDuration: 920
 verdictDistribution:
-  WATCHLIST: 15
-  PASS: 9
+  WATCHLIST: 20
+  PASS: 13
 tags: [agent, business-analyst]
 ---
 
 ## Behavioral Summary
 
-Agent **business-analyst** has been observed across 16 run(s). Average duration: 1120s. Average cost: $0.00.
+Agent **business-analyst** has been observed across 22 run(s). Average duration: 920s. Average cost: $0.29.
 
 ## Run History
 
@@ -35,6 +35,12 @@ Agent **business-analyst** has been observed across 16 run(s). Average duration:
 | 20260416-205941-SFM-fullStory | SFM | fullStory | 1 | 337s | 1 | PASS |
 | 20260416-210309-LULU-fullStory | LULU | fullStory | 1 | 390s | 1 | PASS |
 | 20260416-210339-POOL-fullStory | POOL | fullStory | 1 | 421s | 1 | PASS |
+| 20260417-082354-LULU-pitchDeck | LULU | pitchDeck | 1 | 495s | 2 | WATCHLIST, WATCHLIST |
+| 20260417-175335-LULU-fullStory | LULU | fullStory | 1 | 329s | 1 | WATCHLIST |
+| 20260417-175437-SFM-pitchDeck | SFM | pitchDeck | 1 | 408s | 2 | PASS, PASS |
+| 20260417-183135-POOL-pitchDeck | POOL | pitchDeck | 1 | 396s | 2 | WATCHLIST, WATCHLIST |
+| 20260417-185013-SFM-fullStory | SFM | fullStory | 1 | 349s | 1 | PASS |
+| 20260417-192126-POOL-fullStory | POOL | fullStory | 1 | 348s | 1 | PASS |
 
 ## Failure Modes
 
@@ -42,7 +48,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.00 per run.
+Average cost: $0.29 per run.
 
 ## Quality Trends
 

@@ -1,19 +1,19 @@
 ---
 type: agent-profile
 agentRole: competitor-evaluator
-lastUpdated: 2026-04-17T13:35:44.621Z
-runCount: 8
-avgCost: 0.00
-avgDuration: 1055
+lastUpdated: 2026-04-18T05:34:57.930Z
+runCount: 11
+avgCost: 0.26
+avgDuration: 873
 verdictDistribution:
-  PASS: 3
-  WATCHLIST: 5
+  PASS: 4
+  WATCHLIST: 7
 tags: [agent, competitor-evaluator]
 ---
 
 ## Behavioral Summary
 
-Agent **competitor-evaluator** has been observed across 8 run(s). Average duration: 1055s. Average cost: $0.00.
+Agent **competitor-evaluator** has been observed across 11 run(s). Average duration: 873s. Average cost: $0.26.
 
 ## Run History
 
@@ -27,6 +27,9 @@ Agent **competitor-evaluator** has been observed across 8 run(s). Average durati
 | 20260416-205941-SFM-fullStory | SFM | fullStory | 1 | 362s | 1 | WATCHLIST |
 | 20260416-210309-LULU-fullStory | LULU | fullStory | 1 | 390s | 1 | WATCHLIST |
 | 20260416-210339-POOL-fullStory | POOL | fullStory | 1 | 373s | 1 | PASS |
+| 20260417-175335-LULU-fullStory | LULU | fullStory | 1 | 381s | 1 | WATCHLIST |
+| 20260417-185013-SFM-fullStory | SFM | fullStory | 1 | 366s | 1 | WATCHLIST |
+| 20260417-192126-POOL-fullStory | POOL | fullStory | 1 | 423s | 1 | PASS |
 
 ## Failure Modes
 
@@ -34,7 +37,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.00 per run.
+Average cost: $0.26 per run.
 
 ## Quality Trends
 

@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-175335-LULU-fullStory",
+  "agentRole": "synthesis-writer-rebuttal",
+  "wave": 2,
+  "stage": "fullStory",
+  "sectionsAssigned": [
+    "debate_rebuttal"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "debate_rebuttal",
+        "verdict": "WATCHLIST",
+        "confidence": "MEDIUM",
+        "redFlagCount": 4,
+        "citationCount": 20,
+        "narrativeLength": 7500
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 80159,
+    "outputTokens": 53439,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 0,
+    "cost": 1.042062
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T01:26:26.968Z",
+    "durationSeconds": 329
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

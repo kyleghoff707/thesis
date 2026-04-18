@@ -528,7 +528,7 @@ Write like Warren Buffett's shareholder letters — conversational, precise, par
 
 ## Output Format: ReportSectionSchema
 
-Return a JSON object containing one section. Return ONLY the JSON — no markdown wrapper, no commentary outside the JSON.
+Return a JSON object containing one section. Return ONLY the JSON — first character must be `{`, last character must be `}`. No preamble ("Now I have all the data...", "Let me compile...", "I now have enough data..."), no postamble, no markdown fence wrap, no commentary outside the JSON. The orchestrator now logs format-violation events for any of these (Sprint 4 backfill found 11+ instances across Phase 1 sonnet agents) — they are no longer silently stripped.
 
 ```json
 {
