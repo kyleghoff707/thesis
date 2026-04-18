@@ -1,12 +1,27 @@
 ---
 type: prompt-changelog
-lastUpdated: 2026-04-18T06:00:00Z
+lastUpdated: 2026-04-18T18:00:00Z
 tags: [prompts, changelog]
 ---
 
 # Prompt Version Changelog
 
 > Reverse chronological record of all agent prompt changes with measured impact.
+
+---
+
+## 2026-04-18 — Sprint 5 prep: 3 skill orchestrator prompts — non-essential prose stripped
+
+PM directive: orchestrator skills had grown to 2,758 lines total and were potentially overloading the orchestrators. Cleanup applied per the doctrine "tell LLMs exactly what to do and not to do — extra explanation isn't needed; LLMs take shortcuts when given the opportunity."
+
+- **Skills affected**: generate-one-pager, generate-pitch-deck, generate-full-story
+- **Removed (categories)**: "why this matters" historical preambles → one-line demands; Sprint/EXP changelog inline references (versioning lives here, not in skills); ASCII summary box templates → single directive; inline markdown report templates → structural description; repeated "Wait for completion. Extract the COMPLETE JSON ... See CRITICAL RULE above" at every wave; soft hedging ("Quality is informational"); "Where:" parameter glosses; constraint subsections that didn't drive behavior
+- **Retained verbatim**: all bash commands, schemas, DataPacket field maps, agent registries, DataPacket Slicing rule, Full-Fidelity Output rule, MC-7 contract check, MC-5 sweep script call, all wave/phase/debate task instructions, FGR derivation sub-workflow, JSON Extraction Fallback Chain, Format Violation + Narrative Recovery + Retry Logic, Contamination Boundary, Schema Enforcement, gate checks, auto-archive
+- **Line counts**: one-pager 295→222 (-25%), pitch-deck 1331→829 (-38%), full-story 1132→747 (-34%). **Total -35%, 960 lines removed.**
+- **Before runs**: Sprint 4 — `878fe13` baseline
+- **After runs**: Sprint 5 — pending
+- **Impact**: _Pending — expected: orchestrators complete pipelines without confusion or step-skipping. Watch for any regression in step adherence (especially MC-5 sweep, MC-7 contract check, observatory recording per wave). If a regression appears, selectively restore the section from `878fe13`._
+- **Production parity**: Skill files are Claude-Code-only orchestration; do not affect Managed Agents production runtime. agents-v2/ prompts unchanged in this commit.
 
 ---
 

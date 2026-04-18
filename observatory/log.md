@@ -513,3 +513,81 @@ Sprint 3 showed full-story verdicts exactly mirrored pitch deck verdicts for all
 
 ## [2026-04-18] wiki-update | 11 pages updated
 - Updated: [[tickers/SFM]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst]], [[agents/synthesis-writer]], [[failure-modes/format-violations]], [[failure-modes/data-gaps]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] sprint-5-prep | session summary — Sprint 4 wrap-up + skill cleanup
+
+End-to-end session summary covering everything between the Sprint 4 debrief and the Sprint 5 starting line. Two git commits: `878fe13` (Sprint 4 wrap-up baseline, 148 files), `06d07f8` (skill cleanup, 3 files).
+
+### Sprint 4 audit conclusions
+
+Sprint 4 was the strongest sprint to date. EXP-003 (symmetric debate framework) measurably shifted judge directional histograms from bear-dominant to bull-leaning across all 3 tickers (POOL: 2 Strong Bull / 1 Strong Bear / 4 Unresolved → Bull direction; SFM: 2/1/3 → "Investable at $45-65"; LULU: 4/2/5 → Mixed). Verdicts still WATCHLIST under strict equality, but the residual gap is **price-conditional** — agents' calculated buy prices are below current price, and the user's known-verdict targets accept that as legitimate Rule One behavior. EXP-005 (one-pager DataPacket slicing) confirmed working: SFM 148K → 95K tokens (-36%), production cost ~29% drop. MC-7 (11-section contract) FIXED across all 3 Sprint 4 pitch decks. MC-8 (per-agent usage) PARTIAL — cost + webSearches populating but tokens=0 (one flag still missing in skill template).
+
+### MC-5 fullStory fix (commit `878fe13`)
+
+Three Sprint 4 fullStory orchestrators independently confirmed via verbatim debriefs that Step 8.5 was being skipped. Three convergent root causes: (1) "clean run" bias — no API timeouts to force logging; (2) frame-bucketing — debate self-corrections read as "intended mechanic" not "agent output deviation"; (3) sweep-skip / find-one-example incomplete checklist. Fix shipped in two layers:
+
+- **New script:** [scripts/observatory-sweep-debate.js](../scripts/observatory-sweep-debate.js) (175 lines). Reads saved debate-step-*.json artifacts, emits format-violation events for: weak-strength bull rebuttals, factual-error acknowledgments in rebuttal narratives, judge schema drift (missing pointNumber/judgeScore), missing-or-miscounted scoreboard, stub files (<2KB), markdown-fence wrap survival.
+- **Skill edit:** [generate-full-story/SKILL.md Step 8.5](../.claude/skills/generate-full-story/SKILL.md) — replaced 52-line narrative checklist with two-part structure (scripted sweep + tighter orchestrator-memory residual checklist for items the script cannot infer from files).
+
+Smoke-tested against 3 Sprint 4 fullStory runs: POOL 1 event detected (Wells Fargo concession), LULU 2 (R4 China weak + judge schema drift), SFM 2 (judge schema drifts). Under-logs slightly vs the manual 3-Claude-instance backfill but no false positives.
+
+### Observatory backfill (commit `878fe13`)
+
+Three Claude instances retrospectively swept their own Sprint 4 fullStory runs after the original Step 8.5 skip. Backfilled `formatViolations` totals: POOL 3 (Wells Fargo + FCF payout + Berkshire ibtimes source), LULU 8 (3 Bull factual errors + Judge silent assembly bug + 2 size overruns + PDF rendering bug + meta-violation), SFM 13+2 (5 Phase 1 preambles + Bear Write-tool + Compose Write-tool + Rebuttal schema drifts + Judge math error + meta-violation). [observatory/failure-modes/format-violations.md](failure-modes/format-violations.md) now severity=high, frequency=41 across 21 affected agents.
+
+**Bonus fix shipped:** [scripts/pdf/report_data_reader.py](../scripts/pdf/report_data_reader.py) — added `full-story.json` fallback path. LULU full-story PDF was rendering as 2 pages (title + empty citations); now 36 pages.
+
+### Sprint 5-prep prompt hardening (commit `878fe13`)
+
+Two coordinated changes across 18 prompts:
+
+- **Bull source-quality gate** ([synthesis-writer-fullstory/prompt.md](../agents-v2/synthesis-writer-fullstory/prompt.md)) — added paragraphs after the Bull web-search section: prefer primary sources (SEC filings, press releases, transcripts, dated analyst publications) over content aggregators (ibtimes, *.fool, generic Seeking Alpha listicles, undated "10 stocks Buffett is buying" pieces); name analyst firm + date + direction explicitly; **Rule One Operating Rule #2 enforced** (guru ownership = context, NOT confirmation; cannot be a thesis-strength point). Targets the 5 Bull factual errors backfill found across LULU + POOL.
+- **No-preamble rule** strengthened across **17 JSON-returning agent prompts** (all PD wave agents, all FS Phase 1 agents, both synthesis-writers, both readers, one-pager). First character must be `{` or `[`, last character must be `}` or `]`; named forbidden examples ("Now I have all the data...", "Let me compile...", "I now have enough data..."); observability note that violations are now logged (no longer silently stripped). Targets the 11+ preamble violations across Phase 1 sonnet agents in Sprint 4.
+- **Judge schema** ([financial-analyst-fullstory/prompt.md](../agents-v2/financial-analyst-fullstory/prompt.md)) — explicit requirement: top-level `overallDirection` (NOT nested under `overallVerdict`); per-exchange `pointNumber`, `judgeScore`, `severityFromBear` populated. Prevents the silent assembly bug seen on LULU + SFM (exchangeCount: 0 in full-story.json despite 11 actual exchanges).
+- **Write-tool prohibition** for debate roles in [risk-analyst-fullstory](../agents-v2/risk-analyst-fullstory/prompt.md) (Bear) and [synthesis-writer-pitchdeck](../agents-v2/synthesis-writer-pitchdeck/prompt.md) (debate roles) — return JSON inline, do NOT use Write tool to save debate-step-*.json directly. Targets Sprint 4 SFM Bear/Compose violations.
+
+All edits live in `agents-v2/` prompt content — translates 1:1 to Managed Agents.
+
+### Skill orchestrator cleanup (commit `06d07f8`)
+
+PM directive: "the orchestrator skills are getting very long and potentially overloading the orchestrators." Stripped non-essential prose from all three skill files per the doctrine "tell LLMs exactly what to do and not to do — extra explanation isn't needed."
+
+Categories removed: "why this matters" historical preambles converted to one-line demands; Sprint/EXP changelog inline references (versioning belongs in [prompt-versions/changelog.md](prompt-versions/changelog.md)); big ASCII summary box templates (replaced with single directive); inline markdown report templates (replaced with structural description); repeated "Wait for completion. Extract the COMPLETE JSON ... See CRITICAL RULE above" at every wave; soft hedging ("Quality is informational"); "Where:" parameter glosses; constraint subsections that didn't drive behavior (Inter-Wave Context, Checkpoint Interaction Model, Progress Display, Agent Model Selection prose with Sprint history).
+
+Critical content retained verbatim: all bash commands, all schemas, all DataPacket field maps, agent registries, DataPacket Slicing rule, Full-Fidelity Output rule, MC-7 contract check, MC-5 sweep script call, all wave/phase/debate task instructions, FGR derivation sub-workflow, JSON Extraction Fallback Chain, Format Violation + Narrative Recovery + Retry Logic, Contamination Boundary + Schema Enforcement constraints, all gate checks, auto-archive.
+
+Line counts:
+- one-pager: 295 → 222 (-25%)
+- pitch-deck: 1331 → 829 (-38%)
+- full-story: 1132 → 747 (-34%)
+- **Total: 2758 → 1798 (-35%, 960 lines removed)**
+
+Rollback if needed: `git checkout 878fe13 -- .claude/skills/`.
+
+### Methodology decisions — Sprint 5 and beyond
+
+PM verdict: **methodology is locked in.** Two pattern statuses changed:
+
+- [bear-bull-asymmetry](patterns/bear-bull-asymmetry.md): ACTIVE → **MITIGATED**. EXP-003 worked. Judge directional histograms shifted Bull-leaning across all 3 Sprint 4 tickers. No further debate-framework experiments planned.
+- [wonderful-company-premium](patterns/wonderful-company-premium.md): PARKED → **REJECTED**. PM directive: "the 50% margin of safety is a Rule One cutoff. Methodology doesn't need to change." EXP-004 (quality-adjusted MOS) is no-go.
+
+**Remaining bottleneck identified:** the FGR analyst (valuation-specialist's FGR derivation step). Per PM, this is the only methodology surface area still worth tuning. No experiment specified yet — observed across runs in Sprint 5+.
+
+EXP-G (weight debate by section verdicts) — also rejected; unnecessary given EXP-003 worked.
+
+### Sprint 5 acceptance criteria
+
+Mechanical:
+- `formatViolations` count drops from 11+ per pitchDeck/fullStory to <3
+- Judge `exchanges[].pointNumber` and `judgeScore` populate consistently (no more 11/11 null fields)
+- Bull thesis points no longer use guru ownership as conviction
+- Bull analyst-action citations name firm + date + direction
+- Step 8.5 fullStory sweep produces non-empty `formatViolations` if any of the 6 detection rules fire (or `logged 0 events` printed so we know it ran)
+
+Process:
+- Skill orchestrators complete pipelines without confusion or step-skipping after the -960-line cleanup
+- If a regression appears, selectively restore the specific section from `878fe13`
+
+Methodology:
+- No methodology changes expected. Verdicts should track price gap, not analyst conservatism.
+- FGR analyst behavior monitored; tuning lever identified only if a clear bottleneck emerges

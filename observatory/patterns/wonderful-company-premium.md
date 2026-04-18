@@ -1,10 +1,11 @@
 ---
 type: pattern
 pattern: wonderful-company-premium
-lastUpdated: 2026-04-17T02:30:00Z
-confidence: medium
-runsSampled: 15
-tags: [pattern, valuation, methodology, rule-one, future-experiment]
+lastUpdated: 2026-04-18T18:00:00Z
+confidence: high
+runsSampled: 18
+status: rejected
+tags: [pattern, valuation, methodology, rule-one, rejected]
 ---
 
 ## Observation
@@ -32,4 +33,10 @@ The synthesis writer currently has no mechanism to say: "This company scored PAS
 
 ## Status
 
-PARKED — monitoring for now. Will revisit after FGR conservatism experiments (higher leverage). See [[patterns/valuation-drives-verdict]] and [[experiments/doe-log]].
+**REJECTED — PM directive 2026-04-18.** The 50% margin of safety is a **Rule One non-negotiable cutoff**, not a starting point for negotiation. Quality-adjusted MOS (EXP-TBD-E/F/G in this page) violates the methodology and will not be implemented.
+
+Sprint 4 made the bottleneck visible: judges now reach Bull direction for wonderful companies (POOL, SFM, LULU all have full-story judges saying "Bull" or "Investable"), but the COMPOSE step correctly downgrades to WATCHLIST because the calculated buy price sits below current price. **This is correct Rule One behavior** — great company at the wrong price is WATCHLIST, not BUY. No verdict-mapping fix is needed.
+
+The remaining bottleneck identified in this audit is the **FGR analyst** (valuation-specialist's FGR derivation) — but only as a tuning surface, not a methodology change. Tracked separately if a clear pattern emerges in Sprint 5+ runs.
+
+See [[patterns/valuation-drives-verdict]] (which is the *correct* behavior, not a problem to fix).
