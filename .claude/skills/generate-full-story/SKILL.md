@@ -9,19 +9,11 @@ disable-model-invocation: true
 
 Generate a complete 6-section Rule One Full Story conviction document for **$0**.
 
-This orchestrates 7 specialist agents across 2 phases via Claude Code Agent tool dispatch: Phase 1 dispatches 5 deep-analysis agents in parallel, Phase 2 runs a 4-step adversarial debate (Bull, Bear, Rebuttal, Judge) plus a composition step to produce the final Section 6. Runs end-to-end without stopping -- no PM checkpoints.
-
-The Full Story is Stage 3 -- the final conviction gate before capital deployment. It builds entirely on the completed Pitch Deck (Stage 2). PSR findings are inherited, not re-run.
-
-**Key v2 changes:** Self-contained agent prompts from `agents-v2/` (no config.json, no knowledgeBundle, no dispatch-table.json, no progressState.js, no run-pipeline.js). Multi-role agents (Risk Analyst plays Bear, Synthesis Writer plays Bull + Rebuttal + Compose). No old v1 references.
+Orchestrates 7 specialist agents across 2 phases via Claude Code Agent tool dispatch. Phase 1 dispatches 5 deep-analysis agents in parallel. Phase 2 runs a 4-step adversarial debate (Bull, Bear, Rebuttal, Judge) plus a composition step to produce final Section 6. Runs end-to-end without stopping. Builds entirely on the completed Pitch Deck — PSR findings are inherited, not re-run.
 
 ---
 
 ## Agent Registry
-
-Each entry maps an agent role to its v2 prompt path, the section(s) or debate role it produces, its phase, **model** (from managed-agent.yaml), and Pitch Deck sections it inherits.
-
-**Model is a controlled variable.** These defaults match the Managed Agents YAML configs. The observatory tracks which model each agent used, so DOE experiments can measure the effect of model changes on quality and cost.
 
 ```
 AGENT_REGISTRY:
@@ -73,20 +65,18 @@ AGENT_REGISTRY:
     sections: [inversion_rebuttal]
     phase: 2
     debateRoles: bull (Step 1), bull_rebuttal (Step 3), compose (Final)
-    dpFields: []  # receives section outputs only, no raw DataPacket
+    dpFields: []
 
   financial-analyst:
     prompt: agents-v2/financial-analyst-fullstory/prompt.md
     model: sonnet
-    sections: []  # no independent section
+    sections: []
     phase: 2
     debateRole: judge (Step 4)
-    dpFields: []  # receives debate outputs only
+    dpFields: []
 ```
 
 ## Pitch Deck Inheritance Map
-
-Each Full Story section inherits specific Pitch Deck sections. Agents cite prior findings directly -- they go DEEPER, not wider.
 
 ```
 PD_INHERITANCE_MAP:
@@ -100,132 +90,74 @@ PD_INHERITANCE_MAP:
 ## Phase Structure
 
 ```
-Phase 1 (Deep Analysis):  risk-analyst + business-analyst + competitor-evaluator + management-evaluator + valuation-specialist  [ALL PARALLEL]
-Phase 2 (The Debate):     Bull (synthesis-writer) -> Bear (risk-analyst) -> Rebuttal (synthesis-writer) -> Judge (financial-analyst) -> Compose (synthesis-writer)  [STRICTLY SEQUENTIAL]
+Phase 1 (Deep Analysis):  risk-analyst + business-analyst + competitor-evaluator + management-evaluator + valuation-specialist  [PARALLEL]
+Phase 2 (The Debate):     Bull (synthesis-writer) → Bear (risk-analyst) → Rebuttal (synthesis-writer) → Judge (financial-analyst) → Compose (synthesis-writer)  [SEQUENTIAL]
 ```
 
-Phase 1 agents dispatch **in parallel** (5 Agent tool calls in a single message). Phase 2 debate steps are strictly sequential -- each step depends on the prior step's output.
+Phase 1 agents dispatch in a single message (5 Agent tool calls). Phase 2 debate steps are strictly sequential — each step depends on the prior step's output.
 
 ---
 
-## CRITICAL RULE: DataPacket Slicing
+## CRITICAL RULES
 
-> **You MUST NOT pass the full DataPacket file path to agents.** Instead, use the slicing script:
->
-> ```bash
-> node scripts/slice-datapacket.js {TICKER} {agent-role}
-> ```
->
-> This outputs only the fields that agent needs (per the Agent Registry `dpFields`).
-> Embed the output as a fenced JSON block in the agent's prompt. One bash call per agent.
->
-> **Why this matters:** The full DataPacket is 200KB. Passing it all wastes agent context
-> and reduces output quality. The slicing script handles field extraction automatically —
-> do NOT try to manually extract fields or tell the agent to "read the file yourself."
+**DataPacket Slicing.** You MUST NOT pass the full DataPacket file path to agents. Use `node scripts/slice-datapacket.js {TICKER} {agent-role}` and embed the output as a fenced JSON block. One bash call per agent. Do NOT manually extract fields or instruct the agent to read the file.
 
-## CRITICAL RULE: Full-Fidelity Output Saving
-
-> **NEVER summarize, abbreviate, or reconstruct agent output when saving to disk.**
->
-> When an agent returns its result, the COMPLETE JSON output must be written to the section file
-> using the Write tool. Do NOT create a new JSON object from memory with just key/verdict/summary fields.
-> Do NOT write "stub" sections with short summaries to "keep things moving."
->
-> **The correct save process:**
-> 1. Extract the JSON from the agent response (see JSON Extraction Fallback Chain)
-> 2. Write the COMPLETE extracted JSON to disk using the Write tool — every field the agent produced
-> 3. Verify the saved file is at least 5KB for section files, 2KB for debate steps
-> 4. If a file is under these thresholds, you have likely saved a stub — go back to the agent response and re-extract the full output
->
-> Agent outputs typically contain: narrative (500-2000 words), citations (20-30), redFlags (5-10),
-> data objects (checklists, tables, sensitivity matrices), tables, and charts arrays.
-> A valid section file is 10-50KB. A valid debate-step file is 5-30KB.
-> If your saved file is under these sizes, something went wrong.
->
-> **This rule is non-negotiable.** Saving stubs destroys the pipeline output and invalidates
-> the entire run. The PDF generator, quality checks, and observatory all read these files.
+**Full-Fidelity Output Saving.** When an agent returns its result, write the COMPLETE extracted JSON to disk via the Write tool. Do NOT reconstruct from memory. Do NOT save stub sections. Section files: 10-50KB. Debate-step files: 5-30KB. If a saved file is under 5KB (sections) or 2KB (debate steps), you saved a stub — re-extract from the agent response. This rule is non-negotiable; saving stubs invalidates the run.
 
 ## Step 1: Validate Input and Gate Check
 
 The ticker symbol is `$0`. Uppercase it and store as `TICKER`.
 
-- If `$0` is empty, print usage: `/generate-full-story TICKER` and stop.
-- **Clean start:** Remove stale section data from prior runs (but preserve pitch-deck.json and data-packet.json which this stage reads):
-  ```bash
-  rm -rf .thes1s/reports/{TICKER}/sections/
-  rm -rf .thes1s/reports/{TICKER}/quality/
-  ```
-- Create output directories:
-  - `.thes1s/reports/{TICKER}/`
-  - `.thes1s/reports/{TICKER}/sections/`
+If `$0` is empty, print usage `/generate-full-story TICKER` and stop.
 
-**Gate Check:** Read `.thes1s/reports/{TICKER}/pitch-deck.json`. Verify:
-1. The file exists
-2. Parse it and check that `overallVerdict` is set (not null, not undefined)
-3. Verify `overallVerdict` is not `"FAIL"` -- a FAIL verdict means the company did not pass the Pitch Deck gate
+Clean stale section data (preserve pitch-deck.json + data-packet.json):
+```bash
+rm -rf .thes1s/reports/{TICKER}/sections/
+rm -rf .thes1s/reports/{TICKER}/quality/
+```
 
-Also read `.thes1s/reports/{TICKER}/data-packet.json`. Verify the file exists.
+Create `.thes1s/reports/{TICKER}/sections/`.
+
+**Gate Check.** Read `.thes1s/reports/{TICKER}/pitch-deck.json` and `.thes1s/reports/{TICKER}/data-packet.json`. Verify:
+1. Both files exist
+2. `overallVerdict` is set
+3. `overallVerdict` is NOT `"FAIL"`
 
 If any check fails, print:
 ```
-Gate check FAILED: Pitch Deck must be completed with a PASS or WATCHLIST verdict before generating a Full Story.
+Gate check FAILED: Pitch Deck must exist with PASS or WATCHLIST verdict.
 Run /generate-pitch-deck {TICKER} first.
-
-Missing:
-  pitch-deck.json: {exists/missing}
-  data-packet.json: {exists/missing}
-  Pitch Deck verdict: {verdict or "N/A"}
 ```
-And **stop execution**.
+And stop.
 
-If the gate passes, log:
-```
-Step 1: Gate check PASSED -- Pitch Deck verdict: {verdict}
-Setting up Full Story generation for {TICKER}...
-```
+Store both for downstream use.
 
-Store the Pitch Deck data and DataPacket for downstream use.
-
-## Step 2: Initialize Observatory Capture
-
-Run the observatory init script:
+## Step 2: Initialize Observatory
 
 ```bash
 node scripts/observatory-init.js {TICKER} fullStory .thes1s/reports/{TICKER}/data-packet.json
 ```
 
-Capture the **last line of output** -- that is the `RUN_ID`. You will need it in Step 9.
+Capture the **last line of output** as `RUN_ID`. Retry once on failure.
 
-If this fails, retry once. Observatory tracking is required for every run.
+## Step 3: Read Prompts and Prepare Context
 
-## Step 3: Read Agent Prompts and Prepare Context
+### 3a: Read Phase 1 Agent Prompts
 
-### 3a: Read All Phase 1 Agent Prompts
-
-Read all 5 v2 agent prompts:
 - `agents-v2/risk-analyst-fullstory/prompt.md`
 - `agents-v2/business-analyst-fullstory/prompt.md`
 - `agents-v2/competitor-evaluator-fullstory/prompt.md`
 - `agents-v2/management-evaluator-fullstory/prompt.md`
 - `agents-v2/valuation-specialist-fullstory/prompt.md`
 
-### 3b: Extract DataPacket and Pitch Deck Context
+### 3b: Build DataPacket and Pitch Deck Context
 
-Read the DataPacket from `.thes1s/reports/{TICKER}/data-packet.json`.
-Read the Pitch Deck from `.thes1s/reports/{TICKER}/pitch-deck.json`.
+For each Phase 1 agent:
 
-For each Phase 1 agent, prepare two context blocks:
+**DataPacket slice:** Run `node scripts/slice-datapacket.js {TICKER} {agent-role}` for each agent. Embed as fenced JSON.
 
-**DataPacket slice:** Run `node scripts/slice-datapacket.js {TICKER} {agent-role}` for each agent. Embed the output as a fenced JSON block. See CRITICAL RULE: DataPacket Slicing above.
+**Pitch Deck inheritance:** Extract per PD_INHERITANCE_MAP. For each inherited PD section include `summary`, `verdict`, `confidence`, `verdictRationale`, `narrative`, `redFlags`, `citations`, `data`. Format:
 
-**Pitch Deck inheritance:** Extract the relevant Pitch Deck sections per the PD_INHERITANCE_MAP. For each inherited PD section, include:
-- The section's `summary`, `verdict`, `confidence`, `verdictRationale`
-- The section's `narrative` (full text)
-- The section's `redFlags` array
-- The section's `citations` array
-- The section's `data` object
-
-Format as:
 ```
 ## Inherited Pitch Deck Findings
 
@@ -244,30 +176,18 @@ Format as:
 {list}
 ```
 
-Also include any PSR findings if they exist in the Pitch Deck sections (check for `psr_annual` and `psr_quarterly` section keys, or check for `psrSummary` in the top-level pitch-deck.json). Format PSR findings as a separate context block.
+Also include PSR findings if present in pitch-deck.json (`psr_annual`, `psr_quarterly` keys, or `psrSummary`).
 
-Log:
-```
-Step 3: Context prepared
-  DataPacket: {fieldCount} fields loaded
-  Pitch Deck: {sectionCount} sections loaded
-  PSR findings: {available/unavailable}
-```
+## Step 4: Phase 1 — Deep Analysis (5 Agents Parallel)
 
-## Step 4: Phase 1 -- Deep Analysis (5 Agents in Parallel)
+Dispatch all 5 in a single message (5 Agent tool calls).
 
-> **CRITICAL: Send ALL 5 Agent tool calls in a SINGLE message.**
-> Do NOT dispatch agents one at a time. All 5 are independent — no shared state.
-
-Dispatch all 5 section agents **simultaneously** via 5 Agent tool calls in a single message.
-
-**For each agent, the prompt is concatenated as:**
-
-1. Full contents of the agent's v2 prompt file (from Agent Registry)
-2. DataPacket slice (relevant fields from registry) as a fenced JSON block
-3. Inherited Pitch Deck sections (from PD_INHERITANCE_MAP) formatted per Step 3b
+For each agent, the prompt is concatenated as:
+1. Full v2 prompt
+2. DataPacket slice (fenced JSON)
+3. Inherited Pitch Deck sections per PD_INHERITANCE_MAP
 4. PSR findings (if available)
-5. Task instruction specific to each agent (below)
+5. Task instruction (below)
 
 ### Task Instructions
 
@@ -283,7 +203,7 @@ Determine if any current price dislocation is temporary or structural.
 Identify upcoming catalyst events, recent material events, and the event calendar.
 Use web search for current news, upcoming events, and market sentiment.
 
-Return your output as Format A (ReportSectionSchema) JSON -- the Event Analysis format defined in your prompt.
+Return your output as Format A (ReportSectionSchema) JSON.
 ```
 
 **Business Analyst (S2: Meaning Checklist):**
@@ -297,7 +217,7 @@ The DataPacket and PSR findings are provided.
 Deepen the business understanding from the Pitch Deck into a structured 15-point conviction assessment.
 Use web search for current business developments and industry context.
 
-Return your output as a single ReportSectionSchema JSON object matching the output format in your prompt.
+Return a single ReportSectionSchema JSON object.
 ```
 
 **Competitor Evaluator (S3: Moat Checklist):**
@@ -311,7 +231,7 @@ The DataPacket and PSR findings are provided.
 Validate competitive durability point by point with a 15-point moat checklist.
 Use web search for competitive dynamics, recent entrants, and moat erosion signals.
 
-Return your output as a single ReportSectionSchema JSON object matching the output format in your prompt.
+Return a single ReportSectionSchema JSON object.
 ```
 
 **Management Evaluator (S4: Management Checklist):**
@@ -325,7 +245,7 @@ The DataPacket and PSR findings are provided.
 Assess leadership quality, integrity, and shareholder alignment with a 13-point checklist.
 Use web search for recent management actions, governance issues, and leadership changes.
 
-Return your output as a single ReportSectionSchema JSON object matching the output format in your prompt.
+Return a single ReportSectionSchema JSON object.
 ```
 
 **Valuation Specialist (S5: Valuation Confirmation):**
@@ -336,55 +256,34 @@ You are producing Full Story Section 5: Valuation Confirmation.
 Your inherited Pitch Deck sections are above (FCF, ROE/ROIC & Debt, Valuation).
 The DataPacket and PSR findings are provided.
 
-Stress-test the Pitch Deck's valuation assumptions. Do NOT re-run the calculators -- validate the inputs.
+Stress-test the Pitch Deck's valuation assumptions. Do NOT re-run the calculators — validate the inputs.
 Is the FGR achievable or does it require unrealistic market share? Is the growth real or debt-fueled?
 Use web search for current analyst estimates, market conditions, and growth rate validation.
 
-Return your output as a single ReportSectionSchema JSON object matching the output format in your prompt.
+Return a single ReportSectionSchema JSON object.
 ```
 
 ### Collect Phase 1 Outputs
 
 After all 5 agents return:
+1. Extract JSON from each response (see JSON Extraction Fallback Chain)
+2. Validate required fields: `key`, `title`, `sectionNumber`, `status`, `confidence`, `verdict`, `verdictRationale`, `summary`, `narrative` (>= 200 chars — see Narrative Recovery), `citations`, `redFlags` (>= 1)
+3. Save COMPLETE JSON to `sections/{section_key}.json`. Each file 10-50KB.
 
-1. **Extract JSON** from each agent response using the fallback chain (see "JSON Extraction Fallback Chain" below)
-2. **Validate** each section has required fields: `key`, `title`, `sectionNumber`, `status`, `confidence`, `verdict`, `verdictRationale`, `summary`, `narrative` (>= 200 chars), `citations`, `redFlags` (>= 1)
-3. **Check narrative length** -- if < 200 chars, apply Narrative Recovery (see below)
-4. **Save the COMPLETE extracted JSON** to `.thes1s/reports/{TICKER}/sections/{section_key}.json` using the Write tool. Do NOT reconstruct a summary from memory. Write the full agent output as-is. See CRITICAL RULE above. Each file should be 10-50KB. If any file is under 5KB, you saved a stub — re-extract from the agent response.
+If an agent fails entirely, wait 30 seconds and retry once.
 
-**Retry logic:** If an agent fails entirely, wait 30 seconds and retry once. If retry fails, log the error and continue.
+#### Observatory Recording
 
-Log:
-```
-Step 4: Phase 1 -- Deep Analysis complete
-  S1 Event Analysis:          {verdict} ({confidence}) | {citation_count} citations | {red_flag_count} red flags
-  S2 Meaning Checklist:       {verdict} ({confidence}) | {citation_count} citations | {red_flag_count} red flags
-  S3 Moat Checklist:          {verdict} ({confidence}) | {citation_count} citations | {red_flag_count} red flags
-  S4 Management Checklist:    {verdict} ({confidence}) | {citation_count} citations | {red_flag_count} red flags
-  S5 Valuation Confirmation:  {verdict} ({confidence}) | {citation_count} citations | {red_flag_count} red flags
-  Phase 1: {completed}/5 sections complete
-```
-
-#### Observatory Recording (REQUIRED)
-
-For each Phase 1 agent, record its performance. Extract verdict, confidence, red flags, and citations from saved section JSONs. You MUST run every recording command. If a command errors, retry it once before continuing.
-
-**Per-agent usage parsing — applies to every record-agent call in this skill (Phase 1 + Phase 2 debate steps):**
-
-Each subagent's result includes a `<usage>` block like:
-
+Per-agent usage: parse each subagent's `<usage>` block:
 ```
 <usage>total_tokens: 24500
 tool_uses: 8
 duration_ms: 187000</usage>
 ```
 
-For each agent, parse that block and pass the values:
-- `{AGENT_TOTAL_TOKENS}` — total_tokens from the usage block
-- `{SECONDS_ELAPSED}` — duration_ms / 1000
-- `{AGENT_WEB_SEARCHES}` — number of `web_search` tool calls the subagent made. Count explicitly if you can observe per-tool-call detail. Otherwise estimate by role: **(EXP-003 update: Bull, Bear, AND Rebuttal now all have web search.)** Bull/Bear/Rebuttal debate steps — estimate `max(0, tool_uses - 1)` (one input read). Judge and Compose have NO web search — pass `0`. Phase 1 analysis agents typically run 3-6 web searches (estimate `max(0, tool_uses - 1)` for one DataPacket read).
+Pass to record-agent: `{AGENT_TOTAL_TOKENS}` = total_tokens, `{SECONDS_ELAPSED}` = duration_ms / 1000, `{AGENT_WEB_SEARCHES}` = count `web_search` tool calls explicitly if visible, else estimate. Phase 1 analysis: `max(0, tool_uses - 1)`. Bull/Bear/Rebuttal: `max(0, tool_uses - 1)`. Judge and Compose: pass `0` (no web search).
 
-The script auto-computes `usage.cost` from tokens (Sonnet: $3/M input, $15/M output, 60/40 split when only total is given; Opus: $15/M input, $75/M output) plus web searches ($0.01 each — Managed Agents production billing). **This per-agent cost is the instrument the DOE log uses to attribute cost deltas to specific prompt changes.** If any record-agent call omits `--tokens` or `--web-searches`, that agent's cost will silently record as $0 and break cost-sensitivity analysis.
+Always pass `--tokens` and `--web-searches`. Without them, `usage.cost` records as $0.
 
 ```bash
 node scripts/observatory-record-agent.js {RUN_ID} \
@@ -428,161 +327,121 @@ node scripts/observatory-record-event.js {RUN_ID} dispatch \
   --parallel true --duration {PHASE_DURATION_SECONDS}
 ```
 
-## Step 5: Log Phase 1 Results
+## Step 6: Phase 2 — The Debate (Strictly Sequential)
 
-Print Phase 1 summary with verdicts and any cross-cutting findings:
+### 6a: Read Debate Prompts
 
-```
-================================================================
-  PHASE 1 COMPLETE: {TICKER} Full Story Deep Analysis
-================================================================
-
-  S1 Event Analysis:          {verdict} ({confidence})
-  S2 Meaning Checklist:       {verdict} ({confidence})
-  S3 Moat Checklist:          {verdict} ({confidence})
-  S4 Management Checklist:    {verdict} ({confidence})
-  S5 Valuation Confirmation:  {verdict} ({confidence})
-
-  Cross-Cutting Findings:
-  {aggregated cross-cutting findings from all sections, if any}
-
-  Proceeding to Phase 2: The Debate...
-================================================================
-```
-
-## Step 6: Phase 2 -- The Debate (Strictly Sequential)
-
-### 6a: Read Debate Agent Prompts
-
-Read the prompts for agents that play debate roles (if not already read):
 - `agents-v2/synthesis-writer-fullstory/prompt.md` (Bull, Rebuttal, Compose)
-- `agents-v2/risk-analyst-fullstory/prompt.md` (Bear -- already read in Step 3a)
+- `agents-v2/risk-analyst-fullstory/prompt.md` (Bear — already read)
 - `agents-v2/financial-analyst-fullstory/prompt.md` (Judge)
 
-### 6b: Prepare Section Summaries for Debate
-
-Build a combined summary of all 5 sections for debate context:
+### 6b: Build Section Summaries
 
 ```
 ## Completed Full Story Sections (S1-S5)
 
-### S1: Event Analysis -- {verdict} ({confidence})
+### S1: Event Analysis — {verdict} ({confidence})
 {summary}
 Red Flags: {list}
 Key Data: {event risk score, upcoming events count}
 
-### S2: Meaning Checklist -- {verdict} ({confidence})
+### S2: Meaning Checklist — {verdict} ({confidence})
 {summary}
 Red Flags: {list}
 Key Data: {checklist score, e.g. 12/15}
 
-### S3: Moat Checklist -- {verdict} ({confidence})
+### S3: Moat Checklist — {verdict} ({confidence})
 {summary}
 Red Flags: {list}
 Key Data: {checklist score, e.g. 11/15}
 
-### S4: Management Checklist -- {verdict} ({confidence})
+### S4: Management Checklist — {verdict} ({confidence})
 {summary}
 Red Flags: {list}
 Key Data: {checklist score, e.g. 10/13}
 
-### S5: Valuation Confirmation -- {verdict} ({confidence})
+### S5: Valuation Confirmation — {verdict} ({confidence})
 {summary}
 Red Flags: {list}
 Key Data: {FGR assessment, buy price confirmation}
 ```
 
-### 6c: Step 1 -- Bull (Synthesis Writer)
+### 6c: Step 1 — Bull (Synthesis Writer)
 
-Dispatch the Synthesis Writer via Agent tool with:
-1. Full contents of `agents-v2/synthesis-writer-fullstory/prompt.md`
-2. All 5 section outputs (full JSON -- verdicts, summaries, narratives, red flags, citations, data)
-3. Task instruction:
+Dispatch via Agent tool with:
+1. Full prompt
+2. All 5 section outputs (full JSON)
+3. Task:
 
 ```
 You are the BULL in the Full Story Section 6 adversarial debate for {TICKER} ({COMPANY_NAME}).
 
-Your role is Step 1: Bull Thesis. Synthesize the strongest possible investment thesis from Sections 1-5 provided above.
+Your role is Step 1: Bull Thesis. Synthesize the strongest possible investment thesis from Sections 1-5 above.
 
 Extract 5-7 thesis points covering meaning, moat, management, valuation, and events.
 Each point must cite the source section. Write a compelling overallThesis summary.
 
-You HAVE web search for this role (EXP-003: symmetric evidentiary tooling with the Bear). Use it to surface positive catalysts, insider buying, guru activity, analyst upgrades, and validating third-party signals. Primary job is still distilling the section findings — web search is for sharpening and validating, not inventing a thesis the sections don't support.
+You HAVE web search. Use it to surface positive catalysts, insider buying, guru activity, analyst upgrades, validating third-party signals. Primary job is still distilling section findings — web search is for sharpening and validating, not inventing a thesis the sections don't support.
 
-Return your output as the Bull Thesis JSON format (Step 1) defined in your prompt.
+Return your output as the Bull Thesis JSON format (Step 1).
 ```
 
-Wait for completion. Extract the COMPLETE JSON from the agent response and write it to disk — not a 1-line summary, the full output. Save to `.thes1s/reports/{TICKER}/sections/debate-step-1-bull.json`.
+Wait. Extract COMPLETE JSON, save to `sections/debate-step-1-bull.json`.
 
-Log:
-```
-  Step 1 (Bull): {thesisPointCount} thesis points | Overall thesis: {first 100 chars}...
-```
+### 6d: Step 2 — Bear (Risk Analyst)
 
-### 6d: Step 2 -- Bear (Risk Analyst)
-
-Dispatch the Risk Analyst via Agent tool with:
-1. Full contents of `agents-v2/risk-analyst-fullstory/prompt.md`
-2. The Bull thesis output (Step 1 JSON)
-3. DataPacket slice (full dpFields for risk-analyst)
-4. All 5 section outputs (for reference)
-5. Task instruction:
+Dispatch via Agent tool with:
+1. Full prompt
+2. Bull thesis output (Step 1 JSON)
+3. DataPacket slice (full risk-analyst dpFields)
+4. All 5 section outputs (reference)
+5. Task:
 
 ```
 You are the BEAR in the Full Story Section 6 adversarial debate for {TICKER} ({COMPANY_NAME}).
 
 Your role is Step 2: Bear Inversion. The bull has presented their thesis above. Attack EVERY thesis point with cited counter-evidence.
 
-Use web search for short-seller theses, negative analyst coverage, bear cases, and recent bad news. The Bull also has web search now (EXP-003) — your evidence advantage is no longer structural, it's in the quality and materiality of what you find. A bear point that doesn't survive a web-search-armed rebuttal wasn't a strong bear point to begin with.
+Use web search for short-seller theses, negative analyst coverage, bear cases, recent bad news. The Bull also has web search — your evidence advantage is in quality and materiality.
 
 Each inversion must cite specific evidence (URLs, DataPacket, SEC filings). Classify severity as thesis_killer, significant, or minor.
 
-Return your output as the Bear Debate Step JSON format (Step 2 / Format B) defined in your prompt.
+Return your output as the Bear Debate Step JSON format (Step 2 / Format B).
 ```
 
-Wait for completion. Extract the COMPLETE JSON from the agent response and write it to disk — not a 1-line summary, the full output. Save to `.thes1s/reports/{TICKER}/sections/debate-step-2-bear.json`.
+Wait. Extract COMPLETE JSON, save to `sections/debate-step-2-bear.json`.
 
-Log:
-```
-  Step 2 (Bear): {inversionCount} inversions | Thesis killers: {count} | Significant: {count} | Minor: {count}
-```
+### 6e: Step 3 — Rebuttal (Synthesis Writer)
 
-### 6e: Step 3 -- Rebuttal (Synthesis Writer)
-
-Dispatch the Synthesis Writer via Agent tool with:
-1. Full contents of `agents-v2/synthesis-writer-fullstory/prompt.md`
-2. The Bull thesis output (Step 1 JSON)
-3. The Bear inversion output (Step 2 JSON)
-4. All 5 section outputs (for evidence)
-5. Task instruction:
+Dispatch via Agent tool with:
+1. Full prompt
+2. Bull thesis (Step 1 JSON)
+3. Bear inversion (Step 2 JSON)
+4. All 5 section outputs (evidence)
+5. Task:
 
 ```
 You are the BULL REBUTTAL in the Full Story Section 6 adversarial debate for {TICKER} ({COMPANY_NAME}).
 
 Your role is Step 3: Bull Rebuttal. The bear has attacked your thesis above. Respond to EACH inversion with evidence-based counter-arguments.
 
-You do NOT have web search. Respond using evidence already gathered in Sections 1-5.
+You HAVE web search. Use it to verify bear citations, find already-priced-in context, surface counter-evidence, and check materiality.
 Rate each rebuttal honestly: strong, moderate, or weak. If the bear has a genuine point, acknowledge it.
 
-Return your output as the Bull Rebuttal JSON format (Step 3) defined in your prompt.
+Return your output as the Bull Rebuttal JSON format (Step 3).
 ```
 
-Wait for completion. Extract the COMPLETE JSON from the agent response and write it to disk — not a 1-line summary, the full output. Save to `.thes1s/reports/{TICKER}/sections/debate-step-3-rebuttal.json`.
+Wait. Extract COMPLETE JSON, save to `sections/debate-step-3-rebuttal.json`.
 
-Log:
-```
-  Step 3 (Rebuttal): {rebuttalCount} rebuttals | Strong: {count} | Moderate: {count} | Weak: {count}
-```
+### 6f: Step 4 — Judge (Financial Analyst)
 
-### 6f: Step 4 -- Judge (Financial Analyst)
-
-Dispatch the Financial Analyst via Agent tool with:
-1. Full contents of `agents-v2/financial-analyst-fullstory/prompt.md`
-2. The Bull thesis output (Step 1 JSON)
-3. The Bear inversion output (Step 2 JSON)
-4. The Rebuttal output (Step 3 JSON)
-5. All 5 section outputs (for reference)
-6. Task instruction:
+Dispatch via Agent tool with:
+1. Full prompt
+2. Bull thesis (Step 1 JSON)
+3. Bear inversion (Step 2 JSON)
+4. Rebuttal (Step 3 JSON)
+5. All 5 section outputs (reference)
+6. Task:
 
 ```
 You are the JUDGE in the Full Story Section 6 adversarial debate for {TICKER} ({COMPANY_NAME}).
@@ -593,23 +452,18 @@ For each bear inversion, evaluate: the bull's original claim, the bear's counter
 
 You do NOT have web search. Judge based on evidence presented by both sides and the section data.
 
-Return your output as the JudgeVerdictSchema JSON format (Step 4) defined in your prompt.
+Return your output as the JudgeVerdictSchema JSON format (Step 4).
 ```
 
-Wait for completion. Extract the COMPLETE JSON from the agent response and write it to disk — not a 1-line summary, the full output. Save to `.thes1s/reports/{TICKER}/sections/debate-step-4-judge.json`.
+Wait. Extract COMPLETE JSON, save to `sections/debate-step-4-judge.json`.
 
-Log:
-```
-  Step 4 (Judge): Direction: {direction} | Exchanges: {count} | Strong Bull: {count} | Strong Bear: {count} | Unresolved: {count}
-```
+### 6g: Compose — Final Section 6 (Synthesis Writer)
 
-### 6g: Compose -- Final Section 6 (Synthesis Writer)
-
-Dispatch the Synthesis Writer via Agent tool with:
-1. Full contents of `agents-v2/synthesis-writer-fullstory/prompt.md`
-2. All 4 debate step outputs (Bull, Bear, Rebuttal, Judge -- full JSON)
-3. All 5 section outputs (for reference and citation propagation)
-4. Task instruction:
+Dispatch via Agent tool with:
+1. Full prompt
+2. All 4 debate step outputs (full JSON)
+3. All 5 section outputs (reference and citation propagation)
+4. Task:
 
 ```
 You are COMPOSING the final Section 6 (Inversion & Rebuttal) for {TICKER} ({COMPANY_NAME}).
@@ -617,42 +471,16 @@ You are COMPOSING the final Section 6 (Inversion & Rebuttal) for {TICKER} ({COMP
 Your role is Compose (Final Call). Weave all 4 debate outputs into a cohesive Buffett-style narrative.
 
 The verdict MUST follow the judge's overall direction. Include ALL bear source URLs.
-Structure: thesis -> antithesis -> synthesis. Highlight which bear points were rebutted and which remain unresolved.
+Structure: thesis → antithesis → synthesis. Highlight which bear points were rebutted and which remain unresolved.
 
 The narrative must be 600+ words. Synthesize, do NOT concatenate.
 
-Return your output as the Composition ReportSectionSchema JSON format defined in your prompt (key: "inversion_rebuttal", sectionNumber: 6).
+Return your output as the Composition ReportSectionSchema JSON (key: "inversion_rebuttal", sectionNumber: 6).
 ```
 
-Wait for completion. Extract the COMPLETE JSON from the agent response. Validate as ReportSectionSchema. Write the full output to `.thes1s/reports/{TICKER}/sections/inversion_rebuttal.json` — not a summary. This file should be 10-50KB. See CRITICAL RULE above.
+Wait. Extract COMPLETE JSON, validate ReportSectionSchema, save to `sections/inversion_rebuttal.json`. 10-50KB.
 
-Log:
-```
-  Compose: Section 6 complete | Verdict: {verdict} ({confidence}) | Debate direction: {direction}
-```
-
-## Step 7: Log Phase 2 Results
-
-Print Phase 2 summary:
-
-```
-================================================================
-  PHASE 2 COMPLETE: {TICKER} Full Story Adversarial Debate
-================================================================
-
-  Step 1 (Bull):     {thesisPointCount} thesis points
-  Step 2 (Bear):     {inversionCount} inversions ({thesisKillerCount} thesis killers)
-  Step 3 (Rebuttal): {rebuttalCount} rebuttals (strong: {N}, moderate: {N}, weak: {N})
-  Step 4 (Judge):    Direction: {direction} | Unresolved: {unresolvedCount}
-  Compose:           Verdict: {verdict} ({confidence})
-
-  Debate outcome: {judge's summary}
-================================================================
-```
-
-#### Observatory Recording — Debate Phase (REQUIRED)
-
-For each debate step agent, record its performance. You MUST run every recording command. If a command errors, retry it once before continuing.
+## Step 7: Observatory Recording — Debate Phase
 
 ```bash
 # After Bull (synthesis-writer)
@@ -704,8 +532,6 @@ node scripts/observatory-record-event.js {RUN_ID} dispatch \
 
 ## Step 8: Assemble Final Report
 
-Collect all 6 sections + debate steps:
-
 ```json
 {
   "ticker": "{TICKER}",
@@ -716,7 +542,7 @@ Collect all 6 sections + debate steps:
     /* 6 ReportSectionSchema objects ordered by sectionNumber (1-6) */
   ],
   "sectionKeys": ["event_analysis", "meaning_checklist", "moat_checklist", "management_checklist", "valuation_confirmation", "inversion_rebuttal"],
-  "overallVerdict": "{from Section 6 / judge direction mapped: Bull=PASS, Bear=FAIL, Mixed=WATCHLIST}",
+  "overallVerdict": "{from Section 6 / judge direction: Bull=PASS, Bear=FAIL, Mixed=WATCHLIST}",
   "verdictRationale": "{from Section 6 verdictRationale}",
   "debateOutcome": {
     "direction": "{Bull | Bear | Mixed}",
@@ -737,143 +563,21 @@ Collect all 6 sections + debate steps:
 }
 ```
 
-**Write JSON report** to `.thes1s/reports/{TICKER}/full-story.json`
+Write JSON to `.thes1s/reports/{TICKER}/full-story.json`.
 
-**Generate human-readable markdown** at `.thes1s/reports/{TICKER}/full-story.md`:
+Generate human-readable markdown at `.thes1s/reports/{TICKER}/full-story.md`. Structure: title + verdict + Pitch Deck verdict + debate direction header → Executive Summary (Section 6 verdictRationale + debate outcome) → Phase 1 sections (1-5) with narrative + verdict + checklist score + red flags → Section 6 (Inversion & Rebuttal) narrative + debate scorecard table (per-exchange Bull/Bear/Outcome) → Section verdicts table → All red flags aggregated → Citations.
 
-```markdown
-# {Company Name} ({TICKER}) -- Full Story
+## Step 8.5: Pre-Finalize Event Sweep
 
-**Generated:** {date}
-**Overall Verdict:** {PASS/FAIL/WATCHLIST} ({confidence})
-**Pitch Deck Verdict:** {verdict} (generated {date})
-**Debate Direction:** {Bull/Bear/Mixed}
+Two-part sweep: scripted file-evidence checks, then a residual checklist for orchestrator-memory items the script cannot see.
 
----
-
-## Executive Summary
-{Section 6 verdictRationale + debate outcome summary}
-
----
-
-## Phase 1: Deep Analysis
-
-### 1. Event Analysis
-{narrative}
-
-**Verdict:** {verdict} | **Confidence:** {confidence}
-
-#### Red Flags
-- {list}
-
----
-
-### 2. Meaning Checklist (15-point)
-{narrative}
-
-**Verdict:** {verdict} | **Confidence:** {confidence}
-**Score:** {checklist score}/15
-
-#### Red Flags
-- {list}
-
----
-
-### 3. Moat Checklist (15-point)
-{narrative}
-
-**Verdict:** {verdict} | **Confidence:** {confidence}
-**Score:** {checklist score}/15
-
-#### Red Flags
-- {list}
-
----
-
-### 4. Management Checklist (13-point)
-{narrative}
-
-**Verdict:** {verdict} | **Confidence:** {confidence}
-**Score:** {checklist score}/13
-
-#### Red Flags
-- {list}
-
----
-
-### 5. Valuation Confirmation
-{narrative}
-
-**Verdict:** {verdict} | **Confidence:** {confidence}
-
-#### Red Flags
-- {list}
-
----
-
-## Phase 2: The Debate
-
-### Section 6: Inversion & Rebuttal
-{Section 6 narrative -- the composed Buffett-style debate synthesis}
-
-**Verdict:** {verdict} | **Confidence:** {confidence}
-**Debate Direction:** {direction} | **Unresolved:** {count}
-
-#### Debate Scorecard
-| Exchange | Bull | Bear | Outcome |
-|----------|------|------|---------|
-{for each exchange from judge verdict}
-
-#### Red Flags
-- {list}
-
----
-
-## Section Verdicts
-| Section | Verdict | Confidence |
-|---------|---------|------------|
-| 1. Event Analysis | {verdict} | {confidence} |
-| 2. Meaning Checklist | {verdict} | {confidence} |
-| 3. Moat Checklist | {verdict} | {confidence} |
-| 4. Management Checklist | {verdict} | {confidence} |
-| 5. Valuation Confirmation | {verdict} | {confidence} |
-| 6. Inversion & Rebuttal | {verdict} | {confidence} |
-
----
-
-## All Red Flags
-{aggregated from all 6 sections}
-
----
-
-## Citations
-1. {citation 1}
-2. {citation 2}
-...
-```
-
-Log:
-```
-Step 8: Report assembled
-  Sections: {completed}/6
-  Overall verdict: {verdict}
-  Total citations: {count}
-  Total red flags: {count}
-  Output: .thes1s/reports/{TICKER}/full-story.json
-  Output: .thes1s/reports/{TICKER}/full-story.md
-```
-
-## Step 8.5: Pre-Finalize Event Sweep (REQUIRED)
-
-**Orchestrators systematically under-report their own problem-solving** — silent fixes look like clean output, which corrupts DOE conclusions. The fullStory "clean run" bias is the worst offender (no API timeouts to force logging), and frame-bucketing makes you read mid-debate corrections as "intended mechanic" rather than "agent output deviation." Two-part sweep: scripted file-evidence checks, then a residual checklist for orchestrator-memory items the script cannot see.
-
-**Part 1 — Scripted file-evidence sweep.** Run this verbatim:
+**Part 1 — Scripted file-evidence sweep.** Run verbatim:
 
 ```bash
 node scripts/observatory-sweep-debate.js {RUN_ID} {TICKER}
 ```
 
-Detects (from saved debate artifacts): bull weak-strength concessions, bull factual errors acknowledged in rebuttal narratives, judge schema drift (missing judgeScore/pointNumber), missing-or-miscounted scoreboard, stub debate-step files (<2KB), markdown-fence wrap survival. Prints `logged N events (...)` summary. Cannot see what's not in the files — that's Part 2.
+Detects (from saved debate artifacts): bull weak-strength concessions, bull factual errors acknowledged in rebuttal narratives, judge schema drift (missing judgeScore/pointNumber), missing-or-miscounted scoreboard, stub debate-step files (<2KB), markdown-fence wrap survival. Prints `logged N events (...)` summary.
 
 **Part 2 — Orchestrator-memory checklist.** Answer honestly. **When in doubt, log it.**
 
@@ -884,8 +588,8 @@ Detects (from saved debate artifacts): bull weak-strength concessions, bull fact
 [ ] Did you write a debate step's output from orchestrator memory          → retry, reason: "orchestrator wrote from memory"
      instead of re-dispatching the agent?                                     (AND format-violation: "protocol violation — orchestrator as agent")
 [ ] Did any agent use the Write tool when protocol said "return JSON"?     → format-violation
-[ ] Did any agent wrap JSON in preamble text ("Now I have...") in the      → format-violation
-     stream you observed (gone after extraction)?
+[ ] Did any agent wrap JSON in preamble text in the stream you observed    → format-violation
+     (gone after extraction)?
 [ ] Did you use the JSON extraction fallback chain for any agent?          → format-violation per agent
 [ ] Did the rebuttal acknowledge any factual concession the script's       → format-violation per concession
      regex missed (Bull conceding to Bear with phrasing other than
@@ -895,49 +599,38 @@ Detects (from saved debate artifacts): bull weak-strength concessions, bull fact
      agents were dispatched?
 ```
 
-For each `yes`, run the corresponding `observatory-record-event.js` command (see [Retry Logic](#retry-logic) and [Log Format Violations](#required-log-format-violations) for syntax).
+For each `yes`, run the corresponding `observatory-record-event.js` command (see Format Violations + Retry Logic at the end of this skill for syntax).
 
-**Verify:** `cat observatory/runs/{RUN_ID}/orchestrator.json` — does it honestly reflect the run, or look cleaner than reality?
+## Step 9: Finalize Observatory
 
-## Step 9: Finalize Observatory Capture
-
-Parse the `<usage>` block from the overall session (aggregate across all subagent calls if available). Then run:
+Parse the aggregate `<usage>` block across all subagent calls.
 
 ```bash
 node scripts/observatory-finalize.js {RUN_ID} .thes1s/reports/{TICKER}/full-story.json --verdict {OVERALL_VERDICT} --tokens {TOTAL_TOKENS} --tool-uses {TOOL_USES} --duration {DURATION_SECONDS}
 ```
 
-Where:
-- `{RUN_ID}` is from Step 2
-- `{OVERALL_VERDICT}` is the final verdict (PASS, FAIL, or WATCHLIST)
-- Token/tool/duration values are best-effort estimates from subagent usage blocks
+Retry once on error.
 
-You MUST run this step. If the command errors, retry once before continuing.
-
-## Step 9.5: Observatory Wiki Synthesis (REQUIRED)
-
-Run wiki synthesis to update agent profiles, ticker pages, and pattern pages:
+## Step 9.5: Wiki Synthesis
 
 ```bash
 node --loader ./scripts/node-esm-loader.js scripts/observatory-synthesize.js {RUN_ID}
 ```
 
-Wiki synthesis is part of the pipeline -- run it now. If the command errors, retry once before continuing.
+Retry once on error.
 
 ## Step 10: Generate PDF
 
-Generate the Thes1s-branded Full Story PDF. The PDF reader expects `full-story-api.json`, so copy the output file first:
+The PDF reader expects `full-story-api.json`, so copy first:
 
 ```bash
 cp .thes1s/reports/{TICKER}/full-story.json .thes1s/reports/{TICKER}/full-story-api.json
 python3 scripts/pdf/generate_full_story_pdf.py {TICKER}
 ```
 
-This produces a branded PDF with checklist tables, debate rendering, and evidence sections. If it fails, print a warning and continue — the JSON output is the primary artifact.
+If it fails, print warning and continue.
 
 ## Step 11: Auto-Archive
-
-Archive this run's outputs using the observatory RUN_ID from Step 2:
 
 ```bash
 mkdir -p .thes1s/reports/{TICKER}/archive/{RUN_ID}
@@ -947,186 +640,108 @@ cp .thes1s/reports/{TICKER}/sections/debate-*.json .thes1s/reports/{TICKER}/arch
 cp .thes1s/reports/{TICKER}/*.pdf .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
 ```
 
-This preserves the run's output so future runs on the same ticker don't overwrite it. You MUST run this step. If the command errors, retry once before continuing.
+Retry once on error.
 
-## Step 12: Print Final Summary
+## Step 12: Print Summary
 
-```
-================================================================
-  FULL STORY GENERATION COMPLETE: {TICKER}
-================================================================
-
-Sections completed: {X}/6
-Overall verdict: {PASS/FAIL/WATCHLIST} ({confidence})
-Pitch Deck verdict: {verdict}
-Debate direction: {direction}
-
---- Section Verdicts ---
-  1.  Event Analysis:          {verdict} ({confidence})
-  2.  Meaning Checklist:       {verdict} ({confidence})
-  3.  Moat Checklist:          {verdict} ({confidence})
-  4.  Management Checklist:    {verdict} ({confidence})
-  5.  Valuation Confirmation:  {verdict} ({confidence})
-  6.  Inversion & Rebuttal:    {verdict} ({confidence})
-
---- Debate ---
-  Direction: {Bull/Bear/Mixed}
-  Exchanges: {count}
-  Strong Bull: {count} | Strong Bear: {count} | Unresolved: {count}
-  Thesis killers found: {count}
-  Investment implication: {from judge}
-
---- Red Flags ---
-  Total: {count} across all sections
-
---- Citations ---
-  Total: {count} across all sections
-
---- Output Files ---
-  Report (JSON): .thes1s/reports/{TICKER}/full-story.json
-  Report (MD):   .thes1s/reports/{TICKER}/full-story.md
-  Sections:      .thes1s/reports/{TICKER}/sections/*.json
-  Debate Steps:  .thes1s/reports/{TICKER}/sections/debate-step-*.json
-
-================================================================
-```
+Print: sections completed (X/6), overall verdict + confidence, Pitch Deck verdict, debate direction + Strong Bull/Bear/Unresolved counts, thesis killer count, investment implication, red flag total, citation total, output paths.
 
 ---
 
 ## JSON Extraction Fallback Chain
 
-After every subagent completes, extract JSON from the response using this chain:
+After every subagent completes:
 
-1. Look for a JSON code block (` ```json ... ``` `) in the response text
-2. If not found, look for a raw JSON object/array (first `{` or `[` to matching closing)
-3. If not found, locate the first `{` and last `}` (or `[`/`]`) and attempt parse
-4. Parse the extracted JSON
-5. If all parsing fails, retry once -- dispatch the same agent with the original prompt plus: "Your previous response could not be parsed as JSON. Output ONLY the raw JSON -- no markdown fences, no commentary. Start with `{` or `[` and end with `}` or `]`."
-6. If retry also fails, create a minimal section with `status: "failed"` and save the raw response text in a `.thes1s/reports/{TICKER}/sections/{key}-raw.txt` file for debugging.
+1. JSON code block (```json ... ```)
+2. Raw JSON object/array (first `{` or `[` to matching closing)
+3. First `{` to last `}` (or `[`/`]`) and parse
+4. If all parsing fails, retry once with: "Your previous response could not be parsed as JSON. Output ONLY the raw JSON — no markdown fences, no commentary. Start with `{` or `[` and end with `}` or `]`."
+5. If retry fails, create a minimal section with `status: "failed"` and save raw response to `sections/{key}-raw.txt`.
 
 ### REQUIRED: Log Format Violations
 
-**This is load-bearing observability — not optional cleanup.** The orchestrator's default instinct is to silently fix agent output and keep moving. That bias corrupts the observatory's format-violation metric, which the DOE uses to measure prompt quality. Log every deviation from clean output, even if you fix it in one line.
-
-Whenever the fallback chain triggers ANY of these, run the record-event command BEFORE proceeding:
+Whenever the fallback chain triggers ANY of these, run before proceeding:
 
 ```bash
-# Fallback extraction used (not the happy path — agent output had markdown fences, preamble, or raw JSON instead of the expected fenced block)
+# Fallback extraction used
 node scripts/observatory-record-event.js {RUN_ID} format-violation \
-  --agent {AGENT_ROLE} --violation "fallback extraction required: {describe: markdown fences | preamble text | raw JSON without fences | first-to-last brace | etc}" --fix-applied true
+  --agent {AGENT_ROLE} --violation "fallback extraction required: {markdown fences | preamble | raw JSON | first-to-last brace}" --fix-applied true
 
-# Key mismatch (agent returned "pest_risks" when schema expected "pest"; agent saved "market-position.json" when expected "market_position.json"; etc)
+# Key mismatch
 node scripts/observatory-record-event.js {RUN_ID} format-violation \
   --agent {AGENT_ROLE} --violation "key mismatch: returned '{actual}' expected '{expected}'" --fix-applied true
 
-# Agent returned multiple JSON objects or an array when a single object was expected (or vice versa)
+# Shape mismatch
 node scripts/observatory-record-event.js {RUN_ID} format-violation \
-  --agent {AGENT_ROLE} --violation "shape mismatch: {describe — multiple objects, array vs object, partial drafts, etc}" --fix-applied true
+  --agent {AGENT_ROLE} --violation "shape mismatch: {describe}" --fix-applied true
 
-# Agent saved to wrong path (project root instead of sections/, wrong filename, etc)
+# Wrong filesystem path
 node scripts/observatory-record-event.js {RUN_ID} format-violation \
   --agent {AGENT_ROLE} --violation "filesystem violation: saved to {wrong path} instead of {expected path}" --fix-applied true
 
-# Agent wrote output directly via Write tool instead of returning JSON in response (or vice versa)
+# Used Write tool when protocol said return JSON
 node scripts/observatory-record-event.js {RUN_ID} format-violation \
-  --agent {AGENT_ROLE} --violation "protocol violation: used Write tool instead of response body (or vice versa)" --fix-applied true
+  --agent {AGENT_ROLE} --violation "protocol violation: used Write tool instead of response body" --fix-applied true
 ```
 
-If JSON parsing required the retry prompt at step 5, log a retry too (see Retry Logic below).
+If JSON parsing required the retry prompt at step 4, log a retry too.
 
 ## Narrative Recovery
 
 After extracting section JSON, check each section's `narrative` field:
-- If `narrative.length < 200`: The agent likely produced a stub.
+- If `narrative.length < 200`: agent likely produced a stub.
   1. Search the agent's full response text for substantial prose (markdown with ## headings, > 200 chars)
-  2. If found, inject it into the section's `narrative` field and re-save. **Log a format-violation:**
+  2. If found, inject into the section's `narrative` field and re-save. Log:
      ```bash
      node scripts/observatory-record-event.js {RUN_ID} format-violation \
-       --agent {AGENT_ROLE} --violation "narrative stub in JSON, recovered {length} chars of prose from response body" --fix-applied true
+       --agent {AGENT_ROLE} --violation "narrative stub in JSON, recovered {length} chars from response body" --fix-applied true
      ```
-  3. If no recoverable narrative found, retry the agent once with: "Your previous output had a {length}-char narrative stub. The narrative field MUST contain your FULL analysis (500+ words). Write the complete narrative." **Log the retry:**
+  3. If no recoverable narrative, retry the agent once: "Your previous output had a {length}-char narrative stub. The narrative field MUST contain your FULL analysis (500+ words). Write the complete narrative." Log:
      ```bash
      node scripts/observatory-record-event.js {RUN_ID} retry \
-       --agent {AGENT_ROLE} --wave {N} --reason "narrative stub ({length} chars) — full narrative required" --attempt 1 --resolved false
+       --agent {AGENT_ROLE} --wave {N} --reason "narrative stub ({length} chars)" --attempt 1 --resolved false
      ```
-     After the retry completes, re-run with `--resolved true` if the retry succeeded.
-  4. If retry also produces a stub, save with a warning and continue
+     Re-run with `--resolved true` if the retry succeeded.
+  4. If retry also produces a stub, save with a warning and continue.
 
 ## Retry Logic
 
 If any agent fails entirely (rate limit, timeout, error):
 1. Wait 30 seconds
 2. Re-dispatch with the same prompt
-3. If the retry also fails, log the error, save partial output with `status: "failed"`, and continue
-4. Do NOT retry more than once -- the PM can re-run individual sections manually
+3. If retry fails, log the error, save partial output with `status: "failed"`, and continue
+4. Do NOT retry more than once
 
 ### REQUIRED: Log Every Retry and Stall
 
-**When you retry, log it. When you trim a prompt to avoid a timeout, log it. When an agent runs >15min and you kill it, log it.** Silent workarounds corrupt the observatory's orchestrator telemetry.
-
 ```bash
-# Agent retry (any reason — timeout, rate limit, parse failure, stub narrative, key mismatch that can't be auto-fixed, etc)
+# Agent retry
 node scripts/observatory-record-event.js {RUN_ID} retry \
-  --agent {AGENT_ROLE} --wave {N} --reason "{short reason: timeout | rate-limit | JSON parse failed | narrative stub | schema violation | ...}" --attempt 1 --resolved {true|false}
+  --agent {AGENT_ROLE} --wave {N} --reason "{short reason: timeout | rate-limit | JSON parse failed | narrative stub | schema violation}" --attempt 1 --resolved {true|false}
 
-# Stall detected (agent running unusually long before you intervened — timeout, idle stream, partial response, etc)
-# "Unusually long" = >15min for sonnet agents, >25min for opus agents.
+# Stall detected (>15min sonnet, >25min opus)
 node scripts/observatory-record-event.js {RUN_ID} stall \
-  --agent {AGENT_ROLE} --wave {N} --duration {seconds_before_intervention} --resolution "{how you resolved: retried with trimmed prompt | killed and re-dispatched | timed out | ...}"
+  --agent {AGENT_ROLE} --wave {N} --duration {seconds_before_intervention} --resolution "{retried with trimmed prompt | killed and re-dispatched | timed out}"
 ```
 
-Retry and stall are NOT redundant. Log both if both apply: stall captures "how long it ran before intervention," retry captures "what happened after intervention."
-
-**Full Story has an additional anti-pattern to watch for:** when a debate step (Bear, Rebuttal, Compose) stalls, the orchestrator's instinct is to write the debate step output directly from its own context using the Write tool instead of re-dispatching the agent. **This is a retry AND a protocol violation — log both.**
+Log both if both apply. **Anti-pattern specific to Full Story:** when a debate step (Bear, Rebuttal, Compose) stalls, the orchestrator's instinct is to write the debate step output directly from its own context using the Write tool instead of re-dispatching the agent. **This is a retry AND a protocol violation — log both.**
 
 ## Constraints
 
-### Contamination Boundary (CRITICAL)
-During generation, NEVER read from any of these paths:
+**Contamination boundary.** During generation, NEVER read from:
 - `knowledge/stage-1-one-pager/examples/`
 - `knowledge/stage-2-pitch-deck/examples/`
 - `knowledge/stage-3-full-story/examples/`
 - `knowledge/pre-course-examples/`
 
-These contain the user's manual research examples. Agents must generate from their v2 prompt (which has curriculum baked in) + DataPacket + Pitch Deck inheritance alone.
+**Schema enforcement.** Every section output MUST conform to ReportSectionSchema. Required fields: `key`, `title`, `sectionNumber`, `status`, `confidence`, `verdict`, `verdictRationale`, `summary`, `data`, `narrative`, `citations`, `redFlags` (>= 1), `modelUsed`, `tokenCost`. Debate step outputs (Steps 1-4) use lightweight formats, NOT ReportSectionSchema. Only Compose produces a ReportSectionSchema.
 
-### Schema Enforcement
-Every section output MUST conform to ReportSectionSchema. Required fields: `key`, `title`, `sectionNumber`, `status`, `confidence`, `verdict`, `verdictRationale`, `summary`, `data`, `narrative`, `citations`, `redFlags` (>= 1), `modelUsed`, `tokenCost`.
+**Multi-role agents.** Two agents play multiple roles. When dispatching, the message MUST explicitly state the role:
+- **Risk Analyst** — Phase 1 (S1: Event Analysis) + Phase 2 Step 2 (Bear). Bear dispatch MUST say: "Your role is Step 2: Bear Inversion" so Format B activates.
+- **Synthesis Writer** — Phase 2 Steps 1, 3, Compose. Each dispatch MUST say: "Your role is Step 1: Bull Thesis" or "Your role is Step 3: Bull Rebuttal" or "Your role is Compose (Final Call)".
 
-Debate step outputs (Steps 1-4) use their own lightweight formats, NOT ReportSectionSchema. Only the Compose step produces a ReportSectionSchema.
+**Web search rule.** Phase 1 agents all have web search. Phase 2: Bull, Bear, Rebuttal have web search. Judge and Compose do NOT.
 
-### Error Resilience
-- If a Phase 1 agent fails entirely after retry, log the error, save what succeeded, continue to Phase 2 with available sections.
-- If a debate step fails after retry, the debate cannot continue past that step. Assemble the report with Phase 1 sections only and note the debate failure.
-- If the Compose step fails, use the judge verdict to construct a minimal Section 6 with the judge's direction as the verdict and the judge's summary as the narrative.
-- The pipeline ALWAYS produces partial results rather than nothing.
+**Error resilience.** Phase 1 agent fails after retry → log, save what succeeded, continue to Phase 2 with available sections. Debate step fails after retry → debate cannot continue past that step; assemble report with Phase 1 sections only and note the failure. Compose fails → use judge verdict to construct minimal Section 6 with judge's direction as verdict and judge's summary as narrative. Always produce partial results rather than nothing.
 
-### Multi-Role Agent Handling
-Two agents play multiple roles:
-- **Risk Analyst** -- Phase 1 (S1: Event Analysis) + Phase 2 Step 2 (Bear). When dispatching as Bear, the message MUST explicitly state: "Your role is Step 2: Bear Inversion" so the agent activates Format B output.
-- **Synthesis Writer** -- Phase 2 Steps 1, 3, and Compose. Each dispatch MUST explicitly state which role: "Your role is Step 1: Bull Thesis" or "Your role is Step 3: Bull Rebuttal" or "Your role is Compose (Final Call)".
-
-### Web Search Rule (updated EXP-003 — symmetric tooling)
-Phase 1 agents all have web search (their prompts state this). In Phase 2: Bull, Bear, and Rebuttal all have web search. Judge and Compose do NOT — the Judge is a neutral arbiter judging presented evidence, and Compose is assembly-only. Bull/Bear symmetry is deliberate: the bear's evidence advantage was the core structural bias. Judge still adjudicates claims without its own research — its impartiality is the integrity of the debate.
-
-### Agent Model Selection
-**Model assignments are controlled variables** (from managed-agent.yaml configs). When dispatching each agent via the Agent tool, use the `model` parameter from the Agent Registry above. Default: all agents use **sonnet**. (Sprint 1 used opus for risk-analyst — switched to all-sonnet for Sprint 2 experiment per DOE.) The observatory tracks which model each agent used so DOE experiments can measure the effect of model swaps on quality and cost.
-
-### Progress Display
-```
-Step 1:   Validating input and gate check...
-Step 2:   Observatory initialized (RUN_ID: {id})
-Step 3:   Reading prompts and preparing context...
-Step 4:   Phase 1 -- Deep Analysis (5 agents in parallel)...
-Step 5:   Phase 1 results logged
-Step 6:   Phase 2 -- The Debate (4 steps + compose, strictly sequential)...
-          Step 1 (Bull): dispatching synthesis-writer...
-          Step 2 (Bear): dispatching risk-analyst...
-          Step 3 (Rebuttal): dispatching synthesis-writer...
-          Step 4 (Judge): dispatching financial-analyst...
-          Compose: dispatching synthesis-writer...
-Step 7:   Phase 2 results logged
-Step 8:   Assembling final report...
-Step 9:   Finalizing observatory capture...
-Step 10:  Generation complete.
-```
+**Agent model.** Defaults from Agent Registry (all sonnet). Pass the `model` param to the Agent tool per registry. Observatory tracks per-agent model for DOE.
