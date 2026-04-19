@@ -225,7 +225,7 @@ export const SIC_MAP = {
   '6770': { sector: 'Financial Services', industryGroup: 'Conglomerates', industry: 'Blank Checks', naics: '523999' },
 
   // Mortgage / Real Estate Finance
-  '6159': { sector: 'Financial Services', industryGroup: 'Credit Services', industry: 'Credit Agencies', naics: '522294' },
+  // (SIC 6159 defined earlier under Credit Services — do not redefine here)
   '6162': { sector: 'Financial Services', industryGroup: 'Mortgage Finance', industry: 'Mortgage Finance', naics: '522310' },
   '6163': { sector: 'Financial Services', industryGroup: 'Mortgage Finance', industry: 'Loan Brokers', naics: '522390' },
 
@@ -434,7 +434,8 @@ export const SIC_MAP = {
   '4932': { sector: 'Utilities', industryGroup: 'Utilities - Diversified', industry: 'Utilities - Diversified', naics: '221100' },
   '4941': { sector: 'Utilities', industryGroup: 'Utilities - Regulated Water', industry: 'Utilities - Regulated Water', naics: '221310' },
   '4950': { sector: 'Utilities', industryGroup: 'Utilities - Regulated Water', industry: 'Sanitary Services', naics: '221320' },
-  '4953': { sector: 'Utilities', industryGroup: 'Waste Management', industry: 'Waste Management', naics: '562111' },
+  // (SIC 4953 defined earlier under Industrials/Waste Management — do not redefine here.
+  //  Waste Management Inc and peers classify as Industrials, not Utilities.)
   '4991': { sector: 'Utilities', industryGroup: 'Utilities - Independent Power Producers', industry: 'Independent Power Producers', naics: '221118' },
 
   // ═══ AGRICULTURE ═══════════════════════════════════════════════════
