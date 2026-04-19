@@ -173,6 +173,8 @@ async function handleRun(request, env, user) {
   }
 
   // ── Stage: One Pager ───────────────────────────────────────
+  // Accepts optional body.payload.dataPacket (browser-assembled sliced DataPacket).
+  // If absent, falls back to ticker-only prompt (pre-slicing behavior).
 
   // Create Managed Agent session
   let sessionId;
@@ -187,11 +189,13 @@ async function handleRun(request, env, user) {
   }
 
   // Send initial message
+  const onePagerDataPacket = body.payload?.dataPacket;
+  const onePagerText = buildOnePagerMessage(ticker, onePagerDataPacket);
   try {
     await anthropicFetch(`${ANTHROPIC_API}/v1/sessions/${sessionId}/events`, 'POST', {
       events: [{
         type: 'user.message',
-        content: [{ type: 'text', text: `Create a One Pager on ${ticker.toUpperCase()}` }],
+        content: [{ type: 'text', text: onePagerText }],
       }],
     }, env);
   } catch (err) {
@@ -487,6 +491,31 @@ async function handleAssembleFilings(request, env, user, ticker) {
       elapsedSeconds: parseFloat(elapsed),
     }, 500);
   }
+}
+
+// ─── One Pager Message Builder ──────────────────────────────
+// If a sliced DataPacket was provided, embed it as a fenced JSON block so the
+// agent can use it for quantitative facts (financials, market cap, gurus, etc.)
+// and reserve web search for narrative context. If no DataPacket, fall back to
+// the pre-slicing ticker-only prompt — agent web-searches everything.
+
+function buildOnePagerMessage(ticker, dataPacket) {
+  const upper = ticker.toUpperCase();
+  if (!dataPacket || typeof dataPacket !== 'object') {
+    return `Create a One Pager on ${upper}`;
+  }
+  const companyName = dataPacket.companyInfo?.name || upper;
+  return `# One Pager Research: ${upper}
+Company: ${companyName}
+Assembled: ${dataPacket._sliceMetadata?.ticker ? new Date().toISOString() : 'unknown'}
+
+## DataPacket (sliced)
+
+\`\`\`json
+${JSON.stringify(dataPacket)}
+\`\`\`
+
+Use this DataPacket for all quantitative facts (financials, market cap, ROE/ROIC, gurus, growth rates). Use web search for narrative context (business model, competitive advantages, industry trends, investor concerns).`;
 }
 
 // ─── Pitch Deck Message Builder ─────────────────────────────
