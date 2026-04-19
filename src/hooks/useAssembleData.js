@@ -139,5 +139,29 @@ export function useAssembleData() {
     return { dataPacket, filingContent, assembledAt: new Date().toISOString() };
   }, []);
 
-  return { assemble, phase, progress, error };
+  // Lightweight variant for the one-pager — skips filing fetch + section extraction
+  // since the one-pager slice drops the `filings` field. Keeps assembly fast
+  // (~2-5s vs ~30-60s for the pitch-deck flow).
+  const assembleOnePager = useCallback(async (ticker) => {
+    setError(null);
+    setPhase('dataPacket');
+    setProgress({ phase: 'dataPacket', detail: 'Assembling financial data...', pct: 0 });
+
+    let dataPacket;
+    try {
+      dataPacket = await assembleDataPacket(ticker);
+    } catch (err) {
+      const msg = `DataPacket assembly failed: ${err.message}`;
+      setError(msg);
+      setPhase('error');
+      setProgress({ phase: 'error', detail: msg, pct: 0 });
+      throw new Error(msg);
+    }
+
+    setPhase('done');
+    setProgress({ phase: 'done', detail: 'Financial data assembled', pct: 100 });
+    return { dataPacket, assembledAt: new Date().toISOString() };
+  }, []);
+
+  return { assemble, assembleOnePager, phase, progress, error };
 }

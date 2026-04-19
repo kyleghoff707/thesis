@@ -4,6 +4,7 @@ import { C } from '../theme';
 import Spinner from './Spinner';
 import ConfirmGenerateDialog from './ConfirmGenerateDialog';
 import { useAssembleData } from '../hooks/useAssembleData';
+import { sliceDataPacket } from '../utils/sliceDataPacket';
 
 // Determine button state from report + stage availability + generating flag
 // Pure function — exported via _testExports for testing
@@ -40,7 +41,7 @@ export default function GenerateButton({ ticker, report, stageAvailability, gene
   const [showDialog, setShowDialog] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [assembling, setAssembling] = useState(false);
-  const { assemble, phase: assemblyPhase, progress: assemblyProgress, error: assemblyError } = useAssembleData();
+  const { assemble, assembleOnePager, phase: assemblyPhase, progress: assemblyProgress, error: assemblyError } = useAssembleData();
 
   const reportId = report?.id;
   const state = getButtonState(ticker, report, stageAvailability, generating);
@@ -125,6 +126,20 @@ export default function GenerateButton({ ticker, report, stageAvailability, gene
                 } catch {
                   setAssembling(false);
                   // assemblyError is already set by the hook
+                }
+              } else if (state.stage === 'one-pager') {
+                // Assemble DataPacket, slice to one-pager fields, forward as payload.
+                // On failure, fall back silently to ticker-only (preserves pre-slicing behavior).
+                setAssembling(true);
+                try {
+                  const { dataPacket } = await assembleOnePager(ticker);
+                  const sliced = sliceDataPacket(dataPacket, 'one-pager');
+                  setAssembling(false);
+                  onGenerate(state.stage, { dataPacket: sliced }, report?.id);
+                } catch (err) {
+                  console.warn('[one-pager] DataPacket assembly failed — falling back to ticker-only:', err?.message || err);
+                  setAssembling(false);
+                  onGenerate(state.stage, null, report?.id);
                 }
               } else {
                 onGenerate(state.stage, null, report?.id);
