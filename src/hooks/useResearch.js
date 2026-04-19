@@ -206,5 +206,15 @@ export function useResearch() {
     return reports.find(r => r.id === id) || null;
   }, [reports]);
 
-  return { reports, loading, createReport, updateReport, deleteReport, getReport };
+  // Re-fetch a single report's full data (including stage data) and update local state.
+  // Used after pipeline completion to pick up sections the Worker wrote to report_stages.
+  const refreshReport = useCallback(async (id) => {
+    if (IS_DEV) return;
+    const full = await apiFetch(`/reports/${id}`);
+    if (full?.report) {
+      setReports(prev => prev.map(r => r.id === id ? full.report : r));
+    }
+  }, []);
+
+  return { reports, loading, createReport, updateReport, deleteReport, getReport, refreshReport };
 }

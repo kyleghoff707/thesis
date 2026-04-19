@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { C } from '../theme';
 import { useOnePager } from '../hooks/useOnePager';
 import { useScrollSpy } from '../hooks/useScrollSpy';
+import { useGeneratePipeline } from '../hooks/useGeneratePipeline';
 import SectionRenderer from './SectionRenderer.jsx';
 import VerdictBadge from './VerdictBadge.jsx';
 import { formatTitle, formatRelativeTime, stateToLabel, verdictDotColor } from './reportHelpers';
@@ -49,7 +50,7 @@ function computePercentage(statuses, progressState) {
   return stateProgress[progressState] || 0;
 }
 
-export default function OnePager({ getReport, updateReport }) {
+export default function OnePager({ getReport, updateReport, refreshReport }) {
   const { id } = useParams();
   const report = getReport ? getReport(id) : null;
   // Production: report.onePager is loaded from D1 via useResearch → GET /user/reports/:id.
@@ -57,6 +58,17 @@ export default function OnePager({ getReport, updateReport }) {
   // fall back to useOnePager for dev mode and progress polling.
   const { report: hookData, progress, loading, error } = useOnePager(report?.ticker);
   const onePagerData = report?.onePager || hookData;
+
+  // Subscribe to pipeline completion so we can refresh report.onePager from D1
+  // when the Worker finishes writing to report_stages. useGeneratePipeline is
+  // idempotent to call from multiple components (Toolbox already calls it).
+  const { result: pipelineResult } = useGeneratePipeline(report?.ticker);
+  const hasCompletedSections = pipelineResult?.sections?.length > 0;
+  useEffect(() => {
+    if (hasCompletedSections && refreshReport && id) {
+      refreshReport(id);
+    }
+  }, [hasCompletedSections, id, refreshReport]);
 
   // Grace period: show spinner for 5s after mount to let pipeline write progress.json
   const [graceActive, setGraceActive] = useState(true);
