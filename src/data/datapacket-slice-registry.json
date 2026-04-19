@@ -1,0 +1,21 @@
+{
+  "_comment": "Per-agent DataPacket field registry. Each agent receives only the fields it uses. Shared between scripts/slice-datapacket.js (Claude Code) and src/utils/sliceDataPacket.js (browser/Worker). Source of truth for slicing across environments.",
+  "_schema": {
+    "agentRole": "array of DataPacket top-level field names this agent consumes",
+    "emptyArray": "agent does not receive DataPacket fields (e.g., synthesis-writer receives only section outputs)"
+  },
+  "agents": {
+    "annual-reader": ["companyInfo", "classification", "financials", "ttm", "filings", "caveats"],
+    "quarterly-reader": ["companyInfo", "classification", "financials", "ttm", "filings", "caveats"],
+    "business-analyst": ["companyInfo", "classification", "ruleOneScore", "peers", "gurus", "financials", "ttm", "growthRates", "caveats"],
+    "competitor-market-position": ["companyInfo", "classification", "ruleOneScore", "peers", "peerMetrics", "financials", "ttm", "growthRates", "caveats"],
+    "competitor-moats": ["companyInfo", "classification", "ruleOneScore", "peers", "peerMetrics", "financials", "ttm", "growthRates", "caveats"],
+    "financial-analyst": ["companyInfo", "classification", "financials", "ttm", "growthRates", "returnMetrics", "debtMetrics", "fcf", "keyMetrics", "caveats"],
+    "management-evaluator": ["companyInfo", "classification", "compensation", "insiders", "gurus", "financials", "ttm", "returnMetrics", "caveats"],
+    "risk-analyst": ["companyInfo", "classification", "financials", "ttm", "growthRates", "peers", "insiders", "caveats"],
+    "valuation-specialist": ["companyInfo", "classification", "financials", "ttm", "growthRates", "returnMetrics", "fcf", "keyMetrics", "caveats"],
+    "synthesis-writer": [],
+    "competitor-evaluator": ["companyInfo", "classification", "ruleOneScore", "peers", "peerMetrics", "financials", "ttm", "growthRates", "caveats"],
+    "one-pager": ["companyInfo", "classification", "financials", "ttm", "growthRates", "returnMetrics", "debtMetrics", "fcf", "keyMetrics", "gurus", "caveats"]
+  }
+}

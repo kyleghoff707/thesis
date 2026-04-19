@@ -11,36 +11,15 @@
 //   SLICE=$(node scripts/slice-datapacket.js LULU business-analyst)
 
 import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 // Agent registry — which DataPacket fields each agent needs.
-// Mirrors the AGENT_REGISTRY in generate-pitch-deck and generate-full-story skills.
-const REGISTRY = {
-  // Pitch Deck agents
-  'annual-reader':              ['companyInfo', 'classification', 'financials', 'ttm', 'filings', 'caveats'],
-  'quarterly-reader':           ['companyInfo', 'classification', 'financials', 'ttm', 'filings', 'caveats'],
-  'business-analyst':           ['companyInfo', 'classification', 'ruleOneScore', 'peers', 'gurus', 'financials', 'ttm', 'growthRates', 'caveats'],
-  'competitor-market-position':  ['companyInfo', 'classification', 'ruleOneScore', 'peers', 'peerMetrics', 'financials', 'ttm', 'growthRates', 'caveats'],
-  'competitor-moats':           ['companyInfo', 'classification', 'ruleOneScore', 'peers', 'peerMetrics', 'financials', 'ttm', 'growthRates', 'caveats'],
-  'financial-analyst':          ['companyInfo', 'classification', 'financials', 'ttm', 'growthRates', 'returnMetrics', 'debtMetrics', 'fcf', 'keyMetrics', 'caveats'],
-  'management-evaluator':       ['companyInfo', 'classification', 'compensation', 'insiders', 'gurus', 'financials', 'ttm', 'returnMetrics', 'caveats'],
-  'risk-analyst':               ['companyInfo', 'classification', 'financials', 'ttm', 'growthRates', 'peers', 'insiders', 'caveats'],
-  'valuation-specialist':       ['companyInfo', 'classification', 'financials', 'ttm', 'growthRates', 'returnMetrics', 'fcf', 'keyMetrics', 'caveats'],
-  'synthesis-writer':           [],  // receives section outputs only, no DataPacket
-
-  // Full Story agents (same field mappings where roles overlap)
-  'competitor-evaluator':       ['companyInfo', 'classification', 'ruleOneScore', 'peers', 'peerMetrics', 'financials', 'ttm', 'growthRates', 'caveats'],
-
-  // One Pager — core Rule One minimum standards + valuation inputs + guru signal.
-  // Keeps gurus (2.4KB, Rule One "meaning" signal — guru ownership is real context).
-  // Drops insiders/filings/compensation/peers/peerMetrics/ruleOneScore:
-  // - Insider/peer/mgmt analysis is pitch-deck territory
-  // - Filings are read by annual-reader/quarterly-reader in pitch deck
-  // - ruleOneScore is a pre-computed composite; one-pager judges from raw data
-  // - Narrative context (business model, catalysts, management commentary)
-  //   is better sourced via web search than via DataPacket
-  'one-pager':                  ['companyInfo', 'classification', 'financials', 'ttm', 'growthRates', 'returnMetrics', 'debtMetrics', 'fcf', 'keyMetrics', 'gurus', 'caveats'],
-};
+// Source of truth: src/data/datapacket-slice-registry.json — shared with the
+// browser utility at src/utils/sliceDataPacket.js. Edit the JSON, not this file.
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const registryPath = join(__dirname, '..', 'src', 'data', 'datapacket-slice-registry.json');
+const REGISTRY = JSON.parse(readFileSync(registryPath, 'utf8')).agents;
 
 const args = process.argv.slice(2);
 const ticker = args[0]?.toUpperCase();
