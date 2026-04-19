@@ -28,6 +28,8 @@
 - [x] valuation-specialist-pitchdeck — Section 10 (Valuation) — Phase 3, capstone
 
 ## Pitch Deck Infrastructure
+- [x] Sync 10 pitch-deck specialist prompts (+ one-pager) to platform.claude.com — Workstream 2, 2026-04-19, commit c7dbb11. See `observatory/prompt-versions/changelog.md`.
+- [ ] Sync Pitch Deck Coordinator prompt to platform — **deferred to Workstream 3** (skill → coordinator translation; current repo prompt.md is pre-Sprint-1 content)
 - [ ] Create Pitch Deck coordinator with callable_agents
 - [ ] Wire Pitch Deck into Worker pipeline routes (multi-phase, needs DataPacket)
 - [ ] Apply UX fixes from `agents-v2/UX-MIGRATION-LOG.md` (usePitchDeck hook, timer, stage pills)

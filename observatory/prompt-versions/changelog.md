@@ -1,12 +1,49 @@
 ---
 type: prompt-changelog
-lastUpdated: 2026-04-18T18:00:00Z
+lastUpdated: 2026-04-19T11:00:00Z
 tags: [prompts, changelog]
 ---
 
 # Prompt Version Changelog
 
 > Reverse chronological record of all agent prompt changes with measured impact.
+
+---
+
+## 2026-04-19 — Workstream 2: 11 agents synced to platform.claude.com (Sprint 1–5 → production)
+
+Sprint 1–5 agent prompt optimization — previously isolated to `agents-v2/*/prompt.md` and Claude Code subagent runs — now live in production Managed Agents. Source-of-truth (prompt.md) regenerated into YAML via `scripts/sync-agent-yamls.mjs` (text surgery, preserves comments + tools + callable_agents); YAMLs then pasted into platform agent system fields via portal UI.
+
+**Synced (11 agents):**
+- One Pager Analyst (`agent_011CZzuB5TVsiPgnQZZJscmy`) — production traffic live
+- Annual Reader PSR (`agent_011Ca2vuGcG4jEp4WBAfnu95`)
+- Quarterly Reader PSR (`agent_011Ca2vq6XvSuuwDyRYt9oLM`) — **Opus → Sonnet**
+- Business Analyst (`agent_011Ca1vzUNKzbzdQmX2aJqU2`)
+- Competitor Evaluator — Market Position (`agent_011Ca2r7WPEjx8FwemeqETCA`)
+- Competitor Evaluator — Moats (`agent_011Ca2r9Do9mLtdBnf7QdEnM`)
+- Financial Analyst (`agent_011Ca2sv9peUvMA7G1kzdFQP`)
+- Management Evaluator (`agent_011Ca2thF4fQLKtVVHVgYy3e`)
+- Risk Analyst (`agent_011Ca2u5UMz9E1fN514pAvid`) — **Opus → Sonnet**
+- Valuation Specialist (`agent_011Ca2tZSVn2RTTxYa37YS8b`) — **Opus → Sonnet**
+- Synthesis Writer (`agent_011Ca31BD7pZ1Dz9ngZyUtXM`)
+
+**Deferred to Workstream 3:**
+- Pitch Deck Coordinator (`agent_011Ca37DJEQBPbm6rKET3fMs`). The `agents-v2/coordinator-pitchdeck/prompt.md` dates to 2026-04-13 — Sprint 1–5 orchestration improvements live only in `.claude/skills/generate-pitch-deck/SKILL.md` (PSR parallelization from `9add989`, prose cleanup from `06d07f8`). Syncing current prompt.md now would install pre-Sprint content. Workstream 3 translates skill → coordinator prompt (minus observatory scaffolding) before portal push.
+
+**Content now in production:**
+- EXP-002 FGR conservatism rebalance — "Always prefer conservative growth estimates" → "Lean toward conservative when evidence is genuinely mixed — conservatism is a tiebreaker, not a ceiling" (risk-analyst-pitchdeck, valuation-specialist-pitchdeck, synthesis-writer-pitchdeck, financial-analyst-pitchdeck)
+- EXP-003 symmetric debate language — "demolish" / "discomfort" / "keeps you up at night" → "pressure-test with evidence" / "surface material concerns" (risk-analyst-pitchdeck)
+- No-preamble rule — explicit first-char/last-char constraints, named forbidden preambles, observability note (all 11 agents)
+- Write-tool prohibition — "return JSON inline; do NOT use Write tool to save section files" (synthesis-writer-pitchdeck debate roles)
+- Model all-Sonnet per EXP-001 (3 agents flipped from Opus)
+
+**Canary:** Skipped per PM decision. Only one-pager handles live traffic; prompt change is +4 lines (no-preamble rule addition). Other 10 agents sit idle until `callable_agents` Research Preview unlocks pitch-deck dispatch — zero blast radius until then.
+
+**Rollback paths:**
+1. Managed Agents auto-versions every edit — prior prompt version accessible via dropdown per agent
+2. Local git revert: `git revert c7dbb11` reverts YAML regeneration
+
+**Repo commits:** `c7dbb11` (YAML regeneration + sync script), this entry.
 
 ---
 
