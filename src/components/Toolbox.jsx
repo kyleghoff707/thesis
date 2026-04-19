@@ -127,10 +127,16 @@ export default function Toolbox({ getReport, updateReport, refreshReport, settin
     return results.sort((a, b) => b.portfolioPct - a.portfolioPct);
   }, [ticker, guruActivities]);
 
-  // Update report with company name once we have it — guard against stale company data from previous ticker
-  // finLoading check ensures we don't use stale company data during the transition between tickers
-  if (company?.name && report && !report.companyName && report.ticker === ticker && !finLoading) {
-    updateReport(report.id, { companyName: formatCompanyName(company.name) });
+  // Keep report.companyName in sync with EDGAR's authoritative company.name.
+  // Overwrite if stored is empty OR diverges (e.g., legacy row from a prior
+  // ticker, stale React state left behind during a route change, or a bad
+  // value written by an older version of the app). finLoading check avoids
+  // racing on stale company data during the ticker transition.
+  if (company?.name && report && report.ticker === ticker && !finLoading) {
+    const formatted = formatCompanyName(company.name);
+    if (formatted && report.companyName !== formatted) {
+      updateReport(report.id, { companyName: formatted });
+    }
   }
 
   // ─── All scoring now uses EDGAR as single source of truth ───

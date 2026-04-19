@@ -4,6 +4,8 @@ import { C } from '../theme';
 import { useOnePager } from '../hooks/useOnePager';
 import { useScrollSpy } from '../hooks/useScrollSpy';
 import { useGeneratePipeline } from '../hooks/useGeneratePipeline';
+import { useFinancials } from '../hooks/useFinancials';
+import { formatCompanyName } from '../engines/formatCompanyName';
 import SectionRenderer from './SectionRenderer.jsx';
 import VerdictBadge from './VerdictBadge.jsx';
 import GenerationProgressPanel from './GenerationProgressPanel';
@@ -59,6 +61,18 @@ export default function OnePager({ getReport, updateReport, refreshReport }) {
   // fall back to useOnePager for dev mode and progress polling.
   const { report: hookData, progress, loading, error } = useOnePager(report?.ticker);
   const onePagerData = report?.onePager || hookData;
+
+  // Self-heal companyName if it's empty or diverges from EDGAR's authoritative
+  // name. Covers the case where the user navigates straight to /one-pager
+  // without visiting Toolbox (which runs the same check).
+  const { company: financialsCompany, loading: financialsLoading } = useFinancials(report?.ticker);
+  useEffect(() => {
+    if (!financialsCompany?.name || !report || financialsLoading) return;
+    const formatted = formatCompanyName(financialsCompany.name);
+    if (formatted && report.companyName !== formatted && updateReport) {
+      updateReport(report.id, { companyName: formatted });
+    }
+  }, [financialsCompany?.name, financialsLoading, report?.id, report?.companyName, updateReport]);
 
   // Subscribe to pipeline completion so we can refresh report.onePager from D1
   // when the Worker finishes writing to report_stages. useGeneratePipeline is

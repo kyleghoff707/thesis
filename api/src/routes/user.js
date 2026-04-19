@@ -8,6 +8,46 @@ function json(data, status = 200) {
   });
 }
 
+// DB columns are snake_case; the React app reads camelCase. Normalize at the
+// boundary so callers don't have to care which convention the DB uses.
+function reportRowToCamel(row) {
+  if (!row) return row;
+  const out = { ...row };
+  const pairs = [
+    ['company_name', 'companyName'],
+    ['current_stage', 'currentStage'],
+    ['stage_approvals', 'stageApprovals'],
+    ['created_at', 'createdAt'],
+    ['updated_at', 'updatedAt'],
+  ];
+  for (const [snake, camel] of pairs) {
+    if (snake in out) {
+      out[camel] = out[snake];
+      delete out[snake];
+    }
+  }
+  return out;
+}
+
+// Accept camelCase bodies on PUT /user/reports/:id. Returns a snake_case
+// version so the SQL UPDATE maps cleanly to DB columns.
+function updatesBodyToSnake(body) {
+  if (!body || typeof body !== 'object') return {};
+  const aliases = {
+    companyName: 'company_name',
+    currentStage: 'current_stage',
+    stageApprovals: 'stage_approvals',
+  };
+  const out = { ...body };
+  for (const [camel, snake] of Object.entries(aliases)) {
+    if (camel in out && !(snake in out)) {
+      out[snake] = out[camel];
+      delete out[camel];
+    }
+  }
+  return out;
+}
+
 export async function handleUser(request, env, path, user) {
   const method = request.method;
 
@@ -39,8 +79,8 @@ export async function handleUser(request, env, path, user) {
     }
 
     return json({ reports: results.map(r => ({
-      ...r,
-      stage_approvals: JSON.parse(r.stage_approvals || '{}'),
+      ...reportRowToCamel(r),
+      stageApprovals: JSON.parse(r.stage_approvals || '{}'),
       stages: stageMap[r.id] || {},
     })) });
   }
@@ -59,8 +99,8 @@ export async function handleUser(request, env, path, user) {
     ).bind(id).all();
 
     const parsed = {
-      ...report,
-      stage_approvals: JSON.parse(report.stage_approvals || '{}'),
+      ...reportRowToCamel(report),
+      stageApprovals: JSON.parse(report.stage_approvals || '{}'),
       competitors: JSON.parse(report.competitors || '{}'),
     };
     for (const s of stages) {
@@ -82,7 +122,7 @@ export async function handleUser(request, env, path, user) {
   // PUT /user/reports/:id — update report metadata
   if (reportMatch && method === 'PUT') {
     const id = reportMatch[1];
-    const body = await request.json();
+    const body = updatesBodyToSnake(await request.json());
     const fields = [];
     const values = [];
 
