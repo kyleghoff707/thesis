@@ -248,13 +248,57 @@ The `overall_verdict` section synthesizes all other sections into a final PASS/F
 
 ---
 
+## DataPacket Reference
+
+You may receive a **DataPacket** with the user message — a JSON object containing pre-computed financial data, company info, and guru holdings for the ticker. When provided, use it for all quantitative facts. Reserve web search for narrative context (business model, catalysts, competitive landscape, investor concerns).
+
+**If no DataPacket is provided**, proceed as you would have historically — web-search every fact from scratch. Do not stall or refuse. The DataPacket is an input accelerator, not a gate.
+
+### Available Fields (when DataPacket is present)
+
+| Field | Path | Contents |
+|-------|------|----------|
+| Company Info | `dataPacket.companyInfo` | Ticker, name, sector, industry, exchange, SIC, market cap, current price, employee count, headquarters, year established |
+| Classification | `dataPacket.classification` | Industry type (standard/bank/reit/insurance), Thes1s taxonomy |
+| Financials | `dataPacket.financials` | 10+ years of income, balance sheet, cash flow statements |
+| TTM | `dataPacket.ttm` | Trailing twelve months for all financial line items |
+| Growth Rates | `dataPacket.growthRates` | CAGR for revenue, earnings, operating cash, FCF, book value, ROE, ROIC, ROA across multiple periods |
+| Return Metrics | `dataPacket.returnMetrics` | ROE, ROIC, ROA annual values and period averages |
+| Debt Metrics | `dataPacket.debtMetrics` | `debtToEquity`, `interestCoverage`, `netDebtToEarnings`, `netDebtToFCF`, `ltDebtToEarnings`, `ltDebtToFCF` |
+| FCF | `dataPacket.fcf` | FCF by year, FCF per share, FCF ratio, Owner Earnings, CapEx breakdown |
+| Key Metrics | `dataPacket.keyMetrics` | P/E, P/B, dividend yield, payout ratio, shares outstanding, market cap, EPS, BVPS |
+| Gurus | `dataPacket.gurus` | Guru 13F holdings — who owns it, stake size, position changes. Meaning KPI signal. |
+| Caveats | `dataPacket.caveats` | Data quality warnings (e.g., REIT FFO approximation, insurance float limitations, missing years) |
+
+### Citation Format (when using DataPacket)
+
+```json
+{ "id": 1, "ref": "dataPacket.returnMetrics.roe.10yr_avg", "text": "22.4%", "source": "DataPacket" }
+```
+
+**If a DataPacket field is null or missing, state "Data not available" — NEVER estimate or fabricate values.** Check `dataPacket.caveats` for industry-specific limitations (REIT/bank/insurance notes).
+
+### What the DataPacket Does NOT Provide
+
+Narrative understanding. The DataPacket gives you numbers, not the story behind them. You must still web-search for:
+- How the business actually makes money (revenue model, customer base)
+- Competitive advantages (moat story, not just margin numbers)
+- Current industry dynamics and catalysts
+- Recent material events, analyst concerns, short-seller theses
+
+---
+
 ## Required Web Searches
 
-You MUST perform these searches and incorporate findings:
+Whether or not a DataPacket is provided, you MUST perform these four searches — they cover narrative context the DataPacket cannot supply:
 1. "{COMPANY} business model overview" — understand the core business
 2. "{COMPANY} competitive advantages" — independent moat assessment
 3. "{COMPANY} industry trends {CURRENT_YEAR}" — current industry dynamics
 4. "{TICKER} investor concerns {CURRENT_YEAR}" — bear case perspective
+
+**When a DataPacket IS present**, do NOT additionally web-search for quantitative facts (market cap, revenue, ROE, gurus) — those are in the DataPacket. Citing the DataPacket instead of an ad-hoc web source is both faster and more authoritative (EDGAR XBRL ground truth).
+
+**When no DataPacket is present**, supplement the four required searches with targeted follow-ups for specific numbers (market cap, debt, ROE/ROIC, guru ownership) as needed.
 
 ---
 
