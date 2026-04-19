@@ -17,6 +17,18 @@ function json(data, status = 200) {
   });
 }
 
+// D1's datetime('now') returns "YYYY-MM-DD HH:MM:SS" in UTC with no timezone
+// marker, which browsers parse as LOCAL time. Convert to ISO 8601 UTC so
+// `new Date(ts).getTime()` gives correct epoch ms regardless of client zone.
+function toISO(d1Timestamp) {
+  if (!d1Timestamp) return null;
+  // Already ISO-like (contains T and ends with Z) — pass through.
+  if (typeof d1Timestamp === 'string' && d1Timestamp.includes('T') && d1Timestamp.endsWith('Z')) {
+    return d1Timestamp;
+  }
+  return String(d1Timestamp).replace(' ', 'T') + 'Z';
+}
+
 export async function handlePipeline(request, env, path, user) {
   if (request.method === 'POST' && path === '/api/pipeline/run') {
     return handleRun(request, env, user);
@@ -30,6 +42,14 @@ export async function handlePipeline(request, env, path, user) {
   const eventsMatch = path.match(/^\/api\/pipeline\/events\/([a-zA-Z0-9-]+)$/);
   if (request.method === 'GET' && eventsMatch) {
     return handleEvents(env, user, eventsMatch[1]);
+  }
+
+  // GET /api/pipeline/active/:ticker — find any running pipeline for this user+ticker.
+  // Used by OnePager to recover the runId when sessionStorage was cleared (e.g., after
+  // a transient terminal status blip or a cross-tab scenario).
+  const activeMatch = path.match(/^\/api\/pipeline\/active\/([A-Za-z0-9.-]+)$/);
+  if (request.method === 'GET' && activeMatch) {
+    return handleActiveByTicker(env, user, activeMatch[1]);
   }
 
   // GET /api/pipeline/export/:reportId/:stage/:format — generate PDF/DOCX via export service
@@ -227,7 +247,7 @@ async function handleStatus(env, user, runId) {
     return json({
       status: run.status, sections_json: run.sections_json || null,
       error: run.error, budget: run.budget_json ? JSON.parse(run.budget_json) : null,
-      startedAt: run.started_at,
+      startedAt: toISO(run.started_at),
     });
   }
 
@@ -293,7 +313,7 @@ async function handleStatus(env, user, runId) {
           ).bind(user.id, totalInput, totalOutput, Math.round(costDollars * 1000), run.ticker).run();
         } catch {}
 
-        return json({ status: 'completed', sections_json: sectionsJson, error: null, budget: { totalInput, totalOutput, costDollars }, startedAt: run.started_at });
+        return json({ status: 'completed', sections_json: sectionsJson, error: null, budget: { totalInput, totalOutput, costDollars }, startedAt: toISO(run.started_at) });
       }
 
       await env.DB.prepare(
@@ -312,12 +332,39 @@ async function handleStatus(env, user, runId) {
     return json({
       status: 'running',
       progress: { searches: searches.length, thinkingSteps: thinking.length },
-      startedAt: run.started_at,
+      startedAt: toISO(run.started_at),
     });
 
   } catch {
     return json({ status: 'running' });
   }
+}
+
+// ─── GET /api/pipeline/active/:ticker ───────────────────────
+// Returns the most recent non-terminal pipeline_run for this user+ticker, or
+// 404 if none. OnePager uses this to recover when sessionStorage was cleared.
+
+async function handleActiveByTicker(env, user, ticker) {
+  const upperTicker = ticker.toUpperCase();
+  if (!/^[A-Z][A-Z0-9.-]{0,9}$/.test(upperTicker)) {
+    return json({ error: 'Invalid ticker format' }, 400);
+  }
+
+  const run = await env.DB.prepare(
+    `SELECT id, stage, status, started_at FROM pipeline_runs
+     WHERE user_id = ? AND ticker = ? AND status IN ('queued', 'running')
+     ORDER BY created_at DESC LIMIT 1`
+  ).bind(user.id, upperTicker).first();
+
+  if (!run) return json({ active: false }, 404);
+
+  return json({
+    active: true,
+    runId: run.id,
+    stage: run.stage,
+    status: run.status,
+    startedAt: toISO(run.started_at),
+  });
 }
 
 // ─── GET /api/pipeline/events/:runId (observability) ────────

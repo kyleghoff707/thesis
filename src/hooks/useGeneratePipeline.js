@@ -103,6 +103,11 @@ export function useGeneratePipeline(ticker) {
   }, []);
 
   // ─── Auto-resume on page reload ──────────────────────────
+  // Two-step recovery:
+  //   1. sessionStorage key — fastest; set by triggerGeneration on start.
+  //   2. Server fallback — `/api/pipeline/active/:ticker` finds a non-terminal
+  //      run for this user+ticker. Handles the case where a sibling hook
+  //      (e.g., Toolbox's) cleared sessionStorage before this hook mounted.
 
   useEffect(() => {
     if (IS_DEV || !ticker) return;
@@ -110,7 +115,26 @@ export function useGeneratePipeline(ticker) {
     let cancelled = false;
     (async () => {
       try {
-        const activeRunId = sessionStorage.getItem(`pipeline:${ticker}`);
+        let activeRunId = sessionStorage.getItem(`pipeline:${ticker}`);
+
+        if (!activeRunId) {
+          // Fallback: ask the server if a run is active for this ticker.
+          try {
+            const activeRes = await fetch(`${API_BASE}/api/pipeline/active/${encodeURIComponent(ticker)}`, {
+              credentials: 'include',
+            });
+            if (activeRes.ok) {
+              const data = await activeRes.json();
+              if (data?.active && data.runId) {
+                activeRunId = data.runId;
+                sessionStorage.setItem(`pipeline:${ticker}`, activeRunId);
+              }
+            }
+          } catch {
+            // Network/404 — fine, means no active run.
+          }
+        }
+
         if (!activeRunId || cancelled) return;
 
         const statusRes = await fetch(`${API_BASE}/api/pipeline/status/${activeRunId}`, {
