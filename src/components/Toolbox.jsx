@@ -40,7 +40,7 @@ const TABS = [
   { key: 'filings', label: 'Filings' },
 ];
 
-export default function Toolbox({ getReport, updateReport, settings }) {
+export default function Toolbox({ getReport, updateReport, refreshReport, settings }) {
   const { id } = useParams();
   const report = getReport(id);
   const ticker = report?.ticker;
@@ -64,7 +64,18 @@ export default function Toolbox({ getReport, updateReport, settings }) {
   const { data: compData, loading: compLoading, error: compError } = useCompensation(ticker);
   const { activities: guruActivities } = useGurus();
   const { events: companyEvents, loading: eventsLoading, error: eventsError, irLink, irLinkIsDirect } = useCompanyEvents(ticker, company?.website, company?.name);
-  const { triggerGeneration, generating, generationError, progress, liveSections } = useGeneratePipeline(ticker);
+  const { triggerGeneration, generating, generationError, progress, liveSections, result: pipelineResult } = useGeneratePipeline(ticker);
+
+  // Refresh report from D1 when the pipeline completes — mirrors the effect in
+  // OnePager so whichever component observes terminal state first triggers the
+  // reload. `useGeneratePipeline`'s sessionStorage clear on completion prevents
+  // the other instance from ever firing, so both need this guard.
+  const hasCompletedPipelineSections = pipelineResult?.sections?.length > 0;
+  useEffect(() => {
+    if (hasCompletedPipelineSections && refreshReport && report?.id) {
+      refreshReport(report.id);
+    }
+  }, [hasCompletedPipelineSections, report?.id, refreshReport]);
 
   // Stage availability for GenerateButton — re-fetches when ticker or generation state changes
   const [stageAvailability, setStageAvailability] = useState(null);

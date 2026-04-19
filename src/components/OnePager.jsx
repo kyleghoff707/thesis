@@ -6,6 +6,7 @@ import { useScrollSpy } from '../hooks/useScrollSpy';
 import { useGeneratePipeline } from '../hooks/useGeneratePipeline';
 import SectionRenderer from './SectionRenderer.jsx';
 import VerdictBadge from './VerdictBadge.jsx';
+import GenerationProgressPanel from './GenerationProgressPanel';
 import { formatTitle, formatRelativeTime, stateToLabel, verdictDotColor } from './reportHelpers';
 import Spinner from './Spinner';
 import ExportButtons from './ExportButtons';
@@ -62,13 +63,20 @@ export default function OnePager({ getReport, updateReport, refreshReport }) {
   // Subscribe to pipeline completion so we can refresh report.onePager from D1
   // when the Worker finishes writing to report_stages. useGeneratePipeline is
   // idempotent to call from multiple components (Toolbox already calls it).
-  const { result: pipelineResult } = useGeneratePipeline(report?.ticker);
+  const { result: pipelineResult, generating, progress: pipelineProgress, liveSections, generationError } = useGeneratePipeline(report?.ticker);
   const hasCompletedSections = pipelineResult?.sections?.length > 0;
   useEffect(() => {
     if (hasCompletedSections && refreshReport && id) {
       refreshReport(id);
     }
   }, [hasCompletedSections, id, refreshReport]);
+
+  // Mount-time refresh — handles the edge case where the pipeline completed on the
+  // server while no component instance of useGeneratePipeline was mounted to observe
+  // it (e.g., user was on the Reports tab during the 8-min run). Safe to call redundantly.
+  useEffect(() => {
+    if (refreshReport && id) refreshReport(id);
+  }, [id, refreshReport]);
 
   // Grace period: show spinner for 5s after mount to let pipeline write progress.json
   const [graceActive, setGraceActive] = useState(true);
@@ -212,6 +220,21 @@ export default function OnePager({ getReport, updateReport, refreshReport }) {
 
   return (
     <div>
+      {/* A. Generation progress panel — shows during pipeline runs.
+          Gated on pipelineProgress (from useGeneratePipeline, production) so it
+          renders regardless of which component instance first observed completion. */}
+      {(generating || pipelineProgress) && (
+        <GenerationProgressPanel
+          stage={pipelineProgress?.stage || 'onePager'}
+          ticker={report?.ticker}
+          generating={generating}
+          progress={pipelineProgress}
+          completedSections={liveSections}
+          error={pipelineProgress?.error}
+          generationError={generationError}
+        />
+      )}
+
       {/* B. Report Header (Hero) */}
       <div style={{
         marginBottom: 24,

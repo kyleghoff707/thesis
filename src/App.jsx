@@ -179,7 +179,7 @@ function AuthenticatedApp({ user, logout }) {
         <Route path="/" element={<Navigate to="/research" replace />} />
         <Route path="/watchlists" element={<Watchlists onNewResearch={createReport} />} />
         <Route path="/research" element={<ResearchRedirect reports={reports} />} />
-        <Route path="/research/:id" element={<Toolbox getReport={getReport} updateReport={updateReport} settings={settings} />} />
+        <Route path="/research/:id" element={<Toolbox getReport={getReport} updateReport={updateReport} refreshReport={refreshReport} settings={settings} />} />
         <Route path="/research/:id/toolbox" element={<ToolboxRedirect />} />
         <Route path="/research/:id/one-pager" element={<ReportStageLayout getReport={getReport}><OnePager getReport={getReport} updateReport={updateReport} refreshReport={refreshReport} /></ReportStageLayout>} />
         <Route path="/research/:id/pitch-deck" element={<ReportStageLayout getReport={getReport}><PitchDeck getReport={getReport} updateReport={updateReport} /></ReportStageLayout>} />

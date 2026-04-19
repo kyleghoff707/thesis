@@ -227,6 +227,7 @@ async function handleStatus(env, user, runId) {
     return json({
       status: run.status, sections_json: run.sections_json || null,
       error: run.error, budget: run.budget_json ? JSON.parse(run.budget_json) : null,
+      startedAt: run.started_at,
     });
   }
 
@@ -292,7 +293,7 @@ async function handleStatus(env, user, runId) {
           ).bind(user.id, totalInput, totalOutput, Math.round(costDollars * 1000), run.ticker).run();
         } catch {}
 
-        return json({ status: 'completed', sections_json: sectionsJson, error: null, budget: { totalInput, totalOutput, costDollars } });
+        return json({ status: 'completed', sections_json: sectionsJson, error: null, budget: { totalInput, totalOutput, costDollars }, startedAt: run.started_at });
       }
 
       await env.DB.prepare(
@@ -311,6 +312,7 @@ async function handleStatus(env, user, runId) {
     return json({
       status: 'running',
       progress: { searches: searches.length, thinkingSteps: thinking.length },
+      startedAt: run.started_at,
     });
 
   } catch {
