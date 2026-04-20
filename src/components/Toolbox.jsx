@@ -636,8 +636,12 @@ function formatFYEnd(fyEnd) {
 }
 
 function IndustryInformation({ company, ticker }) {
-  const classification = company?.cik || ticker || company?.sic
-    ? classifyCompany(ticker, company?.cik, company?.sic, company?.sicDescription)
+  // Every downstream field (cik, website, sic, etc.) reads company.X directly.
+  // Skip the whole panel until EDGAR data is loaded — useFinancials returns
+  // null during ticker transitions by design (see selectCompanyForTicker).
+  if (!company) return null;
+  const classification = company.cik || ticker || company.sic
+    ? classifyCompany(ticker, company.cik, company.sic, company.sicDescription)
     : null;
   if (!classification) return null;
   const cikDisplay = company.cik ? company.cik.replace(/^0+/, '') : '--';

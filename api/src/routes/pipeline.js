@@ -356,7 +356,10 @@ async function handleActiveByTicker(env, user, ticker) {
      ORDER BY created_at DESC LIMIT 1`
   ).bind(user.id, upperTicker).first();
 
-  if (!run) return json({ active: false }, 404);
+  // Return 200 with {active: false} rather than 404 so the browser console
+  // doesn't surface this as an error — "no active run" is the expected
+  // state most of the time, not an error condition.
+  if (!run) return json({ active: false });
 
   return json({
     active: true,
