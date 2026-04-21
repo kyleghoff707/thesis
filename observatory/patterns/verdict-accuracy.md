@@ -1,28 +1,30 @@
 ---
 type: pattern
 pattern: verdict-accuracy
-lastUpdated: 2026-04-18T05:34:57.932Z
+lastUpdated: 2026-04-20T03:32:06.081Z
 confidence: high
-runsSampled: 43
+runsSampled: 58
 tags: [pattern, verdict, accuracy]
 ---
 
 ## Observation
 
-Overall verdict accuracy: **0%** (0/33 runs matched expected verdict).
+Overall verdict accuracy: **0%** (0/42 runs matched expected verdict).
 
-Total runs analyzed: 43
+Total runs analyzed: 58
 
 ## Per-Ticker Breakdown
 
 | Ticker | Runs | Expected | Actual Verdicts | Accuracy |
 |--------|------|----------|----------------|----------|
-| [[tickers/LULU]] | 12 | BUY | WATCHLIST | 0/12 |
-| [[tickers/POOL]] | 12 | BUY | PASS, WATCHLIST | 0/12 |
+| [[tickers/LULU]] | 15 | BUY | WATCHLIST | 0/15 |
+| [[tickers/POOL]] | 15 | BUY | PASS, WATCHLIST | 0/15 |
 | [[tickers/UBER]] | 6 | BUY | WATCHLIST | 0/6 |
 | [[tickers/NKE]] | 3 | BUY | WATCHLIST | 0/3 |
-| [[tickers/SFM]] | 9 | BUY | PASS, WATCHLIST | 0/9 |
+| [[tickers/SFM]] | 12 | BUY | PASS, WATCHLIST | 0/12 |
 | [[tickers/TSCO]] | 1 | - | WATCHLIST | no expected |
+| [[tickers/INTU]] | 3 | - | PASS, WATCHLIST | no expected |
+| [[tickers/NOW]] | 3 | - | PASS, WATCHLIST | no expected |
 
 ## Evidence
 
@@ -69,6 +71,21 @@ Total runs analyzed: 43
 - 20260417-183135-POOL-pitchDeck: WATCHLIST vs BUY → MISMATCH
 - 20260417-185013-SFM-fullStory: WATCHLIST vs BUY → MISMATCH
 - 20260417-192126-POOL-fullStory: WATCHLIST vs BUY → MISMATCH
+- 20260417-234446-LULU-onePager: WATCHLIST vs BUY → MISMATCH
+- 20260417-234502-POOL-onePager: WATCHLIST vs BUY → MISMATCH
+- 20260417-234502-SFM-onePager: PASS vs BUY → MISMATCH
+- 20260417-235256-POOL-pitchDeck: WATCHLIST vs BUY → MISMATCH
+- 20260417-235603-SFM-pitchDeck: WATCHLIST vs BUY → MISMATCH
+- 20260417-235824-LULU-pitchDeck: WATCHLIST vs BUY → MISMATCH
+- 20260418-004838-POOL-fullStory: WATCHLIST vs BUY → MISMATCH
+- 20260418-005535-SFM-fullStory: WATCHLIST vs BUY → MISMATCH
+- 20260418-005858-LULU-fullStory: WATCHLIST vs BUY → MISMATCH
+- 20260419-181825-INTU-onePager: PASS vs none → no expected
+- 20260419-182010-NOW-onePager: PASS vs none → no expected
+- 20260419-182914-INTU-pitchDeck: WATCHLIST vs none → no expected
+- 20260419-183000-NOW-pitchDeck: WATCHLIST vs none → no expected
+- 20260419-194111-NOW-fullStory: WATCHLIST vs none → no expected
+- 20260419-195624-INTU-fullStory: WATCHLIST vs none → no expected
 
 ## Hypothesis
 

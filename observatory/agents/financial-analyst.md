@@ -1,19 +1,19 @@
 ---
 type: agent-profile
 agentRole: financial-analyst
-lastUpdated: 2026-04-18T05:34:57.931Z
-runCount: 13
-avgCost: 0.30
-avgDuration: 417
+lastUpdated: 2026-04-20T02:55:34.246Z
+runCount: 18
+avgCost: 0.56
+avgDuration: 456
 verdictDistribution:
-  WATCHLIST: 19
-  PASS: 15
+  WATCHLIST: 25
+  PASS: 24
 tags: [agent, financial-analyst]
 ---
 
 ## Behavioral Summary
 
-Agent **financial-analyst** has been observed across 13 run(s). Average duration: 417s. Average cost: $0.30.
+Agent **financial-analyst** has been observed across 18 run(s). Average duration: 456s. Average cost: $0.56.
 
 ## Run History
 
@@ -32,6 +32,11 @@ Agent **financial-analyst** has been observed across 13 run(s). Average duration
 | 20260417-175437-SFM-pitchDeck | SFM | pitchDeck | 2 | 402s | 3 | PASS, PASS, PASS |
 | 20260417-183135-POOL-pitchDeck | POOL | pitchDeck | 2 | 558s | 3 | WATCHLIST, WATCHLIST, WATCHLIST |
 | 20260417-185013-SFM-fullStory | SFM | fullStory | 2 | 116s | 1 | ? |
+| 20260417-235256-POOL-pitchDeck | POOL | pitchDeck | 2 | 561s | 3 | WATCHLIST, WATCHLIST, WATCHLIST |
+| 20260417-235603-SFM-pitchDeck | SFM | pitchDeck | 2 | 410s | 3 | PASS, PASS, PASS |
+| 20260417-235824-LULU-pitchDeck | LULU | pitchDeck | 2 | 736s | 3 | WATCHLIST, WATCHLIST, WATCHLIST |
+| 20260419-182914-INTU-pitchDeck | INTU | pitchDeck | 2 | 510s | 3 | PASS, PASS, PASS |
+| 20260419-183000-NOW-pitchDeck | NOW | pitchDeck | 2 | 578s | 3 | PASS, PASS, PASS |
 
 ## Failure Modes
 
@@ -39,7 +44,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.30 per run.
+Average cost: $0.56 per run.
 
 ## Quality Trends
 

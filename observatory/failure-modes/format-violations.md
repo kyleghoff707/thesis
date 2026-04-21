@@ -1,9 +1,9 @@
 ---
 type: failure-mode
 mode: format-violations
-lastUpdated: 2026-04-18T05:34:57.932Z
+lastUpdated: 2026-04-20T03:15:10.496Z
 severity: high
-frequency: 41
+frequency: 49
 affectedAgents: [risk-analyst, one-pager, orchestrator, financial-analyst-judge, synthesis-writer-bull, synthesis-writer-rebuttal, synthesis-writer-compose, annual-reader-FY2021, annual-reader-FY2022, annual-reader-FY2023, annual-reader-FY2024, annual-reader-FY2025, quarterly-reader, business-analyst, competitor-market-position, competitor-moats, financial-analyst, management-evaluator, valuation-specialist, competitor-evaluator, synthesis-writer]
 tags: [failure-mode, format-violations]
 ---
@@ -57,6 +57,14 @@ Agent output did not match expected JSON schema.
 | 20260417-192126-POOL-fullStory | POOL | synthesis-writer-bull | Bull thesis contained factual error: cited Wells Fargo raising target to 275 when actual was cut to 215 (caught by bear, acknowledged in rebuttal) |
 | 20260417-192126-POOL-fullStory | POOL | synthesis-writer-bull | Bull thesis point 7 stated dividend payout ratio ~46%; rebuttal conceded actual payout ~60% on reported FCF. Factual correction acknowledged in rebuttal. |
 | 20260417-192126-POOL-fullStory | POOL | synthesis-writer-bull | Bull used low-quality source (ibtimes.com.au speculation re: Berkshire Q1 2026 13F sale) for guru-validation claim; rebuttal acknowledged source quality issue and genuine uncertainty unresolved until May 15 filing. |
+| 20260417-234502-POOL-onePager | POOL | one-pager | Preamble before JSON: ~660 chars of calculation summary preceded the JSON object |
+| 20260417-234502-SFM-onePager | SFM | one-pager | Agent emitted two copies of the JSON object (indented version followed by second more-complete version) — orchestrator used the second copy |
+| 20260417-235256-POOL-pitchDeck | POOL | valuation-specialist | valuation.json contained 2 arithmetic expressions ('5289396000 * 2.158' and '5289396000 * 3.106') instead of computed numeric values — broke JSON parse; manually computed and replaced |
+| 20260417-235603-SFM-pitchDeck | SFM | competitor-moats | protocol violation: used Write tool to save section file instead of returning JSON in response body |
+| 20260418-004838-POOL-fullStory | POOL | financial-analyst-judge | Wrapped judge output in 'content' field instead of returning fields at top level (schema drift) |
+| 20260418-004838-POOL-fullStory | POOL | synthesis-writer-bull | bull point 9 conceded weak in rebuttal |
+| 20260419-182010-NOW-onePager | NOW | one-pager | Emitted TWO copies of the JSON object (indented pretty-printed then compact). Orchestrator used compact (last) copy. |
+| 20260419-194111-NOW-fullStory | NOW | synthesis-writer-bull | bull point 6 conceded weak in rebuttal |
 
 ## Root Cause Analysis
 

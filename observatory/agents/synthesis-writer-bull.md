@@ -1,22 +1,23 @@
 ---
 type: agent-profile
 agentRole: synthesis-writer-bull
-lastUpdated: 2026-04-18T05:33:49.521Z
-runCount: 9
-avgCost: 0.23
-avgDuration: 126
+lastUpdated: 2026-04-20T03:32:06.081Z
+runCount: 14
+avgCost: 0.43
+avgDuration: 145
 verdictDistribution:
-  PASS: 2
+  PASS: 3
   WATCHLIST: 2
-  BULL: 3
+  BULL: 6
   NA: 1
   NEUTRAL: 1
+  N/A: 1
 tags: [agent, synthesis-writer-bull]
 ---
 
 ## Behavioral Summary
 
-Agent **synthesis-writer-bull** has been observed across 9 run(s). Average duration: 126s. Average cost: $0.23.
+Agent **synthesis-writer-bull** has been observed across 14 run(s). Average duration: 145s. Average cost: $0.43.
 
 ## Run History
 
@@ -31,6 +32,11 @@ Agent **synthesis-writer-bull** has been observed across 9 run(s). Average durat
 | 20260416-210339-POOL-fullStory | POOL | fullStory | 2 | 102s | 1 | NA |
 | 20260417-175335-LULU-fullStory | LULU | fullStory | 2 | 235s | 1 | NEUTRAL |
 | 20260417-192126-POOL-fullStory | POOL | fullStory | 2 | 273s | 1 | BULL |
+| 20260418-004838-POOL-fullStory | POOL | fullStory | 2 | 148s | 1 | PASS |
+| 20260418-005535-SFM-fullStory | SFM | fullStory | 2 | 233s | 1 | BULL |
+| 20260418-005858-LULU-fullStory | LULU | fullStory | 2 | 154s | 1 | BULL |
+| 20260419-194111-NOW-fullStory | NOW | fullStory | 2 | 214s | 1 | BULL |
+| 20260419-195624-INTU-fullStory | INTU | fullStory | 2 | 141s | 1 | N/A |
 
 ## Failure Modes
 
@@ -38,7 +44,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.23 per run.
+Average cost: $0.43 per run.
 
 ## Quality Trends
 

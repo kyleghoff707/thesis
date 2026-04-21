@@ -611,3 +611,216 @@ Expected wall-time savings: ~10 min per pitch deck (annual reader run is the gat
 **Sprint 5 acceptance signal:** observatory `dispatch` event for Wave 0 should show `parallel: true` with all annual + quarterly agents in one record. If a Sprint 5 pitch deck shows two separate Wave 0 dispatches (annual then quarterly), the orchestrator regressed — investigate immediately.
 
 **Diagnostic gap noted but not fixed:** observatory under-reports wall time. Pre-/post-pipeline timestamp comparison written to manifest would close the gap; deferred until needed for cost-sensitivity analysis.
+
+## [2026-04-18] run | POOL onePager | 20260417-234502-POOL-onePager
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $0.70 | Duration: 4min | Sections: 6/6
+- Failures: 1
+
+## [2026-04-18] wiki-update | 4 pages updated
+- Updated: [[tickers/POOL]], [[agents/one-pager]], [[failure-modes/format-violations]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] run | SFM onePager | 20260417-234502-SFM-onePager
+- Verdict: PASS (expected: BUY) — MISMATCH
+- Cost: $0.72 | Duration: 5min | Sections: 6/6
+- Failures: 1
+
+## [2026-04-18] wiki-update | 4 pages updated
+- Updated: [[tickers/SFM]], [[agents/one-pager]], [[failure-modes/format-violations]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] run | LULU onePager | 20260417-234446-LULU-onePager
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $0.85 | Duration: 9min | Sections: 6/6
+- Failures: none
+
+## [2026-04-18] wiki-update | 3 pages updated
+- Updated: [[tickers/LULU]], [[agents/one-pager]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] run | POOL pitchDeck | 20260417-235256-POOL-pitchDeck
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $13.35 | Duration: 75min | Sections: 11/11
+- Failures: 1
+
+## [2026-04-18] wiki-update | 17 pages updated
+- Updated: [[tickers/POOL]], [[agents/annual-reader-FY2021]], [[agents/annual-reader-FY2022]], [[agents/annual-reader-FY2023]], [[agents/annual-reader-FY2024]], [[agents/annual-reader-FY2025]], [[agents/quarterly-reader]], [[agents/business-analyst]], [[agents/competitor-market-position]], [[agents/competitor-moats]], [[agents/financial-analyst]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/synthesis-writer]], [[failure-modes/format-violations]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] run | SFM pitchDeck | 20260417-235603-SFM-pitchDeck
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $14.67 | Duration: 58min | Sections: 11/11
+- Failures: 1
+
+## [2026-04-18] wiki-update | 17 pages updated
+- Updated: [[tickers/SFM]], [[agents/annual-reader-fy2021]], [[agents/annual-reader-fy2022]], [[agents/annual-reader-fy2023]], [[agents/annual-reader-fy2024]], [[agents/annual-reader-fy2025]], [[agents/quarterly-reader]], [[agents/business-analyst]], [[agents/competitor-market-position]], [[agents/competitor-moats]], [[agents/financial-analyst]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/synthesis-writer]], [[failure-modes/format-violations]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] run | LULU pitchDeck | 20260417-235824-LULU-pitchDeck
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $8.08 | Duration: 58min | Sections: 11/11
+- Failures: none
+
+## [2026-04-18] wiki-update | 12 pages updated
+- Updated: [[tickers/LULU]], [[agents/annual-reader]], [[agents/quarterly-reader]], [[agents/business-analyst]], [[agents/competitor-market-position]], [[agents/competitor-moats]], [[agents/financial-analyst]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/synthesis-writer]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] run | POOL fullStory | 20260418-004838-POOL-fullStory
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $8.30 | Duration: 50min | Sections: 6/6
+- Failures: 2
+
+## [2026-04-18] wiki-update | 13 pages updated
+- Updated: [[tickers/POOL]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst-judge]], [[agents/risk-analyst-bear]], [[agents/synthesis-writer-bull]], [[agents/synthesis-writer-compose]], [[agents/synthesis-writer-rebuttal]], [[failure-modes/format-violations]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] run | SFM fullStory | 20260418-005535-SFM-fullStory
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $7.46 | Duration: 42min | Sections: 6/6
+- Failures: none
+
+## [2026-04-18] wiki-update | 12 pages updated
+- Updated: [[tickers/SFM]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst-judge]], [[agents/risk-analyst-bear]], [[agents/synthesis-writer-bull]], [[agents/synthesis-writer-compose]], [[agents/synthesis-writer-rebuttal]], [[patterns/verdict-accuracy]]
+
+## [2026-04-18] run | LULU fullStory | 20260418-005858-LULU-fullStory
+- Verdict: WATCHLIST (expected: BUY) — MISMATCH
+- Cost: $5.72 | Duration: 50min | Sections: 6/6
+- Failures: none
+
+## [2026-04-18] wiki-update | 12 pages updated
+- Updated: [[tickers/LULU]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst-judge]], [[agents/risk-analyst-bear]], [[agents/synthesis-writer-bull]], [[agents/synthesis-writer-compose]], [[agents/synthesis-writer-rebuttal]], [[patterns/verdict-accuracy]]
+
+
+## [2026-04-18] post-mortem | Sprint 5 debrief — 9 runs across LULU/POOL/SFM
+
+Audited Sprint 5 run data against the [[sprints/sprint-5-preflight]] change catalog and Cross-cutting acceptance gates table.
+
+### Acceptance gate scoreboard (9 Sprint 5 runs vs Sprint 4 baselines)
+
+| # | Gate | Result | Notes |
+|---|---|---|---|
+| 1 | Verdict accuracy (strict) | as-expected | 0/9 match — price-conditional behavior preserved, all three tickers still trading above agent-calculated buy zones |
+| 2 | Section PASS counts | near-miss on POOL | POOL pitch deck 2 PASS (target ≥3, Sprint 4 was 3); SFM 6 PASS; LULU 1 PASS |
+| 3 | Wall time | **on target (prior "regression" was a measurement artifact)** | `manifest.pipelineMetrics.totalWallTimeSeconds` is computed inconsistently across sprints — Sprint 4 stored sum-of-wave-durations, Sprint 5 overstates by ~20m. Using actual `completedAt − timestamp`: POOL pitch deck 55m vs S4 49m (+6m, noise); POOL full story 31m vs S4 32m (−1m); SFM full story 29m vs S4 36m (**−7m**). PSR parallelization effect visible on full story. **Not a regression.** |
+| 4 | Format violations | major improvement | OnePager 0/1/1, PitchDeck 1/1/0, FullStory 2/0/0 (all <3 target). Sprint 4 was 11–13 per pitch deck / full story — 85%+ drop attributable to no-preamble rule + Write-tool prohibition |
+| 5 | Judge schema | partial | Per-exchange `pointNumber`, `judgeScore`, `severityFromBear` all populated. POOL + SFM judge outputs still wrapped in top-level `content: {...}` (2/3 runs) — identical schema-drift to Sprint 4 LULU. Only LULU Sprint 5 returned flat schema |
+| 6 | Bull source quality | partial | POOL clean. SFM uses `philTownContext` field (context framing, Rule One compliant). LULU T1 cites Phil Town 26.1% + Burry 26.1% + Elliott $1B as "sophisticated actors concluded dislocation is temporary" — Bull acknowledges Rule One Rule #2 verbatim but then uses guru ownership as thesis-strength evidence anyway |
+| 7 | PSR parallel dispatch | clean | All 3 pitch decks show single Wave 0 dispatch with `parallel: true`, annual + quarterly in one record. No sequential regressions |
+| 8 | PDF rendering | all pass | POOL 231KB, SFM 223KB, LULU 167KB — all >100KB target. Change #8 fallback fix held |
+| 9 | MC-5 sweep ran | regression on 2/3 | POOL fullStory formatViolations populated (sweep ran). SFM + LULU fullStory have empty `formatViolations` + `retries` + `stallsDetected` — exactly the Sprint 4 Step 8.5-skip signature that Change #1 was designed to prevent |
+
+### Mechanical issues
+
+**Issue M1: MC-5 sweep skipped on SFM + LULU fullStory — RECURRENCE**
+- **Severity:** HIGH — Change #1 was specifically meant to prevent this. Two of three Sprint 5 full-story orchestrators produced empty-triple (formatViolations + retries + stallsDetected all empty arrays), matching the regression signal in the pre-flight exactly.
+- **Root cause hypothesis:** even with scripted sweep (`scripts/observatory-sweep-debate.js`) + rewritten Step 8.5, orchestrators still frame-bucket the retrospective sweep step under context pressure — identical failure to Sprint 4. POOL ran it; SFM + LULU did not. This is the same 1-of-3 recurrence rate.
+- **Status:** three-Claude convergence pending — request verbatim debriefs from SFM + LULU Sprint 5 orchestrators to confirm vs rule out genuinely clean runs.
+- **Not fixing this sprint.** PM doctrine holds — Sprint 6 is prompt-prose cleanup only.
+
+**Issue M2: [RETRACTED] "Wall-time regression" was a measurement artifact**
+- Initial read of `manifest.pipelineMetrics.totalWallTimeSeconds` showed +15 to +30 min vs Sprint 4. On verification with actual `completedAt − timestamp`: Sprint 5 is flat-or-faster than Sprint 4 (POOL pitch deck +6m noise, POOL full story −1m, SFM full story **−7m**).
+- Root cause of the bad reading: the `totalWallTimeSeconds` field is computed differently between sprints. Sprint 4 records sum-of-wave-durations; Sprint 5 records something that over-reports by ~20 min (possibly includes observatory finalize + synthesize time, or is wrong in some other way).
+- **Also noted (PM input):** the LULU-fullStory run hit a session limit mid-run that forced a switch to Sonnet-only for the remainder. The abnormal `completedAt` of 16:55 (vs started 07:58) on LULU-fullStory is the resume-after-limit artifact, not 9 hours of actual compute — ignore LULU timing for this sprint's baseline.
+- **No action needed** on wall time. PSR parallelization is working as designed on full story; pitch deck flat is within noise.
+- **Follow-up for Sprint 6 (not this sprint):** clean up how `totalWallTimeSeconds` gets populated so future debriefs can trust it directly.
+
+**Issue M3: Judge content-wrap schema drift persists on 2/3 fullStory**
+- **Severity:** MEDIUM — Change #6 added explicit Output Format schema requirement to `financial-analyst-fullstory/prompt.md`. POOL + SFM Sprint 5 judges still wrapped payload in top-level `content: {...}`. LULU correctly returned flat schema.
+- **Downstream impact:** acceptable. Per-exchange `pointNumber` + `judgeScore` populated in all 3, so the Sprint 4 silent assembly bug (`exchangeCount: 0`) does not reappear — observatory debate data is readable regardless of wrapper.
+- **Not blocking** — debate data parses correctly. Sprint 6 prompt-prose pass should tighten the Output Format example to show the JSON literally starting at `{"exchanges": [...]`.
+
+**Issue M4: LULU Bull source-quality gate lip-service**
+- **Severity:** LOW-MEDIUM — Change #4 added Rule One Operating Rule #2 reminder + "guru ownership is context not confirmation cannot be a thesis-strength point in itself." LULU Bull T1 cites the rule verbatim ("Per Rule One Rule #2 — context not confirmation") then uses Elliott + Phil Town + Burry ownership as the "compressing probability of permanent value destruction" claim — functionally thesis strength.
+- **Status:** note for Sprint 6. POOL and SFM are compliant; LULU is partial. The rule worked on two of three tickers, which is consistent with prompt-level changes taking 2–3 runs to fully propagate. Monitor next LULU run.
+
+### Methodology observations
+
+**O1: Judge directional histograms — mixed regression**
+- POOL: S4 2/1/4 → S5 2/2/5 — one extra Strong Bear, inside noise but at the ceiling of Change #9 acceptance (≤1 Strong Bear target missed by 1)
+- SFM: S4 2/1/3 → S5 **4/0/3** — improved, easily clears ≥2 Bull / ≤1 Bear
+- LULU: S4 **4/2/5** → S5 **0/2/5** — Strong Bull count collapsed from 4 to 0. Exchange count dropped from 11 to 7.
+- **Interpretation:** LULU-specific, not a systemic EXP-003 revert. Bull thesis itself shrank (Sprint 4 produced 11 thesis points per judge exchanges; Sprint 5 Bull produced fewer points). Possibly Bull lost fuel because prepare-data's post-nuke cache rebuild surfaced different signals, or Bull agent chose fewer but deeper thesis points. Not a methodology change — monitor next LULU run. Do not act yet.
+- [[patterns/bear-bull-asymmetry]] remains `mitigated` in aggregate (2/3 tickers holding or improving).
+
+**O2: Section PASS counts stable within ±1**
+- POOL pitchDeck 3→2 (Δ −1), SFM 6→6, LULU 1→1. OnePager LULU 3→2, POOL 3→3, SFM 5→4. Aggregate drift is one PASS lost per ticker on average — noise, not trend.
+- [[patterns/valuation-drives-verdict]] continues to hold — calculated buy prices drive overall verdict regardless of section strength.
+
+**O3: Cost dropped proportional to wave structure**
+- POOL pitch deck cost $13.35 (S4 $13.23) — flat. SFM $14.67 (S4 $12.07) — up $2.60. LULU $8.08 (no clean S4 pitch deck baseline). Full story POOL $8.30 (S4 $9.39), SFM $7.46 (S4 $7.98), LULU $5.72 (S4 $7.57) — full story consistently cheaper. Token-wise the runs are slightly more efficient.
+
+### Sprint 6 recommendations
+
+Per PM doctrine, Sprint 6 is the **full agent-prompt prose cleanup pass** across `agents-v2/`. Do NOT touch methodology, scoring, or the 50% MOS. Priorities within the prose cleanup, informed by this debrief:
+
+1. **Judge Output Format** — rewrite to show the literal flat JSON skeleton starting with `{"exchanges":` as the example (addresses Issue M3 without schema change)
+2. **Bull source-quality gate** — LULU lip-service pattern suggests the rule needs a *named non-compliant example* ("compressing probability via sophisticated ownership" = non-compliant) not just the general rule (addresses Issue M4)
+3. **MC-5 sweep enforcement** — *not* a prompt cleanup target; this is orchestrator behavior in `.claude/skills/generate-full-story/SKILL.md`. Leave for post-Sprint-6 investigation
+4. **FGR analyst** — observe only. No action warranted yet.
+
+### What we did NOT observe (stability confirmations)
+
+- No protocol violations (Write-tool for debate files): Change #7 held across all 3 full stories
+- No stub files (<2KB): all debate step JSONs 10–35KB, all sections 37–42KB
+- No data gaps reported in any orchestrator.json
+- No retries or stalls flagged anywhere (but see Issue M1 caveat — could be sweep-skip masking)
+
+### Three-Claude convergence — requested
+
+Per the Sprint 3/4 diagnostic pattern, the strongest signal for Issue M1 is cross-referencing the verbatim debriefs from the other Claude Code instances that ran SFM-fullStory and LULU-fullStory. If those instances report "I ran Step 8.5 and logged 0 events," M1 is noise; if they report skipping, M1 is a confirmed recurrence and Change #1 needs escalation to a bash-command gate in Sprint 7+.
+
+## [2026-04-18] backlog | EXP-008, EXP-009, EXP-010 added to optimization backlog
+
+PM selected three future improvement experiments after Sprint 5 debrief. All three target cost + wall time reduction without methodology changes:
+
+- [[experiments/doe-log]] **EXP-008: Prompt Caching** (highest priority) — Anthropic `cache_control` on stable prefix, expect ~90% input cost drop on cache hits
+- [[experiments/doe-log]] **EXP-009: Per-Agent DataPacket Slicing** — extends EXP-005 to all 17 agents via per-agent slice registries
+- [[experiments/doe-log]] **EXP-010: Shared Methodology Block Deduplication** — promote redundant Rule One prose to shared blocks; sequence after Sprint 6 prose cleanup
+
+PM selected EXP-008 for first implementation. EXP-009 and EXP-010 parked for follow-up.
+
+## [2026-04-18] housekeeping | .thes1s working files nuked
+
+Cleared 66MB `.thes1s/cache/` and all per-ticker working files in `.thes1s/reports/{TICKER}/` before next run set. Archives preserved (LULU, POOL, SFM, NKE, UBER, TSCO). First run on any ticker will rebuild DataPacket + filings-md + transcripts from scratch.
+
+## [2026-04-20] run | INTU onePager | 20260419-181825-INTU-onePager
+- Verdict: PASS (expected: not set) — no expected verdict
+- Cost: $0.88 | Duration: 6min | Sections: 6/6
+- Failures: none
+
+## [2026-04-20] wiki-update | 3 pages updated
+- Updated: [[tickers/INTU]], [[agents/one-pager]], [[patterns/verdict-accuracy]]
+
+## [2026-04-20] run | NOW onePager | 20260419-182010-NOW-onePager
+- Verdict: PASS (expected: not set) — no expected verdict
+- Cost: $0.96 | Duration: 5min | Sections: 6/6
+- Failures: 1
+
+## [2026-04-20] wiki-update | 4 pages updated
+- Updated: [[tickers/NOW]], [[agents/one-pager]], [[failure-modes/format-violations]], [[patterns/verdict-accuracy]]
+
+## [2026-04-20] run | NOW pitchDeck | 20260419-183000-NOW-pitchDeck
+- Verdict: WATCHLIST (expected: not set) — no expected verdict
+- Cost: $0.00 | Duration: 71min | Sections: 11/11
+- Failures: 3
+
+## [2026-04-20] wiki-update | 17 pages updated
+- Updated: [[tickers/NOW]], [[agents/annual-reader-fy2022]], [[agents/annual-reader-fy2023]], [[agents/annual-reader-fy2024]], [[agents/annual-reader-fy2025]], [[agents/quarterly-reader]], [[agents/business-analyst]], [[agents/competitor-market-position]], [[agents/competitor-moats]], [[agents/financial-analyst]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/synthesis-writer]], [[failure-modes/retries]], [[failure-modes/stalls]], [[patterns/verdict-accuracy]]
+
+## [2026-04-20] run | INTU pitchDeck | 20260419-182914-INTU-pitchDeck
+- Verdict: WATCHLIST (expected: not set) — no expected verdict
+- Cost: $9.72 | Duration: 80min | Sections: 11/11
+- Failures: 4
+
+## [2026-04-20] wiki-update | 18 pages updated
+- Updated: [[tickers/INTU]], [[agents/annual-reader-fy2021]], [[agents/annual-reader-fy2022]], [[agents/annual-reader-fy2023]], [[agents/annual-reader-fy2024]], [[agents/annual-reader-fy2025]], [[agents/quarterly-reader]], [[agents/business-analyst]], [[agents/competitor-market-position]], [[agents/competitor-moats]], [[agents/financial-analyst]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/synthesis-writer]], [[failure-modes/retries]], [[failure-modes/stalls]], [[patterns/verdict-accuracy]]
+
+## [2026-04-20] run | NOW fullStory | 20260419-194111-NOW-fullStory
+- Verdict: WATCHLIST (expected: not set) — no expected verdict
+- Cost: $5.46 | Duration: 30min | Sections: 6/6
+- Failures: 1
+
+## [2026-04-20] wiki-update | 13 pages updated
+- Updated: [[tickers/NOW]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst-judge]], [[agents/risk-analyst-bear]], [[agents/synthesis-writer-bull]], [[agents/synthesis-writer-compose]], [[agents/synthesis-writer-rebuttal]], [[failure-modes/format-violations]], [[patterns/verdict-accuracy]]
+
+## [2026-04-20] run | INTU fullStory | 20260419-195624-INTU-fullStory
+- Verdict: WATCHLIST (expected: not set) — no expected verdict
+- Cost: $7.02 | Duration: 60min | Sections: 6/6
+- Failures: none
+
+## [2026-04-20] wiki-update | 12 pages updated
+- Updated: [[tickers/INTU]], [[agents/business-analyst]], [[agents/competitor-evaluator]], [[agents/management-evaluator]], [[agents/risk-analyst]], [[agents/valuation-specialist]], [[agents/financial-analyst-judge]], [[agents/risk-analyst-bear]], [[agents/synthesis-writer-bull]], [[agents/synthesis-writer-compose]], [[agents/synthesis-writer-rebuttal]], [[patterns/verdict-accuracy]]

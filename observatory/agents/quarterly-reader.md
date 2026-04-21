@@ -1,21 +1,23 @@
 ---
 type: agent-profile
 agentRole: quarterly-reader
-lastUpdated: 2026-04-18T02:20:48.198Z
-runCount: 10
-avgCost: 0.22
-avgDuration: 484
+lastUpdated: 2026-04-20T02:55:34.245Z
+runCount: 15
+avgCost: 0.59
+avgDuration: 487
 verdictDistribution:
   WATCHLIST: 3
   PASS: 3
-  N/A: 2
-  INFO: 1
+  N/A: 4
+  INFO: 2
+  NA: 1
+  INFORMATIONAL: 1
 tags: [agent, quarterly-reader]
 ---
 
 ## Behavioral Summary
 
-Agent **quarterly-reader** has been observed across 10 run(s). Average duration: 484s. Average cost: $0.22.
+Agent **quarterly-reader** has been observed across 15 run(s). Average duration: 487s. Average cost: $0.59.
 
 ## Run History
 
@@ -31,6 +33,11 @@ Agent **quarterly-reader** has been observed across 10 run(s). Average duration:
 | 20260417-082354-LULU-pitchDeck | LULU | pitchDeck | 0 | 521s | 1 | INFO |
 | 20260417-175437-SFM-pitchDeck | SFM | pitchDeck | 0 | 373s | 1 | ? |
 | 20260417-183135-POOL-pitchDeck | POOL | pitchDeck | 0 | 478s | 1 | N/A |
+| 20260417-235256-POOL-pitchDeck | POOL | pitchDeck | 0 | 304s | 1 | NA |
+| 20260417-235603-SFM-pitchDeck | SFM | pitchDeck | 0 | 607s | 1 | N/A |
+| 20260417-235824-LULU-pitchDeck | LULU | pitchDeck | 0 | 502s | 1 | INFORMATIONAL |
+| 20260419-182914-INTU-pitchDeck | INTU | pitchDeck | 0 | 608s | 1 | N/A |
+| 20260419-183000-NOW-pitchDeck | NOW | pitchDeck | 0 | 451s | 1 | INFO |
 
 ## Failure Modes
 
@@ -38,7 +45,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.22 per run.
+Average cost: $0.59 per run.
 
 ## Quality Trends
 

@@ -1,19 +1,19 @@
 ---
 type: agent-profile
 agentRole: competitor-evaluator
-lastUpdated: 2026-04-18T05:34:57.930Z
-runCount: 11
-avgCost: 0.26
-avgDuration: 873
+lastUpdated: 2026-04-20T03:32:06.080Z
+runCount: 16
+avgCost: 0.47
+avgDuration: 722
 verdictDistribution:
-  PASS: 4
-  WATCHLIST: 7
+  PASS: 7
+  WATCHLIST: 9
 tags: [agent, competitor-evaluator]
 ---
 
 ## Behavioral Summary
 
-Agent **competitor-evaluator** has been observed across 11 run(s). Average duration: 873s. Average cost: $0.26.
+Agent **competitor-evaluator** has been observed across 16 run(s). Average duration: 722s. Average cost: $0.47.
 
 ## Run History
 
@@ -30,6 +30,11 @@ Agent **competitor-evaluator** has been observed across 11 run(s). Average durat
 | 20260417-175335-LULU-fullStory | LULU | fullStory | 1 | 381s | 1 | WATCHLIST |
 | 20260417-185013-SFM-fullStory | SFM | fullStory | 1 | 366s | 1 | WATCHLIST |
 | 20260417-192126-POOL-fullStory | POOL | fullStory | 1 | 423s | 1 | PASS |
+| 20260418-004838-POOL-fullStory | POOL | fullStory | 1 | 363s | 1 | PASS |
+| 20260418-005535-SFM-fullStory | SFM | fullStory | 1 | 407s | 1 | WATCHLIST |
+| 20260418-005858-LULU-fullStory | LULU | fullStory | 1 | 350s | 1 | WATCHLIST |
+| 20260419-194111-NOW-fullStory | NOW | fullStory | 1 | 439s | 1 | PASS |
+| 20260419-195624-INTU-fullStory | INTU | fullStory | 1 | 377s | 1 | PASS |
 
 ## Failure Modes
 
@@ -37,7 +42,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.26 per run.
+Average cost: $0.47 per run.
 
 ## Quality Trends
 

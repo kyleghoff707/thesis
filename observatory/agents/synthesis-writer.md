@@ -1,18 +1,18 @@
 ---
 type: agent-profile
 agentRole: synthesis-writer
-lastUpdated: 2026-04-18T05:34:57.931Z
-runCount: 14
-avgCost: 0.25
-avgDuration: 474
+lastUpdated: 2026-04-20T02:55:34.247Z
+runCount: 19
+avgCost: 0.44
+avgDuration: 421
 verdictDistribution:
-  WATCHLIST: 13
+  WATCHLIST: 18
 tags: [agent, synthesis-writer]
 ---
 
 ## Behavioral Summary
 
-Agent **synthesis-writer** has been observed across 14 run(s). Average duration: 474s. Average cost: $0.25.
+Agent **synthesis-writer** has been observed across 19 run(s). Average duration: 421s. Average cost: $0.44.
 
 ## Run History
 
@@ -32,6 +32,11 @@ Agent **synthesis-writer** has been observed across 14 run(s). Average duration:
 | 20260417-183135-POOL-pitchDeck | POOL | pitchDeck | 4 | 428s | 1 | WATCHLIST |
 | 20260417-185013-SFM-fullStory | SFM | fullStory | 2 | 178s | 1 | ? |
 | 20260417-185013-SFM-fullStory | SFM | fullStory | 3 | 306s | 1 | WATCHLIST |
+| 20260417-235256-POOL-pitchDeck | POOL | pitchDeck | 4 | 358s | 1 | WATCHLIST |
+| 20260417-235603-SFM-pitchDeck | SFM | pitchDeck | 4 | 226s | 1 | WATCHLIST |
+| 20260417-235824-LULU-pitchDeck | LULU | pitchDeck | 4 | 330s | 1 | WATCHLIST |
+| 20260419-182914-INTU-pitchDeck | INTU | pitchDeck | 4 | 257s | 1 | WATCHLIST |
+| 20260419-183000-NOW-pitchDeck | NOW | pitchDeck | 4 | 202s | 1 | WATCHLIST |
 
 ## Failure Modes
 
@@ -39,7 +44,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.25 per run.
+Average cost: $0.44 per run.
 
 ## Quality Trends
 

@@ -1,7 +1,7 @@
 ---
 type: doe-log
-lastUpdated: 2026-04-17T18:00:00Z
-experimentCount: 4
+lastUpdated: 2026-04-18T17:30:00Z
+experimentCount: 7
 tags: [experiments, doe]
 ---
 
@@ -138,3 +138,79 @@ The changes compound in the same direction (all soften bear dominance), so EXP-0
 
 ### Parked for Sprint 5 if EXP-003 is insufficient
 - **G: Weight debate by section verdicts** — if 7+ pitch deck sections PASS, raise the bar for full-story FAIL. Structural shift, blunt instrument. See [[patterns/bear-bull-asymmetry]] EXP-TBD-D.
+
+---
+
+## EXP-008: Prompt Caching (Anthropic cache_control)
+
+- **Status:** BACKLOG — highest-priority post-Sprint-5 optimization. Selected by PM 2026-04-18 after Sprint 5 debrief. No implementation yet.
+- **Hypothesis:** Each agent prompt today sends ~80-120KB of stable content (Rule One curriculum, methodology rules, DataPacket, filing markdown) fresh on every call. Placing the stable prefix behind Anthropic's prompt cache (5-minute TTL; up to 4 cache breakpoints per request) and varying only the agent-specific task at the end will reduce input token cost ~90% on cache hits and reduce time-to-first-token meaningfully — without changing a single word of methodology.
+- **Control:** Sprint 5 configuration — every agent call is a fresh request with no `cache_control` breakpoints. POOL pitch deck: 1.03M input tokens × $3/M = $3.08 input cost at Sonnet rates.
+- **Treatment (proposed):** Restructure every agent prompt into three zones:
+  1. **Stable prefix** (cacheable): Rule One curriculum, shared methodology blocks, DataPacket JSON, filing content — everything that doesn't vary across agents in the same run
+  2. **Agent-specific section** (cacheable if prompt is identical across invocations): the agent's task/role/output-schema block
+  3. **Dynamic task tail** (not cached): the specific "analyze ticker X" invocation line
+  Use `cache_control: { type: "ephemeral" }` markers at zone boundaries.
+- **Metric:**
+  - Input token cost (expect ~70-90% drop on cache hits after first agent per run warms the cache)
+  - Cache hit rate (read from `cache_read_input_tokens` + `cache_creation_input_tokens` in API response)
+  - Time-to-first-token per agent (expect modest drop, cache hits are faster to start)
+  - Total wall time per pipeline (secondary — wave parallelism already dominates)
+  - Output quality: MUST match Sprint 5 baseline on verdict distribution, section PASS counts, judge histograms
+- **Production parity:** Translates directly to Managed Agents — `cache_control` is an Anthropic API feature, identical in Claude Code subagent and Managed Agents sessions.
+- **Key questions before implementation:**
+  1. Is DataPacket shared enough across agents in a single pitch deck run to benefit from caching? (Yes — all 10 specialist agents read the same DataPacket.)
+  2. Does the cache TTL (5 minutes) cover a full pipeline wave? (Wave 2 is up to ~12 min — may need cache refresh between waves.)
+  3. How are cache breakpoints counted against the 4-per-request limit? (Design the zone layout accordingly.)
+- **Risk:** Low. Caching is transparent — output is identical on cache miss or hit. Failure mode is "cache never hits, cost unchanged" not "wrong output."
+- **Control runs:** Sprint 5 — all 9 runs.
+- **Treatment runs:** _Pending implementation_.
+- **Result:** _Pending_.
+- **Decision:** _Pending_.
+
+### Related reading
+- Anthropic prompt caching docs — cache breakpoints, TTL, and eligible content
+- `claude-api` skill default includes prompt caching (per skill description)
+
+---
+
+## EXP-009: Port DataPacket slicing to production Managed Agents (CORRECTED SCOPE)
+
+- **Status:** BACKLOG. **Scope correction (2026-04-19):** the original EXP-009 framed per-agent slicing as pending work. Audit of `scripts/slice-datapacket.js` confirms slicing has **already been implemented for all 11 agents** in Claude Code — live since at least Sprint 4. Each agent's custom field list is in the `REGISTRY` object, enforced by all three skill files (`generate-one-pager`, `generate-pitch-deck`, `generate-full-story`) via the "MUST NOT pass the full DataPacket" rule. What remains is porting this same optimization into production.
+- **Hypothesis:** Production currently runs un-sliced. The one-pager agent on platform.claude.com receives NO DataPacket today (just "Create a One Pager on ${TICKER}" per [api/src/routes/pipeline.js:193-196](../../api/src/routes/pipeline.js#L193-L196)) and must web-search every fact from scratch. The pitch deck coordinator (blocked on `callable_agents`) would receive the full DataPacket when dispatch unlocks. Porting per-agent slicing to production will match Claude Code behavior and reduce cost + latency.
+- **Control:** Current production state. One-pager: no DataPacket, web search everything, ~$0.72 cost, ~5min duration (Sprint 5 SFM baseline). Pitch deck: blocked on Research Preview, so no production data.
+- **Treatment:** Port the `scripts/slice-datapacket.js` REGISTRY to browser-side slicing (browser already assembles the full DataPacket per [src/engines/dataExport.js](../../src/engines/dataExport.js)). For each agent invocation, browser slices the DataPacket to just that agent's fields before forwarding to the Worker, which passes the slice unchanged to Managed Agents.
+- **Scope decomposition:**
+  - **Workstream 1** — port one-pager slicing to production. Narrow: one agent, 4 coordinated changes (browser + Worker + YAML + portal). Unblocks real cost savings on live traffic.
+  - **Workstream 3** — port pitch-deck slicing via coordinator. Blocked on `callable_agents`; coordinator needs per-agent slicing logic translated from Claude Code skill into coordinator prompt.
+  - **Full story** — blocked on Full Story agents not existing on platform yet.
+- **Metric (one-pager only):** Input tokens per run, web_searches per run (expect significant drop since DataPacket supplies financials), total cost per run, run duration, output quality parity (section PASS counts match Sprint 5 baseline).
+- **Production parity:** Once implemented, the sliced DataPacket is byte-identical to what Claude Code one-pager subagents receive today — directly comparable.
+- **Risk:** Low for one-pager. The Sprint 5 Claude Code runs (EXP-005 treatment arm) already validate that the 11-field slice produces acceptable output. Risk is infrastructure plumbing, not methodology.
+- **Control runs:** Sprint 5 production one-pager runs (when we have them) vs Sprint 5 Claude Code one-pager runs (for quality parity check).
+- **Treatment runs:** _Pending Workstream 1 implementation_.
+- **Result:** _Pending_.
+- **Decision:** _Pending_.
+
+### EXP-005 supersession note
+EXP-005's "Result: Pending — awaiting Sprint 4 runs" is stale. Slicing was live in Claude Code by Sprint 4 and has now run for 2 sprints without quality degradation. EXP-005 is effectively RESOLVED-IN-FAVOR on the Claude Code side; EXP-009 (this entry, as corrected) continues the work into production.
+
+---
+
+## EXP-010: Shared Methodology Block Deduplication
+
+- **Status:** BACKLOG — lower-priority, lower-risk, organizational. Selected by PM 2026-04-18.
+- **Hypothesis:** Every one of the 17 agent prompts redundantly restates the same Rule One fundamentals — 4 Ms framework, FGR derivation steps, 50% MOS, Operating Rule #2 (guru ownership is context not confirmation), 10 research generation requirements, etc. Extracting these into shared blocks (system prompt in Managed Agents; `<<include>>` mechanism in Claude Code skills) will shrink every agent prompt by ~25-35% without changing what the agent actually sees.
+- **Control:** Current state — each `agents-v2/*/prompt.md` is self-contained and merges 7+ curriculum/knowledge files.
+- **Treatment (proposed):** Identify the shared-across-all-agents content and promote to a single shared block. Agent prompts then reference the shared block by inclusion. In Managed Agents this maps to: shared block goes in agent config's `system` or `instructions` field; agent-specific prose stays in the prompt. In Claude Code skills, the SKILL.md orchestrator assembles the final prompt by concatenating shared + agent-specific.
+- **Metric:** Token count per agent prompt (expect 25-35% drop), pipeline cost (modest secondary benefit — cache reuse from EXP-008 interacts), output quality parity.
+- **Production parity:** Managed Agents supports system prompts per-agent; the dedupe mechanism translates cleanly.
+- **Risk:** Medium. Harder to audit what any single agent sees when the prompt is assembled from pieces. Requires clear naming convention for shared blocks and a diff tool that shows the fully-assembled per-agent prompt.
+- **Sequencing:** Should follow Sprint 6 prompt-prose cleanup — no point deduping prose that's about to be rewritten. Then EXP-010 is a one-time refactor of the cleaned prompts.
+- **Control runs:** Post-Sprint-6 — first clean run set.
+- **Treatment runs:** _Pending implementation_.
+- **Result:** _Pending_.
+- **Decision:** _Pending_.
+
+### Interaction with EXP-008 (prompt caching)
+EXP-010 is the companion to EXP-008, not an alternative. Caching saves cost on repeated calls; deduplication saves prompt real-estate. Done together: cache the shared methodology block once, reuse across every agent in a run — maximum leverage. Done separately: still helpful, but less so.

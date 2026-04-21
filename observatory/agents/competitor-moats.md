@@ -1,19 +1,19 @@
 ---
 type: agent-profile
 agentRole: competitor-moats
-lastUpdated: 2026-04-18T02:20:48.198Z
-runCount: 11
-avgCost: 0.30
-avgDuration: 714
+lastUpdated: 2026-04-20T02:55:34.246Z
+runCount: 16
+avgCost: 0.52
+avgDuration: 630
 verdictDistribution:
-  WATCHLIST: 7
-  PASS: 4
+  WATCHLIST: 9
+  PASS: 7
 tags: [agent, competitor-moats]
 ---
 
 ## Behavioral Summary
 
-Agent **competitor-moats** has been observed across 11 run(s). Average duration: 714s. Average cost: $0.30.
+Agent **competitor-moats** has been observed across 16 run(s). Average duration: 630s. Average cost: $0.52.
 
 ## Run History
 
@@ -30,6 +30,11 @@ Agent **competitor-moats** has been observed across 11 run(s). Average duration:
 | 20260417-082354-LULU-pitchDeck | LULU | pitchDeck | 2 | 2976s | 1 | WATCHLIST |
 | 20260417-175437-SFM-pitchDeck | SFM | pitchDeck | 2 | 481s | 1 | WATCHLIST |
 | 20260417-183135-POOL-pitchDeck | POOL | pitchDeck | 2 | 453s | 1 | PASS |
+| 20260417-235256-POOL-pitchDeck | POOL | pitchDeck | 2 | 326s | 1 | PASS |
+| 20260417-235603-SFM-pitchDeck | SFM | pitchDeck | 2 | 636s | 1 | WATCHLIST |
+| 20260417-235824-LULU-pitchDeck | LULU | pitchDeck | 2 | 419s | 1 | WATCHLIST |
+| 20260419-182914-INTU-pitchDeck | INTU | pitchDeck | 2 | 472s | 1 | PASS |
+| 20260419-183000-NOW-pitchDeck | NOW | pitchDeck | 2 | 361s | 1 | PASS |
 
 ## Failure Modes
 
@@ -37,7 +42,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.30 per run.
+Average cost: $0.52 per run.
 
 ## Quality Trends
 

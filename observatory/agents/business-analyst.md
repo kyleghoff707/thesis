@@ -1,19 +1,19 @@
 ---
 type: agent-profile
 agentRole: business-analyst
-lastUpdated: 2026-04-18T05:34:57.930Z
-runCount: 22
-avgCost: 0.29
-avgDuration: 920
+lastUpdated: 2026-04-20T03:32:06.079Z
+runCount: 32
+avgCost: 0.50
+avgDuration: 755
 verdictDistribution:
-  WATCHLIST: 20
-  PASS: 13
+  WATCHLIST: 25
+  PASS: 23
 tags: [agent, business-analyst]
 ---
 
 ## Behavioral Summary
 
-Agent **business-analyst** has been observed across 22 run(s). Average duration: 920s. Average cost: $0.29.
+Agent **business-analyst** has been observed across 32 run(s). Average duration: 755s. Average cost: $0.50.
 
 ## Run History
 
@@ -41,6 +41,16 @@ Agent **business-analyst** has been observed across 22 run(s). Average duration:
 | 20260417-183135-POOL-pitchDeck | POOL | pitchDeck | 1 | 396s | 2 | WATCHLIST, WATCHLIST |
 | 20260417-185013-SFM-fullStory | SFM | fullStory | 1 | 349s | 1 | PASS |
 | 20260417-192126-POOL-fullStory | POOL | fullStory | 1 | 348s | 1 | PASS |
+| 20260417-235256-POOL-pitchDeck | POOL | pitchDeck | 1 | 379s | 2 | WATCHLIST, WATCHLIST |
+| 20260417-235603-SFM-pitchDeck | SFM | pitchDeck | 1 | 302s | 2 | PASS, PASS |
+| 20260417-235824-LULU-pitchDeck | LULU | pitchDeck | 1 | 458s | 2 | WATCHLIST, WATCHLIST |
+| 20260418-004838-POOL-fullStory | POOL | fullStory | 1 | 476s | 1 | PASS |
+| 20260418-005535-SFM-fullStory | SFM | fullStory | 1 | 366s | 1 | PASS |
+| 20260418-005858-LULU-fullStory | LULU | fullStory | 1 | 297s | 1 | WATCHLIST |
+| 20260419-182914-INTU-pitchDeck | INTU | pitchDeck | 1 | 424s | 2 | PASS, PASS |
+| 20260419-183000-NOW-pitchDeck | NOW | pitchDeck | 1 | 357s | 2 | PASS, PASS |
+| 20260419-194111-NOW-fullStory | NOW | fullStory | 1 | 299s | 1 | PASS |
+| 20260419-195624-INTU-fullStory | INTU | fullStory | 1 | 561s | 1 | PASS |
 
 ## Failure Modes
 
@@ -48,7 +58,7 @@ _No failures observed._
 
 ## Cost Profile
 
-Average cost: $0.29 per run.
+Average cost: $0.50 per run.
 
 ## Quality Trends
 

@@ -2,10 +2,10 @@
 type: ticker-page
 ticker: SFM
 companyName: SFM
-lastUpdated: 2026-04-18T05:34:57.929Z
-runCount: 9
+lastUpdated: 2026-04-18T08:25:32.782Z
+runCount: 12
 expectedVerdict: BUY
-verdictHistory: [PASS, WATCHLIST, WATCHLIST, PASS, WATCHLIST, WATCHLIST, PASS, WATCHLIST, WATCHLIST]
+verdictHistory: [PASS, WATCHLIST, WATCHLIST, PASS, WATCHLIST, WATCHLIST, PASS, WATCHLIST, WATCHLIST, PASS, WATCHLIST, WATCHLIST]
 verdictAccuracy: 0.00
 tags: [ticker, SFM]
 ---
@@ -23,36 +23,39 @@ tags: [ticker, SFM]
 | 20260417-174638-SFM-onePager | onePager | PASS | BUY | MISMATCH | $0.74 | 6min | 6/6 |
 | 20260417-175437-SFM-pitchDeck | pitchDeck | WATCHLIST | BUY | MISMATCH | $12.07 | 44min | 11/11 |
 | 20260417-185013-SFM-fullStory | fullStory | WATCHLIST | BUY | MISMATCH | $7.98 | 31min | 6/6 |
+| 20260417-234502-SFM-onePager | onePager | PASS | BUY | MISMATCH | $0.72 | 5min | 6/6 |
+| 20260417-235603-SFM-pitchDeck | pitchDeck | WATCHLIST | BUY | MISMATCH | $14.67 | 58min | 11/11 |
+| 20260418-005535-SFM-fullStory | fullStory | WATCHLIST | BUY | MISMATCH | $7.46 | 42min | 6/6 |
 
 ## Verdict Stability
 
-Verdicts vary: PASS, WATCHLIST. 3/9 returned PASS.
+Verdicts vary: PASS, WATCHLIST. 4/12 returned PASS.
 
 ## Agent Performance
 
 | Agent | Runs | Avg Duration |
 |-------|------|--------------|
-| [[agents/one-pager]] | 3 | 278s |
-| [[agents/annual-reader-fy2021]] | 1 | 272s |
-| [[agents/annual-reader-fy2022]] | 1 | 259s |
-| [[agents/annual-reader-fy2023]] | 1 | 278s |
-| [[agents/annual-reader-fy2024]] | 1 | 225s |
-| [[agents/annual-reader-fy2025]] | 1 | 346s |
-| [[agents/quarterly-reader]] | 2 | 472s |
-| [[agents/business-analyst]] | 6 | 1253s |
-| [[agents/competitor-market-position]] | 3 | 508s |
-| [[agents/competitor-moats]] | 3 | 508s |
-| [[agents/financial-analyst]] | 4 | 356s |
-| [[agents/management-evaluator]] | 6 | 829s |
-| [[agents/risk-analyst]] | 7 | 442s |
-| [[agents/valuation-specialist]] | 6 | 1391s |
-| [[agents/synthesis-writer]] | 5 | 411s |
-| [[agents/competitor-evaluator]] | 3 | 474s |
-| [[agents/financial-analyst-judge]] | 2 | 78s |
-| [[agents/risk-analyst-bear]] | 2 | 2456s |
-| [[agents/synthesis-writer-bull]] | 2 | 67s |
-| [[agents/synthesis-writer-compose]] | 2 | 170s |
-| [[agents/synthesis-writer-rebuttal]] | 2 | 92s |
+| [[agents/one-pager]] | 4 | 281s |
+| [[agents/annual-reader-fy2021]] | 2 | 276s |
+| [[agents/annual-reader-fy2022]] | 2 | 276s |
+| [[agents/annual-reader-fy2023]] | 2 | 315s |
+| [[agents/annual-reader-fy2024]] | 2 | 249s |
+| [[agents/annual-reader-fy2025]] | 2 | 347s |
+| [[agents/quarterly-reader]] | 3 | 517s |
+| [[agents/business-analyst]] | 8 | 1023s |
+| [[agents/competitor-market-position]] | 4 | 461s |
+| [[agents/competitor-moats]] | 4 | 540s |
+| [[agents/financial-analyst]] | 5 | 367s |
+| [[agents/management-evaluator]] | 8 | 702s |
+| [[agents/risk-analyst]] | 9 | 437s |
+| [[agents/valuation-specialist]] | 8 | 1134s |
+| [[agents/synthesis-writer]] | 6 | 380s |
+| [[agents/competitor-evaluator]] | 4 | 457s |
+| [[agents/financial-analyst-judge]] | 3 | 109s |
+| [[agents/risk-analyst-bear]] | 3 | 1733s |
+| [[agents/synthesis-writer-bull]] | 3 | 122s |
+| [[agents/synthesis-writer-compose]] | 3 | 185s |
+| [[agents/synthesis-writer-rebuttal]] | 3 | 154s |
 | [[agents/annual-reader]] | 1 | 540s |
 
 ## DataPacket Notes
