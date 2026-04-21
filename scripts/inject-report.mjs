@@ -20,7 +20,7 @@
 //
 // The caller MUST be an admin (role='admin'). Non-admins get 403.
 
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
@@ -67,7 +67,7 @@ function parseArgs(argv) {
       process.exit(1);
     }
   }
-  if (!args.adminEmail) args.adminEmail = args.email;
+  if (!args.adminEmail) args.adminEmail = 'kyleghoff707@gmail.com';
   return args;
 }
 
@@ -78,18 +78,47 @@ async function promptPassword(label) {
   return answer.trim();
 }
 
-function loadStage(ticker, stage) {
-  const path = resolve(REPORTS_DIR, ticker, STAGE_FILES[stage]);
-  if (!existsSync(path)) return null;
+// Resolve the path to a stage JSON for a ticker. Tries working dir first
+// (.thes1s/reports/{TICKER}/{file}.json), then the newest matching archive dir
+// (.thes1s/reports/{TICKER}/archive/YYYYMMDD-HHMMSS-{TICKER}-{stage}/{file}.json).
+// Archive dir names sort lexicographically = chronologically, so the max-named
+// dir is the most recent run for that stage.
+function resolveStagePath(ticker, stage) {
+  const filename = STAGE_FILES[stage];
+  const working = resolve(REPORTS_DIR, ticker, filename);
+  if (existsSync(working)) return { path: working, source: 'working' };
+
+  const archiveRoot = resolve(REPORTS_DIR, ticker, 'archive');
+  if (!existsSync(archiveRoot)) return null;
+
+  let entries;
   try {
-    const raw = JSON.parse(readFileSync(path, 'utf8'));
+    entries = readdirSync(archiveRoot);
+  } catch {
+    return null;
+  }
+  const suffix = `-${ticker}-${stage}`;
+  const matching = entries.filter(e => e.endsWith(suffix)).sort();
+  for (const dir of matching.reverse()) {
+    const candidate = resolve(archiveRoot, dir, filename);
+    if (existsSync(candidate)) return { path: candidate, source: `archive/${dir}` };
+  }
+  return null;
+}
+
+function loadStage(ticker, stage) {
+  const found = resolveStagePath(ticker, stage);
+  if (!found) return null;
+  try {
+    const raw = JSON.parse(readFileSync(found.path, 'utf8'));
     if (!Array.isArray(raw?.sections) || raw.sections.length === 0) {
-      console.warn(`  [${ticker}] ${stage}: ${STAGE_FILES[stage]} has no sections — skipping`);
+      console.warn(`  [${ticker}] ${stage}: ${found.source} has no sections — skipping`);
       return null;
     }
+    console.log(`  [${ticker}] ${stage}: loaded from ${found.source}`);
     return raw;
   } catch (err) {
-    console.warn(`  [${ticker}] ${stage}: failed to parse — ${err.message}`);
+    console.warn(`  [${ticker}] ${stage}: failed to parse ${found.source} — ${err.message}`);
     return null;
   }
 }

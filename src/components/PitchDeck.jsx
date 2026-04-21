@@ -349,7 +349,10 @@ function GenerationStatusPanel({ generationStatus, ticker }) {
 export default function PitchDeck({ getReport, updateReport }) {
   const { id } = useParams();
   const report = getReport ? getReport(id) : null;
-  const { report: pitchDeckData, progress: rawProgress, generationStatus: rawGenStatus, loading, error, startPolling } = usePitchDeck(report?.ticker);
+  const { report: hookData, progress: rawProgress, generationStatus: rawGenStatus, loading, error, startPolling } = usePitchDeck(report?.ticker);
+  // Production: report.pitchDeck is loaded from D1 via useResearch → GET /user/reports/:id.
+  // Dev: hookData comes from the Vite middleware. Prefer D1 data when present.
+  const pitchDeckData = report?.pitchDeck || hookData;
   const { triggerGeneration, generating } = useGeneratePipeline(report?.ticker);
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [graceActive, setGraceActive] = useState(false);

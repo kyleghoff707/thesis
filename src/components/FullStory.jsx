@@ -181,7 +181,10 @@ export default function FullStory({ getReport, updateReport }) {
   const { id } = useParams();
   const report = getReport ? getReport(id) : null;
   const ticker = report?.ticker;
-  const { report: fullStoryData, quality, progress: rawProgress, generationStatus: rawGenStatus, loading, error, startPolling } = useFullStory(ticker);
+  const { report: hookData, quality, progress: rawProgress, generationStatus: rawGenStatus, loading, error, startPolling } = useFullStory(ticker);
+  // Production: report.fullStory is loaded from D1 via useResearch → GET /user/reports/:id.
+  // Dev: hookData comes from the Vite middleware. Prefer D1 data when present.
+  const fullStoryData = report?.fullStory || hookData;
   const { triggerGeneration, generating } = useGeneratePipeline(ticker);
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [graceActive, setGraceActive] = useState(false);
