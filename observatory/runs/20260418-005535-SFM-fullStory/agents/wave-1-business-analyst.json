@@ -1,0 +1,48 @@
+{
+  "runId": "20260418-005535-SFM-fullStory",
+  "agentRole": "business-analyst",
+  "wave": 1,
+  "stage": "fullStory",
+  "sectionsAssigned": [
+    "meaning_checklist"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "meaning_checklist",
+        "verdict": "PASS",
+        "confidence": "HIGH",
+        "redFlagCount": 5,
+        "citationCount": 15,
+        "narrativeLength": 14000
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 53912,
+    "outputTokens": 35942,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 10,
+    "cost": 0.800866
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T08:03:35.628Z",
+    "durationSeconds": 366
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

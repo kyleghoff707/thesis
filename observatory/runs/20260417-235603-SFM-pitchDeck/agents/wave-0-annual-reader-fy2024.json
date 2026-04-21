@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-235603-SFM-pitchDeck",
+  "agentRole": "annual-reader-fy2024",
+  "wave": 0,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "psr_annual"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "psr_annual",
+        "verdict": "N/A",
+        "confidence": "HIGH",
+        "redFlagCount": 9,
+        "citationCount": 22,
+        "narrativeLength": 39100
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 77742,
+    "outputTokens": 51828,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 0,
+    "cost": 1.010646
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T07:12:32.548Z",
+    "durationSeconds": 272
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

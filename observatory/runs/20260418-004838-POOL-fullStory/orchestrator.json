@@ -1,0 +1,50 @@
+{
+  "runId": "20260418-004838-POOL-fullStory",
+  "dispatches": [
+    {
+      "wave": 1,
+      "stage": "Deep Analysis",
+      "agents": [
+        "risk-analyst",
+        "business-analyst",
+        "competitor-evaluator",
+        "management-evaluator",
+        "valuation-specialist"
+      ],
+      "parallel": true,
+      "durationSeconds": 476
+    },
+    {
+      "wave": 2,
+      "stage": "Adversarial Debate",
+      "agents": [
+        "synthesis-writer",
+        "risk-analyst",
+        "synthesis-writer",
+        "financial-analyst",
+        "synthesis-writer"
+      ],
+      "parallel": false,
+      "durationSeconds": 1136
+    }
+  ],
+  "retries": [],
+  "stallsDetected": [],
+  "formatViolations": [
+    {
+      "agent": "financial-analyst-judge",
+      "violation": "Wrapped judge output in 'content' field instead of returning fields at top level (schema drift)",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    },
+    {
+      "agent": "synthesis-writer-bull",
+      "violation": "bull point 9 conceded weak in rebuttal",
+      "original": null,
+      "corrected": null,
+      "fixApplied": false
+    }
+  ],
+  "dataGaps": []
+}

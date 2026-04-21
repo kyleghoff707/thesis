@@ -1,0 +1,48 @@
+{
+  "runId": "20260419-195624-INTU-fullStory",
+  "agentRole": "synthesis-writer-rebuttal",
+  "wave": 2,
+  "stage": "fullStory",
+  "sectionsAssigned": [
+    "debate_rebuttal"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "debate_rebuttal",
+        "verdict": "N/A",
+        "confidence": "HIGH",
+        "redFlagCount": 0,
+        "citationCount": 24,
+        "narrativeLength": 3000
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 40980,
+    "outputTokens": 27320,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 5,
+    "cost": 0.58274
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-20T03:31:35.217Z",
+    "durationSeconds": 225.979
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

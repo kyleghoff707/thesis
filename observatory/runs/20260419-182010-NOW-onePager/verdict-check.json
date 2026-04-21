@@ -1,0 +1,20 @@
+{
+  "runId": "20260419-182010-NOW-onePager",
+  "ticker": "NOW",
+  "expectedVerdict": null,
+  "expectedSource": null,
+  "actualVerdict": "PASS",
+  "match": null,
+  "sectionVerdicts": {
+    "company_info": "PASS",
+    "minimum_standards": "PASS",
+    "meaning": "PASS",
+    "growth_metrics": "PASS",
+    "valuation_summary": "WATCHLIST",
+    "overall_verdict": "PASS"
+  },
+  "verdictDistribution": {
+    "PASS": 5,
+    "WATCHLIST": 1
+  }
+}

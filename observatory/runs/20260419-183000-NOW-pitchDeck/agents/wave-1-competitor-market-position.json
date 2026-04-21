@@ -1,0 +1,48 @@
+{
+  "runId": "20260419-183000-NOW-pitchDeck",
+  "agentRole": "competitor-market-position",
+  "wave": 1,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "market_position"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "market_position",
+        "verdict": "PASS",
+        "confidence": "HIGH",
+        "redFlagCount": 3,
+        "citationCount": 20,
+        "narrativeLength": 5536
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 82312,
+    "outputTokens": 54875,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 27,
+    "cost": 1.340061
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-20T01:51:36.020Z",
+    "durationSeconds": 338
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

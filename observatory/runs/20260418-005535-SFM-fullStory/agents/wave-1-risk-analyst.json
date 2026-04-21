@@ -1,0 +1,48 @@
+{
+  "runId": "20260418-005535-SFM-fullStory",
+  "agentRole": "risk-analyst",
+  "wave": 1,
+  "stage": "fullStory",
+  "sectionsAssigned": [
+    "event_analysis"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "event_analysis",
+        "verdict": "WATCHLIST",
+        "confidence": "HIGH",
+        "redFlagCount": 6,
+        "citationCount": 15,
+        "narrativeLength": 10600
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 63115,
+    "outputTokens": 42077,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 12,
+    "cost": 0.9405
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T08:03:35.582Z",
+    "durationSeconds": 330
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

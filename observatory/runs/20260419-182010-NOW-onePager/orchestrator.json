@@ -1,0 +1,26 @@
+{
+  "runId": "20260419-182010-NOW-onePager",
+  "dispatches": [
+    {
+      "wave": 0,
+      "stage": "One Pager",
+      "agents": [
+        "one-pager"
+      ],
+      "parallel": false,
+      "durationSeconds": 295
+    }
+  ],
+  "retries": [],
+  "stallsDetected": [],
+  "formatViolations": [
+    {
+      "agent": "one-pager",
+      "violation": "Emitted TWO copies of the JSON object (indented pretty-printed then compact). Orchestrator used compact (last) copy.",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    }
+  ],
+  "dataGaps": []
+}

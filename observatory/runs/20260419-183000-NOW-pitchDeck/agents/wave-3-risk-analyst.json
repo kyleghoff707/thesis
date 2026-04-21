@@ -1,0 +1,48 @@
+{
+  "runId": "20260419-183000-NOW-pitchDeck",
+  "agentRole": "risk-analyst",
+  "wave": 3,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "pest_risks"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "pest_risks",
+        "verdict": "WATCHLIST",
+        "confidence": "MEDIUM",
+        "redFlagCount": 16,
+        "citationCount": 30,
+        "narrativeLength": 11026
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 167453,
+    "outputTokens": 111636,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 28,
+    "cost": 2.456899
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-20T02:14:40.183Z",
+    "durationSeconds": 707
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

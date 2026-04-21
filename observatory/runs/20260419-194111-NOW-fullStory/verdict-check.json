@@ -1,0 +1,20 @@
+{
+  "runId": "20260419-194111-NOW-fullStory",
+  "ticker": "NOW",
+  "expectedVerdict": null,
+  "expectedSource": null,
+  "actualVerdict": "WATCHLIST",
+  "match": null,
+  "sectionVerdicts": {
+    "event_analysis": "WATCHLIST",
+    "meaning_checklist": "PASS",
+    "moat_checklist": "PASS",
+    "management_checklist": "PASS",
+    "valuation_confirmation": "PASS",
+    "inversion_rebuttal": "WATCHLIST"
+  },
+  "verdictDistribution": {
+    "WATCHLIST": 2,
+    "PASS": 4
+  }
+}

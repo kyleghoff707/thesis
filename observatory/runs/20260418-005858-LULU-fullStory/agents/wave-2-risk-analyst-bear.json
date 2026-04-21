@@ -1,0 +1,48 @@
+{
+  "runId": "20260418-005858-LULU-fullStory",
+  "agentRole": "risk-analyst-bear",
+  "wave": 2,
+  "stage": "fullStory",
+  "sectionsAssigned": [
+    "debate_bear"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "debate_bear",
+        "verdict": "BEAR",
+        "confidence": "HIGH",
+        "redFlagCount": 0,
+        "citationCount": 19,
+        "narrativeLength": 4800
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 76738,
+    "outputTokens": 51159,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 14,
+    "cost": 1.137599
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T16:55:07.433Z",
+    "durationSeconds": 548
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

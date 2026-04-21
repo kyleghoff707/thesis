@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-235256-POOL-pitchDeck",
+  "agentRole": "quarterly-reader",
+  "wave": 0,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "psr_quarterly"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "psr_quarterly",
+        "verdict": "NA",
+        "confidence": "HIGH",
+        "redFlagCount": 0,
+        "citationCount": 0,
+        "narrativeLength": 0
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 85128,
+    "outputTokens": 56752,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 20,
+    "cost": 1.306664
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T07:03:37.794Z",
+    "durationSeconds": 304
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

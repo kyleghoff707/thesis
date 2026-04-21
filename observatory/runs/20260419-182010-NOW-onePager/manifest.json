@@ -1,0 +1,32 @@
+{
+  "runId": "20260419-182010-NOW-onePager",
+  "timestamp": "2026-04-20T01:20:10.975Z",
+  "completedAt": "2026-04-20T01:28:51.041Z",
+  "controlVariables": {
+    "ticker": "NOW",
+    "stage": "onePager",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "3bda117ab7debf5a",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": null,
+  "actualVerdict": "PASS",
+  "verdictMatch": null,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 295,
+    "totalCost": 0.955851,
+    "totalTokens": 122545,
+    "totalInputTokens": 73527,
+    "totalOutputTokens": 49018,
+    "toolUses": 14,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 6,
+    "sectionsExpected": 6,
+    "errorsCount": 0
+  },
+  "agentFiles": [
+    "agents/wave-0-one-pager.json"
+  ]
+}

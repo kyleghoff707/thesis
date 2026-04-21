@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-235824-LULU-pitchDeck",
+  "agentRole": "valuation-specialist",
+  "wave": 3,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "valuation"
+  ],
+  "input": {
+    "model": "claude-opus-4-7",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "valuation",
+        "verdict": "WATCHLIST",
+        "confidence": "HIGH",
+        "redFlagCount": 6,
+        "citationCount": 30,
+        "narrativeLength": 10000
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 69301,
+    "outputTokens": 46200,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 8,
+    "cost": 4.584515
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T07:51:20.728Z",
+    "durationSeconds": 356
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

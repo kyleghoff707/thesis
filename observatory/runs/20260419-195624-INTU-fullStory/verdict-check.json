@@ -1,0 +1,20 @@
+{
+  "runId": "20260419-195624-INTU-fullStory",
+  "ticker": "INTU",
+  "expectedVerdict": null,
+  "expectedSource": null,
+  "actualVerdict": "WATCHLIST",
+  "match": null,
+  "sectionVerdicts": {
+    "event_analysis": "WATCHLIST",
+    "meaning_checklist": "PASS",
+    "moat_checklist": "PASS",
+    "management_checklist": "PASS",
+    "valuation_confirmation": "WATCHLIST",
+    "inversion_rebuttal": "WATCHLIST"
+  },
+  "verdictDistribution": {
+    "WATCHLIST": 3,
+    "PASS": 3
+  }
+}

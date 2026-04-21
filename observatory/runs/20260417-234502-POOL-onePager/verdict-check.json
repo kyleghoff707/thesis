@@ -1,0 +1,20 @@
+{
+  "runId": "20260417-234502-POOL-onePager",
+  "ticker": "POOL",
+  "expectedVerdict": "BUY",
+  "expectedSource": "known-verdicts.json",
+  "actualVerdict": "WATCHLIST",
+  "match": false,
+  "sectionVerdicts": {
+    "company_info": "PASS",
+    "minimum_standards": "PASS",
+    "meaning": "PASS",
+    "growth_metrics": "WATCHLIST",
+    "valuation_summary": "WATCHLIST",
+    "overall_verdict": "WATCHLIST"
+  },
+  "verdictDistribution": {
+    "PASS": 3,
+    "WATCHLIST": 3
+  }
+}

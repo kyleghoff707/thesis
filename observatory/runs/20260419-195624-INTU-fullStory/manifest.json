@@ -1,0 +1,41 @@
+{
+  "runId": "20260419-195624-INTU-fullStory",
+  "timestamp": "2026-04-20T02:56:24.257Z",
+  "completedAt": "2026-04-20T03:31:59.998Z",
+  "controlVariables": {
+    "ticker": "INTU",
+    "stage": "fullStory",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "94a0bcd132930365",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": null,
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": null,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 3600,
+    "totalCost": 7.0200000000000005,
+    "totalTokens": 900000,
+    "totalInputTokens": 540000,
+    "totalOutputTokens": 360000,
+    "toolUses": 180,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 6,
+    "sectionsExpected": 6,
+    "errorsCount": 0
+  },
+  "agentFiles": [
+    "agents/wave-1-risk-analyst.json",
+    "agents/wave-1-business-analyst.json",
+    "agents/wave-1-competitor-evaluator.json",
+    "agents/wave-1-management-evaluator.json",
+    "agents/wave-1-valuation-specialist.json",
+    "agents/wave-2-synthesis-writer-bull.json",
+    "agents/wave-2-risk-analyst-bear.json",
+    "agents/wave-2-synthesis-writer-rebuttal.json",
+    "agents/wave-2-financial-analyst-judge.json",
+    "agents/wave-2-synthesis-writer-compose.json"
+  ]
+}

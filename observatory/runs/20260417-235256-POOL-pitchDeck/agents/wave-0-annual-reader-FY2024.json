@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-235256-POOL-pitchDeck",
+  "agentRole": "annual-reader-FY2024",
+  "wave": 0,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "psr_annual_FY2024"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "psr_annual_FY2024",
+        "verdict": "NA",
+        "confidence": "HIGH",
+        "redFlagCount": 0,
+        "citationCount": 0,
+        "narrativeLength": 0
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 62784,
+    "outputTokens": 41856,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 19,
+    "cost": 1.006192
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T07:03:37.707Z",
+    "durationSeconds": 252
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

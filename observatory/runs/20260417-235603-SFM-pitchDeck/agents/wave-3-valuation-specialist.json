@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-235603-SFM-pitchDeck",
+  "agentRole": "valuation-specialist",
+  "wave": 3,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "valuation"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "valuation",
+        "verdict": "WATCHLIST",
+        "confidence": "HIGH",
+        "redFlagCount": 5,
+        "citationCount": 13,
+        "narrativeLength": 25000
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 72122,
+    "outputTokens": 48081,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 6,
+    "cost": 0.997581
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T07:50:04.080Z",
+    "durationSeconds": 395
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

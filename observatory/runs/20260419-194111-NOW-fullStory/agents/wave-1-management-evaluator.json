@@ -1,0 +1,48 @@
+{
+  "runId": "20260419-194111-NOW-fullStory",
+  "agentRole": "management-evaluator",
+  "wave": 1,
+  "stage": "fullStory",
+  "sectionsAssigned": [
+    "management_checklist"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "management_checklist",
+        "verdict": "PASS",
+        "confidence": "MEDIUM",
+        "redFlagCount": 3,
+        "citationCount": 22,
+        "narrativeLength": 7182
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 74423,
+    "outputTokens": 49615,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 17,
+    "cost": 1.137494
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-20T02:49:42.060Z",
+    "durationSeconds": 398
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

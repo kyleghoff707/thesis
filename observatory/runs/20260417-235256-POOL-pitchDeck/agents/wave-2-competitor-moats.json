@@ -1,0 +1,48 @@
+{
+  "runId": "20260417-235256-POOL-pitchDeck",
+  "agentRole": "competitor-moats",
+  "wave": 2,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "barriers_moats"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "barriers_moats",
+        "verdict": "PASS",
+        "confidence": "HIGH",
+        "redFlagCount": 4,
+        "citationCount": 15,
+        "narrativeLength": 6988
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 46273,
+    "outputTokens": 30849,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 13,
+    "cost": 0.731554
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-18T07:29:32.152Z",
+    "durationSeconds": 326
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

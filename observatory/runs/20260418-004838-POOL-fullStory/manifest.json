@@ -1,0 +1,41 @@
+{
+  "runId": "20260418-004838-POOL-fullStory",
+  "timestamp": "2026-04-18T07:48:38.294Z",
+  "completedAt": "2026-04-18T08:19:44.898Z",
+  "controlVariables": {
+    "ticker": "POOL",
+    "stage": "fullStory",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "95633dcf17d2a403",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": "BUY",
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": false,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 3000,
+    "totalCost": 8.2972578,
+    "totalTokens": 1063751,
+    "totalInputTokens": 638251,
+    "totalOutputTokens": 425500,
+    "toolUses": 219,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 6,
+    "sectionsExpected": 6,
+    "errorsCount": 0
+  },
+  "agentFiles": [
+    "agents/wave-1-risk-analyst.json",
+    "agents/wave-1-business-analyst.json",
+    "agents/wave-1-competitor-evaluator.json",
+    "agents/wave-1-management-evaluator.json",
+    "agents/wave-1-valuation-specialist.json",
+    "agents/wave-2-synthesis-writer-bull.json",
+    "agents/wave-2-risk-analyst-bear.json",
+    "agents/wave-2-synthesis-writer-rebuttal.json",
+    "agents/wave-2-financial-analyst-judge.json",
+    "agents/wave-2-synthesis-writer-compose.json"
+  ]
+}

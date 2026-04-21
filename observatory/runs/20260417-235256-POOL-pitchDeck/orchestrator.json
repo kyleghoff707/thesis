@@ -1,0 +1,71 @@
+{
+  "runId": "20260417-235256-POOL-pitchDeck",
+  "dispatches": [
+    {
+      "wave": 0,
+      "stage": "PSR",
+      "agents": [
+        "annual-reader-FY2021",
+        "annual-reader-FY2022",
+        "annual-reader-FY2023",
+        "annual-reader-FY2024",
+        "annual-reader-FY2025",
+        "quarterly-reader"
+      ],
+      "parallel": true,
+      "durationSeconds": 379
+    },
+    {
+      "wave": 1,
+      "stage": "Business Fundamentals",
+      "agents": [
+        "business-analyst",
+        "competitor-market-position"
+      ],
+      "parallel": true,
+      "durationSeconds": 399
+    },
+    {
+      "wave": 2,
+      "stage": "Deep Analysis",
+      "agents": [
+        "competitor-moats",
+        "financial-analyst",
+        "management-evaluator"
+      ],
+      "parallel": true,
+      "durationSeconds": 688
+    },
+    {
+      "wave": 3,
+      "stage": "Risk & Valuation",
+      "agents": [
+        "risk-analyst",
+        "valuation-specialist"
+      ],
+      "parallel": true,
+      "durationSeconds": 562
+    },
+    {
+      "wave": 4,
+      "stage": "Synthesis",
+      "agents": [
+        "synthesis-writer"
+      ],
+      "parallel": false,
+      "durationSeconds": 358
+    }
+  ],
+  "retries": [],
+  "stallsDetected": [],
+  "formatViolations": [
+    {
+      "agent": "valuation-specialist",
+      "violation": "valuation.json contained 2 arithmetic expressions ('5289396000 * 2.158' and '5289396000 * 3.106') instead of computed numeric values — broke JSON parse; manually computed and replaced",
+      "original": null,
+      "corrected": null,
+      "fixApplied": true
+    }
+  ],
+  "dataGaps": []
+}

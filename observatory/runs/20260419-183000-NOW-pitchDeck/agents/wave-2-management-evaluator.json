@@ -1,0 +1,48 @@
+{
+  "runId": "20260419-183000-NOW-pitchDeck",
+  "agentRole": "management-evaluator",
+  "wave": 2,
+  "stage": "pitchDeck",
+  "sectionsAssigned": [
+    "management"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "management",
+        "verdict": "WATCHLIST",
+        "confidence": "MEDIUM",
+        "redFlagCount": 3,
+        "citationCount": 25,
+        "narrativeLength": 9029
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 96410,
+    "outputTokens": 64273,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 9,
+    "cost": 1.343325
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-20T02:02:10.171Z",
+    "durationSeconds": 297
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

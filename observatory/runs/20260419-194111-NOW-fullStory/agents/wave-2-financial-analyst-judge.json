@@ -1,0 +1,48 @@
+{
+  "runId": "20260419-194111-NOW-fullStory",
+  "agentRole": "financial-analyst-judge",
+  "wave": 2,
+  "stage": "fullStory",
+  "sectionsAssigned": [
+    "debate_judge"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "debate_judge",
+        "verdict": "WATCHLIST",
+        "confidence": "MEDIUM",
+        "redFlagCount": 5,
+        "citationCount": 10,
+        "narrativeLength": 3500
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 62262,
+    "outputTokens": 41508,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 0,
+    "cost": 0.809406
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-20T03:14:42.236Z",
+    "durationSeconds": 207
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

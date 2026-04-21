@@ -1,0 +1,48 @@
+{
+  "runId": "20260419-194111-NOW-fullStory",
+  "agentRole": "synthesis-writer-bull",
+  "wave": 2,
+  "stage": "fullStory",
+  "sectionsAssigned": [
+    "debate_bull"
+  ],
+  "input": {
+    "model": "claude-sonnet-4-6",
+    "promptVersion": null
+  },
+  "output": {
+    "sectionsProduced": 1,
+    "sections": [
+      {
+        "key": "debate_bull",
+        "verdict": "BULL",
+        "confidence": "HIGH",
+        "redFlagCount": 0,
+        "citationCount": 30,
+        "narrativeLength": 4000
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 68323,
+    "outputTokens": 45549,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "webSearches": 11,
+    "cost": 0.998204
+  },
+  "timing": {
+    "startedAt": null,
+    "completedAt": "2026-04-20T03:14:42.112Z",
+    "durationSeconds": 214
+  },
+  "qualitySignals": {
+    "formatValid": true,
+    "schemaValid": true,
+    "requiredFieldsMissing": [],
+    "keyNormalized": false,
+    "retryCount": 0,
+    "retryReasons": [],
+    "criticScores": {}
+  }
+}

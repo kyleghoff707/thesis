@@ -1,0 +1,44 @@
+{
+  "runId": "20260419-183000-NOW-pitchDeck",
+  "timestamp": "2026-04-20T01:30:00.580Z",
+  "completedAt": "2026-04-20T02:40:36.690Z",
+  "controlVariables": {
+    "ticker": "NOW",
+    "stage": "pitchDeck",
+    "models": {
+      "default": "claude-sonnet-4-6"
+    },
+    "dataPacketHash": "3bda117ab7debf5a",
+    "dataPacketCaveats": []
+  },
+  "expectedVerdict": null,
+  "actualVerdict": "WATCHLIST",
+  "verdictMatch": null,
+  "pipelineMetrics": {
+    "totalWallTimeSeconds": 4236.111,
+    "totalCost": 0,
+    "totalTokens": 0,
+    "totalInputTokens": 0,
+    "totalOutputTokens": 0,
+    "toolUses": 0,
+    "model": "claude-sonnet-4-6",
+    "sectionsProduced": 11,
+    "sectionsExpected": 11,
+    "errorsCount": 0
+  },
+  "agentFiles": [
+    "agents/wave-0-annual-reader-fy2025.json",
+    "agents/wave-0-annual-reader-fy2024.json",
+    "agents/wave-0-annual-reader-fy2023.json",
+    "agents/wave-0-annual-reader-fy2022.json",
+    "agents/wave-0-quarterly-reader.json",
+    "agents/wave-1-business-analyst.json",
+    "agents/wave-1-competitor-market-position.json",
+    "agents/wave-2-competitor-moats.json",
+    "agents/wave-2-financial-analyst.json",
+    "agents/wave-2-management-evaluator.json",
+    "agents/wave-3-risk-analyst.json",
+    "agents/wave-3-valuation-specialist.json",
+    "agents/wave-4-synthesis-writer.json"
+  ]
+}
