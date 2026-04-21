@@ -9,36 +9,40 @@
 // ─── Section Header Patterns ────────────────────────────────────
 
 // Item separator pattern — matches period, colon, whitespace, em-dash, en-dash, hyphen
-// Some filers use "Item 1." others "Item 1—" (Costco) or "Item 1:" etc.
-const SEP = '[.:\\s\\-\\u2013\\u2014]';
+// Some filers use "Item 1." others "Item 1—" (Costco), "Item 1:" (Costco TOC),
+// or "ITEM 7 - MANAGEMENT'S DISCUSSION" (Intuit, space before dash) etc.
+const SEP = '\\s*[.:\\-\\u2013\\u2014][.:|\\s\\-\\u2013\\u2014]*';
+
+// Leading pipe for markdown-table-wrapped item headers, e.g. `| Item 1. Business |`
+const LEAD = `^(?:\\|\\s*)?(?:#{1,3}\\s*)?`;
 
 // 10-K focused map: 4 sections the pipeline uses for annual filings
 export const SECTION_MAP_10K = {
-  'Business': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*1${SEP}\\s*Business`, 'im'),
-  'Risk Factors': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*1A${SEP}\\s*Risk\\s*Factors`, 'im'),
-  'MD&A': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*7${SEP}\\s*Management[''\\u2019]?s?\\s*Discussion`, 'im'),
-  'Financial Statements': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*8${SEP}\\s*Financial\\s*Statements`, 'im'),
+  'Business': new RegExp(`${LEAD}Item\\s*1${SEP}\\s*Business`, 'im'),
+  'Risk Factors': new RegExp(`${LEAD}Item\\s*1A${SEP}\\s*Risk\\s*Factors`, 'im'),
+  'MD&A': new RegExp(`${LEAD}Item\\s*7${SEP}\\s*Management[''\\u2019]?s?\\s*Discussion`, 'im'),
+  'Financial Statements': new RegExp(`${LEAD}Item\\s*8${SEP}\\s*Financial\\s*Statements`, 'im'),
 };
 
 // 10-Q focused map: 3 sections with 10-Q item numbers
 // Item 1 = Financial Statements (not Business), Item 2 = MD&A (not Properties)
 export const SECTION_MAP_10Q = {
-  'Financial Statements': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*1${SEP}\\s*Financial\\s*Statements`, 'im'),
-  'MD&A': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*2${SEP}\\s*Management[''\\u2019]?s?\\s*Discussion`, 'im'),
-  'Risk Factors': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*1A${SEP}\\s*Risk\\s*Factors`, 'im'),
+  'Financial Statements': new RegExp(`${LEAD}Item\\s*1${SEP}\\s*Financial\\s*Statements`, 'im'),
+  'MD&A': new RegExp(`${LEAD}Item\\s*2${SEP}\\s*Management[''\\u2019]?s?\\s*Discussion`, 'im'),
+  'Risk Factors': new RegExp(`${LEAD}Item\\s*1A${SEP}\\s*Risk\\s*Factors`, 'im'),
 };
 
 // Backward-compatible full map — includes all legacy sections (10-K items)
 export const SECTION_MAP = {
-  'Business': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*1${SEP}\\s*Business`, 'im'),
-  'Risk Factors': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*1A${SEP}\\s*Risk\\s*Factors`, 'im'),
-  'MD&A': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*7${SEP}\\s*Management[''\\u2019]?s?\\s*Discussion`, 'im'),
-  'Financial Statements': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*8${SEP}\\s*Financial\\s*Statements`, 'im'),
-  'Controls': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*9A${SEP}\\s*Controls`, 'im'),
-  'Properties': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*2${SEP}\\s*Properties`, 'im'),
-  'Legal': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*3${SEP}\\s*Legal`, 'im'),
-  'Executive Compensation': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*11${SEP}\\s*Executive\\s*Comp`, 'im'),
-  'Market Risk': new RegExp(`^(?:#{1,3}\\s*)?Item\\s*7A${SEP}\\s*Quantitative.*Market\\s*Risk`, 'im'),
+  'Business': new RegExp(`${LEAD}Item\\s*1${SEP}\\s*Business`, 'im'),
+  'Risk Factors': new RegExp(`${LEAD}Item\\s*1A${SEP}\\s*Risk\\s*Factors`, 'im'),
+  'MD&A': new RegExp(`${LEAD}Item\\s*7${SEP}\\s*Management[''\\u2019]?s?\\s*Discussion`, 'im'),
+  'Financial Statements': new RegExp(`${LEAD}Item\\s*8${SEP}\\s*Financial\\s*Statements`, 'im'),
+  'Controls': new RegExp(`${LEAD}Item\\s*9A${SEP}\\s*Controls`, 'im'),
+  'Properties': new RegExp(`${LEAD}Item\\s*2${SEP}\\s*Properties`, 'im'),
+  'Legal': new RegExp(`${LEAD}Item\\s*3${SEP}\\s*Legal`, 'im'),
+  'Executive Compensation': new RegExp(`${LEAD}Item\\s*11${SEP}\\s*Executive\\s*Comp`, 'im'),
+  'Market Risk': new RegExp(`${LEAD}Item\\s*7A${SEP}\\s*Quantitative.*Market\\s*Risk`, 'im'),
 };
 
 // ─── Section Extraction ─────────────────────────────────────────
@@ -77,42 +81,44 @@ export function extractSection(markdown, sectionName, sectionMap = SECTION_MAP) 
     }
   }
 
-  // Find the start position
-  const match = markdown.match(pattern);
-  if (!match) return null;
-
-  const startIdx = match.index;
-
-  // Determine the heading level of the matched header
-  const headerLine = markdown.substring(startIdx).split('\n')[0];
-  const headingMatch = headerLine.match(/^(#{1,6})/);
-  const headingLevel = headingMatch ? headingMatch[1].length : 0;
-
-  // Find the next section boundary
-  const afterHeader = markdown.substring(startIdx + headerLine.length);
-  let nextHeaderPattern;
-  if (headingLevel > 0) {
-    // Heading-formatted: find next heading at same or higher level
-    nextHeaderPattern = new RegExp(`^#{1,${headingLevel}}\\s+\\S`, 'm');
-  } else {
-    // Plain-text Item line: find next Item N pattern (same format)
-    nextHeaderPattern = /^Item\s+\d+[A-Z]?[.:\s]/im;
+  // Find ALL candidate start positions (TOC entries often match before the body).
+  // Iterate from latest to earliest so we prefer the body header; fall back to
+  // the longest extracted section if needed.
+  const globalPattern = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
+  const starts = [];
+  let gm;
+  while ((gm = globalPattern.exec(markdown)) !== null) {
+    starts.push(gm.index);
+    if (gm.index === globalPattern.lastIndex) globalPattern.lastIndex++;
   }
-  const nextMatch = afterHeader.match(nextHeaderPattern);
+  if (starts.length === 0) return null;
 
-  let endIdx;
-  if (nextMatch) {
-    endIdx = startIdx + headerLine.length + nextMatch.index;
-  } else {
-    endIdx = markdown.length;
+  const TOC_THRESHOLD = 1000;
+  let best = null;
+  // Prefer later matches (body > TOC). First section whose extraction is substantial wins.
+  for (let i = starts.length - 1; i >= 0; i--) {
+    const startIdx = starts[i];
+    const headerLine = markdown.substring(startIdx).split('\n')[0];
+    const headingMatch = headerLine.match(/^(#{1,6})/);
+    const headingLevel = headingMatch ? headingMatch[1].length : 0;
+
+    const afterHeader = markdown.substring(startIdx + headerLine.length);
+    let nextHeaderPattern;
+    if (headingLevel > 0) {
+      nextHeaderPattern = new RegExp(`^#{1,${headingLevel}}\\s+\\S`, 'm');
+    } else {
+      nextHeaderPattern = /^(?:\|\s*)?Item\s+\d+[A-Z]?[.:\s|]/im;
+    }
+    const nextMatch = afterHeader.match(nextHeaderPattern);
+    const endIdx = nextMatch ? startIdx + headerLine.length + nextMatch.index : markdown.length;
+    const section = markdown.substring(startIdx, endIdx).trim();
+
+    if (section.length >= TOC_THRESHOLD) return section;
+    if (!best || section.length > best.length) best = section;
   }
 
-  const section = markdown.substring(startIdx, endIdx).trim();
-
-  // Guard: very short sections are likely false header matches
-  if (section.length < 100) return null;
-
-  return section;
+  if (!best || best.length < 100) return null;
+  return best;
 }
 
 /**
