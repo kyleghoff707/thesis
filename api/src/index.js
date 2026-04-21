@@ -9,6 +9,7 @@ import { handleProxy } from './routes/proxy.js';
 import { handleClaude } from './routes/claude.js';
 import { handleStripeWebhook, handleStripe } from './routes/stripe.js';
 import { handlePipeline } from './routes/pipeline.js';
+import { handleAdmin } from './routes/admin.js';
 import { handleCron } from './cron/index.js';
 import { authenticate } from './middleware/auth.js';
 
@@ -88,6 +89,8 @@ export default {
           response = json({ error: 'Unauthorized' }, 401);
         } else if (path.startsWith('/api/pipeline/')) {
           response = await handlePipeline(request, env, path, user);
+        } else if (path.startsWith('/admin/')) {
+          response = await handleAdmin(request, env, path, user);
         } else if (path.startsWith('/user/')) {
           response = await handleUser(request, env, path, user);
         } else if (path.startsWith('/proxy/claude/')) {
