@@ -635,7 +635,7 @@ export default function FullStory({ getReport, updateReport }) {
             Stage 3: Full Story
           </span>
           {fullStoryData && isComplete && (
-            <ExportButtons ticker={ticker} stage="full-story" />
+            <ExportButtons ticker={ticker} stage="full-story" report={report} />
           )}
           {timestamp && (
             <span style={{ fontSize: 11, fontWeight: 400, color: C.textMuted }}>

@@ -18,6 +18,7 @@ All diagrams are drawn programmatically using fpdf2's drawing primitives —
 no external charting libraries needed.
 """
 
+import os
 import re
 import math
 from fpdf import FPDF

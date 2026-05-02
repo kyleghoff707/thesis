@@ -415,12 +415,13 @@ def _render_section_charts(pdf, data, section_key):
 # MAIN GENERATOR
 # =========================================================================
 
-def generate_pitch_deck(ticker):
+def generate_pitch_deck(ticker, base_dir=None):
     """Build the full visual Pitch Deck PDF."""
-    proj = os.path.join(os.path.dirname(__file__), '..', '..')
-    report_dir = os.path.join(proj, '.thes1s', 'reports', ticker)
+    if base_dir is None:
+        base_dir = os.path.join(os.path.dirname(__file__), '..', '..')
+    report_dir = os.path.join(base_dir, '.thes1s', 'reports', ticker)
 
-    data = ReportData(ticker, 'pitch-deck')
+    data = ReportData(ticker, 'pitch-deck', base_dir=base_dir)
     company_name = data.get_company_name()
     overall_verdict = data.get_overall_verdict()
 

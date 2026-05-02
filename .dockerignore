@@ -1,0 +1,8 @@
+**/__pycache__
+**/*.pyc
+**/.DS_Store
+.git
+.thes1s
+node_modules
+dist
+api/node_modules

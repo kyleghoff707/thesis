@@ -352,12 +352,13 @@ def _render_price_range(pdf, data):
 # MAIN GENERATOR
 # =========================================================================
 
-def generate_full_story(ticker):
+def generate_full_story(ticker, base_dir=None):
     """Build the Full Story PDF with checklists, debate, and evidence."""
-    proj = os.path.join(os.path.dirname(__file__), '..', '..')
-    report_dir = os.path.join(proj, '.thes1s', 'reports', ticker)
+    if base_dir is None:
+        base_dir = os.path.join(os.path.dirname(__file__), '..', '..')
+    report_dir = os.path.join(base_dir, '.thes1s', 'reports', ticker)
 
-    data = ReportData(ticker, 'full-story')
+    data = ReportData(ticker, 'full-story', base_dir=base_dir)
     company_name = data.get_company_name()
 
     # Full Story may not have a single overall verdict -- the debate IS the verdict

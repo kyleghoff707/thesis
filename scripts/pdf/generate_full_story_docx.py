@@ -255,10 +255,10 @@ def _render_debate(doc, debate_outputs, temp_charts):
                                     run.font.color.rgb = WHITE
 
 
-def generate_full_story_docx(ticker):
+def generate_full_story_docx(ticker, base_dir=None):
     """Generate Full Story Word document for the given ticker."""
 
-    data = ReportData(ticker, 'full-story')
+    data = ReportData(ticker, 'full-story', base_dir=base_dir)
     company_name = data.get_company_name()
 
     doc = create_thes1s_doc()

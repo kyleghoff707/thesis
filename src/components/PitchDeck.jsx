@@ -755,7 +755,7 @@ export default function PitchDeck({ getReport, updateReport }) {
             <span style={{ fontSize: 11, fontWeight: 600, color: C.red }}>Rejected</span>
           )}
           {pitchDeckData && isComplete && (
-            <ExportButtons ticker={report?.ticker} stage="pitch-deck" />
+            <ExportButtons ticker={report?.ticker} stage="pitch-deck" report={report} />
           )}
         </div>
       </div>

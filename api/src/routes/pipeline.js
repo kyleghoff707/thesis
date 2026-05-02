@@ -182,12 +182,16 @@ async function handleRun(request, env, user) {
       return json({ error: 'Failed to send message to Pitch Deck agent', detail: err.message }, 500);
     }
 
-    // Create pipeline run record
+    // Create pipeline run record. Persist the DataPacket so the export service
+    // can render charts after the run completes.
     const runId = crypto.randomUUID();
     await env.DB.prepare(
-      `INSERT INTO pipeline_runs (id, user_id, report_id, ticker, stage, status, session_id, started_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, 'running', ?, datetime('now'), datetime('now'))`
-    ).bind(runId, user.id, reportId || null, ticker.toUpperCase(), stage, sessionId).run();
+      `INSERT INTO pipeline_runs (id, user_id, report_id, ticker, stage, status, session_id, data_packet_json, started_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 'running', ?, ?, datetime('now'), datetime('now'))`
+    ).bind(
+      runId, user.id, reportId || null, ticker.toUpperCase(), stage, sessionId,
+      JSON.stringify(payload.dataPacket),
+    ).run();
 
     return json({ runId, status: 'running', ticker: ticker.toUpperCase(), stage }, 200);
   }
@@ -222,12 +226,16 @@ async function handleRun(request, env, user) {
     return json({ error: 'Failed to send message to agent', detail: err.message }, 500);
   }
 
-  // Create pipeline run record
+  // Create pipeline run record. Persist the DataPacket (when provided) so the
+  // export service can render charts after the One Pager completes.
   const runId = crypto.randomUUID();
   await env.DB.prepare(
-    `INSERT INTO pipeline_runs (id, user_id, report_id, ticker, stage, status, session_id, started_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, 'running', ?, datetime('now'), datetime('now'))`
-  ).bind(runId, user.id, reportId || null, ticker.toUpperCase(), stage, sessionId).run();
+    `INSERT INTO pipeline_runs (id, user_id, report_id, ticker, stage, status, session_id, data_packet_json, started_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, 'running', ?, ?, datetime('now'), datetime('now'))`
+  ).bind(
+    runId, user.id, reportId || null, ticker.toUpperCase(), stage, sessionId,
+    onePagerDataPacket ? JSON.stringify(onePagerDataPacket) : null,
+  ).run();
 
   return json({ runId, status: 'running', ticker: ticker.toUpperCase(), stage }, 200);
 }
@@ -389,33 +397,71 @@ async function handleEvents(env, user, runId) {
 // ─── GET /api/pipeline/export/:runId/:format ────────────────
 
 async function handleExport(env, user, reportId, stage, format) {
-  // Look up the most recent completed pipeline run for this report + stage
   const stageReverseMap = { 'one-pager': 'onePager', 'pitch-deck': 'pitchDeck', 'full-story': 'fullStory' };
   const pipelineStage = stageReverseMap[stage] || stage;
+  const exportStage = stage;
 
+  // Auth check + ticker lookup. report_stages has no user_id, so we authorize
+  // through reports.user_id and reuse this for both data sources.
+  const reportRow = await env.DB.prepare(
+    `SELECT id, ticker FROM reports WHERE id = ? AND user_id = ?`
+  ).bind(reportId, user.id).first();
+
+  if (!reportRow) return json({ error: 'Report not found' }, 404);
+
+  let reportData = null;
+  let dataPacket = null;
+  let ticker = reportRow.ticker;
+
+  // Source 1: pipeline_runs — fresh runs include the DataPacket so charts render.
   const run = await env.DB.prepare(
-    `SELECT ticker, stage, sections_json FROM pipeline_runs
+    `SELECT ticker, stage, sections_json, data_packet_json FROM pipeline_runs
      WHERE report_id = ? AND user_id = ? AND stage = ? AND status = 'completed'
      ORDER BY completed_at DESC LIMIT 1`
   ).bind(reportId, user.id, pipelineStage).first();
 
-  if (!run?.sections_json) return json({ error: 'No completed report found' }, 404);
+  if (run?.sections_json) {
+    let sections;
+    try { sections = JSON.parse(run.sections_json); } catch { return json({ error: 'Invalid pipeline_runs data' }, 500); }
 
-  const exportStage = stage;
+    if (run.data_packet_json) {
+      try { dataPacket = JSON.parse(run.data_packet_json); } catch { /* charts omitted */ }
+    }
 
-  // Build the report object the Python generators expect
-  let sections;
-  try { sections = JSON.parse(run.sections_json); } catch { return json({ error: 'Invalid report data' }, 500); }
+    ticker = run.ticker || ticker;
+    reportData = {
+      ticker,
+      companyName: dataPacket?.companyInfo?.name || sections[0]?.data?.name || ticker,
+      stage: run.stage,
+      generatedAt: new Date().toISOString(),
+      sections,
+      overallVerdict: sections.find(s => s.key === 'overall_verdict')?.verdict || 'N/A',
+      sectionKeys: sections.map(s => s.key),
+    };
+  } else {
+    // Source 2: report_stages — synced/injected reports (PD/FS backfill).
+    // The stored `data` field is already a full report object with sections,
+    // companyName, overallVerdict, sectionKeys, plus PD/FS-specific fields
+    // (synthesisNarrative, fgrDerivation, debateOutputs, etc.) that the
+    // Python generators consume directly.
+    const stageRow = await env.DB.prepare(
+      `SELECT data FROM report_stages WHERE report_id = ? AND stage = ?`
+    ).bind(reportId, pipelineStage).first();
 
-  const reportData = {
-    ticker: run.ticker,
-    companyName: sections[0]?.data?.name || run.ticker,
-    stage: run.stage,
-    generatedAt: new Date().toISOString(),
-    sections,
-    overallVerdict: sections.find(s => s.key === 'overall_verdict')?.verdict || 'N/A',
-    sectionKeys: sections.map(s => s.key),
-  };
+    if (!stageRow?.data) return json({ error: 'No completed report found' }, 404);
+
+    try {
+      reportData = JSON.parse(stageRow.data);
+    } catch {
+      return json({ error: 'Invalid report_stages data' }, 500);
+    }
+
+    ticker = reportData.ticker || ticker;
+    if (!reportData.ticker) reportData.ticker = ticker;
+    if (!reportData.companyName) reportData.companyName = ticker;
+    // dataPacket isn't stored alongside report_stages, so charts are omitted
+    // for backfilled exports — sections + narrative + verdicts still render.
+  }
 
   // Call export service
   if (!env.EXPORT_SERVICE_URL) return json({ error: 'Export service not configured' }, 503);
@@ -424,7 +470,7 @@ async function handleExport(env, user, reportId, stage, format) {
     const exportRes = await fetch(`${env.EXPORT_SERVICE_URL}/export/${exportStage}/${format}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ticker: run.ticker, report: reportData }),
+      body: JSON.stringify({ ticker, report: reportData, dataPacket: dataPacket || {} }),
     });
 
     if (!exportRes.ok) {
@@ -438,7 +484,7 @@ async function handleExport(env, user, reportId, stage, format) {
     return new Response(exportRes.body, {
       headers: {
         'Content-Type': mime,
-        'Content-Disposition': `attachment; filename="${run.ticker}-${exportStage}${ext}"`,
+        'Content-Disposition': `attachment; filename="${ticker}-${exportStage}${ext}"`,
       },
     });
   } catch (err) {
