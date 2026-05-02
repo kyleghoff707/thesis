@@ -1,0 +1,20 @@
+import { Inngest, EventSchemas } from 'inngest';
+
+// Define event types so TS knows the shape of event.data in functions
+type Events = {
+  'thes1s/onepager.start': {
+    data: {
+      runId: string;
+      ticker: string;
+      userId: string;
+    };
+  };
+  'thes1s/hello.world': {
+    data: { message: string };
+  };
+};
+
+export const inngest = new Inngest({
+  id: 'thes1s-agents',
+  schemas: new EventSchemas().fromRecord<Events>(),
+});

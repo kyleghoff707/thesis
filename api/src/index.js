@@ -9,6 +9,7 @@ import { handleProxy } from './routes/proxy.js';
 import { handleClaude } from './routes/claude.js';
 import { handleStripeWebhook, handleStripe } from './routes/stripe.js';
 import { handlePipeline } from './routes/pipeline.js';
+import { handlePipelineV3 } from './routes/pipeline-v3.js';
 import { handleAdmin } from './routes/admin.js';
 import { handleCron } from './cron/index.js';
 import { authenticate } from './middleware/auth.js';
@@ -82,11 +83,18 @@ export default {
       else if (path.startsWith('/data/')) {
         response = await handleData(request, env, path);
       }
+      // v3 pipeline callback (no auth — Fly POSTs here, validated via X-Callback-Secret)
+      else if (path === '/api/v3/pipeline/callback' && request.method === 'POST') {
+        response = await handlePipelineV3(request, env, path, null);
+      }
       // All other routes require authentication
       else {
         const user = await authenticate(request, env);
         if (!user) {
           response = json({ error: 'Unauthorized' }, 401);
+        } else if (path.startsWith('/api/v3/pipeline/')) {
+          const v3Response = await handlePipelineV3(request, env, path, user);
+          response = v3Response ?? json({ error: 'Not found' }, 404);
         } else if (path.startsWith('/api/pipeline/')) {
           response = await handlePipeline(request, env, path, user);
         } else if (path.startsWith('/admin/')) {

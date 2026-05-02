@@ -16,6 +16,7 @@
     "@anthropic-ai/sdk": "^0.52.0",
     "@mixmark-io/domino": "^2.2.0",
     "@xmldom/xmldom": "^0.9.0",
+    "inngest": "^4.2.6",
     "yahoo-finance2": "^3.13.2",
     "zod": "^3.25.0"
   }

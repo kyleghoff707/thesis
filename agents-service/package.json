@@ -1,0 +1,33 @@
+{
+  "name": "thes1s-agents",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "vitest run tests/integration",
+    "typecheck": "tsc --noEmit",
+    "inngest:dev": "npx inngest-cli@latest dev"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.40.0",
+    "fastify": "^5.0.0",
+    "inngest": "^3.30.0",
+    "langfuse": "^3.30.0",
+    "zod": "^3.23.0",
+    "zod-to-json-schema": "^3.25.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

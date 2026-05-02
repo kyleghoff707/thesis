@@ -238,3 +238,20 @@ CREATE TABLE IF NOT EXISTS managed_agents (
   prompt_hash TEXT NOT NULL UNIQUE,
   created_at TEXT DEFAULT (datetime('now'))
 );
+
+-- ═══ v3 pipeline runs (Inngest-orchestrated, parallel to pipeline_runs) ═════
+CREATE TABLE IF NOT EXISTS v3_runs (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  ticker TEXT NOT NULL,
+  pipeline_stage TEXT NOT NULL,           -- 'one-pager' | 'pitch-deck' | 'full-story'
+  status TEXT NOT NULL DEFAULT 'pending', -- 'pending' | 'running' | 'completed' | 'failed'
+  result_json TEXT,                       -- the agent output (full report) when completed
+  error_message TEXT,                     -- error string when failed
+  started_at TEXT NOT NULL DEFAULT (datetime('now')),
+  finished_at TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_v3_runs_user_ticker ON v3_runs(user_id, ticker, started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_v3_runs_status ON v3_runs(status);

@@ -404,6 +404,57 @@ Karpathy Wiki LLM pattern for tracking agent team behavior across pipeline runs.
 
 ---
 
+## v3 Pipeline (Inngest + Fly + Direct Anthropic SDK)
+
+**Status (2026-05-02):** One Pager backend live in v3. Frontend not wired yet —
+real users still hit v1 (Managed Agents). v1 and v3 run side-by-side via separate
+Worker route prefixes. Pitch Deck and Full Story v3 not yet built.
+
+**Architecture:**
+- **Worker (CF)**: Auth, D1/R2, DataPacket assembly. Fires Inngest events on `/api/v3/pipeline/onepager/start`, receives Fly callbacks on `/api/v3/pipeline/callback`.
+- **Inngest Cloud**: Event queue, durable retries, journaled step recovery. Production env synced to `https://thes1s-agents.fly.dev/api/inngest`.
+- **Fly.io `thes1s-agents`** (IAD region): TypeScript Fastify service hosting Inngest functions. Auto-stop when idle (zero idle cost). 2 machines for HA. Source in `agents-service/`.
+- **Anthropic SDK direct**: No agent framework. `tool_choice: { type: 'tool', name: 'emit_output' }` forces structured JSON via Zod-derived schemas. Prompt caching (`cache_control: { type: 'ephemeral' }`) on system prompt + DataPacket.
+- **Langfuse Cloud** (`thes1s-dev` project): Every Anthropic call traced with cost + tokens. Stable trace IDs via `event.id` so Inngest step replays don't duplicate traces.
+
+**Routes:**
+- `POST /api/v3/pipeline/onepager/start { ticker }` — auth required. Inserts `v3_runs` row, fires `thes1s/onepager.start` event, returns `{ runId, status: 'running' }` (HTTP 202).
+- `GET /api/v3/pipeline/status/:runId` — auth required. Reads `v3_runs` row, returns `{ runId, ticker, status, result, error, startedAt, finishedAt }`. Status: `pending | running | completed | failed`.
+- `POST /api/v3/pipeline/callback` — **public** (no session auth). Validates `X-Callback-Secret` header against `V3_CALLBACK_SECRET` Worker secret. Fly POSTs `{ runId, status: 'completed' | 'failed', result?, error? }` here.
+
+**D1 schema** (`api/schema.sql`): Table `v3_runs (id, user_id, ticker, pipeline_stage, status, result_json, error_message, started_at, finished_at)` with indexes on `(user_id, ticker, started_at DESC)` and `status`. Separate from v1's `pipeline_runs` so both pipelines coexist.
+
+**Inngest function structure** (`agents-service/src/inngest/functions/one-pager.ts`):
+1. `run-one-pager-agent` — Anthropic call (~90s for One Pager without web search)
+2. `validate-output` — Zod parse against `OnePagerOutputSchema`
+3. `post-callback` — POSTs result to Worker
+
+Function-level `retries: 3`, `timeouts: { finish: '15m' }`. `onFailure` handler always notifies the Worker so runs never get stuck "running" forever.
+
+**Cost protection (Task 23):** Anthropic 4xx errors are wrapped as `NonRetriableError` in `agents-service/src/lib/anthropic-client.ts`, so consistent failures (bad schema, malformed request) stop after attempt #1 instead of burning through `retries: 3`. Inngest v3 doesn't support per-step retry overrides — Fix 2 alone covers the cost-protection goal because all consistent-failure modes are 4xx.
+
+**Secrets:**
+- Fly (`thes1s-agents`): `ANTHROPIC_API_KEY`, `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_HOST`, `WORKER_CALLBACK_URL`, `WORKER_CALLBACK_SECRET`.
+- Worker (`thes1s-api`): `INNGEST_EVENT_KEY` (same value as Fly), `V3_CALLBACK_SECRET` (same value as Fly's `WORKER_CALLBACK_SECRET`).
+
+**Deploy commands:**
+- Fly service (run from project root, NOT from `agents-service/` — build context must include `agents-v2/` for prompts):
+  ```
+  fly deploy . --config agents-service/fly.toml
+  ```
+  After deploy, Inngest auto-syncs on the next event. Force a sync with `curl -X PUT https://thes1s-agents.fly.dev/api/inngest`.
+- Worker: `cd api && npx wrangler deploy` (unchanged).
+
+**Known limitations / deferred work:**
+1. **Web search disabled.** Anthropic's forced `tool_choice` makes the model emit_output on its first turn — it can't run `web_search` first. Re-enabling requires either a multi-turn agent loop in `anthropic-client.ts` or a separate retrieval step. Currently the One Pager runs from training data only.
+2. **Frontend not wired (Task 20 deferred).** v3 has no UI — runs trigger via curl from DevTools or scripts. The existing `OnePager.jsx`/`useGeneratePipeline` chain still drives v1.
+3. **No streaming progress.** v3's One Pager is one Anthropic call; UI would show a silent spinner for ~90s. Pitch Deck (10 agents, 5 waves, ~10 min) would be a 10-min silent spinner. Streaming progress is required before cutover — design options: (a) token streaming via `anthropic.messages.stream`, (b) Inngest step-event push to Worker, (c) both. **All 3 stages need this before they ship to users.**
+4. **v3 cutover (Task 24) blocked on items 1–3.**
+
+**See also:** `gstack/plans/agent-pipeline-migration-onepager-eng-plan-20260502.md` for the migration plan, including the Self-Review table mapping spec items → tasks.
+
+---
+
 ## Knowledge Base
 
 ```
