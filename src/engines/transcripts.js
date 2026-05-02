@@ -1,6 +1,7 @@
-// Earnings call transcript engine
-// Fetches from Alpha Vantage (2-key failover for 50 calls/day)
-// Caches in IndexedDB — transcripts are immutable once published
+// Earnings call transcript engine.
+// Production: R2 only (cron-synced server-side). AV keys are dev-only — see config.js.
+// Dev: tries R2, then falls back to direct Alpha Vantage (2-key failover, 50 calls/day).
+// Caches in IndexedDB — transcripts are immutable once published.
 
 import { ALPHA_VANTAGE_KEY, ALPHA_VANTAGE_KEY_2 } from './config.js';
 import { dataUrl } from './apiBase.js';

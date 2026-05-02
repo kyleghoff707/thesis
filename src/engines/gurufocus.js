@@ -129,26 +129,8 @@ export async function fetchGuruFocusData(ticker) {
       if (raw.error === 'no_data_extracted') return null;
       data = normalizeScrapeResponse(raw);
     } else {
-      // Tauri production: prefer API mode if key available
-      const apiKey = (import.meta.env.VITE_GURUFOCUS_KEY || '').trim();
-
-      if (apiKey) {
-        const resp = await fetch(`https://api.gurufocus.com/public/user/${apiKey}/stock/${encodeURIComponent(ticker.toUpperCase())}/summary`);
-        if (!resp.ok) return null;
-        const raw = await resp.json();
-        data = normalizeApiResponse(raw);
-      } else {
-        // Scrape mode in production — attempt direct fetch
-        const resp = await fetch(`https://www.gurufocus.com/stock/${encodeURIComponent(ticker.toUpperCase())}/summary`, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          },
-        });
-        if (!resp.ok) return null;
-        // In Tauri, we'd need to parse the HTML — but GuruFocus is JS-heavy
-        // so this will likely return empty. API mode is recommended for production.
-        return null;
-      }
+      // Production (web): no GuruFocus path. Add a Worker proxy if this is needed.
+      return null;
     }
 
     if (!hasUsefulData(data)) return null;
