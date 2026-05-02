@@ -307,14 +307,24 @@ export default function FullStory({ getReport, updateReport }) {
   // Saved deep dives from report envelope
   const savedDeepDives = report?.deepDives || {};
 
-  // Judge verdict — direct read from debateOutputs
-  const verdict = fullStoryData?.debateOutputs?.judge?.content?.overallVerdict;
+  // Judge verdict — read from inlined debate content. Newer agents emit overallVerdict as an
+  // object; older runs emit it as a bare string ("MIXED") with overallDirection/overallSummary
+  // as siblings. Normalize to the object shape downstream code expects.
+  const judgeContent = fullStoryData?.debate?.step4Judge?.content;
+  const rawVerdict = judgeContent?.overallVerdict;
+  const verdict = (rawVerdict && typeof rawVerdict === 'object')
+    ? rawVerdict
+    : (judgeContent && (rawVerdict || judgeContent.overallDirection || judgeContent.overallSummary || judgeContent.investmentImplication) ? {
+        direction: typeof rawVerdict === 'string' ? rawVerdict : (judgeContent.overallDirection || judgeContent.verdictDirection),
+        summary: judgeContent.overallSummary || judgeContent.verdictRationale || judgeContent.verdictDirectionRationale,
+        investmentImplication: judgeContent.investmentImplication,
+      } : null);
 
   // Company name fallback: report.companyName > fullStoryData.ticker > ''
   const companyName = report?.companyName || fullStoryData?.ticker || '';
 
-  // Timestamp uses completedAt (the API JSON field name)
-  const timestamp = fullStoryData?.completedAt;
+  // Timestamp: completedAt (legacy) or generatedAt (current agent output).
+  const timestamp = fullStoryData?.completedAt || fullStoryData?.generatedAt;
 
   // Completion state
   const isComplete = !progress || progress.state === 'COMPLETE';
@@ -822,9 +832,11 @@ export default function FullStory({ getReport, updateReport }) {
             const section = sectionMap[def.key];
             const qs = qualityMap[def.key];
 
-            // Promise Tracker — data comes from fullStoryData.promises, not sections array
+            // Promise Tracker — promises live in management_checklist section.data.promises
             if (def.key === 'promise_tracker') {
-              const promises = fullStoryData?.promises || [];
+              const promises = fullStoryData?.sections?.find(s => s.key === 'management_checklist')?.data?.promises
+                || fullStoryData?.promises
+                || [];
               if (!promises.length && !fullStoryData) return null;
               return (
                 <div key={def.key} id={'section-' + def.key}>
@@ -889,7 +901,7 @@ export default function FullStory({ getReport, updateReport }) {
                 <DebateRenderer
                   section={section}
                   sectionId={'section-' + def.key}
-                  debateOutputs={fullStoryData?.debateOutputs}
+                  debate={fullStoryData?.debate}
                   onCitationClick={handleCitationClick}
                 />
               );

@@ -11,25 +11,33 @@ import { renderTextWithCitations } from './CitationTooltip.jsx';
 
 const DEFAULT_TAB = 'bull';
 
-const DATA_KEYS = { bull: 'bull', bear: 'bear', rebuttal: 'bull_rebuttal', judge: 'judge' };
+// Maps tab keys to the agent's debate-step keys in fullStoryData.debate.
+const DATA_KEYS = { bull: 'step1Bull', bear: 'step2Bear', rebuttal: 'step3Rebuttal', judge: 'step4Judge' };
+
+// Badge ink — picks a contrasting text color that works in both themes.
+// scoreBgGreen/Yellow/Red are static saturated tones (don't shift between themes)
+// so #fff stays high-contrast on them in either palette.
+const BADGE_INK = '#ffffff';
 
 function getStrengthStyle(strength) {
   const map = {
-    strong: { bg: C.green, text: '#fff', label: 'STRONG' },
-    moderate: { bg: C.yellow, text: '#fff', label: 'MODERATE' },
-    weak: { bg: C.red, text: '#fff', label: 'WEAK' },
+    strong:   { bg: C.scoreBgGreen,  text: BADGE_INK, label: 'STRONG' },
+    moderate: { bg: C.scoreBgYellow, text: BADGE_INK, label: 'MODERATE' },
+    weak:     { bg: C.scoreBgRed,    text: BADGE_INK, label: 'WEAK' },
   };
   if (!strength) return { bg: C.badge, text: C.badgeText, label: '' };
-  return map[strength] || { bg: C.badge, text: C.badgeText, label: strength.toUpperCase() };
+  const key = String(strength).toLowerCase();
+  return map[key] || { bg: C.badge, text: C.badgeText, label: String(strength).toUpperCase() };
 }
 
 function getSeverityStyle(severity) {
   const map = {
-    thesis_killer: { bg: C.red, text: '#fff', label: 'THESIS KILLER' },
-    significant: { bg: C.yellow, text: '#fff', label: 'SIGNIFICANT' },
+    thesis_killer: { bg: C.scoreBgRed,    text: BADGE_INK, label: 'THESIS KILLER' },
+    significant:   { bg: C.scoreBgYellow, text: BADGE_INK, label: 'SIGNIFICANT' },
   };
   if (!severity) return { bg: C.badge, text: C.badgeText, label: '' };
-  return map[severity] || { bg: C.badge, text: C.badgeText, label: severity.toUpperCase() };
+  const key = String(severity).toLowerCase();
+  return map[key] || { bg: C.badge, text: C.badgeText, label: String(severity).toUpperCase().replace(/_/g, ' ') };
 }
 
 function getExchangeVerdictColor(verdict) {
@@ -82,6 +90,34 @@ function SeverityBadge({ severity }) {
   );
 }
 
+// ─── Tab Overview Callout ────────────────────────────────────
+// Consistent opener used by Bull/Bear/Rebuttal tabs so the eye registers the same
+// rhythm regardless of which side is showing. The colored left border carries the
+// stance signal; the body text is plain weight (no hero treatment).
+function OverviewCallout({ label, color, children }) {
+  if (!children) return null;
+  return (
+    <div style={{
+      borderLeft: '3px solid ' + color,
+      background: C.bg,
+      padding: '10px 14px',
+      borderRadius: '0 6px 6px 0',
+      marginBottom: 16,
+    }}>
+      <div style={{
+        fontSize: 10, fontWeight: 700, color,
+        textTransform: 'uppercase', letterSpacing: '0.06em',
+        marginBottom: 4,
+      }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 13, color: C.text, lineHeight: 1.65 }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 // ─── Chevron ─────────────────────────────────────────────────
 
 function Chevron({ expanded }) {
@@ -116,11 +152,9 @@ function BullContent({ data, onCitationClick }) {
 
   return (
     <div>
-      {content.overallThesis && (
-        <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 12 }}>
-          <ReportMarkdown content={content.overallThesis} />
-        </div>
-      )}
+      <OverviewCallout label="Bull Thesis" color={C.green}>
+        {content.overallThesis && <ReportMarkdown content={content.overallThesis} />}
+      </OverviewCallout>
       {(content.thesisPoints || []).map((point, idx) => (
         <div key={idx}>
           <div
@@ -138,7 +172,7 @@ function BullContent({ data, onCitationClick }) {
             }}
           >
             <span style={{ fontSize: 13, color: C.text, flex: 1 }}>
-              {point.point}
+              {point.point || point.title || point.claim}
             </span>
             <Chevron expanded={expanded.has(idx)} />
           </div>
@@ -175,49 +209,54 @@ function BearContent({ data, onCitationClick }) {
 
   return (
     <div>
-      {content.overallBearCase && (
-        <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 12 }}>
-          <ReportMarkdown content={content.overallBearCase} />
-        </div>
-      )}
-      {(content.inversions || []).map((inversion, idx) => (
-        <div key={idx}>
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => toggle(idx)}
-            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), toggle(idx))}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              cursor: 'pointer',
-              borderBottom: '1px solid ' + C.borderLight,
-              padding: '8px 0',
-            }}
-          >
-            <SeverityBadge severity={inversion.severity} />
-            <span style={{ fontSize: 13, color: C.text, flex: 1 }}>
-              {inversion.counterArgument}
-            </span>
-            <Chevron expanded={expanded.has(idx)} />
-          </div>
-          {expanded.has(idx) && (
-            <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.7, padding: '8px 0 4px 20px' }}>
-              {inversion.evidence}
-              {inversion.sources?.length > 0 && (
-                <div style={{ marginTop: 4 }}>
-                  {inversion.sources.map((src, si) => (
-                    <div key={si} style={{ fontSize: 11, color: C.textMuted }}>
-                      {typeof src === 'string' ? src : src.source || src.text || JSON.stringify(src)}
-                    </div>
-                  ))}
-                </div>
-              )}
+      <OverviewCallout label="Bear Inversion" color={C.red}>
+        {(content.overallBearCase || content.overallInversion) && (
+          <ReportMarkdown content={content.overallBearCase || content.overallInversion} />
+        )}
+      </OverviewCallout>
+      {(content.inversions || content.thesisInversions || []).map((inversion, idx) => {
+        const headerText = inversion.counterArgument || inversion.bullClaim || inversion.counterEvidence;
+        const bodyText = inversion.evidence || inversion.counterEvidence;
+        const sources = inversion.sources || inversion.citations;
+        return (
+          <div key={idx}>
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => toggle(idx)}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), toggle(idx))}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                cursor: 'pointer',
+                borderBottom: '1px solid ' + C.borderLight,
+                padding: '8px 0',
+              }}
+            >
+              <SeverityBadge severity={inversion.severity} />
+              <span style={{ fontSize: 13, color: C.text, flex: 1 }}>
+                {headerText}
+              </span>
+              <Chevron expanded={expanded.has(idx)} />
             </div>
-          )}
-        </div>
-      ))}
+            {expanded.has(idx) && (
+              <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.7, padding: '8px 0 4px 20px' }}>
+                {bodyText}
+                {Array.isArray(sources) && sources.length > 0 && (
+                  <div style={{ marginTop: 4 }}>
+                    {sources.map((src, si) => (
+                      <div key={si} style={{ fontSize: 11, color: C.textMuted }}>
+                        {typeof src === 'string' ? src : src.source || src.text || JSON.stringify(src)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -239,40 +278,57 @@ function RebuttalContent({ data, onCitationClick }) {
 
   return (
     <div>
-      {(content.rebuttals || []).map((rebuttal, idx) => (
-        <div key={idx}>
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => toggle(idx)}
-            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), toggle(idx))}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              cursor: 'pointer',
-              borderBottom: '1px solid ' + C.borderLight,
-              padding: '8px 0',
-            }}
-          >
-            <StrengthBadge strength={rebuttal.rebuttalStrength} />
-            <span style={{ fontSize: 13, color: C.text, flex: 1 }}>
-              {rebuttal.bearPoint}
-            </span>
-            {rebuttal.honest === false && (
-              <span style={{ fontSize: 11, color: C.red, fontWeight: 700 }}>
-                Point conceded
+      <OverviewCallout label="Rebuttal" color={C.accent}>
+        {content.overallRebuttal && <ReportMarkdown content={content.overallRebuttal} />}
+      </OverviewCallout>
+      {(content.rebuttals || []).map((rebuttal, idx) => {
+        const strength = rebuttal.rebuttalStrength || rebuttal.strength;
+        const headerText = rebuttal.bearPoint || rebuttal.bearInversion;
+        const bodyText = rebuttal.rebuttal || rebuttal.counterArgument;
+        const concession = rebuttal.concession;
+        // Honest concession indicator: legacy boolean OR a non-trivial concession string.
+        const conceded = rebuttal.honest === false || (typeof concession === 'string' && concession.trim().length > 0);
+        return (
+          <div key={idx}>
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => toggle(idx)}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), toggle(idx))}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                cursor: 'pointer',
+                borderBottom: '1px solid ' + C.borderLight,
+                padding: '8px 0',
+              }}
+            >
+              <StrengthBadge strength={strength} />
+              <span style={{ fontSize: 13, color: C.text, flex: 1 }}>
+                {headerText}
               </span>
-            )}
-            <Chevron expanded={expanded.has(idx)} />
-          </div>
-          {expanded.has(idx) && (
-            <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.7, padding: '8px 0 4px 20px' }}>
-              {rebuttal.rebuttal}
+              {conceded && (
+                <span style={{ fontSize: 11, color: C.yellow, fontWeight: 700 }}>
+                  Concession
+                </span>
+              )}
+              <Chevron expanded={expanded.has(idx)} />
             </div>
-          )}
-        </div>
-      ))}
+            {expanded.has(idx) && (
+              <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.7, padding: '8px 0 4px 20px' }}>
+                {bodyText}
+                {typeof concession === 'string' && concession.trim().length > 0 && (
+                  <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid ' + C.borderLight }}>
+                    <span style={{ fontWeight: 700, color: C.textMuted, fontSize: 12 }}>Concession: </span>
+                    {concession}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -280,12 +336,22 @@ function RebuttalContent({ data, onCitationClick }) {
 // ─── Exchange Row ────────────────────────────────────────────
 
 function ExchangeRow({ exchange, isExpanded, onToggle }) {
+  // Agent emits: bullClaim, bearInversion, bullRebuttal, judgeScore, severityFromBear, reasoning, pointNumber.
+  // Legacy shape used: bullStrength, bearStrength, verdict, topic, reasoning.
+  const verdictText = exchange.verdict || exchange.judgeScore;
+  // severityFromBear uses the severity scale (significant / thesis_killer), not the strength scale.
+  const bearSeverity = exchange.severityFromBear || exchange.bearSeverity;
+  const summary = exchange.bullClaim
+    ? exchange.bullClaim.slice(0, 140) + (exchange.bullClaim.length > 140 ? '…' : '')
+    : (exchange.topic || '');
+  const pointLabel = exchange.pointNumber != null ? `Point ${exchange.pointNumber}` : null;
   return (
     <div style={{
       border: '1px solid ' + C.borderLight,
       borderRadius: 6,
       marginBottom: 8,
-      padding: '8px 12px',
+      padding: '10px 12px',
+      background: C.bg,
     }}>
       <div
         role="button"
@@ -294,25 +360,38 @@ function ExchangeRow({ exchange, isExpanded, onToggle }) {
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onToggle())}
         style={{
           display: 'flex',
-          alignItems: 'center',
-          gap: 10,
+          alignItems: 'flex-start',
+          gap: 12,
           cursor: 'pointer',
         }}
       >
-        <StrengthBadge strength={exchange.bullStrength} />
-        <span style={{
-          flex: 1,
-          textAlign: 'center',
-          fontSize: 12,
-          fontWeight: 700,
-          color: getExchangeVerdictColor(exchange.verdict),
-        }}>
-          {exchange.verdict}
-        </span>
-        <StrengthBadge strength={exchange.bearStrength} />
-      </div>
-      <div style={{ fontSize: 12, color: C.textMuted, marginTop: 4 }}>
-        {exchange.topic}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {pointLabel && (
+            <div style={{
+              fontSize: 10, fontWeight: 700, color: C.textMuted,
+              textTransform: 'uppercase', letterSpacing: '0.06em',
+              marginBottom: 2,
+            }}>
+              {pointLabel}
+            </div>
+          )}
+          <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5 }}>
+            {summary}
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, paddingTop: pointLabel ? 14 : 0 }}>
+          <span style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: getExchangeVerdictColor(verdictText),
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+          }}>
+            {verdictText}
+          </span>
+          {bearSeverity && <SeverityBadge severity={bearSeverity} />}
+          <Chevron expanded={isExpanded} />
+        </div>
       </div>
       {isExpanded && (
         <div style={{
@@ -323,7 +402,30 @@ function ExchangeRow({ exchange, isExpanded, onToggle }) {
           paddingTop: 8,
           borderTop: '1px solid ' + C.borderLight,
         }}>
-          {exchange.reasoning}
+          {exchange.bullClaim && (
+            <div style={{ marginBottom: 6 }}>
+              <span style={{ fontWeight: 700, color: C.green, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Bull: </span>
+              {exchange.bullClaim}
+            </div>
+          )}
+          {exchange.bearInversion && (
+            <div style={{ marginBottom: 6 }}>
+              <span style={{ fontWeight: 700, color: C.red, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Bear: </span>
+              {exchange.bearInversion}
+            </div>
+          )}
+          {exchange.bullRebuttal && (
+            <div style={{ marginBottom: 6 }}>
+              <span style={{ fontWeight: 700, color: C.accent, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Rebuttal: </span>
+              {exchange.bullRebuttal}
+            </div>
+          )}
+          {exchange.reasoning && (
+            <div>
+              <span style={{ fontWeight: 700, color: C.textMuted, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Judge: </span>
+              {exchange.reasoning}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -345,7 +447,16 @@ function JudgeContent({ data, onCitationClick }) {
     });
   };
 
-  const overallVerdict = content.overallVerdict;
+  // overallVerdict may be an object ({direction, summary, investmentImplication}) or a bare string ("MIXED").
+  // When it's a string, fall back to sibling fields the agent emits at the judge top level.
+  const rawVerdict = content.overallVerdict;
+  const overallVerdict = (rawVerdict && typeof rawVerdict === 'object')
+    ? rawVerdict
+    : ((rawVerdict || content.overallDirection || content.overallSummary || content.investmentImplication) ? {
+        direction: typeof rawVerdict === 'string' ? rawVerdict : (content.overallDirection || content.verdictDirection),
+        summary: content.overallSummary || content.verdictRationale || content.verdictDirectionRationale,
+        investmentImplication: content.investmentImplication,
+      } : null);
 
   return (
     <div>
@@ -359,38 +470,48 @@ function JudgeContent({ data, onCitationClick }) {
         />
       ))}
 
-      {/* Overall Verdict */}
+      {/* Overall Verdict — verdict-shaped card after exchanges so the call feels earned */}
       {overallVerdict && (
         <div style={{
-          borderTop: '2px solid ' + C.border,
+          borderLeft: '3px solid ' + C.textSecondary,
+          background: C.bg,
+          padding: '12px 16px',
+          borderRadius: '0 6px 6px 0',
           marginTop: 16,
-          paddingTop: 16,
         }}>
           <div style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: C.textMuted,
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-            marginBottom: 8,
+            display: 'flex', alignItems: 'center', gap: 10,
+            marginBottom: 10,
           }}>
-            Overall Verdict
+            <div style={{
+              fontSize: 10, fontWeight: 700, color: C.textSecondary,
+              textTransform: 'uppercase', letterSpacing: '0.06em',
+            }}>
+              Overall Verdict
+            </div>
+            <DirectionBadge direction={overallVerdict.direction} />
           </div>
-          <DirectionBadge direction={overallVerdict.direction} />
           {overallVerdict.summary && (
-            <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.7, marginTop: 8 }}>
+            <div style={{ fontSize: 13, color: C.text, lineHeight: 1.65 }}>
               {overallVerdict.summary}
             </div>
           )}
           {overallVerdict.investmentImplication && (
-            <>
-              <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginTop: 12 }}>
+            <div style={{
+              marginTop: 12, paddingTop: 10,
+              borderTop: '1px solid ' + C.borderLight,
+            }}>
+              <div style={{
+                fontSize: 10, fontWeight: 700, color: C.accent,
+                textTransform: 'uppercase', letterSpacing: '0.06em',
+                marginBottom: 4,
+              }}>
                 Investment Implication
               </div>
-              <div style={{ fontSize: 13, color: C.text, lineHeight: 1.7, marginTop: 4 }}>
+              <div style={{ fontSize: 13, color: C.text, lineHeight: 1.65 }}>
                 {overallVerdict.investmentImplication}
               </div>
-            </>
+            </div>
           )}
         </div>
       )}
@@ -400,7 +521,7 @@ function JudgeContent({ data, onCitationClick }) {
 
 // ─── Main Component ──────────────────────────────────────────
 
-export default function DebateRenderer({ section, sectionId, debateOutputs, onCitationClick }) {
+export default function DebateRenderer({ section, sectionId, debate, onCitationClick }) {
   if (!section) return null;
 
   const [activeTab, setActiveTab] = useState(DEFAULT_TAB);
@@ -416,7 +537,7 @@ export default function DebateRenderer({ section, sectionId, debateOutputs, onCi
 
   const activeTabDef = DEBATE_TABS.find(t => t.key === activeTab);
   const activeTabColor = activeTabDef ? activeTabDef.color : C.textMuted;
-  const activeData = debateOutputs ? debateOutputs[DATA_KEYS[activeTab]] : null;
+  const activeData = debate ? debate[DATA_KEYS[activeTab]] : null;
 
   const hasCitations = section.citations && Array.isArray(section.citations) && section.citations.length > 0;
 
@@ -505,7 +626,7 @@ export default function DebateRenderer({ section, sectionId, debateOutputs, onCi
       )}
 
       {/* 4. Empty Debate State */}
-      {!debateOutputs ? (
+      {!debate ? (
         <div style={{ textAlign: 'center', padding: '32px 0' }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: C.textMuted, marginBottom: 4 }}>
             Debate Not Available
@@ -545,11 +666,8 @@ export default function DebateRenderer({ section, sectionId, debateOutputs, onCi
             ))}
           </div>
 
-          {/* 6. Active Content Area */}
-          <div style={{
-            borderLeft: '3px solid ' + activeTabColor,
-            paddingLeft: 16,
-          }}>
+          {/* 6. Active Content Area — stance is signaled by the inner OverviewCallout's colored border, no outer rule */}
+          <div>
             {!activeData ? (
               <div style={{ textAlign: 'center', padding: '32px 0', fontSize: 13, color: C.textMuted }}>
                 Data for this debate step is not available.

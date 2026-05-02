@@ -274,48 +274,54 @@ export default function SectionRenderer({ section, sectionId, onCitationClick, n
           }}>
             Broader Linked Insights
           </div>
-          {section.crossCuttingFindings.map((finding, fi) => (
-            <div key={fi} style={{
-              background: C.bg,
-              borderRadius: 6,
-              padding: '8px 12px',
-              marginBottom: 6,
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 8,
+          {section.crossCuttingFindings.map((finding, fi) => {
+            const isString = typeof finding === 'string';
+            const text = isString ? finding : (finding.finding || finding.text || '');
+            const severity = isString ? null : finding.severity;
+            const source = isString ? null : finding.source;
+            return (
+              <div key={fi} style={{
+                background: C.bg,
+                borderRadius: 6,
+                padding: '8px 12px',
+                marginBottom: 6,
               }}>
-                <span style={{
-                  display: 'inline-block',
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: getSeverityColor(finding.severity),
-                  marginTop: 5,
-                  flexShrink: 0,
-                }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{
-                    fontSize: 12,
-                    color: C.text,
-                    lineHeight: 1.5,
-                  }}>
-                    {finding.finding}
-                  </div>
-                  {finding.source && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 8,
+                }}>
+                  <span style={{
+                    display: 'inline-block',
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    background: getSeverityColor(severity),
+                    marginTop: 5,
+                    flexShrink: 0,
+                  }} />
+                  <div style={{ flex: 1 }}>
                     <div style={{
-                      fontSize: 11,
-                      color: C.textMuted,
-                      marginTop: 2,
+                      fontSize: 12,
+                      color: C.text,
+                      lineHeight: 1.5,
                     }}>
-                      {finding.source}
+                      {text}
                     </div>
-                  )}
+                    {source && (
+                      <div style={{
+                        fontSize: 11,
+                        color: C.textMuted,
+                        marginTop: 2,
+                      }}>
+                        {source}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

@@ -106,15 +106,44 @@ function resolveStagePath(ticker, stage) {
   return null;
 }
 
+// The agent's full-story.json stores debate.{step1Bull,step2Bear,step3Rebuttal,step4Judge}
+// as path strings (e.g. ".thes1s/reports/INTU/sections/debate-step-1-bull.json") —
+// the actual content lives in those sibling files. Inline them so D1 has real data.
+function inlineDebatePaths(raw, sourcePath) {
+  if (!raw?.debate || typeof raw.debate !== 'object') return raw;
+  const sourceDir = resolve(sourcePath, '..');
+  for (const key of ['step1Bull', 'step2Bear', 'step3Rebuttal', 'step4Judge']) {
+    const val = raw.debate[key];
+    if (typeof val !== 'string' || !val.endsWith('.json')) continue;
+    const candidates = [
+      resolve(sourceDir, val),                                    // resolved relative to JSON
+      resolve(PROJECT_ROOT, val),                                 // resolved relative to project root
+      resolve(sourceDir, 'sections', val.split('/').pop()),       // sibling sections/ dir
+    ];
+    let inlined = null;
+    for (const candidate of candidates) {
+      if (existsSync(candidate)) {
+        try {
+          inlined = JSON.parse(readFileSync(candidate, 'utf8'));
+          break;
+        } catch { /* try next */ }
+      }
+    }
+    if (inlined) raw.debate[key] = { content: inlined };
+  }
+  return raw;
+}
+
 function loadStage(ticker, stage) {
   const found = resolveStagePath(ticker, stage);
   if (!found) return null;
   try {
-    const raw = JSON.parse(readFileSync(found.path, 'utf8'));
+    let raw = JSON.parse(readFileSync(found.path, 'utf8'));
     if (!Array.isArray(raw?.sections) || raw.sections.length === 0) {
       console.warn(`  [${ticker}] ${stage}: ${found.source} has no sections — skipping`);
       return null;
     }
+    if (stage === 'fullStory') raw = inlineDebatePaths(raw, found.path);
     console.log(`  [${ticker}] ${stage}: loaded from ${found.source}`);
     return raw;
   } catch (err) {

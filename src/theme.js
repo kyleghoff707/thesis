@@ -42,7 +42,7 @@ export const C_DARK = {
   bgHover: '#334155',
   bgInput: '#1e293b',
   border: '#334155',
-  borderLight: '#1e293b',
+  borderLight: '#293548',
   text: '#f1f5f9',
   textSecondary: '#94a3b8',
   textMuted: '#64748b',

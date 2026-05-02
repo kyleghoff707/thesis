@@ -2,12 +2,20 @@ import { useState } from 'react';
 import { C } from '../theme';
 import PromiseStatusBadge from './PromiseStatusBadge.jsx';
 
+// Status values may be free-form ("KEPT (2 years early)", "BROKEN (89%, abandoned silently)").
+// Extract the leading enum word so counts and badges match.
+export function normalizePromiseStatus(raw) {
+  if (!raw) return 'PENDING';
+  const word = String(raw).trim().split(/[\s(]/)[0].toUpperCase();
+  return ['KEPT', 'PARTIAL', 'BROKEN', 'PENDING'].includes(word) ? word : 'PENDING';
+}
+
 // Compute proportional bar segments from promise status counts
 function computePromiseBarSegments(promises) {
   if (!promises || !promises.length) return [];
   const counts = { KEPT: 0, PARTIAL: 0, BROKEN: 0, PENDING: 0 };
   for (const p of promises) {
-    counts[p.status] = (counts[p.status] || 0) + 1;
+    counts[normalizePromiseStatus(p.status)]++;
   }
   const segments = [];
   if (counts.KEPT > 0) segments.push({ flex: counts.KEPT, color: C.green, label: 'kept' });
@@ -22,7 +30,7 @@ function formatPromiseScoreText(promises) {
   if (!promises || !promises.length) return '';
   const counts = { KEPT: 0, PARTIAL: 0, BROKEN: 0, PENDING: 0 };
   for (const p of promises) {
-    counts[p.status] = (counts[p.status] || 0) + 1;
+    counts[normalizePromiseStatus(p.status)]++;
   }
   return `${counts.KEPT} KEPT \u00B7 ${counts.PARTIAL} PARTIAL \u00B7 ${counts.BROKEN} BROKEN`;
 }
@@ -196,17 +204,19 @@ export default function PromiseTracker({ promises, sectionId }) {
               }}
             >
               <span style={{ fontSize: 12, fontWeight: 700, color: C.textMuted }}>
-                {promise.quarterYear}
+                {promise.quarterYear || promise.period}
               </span>
-              <span style={{
-                fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-                background: C.badge, color: C.badgeText,
-                padding: '2px 8px', borderRadius: 4,
-              }}>
-                {promise.category}
-              </span>
+              {promise.category && (
+                <span style={{
+                  fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+                  background: C.badge, color: C.badgeText,
+                  padding: '2px 8px', borderRadius: 4,
+                }}>
+                  {promise.category}
+                </span>
+              )}
               <span style={{ flex: 1 }} />
-              <PromiseStatusBadge status={promise.status} />
+              <PromiseStatusBadge status={normalizePromiseStatus(promise.status)} />
               <span style={{
                 fontSize: 11, color: C.textMuted,
                 transition: 'transform 0.2s',
@@ -216,28 +226,30 @@ export default function PromiseTracker({ promises, sectionId }) {
               </span>
             </div>
 
-            {/* Row 2: quote text */}
+            {/* Row 2: quote / promise text */}
             <div style={{
               fontSize: 13, fontWeight: 400, color: C.text,
               lineHeight: 1.7, fontStyle: 'italic',
               marginTop: 4,
             }}>
-              &ldquo;{promise.quote}&rdquo;
+              &ldquo;{promise.quote || promise.promise}&rdquo;
             </div>
 
-            {/* Expanded evidence */}
-            {isExpanded && promise.evidence && (
+            {/* Expanded evidence \u2014 show status detail when only enum text is available */}
+            {isExpanded && (promise.evidence || promise.status) && (
               <div style={{
                 paddingLeft: 20, paddingTop: 8,
                 fontSize: 13, color: C.textSecondary, lineHeight: 1.7,
               }}>
-                <div style={{ marginBottom: 4 }}>
-                  <span style={{ fontWeight: 700, color: C.textMuted, fontSize: 12 }}>What they said: </span>
-                  {promise.quote}
-                </div>
+                {(promise.quote || promise.promise) && (
+                  <div style={{ marginBottom: 4 }}>
+                    <span style={{ fontWeight: 700, color: C.textMuted, fontSize: 12 }}>What they said: </span>
+                    {promise.quote || promise.promise}
+                  </div>
+                )}
                 <div>
                   <span style={{ fontWeight: 700, color: C.textMuted, fontSize: 12 }}>What happened: </span>
-                  {promise.evidence}
+                  {promise.evidence || promise.status}
                 </div>
               </div>
             )}

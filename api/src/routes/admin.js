@@ -61,8 +61,11 @@ export async function handleAdmin(request, env, path, user) {
 
     const writtenStages = [];
     for (const [stage, raw] of stageEntries) {
+      // Persist the entire raw payload so renderer fields like synthesisNarrative,
+      // psrSummary, assumptions, sensitivityTables, debate, overallVerdict, etc.
+      // are preserved. Only `errors` and `generatedAt` get defaults applied.
       const payload = {
-        sections: raw.sections,
+        ...raw,
         errors: raw.errors || [],
         generatedAt: raw.generatedAt || new Date().toISOString(),
       };
