@@ -255,3 +255,34 @@ CREATE TABLE IF NOT EXISTS v3_runs (
 
 CREATE INDEX IF NOT EXISTS idx_v3_runs_user_ticker ON v3_runs(user_id, ticker, started_at DESC);
 CREATE INDEX IF NOT EXISTS idx_v3_runs_status ON v3_runs(status);
+
+-- ─── v3 streaming + partial-success additions (2026-05-02) ──────────────────
+
+-- Per-agent state (1 row per agent per run)
+CREATE TABLE IF NOT EXISTS v3_run_agents (
+  run_id        TEXT NOT NULL,
+  agent_id      TEXT NOT NULL,    -- 'one-pager' | 'business-analyst' | etc.
+  display_name  TEXT NOT NULL,
+  wave          INTEGER,           -- nullable (Pitch Deck only)
+  status        TEXT NOT NULL CHECK (status IN ('pending','running','completed','failed')),
+  started_at    TEXT,
+  finished_at   TEXT,
+  subprogress   TEXT,              -- JSON: { current, total, label }
+  last_message  TEXT,
+  tokens_input  INTEGER NOT NULL DEFAULT 0,
+  tokens_output INTEGER NOT NULL DEFAULT 0,
+  cached_tokens INTEGER NOT NULL DEFAULT 0,
+  error_message TEXT,
+  PRIMARY KEY (run_id, agent_id),
+  FOREIGN KEY (run_id) REFERENCES v3_runs(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_v3_run_agents_run ON v3_run_agents(run_id);
+
+-- Run-level streaming + partial-success columns
+ALTER TABLE v3_runs ADD COLUMN phase TEXT;
+ALTER TABLE v3_runs ADD COLUMN phase_label TEXT;
+ALTER TABLE v3_runs ADD COLUMN heartbeat_at TEXT;
+ALTER TABLE v3_runs ADD COLUMN tokens_input INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE v3_runs ADD COLUMN tokens_output INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE v3_runs ADD COLUMN cost_usd REAL NOT NULL DEFAULT 0;
+ALTER TABLE v3_runs ADD COLUMN failed_sections TEXT;
