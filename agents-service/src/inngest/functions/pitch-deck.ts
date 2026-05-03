@@ -42,15 +42,16 @@ export const pitchDeckFn = inngest.createFunction(
     const traceId = event.id ?? runId;
     const runPub = new ProgressPublisher(runId, '__run__');
 
-    // ─── Step: Fetch pre-assembled inputs from R2 (via Worker proxy) ─────
-    const { dataPacket, filing } = await step.run('fetch-inputs', async () => {
-      await runPub.setPhase('fetching-inputs', 'Loading DataPacket and filings');
-      const [dp, fc] = await Promise.all([
-        fetchAssembly<unknown>(runId, 'datapacket'),
-        fetchAssembly<FilingAssembly>(runId, 'filings'),
-      ]);
-      return { dataPacket: dp, filing: fc };
-    });
+    // Fetch pre-assembled inputs from R2 OUTSIDE step.run. The DataPacket +
+    // filings serialize to multiple MB and would blow past Inngest's per-request
+    // body size limit if persisted as step state. Inngest replays the function
+    // body between steps, so this fetch re-runs on each replay — that's fine
+    // because R2 GETs are idempotent and fast (~1–2s combined).
+    await runPub.setPhase('fetching-inputs', 'Loading DataPacket and filings');
+    const [dataPacket, filing] = await Promise.all([
+      fetchAssembly<unknown>(runId, 'datapacket'),
+      fetchAssembly<FilingAssembly>(runId, 'filings'),
+    ]);
 
     // ─── Wave 0 — PSR (parallel) ─────────────────────────────────────────
     await runPub.setPhase('wave-0-psr', 'Wave 0: Reading filings and transcripts');
