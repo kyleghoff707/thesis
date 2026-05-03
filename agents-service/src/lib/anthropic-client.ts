@@ -30,6 +30,17 @@ export interface CallAgentParams<T> {
   traceId?: string;
   /** Pass tools (e.g. web_search) — they coexist with the forced output tool. */
   tools?: Array<Record<string, unknown>>;
+  // ─── NEW optional params (Tasks 11–16) ────────────────────────────────────
+  /** Max research turns in Phase A before forcing emit. Default: 1 (current behavior). */
+  maxResearchTurns?: number;
+  /** Web search cap. If provided, web_search tool is added automatically. */
+  maxWebSearches?: number;
+  /** Per-agent cumulative cost ceiling (USD). If exceeded, force final emit. */
+  costCeilingUsd?: number;
+  /** ProgressPublisher for heartbeat + tokens publishing. */
+  progress?: import('./worker-progress.js').ProgressPublisher;
+  /** Per-agent token cumulative cap. Default: 200_000. */
+  maxTotalTokens?: number;
 }
 
 export async function callAgentWithStructuredOutput<T>(params: CallAgentParams<T>): Promise<T> {
