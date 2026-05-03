@@ -286,3 +286,8 @@ ALTER TABLE v3_runs ADD COLUMN tokens_input INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE v3_runs ADD COLUMN tokens_output INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE v3_runs ADD COLUMN cost_usd REAL NOT NULL DEFAULT 0;
 ALTER TABLE v3_runs ADD COLUMN failed_sections TEXT;
+
+-- ─── v3 link from reports → v3_runs (Brainstorm 1 Decision 8) ──────────────
+-- Added 2026-05-03 as part of PD/FS migration.
+ALTER TABLE reports ADD COLUMN v3_run_id TEXT REFERENCES v3_runs(id);
+CREATE INDEX IF NOT EXISTS idx_reports_v3_run_id ON reports(v3_run_id);
