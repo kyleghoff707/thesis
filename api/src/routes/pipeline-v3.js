@@ -4,6 +4,14 @@
 // POST /api/v3/pipeline/callback         — Fly service POSTs final result here (no auth, shared-secret instead)
 
 import { Inngest } from 'inngest';
+import { assembleDataPacket } from '../assembly/assembleDataPacket.js';
+import { assembleFilingContent } from '../assembly/assembleFilingContent.js';
+import {
+  writeAssembly,
+  dataPacketKey,
+  filingsKey,
+  parentReportKey,
+} from '../assembly/r2-cache.js';
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -23,6 +31,16 @@ export async function handlePipelineV3(request, env, path, user) {
   // POST /api/v3/pipeline/onepager/start
   if (request.method === 'POST' && path === '/api/v3/pipeline/onepager/start') {
     return handleOnePagerStart(request, env, user);
+  }
+
+  // POST /api/v3/pipeline/pitchdeck/start
+  if (request.method === 'POST' && path === '/api/v3/pipeline/pitchdeck/start') {
+    return handlePitchDeckStart(request, env, user);
+  }
+
+  // POST /api/v3/pipeline/fullstory/start
+  if (request.method === 'POST' && path === '/api/v3/pipeline/fullstory/start') {
+    return handleFullStoryStart(request, env, user);
   }
 
   // GET /api/v3/pipeline/status/:runId
@@ -58,20 +76,154 @@ async function handleOnePagerStart(request, env, user) {
   }
 
   const runId = crypto.randomUUID();
+  const reportId = crypto.randomUUID();
 
-  // Insert v3_runs row before sending the event so the status endpoint is queryable immediately.
-  await env.DB.prepare(
-    `INSERT INTO v3_runs (id, user_id, ticker, pipeline_stage, status) VALUES (?, ?, ?, 'one-pager', 'running')`
-  ).bind(runId, user.id, ticker).run();
+  // Mint reports + v3_runs rows; link them.
+  await env.DB.batch([
+    env.DB.prepare(
+      `INSERT INTO reports (id, user_id, ticker, current_stage, v3_run_id) VALUES (?, ?, ?, 1, ?)`
+    ).bind(reportId, user.id, ticker, runId),
+    env.DB.prepare(
+      `INSERT INTO v3_runs (id, user_id, ticker, pipeline_stage, status) VALUES (?, ?, ?, 'one-pager', 'running')`
+    ).bind(runId, user.id, ticker),
+  ]);
 
   // Send Inngest event
   const inngest = getInngestClient(env);
   await inngest.send({
     name: 'thes1s/onepager.start',
-    data: { runId, ticker, userId: String(user.id) },
+    data: { runId, ticker, userId: String(user.id), reportId },
   });
 
-  return json({ runId, status: 'running' }, 202);
+  return json({ runId, reportId, status: 'running' }, 202);
+}
+
+async function handlePitchDeckStart(request, env, user) {
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'Invalid JSON body' }, 400); }
+
+  const ticker = (body.ticker ?? '').toString().trim().toUpperCase();
+  if (!ticker || !/^[A-Z0-9.-]{1,10}$/.test(ticker)) {
+    return json({ error: 'Invalid ticker' }, 400);
+  }
+
+  const runId = crypto.randomUUID();
+  const reportId = crypto.randomUUID();
+
+  // 1. Mint reports + v3_runs rows; link them.
+  await env.DB.batch([
+    env.DB.prepare(
+      `INSERT INTO reports (id, user_id, ticker, current_stage, v3_run_id) VALUES (?, ?, ?, 1, ?)`
+    ).bind(reportId, user.id, ticker, runId),
+    env.DB.prepare(
+      `INSERT INTO v3_runs (id, user_id, ticker, pipeline_stage, status) VALUES (?, ?, ?, 'pitch-deck', 'running')`
+    ).bind(runId, user.id, ticker),
+  ]);
+
+  // 2. Pre-assemble DataPacket + filing content into R2.
+  // Sequential because filing assembly needs the DataPacket's filings array.
+  let packet;
+  try {
+    packet = await assembleDataPacket(ticker, env);
+    await writeAssembly(env, dataPacketKey(runId), packet);
+  } catch (err) {
+    await markFailed(env.DB, runId, `assemble datapacket: ${err.message}`);
+    return json({ error: `DataPacket assembly failed: ${err.message}` }, 500);
+  }
+
+  try {
+    const filings = await assembleFilingContent(ticker, packet, env);
+    await writeAssembly(env, filingsKey(runId), filings);
+  } catch (err) {
+    await markFailed(env.DB, runId, `assemble filings: ${err.message}`);
+    return json({ error: `Filing assembly failed: ${err.message}` }, 500);
+  }
+
+  // 3. Fire the Inngest event.
+  const inngest = getInngestClient(env);
+  await inngest.send({
+    name: 'thes1s/pitchdeck.start',
+    data: { runId, ticker, userId: String(user.id), reportId },
+  });
+
+  return json({ runId, reportId, status: 'running' }, 202);
+}
+
+async function markFailed(db, runId, error) {
+  await db.prepare(
+    `UPDATE v3_runs SET status = 'failed', error_message = ?, finished_at = datetime('now') WHERE id = ?`
+  ).bind(error, runId).run();
+}
+
+async function handleFullStoryStart(request, env, user) {
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'Invalid JSON body' }, 400); }
+
+  const ticker = (body.ticker ?? '').toString().trim().toUpperCase();
+  const parentReportId = (body.parentReportId ?? '').toString().trim();
+  if (!ticker || !/^[A-Z0-9.-]{1,10}$/.test(ticker)) {
+    return json({ error: 'Invalid ticker' }, 400);
+  }
+  if (!parentReportId) {
+    return json({ error: 'parentReportId required (must be a completed v3 Pitch Deck report)' }, 400);
+  }
+
+  // Validate the parent PD report.
+  const parent = await env.DB.prepare(
+    `SELECT id, ticker, v3_run_id, user_id FROM reports WHERE id = ? AND user_id = ?`
+  ).bind(parentReportId, user.id).first();
+  if (!parent) return json({ error: 'Parent report not found' }, 404);
+  if (parent.ticker !== ticker) return json({ error: 'Parent report ticker mismatch' }, 400);
+  if (!parent.v3_run_id) return json({ error: 'Parent report is not a v3 run (legacy v1 reports cannot drive FS yet)' }, 400);
+
+  const parentRun = await env.DB.prepare(
+    `SELECT status, result_json, pipeline_stage FROM v3_runs WHERE id = ?`
+  ).bind(parent.v3_run_id).first();
+  if (!parentRun || parentRun.status !== 'completed') {
+    return json({ error: 'Parent Pitch Deck run not completed' }, 400);
+  }
+  if (parentRun.pipeline_stage !== 'pitch-deck') {
+    return json({ error: 'Parent run is not a Pitch Deck' }, 400);
+  }
+
+  const runId = crypto.randomUUID();
+  const reportId = crypto.randomUUID();
+
+  await env.DB.batch([
+    env.DB.prepare(
+      `INSERT INTO reports (id, user_id, ticker, current_stage, v3_run_id) VALUES (?, ?, ?, 3, ?)`
+    ).bind(reportId, user.id, ticker, runId),
+    env.DB.prepare(
+      `INSERT INTO v3_runs (id, user_id, ticker, pipeline_stage, status) VALUES (?, ?, ?, 'full-story', 'running')`
+    ).bind(runId, user.id, ticker),
+  ]);
+
+  // Assemble DataPacket. FS does not need fresh filings — PSR was Wave 0 of PD,
+  // its findings are inherited via the parent PD report.
+  let packet;
+  try {
+    packet = await assembleDataPacket(ticker, env);
+    await writeAssembly(env, dataPacketKey(runId), packet);
+  } catch (err) {
+    await markFailed(env.DB, runId, `assemble datapacket: ${err.message}`);
+    return json({ error: `DataPacket assembly failed: ${err.message}` }, 500);
+  }
+
+  // Stash the parent PD report so FS Phase 1 agents can read it.
+  try {
+    await writeAssembly(env, parentReportKey(runId), JSON.parse(parentRun.result_json));
+  } catch (err) {
+    await markFailed(env.DB, runId, `stash parent report: ${err.message}`);
+    return json({ error: `Could not stash parent PD report: ${err.message}` }, 500);
+  }
+
+  const inngest = getInngestClient(env);
+  await inngest.send({
+    name: 'thes1s/fullstory.start',
+    data: { runId, ticker, userId: String(user.id), reportId, parentReportId },
+  });
+
+  return json({ runId, reportId, status: 'running' }, 202);
 }
 
 async function handleStatus(env, user, runId) {
