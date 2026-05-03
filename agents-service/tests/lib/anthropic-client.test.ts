@@ -131,24 +131,29 @@ describe('callAgentWithStructuredOutput', () => {
     expect(thrown).not.toBeInstanceOf(NonRetriableError);
   });
 
-  it('throws when no tool_use block is returned', async () => {
-    mockCreate.mockResolvedValueOnce({
-      content: [{ type: 'text', text: 'I refuse.' }],
-      stop_reason: 'end_turn',
-      usage: { input_tokens: 100, output_tokens: 5, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+  it('Phase A end_turn → Phase B forced emit returns valid output', async () => {
+    // Default maxResearchTurns is 1 (legacy single-call path). Phase A end_turn
+    // now leads to Phase B's forced emit instead of throwing.
+    mockCreate
+      .mockResolvedValueOnce({
+        content: [{ type: 'text', text: 'I refuse.' }],
+        stop_reason: 'end_turn',
+        usage: { input_tokens: 100, output_tokens: 5, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      })
+      .mockResolvedValueOnce({
+        content: [{ type: 'tool_use', name: 'emit_output', input: { verdict: 'no', reason: 'forced' } }],
+        stop_reason: 'tool_use',
+        usage: { input_tokens: 120, output_tokens: 20, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      });
+
+    const result = await callAgentWithStructuredOutput({
+      systemPrompt: 'You are a test agent.', userMessage: 'Test',
+      schema: TestSchema, schemaName: 'TestOutput', schemaDescription: 'Test',
+      model: 'claude-sonnet-4-6', traceName: 'test',
     });
 
-    await expect(
-      callAgentWithStructuredOutput({
-        systemPrompt: 'You are a test agent.',
-        userMessage: 'Test',
-        schema: TestSchema,
-        schemaName: 'TestOutput',
-        schemaDescription: 'Test',
-        model: 'claude-sonnet-4-6',
-        traceName: 'test',
-      })
-    ).rejects.toThrow(/Phase A exited without emit_output/i);
+    expect(result).toEqual({ verdict: 'no', reason: 'forced' });
+    expect(mockCreate).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -227,47 +232,84 @@ describe('callAgentWithStructuredOutput — Pattern 1 auto-loop', () => {
     expect(mockCreate).toHaveBeenCalledTimes(2);
   });
 
-  it('breaks Phase A loop when maxTotalTokens is exceeded', async () => {
-    // One huge over-budget response, no emit. Loop should break before turn 2.
-    mockCreate.mockResolvedValueOnce({
-      content: [{ type: 'server_tool_use', name: 'web_search', input: { query: 'q' } }],
-      stop_reason: 'tool_use',
-      usage: { input_tokens: 250_000, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
-    });
+  it('breaks Phase A loop when maxTotalTokens is exceeded → Phase B emits', async () => {
+    mockCreate
+      .mockResolvedValueOnce({
+        content: [{ type: 'server_tool_use', name: 'web_search', input: { query: 'q' } }],
+        stop_reason: 'tool_use',
+        usage: { input_tokens: 250_000, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      })
+      .mockResolvedValueOnce({
+        content: [{ type: 'tool_use', name: 'emit_output', input: { verdict: 'no', reason: 'budget exceeded' } }],
+        stop_reason: 'tool_use',
+        usage: { input_tokens: 100, output_tokens: 20, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      });
 
-    // Phase B not yet implemented (Task 14), so the loop break leads to the
-    // placeholder throw. This test is updated in Task 14 to expect Phase B's
-    // forced emit instead.
-    await expect(callAgentWithStructuredOutput({
+    const result = await callAgentWithStructuredOutput({
       systemPrompt: 's', userMessage: 'u',
       schema: TestSchema, schemaName: 'TestOutput', schemaDescription: 't',
       model: 'claude-sonnet-4-6', traceName: 'test',
       maxResearchTurns: 10, maxWebSearches: 5,
       maxTotalTokens: 200_000,
-    })).rejects.toThrow(/Phase A exited without emit_output/i);
-
-    // Crucially: only 1 call was made (loop broke before turn 2).
-    expect(mockCreate).toHaveBeenCalledTimes(1);
-  });
-
-  it('breaks Phase A loop when costCeilingUsd is exceeded', async () => {
-    // Sonnet pricing in costsForModel: $3/M input, $15/M output.
-    // 100k input + 5k output = 100000*3/1e6 + 5000*15/1e6 = 0.30 + 0.075 = $0.375
-    // costCeilingUsd: 0.20 → after turn 1, totalCostUsd ($0.375) >= 0.20 → break.
-    mockCreate.mockResolvedValueOnce({
-      content: [{ type: 'server_tool_use', name: 'web_search', input: { query: 'q' } }],
-      stop_reason: 'tool_use',
-      usage: { input_tokens: 100_000, output_tokens: 5000, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
     });
 
-    await expect(callAgentWithStructuredOutput({
+    expect(result.verdict).toBe('no');
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+  });
+
+  it('breaks Phase A loop when costCeilingUsd is exceeded → Phase B emits', async () => {
+    mockCreate
+      .mockResolvedValueOnce({
+        content: [{ type: 'server_tool_use', name: 'web_search', input: { query: 'q' } }],
+        stop_reason: 'tool_use',
+        usage: { input_tokens: 100_000, output_tokens: 5000, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      })
+      .mockResolvedValueOnce({
+        content: [{ type: 'tool_use', name: 'emit_output', input: { verdict: 'no', reason: 'cost ceiling' } }],
+        stop_reason: 'tool_use',
+        usage: { input_tokens: 100, output_tokens: 20, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      });
+
+    const result = await callAgentWithStructuredOutput({
       systemPrompt: 's', userMessage: 'u',
       schema: TestSchema, schemaName: 'TestOutput', schemaDescription: 't',
       model: 'claude-sonnet-4-6', traceName: 'test',
       maxResearchTurns: 10, maxWebSearches: 5,
       costCeilingUsd: 0.20,
-    })).rejects.toThrow(/Phase A exited without emit_output/i);
+    });
 
-    expect(mockCreate).toHaveBeenCalledTimes(1);
+    expect(result.verdict).toBe('no');
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+  });
+
+  it('falls back to forced emit when Phase A ends with end_turn (auto-loop path)', async () => {
+    mockCreate
+      .mockResolvedValueOnce({
+        content: [{ type: 'text', text: 'I have enough information to answer.' }],
+        stop_reason: 'end_turn',
+        usage: { input_tokens: 100, output_tokens: 30, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      })
+      .mockResolvedValueOnce({
+        content: [{ type: 'tool_use', name: 'emit_output', input: { verdict: 'yes', reason: 'synthesized' } }],
+        stop_reason: 'tool_use',
+        usage: { input_tokens: 150, output_tokens: 20, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      });
+
+    const result = await callAgentWithStructuredOutput({
+      systemPrompt: 's', userMessage: 'u',
+      schema: TestSchema, schemaName: 'TestOutput', schemaDescription: 't',
+      model: 'claude-sonnet-4-6', traceName: 'test',
+      maxResearchTurns: 5, maxWebSearches: 3,
+    });
+
+    expect(result).toEqual({ verdict: 'yes', reason: 'synthesized' });
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+
+    // Verify Phase B used forced tool_choice
+    const phaseBCall = mockCreate.mock.calls[1][0];
+    expect(phaseBCall.tool_choice).toEqual({ type: 'tool', name: 'emit_output' });
+    // Verify Phase B dropped web_search (only emit_output tool present)
+    expect(phaseBCall.tools.length).toBe(1);
+    expect(phaseBCall.tools[0].name).toBe('emit_output');
   });
 });

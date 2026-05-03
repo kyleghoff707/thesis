@@ -182,8 +182,61 @@ export async function callAgentWithStructuredOutput<T>(params: CallAgentParams<T
     if (response.stop_reason === 'end_turn') break;
   }
 
-  // Phase B will handle this in Task 14. Until then, fail loud.
-  throw new Error('Phase A exited without emit_output (Phase B not yet implemented — see Task 14)');
+  // ─── Phase B — forced synthesis ───────────────────────────────────────────
+  // Phase A exited without emitting (end_turn, token budget, or cost ceiling).
+  // Issue ONE more call with tool_choice forced to emit_output and web_search
+  // removed. This is the guarantee that the wrapper always returns a valid
+  // Zod-parsed object.
+  messages.push({
+    role: 'user',
+    content: 'Now synthesize the research above into the required JSON by calling the emit_output tool. Do not perform additional research.',
+  });
+
+  let phaseBResponse: Anthropic.Message;
+  try {
+    phaseBResponse = await anthropic.messages.create({
+      model: params.model,
+      max_tokens: params.maxTokens ?? 8000,
+      system,
+      messages,
+      tools: [outputTool as unknown as Anthropic.ToolUnion],   // emit_output ONLY (drop web_search)
+      tool_choice: { type: 'tool', name: 'emit_output' },
+    });
+  } catch (err) {
+    if (err instanceof Anthropic.APIError && err.status >= 400 && err.status < 500) {
+      throw new NonRetriableError(
+        `Anthropic Phase B ${err.status} (non-retryable): ${err.message}`,
+        { cause: err },
+      );
+    }
+    throw err;
+  }
+
+  generation.end({
+    output: { stopReason: phaseBResponse.stop_reason },
+    usage: {
+      input:  phaseBResponse.usage.input_tokens,
+      output: phaseBResponse.usage.output_tokens,
+      total:  phaseBResponse.usage.input_tokens + phaseBResponse.usage.output_tokens,
+    },
+    metadata: {
+      cacheCreationTokens: phaseBResponse.usage.cache_creation_input_tokens ?? 0,
+      cacheReadTokens:     phaseBResponse.usage.cache_read_input_tokens ?? 0,
+    },
+  });
+
+  const phaseBEmit = phaseBResponse.content.find(
+    (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use' && b.name === 'emit_output'
+  );
+  if (!phaseBEmit) {
+    throw new Error(`Phase B failed to emit (stop_reason=${phaseBResponse.stop_reason})`);
+  }
+
+  const parsed = params.schema.safeParse(phaseBEmit.input);
+  if (!parsed.success) {
+    throw new Error(`Phase B schema validation failed: ${parsed.error.message}`);
+  }
+  return parsed.data;
 }
 
 function costsForModel(model: string): { input: number; output: number } {
