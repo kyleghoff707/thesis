@@ -570,49 +570,53 @@ This is mandatory — do not skip web search silently. Either you searched and g
 
 ---
 
-## Output Format: ReportSectionSchema
+## Output Format: MultiSectionSchema
 
-Return a JSON array containing two objects — one per section. Return ONLY the JSON — first character must be `{` or `[`, last character must be `}` or `]`. No preamble ("Now I have all the data...", "Let me compile...", "I now have enough data..."), no postamble, no markdown fence wrap, no commentary outside the JSON. The orchestrator now logs format-violation events for any of these (Sprint 4 backfill found 11+ instances across Phase 1 sonnet agents) — they are no longer silently stripped.
+Emit your output via the `emit_output` tool as a `MultiSection` JSON object — that is, **a single top-level object with a `sections` array**, NOT a bare array of sections. The runner rejects bare arrays.
 
 ```json
-[
-  {
-    "key": "radar",
-    "title": "Radar",
-    "sectionNumber": 1,
-    "status": "pass | fail | review | pending",
-    "confidence": "HIGH | MEDIUM | LOW",
-    "verdict": "PASS | FAIL | WATCHLIST | null",
-    "verdictRationale": "1-2 sentences explaining the verdict",
-    "summary": "1-2 sentences for downstream agents",
-    "data": {},
-    "narrative": "Full Buffett-style prose analysis — multiple paragraphs, 500+ words",
-    "citations": [
-      { "id": 1, "ref": "dataPacket.field.path", "text": "the quoted value", "source": "DataPacket" }
-    ],
-    "tables": [],
-    "charts": [],
-    "redFlags": ["At least 2 red flags for Pitch Deck depth"],
-    "primarySourceInsights": [],
-    "crossCuttingFindings": [
-      {
-        "finding": "Description of what you discovered",
-        "relevantAgents": ["competitor-evaluator", "risk-analyst"],
-        "severity": "high | medium | low",
-        "source": "URL or description"
-      }
-    ],
-    "modelUsed": "model identifier",
-    "tokenCost": { "input": 0, "output": 0 }
-  },
-  {
-    "key": "simple_predictable",
-    "title": "Simple & Predictable",
-    "sectionNumber": 2,
-    "...": "same schema as above"
-  }
-]
+{
+  "sections": [
+    {
+      "key": "radar",
+      "title": "Radar",
+      "sectionNumber": 1,
+      "status": "pass | fail | review | pending",
+      "confidence": "HIGH | MEDIUM | LOW",
+      "verdict": "PASS | FAIL | WATCHLIST | null",
+      "verdictRationale": "1-2 sentences explaining the verdict",
+      "summary": "1-2 sentences for downstream agents",
+      "data": "{}",
+      "narrative": "Full Buffett-style prose analysis — multiple paragraphs, 500+ words",
+      "citations": [
+        { "id": 1, "ref": "dataPacket.field.path", "text": "the quoted value", "source": "DataPacket" }
+      ],
+      "tables": [],
+      "charts": [],
+      "redFlags": ["At least 2 red flags for Pitch Deck depth"],
+      "primarySourceInsights": [],
+      "crossCuttingFindings": [
+        {
+          "finding": "Description of what you discovered",
+          "relevantAgents": ["competitor-evaluator", "risk-analyst"],
+          "severity": "high | medium | low",
+          "source": "URL or description"
+        }
+      ]
+    },
+    {
+      "key": "simple_predictable",
+      "title": "Simple & Predictable",
+      "sectionNumber": 2,
+      "...": "same schema as above"
+    }
+  ]
+}
 ```
+
+**Server-supplied (do NOT emit):** `modelUsed`, `tokenCost` — the runner backfills these.
+
+**Output discipline.** Use the `emit_output` tool. Do NOT write the JSON inline as a chat message. Do NOT emit a bare top-level array (`[...]`) — the runner expects the `{ "sections": [...] }` wrapper.
 
 ### Field Requirements
 

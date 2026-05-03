@@ -46,7 +46,7 @@ export async function runManagementEvaluatorPitchDeck(input: ManagementEvaluator
       schemaName: 'ManagementEvaluatorSection',
       schemaDescription: 'Emit Section 6 (Management) as a ReportSection.',
       model: MODEL,
-      maxTokens: 8000,
+      maxTokens: 16000,
       traceName: 'pitchdeck.management-evaluator',
       traceMetadata: { ticker: input.ticker, runId: input.runId, wave: 2 },
       traceId: input.traceId,

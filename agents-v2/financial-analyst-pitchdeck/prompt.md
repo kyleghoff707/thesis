@@ -540,46 +540,50 @@ This is mandatory — do not skip web search silently. Either you searched and g
 
 ---
 
-## Output Format: ReportSectionSchema
+## Output Format: MultiSectionSchema
 
-Return a JSON array containing three objects — one per section. Return ONLY the JSON — first character must be `{` or `[`, last character must be `}` or `]`. No preamble ("Now I have all the data...", "Let me compile...", "I now have enough data..."), no postamble, no markdown fence wrap, no commentary outside the JSON. The orchestrator now logs format-violation events for any of these (Sprint 4 backfill found 11+ instances across Phase 1 sonnet agents) — they are no longer silently stripped.
+Emit your output via the `emit_output` tool as a `MultiSection` JSON object — **a single top-level object with a `sections` array of three section objects**, NOT a bare array. The runner rejects bare arrays.
 
 ```json
-[
-  {
-    "key": "fcf",
-    "title": "Free Cash Flow Generative",
-    "sectionNumber": 5,
-    "status": "pass | fail | review | pending",
-    "confidence": "HIGH | MEDIUM | LOW",
-    "verdict": "PASS | FAIL | WATCHLIST | null",
-    "verdictRationale": "1-2 sentences explaining the verdict",
-    "summary": "1-2 sentences for downstream agents",
-    "data": {},
-    "narrative": "Full prose analysis — 500+ words",
-    "citations": [],
-    "tables": [],
-    "charts": [],
-    "redFlags": ["At least 2 red flags"],
-    "primarySourceInsights": [],
-    "crossCuttingFindings": [],
-    "modelUsed": "model identifier",
-    "tokenCost": { "input": 0, "output": 0 }
-  },
-  {
-    "key": "roe_roic_debt",
-    "title": "ROE / ROIC / ROA & Debt",
-    "sectionNumber": 7,
-    "...": "same schema"
-  },
-  {
-    "key": "balance_sheet",
-    "title": "Strong Balance Sheet",
-    "sectionNumber": 8,
-    "...": "same schema"
-  }
-]
+{
+  "sections": [
+    {
+      "key": "fcf",
+      "title": "Free Cash Flow Generative",
+      "sectionNumber": 5,
+      "status": "pass | fail | review | pending",
+      "confidence": "HIGH | MEDIUM | LOW",
+      "verdict": "PASS | FAIL | WATCHLIST | null",
+      "verdictRationale": "1-2 sentences explaining the verdict",
+      "summary": "1-2 sentences for downstream agents",
+      "data": "{}",
+      "narrative": "Full prose analysis — 500+ words",
+      "citations": [],
+      "tables": [],
+      "charts": [],
+      "redFlags": ["At least 2 red flags"],
+      "primarySourceInsights": [],
+      "crossCuttingFindings": []
+    },
+    {
+      "key": "roe_roic_debt",
+      "title": "ROE / ROIC / ROA & Debt",
+      "sectionNumber": 7,
+      "...": "same schema"
+    },
+    {
+      "key": "balance_sheet",
+      "title": "Strong Balance Sheet",
+      "sectionNumber": 8,
+      "...": "same schema"
+    }
+  ]
+}
 ```
+
+**Server-supplied (do NOT emit):** `modelUsed`, `tokenCost` — the runner backfills these.
+
+**Output discipline.** Use the `emit_output` tool. Do NOT write the JSON inline as a chat message. Do NOT emit a bare top-level array (`[...]`) — the runner expects the `{ "sections": [...] }` wrapper.
 
 ### Section 5: FCF — Data Structure
 

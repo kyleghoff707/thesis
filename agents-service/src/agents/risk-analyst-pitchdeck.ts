@@ -46,7 +46,7 @@ export async function runRiskAnalystPitchDeck(input: RiskAnalystPDInput): Promis
       schemaName: 'RiskAnalystPDSection',
       schemaDescription: 'Emit Section 9 (PEST Risks) as a ReportSection.',
       model: MODEL,
-      maxTokens: 8000,
+      maxTokens: 16000,
       traceName: 'pitchdeck.risk-analyst',
       traceMetadata: { ticker: input.ticker, runId: input.runId, wave: 3 },
       traceId: input.traceId,

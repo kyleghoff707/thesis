@@ -46,7 +46,7 @@ export async function runCompetitorMarketPositionPitchDeck(input: CompetitorMPPD
       schemaName: 'CompetitorMarketPositionSection',
       schemaDescription: 'Emit Section 3 (Dominant Market Position) as a ReportSection.',
       model: MODEL,
-      maxTokens: 8000,
+      maxTokens: 16000,
       traceName: 'pitchdeck.competitor-market-position',
       traceMetadata: { ticker: input.ticker, runId: input.runId, wave: 1 },
       traceId: input.traceId,

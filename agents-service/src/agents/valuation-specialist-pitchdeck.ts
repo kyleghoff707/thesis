@@ -51,7 +51,7 @@ export async function runValuationSpecialistPitchDeck(input: ValuationSpecialist
       schemaName: 'ValuationSpecialistPDSection',
       schemaDescription: 'Emit Section 10 (Valuation) as a ReportSection.',
       model: MODEL,
-      maxTokens: 8000,
+      maxTokens: 16000,
       traceName: 'pitchdeck.valuation-specialist',
       traceMetadata: { ticker: input.ticker, runId: input.runId, wave: 3 },
       traceId: input.traceId,

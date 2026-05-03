@@ -47,7 +47,7 @@ export async function runSynthesisWriterPitchDeck(input: SynthesisWriterPDInput)
       schemaName: 'OverallVerdictSection',
       schemaDescription: 'Emit Section 11 (Overall Verdict) as a ReportSection.',
       model: MODEL,
-      maxTokens: 8000,
+      maxTokens: 16000,
       traceName: 'pitchdeck.synthesis-writer',
       traceMetadata: { ticker: input.ticker, runId: input.runId, wave: 4 },
       traceId: input.traceId,

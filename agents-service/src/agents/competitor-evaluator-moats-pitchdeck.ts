@@ -49,7 +49,7 @@ export async function runCompetitorMoatsPitchDeck(input: CompetitorMoatsPDInput)
       schemaName: 'CompetitorMoatsSection',
       schemaDescription: 'Emit Section 4 (Moats) as a ReportSection.',
       model: MODEL,
-      maxTokens: 8000,
+      maxTokens: 16000,
       traceName: 'pitchdeck.competitor-moats',
       traceMetadata: { ticker: input.ticker, runId: input.runId, wave: 2 },
       traceId: input.traceId,

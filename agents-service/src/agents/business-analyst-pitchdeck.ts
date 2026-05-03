@@ -47,7 +47,7 @@ export async function runBusinessAnalystPitchDeck(input: BusinessAnalystPDInput)
       schemaName: 'BusinessAnalystPDSections',
       schemaDescription: 'Emit Sections 1 and 2 as { sections: ReportSection[] }.',
       model: MODEL,
-      maxTokens: 12000,
+      maxTokens: 16000,
       traceName: 'pitchdeck.business-analyst',
       traceMetadata: { ticker: input.ticker, runId: input.runId, wave: 1 },
       traceId: input.traceId,
