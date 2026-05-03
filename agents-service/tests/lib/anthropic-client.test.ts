@@ -312,4 +312,69 @@ describe('callAgentWithStructuredOutput — Pattern 1 auto-loop', () => {
     expect(phaseBCall.tools.length).toBe(1);
     expect(phaseBCall.tools[0].name).toBe('emit_output');
   });
+
+  it('retries Phase B with the validation error appended on Zod failure', async () => {
+    // Phase A: ends with end_turn (no emit)
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'text', text: 'I have what I need.' }],
+      stop_reason: 'end_turn',
+      usage: { input_tokens: 100, output_tokens: 30, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+    });
+    // Phase B attempt 1: invalid (verdict not in enum)
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', name: 'emit_output', input: { verdict: 'maybe', reason: 'unsure' } }],
+      stop_reason: 'tool_use',
+      usage: { input_tokens: 150, output_tokens: 20, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+    });
+    // Phase B attempt 2: valid
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', name: 'emit_output', input: { verdict: 'yes', reason: 'corrected' } }],
+      stop_reason: 'tool_use',
+      usage: { input_tokens: 170, output_tokens: 20, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+    });
+
+    const result = await callAgentWithStructuredOutput({
+      systemPrompt: 's', userMessage: 'u',
+      schema: TestSchema, schemaName: 'TestOutput', schemaDescription: 't',
+      model: 'claude-sonnet-4-6', traceName: 'test',
+      maxResearchTurns: 5,
+    });
+
+    expect(result.verdict).toBe('yes');
+    expect(mockCreate).toHaveBeenCalledTimes(3);  // Phase A + Phase B attempts 1 + 2
+  });
+
+  it('throws NonRetriableError after 3 schema failures in Phase B', async () => {
+    const { NonRetriableError } = await import('inngest');
+
+    // Phase A: end_turn
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'text', text: 'done.' }],
+      stop_reason: 'end_turn',
+      usage: { input_tokens: 100, output_tokens: 30, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+    });
+    // 3 invalid Phase B attempts
+    for (let i = 0; i < 3; i++) {
+      mockCreate.mockResolvedValueOnce({
+        content: [{ type: 'tool_use', name: 'emit_output', input: { verdict: 'maybe' } }],
+        stop_reason: 'tool_use',
+        usage: { input_tokens: 100, output_tokens: 10, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      });
+    }
+
+    let thrown: unknown;
+    try {
+      await callAgentWithStructuredOutput({
+        systemPrompt: 's', userMessage: 'u',
+        schema: TestSchema, schemaName: 'TestOutput', schemaDescription: 't',
+        model: 'claude-sonnet-4-6', traceName: 'test',
+        maxResearchTurns: 5,
+      });
+    } catch (e) {
+      thrown = e;
+    }
+    expect(thrown).toBeInstanceOf(NonRetriableError);
+    expect((thrown as Error).message).toMatch(/Schema validation failed after 3 attempts/i);
+    expect(mockCreate).toHaveBeenCalledTimes(4);  // 1 Phase A + 3 Phase B attempts
+  });
 });
