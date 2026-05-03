@@ -226,4 +226,48 @@ describe('callAgentWithStructuredOutput — Pattern 1 auto-loop', () => {
     expect(result).toEqual({ verdict: 'yes', reason: 'paused then resumed' });
     expect(mockCreate).toHaveBeenCalledTimes(2);
   });
+
+  it('breaks Phase A loop when maxTotalTokens is exceeded', async () => {
+    // One huge over-budget response, no emit. Loop should break before turn 2.
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'server_tool_use', name: 'web_search', input: { query: 'q' } }],
+      stop_reason: 'tool_use',
+      usage: { input_tokens: 250_000, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+    });
+
+    // Phase B not yet implemented (Task 14), so the loop break leads to the
+    // placeholder throw. This test is updated in Task 14 to expect Phase B's
+    // forced emit instead.
+    await expect(callAgentWithStructuredOutput({
+      systemPrompt: 's', userMessage: 'u',
+      schema: TestSchema, schemaName: 'TestOutput', schemaDescription: 't',
+      model: 'claude-sonnet-4-6', traceName: 'test',
+      maxResearchTurns: 10, maxWebSearches: 5,
+      maxTotalTokens: 200_000,
+    })).rejects.toThrow(/Phase A exited without emit_output/i);
+
+    // Crucially: only 1 call was made (loop broke before turn 2).
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+  });
+
+  it('breaks Phase A loop when costCeilingUsd is exceeded', async () => {
+    // Sonnet pricing in costsForModel: $3/M input, $15/M output.
+    // 100k input + 5k output = 100000*3/1e6 + 5000*15/1e6 = 0.30 + 0.075 = $0.375
+    // costCeilingUsd: 0.20 → after turn 1, totalCostUsd ($0.375) >= 0.20 → break.
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'server_tool_use', name: 'web_search', input: { query: 'q' } }],
+      stop_reason: 'tool_use',
+      usage: { input_tokens: 100_000, output_tokens: 5000, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+    });
+
+    await expect(callAgentWithStructuredOutput({
+      systemPrompt: 's', userMessage: 'u',
+      schema: TestSchema, schemaName: 'TestOutput', schemaDescription: 't',
+      model: 'claude-sonnet-4-6', traceName: 'test',
+      maxResearchTurns: 10, maxWebSearches: 5,
+      costCeilingUsd: 0.20,
+    })).rejects.toThrow(/Phase A exited without emit_output/i);
+
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+  });
 });

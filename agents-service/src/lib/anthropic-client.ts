@@ -105,8 +105,24 @@ export async function callAgentWithStructuredOutput<T>(params: CallAgentParams<T
 
   const maxResearchTurns = params.maxResearchTurns ?? 1;
 
+  // Cumulative state across turns for circuit breakers.
+  let totalTokens = 0;
+  let totalCostUsd = 0;
+  const { input: costPerInputTok, output: costPerOutputTok } = costsForModel(params.model);
+  const maxTotalTokens = params.maxTotalTokens ?? 200_000;
+
   // ─── Phase A — research loop with tool_choice='auto' ───────────────────────
   for (let turn = 0; turn < maxResearchTurns; turn++) {
+    // Circuit breakers BEFORE each call.
+    if (totalTokens >= maxTotalTokens) {
+      console.warn(`[${params.traceName}] token budget exceeded (${totalTokens}/${maxTotalTokens}) — forcing emit`);
+      break;
+    }
+    if (params.costCeilingUsd !== undefined && totalCostUsd >= params.costCeilingUsd) {
+      console.warn(`[${params.traceName}] cost ceiling exceeded ($${totalCostUsd.toFixed(2)}/$${params.costCeilingUsd}) — forcing emit`);
+      break;
+    }
+
     let response: Anthropic.Message;
     try {
       response = await anthropic.messages.create({
@@ -128,6 +144,11 @@ export async function callAgentWithStructuredOutput<T>(params: CallAgentParams<T
     }
 
     messages.push({ role: 'assistant', content: response.content });
+
+    // Accumulate after each call — used by the breakers on the next iteration.
+    totalTokens  += response.usage.input_tokens + response.usage.output_tokens;
+    totalCostUsd += response.usage.input_tokens  * costPerInputTok
+                  + response.usage.output_tokens * costPerOutputTok;
 
     // Did the model emit_output?
     const emitBlock = response.content.find(
@@ -163,4 +184,13 @@ export async function callAgentWithStructuredOutput<T>(params: CallAgentParams<T
 
   // Phase B will handle this in Task 14. Until then, fail loud.
   throw new Error('Phase A exited without emit_output (Phase B not yet implemented — see Task 14)');
+}
+
+function costsForModel(model: string): { input: number; output: number } {
+  // USD per token. Keep updated when Anthropic prices change.
+  if (model.startsWith('claude-opus'))   return { input: 15 / 1e6, output: 75 / 1e6 };
+  if (model.startsWith('claude-sonnet')) return { input:  3 / 1e6, output: 15 / 1e6 };
+  if (model.startsWith('claude-haiku'))  return { input:  1 / 1e6, output:  5 / 1e6 };
+  // Unknown model — be conservative (treat as Opus pricing).
+  return { input: 15 / 1e6, output: 75 / 1e6 };
 }
