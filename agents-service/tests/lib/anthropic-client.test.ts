@@ -344,6 +344,48 @@ describe('callAgentWithStructuredOutput — Pattern 1 auto-loop', () => {
     expect(mockCreate).toHaveBeenCalledTimes(3);  // Phase A + Phase B attempts 1 + 2
   });
 
+  it('publishes heartbeat events while a long call is in flight', async () => {
+    vi.useFakeTimers();
+    const mockPub = {
+      heartbeat: vi.fn().mockResolvedValue(undefined),
+      setRunTokens: vi.fn().mockResolvedValue(undefined),
+      setStatus: vi.fn().mockResolvedValue(undefined),
+      setSubprogress: vi.fn().mockResolvedValue(undefined),
+      setPhase: vi.fn().mockResolvedValue(undefined),
+    };
+
+    // 25-second mock messages.create — long enough for 3 heartbeats at 8s.
+    mockCreate.mockImplementation(() => new Promise((resolve) => {
+      setTimeout(() => resolve({
+        content: [{ type: 'tool_use', name: 'emit_output', input: { verdict: 'yes', reason: 'ok' } }],
+        stop_reason: 'tool_use',
+        usage: { input_tokens: 100, output_tokens: 20, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      }), 25_000);
+    }));
+
+    const promise = callAgentWithStructuredOutput({
+      systemPrompt: 's', userMessage: 'u',
+      schema: TestSchema, schemaName: 'TestOutput', schemaDescription: 't',
+      model: 'claude-sonnet-4-6', traceName: 'test',
+      maxResearchTurns: 5,
+      progress: mockPub as any,
+    });
+
+    await vi.advanceTimersByTimeAsync(25_000);
+    await promise;
+
+    expect(mockPub.heartbeat).toHaveBeenCalled();
+    expect(mockPub.heartbeat.mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(mockPub.setRunTokens).toHaveBeenCalled();
+    // First setRunTokens call after the turn should report input=100, output=20
+    const call = mockPub.setRunTokens.mock.calls[0];
+    expect(call[0]).toBe(100);  // totalInputTokens
+    expect(call[1]).toBe(20);   // totalOutputTokens
+    expect(call[2]).toBeGreaterThan(0);  // costUsd
+
+    vi.useRealTimers();
+  });
+
   it('throws NonRetriableError after 3 schema failures in Phase B', async () => {
     const { NonRetriableError } = await import('inngest');
 
