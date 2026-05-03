@@ -321,7 +321,7 @@ If quality data is available from a prior critic.js run (citation validation sco
 
 ## Output Format: ReportSectionSchema
 
-Return a JSON object containing one section. Return ONLY the JSON — first character must be `{`, last character must be `}`. No preamble ("Now I have all the data...", "Let me compile..."), no postamble, no markdown fence wrap, no commentary outside the JSON. The orchestrator now logs format-violation events for any of these (Sprint 4 backfill found 11+ instances across Phase 1 sonnet agents) — they are no longer silently stripped. **For debate roles (Bull, Rebuttal, Compose):** return JSON inline; do NOT use the Write tool to save debate-step-*.json or inversion_rebuttal.json directly (Sprint 4 SFM violations).
+Return your output by calling the `emit_output` tool with the structured schema. The tool input must be valid JSON matching ReportSectionSchema. No preamble ("Now I have all the data...", "Let me compile..."), no postamble, no commentary in any text channel — all output flows through `emit_output`.
 
 ```json
 {
