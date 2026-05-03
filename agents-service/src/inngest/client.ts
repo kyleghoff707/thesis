@@ -7,6 +7,24 @@ type Events = {
       runId: string;
       ticker: string;
       userId: string;
+      reportId?: string;
+    };
+  };
+  'thes1s/pitchdeck.start': {
+    data: {
+      runId: string;
+      ticker: string;
+      userId: string;
+      reportId: string;
+    };
+  };
+  'thes1s/fullstory.start': {
+    data: {
+      runId: string;
+      ticker: string;
+      userId: string;
+      reportId: string;
+      parentReportId: string;
     };
   };
   'thes1s/hello.world': {
