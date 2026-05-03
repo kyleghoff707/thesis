@@ -87,6 +87,10 @@ export default {
       else if (path === '/api/v3/pipeline/callback' && request.method === 'POST') {
         response = await handlePipelineV3(request, env, path, null);
       }
+      // v3 pipeline R2 assembly fetch (no auth — Fly GETs here, validated via X-Callback-Secret)
+      else if (path.startsWith('/api/v3/pipeline/assembly/') && request.method === 'GET') {
+        response = await handlePipelineV3(request, env, path, null);
+      }
       // All other routes require authentication
       else {
         const user = await authenticate(request, env);

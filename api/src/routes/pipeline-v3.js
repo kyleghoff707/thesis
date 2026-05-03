@@ -59,7 +59,29 @@ export async function handlePipelineV3(request, env, path, user) {
     return handleProgress(request, env);
   }
 
+  // GET /api/v3/pipeline/assembly/:runId/:key.json — Fly fetches R2 artifacts here.
+  // Public route, secret-authenticated.
+  const assemblyMatch = path.match(/^\/api\/v3\/pipeline\/assembly\/([a-f0-9-]+)\/([a-z0-9-]+)\.json$/);
+  if (request.method === 'GET' && assemblyMatch) {
+    return handleAssemblyFetch(request, env, assemblyMatch[1], assemblyMatch[2]);
+  }
+
   return null; // route not handled — let the main router 404
+}
+
+async function handleAssemblyFetch(request, env, runId, key) {
+  const provided = request.headers.get('X-Callback-Secret');
+  if (!provided || provided !== env.V3_CALLBACK_SECRET) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+  const validKeys = ['datapacket', 'filings', 'parent-report'];
+  if (!validKeys.includes(key)) return new Response('Not Found', { status: 404 });
+
+  const r2Key = `assembly/${runId}/${key}.json`;
+  const obj = await env.TRANSCRIPTS.get(r2Key);
+  if (!obj) return new Response('Not Found', { status: 404 });
+
+  return new Response(obj.body, { headers: { 'Content-Type': 'application/json' } });
 }
 
 async function handleOnePagerStart(request, env, user) {
