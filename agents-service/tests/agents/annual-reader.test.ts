@@ -37,13 +37,15 @@ const STUB_OUTPUT = {
   primarySourceInsights: [],
   crossCuttingFindings: [],
   questions: [],
-  modelUsed: 'claude-sonnet-4-6',
-  tokenCost: { input: 5000, output: 800 },
 };
 
 describe('runAnnualReader', () => {
   it('loads the annual-reader prompt and includes filings + DataPacket in user message', async () => {
-    (callAgentWithStructuredOutput as any).mockResolvedValueOnce(STUB_OUTPUT);
+    (callAgentWithStructuredOutput as any).mockResolvedValueOnce({
+      data: STUB_OUTPUT,
+      modelUsed: 'claude-sonnet-4-6',
+      tokenCost: { input: 5000, output: 800 },
+    });
 
     const result = await runAnnualReader({
       ticker: 'AAPL',
@@ -52,7 +54,11 @@ describe('runAnnualReader', () => {
       filingContent: { '10-K-2025-09-04': { sections: { item1: '...' } } },
     });
 
-    expect(result).toEqual(STUB_OUTPUT);
+    expect(result).toEqual({
+      ...STUB_OUTPUT,
+      modelUsed: 'claude-sonnet-4-6',
+      tokenCost: { input: 5000, output: 800 },
+    });
     expect(loadAgentPrompt).toHaveBeenCalledWith('annual-reader');
 
     const args = (callAgentWithStructuredOutput as any).mock.calls[0][0];

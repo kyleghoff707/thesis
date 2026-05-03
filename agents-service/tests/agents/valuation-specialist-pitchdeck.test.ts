@@ -25,12 +25,15 @@ const SECTION = (n: number, title: string) => ({
   verdictRationale: '.', summary: '.', data: '{}', narrative: '.',
   citations: [], tables: [], charts: [],
   redFlags: ['x'], primarySourceInsights: [], crossCuttingFindings: [], questions: [],
-  modelUsed: 'claude-opus-4-7', tokenCost: { input: 1, output: 1 },
 });
 
 describe('runValuationSpecialistPitchDeck', () => {
   it('includes Section 3 + Section 4 in userMessage, uses Opus + web search', async () => {
-    (callAgentWithStructuredOutput as any).mockResolvedValueOnce(SECTION(10, 'Valuation'));
+    (callAgentWithStructuredOutput as any).mockResolvedValueOnce({
+      data: SECTION(10, 'Valuation'),
+      modelUsed: 'claude-opus-4-7',
+      tokenCost: { input: 100, output: 50 },
+    });
 
     const result = await runValuationSpecialistPitchDeck({
       ticker: 'AAPL', runId: 'r1',
@@ -42,6 +45,8 @@ describe('runValuationSpecialistPitchDeck', () => {
     });
 
     expect(result.sectionNumber).toBe(10);
+    expect(result.modelUsed).toBe('claude-opus-4-7');
+    expect(result.tokenCost).toEqual({ input: 100, output: 50 });
     expect(loadAgentPrompt).toHaveBeenCalledWith('valuation-specialist-pitchdeck');
 
     const args = (callAgentWithStructuredOutput as any).mock.calls[0][0];

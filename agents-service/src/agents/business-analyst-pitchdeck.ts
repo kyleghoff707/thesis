@@ -40,7 +40,7 @@ export async function runBusinessAnalystPitchDeck(input: BusinessAnalystPDInput)
   });
 
   try {
-    const output = await callAgentWithStructuredOutput({
+    const { data, modelUsed, tokenCost } = await callAgentWithStructuredOutput({
       systemPrompt,
       userMessage,
       schema: MultiSectionSchema,
@@ -57,7 +57,7 @@ export async function runBusinessAnalystPitchDeck(input: BusinessAnalystPDInput)
     });
 
     await progress.setStatus('completed', { finishedAt: new Date().toISOString() });
-    return output;
+    return { sections: data.sections.map((s) => ({ ...s, modelUsed, tokenCost })) };
   } catch (err) {
     await progress.setStatus('failed', {
       finishedAt: new Date().toISOString(),

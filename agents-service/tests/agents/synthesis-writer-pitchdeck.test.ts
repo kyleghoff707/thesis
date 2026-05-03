@@ -25,12 +25,15 @@ const SECTION = (n: number, title: string) => ({
   verdictRationale: '.', summary: '.', data: '{}', narrative: '.',
   citations: [], tables: [], charts: [],
   redFlags: ['x'], primarySourceInsights: [], crossCuttingFindings: [], questions: [],
-  modelUsed: 'claude-sonnet-4-6', tokenCost: { input: 1, output: 1 },
 });
 
 describe('runSynthesisWriterPitchDeck', () => {
   it('includes all 10 prior section headers in userMessage, returns Section 11', async () => {
-    (callAgentWithStructuredOutput as any).mockResolvedValueOnce(SECTION(11, 'Overall Verdict'));
+    (callAgentWithStructuredOutput as any).mockResolvedValueOnce({
+      data: SECTION(11, 'Overall Verdict'),
+      modelUsed: 'claude-sonnet-4-6',
+      tokenCost: { input: 100, output: 50 },
+    });
 
     const priorSections = [1,2,3,4,5,6,7,8,9,10].map(n => SECTION(n, `Section ${n}`));
 
@@ -41,6 +44,8 @@ describe('runSynthesisWriterPitchDeck', () => {
     });
 
     expect(result.sectionNumber).toBe(11);
+    expect(result.modelUsed).toBe('claude-sonnet-4-6');
+    expect(result.tokenCost).toEqual({ input: 100, output: 50 });
     expect(loadAgentPrompt).toHaveBeenCalledWith('synthesis-writer-pitchdeck');
 
     const args = (callAgentWithStructuredOutput as any).mock.calls[0][0];

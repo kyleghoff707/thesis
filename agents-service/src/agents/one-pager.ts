@@ -25,7 +25,7 @@ export async function runOnePagerAgent(input: OnePagerInput): Promise<OnePagerOu
   await progress.setPhase('researching', 'Researching the company');
 
   try {
-    const output = await callAgentWithStructuredOutput({
+    const { data, modelUsed, tokenCost } = await callAgentWithStructuredOutput({
       systemPrompt,
       userMessage,
       schema: OnePagerOutputSchema,
@@ -49,7 +49,10 @@ export async function runOnePagerAgent(input: OnePagerInput): Promise<OnePagerOu
     await progress.setStatus('completed', {
       finishedAt: new Date().toISOString(),
     });
-    return output;
+    return {
+      ...data,
+      sections: data.sections.map((s) => ({ ...s, modelUsed, tokenCost })),
+    };
   } catch (err) {
     await progress.setStatus('failed', {
       finishedAt: new Date().toISOString(),

@@ -25,13 +25,16 @@ const SECTION = (n: number, title: string) => ({
   verdictRationale: '.', summary: '.', data: '{}', narrative: '.',
   citations: [], tables: [], charts: [],
   redFlags: ['minor concern'], primarySourceInsights: [], crossCuttingFindings: [], questions: [],
-  modelUsed: 'claude-sonnet-4-6', tokenCost: { input: 1, output: 1 },
 });
 
 describe('runBusinessAnalystPitchDeck', () => {
   it('loads BA prompt, builds userMessage with PSR + findings, returns MultiSection', async () => {
     const stub = { sections: [SECTION(1, 'Radar'), SECTION(2, 'Simple & Predictable')] };
-    (callAgentWithStructuredOutput as any).mockResolvedValueOnce(stub);
+    (callAgentWithStructuredOutput as any).mockResolvedValueOnce({
+      data: stub,
+      modelUsed: 'claude-sonnet-4-6',
+      tokenCost: { input: 100, output: 50 },
+    });
 
     const result = await runBusinessAnalystPitchDeck({
       ticker: 'AAPL', runId: 'r1',
@@ -40,7 +43,11 @@ describe('runBusinessAnalystPitchDeck', () => {
       crossCuttingFindings: [{ finding: 'high debt', relevantAgents: [], severity: 'high', source: 'fa' }],
     });
 
-    expect(result).toEqual(stub);
+    expect(result.sections).toHaveLength(2);
+    for (const s of result.sections) {
+      expect(s.modelUsed).toBe('claude-sonnet-4-6');
+      expect(s.tokenCost).toEqual({ input: 100, output: 50 });
+    }
     expect(loadAgentPrompt).toHaveBeenCalledWith('business-analyst-pitchdeck');
 
     const args = (callAgentWithStructuredOutput as any).mock.calls[0][0];

@@ -6,6 +6,8 @@ import {
   type ReportSection,
 } from '../../src/agents/schemas/report-section.js';
 
+// MINIMAL_SECTION omits modelUsed + tokenCost — those are now optional and
+// runner-supplied. The schema must accept a section without them.
 const MINIMAL_SECTION: ReportSection = {
   key: 'fcf',
   title: 'Free Cash Flow',
@@ -24,8 +26,6 @@ const MINIMAL_SECTION: ReportSection = {
   primarySourceInsights: [],
   crossCuttingFindings: [],
   questions: [],
-  modelUsed: 'claude-sonnet-4-6',
-  tokenCost: { input: 1000, output: 500 },
 };
 
 describe('ReportSectionSchema', () => {

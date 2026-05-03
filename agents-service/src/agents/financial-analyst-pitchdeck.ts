@@ -40,7 +40,7 @@ export async function runFinancialAnalystPitchDeck(input: FinancialAnalystPDInpu
   });
 
   try {
-    const output = await callAgentWithStructuredOutput({
+    const { data, modelUsed, tokenCost } = await callAgentWithStructuredOutput({
       systemPrompt,
       userMessage,
       schema: MultiSectionSchema,
@@ -56,7 +56,7 @@ export async function runFinancialAnalystPitchDeck(input: FinancialAnalystPDInpu
       progress,
     });
     await progress.setStatus('completed', { finishedAt: new Date().toISOString() });
-    return output;
+    return { sections: data.sections.map((s) => ({ ...s, modelUsed, tokenCost })) };
   } catch (err) {
     await progress.setStatus('failed', {
       finishedAt: new Date().toISOString(),

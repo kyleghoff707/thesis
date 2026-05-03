@@ -267,11 +267,11 @@ Each section is a `ReportSection` object with these fields:
   "data": "{}",
   "narrative": "1-3 SHORT paragraphs — this is a one pager, not an essay. Conversational, cite specific numbers, OK to say 'I don't know yet.'",
   "citations": [ { "id": 1, "ref": "dataPacket.returnMetrics.roe.10yr_avg", "text": "22.4%", "source": "DataPacket" } ],
-  "redFlags": ["At least 1 concern, even on a PASS verdict — there is always something to watch."],
-  "modelUsed": "claude-sonnet-4-6",
-  "tokenCost": { "input": 0, "output": 0 }
+  "redFlags": ["At least 1 concern, even on a PASS verdict — there is always something to watch."]
 }
 ```
+
+(`modelUsed` and `tokenCost` are server-supplied — do not emit them.)
 
 Field-by-field:
 - `key`: the slug from the table above (lowercase, snake_case)
@@ -286,8 +286,8 @@ Field-by-field:
 - `narrative`: 1-3 SHORT paragraphs — this is a one pager, not an essay
 - `citations`: array of `{ id, ref, text, source }` — every quantitative claim must be cited
 - `redFlags`: array with **at least 1 item**, even on PASS — there is always something to watch
-- `modelUsed`: always `"claude-sonnet-4-6"` (the runner backfills the actual model if different)
-- `tokenCost`: emit `{ "input": 0, "output": 0 }` as a placeholder — the runner records the actual usage
+
+(`modelUsed` and `tokenCost` are server-supplied — do not emit them.)
 
 The `overall_verdict` section (sectionNumber 6) synthesizes all other sections into a final PASS/FAIL/WATCHLIST recommendation. Its `verdict` should match top-level `overallVerdict`.
 

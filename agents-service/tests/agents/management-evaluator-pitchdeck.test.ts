@@ -25,12 +25,15 @@ const SECTION = (n: number, title: string) => ({
   verdictRationale: '.', summary: '.', data: '{}', narrative: '.',
   citations: [], tables: [], charts: [],
   redFlags: ['x'], primarySourceInsights: [], crossCuttingFindings: [], questions: [],
-  modelUsed: 'claude-sonnet-4-6', tokenCost: { input: 1, output: 1 },
 });
 
 describe('runManagementEvaluatorPitchDeck', () => {
   it('returns Section 6 with web search ON', async () => {
-    (callAgentWithStructuredOutput as any).mockResolvedValueOnce(SECTION(6, 'Management'));
+    (callAgentWithStructuredOutput as any).mockResolvedValueOnce({
+      data: SECTION(6, 'Management'),
+      modelUsed: 'claude-sonnet-4-6',
+      tokenCost: { input: 100, output: 50 },
+    });
 
     const result = await runManagementEvaluatorPitchDeck({
       ticker: 'AAPL', runId: 'r1',
@@ -40,6 +43,8 @@ describe('runManagementEvaluatorPitchDeck', () => {
     });
 
     expect(result.sectionNumber).toBe(6);
+    expect(result.modelUsed).toBe('claude-sonnet-4-6');
+    expect(result.tokenCost).toEqual({ input: 100, output: 50 });
     expect(loadAgentPrompt).toHaveBeenCalledWith('management-evaluator-pitchdeck');
 
     const args = (callAgentWithStructuredOutput as any).mock.calls[0][0];

@@ -37,13 +37,15 @@ const STUB_OUTPUT = {
   primarySourceInsights: [],
   crossCuttingFindings: [],
   questions: [],
-  modelUsed: 'claude-opus-4-7',
-  tokenCost: { input: 8000, output: 1200 },
 };
 
 describe('runQuarterlyReader', () => {
   it('loads the quarterly-reader prompt and includes 10-Qs + transcripts in user message', async () => {
-    (callAgentWithStructuredOutput as any).mockResolvedValueOnce(STUB_OUTPUT);
+    (callAgentWithStructuredOutput as any).mockResolvedValueOnce({
+      data: STUB_OUTPUT,
+      modelUsed: 'claude-opus-4-7',
+      tokenCost: { input: 8000, output: 1200 },
+    });
 
     const result = await runQuarterlyReader({
       ticker: 'AAPL',
@@ -53,7 +55,11 @@ describe('runQuarterlyReader', () => {
       transcriptContent: { 'transcript-Q4-2025': 'Operator: ...' },
     });
 
-    expect(result).toEqual(STUB_OUTPUT);
+    expect(result).toEqual({
+      ...STUB_OUTPUT,
+      modelUsed: 'claude-opus-4-7',
+      tokenCost: { input: 8000, output: 1200 },
+    });
     expect(loadAgentPrompt).toHaveBeenCalledWith('quarterly-reader');
 
     const args = (callAgentWithStructuredOutput as any).mock.calls[0][0];

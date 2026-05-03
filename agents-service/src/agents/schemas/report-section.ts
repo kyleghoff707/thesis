@@ -46,8 +46,8 @@ export const ReportSectionSchema = z.object({
   primarySourceInsights: z.array(z.string()).optional().default([]),
   crossCuttingFindings: z.array(CrossCuttingFindingSchema).optional().default([]),
   questions: z.array(z.string()).optional().default([]),
-  modelUsed: z.string(),
-  tokenCost: z.object({ input: z.number(), output: z.number() }),
+  modelUsed: z.string().optional(),
+  tokenCost: z.object({ input: z.number(), output: z.number() }).optional(),
 });
 
 export type ReportSection = z.infer<typeof ReportSectionSchema>;

@@ -43,7 +43,15 @@ export interface CallAgentParams<T> {
   maxTotalTokens?: number;
 }
 
-export async function callAgentWithStructuredOutput<T>(params: CallAgentParams<T>): Promise<T> {
+export interface CallAgentResult<T> {
+  data: T;
+  modelUsed: string;
+  tokenCost: { input: number; output: number };
+}
+
+export async function callAgentWithStructuredOutput<T>(
+  params: CallAgentParams<T>,
+): Promise<CallAgentResult<T>> {
   const anthropic = getClient();
   const langfuse = getLangfuse();
 
@@ -195,7 +203,11 @@ export async function callAgentWithStructuredOutput<T>(params: CallAgentParams<T
         });
         const parsed = params.schema.safeParse(emitBlock.input);
         if (!parsed.success) throw new Error(`Schema validation failed: ${parsed.error.message}`);
-        return parsed.data;
+        return {
+          data: parsed.data,
+          modelUsed: params.model,
+          tokenCost: { input: totalInputTokens, output: totalOutputTokens },
+        };
       }
 
       // Loop continues — server tools auto-feed results, no client tool execution needed.
@@ -278,7 +290,11 @@ export async function callAgentWithStructuredOutput<T>(params: CallAgentParams<T
             cacheReadTokens:     phaseBResponse.usage.cache_read_input_tokens ?? 0,
           },
         });
-        return parsed.data;
+        return {
+          data: parsed.data,
+          modelUsed: params.model,
+          tokenCost: { input: totalInputTokens, output: totalOutputTokens },
+        };
       }
 
       lastZodError = parsed.error.message;

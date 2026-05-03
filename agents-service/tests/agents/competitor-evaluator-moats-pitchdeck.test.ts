@@ -25,12 +25,15 @@ const SECTION = (n: number, title: string) => ({
   verdictRationale: '.', summary: '.', data: '{}', narrative: '.',
   citations: [], tables: [], charts: [],
   redFlags: ['x'], primarySourceInsights: [], crossCuttingFindings: [], questions: [],
-  modelUsed: 'claude-sonnet-4-6', tokenCost: { input: 1, output: 1 },
 });
 
 describe('runCompetitorMoatsPitchDeck', () => {
   it('loads moats prompt, includes Section 3 in userMessage, returns ReportSection', async () => {
-    (callAgentWithStructuredOutput as any).mockResolvedValueOnce(SECTION(4, 'Moats'));
+    (callAgentWithStructuredOutput as any).mockResolvedValueOnce({
+      data: SECTION(4, 'Moats'),
+      modelUsed: 'claude-sonnet-4-6',
+      tokenCost: { input: 100, output: 50 },
+    });
 
     const result = await runCompetitorMoatsPitchDeck({
       ticker: 'AAPL', runId: 'r1',
@@ -41,6 +44,8 @@ describe('runCompetitorMoatsPitchDeck', () => {
     });
 
     expect(result.sectionNumber).toBe(4);
+    expect(result.modelUsed).toBe('claude-sonnet-4-6');
+    expect(result.tokenCost).toEqual({ input: 100, output: 50 });
     expect(loadAgentPrompt).toHaveBeenCalledWith('competitor-evaluator-moats-pitchdeck');
 
     const args = (callAgentWithStructuredOutput as any).mock.calls[0][0];

@@ -40,7 +40,7 @@ export async function runSynthesisWriterPitchDeck(input: SynthesisWriterPDInput)
   });
 
   try {
-    const output = await callAgentWithStructuredOutput({
+    const { data, modelUsed, tokenCost } = await callAgentWithStructuredOutput({
       systemPrompt,
       userMessage,
       schema: ReportSectionSchema,
@@ -55,7 +55,7 @@ export async function runSynthesisWriterPitchDeck(input: SynthesisWriterPDInput)
       progress,
     });
     await progress.setStatus('completed', { finishedAt: new Date().toISOString() });
-    return output;
+    return { ...data, modelUsed, tokenCost };
   } catch (err) {
     await progress.setStatus('failed', {
       finishedAt: new Date().toISOString(),

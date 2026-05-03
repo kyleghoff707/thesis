@@ -25,12 +25,15 @@ const SECTION = (n: number, title: string) => ({
   verdictRationale: '.', summary: '.', data: '{}', narrative: '.',
   citations: [], tables: [], charts: [],
   redFlags: ['watch for new entrants'], primarySourceInsights: [], crossCuttingFindings: [], questions: [],
-  modelUsed: 'claude-sonnet-4-6', tokenCost: { input: 1, output: 1 },
 });
 
 describe('runCompetitorMarketPositionPitchDeck', () => {
   it('loads CMP prompt, requests web search, returns ReportSection', async () => {
-    (callAgentWithStructuredOutput as any).mockResolvedValueOnce(SECTION(3, 'Dominant Market Position'));
+    (callAgentWithStructuredOutput as any).mockResolvedValueOnce({
+      data: SECTION(3, 'Dominant Market Position'),
+      modelUsed: 'claude-sonnet-4-6',
+      tokenCost: { input: 100, output: 50 },
+    });
 
     const result = await runCompetitorMarketPositionPitchDeck({
       ticker: 'AAPL', runId: 'r1',
@@ -40,6 +43,8 @@ describe('runCompetitorMarketPositionPitchDeck', () => {
     });
 
     expect(result.sectionNumber).toBe(3);
+    expect(result.modelUsed).toBe('claude-sonnet-4-6');
+    expect(result.tokenCost).toEqual({ input: 100, output: 50 });
     expect(loadAgentPrompt).toHaveBeenCalledWith('competitor-evaluator-market-position-pitchdeck');
 
     const args = (callAgentWithStructuredOutput as any).mock.calls[0][0];

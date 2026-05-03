@@ -84,7 +84,9 @@ describe('callAgentWithStructuredOutput', () => {
       traceName: 'test',
     });
 
-    expect(result).toEqual({ verdict: 'yes', reason: 'good' });
+    expect(result.data).toEqual({ verdict: 'yes', reason: 'good' });
+    expect(result.modelUsed).toBe('claude-sonnet-4-6');
+    expect(result.tokenCost).toEqual({ input: 100, output: 20 });
   });
 
   it('throws NonRetriableError when Anthropic returns 4xx (non-retryable)', async () => {
@@ -152,7 +154,9 @@ describe('callAgentWithStructuredOutput', () => {
       model: 'claude-sonnet-4-6', traceName: 'test',
     });
 
-    expect(result).toEqual({ verdict: 'no', reason: 'forced' });
+    expect(result.data).toEqual({ verdict: 'no', reason: 'forced' });
+    expect(result.modelUsed).toBe('claude-sonnet-4-6');
+    expect(result.tokenCost).toEqual({ input: 220, output: 25 });
     expect(mockCreate).toHaveBeenCalledTimes(2);
   });
 });
@@ -174,7 +178,9 @@ describe('callAgentWithStructuredOutput — Pattern 1 auto-loop', () => {
       maxResearchTurns: 5,
     });
 
-    expect(result).toEqual({ verdict: 'yes', reason: 'good' });
+    expect(result.data).toEqual({ verdict: 'yes', reason: 'good' });
+    expect(result.modelUsed).toBe('claude-sonnet-4-6');
+    expect(result.tokenCost).toEqual({ input: 100, output: 20 });
     expect(mockCreate).toHaveBeenCalledOnce();
   });
 
@@ -204,7 +210,9 @@ describe('callAgentWithStructuredOutput — Pattern 1 auto-loop', () => {
       maxResearchTurns: 5, maxWebSearches: 3,
     });
 
-    expect(result).toEqual({ verdict: 'yes', reason: 'AAPL strong' });
+    expect(result.data).toEqual({ verdict: 'yes', reason: 'AAPL strong' });
+    expect(result.modelUsed).toBe('claude-sonnet-4-6');
+    expect(result.tokenCost).toEqual({ input: 450, output: 80 });
     expect(mockCreate).toHaveBeenCalledTimes(2);
   });
 
@@ -228,7 +236,9 @@ describe('callAgentWithStructuredOutput — Pattern 1 auto-loop', () => {
       maxResearchTurns: 5, maxWebSearches: 3,
     });
 
-    expect(result).toEqual({ verdict: 'yes', reason: 'paused then resumed' });
+    expect(result.data).toEqual({ verdict: 'yes', reason: 'paused then resumed' });
+    expect(result.modelUsed).toBe('claude-sonnet-4-6');
+    expect(result.tokenCost).toEqual({ input: 250, output: 30 });
     expect(mockCreate).toHaveBeenCalledTimes(2);
   });
 
@@ -253,7 +263,8 @@ describe('callAgentWithStructuredOutput — Pattern 1 auto-loop', () => {
       maxTotalTokens: 200_000,
     });
 
-    expect(result.verdict).toBe('no');
+    expect(result.data.verdict).toBe('no');
+    expect(result.modelUsed).toBe('claude-sonnet-4-6');
     expect(mockCreate).toHaveBeenCalledTimes(2);
   });
 
@@ -278,7 +289,8 @@ describe('callAgentWithStructuredOutput — Pattern 1 auto-loop', () => {
       costCeilingUsd: 0.20,
     });
 
-    expect(result.verdict).toBe('no');
+    expect(result.data.verdict).toBe('no');
+    expect(result.modelUsed).toBe('claude-sonnet-4-6');
     expect(mockCreate).toHaveBeenCalledTimes(2);
   });
 
@@ -302,7 +314,9 @@ describe('callAgentWithStructuredOutput — Pattern 1 auto-loop', () => {
       maxResearchTurns: 5, maxWebSearches: 3,
     });
 
-    expect(result).toEqual({ verdict: 'yes', reason: 'synthesized' });
+    expect(result.data).toEqual({ verdict: 'yes', reason: 'synthesized' });
+    expect(result.modelUsed).toBe('claude-sonnet-4-6');
+    expect(result.tokenCost).toEqual({ input: 250, output: 50 });
     expect(mockCreate).toHaveBeenCalledTimes(2);
 
     // Verify Phase B used forced tool_choice
@@ -340,7 +354,8 @@ describe('callAgentWithStructuredOutput — Pattern 1 auto-loop', () => {
       maxResearchTurns: 5,
     });
 
-    expect(result.verdict).toBe('yes');
+    expect(result.data.verdict).toBe('yes');
+    expect(result.modelUsed).toBe('claude-sonnet-4-6');
     expect(mockCreate).toHaveBeenCalledTimes(3);  // Phase A + Phase B attempts 1 + 2
   });
 

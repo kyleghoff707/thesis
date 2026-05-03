@@ -25,13 +25,16 @@ const SECTION = (n: number, title: string) => ({
   verdictRationale: '.', summary: '.', data: '{}', narrative: '.',
   citations: [], tables: [], charts: [],
   redFlags: ['x'], primarySourceInsights: [], crossCuttingFindings: [], questions: [],
-  modelUsed: 'claude-sonnet-4-6', tokenCost: { input: 1, output: 1 },
 });
 
 describe('runFinancialAnalystPitchDeck', () => {
   it('returns MultiSection with Sections 5, 7, 8', async () => {
     const stub = { sections: [SECTION(5, 'FCF'), SECTION(7, 'ROE'), SECTION(8, 'Balance Sheet')] };
-    (callAgentWithStructuredOutput as any).mockResolvedValueOnce(stub);
+    (callAgentWithStructuredOutput as any).mockResolvedValueOnce({
+      data: stub,
+      modelUsed: 'claude-sonnet-4-6',
+      tokenCost: { input: 200, output: 80 },
+    });
 
     const result = await runFinancialAnalystPitchDeck({
       ticker: 'AAPL', runId: 'r1',
@@ -41,6 +44,10 @@ describe('runFinancialAnalystPitchDeck', () => {
     });
 
     expect(result.sections).toHaveLength(3);
+    for (const s of result.sections) {
+      expect(s.modelUsed).toBe('claude-sonnet-4-6');
+      expect(s.tokenCost).toEqual({ input: 200, output: 80 });
+    }
     expect(loadAgentPrompt).toHaveBeenCalledWith('financial-analyst-pitchdeck');
 
     const args = (callAgentWithStructuredOutput as any).mock.calls[0][0];
