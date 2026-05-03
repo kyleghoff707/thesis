@@ -113,7 +113,10 @@ export default {
       return corsResponse(response, request);
     } catch (err) {
       console.error('Worker error:', err.message, err.stack);
-      return corsResponse(json({ error: 'Internal server error' }, 500));
+      return corsResponse(
+        json({ error: 'Internal server error', detail: err?.message ?? String(err) }, 500),
+        request,
+      );
     }
   },
 
