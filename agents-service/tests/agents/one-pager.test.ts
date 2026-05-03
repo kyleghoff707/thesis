@@ -1,5 +1,15 @@
 import { describe, it, expect, vi } from 'vitest';
 
+vi.mock('../../src/lib/worker-progress.js', () => ({
+  ProgressPublisher: vi.fn().mockImplementation(() => ({
+    setStatus:      vi.fn().mockResolvedValue(undefined),
+    setPhase:       vi.fn().mockResolvedValue(undefined),
+    heartbeat:      vi.fn().mockResolvedValue(undefined),
+    setRunTokens:   vi.fn().mockResolvedValue(undefined),
+    setSubprogress: vi.fn().mockResolvedValue(undefined),
+  })),
+}));
+
 vi.mock('../../src/lib/anthropic-client.js', () => ({
   callAgentWithStructuredOutput: vi.fn(),
 }));
