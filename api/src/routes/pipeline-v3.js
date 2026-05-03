@@ -78,14 +78,15 @@ async function handleOnePagerStart(request, env, user) {
   const runId = crypto.randomUUID();
   const reportId = crypto.randomUUID();
 
-  // Mint reports + v3_runs rows; link them.
+  // Mint v3_runs first (parent), then reports (child) so the FK on
+  // reports.v3_run_id → v3_runs.id resolves under D1's immediate FK enforcement.
   await env.DB.batch([
-    env.DB.prepare(
-      `INSERT INTO reports (id, user_id, ticker, current_stage, v3_run_id) VALUES (?, ?, ?, 1, ?)`
-    ).bind(reportId, user.id, ticker, runId),
     env.DB.prepare(
       `INSERT INTO v3_runs (id, user_id, ticker, pipeline_stage, status) VALUES (?, ?, ?, 'one-pager', 'running')`
     ).bind(runId, user.id, ticker),
+    env.DB.prepare(
+      `INSERT INTO reports (id, user_id, ticker, current_stage, v3_run_id) VALUES (?, ?, ?, 1, ?)`
+    ).bind(reportId, user.id, ticker, runId),
   ]);
 
   // Send Inngest event
@@ -115,14 +116,14 @@ async function handlePitchDeckStart(request, env, user) {
   const runId = crypto.randomUUID();
   const reportId = crypto.randomUUID();
 
-  // 1. Mint reports + v3_runs rows; link them.
+  // 1. Mint v3_runs first (parent), then reports (child) — FK ordering.
   await env.DB.batch([
-    env.DB.prepare(
-      `INSERT INTO reports (id, user_id, ticker, current_stage, v3_run_id) VALUES (?, ?, ?, 2, ?)`
-    ).bind(reportId, user.id, ticker, runId),
     env.DB.prepare(
       `INSERT INTO v3_runs (id, user_id, ticker, pipeline_stage, status) VALUES (?, ?, ?, 'pitch-deck', 'running')`
     ).bind(runId, user.id, ticker),
+    env.DB.prepare(
+      `INSERT INTO reports (id, user_id, ticker, current_stage, v3_run_id) VALUES (?, ?, ?, 2, ?)`
+    ).bind(reportId, user.id, ticker, runId),
   ]);
 
   // 2. Pre-assemble DataPacket + filing content into R2.
@@ -199,13 +200,14 @@ async function handleFullStoryStart(request, env, user) {
   const runId = crypto.randomUUID();
   const reportId = crypto.randomUUID();
 
+  // Mint v3_runs first (parent), then reports (child) — FK ordering.
   await env.DB.batch([
-    env.DB.prepare(
-      `INSERT INTO reports (id, user_id, ticker, current_stage, v3_run_id) VALUES (?, ?, ?, 3, ?)`
-    ).bind(reportId, user.id, ticker, runId),
     env.DB.prepare(
       `INSERT INTO v3_runs (id, user_id, ticker, pipeline_stage, status) VALUES (?, ?, ?, 'full-story', 'running')`
     ).bind(runId, user.id, ticker),
+    env.DB.prepare(
+      `INSERT INTO reports (id, user_id, ticker, current_stage, v3_run_id) VALUES (?, ?, ?, 3, ?)`
+    ).bind(reportId, user.id, ticker, runId),
   ]);
 
   // Assemble DataPacket. FS does not need fresh filings — PSR was Wave 0 of PD,
