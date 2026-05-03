@@ -37,7 +37,7 @@ export const ReportSectionSchema = z.object({
   verdict: z.enum(['PASS', 'FAIL', 'WATCHLIST']).nullable(),
   verdictRationale: z.string(),
   summary: z.string(),
-  data: z.string(),
+  data: z.string().optional().default('{}'),
   narrative: z.string(),
   citations: z.array(CitationSchema),
   tables: z.array(z.string()).optional().default([]),
