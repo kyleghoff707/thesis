@@ -220,33 +220,78 @@ When assessing management, use these Buffett criteria:
 
 ## Output Format
 
-Produce a JSON object with 6 keys matching the One Pager sections.
-
-**Output discipline.** Return ONLY ONE JSON object — first character must be `{`, last character must be `}`. No preamble ("Now I have all the data...", "Let me compile final calculations..."), no postamble, no markdown fence wrap, no commentary. Do NOT emit two copies of the JSON (Sprint 4 SFM one-pager emitted indented + compact copies; orchestrator used the last one but logged the violation). The orchestrator now logs format-violation events — no longer silently stripped.
-
-Each section must include:
+Emit your output via the `emit_output` tool as an `OnePagerOutput` JSON object. The shape is:
 
 ```json
 {
-  "company_info": { ... },
-  "minimum_standards": { ... },
-  "meaning": { ... },
-  "growth_metrics": { ... },
-  "valuation_summary": { ... },
-  "overall_verdict": { ... }
+  "ticker": "AAPL",
+  "companyName": "Apple Inc.",
+  "generatedAt": "2026-05-03T20:00:00.000Z",
+  "overallVerdict": "PASS",
+  "overallRationale": "1-3 sentences explaining the overall PASS/FAIL/WATCHLIST decision.",
+  "sections": [ /* 6 ReportSection objects, one per One Pager section */ ]
 }
 ```
 
-Each section contains:
-- `verdict`: "PASS", "FAIL", or "WATCHLIST"
-- `confidence`: "HIGH", "MEDIUM", or "LOW"
-- `verdictRationale`: 1-2 sentences explaining the verdict
-- `summary`: 2-3 sentence summary
-- `narrative`: 1-3 SHORT paragraphs — this is a one pager, not an essay. Conversational, cite specific numbers, OK to say "I don't know yet."
-- `redFlags`: Array with at least 1 item, even for PASS verdicts. There is always something to watch.
-- `citations`: Array of `{ id, ref, text, source }` — every quantitative claim must be cited
+Top-level fields:
+- `ticker`: the input ticker, uppercase (e.g., "AAPL")
+- `companyName`: full legal entity name (e.g., "Apple Inc.")
+- `generatedAt`: ISO 8601 UTC datetime of when you produced the output (e.g., `"2026-05-03T20:00:00.000Z"`)
+- `overallVerdict`: `"PASS"` | `"FAIL"` | `"WATCHLIST"` — final synthesis verdict
+- `overallRationale`: 1-3 sentences explaining the overall verdict
+- `sections`: array of exactly 6 `ReportSection` objects in this order
 
-The `overall_verdict` section synthesizes all other sections into a final PASS/FAIL/WATCHLIST recommendation.
+The 6 `sections` (in order):
+
+| # | `key` | `title` |
+|---|---|---|
+| 1 | `company_info` | Company Info |
+| 2 | `minimum_standards` | Minimum Standards |
+| 3 | `meaning` | Meaning |
+| 4 | `growth_metrics` | Growth Metrics |
+| 5 | `valuation_summary` | Valuation Summary |
+| 6 | `overall_verdict` | Overall Verdict |
+
+Each section is a `ReportSection` object with these fields:
+
+```json
+{
+  "key": "minimum_standards",
+  "title": "Minimum Standards",
+  "sectionNumber": 2,
+  "status": "pass",
+  "confidence": "HIGH",
+  "verdict": "PASS",
+  "verdictRationale": "1-2 sentences explaining the section verdict.",
+  "summary": "2-3 sentence summary.",
+  "data": "{}",
+  "narrative": "1-3 SHORT paragraphs — this is a one pager, not an essay. Conversational, cite specific numbers, OK to say 'I don't know yet.'",
+  "citations": [ { "id": 1, "ref": "dataPacket.returnMetrics.roe.10yr_avg", "text": "22.4%", "source": "DataPacket" } ],
+  "redFlags": ["At least 1 concern, even on a PASS verdict — there is always something to watch."],
+  "modelUsed": "claude-sonnet-4-6",
+  "tokenCost": { "input": 0, "output": 0 }
+}
+```
+
+Field-by-field:
+- `key`: the slug from the table above (lowercase, snake_case)
+- `title`: the human title from the table above
+- `sectionNumber`: 1-6, matching the table order
+- `status`: `"pass"` | `"fail"` | `"review"` | `"pending"` — lowercase
+- `confidence`: `"HIGH"` | `"MEDIUM"` | `"LOW"` — uppercase
+- `verdict`: `"PASS"` | `"FAIL"` | `"WATCHLIST"` (or `null` for `company_info` if no verdict applies)
+- `verdictRationale`: 1-2 sentences explaining the section verdict
+- `summary`: 2-3 sentence summary
+- `data`: a JSON string of any per-section structured data, or `"{}"` if none
+- `narrative`: 1-3 SHORT paragraphs — this is a one pager, not an essay
+- `citations`: array of `{ id, ref, text, source }` — every quantitative claim must be cited
+- `redFlags`: array with **at least 1 item**, even on PASS — there is always something to watch
+- `modelUsed`: always `"claude-sonnet-4-6"` (the runner backfills the actual model if different)
+- `tokenCost`: emit `{ "input": 0, "output": 0 }` as a placeholder — the runner records the actual usage
+
+The `overall_verdict` section (sectionNumber 6) synthesizes all other sections into a final PASS/FAIL/WATCHLIST recommendation. Its `verdict` should match top-level `overallVerdict`.
+
+**Output discipline.** Use the `emit_output` tool — do NOT write the JSON inline as a chat message. The tool call is the only correct output channel.
 
 ---
 
