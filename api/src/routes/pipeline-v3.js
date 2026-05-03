@@ -117,7 +117,7 @@ async function handleCallback(request, env) {
 
   if (status === 'completed') {
     await env.DB.prepare(
-      `UPDATE v3_runs SET status = 'completed', result_json = ?, finished_at = datetime('now') WHERE id = ?`
+      `UPDATE v3_runs SET status = 'completed', result_json = ?, finished_at = datetime('now') WHERE id = ? AND status NOT IN ('completed','completed_with_errors','failed')`
     ).bind(JSON.stringify(result ?? {}), runId).run();
   } else if (status === 'completed_with_errors') {
     await env.DB.prepare(
@@ -129,7 +129,7 @@ async function handleCallback(request, env) {
     ).run();
   } else {
     await env.DB.prepare(
-      `UPDATE v3_runs SET status = 'failed', error_message = ?, finished_at = datetime('now') WHERE id = ?`
+      `UPDATE v3_runs SET status = 'failed', error_message = ?, finished_at = datetime('now') WHERE id = ? AND status NOT IN ('completed','completed_with_errors','failed')`
     ).bind(String(error ?? 'Unknown error'), runId).run();
   }
 
