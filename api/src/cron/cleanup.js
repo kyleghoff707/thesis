@@ -57,6 +57,28 @@ export async function cleanupStale(env) {
   }
   totalDeleted += r2Deleted;
 
+  // v3 assembly cache cleanup — delete R2 objects for runs > 30 days old.
+  const stale = await env.DB.prepare(
+    `SELECT id FROM v3_runs WHERE started_at < datetime('now', '-30 days')`
+  ).all();
+
+  let assemblyDeleted = 0;
+  for (const row of stale.results ?? []) {
+    for (const key of [
+      `assembly/${row.id}/datapacket.json`,
+      `assembly/${row.id}/filings.json`,
+      `assembly/${row.id}/parent-report.json`,
+    ]) {
+      try {
+        await env.TRANSCRIPTS.delete(key);
+        assemblyDeleted++;
+      } catch (e) {
+        console.warn(`assembly cleanup ${key}: ${e.message}`);
+      }
+    }
+  }
+  console.log(`v3 assembly cleanup: ${assemblyDeleted} objects deleted across ${stale.results?.length ?? 0} stale runs`);
+
   await env.DB.prepare(
     'INSERT OR REPLACE INTO sync_status (job_name, last_run, last_offset, status, items_processed, error) VALUES (?, datetime(\'now\'), 0, \'complete\', ?, NULL)'
   ).bind('cleanup', totalDeleted).run();
