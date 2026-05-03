@@ -2,6 +2,7 @@ import { inngest } from '../client.js';
 import { runOnePagerAgent } from '../../agents/one-pager.js';
 import { OnePagerOutputSchema } from '../../agents/schemas/one-pager.js';
 import { postCallback } from '../../lib/worker-callback.js';
+import { ProgressPublisher } from '../../lib/worker-progress.js';
 import { flushLangfuse } from '../../lib/langfuse-client.js';
 
 export const onePagerFn = inngest.createFunction(
@@ -29,16 +30,24 @@ export const onePagerFn = inngest.createFunction(
     // dedupe into a single trace instead of producing N copies.
     const traceId = event.id ?? runId;
 
-    // Cost protection: Inngest doesn't support per-step retry overrides (StepOptions
-    // only exposes id + name). The companion fix is in anthropic-client.ts which wraps
-    // 4xx errors as NonRetriableError so consistent failures (bad schema, malformed
-    // request, policy violation) stop after the first attempt instead of burning
-    // tokens on 4 attempts. Transient 5xx still gets the function-level retries: 3.
+    // Run-level publisher — used for setPhase only. Synthetic __run__ agentId
+    // never appears in v3_run_agents (that table holds per-agent rows; the
+    // run-level publisher only writes to v3_runs via the phase-update kind).
+    const runPub = new ProgressPublisher(runId, '__run__');
+
+    // Cost protection: Inngest doesn't support per-step retry overrides. The
+    // companion fix is in anthropic-client.ts which wraps 4xx errors as
+    // NonRetriableError so consistent failures stop after the first attempt
+    // instead of burning tokens on 4 attempts. Transient 5xx still gets the
+    // function-level retries: 3.
     const output = await step.run('run-one-pager-agent', async () => {
+      // Per-agent state (running → completed) is published from inside the runner (Task 17).
+      // The runner also publishes phase=researching at start.
       return runOnePagerAgent({ ticker, runId, traceId });
     });
 
     await step.run('validate-output', async () => {
+      await runPub.setPhase('validating', 'Validating the output schema');
       const parsed = OnePagerOutputSchema.safeParse(output);
       if (!parsed.success) {
         throw new Error(`Schema validation failed at gate: ${parsed.error.message}`);
@@ -46,7 +55,9 @@ export const onePagerFn = inngest.createFunction(
     });
 
     await step.run('post-callback', async () => {
+      await runPub.setPhase('finalizing', 'Saving the report');
       await postCallback({ runId, status: 'completed', result: output });
+      await runPub.setPhase('completed', 'Completed');
     });
 
     await flushLangfuse();
