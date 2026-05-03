@@ -36,6 +36,11 @@ export async function handlePipelineV3(request, env, path, user) {
     return handleCallback(request, env);
   }
 
+  // POST /api/v3/pipeline/progress (UNAUTHENTICATED — uses shared secret)
+  if (request.method === 'POST' && path === '/api/v3/pipeline/progress') {
+    return handleProgress(request, env);
+  }
+
   return null; // route not handled — let the main router 404
 }
 
@@ -129,4 +134,55 @@ async function handleCallback(request, env) {
   }
 
   return json({ ok: true });
+}
+
+async function handleProgress(request, env) {
+  const provided = request.headers.get('X-Callback-Secret');
+  if (!provided || provided !== env.V3_CALLBACK_SECRET) {
+    return json({ error: 'Unauthorized' }, 401);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'Invalid JSON body' }, 400);
+  }
+
+  const { runId, kind, payload } = body;
+  if (!runId || !kind) {
+    return json({ error: 'runId and kind required' }, 400);
+  }
+
+  switch (kind) {
+    case 'heartbeat':
+      return handleHeartbeat(env, runId);
+    case 'agent-update':
+      return handleAgentUpdate(env, runId, payload ?? {});
+    case 'phase-update':
+      return handlePhaseUpdate(env, runId, payload ?? {});
+    case 'tokens':
+      return handleTokens(env, runId, payload ?? {});
+    default:
+      return json({ error: `Unknown kind: ${kind}` }, 400);
+  }
+}
+
+async function handleHeartbeat(env, runId) {
+  // Idempotent: bump heartbeat_at only when the run is still in flight.
+  await env.DB.prepare(
+    `UPDATE v3_runs SET heartbeat_at = datetime('now') WHERE id = ? AND status NOT IN ('completed','completed_with_errors','failed')`
+  ).bind(runId).run();
+  return json({ ok: true });
+}
+
+// Implemented in Tasks 4 & 5
+async function handleAgentUpdate(env, runId, payload) {
+  return json({ ok: true });  // stub — Task 4
+}
+async function handlePhaseUpdate(env, runId, payload) {
+  return json({ ok: true });  // stub — Task 5
+}
+async function handleTokens(env, runId, payload) {
+  return json({ ok: true });  // stub — Task 5
 }
