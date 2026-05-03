@@ -153,6 +153,9 @@ export async function callAgentWithStructuredOutput<T>(params: CallAgentParams<T
 
     // Loop continues — server tools auto-feed results, no client tool execution needed.
     if (response.stop_reason === 'tool_use') continue;
+    // pause_turn: server tool internal cap hit; re-send to resume.
+    // Cast because the SDK type union doesn't include 'pause_turn' yet.
+    if ((response.stop_reason as string) === 'pause_turn') continue;
 
     // Model returned text without emitting. Break to Phase B (Task 14).
     if (response.stop_reason === 'end_turn') break;

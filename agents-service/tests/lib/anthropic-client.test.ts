@@ -202,4 +202,28 @@ describe('callAgentWithStructuredOutput — Pattern 1 auto-loop', () => {
     expect(result).toEqual({ verdict: 'yes', reason: 'AAPL strong' });
     expect(mockCreate).toHaveBeenCalledTimes(2);
   });
+
+  it('continues looping on stop_reason=pause_turn', async () => {
+    mockCreate
+      .mockResolvedValueOnce({
+        content: [{ type: 'server_tool_use', name: 'web_search', input: { query: 'q1' } }],
+        stop_reason: 'pause_turn',
+        usage: { input_tokens: 100, output_tokens: 10, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      })
+      .mockResolvedValueOnce({
+        content: [{ type: 'tool_use', name: 'emit_output', input: { verdict: 'yes', reason: 'paused then resumed' } }],
+        stop_reason: 'tool_use',
+        usage: { input_tokens: 150, output_tokens: 20, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      });
+
+    const result = await callAgentWithStructuredOutput({
+      systemPrompt: 's', userMessage: 'u',
+      schema: TestSchema, schemaName: 'TestOutput', schemaDescription: 't',
+      model: 'claude-sonnet-4-6', traceName: 'test',
+      maxResearchTurns: 5, maxWebSearches: 3,
+    });
+
+    expect(result).toEqual({ verdict: 'yes', reason: 'paused then resumed' });
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+  });
 });
