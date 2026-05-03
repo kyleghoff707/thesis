@@ -178,7 +178,53 @@ async function handleHeartbeat(env, runId) {
 
 // Implemented in Tasks 4 & 5
 async function handleAgentUpdate(env, runId, payload) {
-  return json({ ok: true });  // stub — Task 4
+  const {
+    agentId, displayName, wave, status,
+    startedAt, finishedAt, subprogress, lastMessage,
+    tokensInput, tokensOutput, cachedTokens, errorMessage,
+  } = payload;
+
+  if (!agentId || !displayName || !status) {
+    return json({ error: 'agentId, displayName, status required' }, 400);
+  }
+  if (!['pending','running','completed','failed'].includes(status)) {
+    return json({ error: `Invalid status: ${status}` }, 400);
+  }
+
+  // Idempotent UPSERT: existing row updates, new row inserts. Conditional
+  // status guard prevents downgrade from terminal states (e.g. retry replay).
+  await env.DB.prepare(
+    `INSERT INTO v3_run_agents
+       (run_id, agent_id, display_name, wave, status, started_at, finished_at,
+        subprogress, last_message, tokens_input, tokens_output, cached_tokens, error_message)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(run_id, agent_id) DO UPDATE SET
+       display_name  = excluded.display_name,
+       wave          = excluded.wave,
+       status        = CASE
+                         WHEN v3_run_agents.status IN ('completed','failed')
+                           THEN v3_run_agents.status
+                         ELSE excluded.status
+                       END,
+       started_at    = COALESCE(v3_run_agents.started_at, excluded.started_at),
+       finished_at   = COALESCE(excluded.finished_at, v3_run_agents.finished_at),
+       subprogress   = excluded.subprogress,
+       last_message  = excluded.last_message,
+       tokens_input  = excluded.tokens_input,
+       tokens_output = excluded.tokens_output,
+       cached_tokens = excluded.cached_tokens,
+       error_message = COALESCE(excluded.error_message, v3_run_agents.error_message)
+    `
+  ).bind(
+    runId, agentId, displayName, wave ?? null, status,
+    startedAt ?? null, finishedAt ?? null,
+    subprogress ? JSON.stringify(subprogress) : null,
+    lastMessage ?? null,
+    tokensInput ?? 0, tokensOutput ?? 0, cachedTokens ?? 0,
+    errorMessage ?? null,
+  ).run();
+
+  return json({ ok: true });
 }
 async function handlePhaseUpdate(env, runId, payload) {
   return json({ ok: true });  // stub — Task 5
