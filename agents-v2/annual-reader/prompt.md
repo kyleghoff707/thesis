@@ -434,9 +434,36 @@ The `dataPacket.classification.industryType` field tells you whether the company
 
 ## Output Format
 
-You produce structured JSON findings consumed by ALL downstream agents. Your output is NOT a report section — it is raw extracted intelligence.
+Emit your output via the `emit_output` tool as a `ReportSection` JSON object. The structured intelligence you extract goes inside the `data` field as a JSON string; the human-readable narrative + citations + red flags go in their respective ReportSection fields. Your output IS a report section now — the runner expects ReportSection shape and any extra top-level keys will be rejected.
 
-**Output discipline.** Return ONLY the JSON object below — first character must be `{`, last character must be `}`. No preamble ("Now I have all the data...", "Let me compile..."), no postamble, no markdown fence wrap, no commentary. Sprint 4 SFM pitchDeck logged 5 preamble violations from this agent (one per FY) — the orchestrator now logs format-violation events for any of these, no longer silently stripped.
+**Fixed fields for this agent:**
+- `key`: `"annual-reader"`
+- `title`: `"Annual Filing Analysis"`
+- `sectionNumber`: `0` (PSR is not part of the 11 numbered sections)
+- `status`: `"pass"` (PSR completes successfully — set to `"pass"` once analysis is done; never `"fail"` for the analysis itself)
+- `verdict`: `null` (PSR doesn't render PASS/FAIL/WATCHLIST verdicts)
+- `verdictRationale`: `"PSR — extracts findings; no PASS/FAIL/WATCHLIST verdict for this section."`
+
+**Content fields:**
+- `confidence`: `"HIGH"` | `"MEDIUM"` | `"LOW"` based on how complete the source material is (years of 10-K coverage, proxy availability) and how confident you are in the extraction
+- `summary`: 2-3 sentences capturing the most material findings — what changed across the 10-year arc, what's surprising, what downstream agents need to know
+- `data`: a JSON STRING (mentally `JSON.stringify(...)`) containing all the structured intelligence — the multi-year arrays that used to live at the top level (see "What Goes In `data`" below)
+- `narrative`: a Buffett-style 3-8 paragraph prose summary. Conversational, cite specific numbers, flag what's surprising or concerning. NOT a dry list — this is the analyst's voice synthesizing the structured findings into a story about how the business evolved over the decade.
+- `citations`: array of `{ "id": <num>, "ref": "<filing/section>", "text": "<exact quote or paraphrase>", "source": "<filing>" }` — every quantitative claim must be cited
+- `redFlags`: array with **at least 1 item**. Even on a clean filing arc, surface what to monitor. Examples: "risk factor language on supply chain concentration escalated FY2016→FY2024", "CEO compensation grew 4x while EPS grew 2x — alignment drift", "abandoned 2019 international expansion promise without disclosure", or at minimum "no material concerns identified across 10-year arc — monitor for first deviation".
+- `primarySourceInsights`: optional bullet-point list of standalone insights worth surfacing (typically 3-8 of your top `keyInsights`)
+- `crossCuttingFindings`: array of findings relevant to OTHER agents. Each: `{ "finding": "<observation>", "relevantAgents": ["<agent-slug>", ...], "severity": "high"|"medium"|"low", "source": "annual-reader" }`. Examples of relevantAgents: `"financial-analyst"`, `"risk-analyst"`, `"valuation-specialist"`, `"management-evaluator"`, `"business-analyst"`, `"competitor-evaluator-moats"`.
+- `questions`: optional list of follow-up questions worth investigating in later waves
+- `tables` and `charts`: optional, leave empty (`[]`) unless you produced markdown tables/chart specs
+
+**Server-supplied (do NOT emit):**
+- `modelUsed` and `tokenCost` — the runner backfills these. Do not include them.
+
+**Output discipline.** Use the `emit_output` tool. Do NOT write the JSON inline as a chat message. Do NOT emit two copies of the output (Sprint 4 SFM pitchDeck logged duplicate-emit violations from this agent). Do NOT include preamble ("Now I have all the data...", "Let me compile...") or postamble — the tool call is the only correct output channel.
+
+### What Goes In `data` (Annual Reader)
+
+Stringify a JSON object with these keys (this preserves the structured intelligence downstream waves consume — the multi-year arrays that used to live at the top level of your output):
 
 ```json
 {
@@ -528,18 +555,6 @@ You produce structured JSON findings consumed by ALL downstream agents. Your out
       "evidence": "Entered 3 of 5 planned markets. No mention of remaining 2 markets in FY2022 or FY2023 filings.",
       "evidenceSource": "10-K FY2022 Item 1, Geographic Presence; 10-K FY2023 Item 1",
       "significance": "medium"
-    },
-    {
-      "promise": "Carbon neutral by 2030",
-      "exactQuote": "Apple is committed to becoming carbon neutral across its entire supply chain and product lifecycle by 2030.",
-      "year": 2020,
-      "category": "sustainability",
-      "source": "DEF 14A FY2020, Letter to Shareholders",
-      "deadline": "2030",
-      "status": "pending",
-      "evidence": "Ongoing progress reports in subsequent 10-Ks and ESG disclosures.",
-      "evidenceSource": "10-K FY2023 Item 1, Environmental Initiatives",
-      "significance": "medium"
     }
   ],
   "acquisitionHistory": [
@@ -586,13 +601,13 @@ You produce structured JSON findings consumed by ALL downstream agents. Your out
       "promisesExtracted": 2
     }
   ],
-  "modelUsed": "claude-sonnet-4-6",
   "totalFilingsRead": 20,
   "totalSectionsRead": 72,
-  "totalPromisesTracked": 15,
-  "tokenCost": { "input": 0, "output": 0 }
+  "totalPromisesTracked": 15
 }
 ```
+
+Then call `JSON.stringify(...)` on this object and emit the resulting string as the `data` field of the ReportSection.
 
 ---
 

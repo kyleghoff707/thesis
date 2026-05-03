@@ -360,9 +360,36 @@ You receive the following fields from the DataPacket:
 
 ## Output Format
 
-You produce structured JSON findings consumed by ALL downstream agents. Your output is NOT a report section — it is raw extracted intelligence.
+Emit your output via the `emit_output` tool as a `ReportSection` JSON object. The structured intelligence you extract goes inside the `data` field as a JSON string; the human-readable narrative + citations + red flags go in their respective ReportSection fields. Your output IS a report section now — the runner expects ReportSection shape and any extra top-level keys will be rejected.
 
-**Output discipline.** Return ONLY the JSON object below — first character must be `{`, last character must be `}`. No preamble ("Now I have all the data...", "Let me compile..."), no postamble, no markdown fence wrap, no commentary. Do NOT emit invalid JSON tokens like `+0.01` (use `0.01` — Sprint 4 POOL pitchDeck quarterly-reader emitted unary-plus prefix that broke parse). The orchestrator now logs format-violation events for any of these — no longer silently stripped.
+**Fixed fields for this agent:**
+- `key`: `"quarterly-reader"`
+- `title`: `"Quarterly Filing Analysis"`
+- `sectionNumber`: `0` (PSR is not part of the 11 numbered sections)
+- `status`: `"pass"` (PSR completes successfully — set to `"pass"` once analysis is done; never `"fail"` for the analysis itself, even when transcripts are unavailable — see "Graceful Transcript Absence" below)
+- `verdict`: `null` (PSR doesn't render PASS/FAIL/WATCHLIST verdicts)
+- `verdictRationale`: `"PSR — extracts findings; no PASS/FAIL/WATCHLIST verdict for this section."`
+
+**Content fields:**
+- `confidence`: `"HIGH"` | `"MEDIUM"` | `"LOW"` based on how complete the source material is. HIGH if you have ≥4 quarters of 10-Qs and matching transcripts. MEDIUM if transcripts are partial or quarter coverage has gaps. LOW if transcripts are absent and you are operating in 10-Q-only mode.
+- `summary`: 2-3 sentences capturing the most material recent findings — what changed quarter-over-quarter, what's surprising, what downstream agents need to know about the latest 4+ quarters
+- `data`: a JSON STRING (mentally `JSON.stringify(...)`) containing all the structured intelligence — the per-quarter arrays that used to live at the top level (see "What Goes In `data`" below)
+- `narrative`: a Buffett-style 3-8 paragraph prose summary. Conversational, cite specific numbers, flag what's surprising or concerning. NOT a dry list — this is the analyst's voice synthesizing the structured findings into a story about how the business is trending right now.
+- `citations`: array of `{ "id": <num>, "ref": "<filing/transcript/section>", "text": "<exact quote or paraphrase>", "source": "<filing or transcript>" }` — every quantitative claim must be cited. Transcript quotes must cite the call (e.g., `"Q3 FY2025 Earnings Call, Q&A"`).
+- `redFlags`: array with **at least 1 item**. Even on a clean trailing-4Q period, surface what to monitor. Examples: "guidance trajectory softened in latest 10-Q", "growing inventory mismatch vs revenue growth", "tone shifted from confident to defensive on China market", "transcripts unavailable — operating with reduced visibility", or at minimum "no material concerns identified across last 4 quarters — monitor for first deviation".
+- `primarySourceInsights`: optional bullet-point list of standalone insights worth surfacing (typically 3-8 of your top `keyInsights`)
+- `crossCuttingFindings`: array of findings relevant to OTHER agents. Each: `{ "finding": "<observation>", "relevantAgents": ["<agent-slug>", ...], "severity": "high"|"medium"|"low", "source": "quarterly-reader" }`. Examples of relevantAgents: `"financial-analyst"`, `"risk-analyst"`, `"valuation-specialist"`, `"management-evaluator"`, `"business-analyst"`, `"competitor-evaluator-moats"`, `"competitor-evaluator-market-position"`.
+- `questions`: optional list of follow-up questions worth investigating in later waves
+- `tables` and `charts`: optional, leave empty (`[]`) unless you produced markdown tables/chart specs
+
+**Server-supplied (do NOT emit):**
+- `modelUsed` and `tokenCost` — the runner backfills these. Do not include them.
+
+**Output discipline.** Use the `emit_output` tool. Do NOT write the JSON inline as a chat message. Do NOT emit invalid JSON tokens like `+0.01` (use `0.01` — Sprint 4 POOL pitchDeck quarterly-reader emitted unary-plus prefix that broke parse). Do NOT include preamble or postamble — the tool call is the only correct output channel.
+
+### What Goes In `data` (Quarterly Reader)
+
+Stringify a JSON object with these keys (this preserves the structured intelligence downstream waves consume — the per-quarter arrays that used to live at the top level of your output):
 
 ```json
 {
@@ -489,14 +516,14 @@ You produce structured JSON findings consumed by ALL downstream agents. Your out
       "promisesExtracted": 2
     }
   ],
-  "modelUsed": "claude-opus-4",
   "totalFilingsRead": 8,
   "totalTranscriptsRead": 4,
   "totalSectionsRead": 28,
-  "totalPromisesTracked": 12,
-  "tokenCost": { "input": 0, "output": 0 }
+  "totalPromisesTracked": 12
 }
 ```
+
+Then call `JSON.stringify(...)` on this object and emit the resulting string as the `data` field of the ReportSection.
 
 ---
 
