@@ -75,25 +75,71 @@ async function handleOnePagerStart(request, env, user) {
 }
 
 async function handleStatus(env, user, runId) {
+  // Run-level row
   const row = await env.DB.prepare(
-    `SELECT id, ticker, pipeline_stage, status, result_json, error_message, started_at, finished_at
+    `SELECT id, ticker, pipeline_stage, status,
+            phase, phase_label, heartbeat_at,
+            tokens_input, tokens_output, cost_usd,
+            result_json, error_message, failed_sections,
+            started_at, finished_at
      FROM v3_runs WHERE id = ? AND user_id = ?`
   ).bind(runId, user.id).first();
 
   if (!row) return json({ error: 'Run not found' }, 404);
 
-  const result = row.result_json ? JSON.parse(row.result_json) : null;
+  // Per-agent rows (may be empty if no agent has reported yet)
+  const agentsRes = await env.DB.prepare(
+    `SELECT agent_id, display_name, wave, status,
+            started_at, finished_at, subprogress, last_message,
+            tokens_input, tokens_output, cached_tokens, error_message
+     FROM v3_run_agents
+     WHERE run_id = ?
+     ORDER BY wave ASC NULLS FIRST, agent_id ASC`
+  ).bind(runId).all();
+
+  const agents = (agentsRes.results ?? []).map((a) => ({
+    id:           a.agent_id,
+    displayName:  a.display_name,
+    wave:         a.wave,
+    status:       a.status,
+    startedAt:    a.started_at,
+    finishedAt:   a.finished_at,
+    subprogress:  a.subprogress ? safeJsonParse(a.subprogress) : null,
+    lastMessage:  a.last_message,
+    tokens: (a.tokens_input || a.tokens_output || a.cached_tokens) ? {
+      input:  a.tokens_input,
+      output: a.tokens_output,
+      cached: a.cached_tokens,
+    } : null,
+    error:        a.error_message,
+  }));
 
   return json({
-    runId: row.id,
-    ticker: row.ticker,
-    pipelineStage: row.pipeline_stage,
-    status: row.status,
-    result,
-    error: row.error_message ?? null,
-    startedAt: row.started_at,
-    finishedAt: row.finished_at,
+    runId:          row.id,
+    ticker:         row.ticker,
+    pipelineStage:  row.pipeline_stage,
+    status:         row.status,
+    phase:          row.phase,
+    phaseLabel:     row.phase_label,
+    agents,
+    heartbeatAt:    row.heartbeat_at,
+    startedAt:      row.started_at,
+    updatedAt:      row.heartbeat_at ?? row.started_at,
+    finishedAt:     row.finished_at,
+    tokens: {
+      input:  row.tokens_input ?? 0,
+      output: row.tokens_output ?? 0,
+      cached: 0,  // run-level cached not tracked separately yet
+    },
+    costUsd:        row.cost_usd ?? 0,
+    result:         row.result_json ? safeJsonParse(row.result_json) : null,
+    error:          row.error_message ? { message: row.error_message } : null,
+    failedSections: row.failed_sections ? safeJsonParse(row.failed_sections) : null,
   });
+}
+
+function safeJsonParse(s) {
+  try { return JSON.parse(s); } catch { return null; }
 }
 
 async function handleCallback(request, env) {
