@@ -227,8 +227,31 @@ async function handleAgentUpdate(env, runId, payload) {
   return json({ ok: true });
 }
 async function handlePhaseUpdate(env, runId, payload) {
-  return json({ ok: true });  // stub — Task 5
+  const { phase, phaseLabel } = payload;
+  if (!phase) return json({ error: 'phase required' }, 400);
+
+  await env.DB.prepare(
+    `UPDATE v3_runs SET phase = ?, phase_label = ? WHERE id = ? AND status NOT IN ('completed','completed_with_errors','failed')`
+  ).bind(phase, phaseLabel ?? null, runId).run();
+
+  return json({ ok: true });
 }
+
 async function handleTokens(env, runId, payload) {
-  return json({ ok: true });  // stub — Task 5
+  const { tokensInput, tokensOutput, costUsd } = payload;
+
+  await env.DB.prepare(
+    `UPDATE v3_runs
+     SET tokens_input  = COALESCE(?, tokens_input),
+         tokens_output = COALESCE(?, tokens_output),
+         cost_usd      = COALESCE(?, cost_usd)
+     WHERE id = ? AND status NOT IN ('completed','completed_with_errors','failed')`
+  ).bind(
+    tokensInput ?? null,
+    tokensOutput ?? null,
+    costUsd ?? null,
+    runId,
+  ).run();
+
+  return json({ ok: true });
 }
