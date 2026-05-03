@@ -31,7 +31,7 @@ describe('runValuationSpecialistPitchDeck', () => {
   it('includes Section 3 + Section 4 in userMessage, uses Opus + web search', async () => {
     (callAgentWithStructuredOutput as any).mockResolvedValueOnce({
       data: SECTION(10, 'Valuation'),
-      modelUsed: 'claude-opus-4-7',
+      modelUsed: 'claude-sonnet-4-6',
       tokenCost: { input: 100, output: 50 },
     });
 
@@ -45,14 +45,14 @@ describe('runValuationSpecialistPitchDeck', () => {
     });
 
     expect(result.sectionNumber).toBe(10);
-    expect(result.modelUsed).toBe('claude-opus-4-7');
+    expect(result.modelUsed).toBe('claude-sonnet-4-6');
     expect(result.tokenCost).toEqual({ input: 100, output: 50 });
     expect(loadAgentPrompt).toHaveBeenCalledWith('valuation-specialist-pitchdeck');
 
     const args = (callAgentWithStructuredOutput as any).mock.calls[0][0];
     expect(args.userMessage).toContain('## Section 3');
     expect(args.userMessage).toContain('## Section 4');
-    expect(args.model).toBe('claude-opus-4-7');
+    expect(args.model).toBe('claude-sonnet-4-6');
     expect(args.maxWebSearches).toBe(5);
     expect(args.traceName).toBe('pitchdeck.valuation-specialist');
   });

@@ -18,7 +18,7 @@ export interface ValuationSpecialistPDInput {
   crossCuttingFindings: CrossCuttingFinding[];
 }
 
-const MODEL = 'claude-opus-4-7';
+const MODEL = 'claude-sonnet-4-6';
 
 export async function runValuationSpecialistPitchDeck(input: ValuationSpecialistPDInput): Promise<ReportSection> {
   const systemPrompt = await loadAgentPrompt('valuation-specialist-pitchdeck');

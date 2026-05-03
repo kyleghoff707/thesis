@@ -14,7 +14,7 @@ export interface QuarterlyReaderInput {
   transcriptContent: Record<string, unknown>;
 }
 
-const MODEL = 'claude-opus-4-7';
+const MODEL = 'claude-sonnet-4-6';
 
 export async function runQuarterlyReader(input: QuarterlyReaderInput): Promise<ReportSection> {
   const systemPrompt = await loadAgentPrompt('quarterly-reader');

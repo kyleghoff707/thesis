@@ -16,7 +16,7 @@ export interface RiskAnalystPDInput {
   crossCuttingFindings: CrossCuttingFinding[];
 }
 
-const MODEL = 'claude-opus-4-7';
+const MODEL = 'claude-sonnet-4-6';
 
 export async function runRiskAnalystPitchDeck(input: RiskAnalystPDInput): Promise<ReportSection> {
   const systemPrompt = await loadAgentPrompt('risk-analyst-pitchdeck');

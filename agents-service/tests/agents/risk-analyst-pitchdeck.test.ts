@@ -31,7 +31,7 @@ describe('runRiskAnalystPitchDeck', () => {
   it('uses Opus, web search, returns Section 9', async () => {
     (callAgentWithStructuredOutput as any).mockResolvedValueOnce({
       data: SECTION(9, 'PEST Risks'),
-      modelUsed: 'claude-opus-4-7',
+      modelUsed: 'claude-sonnet-4-6',
       tokenCost: { input: 100, output: 50 },
     });
 
@@ -43,12 +43,12 @@ describe('runRiskAnalystPitchDeck', () => {
     });
 
     expect(result.sectionNumber).toBe(9);
-    expect(result.modelUsed).toBe('claude-opus-4-7');
+    expect(result.modelUsed).toBe('claude-sonnet-4-6');
     expect(result.tokenCost).toEqual({ input: 100, output: 50 });
     expect(loadAgentPrompt).toHaveBeenCalledWith('risk-analyst-pitchdeck');
 
     const args = (callAgentWithStructuredOutput as any).mock.calls[0][0];
-    expect(args.model).toBe('claude-opus-4-7');
+    expect(args.model).toBe('claude-sonnet-4-6');
     expect(args.maxWebSearches).toBe(5);
     expect(args.traceName).toBe('pitchdeck.risk-analyst');
   });

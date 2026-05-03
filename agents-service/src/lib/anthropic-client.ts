@@ -10,7 +10,14 @@ let client: Anthropic | null = null;
 function getClient(): Anthropic {
   if (client) return client;
   const env = loadEnv();
-  client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, maxRetries: 4 });
+  client = new Anthropic({
+    apiKey: env.ANTHROPIC_API_KEY,
+    maxRetries: 4,
+    // 1M context beta — enables Sonnet 4.x to accept up to 1M input tokens.
+    // Required for agents that pass full DataPacket + filings + prior section
+    // outputs in a single user message.
+    defaultHeaders: { 'anthropic-beta': 'context-1m-2025-08-07' },
+  });
   return client;
 }
 

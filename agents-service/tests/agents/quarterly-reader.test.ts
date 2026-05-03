@@ -43,7 +43,7 @@ describe('runQuarterlyReader', () => {
   it('loads the quarterly-reader prompt and includes 10-Qs + transcripts in user message', async () => {
     (callAgentWithStructuredOutput as any).mockResolvedValueOnce({
       data: STUB_OUTPUT,
-      modelUsed: 'claude-opus-4-7',
+      modelUsed: 'claude-sonnet-4-6',
       tokenCost: { input: 8000, output: 1200 },
     });
 
@@ -57,7 +57,7 @@ describe('runQuarterlyReader', () => {
 
     expect(result).toEqual({
       ...STUB_OUTPUT,
-      modelUsed: 'claude-opus-4-7',
+      modelUsed: 'claude-sonnet-4-6',
       tokenCost: { input: 8000, output: 1200 },
     });
     expect(loadAgentPrompt).toHaveBeenCalledWith('quarterly-reader');
@@ -67,7 +67,7 @@ describe('runQuarterlyReader', () => {
     expect(args.userMessage).toContain('## DataPacket');
     expect(args.userMessage).toContain('## 10-Q Filings');
     expect(args.userMessage).toContain('## Transcripts');
-    expect(args.model).toBe('claude-opus-4-7');
+    expect(args.model).toBe('claude-sonnet-4-6');
     expect(args.maxResearchTurns).toBe(1);
     expect(args.maxWebSearches).toBeUndefined();
     expect(args.traceName).toBe('pitchdeck.quarterly-reader');
