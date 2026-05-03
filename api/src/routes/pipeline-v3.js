@@ -90,10 +90,15 @@ async function handleOnePagerStart(request, env, user) {
 
   // Send Inngest event
   const inngest = getInngestClient(env);
-  await inngest.send({
-    name: 'thes1s/onepager.start',
-    data: { runId, ticker, userId: String(user.id), reportId },
-  });
+  try {
+    await inngest.send({
+      name: 'thes1s/onepager.start',
+      data: { runId, ticker, userId: String(user.id), reportId },
+    });
+  } catch (err) {
+    await markFailed(env.DB, runId, `inngest dispatch: ${err.message}`);
+    return json({ error: `Pipeline dispatch failed: ${err.message}` }, 500);
+  }
 
   return json({ runId, reportId, status: 'running' }, 202);
 }
@@ -113,7 +118,7 @@ async function handlePitchDeckStart(request, env, user) {
   // 1. Mint reports + v3_runs rows; link them.
   await env.DB.batch([
     env.DB.prepare(
-      `INSERT INTO reports (id, user_id, ticker, current_stage, v3_run_id) VALUES (?, ?, ?, 1, ?)`
+      `INSERT INTO reports (id, user_id, ticker, current_stage, v3_run_id) VALUES (?, ?, ?, 2, ?)`
     ).bind(reportId, user.id, ticker, runId),
     env.DB.prepare(
       `INSERT INTO v3_runs (id, user_id, ticker, pipeline_stage, status) VALUES (?, ?, ?, 'pitch-deck', 'running')`
@@ -141,10 +146,15 @@ async function handlePitchDeckStart(request, env, user) {
 
   // 3. Fire the Inngest event.
   const inngest = getInngestClient(env);
-  await inngest.send({
-    name: 'thes1s/pitchdeck.start',
-    data: { runId, ticker, userId: String(user.id), reportId },
-  });
+  try {
+    await inngest.send({
+      name: 'thes1s/pitchdeck.start',
+      data: { runId, ticker, userId: String(user.id), reportId },
+    });
+  } catch (err) {
+    await markFailed(env.DB, runId, `inngest dispatch: ${err.message}`);
+    return json({ error: `Pipeline dispatch failed: ${err.message}` }, 500);
+  }
 
   return json({ runId, reportId, status: 'running' }, 202);
 }
@@ -218,10 +228,15 @@ async function handleFullStoryStart(request, env, user) {
   }
 
   const inngest = getInngestClient(env);
-  await inngest.send({
-    name: 'thes1s/fullstory.start',
-    data: { runId, ticker, userId: String(user.id), reportId, parentReportId },
-  });
+  try {
+    await inngest.send({
+      name: 'thes1s/fullstory.start',
+      data: { runId, ticker, userId: String(user.id), reportId, parentReportId },
+    });
+  } catch (err) {
+    await markFailed(env.DB, runId, `inngest dispatch: ${err.message}`);
+    return json({ error: `Pipeline dispatch failed: ${err.message}` }, 500);
+  }
 
   return json({ runId, reportId, status: 'running' }, 202);
 }
