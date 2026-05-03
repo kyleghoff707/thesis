@@ -17,6 +17,15 @@ export function useGeneratePipeline(ticker) {
   const [result, setResult] = useState(null);
   const [progress, setProgress] = useState(null);
   const [liveSections, setLiveSections] = useState([]);
+  // v3 streaming fields — only populated when polling /api/v3/pipeline/status.
+  // For v1 polling these stay at their initial values (no-op), since the v1
+  // status response doesn't include these fields.
+  const [liveAgents, setLiveAgents] = useState([]);
+  const [livePhase, setLivePhase] = useState({ phase: null, label: null });
+  const [heartbeatAt, setHeartbeatAt] = useState(null);
+  const [liveTokens, setLiveTokens] = useState({ input: 0, output: 0, cached: 0 });
+  const [liveCostUsd, setLiveCostUsd] = useState(0);
+  const [failedSections, setFailedSections] = useState(null);
   const pollRef = useRef(null);
 
   // ─── Shared polling logic ────────────────────────────────
@@ -46,6 +55,15 @@ export function useGeneratePipeline(ticker) {
         consecutiveErrors = 0;
         const status = await statusRes.json();
         setProgress(status);
+
+        // v3 streaming fields — present only when polling /api/v3/pipeline/status.
+        // For v1, these are all undefined → setters are skipped.
+        if (status.agents !== undefined) setLiveAgents(status.agents);
+        if (status.phase !== undefined) setLivePhase({ phase: status.phase, label: status.phaseLabel });
+        if (status.heartbeatAt !== undefined) setHeartbeatAt(status.heartbeatAt);
+        if (status.tokens !== undefined) setLiveTokens(status.tokens);
+        if (status.costUsd !== undefined) setLiveCostUsd(status.costUsd);
+        if (status.failedSections !== undefined) setFailedSections(status.failedSections);
 
         // Parse sections_json for live rendering (updates on every poll)
         if (status.sections_json) {
@@ -276,5 +294,20 @@ export function useGeneratePipeline(ticker) {
     }
   }, [ticker, startPolling]);
 
-  return { triggerGeneration, generating, generationError, result, progress, liveSections };
+  return {
+    triggerGeneration,
+    generating,
+    generationError,
+    result,
+    progress,
+    liveSections,        // v1 only
+
+    // v3 additions (no-op for v1 polling)
+    liveAgents,
+    livePhase,
+    heartbeatAt,
+    liveTokens,
+    liveCostUsd,
+    failedSections,
+  };
 }
