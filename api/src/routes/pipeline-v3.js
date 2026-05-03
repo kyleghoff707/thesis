@@ -106,7 +106,7 @@ async function handleCallback(request, env) {
   }
 
   const { runId, status, result, error } = body;
-  if (!runId || !['completed', 'failed'].includes(status)) {
+  if (!runId || !['completed', 'completed_with_errors', 'failed'].includes(status)) {
     return json({ error: 'Invalid callback payload' }, 400);
   }
 
@@ -114,6 +114,14 @@ async function handleCallback(request, env) {
     await env.DB.prepare(
       `UPDATE v3_runs SET status = 'completed', result_json = ?, finished_at = datetime('now') WHERE id = ?`
     ).bind(JSON.stringify(result ?? {}), runId).run();
+  } else if (status === 'completed_with_errors') {
+    await env.DB.prepare(
+      `UPDATE v3_runs SET status = 'completed_with_errors', result_json = ?, failed_sections = ?, finished_at = datetime('now') WHERE id = ? AND status NOT IN ('completed','completed_with_errors','failed')`
+    ).bind(
+      JSON.stringify(result ?? {}),
+      JSON.stringify(body.failedSections ?? []),
+      runId,
+    ).run();
   } else {
     await env.DB.prepare(
       `UPDATE v3_runs SET status = 'failed', error_message = ?, finished_at = datetime('now') WHERE id = ?`
