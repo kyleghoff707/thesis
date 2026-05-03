@@ -45,7 +45,7 @@ export async function runQuarterlyReader(input: QuarterlyReaderInput): Promise<R
       schemaName: 'QuarterlyReaderSection',
       schemaDescription: 'Emit your quarterly-filing + transcript analysis as a ReportSection.',
       model: MODEL,
-      maxTokens: 8000,
+      maxTokens: 16000,
       traceName: 'pitchdeck.quarterly-reader',
       traceMetadata: { ticker: input.ticker, runId: input.runId, wave: 0 },
       traceId: input.traceId,

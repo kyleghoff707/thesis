@@ -43,7 +43,7 @@ export async function runAnnualReader(input: AnnualReaderInput): Promise<ReportS
       schemaName: 'AnnualReaderSection',
       schemaDescription: 'Emit your annual-filing analysis as a ReportSection.',
       model: MODEL,
-      maxTokens: 8000,
+      maxTokens: 16000,
       traceName: 'pitchdeck.annual-reader',
       traceMetadata: { ticker: input.ticker, runId: input.runId, wave: 0 },
       traceId: input.traceId,
