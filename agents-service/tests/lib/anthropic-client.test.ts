@@ -148,6 +148,58 @@ describe('callAgentWithStructuredOutput', () => {
         model: 'claude-sonnet-4-6',
         traceName: 'test',
       })
-    ).rejects.toThrow(/no tool_use block/i);
+    ).rejects.toThrow(/Phase A exited without emit_output/i);
+  });
+});
+
+describe('callAgentWithStructuredOutput — Pattern 1 auto-loop', () => {
+  beforeEach(() => mockCreate.mockReset());
+
+  it('returns immediately when model emits emit_output on turn 1', async () => {
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', name: 'emit_output', input: { verdict: 'yes', reason: 'good' } }],
+      stop_reason: 'tool_use',
+      usage: { input_tokens: 100, output_tokens: 20, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+    });
+
+    const result = await callAgentWithStructuredOutput({
+      systemPrompt: 'You are test', userMessage: 'go',
+      schema: TestSchema, schemaName: 'TestOutput', schemaDescription: 't',
+      model: 'claude-sonnet-4-6', traceName: 'test',
+      maxResearchTurns: 5,
+    });
+
+    expect(result).toEqual({ verdict: 'yes', reason: 'good' });
+    expect(mockCreate).toHaveBeenCalledOnce();
+  });
+
+  it('loops while model returns stop_reason=tool_use without emit_output', async () => {
+    // Turn 1: server tool web_search runs (server_tool_use + web_search_tool_result blocks).
+    // No client tool_use to execute, but stop_reason=tool_use.
+    // Turn 2: model emits emit_output.
+    mockCreate
+      .mockResolvedValueOnce({
+        content: [
+          { type: 'server_tool_use', name: 'web_search', input: { query: 'AAPL revenue' } },
+          { type: 'web_search_tool_result', tool_use_id: 'sv1', content: [] },
+        ],
+        stop_reason: 'tool_use',
+        usage: { input_tokens: 200, output_tokens: 30, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      })
+      .mockResolvedValueOnce({
+        content: [{ type: 'tool_use', name: 'emit_output', input: { verdict: 'yes', reason: 'AAPL strong' } }],
+        stop_reason: 'tool_use',
+        usage: { input_tokens: 250, output_tokens: 50, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      });
+
+    const result = await callAgentWithStructuredOutput({
+      systemPrompt: 'You are test', userMessage: 'go',
+      schema: TestSchema, schemaName: 'TestOutput', schemaDescription: 't',
+      model: 'claude-sonnet-4-6', traceName: 'test',
+      maxResearchTurns: 5, maxWebSearches: 3,
+    });
+
+    expect(result).toEqual({ verdict: 'yes', reason: 'AAPL strong' });
+    expect(mockCreate).toHaveBeenCalledTimes(2);
   });
 });

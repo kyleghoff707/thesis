@@ -74,73 +74,90 @@ export async function callAgentWithStructuredOutput<T>(params: CallAgentParams<T
     input_schema: jsonSchema,
   };
 
-  // Construct the system prompt as a content array so we can attach cache_control.
-  // System prompt is cached (5min ephemeral) — agent specialists with the same
-  // system prompt + same DataPacket will hit cache for ~10x cost reduction on input.
+  // Build tools array. web_search is a server tool, added when maxWebSearches > 0.
+  const tools: Anthropic.ToolUnion[] = [];
+  if ((params.maxWebSearches ?? 0) > 0) {
+    tools.push({
+      type: 'web_search_20250305',
+      name: 'web_search',
+      max_uses: params.maxWebSearches,
+    } as unknown as Anthropic.ToolUnion);
+  }
+  // Caller-provided tools (passthrough)
+  for (const t of params.tools ?? []) tools.push(t as unknown as Anthropic.ToolUnion);
+  // emit_output last
+  tools.push(outputTool as unknown as Anthropic.ToolUnion);
+
+  // System prompt with cache_control.
   const system: Anthropic.TextBlockParam[] = [
     { type: 'text', text: params.systemPrompt, cache_control: { type: 'ephemeral' } },
   ];
 
-  // If cacheable context is provided (e.g. DataPacket), put it as the first user-message
-  // content block with its own cache_control breakpoint.
+  // User content (cacheable context, then user message).
   const userContent: Anthropic.ContentBlockParam[] = [];
   if (params.cacheableContext) {
-    userContent.push({
-      type: 'text',
-      text: params.cacheableContext,
-      cache_control: { type: 'ephemeral' },
-    });
+    userContent.push({ type: 'text', text: params.cacheableContext, cache_control: { type: 'ephemeral' } });
   }
   userContent.push({ type: 'text', text: params.userMessage });
 
-  // 4xx errors are non-retryable by definition — Inngest's retry policy would just
-  // burn tokens making the same malformed request. Wrap them in NonRetriableError so
-  // Inngest gives up immediately. 5xx and network errors propagate normally.
-  let response;
-  try {
-    response = await anthropic.messages.create({
-      model: params.model,
-      max_tokens: params.maxTokens ?? 8000,
-      system,
-      messages: [{ role: 'user', content: userContent }],
-      tools: [...(params.tools ?? []), outputTool] as Anthropic.ToolUnion[],
-      tool_choice: { type: 'tool', name: 'emit_output' },
-    });
-  } catch (err) {
-    if (err instanceof Anthropic.APIError && err.status >= 400 && err.status < 500) {
-      throw new NonRetriableError(
-        `Anthropic ${err.status} (non-retryable): ${err.message}`,
-        { cause: err },
-      );
+  // Conversation accumulator across turns.
+  const messages: Anthropic.MessageParam[] = [{ role: 'user', content: userContent }];
+
+  const maxResearchTurns = params.maxResearchTurns ?? 1;
+
+  // ─── Phase A — research loop with tool_choice='auto' ───────────────────────
+  for (let turn = 0; turn < maxResearchTurns; turn++) {
+    let response: Anthropic.Message;
+    try {
+      response = await anthropic.messages.create({
+        model: params.model,
+        max_tokens: params.maxTokens ?? 8000,
+        system,
+        messages,
+        tools,
+        tool_choice: maxResearchTurns > 1 ? { type: 'auto' } : { type: 'tool', name: 'emit_output' },
+      });
+    } catch (err) {
+      if (err instanceof Anthropic.APIError && err.status >= 400 && err.status < 500) {
+        throw new NonRetriableError(
+          `Anthropic ${err.status} (non-retryable): ${err.message}`,
+          { cause: err },
+        );
+      }
+      throw err;
     }
-    throw err;
+
+    messages.push({ role: 'assistant', content: response.content });
+
+    // Did the model emit_output?
+    const emitBlock = response.content.find(
+      (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use' && b.name === 'emit_output'
+    );
+    if (emitBlock) {
+      generation.end({
+        output: { stopReason: response.stop_reason },
+        usage: {
+          input: response.usage.input_tokens,
+          output: response.usage.output_tokens,
+          total: response.usage.input_tokens + response.usage.output_tokens,
+        },
+        metadata: {
+          cacheCreationTokens: response.usage.cache_creation_input_tokens ?? 0,
+          cacheReadTokens: response.usage.cache_read_input_tokens ?? 0,
+        },
+      });
+      const parsed = params.schema.safeParse(emitBlock.input);
+      if (!parsed.success) throw new Error(`Schema validation failed: ${parsed.error.message}`);
+      return parsed.data;
+    }
+
+    // Loop continues — server tools auto-feed results, no client tool execution needed.
+    if (response.stop_reason === 'tool_use') continue;
+
+    // Model returned text without emitting. Break to Phase B (Task 14).
+    if (response.stop_reason === 'end_turn') break;
   }
 
-  generation.end({
-    output: { stopReason: response.stop_reason },
-    usage: {
-      input: response.usage.input_tokens,
-      output: response.usage.output_tokens,
-      total: response.usage.input_tokens + response.usage.output_tokens,
-    },
-    metadata: {
-      cacheCreationTokens: response.usage.cache_creation_input_tokens ?? 0,
-      cacheReadTokens: response.usage.cache_read_input_tokens ?? 0,
-    },
-  });
-
-  // Find the tool_use block — there should be exactly one because of tool_choice.
-  const toolUse = response.content.find((b) => b.type === 'tool_use');
-  if (!toolUse || toolUse.type !== 'tool_use' || toolUse.name !== 'emit_output') {
-    throw new Error(`Anthropic returned no tool_use block (stop_reason=${response.stop_reason})`);
-  }
-
-  // Validate against Zod schema. If parse fails, throw — the Inngest retry policy
-  // will catch and retry with the validation error in the prompt (handled in Task 15).
-  const parsed = params.schema.safeParse(toolUse.input);
-  if (!parsed.success) {
-    throw new Error(`Schema validation failed: ${parsed.error.message}`);
-  }
-
-  return parsed.data;
+  // Phase B will handle this in Task 14. Until then, fail loud.
+  throw new Error('Phase A exited without emit_output (Phase B not yet implemented — see Task 14)');
 }
