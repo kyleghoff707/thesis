@@ -11,7 +11,7 @@ export const CitationSchema = z.object({
   ref: z.string(),
   text: z.string(),
   source: z.string(),
-  url: z.string().url().optional(),
+  url: z.string().url().nullish(),
 });
 
 // Cross-cutting finding — observations relevant to other agents' sections.
