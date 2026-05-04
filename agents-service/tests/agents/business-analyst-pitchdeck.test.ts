@@ -28,13 +28,19 @@ const SECTION = (n: number, title: string) => ({
 });
 
 describe('runBusinessAnalystPitchDeck', () => {
-  it('loads BA prompt, builds userMessage with PSR + findings, returns MultiSection', async () => {
-    const stub = { sections: [SECTION(1, 'Radar'), SECTION(2, 'Simple & Predictable')] };
-    (callAgentWithStructuredOutput as any).mockResolvedValueOnce({
-      data: stub,
-      modelUsed: 'claude-sonnet-4-6',
-      tokenCost: { input: 100, output: 50 },
-    });
+  it('makes 2 sequential single-section calls and returns MultiSection', async () => {
+    // Mock 2 single-section responses (one per section).
+    (callAgentWithStructuredOutput as any)
+      .mockResolvedValueOnce({
+        data: SECTION(1, 'Radar'),
+        modelUsed: 'claude-sonnet-4-6',
+        tokenCost: { input: 100, output: 50 },
+      })
+      .mockResolvedValueOnce({
+        data: SECTION(2, 'Simple & Predictable'),
+        modelUsed: 'claude-sonnet-4-6',
+        tokenCost: { input: 120, output: 60 },
+      });
 
     const result = await runBusinessAnalystPitchDeck({
       ticker: 'AAPL', runId: 'r1',
@@ -43,20 +49,30 @@ describe('runBusinessAnalystPitchDeck', () => {
       crossCuttingFindings: [{ finding: 'high debt', relevantAgents: [], severity: 'high', source: 'fa' }],
     });
 
+    // Wrapper returns MultiSection-shaped output (2 sections merged)
     expect(result.sections).toHaveLength(2);
-    for (const s of result.sections) {
-      expect(s.modelUsed).toBe('claude-sonnet-4-6');
-      expect(s.tokenCost).toEqual({ input: 100, output: 50 });
-    }
+    expect(result.sections[0].sectionNumber).toBe(1);
+    expect(result.sections[1].sectionNumber).toBe(2);
+    expect(result.sections[0].modelUsed).toBe('claude-sonnet-4-6');
+    expect(result.sections[0].tokenCost).toEqual({ input: 100, output: 50 });
+    expect(result.sections[1].tokenCost).toEqual({ input: 120, output: 60 });
     expect(loadAgentPrompt).toHaveBeenCalledWith('business-analyst-pitchdeck');
+    expect((callAgentWithStructuredOutput as any).mock.calls).toHaveLength(2);
 
-    const args = (callAgentWithStructuredOutput as any).mock.calls[0][0];
-    expect(args.userMessage).toContain('AAPL');
-    expect(args.userMessage).toContain('## DataPacket');
-    expect(args.userMessage).toContain('## PSR Findings');
-    expect(args.userMessage).toContain('## Cross-Cutting Findings');
-    expect(args.model).toBe('claude-sonnet-4-6');
-    expect(args.maxWebSearches).toBe(5);
-    expect(args.maxResearchTurns).toBe(5);
+    // First call (Section 1) — userMessage targets just Section 1 with ReportSectionSchema
+    const callOne = (callAgentWithStructuredOutput as any).mock.calls[0][0];
+    expect(callOne.userMessage).toContain('Section 1 (Radar)');
+    expect(callOne.userMessage).toContain('AAPL');
+    expect(callOne.userMessage).toContain('## DataPacket');
+    expect(callOne.userMessage).toContain('## PSR Findings');
+    expect(callOne.userMessage).toContain('## Cross-Cutting Findings');
+    expect(callOne.model).toBe('claude-sonnet-4-6');
+    expect(callOne.maxWebSearches).toBe(3);
+    expect(callOne.traceName).toBe('pitchdeck.business-analyst.section-1');
+
+    // Second call (Section 2)
+    const callTwo = (callAgentWithStructuredOutput as any).mock.calls[1][0];
+    expect(callTwo.userMessage).toContain('Section 2 (Simple & Predictable)');
+    expect(callTwo.traceName).toBe('pitchdeck.business-analyst.section-2');
   });
 });

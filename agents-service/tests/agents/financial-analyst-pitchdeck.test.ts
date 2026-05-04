@@ -28,13 +28,23 @@ const SECTION = (n: number, title: string) => ({
 });
 
 describe('runFinancialAnalystPitchDeck', () => {
-  it('returns MultiSection with Sections 5, 7, 8', async () => {
-    const stub = { sections: [SECTION(5, 'FCF'), SECTION(7, 'ROE'), SECTION(8, 'Balance Sheet')] };
-    (callAgentWithStructuredOutput as any).mockResolvedValueOnce({
-      data: stub,
-      modelUsed: 'claude-sonnet-4-6',
-      tokenCost: { input: 200, output: 80 },
-    });
+  it('makes 3 sequential single-section calls and returns MultiSection', async () => {
+    (callAgentWithStructuredOutput as any)
+      .mockResolvedValueOnce({
+        data: SECTION(5, 'Free Cash Flow Generative'),
+        modelUsed: 'claude-sonnet-4-6',
+        tokenCost: { input: 200, output: 80 },
+      })
+      .mockResolvedValueOnce({
+        data: SECTION(7, 'ROE / ROIC / ROA & Debt'),
+        modelUsed: 'claude-sonnet-4-6',
+        tokenCost: { input: 220, output: 90 },
+      })
+      .mockResolvedValueOnce({
+        data: SECTION(8, 'Strong Balance Sheet'),
+        modelUsed: 'claude-sonnet-4-6',
+        tokenCost: { input: 180, output: 70 },
+      });
 
     const result = await runFinancialAnalystPitchDeck({
       ticker: 'AAPL', runId: 'r1',
@@ -44,15 +54,21 @@ describe('runFinancialAnalystPitchDeck', () => {
     });
 
     expect(result.sections).toHaveLength(3);
-    for (const s of result.sections) {
-      expect(s.modelUsed).toBe('claude-sonnet-4-6');
-      expect(s.tokenCost).toEqual({ input: 200, output: 80 });
-    }
+    expect(result.sections.map((s) => s.sectionNumber)).toEqual([5, 7, 8]);
+    expect(result.sections[0].tokenCost).toEqual({ input: 200, output: 80 });
+    expect(result.sections[1].tokenCost).toEqual({ input: 220, output: 90 });
+    expect(result.sections[2].tokenCost).toEqual({ input: 180, output: 70 });
     expect(loadAgentPrompt).toHaveBeenCalledWith('financial-analyst-pitchdeck');
+    expect((callAgentWithStructuredOutput as any).mock.calls).toHaveLength(3);
 
-    const args = (callAgentWithStructuredOutput as any).mock.calls[0][0];
-    expect(args.maxTokens).toBe(16000);
-    expect(args.maxWebSearches).toBe(3);
-    expect(args.traceName).toBe('pitchdeck.financial-analyst');
+    const callOne = (callAgentWithStructuredOutput as any).mock.calls[0][0];
+    expect(callOne.userMessage).toContain('Section 5');
+    expect(callOne.maxTokens).toBe(16000);
+    expect(callOne.maxWebSearches).toBe(2);
+    expect(callOne.traceName).toBe('pitchdeck.financial-analyst.section-5');
+
+    const callThree = (callAgentWithStructuredOutput as any).mock.calls[2][0];
+    expect(callThree.userMessage).toContain('Section 8');
+    expect(callThree.traceName).toBe('pitchdeck.financial-analyst.section-8');
   });
 });
