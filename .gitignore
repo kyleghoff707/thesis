@@ -61,10 +61,8 @@ src/engines/__tests__/fixtures/edgar-cache/
 .claude/scheduled_tasks.lock
 .council/
 
-# Observatory — Obsidian workspace config (vault content is tracked)
-observatory/.obsidian/
 api/src/pipeline/curriculumBundle.js
 
 # Agent YAML sync backups (pre-migration snapshots, local-only)
-agents-v2/.backup-*/
-agents-v2/.staging-sync/
+agents/.backup-*/
+agents/.staging-sync/

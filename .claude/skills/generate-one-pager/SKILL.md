@@ -38,17 +38,9 @@ node scripts/slice-datapacket.js {TICKER} one-pager > /tmp/{TICKER}-one-pager-sl
 
 Keeps: companyInfo, classification, financials, ttm, growthRates, returnMetrics, debtMetrics, fcf, keyMetrics, gurus, caveats. Drops everything else — narrative context comes from web search.
 
-## Step 3.5: Initialize Observatory
-
-```bash
-node scripts/observatory-init.js {TICKER} onePager .thes1s/reports/{TICKER}/data-packet.json
-```
-
-Capture the **last line of output** as `RUN_ID`. Retry once on failure.
-
 ## Step 4: Dispatch One Pager Subagent
 
-Read `agents-v2/one-pager/prompt.md`.
+Read `agents/one-pager/prompt.md`.
 
 Dispatch a single Sonnet subagent via the **Agent tool** with:
 
@@ -122,74 +114,6 @@ Map verdict → status: PASS → "pass", FAIL → "fail", WATCHLIST → "review"
 
 Write to `.thes1s/reports/{TICKER}/one-pager.json`.
 
-## Step 5.5: Observatory Recording
-
-Parse the subagent's `<usage>` block:
-
-```
-<usage>total_tokens: 90220
-tool_uses: 17
-duration_ms: 202720</usage>
-```
-
-Extract `TOTAL_TOKENS`, `TOOL_USES`, `DURATION_SECONDS` (= duration_ms / 1000). Estimate `WEB_SEARCHES = tool_uses - 3`.
-
-```bash
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role one-pager --wave 0 --stage onePager \
-  --sections "company_info,minimum_standards,meaning,growth_metrics,valuation_summary,overall_verdict" \
-  --model claude-sonnet-4-6 \
-  --duration {DURATION_SECONDS} --verdict {OVERALL_VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {TOTAL_TOKENS} --web-searches {WEB_SEARCHES}
-
-node scripts/observatory-record-event.js {RUN_ID} dispatch \
-  --wave 0 --stage "One Pager" \
-  --agents "one-pager" --parallel false --duration {DURATION_SECONDS}
-```
-
-Always pass `--tokens` and `--web-searches`. Without them, `usage.cost` records as $0.
-
-## Step 5.6: Pre-Finalize Sweep
-
-Log every event the in-the-moment work missed:
-
-```
-[ ] Markdown-fence stripping?       → format-violation
-[ ] Preamble before JSON?            → format-violation
-[ ] Multiple JSON objects?           → format-violation
-[ ] Key mismatch vs schema?          → format-violation
-[ ] Used JSON fallback past step 1?  → format-violation
-[ ] Dispatched the retry prompt?     → retry
-[ ] Dispatched a second time?        → retry
-```
-
-For each `yes`:
-
-```bash
-node scripts/observatory-record-event.js {RUN_ID} format-violation \
-  --agent one-pager --violation "{describe}" --fix-applied true
-
-node scripts/observatory-record-event.js {RUN_ID} retry \
-  --agent one-pager --wave 0 --reason "{short reason}" --attempt 1 --resolved {true|false}
-```
-
-## Step 5.7: Finalize Observatory
-
-```bash
-node scripts/observatory-finalize.js {RUN_ID} .thes1s/reports/{TICKER}/one-pager.json --verdict {OVERALL_VERDICT} --tokens {TOTAL_TOKENS} --tool-uses {TOOL_USES} --duration {DURATION_SECONDS}
-```
-
-Retry once on error.
-
-## Step 5.8: Wiki Synthesis
-
-```bash
-node --loader ./scripts/node-esm-loader.js scripts/observatory-synthesize.js {RUN_ID}
-```
-
-Retry once on error.
-
 ## Step 6: Generate PDF
 
 ```bash
@@ -201,10 +125,11 @@ If it fails, print warning and continue.
 ## Step 7: Auto-Archive
 
 ```bash
-mkdir -p .thes1s/reports/{TICKER}/archive/{RUN_ID}
-cp .thes1s/reports/{TICKER}/one-pager.json .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
-cp .thes1s/reports/{TICKER}/data-packet.json .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
-cp .thes1s/reports/{TICKER}/*.pdf .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
+ARCHIVE_ID=$(date +%Y%m%d-%H%M%S)
+mkdir -p .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}
+cp .thes1s/reports/{TICKER}/one-pager.json .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thes1s/reports/{TICKER}/data-packet.json .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thes1s/reports/{TICKER}/*.pdf .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
 ```
 
 ## Step 8: Print Summary
@@ -213,7 +138,7 @@ Print: overall verdict, per-section verdicts + confidence, red flag count, outpu
 
 ## Constraints
 
-**No API calls.** All AI work runs as Claude Code subagents. Never call `run-pipeline.js`, `onePagerGenerator.js`, or the Claude API directly.
+**No API calls.** All AI work runs as Claude Code subagents. Never call `onePagerGenerator.js` or the Claude API directly.
 
 **Contamination boundary.** During generation, NEVER read from:
 - `knowledge/stage-1-one-pager/examples/`

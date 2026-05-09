@@ -1,16 +1,11 @@
-// Thes1s API — Cloudflare Worker
+// Thesis API — Cloudflare Worker
 // Routes: /auth/*, /user/*, /data/*, /proxy/*, /health
-// Auth: HTTP-only session cookies, invite-only signup
+// Auth: HTTP-only session cookies
 
 import { handleAuth } from './routes/auth.js';
 import { handleUser } from './routes/user.js';
 import { handleData } from './routes/data.js';
 import { handleProxy } from './routes/proxy.js';
-import { handleClaude } from './routes/claude.js';
-import { handleStripeWebhook, handleStripe } from './routes/stripe.js';
-import { handlePipeline } from './routes/pipeline.js';
-import { handlePipelineV3 } from './routes/pipeline-v3.js';
-import { handleAdmin } from './routes/admin.js';
 import { handleCron } from './cron/index.js';
 import { authenticate } from './middleware/auth.js';
 
@@ -30,7 +25,7 @@ function getCorsHeaders(request) {
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, x-api-key, anthropic-version, anthropic-beta, x-claude-caller, x-claude-ticker',
+    'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Credentials': 'true',
   };
 }
@@ -71,49 +66,21 @@ export default {
       else if (path.startsWith('/auth/')) {
         response = await handleAuth(request, env, path);
       }
-      // Stripe webhook (no auth — verified by Stripe signature)
-      else if (path === '/stripe/webhook') {
-        response = await handleStripeWebhook(request, env);
-      }
       // Public API proxies (no auth — SEC, Yahoo, Finviz are public APIs)
-      else if (path.startsWith('/proxy/') && !path.startsWith('/proxy/claude/')) {
+      else if (path.startsWith('/proxy/')) {
         response = await handleProxy(request, env, path, url);
       }
       // Shared data (no auth — cron-populated D1/R2, read-only, not user-specific)
       else if (path.startsWith('/data/')) {
         response = await handleData(request, env, path);
       }
-      // v3 pipeline callback (no auth — Fly POSTs here, validated via X-Callback-Secret)
-      else if (path === '/api/v3/pipeline/callback' && request.method === 'POST') {
-        response = await handlePipelineV3(request, env, path, null);
-      }
-      // v3 pipeline progress (no auth — Fly POSTs here, validated via X-Callback-Secret)
-      else if (path === '/api/v3/pipeline/progress' && request.method === 'POST') {
-        response = await handlePipelineV3(request, env, path, null);
-      }
-      // v3 pipeline R2 assembly fetch (no auth — Fly GETs here, validated via X-Callback-Secret)
-      else if (path.startsWith('/api/v3/pipeline/assembly/') && request.method === 'GET') {
-        const v3Response = await handlePipelineV3(request, env, path, null);
-        response = v3Response ?? json({ error: 'Not found' }, 404);
-      }
       // All other routes require authentication
       else {
         const user = await authenticate(request, env);
         if (!user) {
           response = json({ error: 'Unauthorized' }, 401);
-        } else if (path.startsWith('/api/v3/pipeline/')) {
-          const v3Response = await handlePipelineV3(request, env, path, user);
-          response = v3Response ?? json({ error: 'Not found' }, 404);
-        } else if (path.startsWith('/api/pipeline/')) {
-          response = await handlePipeline(request, env, path, user);
-        } else if (path.startsWith('/admin/')) {
-          response = await handleAdmin(request, env, path, user);
         } else if (path.startsWith('/user/')) {
           response = await handleUser(request, env, path, user);
-        } else if (path.startsWith('/proxy/claude/')) {
-          response = await handleClaude(request, env, ctx, user);
-        } else if (path.startsWith('/stripe/')) {
-          response = await handleStripe(request, env, path, user);
         } else {
           response = json({ error: 'Not found' }, 404);
         }

@@ -19,7 +19,7 @@ Orchestrates 7 specialist agents across 2 phases via Claude Code Agent tool disp
 AGENT_REGISTRY:
 
   risk-analyst:
-    prompt: agents-v2/risk-analyst-fullstory/prompt.md
+    prompt: agents/risk-analyst-fullstory/prompt.md
     model: sonnet
     sections: [event_analysis]
     phase: 1
@@ -28,7 +28,7 @@ AGENT_REGISTRY:
     dpFields: [companyInfo, classification, financials, ttm, growthRates, peers, insiders, caveats]
 
   business-analyst:
-    prompt: agents-v2/business-analyst-fullstory/prompt.md
+    prompt: agents/business-analyst-fullstory/prompt.md
     model: sonnet
     sections: [meaning_checklist]
     phase: 1
@@ -36,7 +36,7 @@ AGENT_REGISTRY:
     dpFields: [companyInfo, classification, ruleOneScore, peers, gurus, financials, ttm, growthRates, caveats]
 
   competitor-evaluator:
-    prompt: agents-v2/competitor-evaluator-fullstory/prompt.md
+    prompt: agents/competitor-evaluator-fullstory/prompt.md
     model: sonnet
     sections: [moat_checklist]
     phase: 1
@@ -44,7 +44,7 @@ AGENT_REGISTRY:
     dpFields: [companyInfo, classification, ruleOneScore, peers, peerMetrics, financials, ttm, growthRates, caveats]
 
   management-evaluator:
-    prompt: agents-v2/management-evaluator-fullstory/prompt.md
+    prompt: agents/management-evaluator-fullstory/prompt.md
     model: sonnet
     sections: [management_checklist]
     phase: 1
@@ -52,7 +52,7 @@ AGENT_REGISTRY:
     dpFields: [companyInfo, classification, compensation, insiders, gurus, financials, ttm, returnMetrics, caveats]
 
   valuation-specialist:
-    prompt: agents-v2/valuation-specialist-fullstory/prompt.md
+    prompt: agents/valuation-specialist-fullstory/prompt.md
     model: sonnet
     sections: [valuation_confirmation]
     phase: 1
@@ -60,7 +60,7 @@ AGENT_REGISTRY:
     dpFields: [companyInfo, classification, financials, ttm, growthRates, returnMetrics, fcf, keyMetrics, caveats]
 
   synthesis-writer:
-    prompt: agents-v2/synthesis-writer-fullstory/prompt.md
+    prompt: agents/synthesis-writer-fullstory/prompt.md
     model: sonnet
     sections: [inversion_rebuttal]
     phase: 2
@@ -68,7 +68,7 @@ AGENT_REGISTRY:
     dpFields: []
 
   financial-analyst:
-    prompt: agents-v2/financial-analyst-fullstory/prompt.md
+    prompt: agents/financial-analyst-fullstory/prompt.md
     model: sonnet
     sections: []
     phase: 2
@@ -132,23 +132,15 @@ And stop.
 
 Store both for downstream use.
 
-## Step 2: Initialize Observatory
-
-```bash
-node scripts/observatory-init.js {TICKER} fullStory .thes1s/reports/{TICKER}/data-packet.json
-```
-
-Capture the **last line of output** as `RUN_ID`. Retry once on failure.
-
 ## Step 3: Read Prompts and Prepare Context
 
 ### 3a: Read Phase 1 Agent Prompts
 
-- `agents-v2/risk-analyst-fullstory/prompt.md`
-- `agents-v2/business-analyst-fullstory/prompt.md`
-- `agents-v2/competitor-evaluator-fullstory/prompt.md`
-- `agents-v2/management-evaluator-fullstory/prompt.md`
-- `agents-v2/valuation-specialist-fullstory/prompt.md`
+- `agents/risk-analyst-fullstory/prompt.md`
+- `agents/business-analyst-fullstory/prompt.md`
+- `agents/competitor-evaluator-fullstory/prompt.md`
+- `agents/management-evaluator-fullstory/prompt.md`
+- `agents/valuation-specialist-fullstory/prompt.md`
 
 ### 3b: Build DataPacket and Pitch Deck Context
 
@@ -272,68 +264,13 @@ After all 5 agents return:
 
 If an agent fails entirely, wait 30 seconds and retry once.
 
-#### Observatory Recording
-
-Per-agent usage: parse each subagent's `<usage>` block:
-```
-<usage>total_tokens: 24500
-tool_uses: 8
-duration_ms: 187000</usage>
-```
-
-Pass to record-agent: `{AGENT_TOTAL_TOKENS}` = total_tokens, `{SECONDS_ELAPSED}` = duration_ms / 1000, `{AGENT_WEB_SEARCHES}` = count `web_search` tool calls explicitly if visible, else estimate. Phase 1 analysis: `max(0, tool_uses - 1)`. Bull/Bear/Rebuttal: `max(0, tool_uses - 1)`. Judge and Compose: pass `0` (no web search).
-
-Always pass `--tokens` and `--web-searches`. Without them, `usage.cost` records as $0.
-
-```bash
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role risk-analyst --wave 1 --stage fullStory \
-  --sections "event_analysis" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role business-analyst --wave 1 --stage fullStory \
-  --sections "meaning_checklist" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role competitor-evaluator --wave 1 --stage fullStory \
-  --sections "moat_checklist" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role management-evaluator --wave 1 --stage fullStory \
-  --sections "management_checklist" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role valuation-specialist --wave 1 --stage fullStory \
-  --sections "valuation_confirmation" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-node scripts/observatory-record-event.js {RUN_ID} dispatch \
-  --wave 1 --stage "Deep Analysis" \
-  --agents "risk-analyst,business-analyst,competitor-evaluator,management-evaluator,valuation-specialist" \
-  --parallel true --duration {PHASE_DURATION_SECONDS}
-```
-
 ## Step 6: Phase 2 — The Debate (Strictly Sequential)
 
 ### 6a: Read Debate Prompts
 
-- `agents-v2/synthesis-writer-fullstory/prompt.md` (Bull, Rebuttal, Compose)
-- `agents-v2/risk-analyst-fullstory/prompt.md` (Bear — already read)
-- `agents-v2/financial-analyst-fullstory/prompt.md` (Judge)
+- `agents/synthesis-writer-fullstory/prompt.md` (Bull, Rebuttal, Compose)
+- `agents/risk-analyst-fullstory/prompt.md` (Bear — already read)
+- `agents/financial-analyst-fullstory/prompt.md` (Judge)
 
 ### 6b: Build Section Summaries
 
@@ -480,56 +417,6 @@ Return your output as the Composition ReportSectionSchema JSON (key: "inversion_
 
 Wait. Extract COMPLETE JSON, validate ReportSectionSchema, save to `sections/inversion_rebuttal.json`. 10-50KB.
 
-## Step 7: Observatory Recording — Debate Phase
-
-```bash
-# After Bull (synthesis-writer)
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role synthesis-writer-bull --wave 2 --stage fullStory \
-  --sections "debate_bull" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-# After Bear (risk-analyst)
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role risk-analyst-bear --wave 2 --stage fullStory \
-  --sections "debate_bear" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-# After Rebuttal (synthesis-writer)
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role synthesis-writer-rebuttal --wave 2 --stage fullStory \
-  --sections "debate_rebuttal" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-# After Judge (financial-analyst)
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role financial-analyst-judge --wave 2 --stage fullStory \
-  --sections "debate_judge" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-# After Compose (synthesis-writer)
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role synthesis-writer-compose --wave 2 --stage fullStory \
-  --sections "inversion_rebuttal" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-# Phase dispatch record
-node scripts/observatory-record-event.js {RUN_ID} dispatch \
-  --wave 2 --stage "Adversarial Debate" \
-  --agents "synthesis-writer,risk-analyst,synthesis-writer,financial-analyst,synthesis-writer" \
-  --parallel false --duration {PHASE_DURATION_SECONDS}
-```
-
 ## Step 8: Assemble Final Report
 
 ```json
@@ -567,58 +454,6 @@ Write JSON to `.thes1s/reports/{TICKER}/full-story.json`.
 
 Generate human-readable markdown at `.thes1s/reports/{TICKER}/full-story.md`. Structure: title + verdict + Pitch Deck verdict + debate direction header → Executive Summary (Section 6 verdictRationale + debate outcome) → Phase 1 sections (1-5) with narrative + verdict + checklist score + red flags → Section 6 (Inversion & Rebuttal) narrative + debate scorecard table (per-exchange Bull/Bear/Outcome) → Section verdicts table → All red flags aggregated → Citations.
 
-## Step 8.5: Pre-Finalize Event Sweep
-
-Two-part sweep: scripted file-evidence checks, then a residual checklist for orchestrator-memory items the script cannot see.
-
-**Part 1 — Scripted file-evidence sweep.** Run verbatim:
-
-```bash
-node scripts/observatory-sweep-debate.js {RUN_ID} {TICKER}
-```
-
-Detects (from saved debate artifacts): bull weak-strength concessions, bull factual errors acknowledged in rebuttal narratives, judge schema drift (missing judgeScore/pointNumber), missing-or-miscounted scoreboard, stub debate-step files (<2KB), markdown-fence wrap survival. Prints `logged N events (...)` summary.
-
-**Part 2 — Orchestrator-memory checklist.** Answer honestly. **When in doubt, log it.**
-
-```
-[ ] Did any agent timeout, stall, or fail and get re-dispatched?          → retry (+ stall if >15min)
-[ ] Did any "Stream idle timeout" or partial-response error occur?         → stall
-[ ] Did you trim any agent's context/prompt and re-dispatch?               → retry, reason: "trimmed prompt to avoid timeout"
-[ ] Did you write a debate step's output from orchestrator memory          → retry, reason: "orchestrator wrote from memory"
-     instead of re-dispatching the agent?                                     (AND format-violation: "protocol violation — orchestrator as agent")
-[ ] Did any agent use the Write tool when protocol said "return JSON"?     → format-violation
-[ ] Did any agent wrap JSON in preamble text in the stream you observed    → format-violation
-     (gone after extraction)?
-[ ] Did you use the JSON extraction fallback chain for any agent?          → format-violation per agent
-[ ] Did the rebuttal acknowledge any factual concession the script's       → format-violation per concession
-     regex missed (Bull conceding to Bear with phrasing other than
-     "factual error" / "the bear correctly caught")?
-[ ] Did any agent flag missing DataPacket fields?                          → data-gap
-[ ] Were any Pitch Deck inheritance sections missing/empty when Phase 1    → data-gap
-     agents were dispatched?
-```
-
-For each `yes`, run the corresponding `observatory-record-event.js` command (see Format Violations + Retry Logic at the end of this skill for syntax).
-
-## Step 9: Finalize Observatory
-
-Parse the aggregate `<usage>` block across all subagent calls.
-
-```bash
-node scripts/observatory-finalize.js {RUN_ID} .thes1s/reports/{TICKER}/full-story.json --verdict {OVERALL_VERDICT} --tokens {TOTAL_TOKENS} --tool-uses {TOOL_USES} --duration {DURATION_SECONDS}
-```
-
-Retry once on error.
-
-## Step 9.5: Wiki Synthesis
-
-```bash
-node --loader ./scripts/node-esm-loader.js scripts/observatory-synthesize.js {RUN_ID}
-```
-
-Retry once on error.
-
 ## Step 10: Generate PDF
 
 The PDF reader expects `full-story-api.json`, so copy first:
@@ -633,11 +468,12 @@ If it fails, print warning and continue.
 ## Step 11: Auto-Archive
 
 ```bash
-mkdir -p .thes1s/reports/{TICKER}/archive/{RUN_ID}
-cp .thes1s/reports/{TICKER}/full-story.json .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
-cp .thes1s/reports/{TICKER}/full-story-api.json .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
-cp .thes1s/reports/{TICKER}/sections/debate-*.json .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
-cp .thes1s/reports/{TICKER}/*.pdf .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
+ARCHIVE_ID=$(date +%Y%m%d-%H%M%S)
+mkdir -p .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}
+cp .thes1s/reports/{TICKER}/full-story.json .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thes1s/reports/{TICKER}/full-story-api.json .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thes1s/reports/{TICKER}/sections/debate-*.json .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thes1s/reports/{TICKER}/*.pdf .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
 ```
 
 Retry once on error.
@@ -658,50 +494,13 @@ After every subagent completes:
 4. If all parsing fails, retry once with: "Your previous response could not be parsed as JSON. Output ONLY the raw JSON — no markdown fences, no commentary. Start with `{` or `[` and end with `}` or `]`."
 5. If retry fails, create a minimal section with `status: "failed"` and save raw response to `sections/{key}-raw.txt`.
 
-### REQUIRED: Log Format Violations
-
-Whenever the fallback chain triggers ANY of these, run before proceeding:
-
-```bash
-# Fallback extraction used
-node scripts/observatory-record-event.js {RUN_ID} format-violation \
-  --agent {AGENT_ROLE} --violation "fallback extraction required: {markdown fences | preamble | raw JSON | first-to-last brace}" --fix-applied true
-
-# Key mismatch
-node scripts/observatory-record-event.js {RUN_ID} format-violation \
-  --agent {AGENT_ROLE} --violation "key mismatch: returned '{actual}' expected '{expected}'" --fix-applied true
-
-# Shape mismatch
-node scripts/observatory-record-event.js {RUN_ID} format-violation \
-  --agent {AGENT_ROLE} --violation "shape mismatch: {describe}" --fix-applied true
-
-# Wrong filesystem path
-node scripts/observatory-record-event.js {RUN_ID} format-violation \
-  --agent {AGENT_ROLE} --violation "filesystem violation: saved to {wrong path} instead of {expected path}" --fix-applied true
-
-# Used Write tool when protocol said return JSON
-node scripts/observatory-record-event.js {RUN_ID} format-violation \
-  --agent {AGENT_ROLE} --violation "protocol violation: used Write tool instead of response body" --fix-applied true
-```
-
-If JSON parsing required the retry prompt at step 4, log a retry too.
-
 ## Narrative Recovery
 
 After extracting section JSON, check each section's `narrative` field:
 - If `narrative.length < 200`: agent likely produced a stub.
   1. Search the agent's full response text for substantial prose (markdown with ## headings, > 200 chars)
-  2. If found, inject into the section's `narrative` field and re-save. Log:
-     ```bash
-     node scripts/observatory-record-event.js {RUN_ID} format-violation \
-       --agent {AGENT_ROLE} --violation "narrative stub in JSON, recovered {length} chars from response body" --fix-applied true
-     ```
-  3. If no recoverable narrative, retry the agent once: "Your previous output had a {length}-char narrative stub. The narrative field MUST contain your FULL analysis (500+ words). Write the complete narrative." Log:
-     ```bash
-     node scripts/observatory-record-event.js {RUN_ID} retry \
-       --agent {AGENT_ROLE} --wave {N} --reason "narrative stub ({length} chars)" --attempt 1 --resolved false
-     ```
-     Re-run with `--resolved true` if the retry succeeded.
+  2. If found, inject into the section's `narrative` field and re-save.
+  3. If no recoverable narrative, retry the agent once: "Your previous output had a {length}-char narrative stub. The narrative field MUST contain your FULL analysis (500+ words). Write the complete narrative."
   4. If retry also produces a stub, save with a warning and continue.
 
 ## Retry Logic
@@ -712,19 +511,7 @@ If any agent fails entirely (rate limit, timeout, error):
 3. If retry fails, log the error, save partial output with `status: "failed"`, and continue
 4. Do NOT retry more than once
 
-### REQUIRED: Log Every Retry and Stall
-
-```bash
-# Agent retry
-node scripts/observatory-record-event.js {RUN_ID} retry \
-  --agent {AGENT_ROLE} --wave {N} --reason "{short reason: timeout | rate-limit | JSON parse failed | narrative stub | schema violation}" --attempt 1 --resolved {true|false}
-
-# Stall detected (>15min sonnet, >25min opus)
-node scripts/observatory-record-event.js {RUN_ID} stall \
-  --agent {AGENT_ROLE} --wave {N} --duration {seconds_before_intervention} --resolution "{retried with trimmed prompt | killed and re-dispatched | timed out}"
-```
-
-Log both if both apply. **Anti-pattern specific to Full Story:** when a debate step (Bear, Rebuttal, Compose) stalls, the orchestrator's instinct is to write the debate step output directly from its own context using the Write tool instead of re-dispatching the agent. **This is a retry AND a protocol violation — log both.**
+**Anti-pattern specific to Full Story:** when a debate step (Bear, Rebuttal, Compose) stalls, the orchestrator's instinct is to write the debate step output directly from its own context using the Write tool instead of re-dispatching the agent. Do not. Re-dispatch the agent.
 
 ## Constraints
 
@@ -744,4 +531,4 @@ Log both if both apply. **Anti-pattern specific to Full Story:** when a debate s
 
 **Error resilience.** Phase 1 agent fails after retry → log, save what succeeded, continue to Phase 2 with available sections. Debate step fails after retry → debate cannot continue past that step; assemble report with Phase 1 sections only and note the failure. Compose fails → use judge verdict to construct minimal Section 6 with judge's direction as verdict and judge's summary as narrative. Always produce partial results rather than nothing.
 
-**Agent model.** Defaults from Agent Registry (all sonnet). Pass the `model` param to the Agent tool per registry. Observatory tracks per-agent model for DOE.
+**Agent model.** Defaults from Agent Registry (all sonnet). Pass the `model` param to the Agent tool per registry.

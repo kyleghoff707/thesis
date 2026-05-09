@@ -21,7 +21,7 @@ The user is NOT a programmer — keep explanations in plain English.
 
 - Vite + React frontend
 - Anthropic Claude via Claude Code subagents (the user's own subscription)
-- `agents-v2/` = production agent prompts; `.claude/skills/generate-*` = orchestration
+- `agents/` = production agent prompts; `.claude/skills/generate-*` = orchestration
 - SEC EDGAR + Yahoo Finance + Finviz for free data; Alpha Vantage optional (user-supplied key)
 - Reports: Python PDF/DOCX generators in `scripts/pdf/`
 - Optional Cloudflare Workers + D1 + R2 backend in `api/` for connected-mode account sync
@@ -42,10 +42,9 @@ Each stage gates the next: user must approve the prior verdict before unlocking 
 ## Source structure
 
 ```
-agents-v2/         — Agent prompts (production path)
+agents/         — Agent prompts (production path)
 .claude/skills/    — generate-one-pager, generate-pitch-deck, generate-full-story, analyze
 api/               — Cloudflare Worker (optional connected-mode backend)
-agents-service/    — Fastify + Inngest dispatch (v3, paused)
 scripts/           — CLI runners + PDF/DOCX toolkit
 src/
   components/      — React UI

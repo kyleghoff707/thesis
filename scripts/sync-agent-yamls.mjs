@@ -7,7 +7,7 @@
 // stays byte-identical. This preserves the wave-grouping comments in coordinator YAMLs.
 //
 // Usage:
-//   node scripts/sync-agent-yamls.mjs            # dry run — writes to agents-v2/.staging-sync/
+//   node scripts/sync-agent-yamls.mjs            # dry run — writes to agents/.staging-sync/
 //   node scripts/sync-agent-yamls.mjs --check    # verify staging files match prompt.md content
 //   node scripts/sync-agent-yamls.mjs --commit   # overwrites real YAMLs (auto-stages + checks first)
 //
@@ -21,7 +21,7 @@ import yaml from 'js-yaml';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const AGENTS_DIR = join(ROOT, 'agents-v2');
+const AGENTS_DIR = join(ROOT, 'agents');
 const STAGING_DIR = join(AGENTS_DIR, '.staging-sync');
 
 const IN_SCOPE_AGENTS = [

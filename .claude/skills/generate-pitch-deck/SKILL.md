@@ -19,70 +19,70 @@ Orchestrates 10 specialist agents across 5 waves via Claude Code Agent tool disp
 AGENT_REGISTRY:
 
   annual-reader:
-    prompt: agents-v2/annual-reader/prompt.md
+    prompt: agents/annual-reader/prompt.md
     model: sonnet
     sections: [psr_annual]
     wave: 0
     dpFields: [companyInfo, classification, financials, ttm, filings, caveats]
 
   quarterly-reader:
-    prompt: agents-v2/quarterly-reader/prompt.md
+    prompt: agents/quarterly-reader/prompt.md
     model: sonnet
     sections: [psr_quarterly]
     wave: 0
     dpFields: [companyInfo, classification, financials, ttm, filings, caveats]
 
   business-analyst:
-    prompt: agents-v2/business-analyst-pitchdeck/prompt.md
+    prompt: agents/business-analyst-pitchdeck/prompt.md
     model: sonnet
     sections: [radar, simple_predictable]
     wave: 1
     dpFields: [companyInfo, classification, ruleOneScore, peers, gurus, financials, ttm, growthRates, caveats]
 
   competitor-market-position:
-    prompt: agents-v2/competitor-evaluator-market-position-pitchdeck/prompt.md
+    prompt: agents/competitor-evaluator-market-position-pitchdeck/prompt.md
     model: sonnet
     sections: [market_position]
     wave: 1
     dpFields: [companyInfo, classification, ruleOneScore, peers, peerMetrics, financials, ttm, growthRates, caveats]
 
   competitor-moats:
-    prompt: agents-v2/competitor-evaluator-moats-pitchdeck/prompt.md
+    prompt: agents/competitor-evaluator-moats-pitchdeck/prompt.md
     model: sonnet
     sections: [barriers_moats]
     wave: 2
     dpFields: [companyInfo, classification, ruleOneScore, peers, peerMetrics, financials, ttm, growthRates, caveats]
 
   financial-analyst:
-    prompt: agents-v2/financial-analyst-pitchdeck/prompt.md
+    prompt: agents/financial-analyst-pitchdeck/prompt.md
     model: sonnet
     sections: [fcf, roe_roic_debt, balance_sheet]
     wave: 2
     dpFields: [companyInfo, classification, financials, ttm, growthRates, returnMetrics, debtMetrics, fcf, keyMetrics, caveats]
 
   management-evaluator:
-    prompt: agents-v2/management-evaluator-pitchdeck/prompt.md
+    prompt: agents/management-evaluator-pitchdeck/prompt.md
     model: sonnet
     sections: [management]
     wave: 2
     dpFields: [companyInfo, classification, compensation, insiders, gurus, financials, ttm, returnMetrics, caveats]
 
   risk-analyst:
-    prompt: agents-v2/risk-analyst-pitchdeck/prompt.md
+    prompt: agents/risk-analyst-pitchdeck/prompt.md
     model: sonnet
     sections: [pest]
     wave: 3
     dpFields: [companyInfo, classification, financials, ttm, growthRates, peers, insiders, caveats]
 
   valuation-specialist:
-    prompt: agents-v2/valuation-specialist-pitchdeck/prompt.md
+    prompt: agents/valuation-specialist-pitchdeck/prompt.md
     model: sonnet
     sections: [valuation]
     wave: 3
     dpFields: [companyInfo, classification, financials, ttm, growthRates, returnMetrics, fcf, keyMetrics, caveats]
 
   synthesis-writer:
-    prompt: agents-v2/synthesis-writer-pitchdeck/prompt.md
+    prompt: agents/synthesis-writer-pitchdeck/prompt.md
     model: sonnet
     sections: [overall_verdict]
     wave: 4
@@ -151,22 +151,14 @@ Save PM-provided data to `.thes1s/reports/{TICKER}/pm-supplementary.md`, re-run 
 
 **Exit code 0 (PROCEED):** Print summary and continue.
 
-## Step 2.5: Initialize Observatory
-
-```bash
-node scripts/observatory-init.js {TICKER} pitchDeck .thes1s/reports/{TICKER}/data-packet.json
-```
-
-Capture the **last line of output** as `RUN_ID`. Retry once on failure.
-
 ## Step 3: Wave 0 — Primary Source Reading (PARALLEL)
 
 Read the DataPacket from `.thes1s/reports/{TICKER}/data-packet.json`.
 
 ### 3a: Read PSR Agent Prompts
 
-- `agents-v2/annual-reader/prompt.md`
-- `agents-v2/quarterly-reader/prompt.md`
+- `agents/annual-reader/prompt.md`
+- `agents/quarterly-reader/prompt.md`
 
 ### 3b: PARALLEL DISPATCH — All PSR Agents (Single Message)
 
@@ -185,7 +177,7 @@ In a single message, dispatch:
 #### Annual Reader Dispatch (one per 10-K)
 
 For each 10-K, the prompt is concatenated as:
-1. Full contents of `agents-v2/annual-reader/prompt.md`
+1. Full contents of `agents/annual-reader/prompt.md`
 2. DataPacket slice: `companyInfo`, `classification`, `financials` (this year + prior year), `ttm`, `filings`, `caveats` — fenced JSON
 3. All sections from that year's 10-K filing:
 ```
@@ -209,7 +201,7 @@ For each 10-K, the prompt is concatenated as:
 #### Quarterly Reader Dispatch (one per batch, max 4 10-Qs per batch)
 
 For each batch, the prompt is concatenated as:
-1. Full contents of `agents-v2/quarterly-reader/prompt.md`
+1. Full contents of `agents/quarterly-reader/prompt.md`
 2. DataPacket slice: same fields as annual reader
 3. All sections from each 10-Q in the batch
 4. Earnings transcripts from `.thes1s/reports/{TICKER}/transcripts/`:
@@ -248,8 +240,8 @@ If a PSR agent fails entirely, log the error and continue. Partial PSR is still 
 
 ### 4a: Read Agent Prompts
 
-- `agents-v2/business-analyst-pitchdeck/prompt.md`
-- `agents-v2/competitor-evaluator-market-position-pitchdeck/prompt.md`
+- `agents/business-analyst-pitchdeck/prompt.md`
+- `agents/competitor-evaluator-market-position-pitchdeck/prompt.md`
 
 ### 4b: PARALLEL DISPATCH — Single Message
 
@@ -271,39 +263,6 @@ Dispatch BOTH agents in a single message (2 Agent tool calls).
 
 After BOTH return, extract COMPLETE JSON from each response and Write to disk. Save to `sections/radar.json`, `sections/simple_predictable.json`, `sections/market_position.json`. Each 10-50KB.
 
-#### Observatory Recording
-
-Per-agent usage: parse each subagent's `<usage>` block:
-```
-<usage>total_tokens: 24500
-tool_uses: 8
-duration_ms: 187000</usage>
-```
-
-Pass to record-agent: `{AGENT_TOTAL_TOKENS}` = total_tokens, `{SECONDS_ELAPSED}` = duration_ms / 1000, `{AGENT_WEB_SEARCHES}` = count `web_search` tool calls explicitly if visible, else `max(0, tool_uses - 2)` for Wave 0 PSR readers, `max(0, tool_uses - 1)` for analysis agents.
-
-Always pass `--tokens` and `--web-searches`. Without them, `usage.cost` records as $0.
-
-```bash
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role business-analyst --wave 1 --stage pitchDeck \
-  --sections "radar,simple_predictable" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role competitor-market-position --wave 1 --stage pitchDeck \
-  --sections "market_position" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-node scripts/observatory-record-event.js {RUN_ID} dispatch \
-  --wave 1 --stage "Business Fundamentals" \
-  --agents "business-analyst,competitor-market-position" --parallel true --duration {WAVE_DURATION_SECONDS}
-```
-
 ### 4c: Validate Wave 1 Outputs
 
 Required fields per section: `key`, `title`, `sectionNumber`, `status`, `confidence`, `verdict`, `verdictRationale`, `summary`, `narrative` (>= 200 chars — see Narrative Recovery), `citations`, `redFlags` (>= 1), `searchesPerformed` (non-empty).
@@ -312,9 +271,9 @@ Required fields per section: `key`, `title`, `sectionNumber`, `status`, `confide
 
 ### 6a: Read Agent Prompts
 
-- `agents-v2/competitor-evaluator-moats-pitchdeck/prompt.md`
-- `agents-v2/financial-analyst-pitchdeck/prompt.md`
-- `agents-v2/management-evaluator-pitchdeck/prompt.md`
+- `agents/competitor-evaluator-moats-pitchdeck/prompt.md`
+- `agents/financial-analyst-pitchdeck/prompt.md`
+- `agents/management-evaluator-pitchdeck/prompt.md`
 
 ### 6b: Prepare Wave 1 Context
 
@@ -348,35 +307,6 @@ Dispatch ALL 3 agents in a single message (3 Agent tool calls).
 
 After ALL 3 return, extract COMPLETE JSON and Write to disk. Each file 10-50KB.
 
-#### Observatory Recording
-
-```bash
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role competitor-moats --wave 2 --stage pitchDeck \
-  --sections "barriers_moats" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role financial-analyst --wave 2 --stage pitchDeck \
-  --sections "fcf,roe_roic_debt,balance_sheet" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role management-evaluator --wave 2 --stage pitchDeck \
-  --sections "management" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-node scripts/observatory-record-event.js {RUN_ID} dispatch \
-  --wave 2 --stage "Deep Analysis" \
-  --agents "competitor-moats,financial-analyst,management-evaluator" --parallel true --duration {WAVE_DURATION_SECONDS}
-```
-
 ### 6d: Validate Wave 2 Outputs
 
 Same validation as Wave 1.
@@ -385,8 +315,8 @@ Same validation as Wave 1.
 
 ### 8a: Read Agent Prompts
 
-- `agents-v2/risk-analyst-pitchdeck/prompt.md`
-- `agents-v2/valuation-specialist-pitchdeck/prompt.md`
+- `agents/risk-analyst-pitchdeck/prompt.md`
+- `agents/valuation-specialist-pitchdeck/prompt.md`
 
 ### 8b: Prepare Wave 1 + Wave 2 Context
 
@@ -411,28 +341,6 @@ Dispatch BOTH agents in a single message (2 Agent tool calls).
 5. Task: "Produce the complete valuation analysis for {TICKER} as section 10. Derive FGR using all 5 inputs with evidence. Run all four methods (MOS, PBT, Ten Cap, Equity Bond) with buy price RANGES. Include sensitivity tables. The FGR derivation must be in the section's `data` field with structure: `{ fgrDerivation: { inputs: [...], proposedRange: { low, high }, weightedAverage } }`. Return a single JSON object matching ReportSectionSchema."
 
 After BOTH return, extract JSON and save.
-
-#### Observatory Recording
-
-```bash
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role risk-analyst --wave 3 --stage pitchDeck \
-  --sections "pest" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role valuation-specialist --wave 3 --stage pitchDeck \
-  --sections "valuation" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-node scripts/observatory-record-event.js {RUN_ID} dispatch \
-  --wave 3 --stage "Risk & Valuation" \
-  --agents "risk-analyst,valuation-specialist" --parallel true --duration {WAVE_DURATION_SECONDS}
-```
 
 ## Step 9: FGR Derivation Sub-Workflow
 
@@ -484,7 +392,7 @@ Save the final FGR derivation for the report.
 
 ### 11a: Read Synthesis Writer Prompt
 
-`agents-v2/synthesis-writer-pitchdeck/prompt.md`
+`agents/synthesis-writer-pitchdeck/prompt.md`
 
 ### 11b: Dispatch Synthesis Writer
 
@@ -501,21 +409,6 @@ Dispatch via Agent tool with:
 Wait for completion. Save to `.thes1s/reports/{TICKER}/sections/overall_verdict.json`.
 
 **Fallback if synthesis-writer fails:** Compute overall verdict from individual section verdicts (majority rule weighted by confidence: HIGH=3, MEDIUM=2, LOW=1).
-
-#### Observatory Recording
-
-```bash
-node scripts/observatory-record-agent.js {RUN_ID} \
-  --role synthesis-writer --wave 4 --stage pitchDeck \
-  --sections "overall_verdict" --model claude-sonnet-4-6 \
-  --duration {SECONDS_ELAPSED} --verdict {OVERALL_VERDICT} --confidence {CONFIDENCE} \
-  --citations {CITATION_COUNT} --red-flags {RED_FLAG_COUNT} --narrative-length {NARRATIVE_LENGTH} \
-  --tokens {AGENT_TOTAL_TOKENS} --web-searches {AGENT_WEB_SEARCHES}
-
-node scripts/observatory-record-event.js {RUN_ID} dispatch \
-  --wave 4 --stage "Synthesis" \
-  --agents "synthesis-writer" --parallel false --duration {WAVE_DURATION_SECONDS}
-```
 
 ## Step 12: Assemble Final Report
 
@@ -662,64 +555,7 @@ console.log('✓ contract check passed');
 "
 ```
 
-If this fails, do NOT proceed. Go back to Step 12, append `sections/overall_verdict.json` as the 11th element. Record:
-
-```bash
-node scripts/observatory-record-event.js {RUN_ID} format-violation \
-  --agent synthesis-writer --violation "overall_verdict excluded from sections[] during assembly" --fix-applied true
-```
-
-## Step 14.5: Pre-Finalize Event Sweep
-
-Log every event the in-the-moment work missed. **When in doubt, log it.**
-
-```
-Retries:
-  [ ] Did any agent timeout, stall, or fail and get re-dispatched?         → retry (+ stall if >15min)
-  [ ] Did any agent require a second prompt to produce valid JSON?          → retry, reason: "JSON parse failed"
-  [ ] Did any agent require a second prompt for a full narrative?           → retry, reason: "narrative stub"
-  [ ] Did you trim any agent's context/prompt and re-dispatch?              → retry, reason: "trimmed prompt"
-
-Stalls:
-  [ ] Did any sonnet agent run >15min?                                      → stall
-  [ ] Did any "Stream idle timeout" or partial-response error occur?        → stall
-
-Format violations:
-  [ ] Did any agent use markdown fences?                                    → format-violation
-  [ ] Did any agent wrap JSON in preamble text ("Now I have...")?           → format-violation
-  [ ] Did any agent return an array when an object was expected?            → format-violation
-  [ ] Did any agent return multiple JSON objects?                           → format-violation
-  [ ] Did the extracted key not match the expected key?                     → format-violation
-  [ ] Did you rename any saved file?                                        → format-violation
-  [ ] Did any agent save to a wrong directory?                              → format-violation
-  [ ] Did any agent use the Write tool when the protocol said "return JSON"? → format-violation
-  [ ] Did you use the JSON extraction fallback chain past step 1?           → format-violation per agent
-
-Data gaps:
-  [ ] Did any agent flag missing DataPacket fields?                         → data-gap
-  [ ] Were any filings missing from filingContent?                          → data-gap
-  [ ] Were any transcripts missing?                                         → data-gap
-```
-
-For each `yes`, run the corresponding `observatory-record-event.js` command (see Format Violations + Retry Logic at the end of this skill for syntax).
-
-## Step 15: Finalize Observatory
-
-Parse the aggregate `<usage>` block across all subagent calls.
-
-```bash
-node scripts/observatory-finalize.js {RUN_ID} .thes1s/reports/{TICKER}/pitch-deck.json --verdict {OVERALL_VERDICT} --tokens {TOTAL_TOKENS} --tool-uses {TOOL_USES} --duration {DURATION_SECONDS}
-```
-
-Retry once on error.
-
-## Step 15.5: Wiki Synthesis
-
-```bash
-node --loader ./scripts/node-esm-loader.js scripts/observatory-synthesize.js {RUN_ID}
-```
-
-Retry once on error.
+If this fails, do NOT proceed. Go back to Step 12, append `sections/overall_verdict.json` as the 11th element.
 
 ## Step 16: Generate PDF
 
@@ -732,11 +568,12 @@ If it fails, print warning and continue.
 ## Step 17: Auto-Archive
 
 ```bash
-mkdir -p .thes1s/reports/{TICKER}/archive/{RUN_ID}
-cp .thes1s/reports/{TICKER}/pitch-deck.json .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
-cp .thes1s/reports/{TICKER}/data-packet.json .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
-cp .thes1s/reports/{TICKER}/sections/*.json .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
-cp .thes1s/reports/{TICKER}/*.pdf .thes1s/reports/{TICKER}/archive/{RUN_ID}/ 2>/dev/null
+ARCHIVE_ID=$(date +%Y%m%d-%H%M%S)
+mkdir -p .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}
+cp .thes1s/reports/{TICKER}/pitch-deck.json .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thes1s/reports/{TICKER}/data-packet.json .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thes1s/reports/{TICKER}/sections/*.json .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thes1s/reports/{TICKER}/*.pdf .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
 ```
 
 Retry once on error.
@@ -759,50 +596,13 @@ After every subagent completes:
 
 **Multi-section agents** (business-analyst returns 2, financial-analyst returns 3): parse the JSON array, split into individual section objects by `key`, save each to its own file.
 
-### REQUIRED: Log Format Violations
-
-Whenever the fallback chain triggers ANY of these, run before proceeding:
-
-```bash
-# Fallback extraction used
-node scripts/observatory-record-event.js {RUN_ID} format-violation \
-  --agent {AGENT_ROLE} --violation "fallback extraction required: {markdown fences | preamble | raw JSON | first-to-last brace}" --fix-applied true
-
-# Key mismatch
-node scripts/observatory-record-event.js {RUN_ID} format-violation \
-  --agent {AGENT_ROLE} --violation "key mismatch: returned '{actual}' expected '{expected}'" --fix-applied true
-
-# Shape mismatch (multiple objects, array vs object, partial drafts)
-node scripts/observatory-record-event.js {RUN_ID} format-violation \
-  --agent {AGENT_ROLE} --violation "shape mismatch: {describe}" --fix-applied true
-
-# Wrong filesystem path
-node scripts/observatory-record-event.js {RUN_ID} format-violation \
-  --agent {AGENT_ROLE} --violation "filesystem violation: saved to {wrong path} instead of {expected path}" --fix-applied true
-
-# Used Write tool when protocol said return JSON
-node scripts/observatory-record-event.js {RUN_ID} format-violation \
-  --agent {AGENT_ROLE} --violation "protocol violation: used Write tool instead of response body" --fix-applied true
-```
-
-If JSON parsing required the retry prompt at step 4, log a retry too.
-
 ## Narrative Recovery
 
 After extracting section JSON, check each section's `narrative` field:
 - If `narrative.length < 200`: agent likely produced a stub.
   1. Search the agent's full response text for substantial prose (markdown with ## headings, > 200 chars)
-  2. If found, inject into the section's `narrative` field and re-save. Log:
-     ```bash
-     node scripts/observatory-record-event.js {RUN_ID} format-violation \
-       --agent {AGENT_ROLE} --violation "narrative stub in JSON, recovered {length} chars from response body" --fix-applied true
-     ```
-  3. If no recoverable narrative, retry the agent once: "Your previous output had a {length}-char narrative stub. The narrative field MUST contain your FULL analysis (500+ words). Write the complete narrative." Log:
-     ```bash
-     node scripts/observatory-record-event.js {RUN_ID} retry \
-       --agent {AGENT_ROLE} --wave {N} --reason "narrative stub ({length} chars)" --attempt 1 --resolved false
-     ```
-     Re-run with `--resolved true` if the retry succeeded.
+  2. If found, inject into the section's `narrative` field and re-save.
+  3. If no recoverable narrative, retry the agent once: "Your previous output had a {length}-char narrative stub. The narrative field MUST contain your FULL analysis (500+ words). Write the complete narrative."
   4. If retry also produces a stub, save with a warning and continue.
 
 ## Retry Logic
@@ -812,20 +612,6 @@ If any agent fails entirely (rate limit, timeout, error):
 2. Re-dispatch with the same prompt
 3. If retry fails, log the error, save partial output with `status: "failed"`, and continue
 4. Do NOT retry more than once
-
-### REQUIRED: Log Every Retry and Stall
-
-```bash
-# Agent retry
-node scripts/observatory-record-event.js {RUN_ID} retry \
-  --agent {AGENT_ROLE} --wave {N} --reason "{short reason: timeout | rate-limit | JSON parse failed | narrative stub | schema violation}" --attempt 1 --resolved {true|false}
-
-# Stall detected (>15min sonnet, >25min opus)
-node scripts/observatory-record-event.js {RUN_ID} stall \
-  --agent {AGENT_ROLE} --wave {N} --duration {seconds_before_intervention} --resolution "{retried with trimmed prompt | killed and re-dispatched | timed out}"
-```
-
-Log both if both apply.
 
 ## Constraints
 
@@ -839,4 +625,4 @@ Log both if both apply.
 
 **Error resilience.** PSR agent fails → continue without findings. Wave agent fails after retry → log, save what succeeded, continue. Synthesis-writer fails → use majority-rule fallback. Always produce partial results rather than nothing.
 
-**Agent model.** Defaults from Agent Registry (all sonnet). Pass the `model` param to the Agent tool per registry. Observatory tracks per-agent model for DOE.
+**Agent model.** Defaults from Agent Registry (all sonnet). Pass the `model` param to the Agent tool per registry.

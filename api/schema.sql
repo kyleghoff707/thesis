@@ -20,14 +20,6 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 
-CREATE TABLE IF NOT EXISTS invite_tokens (
-  token TEXT PRIMARY KEY,
-  email TEXT NOT NULL,
-  created_by TEXT NOT NULL REFERENCES users(id),
-  created_at TEXT DEFAULT (datetime('now')),
-  used_at TEXT
-);
-
 -- ═══ User Data (per-user) ══════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS reports (
@@ -177,7 +169,7 @@ CREATE TABLE IF NOT EXISTS sync_status (
   error TEXT
 );
 
--- ═══ Billing & Usage Tracking ═════════════════════════════
+-- ═══ Usage Tracking ═════════════════════════════
 
 CREATE TABLE IF NOT EXISTS api_usage (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -196,98 +188,3 @@ CREATE TABLE IF NOT EXISTS api_usage (
 );
 CREATE INDEX IF NOT EXISTS idx_api_usage_user ON api_usage(user_id);
 CREATE INDEX IF NOT EXISTS idx_api_usage_month ON api_usage(user_id, created_at);
-
-CREATE TABLE IF NOT EXISTS billing (
-  user_id TEXT PRIMARY KEY REFERENCES users(id),
-  monthly_limit_cents INTEGER NOT NULL DEFAULT 5000,
-  stripe_customer_id TEXT,
-  stripe_subscription_item_id TEXT,
-  billing_active INTEGER DEFAULT 0,
-  updated_at TEXT DEFAULT (datetime('now'))
-);
-
--- ═══ Pipeline Runs (server-side generation tracking) ═════
-
-CREATE TABLE IF NOT EXISTS pipeline_runs (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL REFERENCES users(id),
-  report_id TEXT,
-  ticker TEXT NOT NULL,
-  stage TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'queued',
-  session_id TEXT,
-  current_wave INTEGER DEFAULT 0,
-  total_waves INTEGER,
-  progress TEXT,
-  sections_json TEXT,
-  data_packet_json TEXT,
-  error TEXT,
-  budget_json TEXT,
-  started_at TEXT,
-  completed_at TEXT,
-  updated_at TEXT DEFAULT (datetime('now')),
-  created_at TEXT DEFAULT (datetime('now')),
-  FOREIGN KEY (user_id) REFERENCES users(id)
-);
-CREATE INDEX IF NOT EXISTS idx_pipeline_user_status ON pipeline_runs(user_id, status);
-
--- Managed Agents coordinator cache
-CREATE TABLE IF NOT EXISTS managed_agents (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  agent_id TEXT NOT NULL,
-  prompt_hash TEXT NOT NULL UNIQUE,
-  created_at TEXT DEFAULT (datetime('now'))
-);
-
--- ═══ v3 pipeline runs (Inngest-orchestrated, parallel to pipeline_runs) ═════
-CREATE TABLE IF NOT EXISTS v3_runs (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL,
-  ticker TEXT NOT NULL,
-  pipeline_stage TEXT NOT NULL,           -- 'one-pager' | 'pitch-deck' | 'full-story'
-  status TEXT NOT NULL DEFAULT 'pending', -- 'pending' | 'running' | 'completed' | 'failed'
-  result_json TEXT,                       -- the agent output (full report) when completed
-  error_message TEXT,                     -- error string when failed
-  started_at TEXT NOT NULL DEFAULT (datetime('now')),
-  finished_at TEXT,
-  FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_v3_runs_user_ticker ON v3_runs(user_id, ticker, started_at DESC);
-CREATE INDEX IF NOT EXISTS idx_v3_runs_status ON v3_runs(status);
-
--- ─── v3 streaming + partial-success additions (2026-05-02) ──────────────────
-
--- Per-agent state (1 row per agent per run)
-CREATE TABLE IF NOT EXISTS v3_run_agents (
-  run_id        TEXT NOT NULL,
-  agent_id      TEXT NOT NULL,    -- 'one-pager' | 'business-analyst' | etc.
-  display_name  TEXT NOT NULL,
-  wave          INTEGER,           -- nullable (Pitch Deck only)
-  status        TEXT NOT NULL CHECK (status IN ('pending','running','completed','failed')),
-  started_at    TEXT,
-  finished_at   TEXT,
-  subprogress   TEXT,              -- JSON: { current, total, label }
-  last_message  TEXT,
-  tokens_input  INTEGER NOT NULL DEFAULT 0,
-  tokens_output INTEGER NOT NULL DEFAULT 0,
-  cached_tokens INTEGER NOT NULL DEFAULT 0,
-  error_message TEXT,
-  PRIMARY KEY (run_id, agent_id),
-  FOREIGN KEY (run_id) REFERENCES v3_runs(id) ON DELETE CASCADE
-);
-CREATE INDEX IF NOT EXISTS idx_v3_run_agents_run ON v3_run_agents(run_id);
-
--- Run-level streaming + partial-success columns
-ALTER TABLE v3_runs ADD COLUMN phase TEXT;
-ALTER TABLE v3_runs ADD COLUMN phase_label TEXT;
-ALTER TABLE v3_runs ADD COLUMN heartbeat_at TEXT;
-ALTER TABLE v3_runs ADD COLUMN tokens_input INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE v3_runs ADD COLUMN tokens_output INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE v3_runs ADD COLUMN cost_usd REAL NOT NULL DEFAULT 0;
-ALTER TABLE v3_runs ADD COLUMN failed_sections TEXT;
-
--- ─── v3 link from reports → v3_runs (Brainstorm 1 Decision 8) ──────────────
--- Added 2026-05-03 as part of PD/FS migration.
-ALTER TABLE reports ADD COLUMN v3_run_id TEXT REFERENCES v3_runs(id);
-CREATE INDEX IF NOT EXISTS idx_reports_v3_run_id ON reports(v3_run_id);

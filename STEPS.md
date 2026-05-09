@@ -16,23 +16,42 @@ These cascade through every later phase.
 
 ---
 
-## Phase 1 — Foundation (sequential)
+## Phase 1 — Foundation (COMPLETE — 2026-05-08)
 
-1. Fork repo to new GitHub.
-2. Strip secrets: `.env*`, hardcoded keys, session cookies in scripts, internal-only docs.
-3. Delete dead code (from audit):
-   - `agents-v2/coordinator-pitchdeck/`, `coordinator-fullstory/` (deprecated 2026-05-03)
-   - `AssumptionTracker.jsx` — **verify before deleting**: re-audit found it imported by `src/components/pitchDeck/` as a slide-out assumption panel. Confirm zero live render path.
-   - `CheckpointCommentBox.jsx`, `DataGapsPanel.jsx`
-   - `scripts/run-pipeline.js`, `run-full-story.js` (v1 monolithic runners)
-   - `useGeneratePitchDeckV3.js` — **verify zero callers via grep before deleting**.
-   - `src/schemas/observatory.js` (if observatory isn't shipping — see cascade below)
-   - `scripts/pdf/generate_agentic_workflow_stack.py` (duplicate Thes1sPDF)
-   - `scripts/test-assembly.py` (hardcoded session cookie)
-   - `.claude/skills/generate-section/` — **broken**: references `agents/orchestrator/config.json` and `agents/{agentName}/config.json` which don't exist in the repo. Either fix in Phase 2 or drop here.
-   - **Observatory cascade** (only if Phase 1 decision is to drop): `observatory/` Obsidian vault, all `scripts/observatory-*.js` (init, finalize, record-agent, record-event, sweep-debate, lint, query, synthesize), `src/engines/observatoryCapture.js`, `src/engines/observatorySynthesize.js`, and the observatory hooks in every `.claude/skills/generate-*` SKILL.md.
-4. Add `LICENSE`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `.github/ISSUE_TEMPLATE/`, PR template.
-5. **Observatory: ship or not?** Recommend NO — research-time tool, leaks optimization scaffolding.
+All foundation work executed. Repo is ready for Phase 2 rebrand.
+
+### What got done
+
+1. ✅ **Forked to new GitHub.** Private repo at `https://github.com/kyleghoff707/thesis`. Stays empty until the squash-and-push at the end of the rebrand. Old `stock-analyzer.git` remote detached for a clean break.
+2. ✅ **Stripped secrets.** All `.env*` files were already gitignored (Anthropic, Inngest, Langfuse, Worker callback keys — never tracked). The hardcoded session UUID in `scripts/test-assembly.py` was removed via file deletion. Tier 2 infrastructure IDs (D1, R2, Stripe, Managed Agents) removed from `api/wrangler.toml` along with the routes that used them.
+3. ✅ **Deleted dead code** (audit list + much more):
+   - **All items from the original audit list above** — executed verbatim.
+   - **Top-level directories**: `.council/`, `agents/` (v1 archive), `codex/`, `council/`, `docs/`, `gstack/`, `knowledge/`, `public/`, `validation/`, `_planning-archive/`, `agents-service/`, `export-service/`. Plus root `fly.toml`, `TODOS.md`.
+   - **api/ surgery**: 5 routes (`admin`, `claude`, `pipeline`, `pipeline-v3`, `stripe`), entire `assembly/` and `shims/` directories, 6 D1 tables (`invite_tokens`, `billing`, `pipeline_runs`, `managed_agents`, `v3_runs`, `v3_run_agents`), 14 wrangler env vars. `auth.js` trimmed to login/logout/me only — signup/invite/setup will be redesigned in Phase 4 per the locked open-public-signup decision.
+   - **agents/ cleanup**: `agent-research/` subfolder, `coordinator-pitchdeck/`, `coordinator-fullstory/`, all 25 `managed-agent.yaml` files (Managed Agents platform metadata, no longer needed), `.backup-*` and `.staging-sync/` snapshot dirs, top-level `ORCHESTRATION.md` / `TODO.md` / `UX-MIGRATION-LOG.md` migration docs.
+   - **src/ cleanup**: `src/engines/knowledgeBundle.js` + 4 consumers (`onePagerGenerator.js`, `aiResearch.js`, `pipelineManager.js`, `aiResearch.test.js`), `AssumptionTracker.jsx`, `useGeneratePitchDeckV3.js`, `src/schemas/observatory.js`.
+   - **vite.config.js**: dead POST endpoint that called the removed `run-pipeline.js`.
+   - **.gitignore**: dead `observatory/.obsidian/` entry.
+   - **Rename**: `agents-v2/` → `agents/` (sed-replaced across 17 files).
+   - **Skill files**: removed ~500 LOC of observatory orchestration from all 3 `.claude/skills/generate-*/SKILL.md` files.
+   - **CLAUDE.md**: rewritten thin (~600 lines → ~75 lines).
+   - **Pruned**: 62 stale `worktree-agent-*` git branches.
+
+   **Total tracked-file deletions: 154+. ~190 MB of disk space reclaimed.**
+4. ✅ **Added open-source scaffolding**:
+   - `LICENSE` — MIT, © 2026 Kyle Hoff
+   - `CONTRIBUTING.md` — minimalist, with the `agents/` issue-only PR policy
+   - `CODE_OF_CONDUCT.md` — Contributor Covenant 2.1 (adopted by reference)
+   - `.github/ISSUE_TEMPLATE/` — 3 form templates (bug, feature, question) + `config.yml` (blank issues disabled)
+   - `.github/pull_request_template.md` — standard checklist with the `agents/` PR guard
+5. ✅ **Observatory: dropped entirely.** Vault, 8 scripts, 2 engines, schema, and all SKILL.md hooks scrubbed. Resurrect-able from `stock-analyzer.git` if ever needed.
+
+### Verification
+
+- `grep -rln -i "observatory" --exclude-dir=node_modules --exclude-dir=.git .` → only matches `STEPS.md` (this file, descriptive only)
+- `grep -rln "agents-service" --exclude-dir=node_modules --exclude-dir=.git .` → only matches `STEPS.md`
+- All 3 `.claude/skills/generate-*/SKILL.md` files dispatch agents end-to-end without invoking deleted scripts
+- New `kyleghoff707/thesis` repo created, empty, private, no upstream wired
 
 ---
 
@@ -47,10 +66,10 @@ This is the bulk of the work. Mass rename comes first; everything else is parall
 
 | Workstream | Touches | Effort |
 |---|---|---|
-| Agent prompts: Rule 1 → "Buffett-style value investing" | `agents-v2/*/prompt.md`, `knowledge/` curriculum files | High |
+| Agent prompts: Rule 1 → "Buffett-style value investing" | `agents/*/prompt.md`, `knowledge/` curriculum files | High |
 | Website UI text + tour | `src/components/*`, `tourSteps.js`, glossary | Medium |
 | PDF/DOCX branding (logo, colors, wordmark) | `scripts/pdf/thes1s_pdf.py` → `thesis_pdf.py`, `docx_helpers.py` | Medium |
-| Re-enable web search on One Pager analyst | `agents-v2/one-pager/`, skill orchestration | Medium |
+| Re-enable web search on One Pager analyst | `agents/one-pager/`, skill orchestration | Medium |
 | Code/doc cleanup (audit findings) | `CLAUDE.md` (3-layer XBRL claim vs dormant Layers 2+3; 8-tab Toolbox claim vs 7 actual tabs); `src/schemas/dataPacket.js` + `src/utils/sliceDataPacket.js` (duplicated `sliceDataPacket()` — consolidate to utils version) | Low |
 
 ### Brainstorm pods (run in parallel — each deserves its own session)
@@ -158,11 +177,11 @@ Phase 5 (polish) ║ Phase 6 (GitHub readiness)   ← PARALLEL
 
 ## Open questions (answer before/during the relevant phase)
 
-1. ~~License — MIT vs AGPL (Phase 0)~~ — **resolved: MIT.** Copyright-holder identity still open.
+1. ~~License — MIT vs AGPL (Phase 0)~~ — **resolved: MIT, © 2026 Kyle Hoff.**
 2. ~~Repo strategy — monorepo vs split (Phase 0)~~ — **resolved: monorepo.**
 3. ~~Trademark on chosen name (Phase 0)~~ — **resolved: Thesis, no investing-space conflicts found**
 4. ~~Existing user migration plan (Phase 0)~~ — **resolved: fresh start, no users to migrate**
-5. Observatory ship-or-not (Phase 1) — recommend no
+5. ~~Observatory ship-or-not (Phase 1)~~ — **resolved: dropped entirely; scrubbed from operational repo**
 6. Alpha Vantage strategy (Phase 3)
 7. Compensation scraper fate (Phase 3)
 8. Industry taxonomy refresh strategy (Phase 3)
@@ -179,13 +198,13 @@ From the audit of the existing codebase. These are the footguns; carry them forw
 - **`edgarFinancials.js` cache key is `v9`.** Bump on any taxonomy/derivation change or browsers serve stale data.
 - **`negate` flag silently flips signs** on cash flow fields. Easy to misuse. Currently only on 4 fields.
 - **FY label offset for Jan/Feb fiscal years** runs late. Out-of-band reads of `years` array must be aware.
-- **`KEY_NORMALIZATION` lives in 3 places** with different aliases (run-pipeline.js, run-full-story.js, PitchDeck.jsx + FullStory.jsx). Centralize during rebrand.
+- **`KEY_NORMALIZATION` lives in PitchDeck.jsx + FullStory.jsx** with different aliases. The two `scripts/run-*.js` copies were deleted in Phase 1. Centralize the surviving frontend copies during the Phase 2 rebrand.
 - **`Spinner.jsx` injects keyframes globally** as a side effect on import. Don't remove the import without moving the keyframes.
 - **Toolbox is 7 tabs, not 8.** Old CLAUDE.md says 8 (no Audit tab exists).
 - **Static taxonomy JSON drifts from D1.** Decide single source of truth.
 - **Two parallel classification systems** — Thes1s taxonomy (sector/peers) AND raw-SIC overlay selector (`industryClassifier.js`). They can disagree. Worth unifying.
-- **Three execution surfaces drift** — skills, run-pipeline.js, agents-service. Pick one and delete the others in the new repo.
-- **Web search ⊥ structured output** in Anthropic API. The current v3 stack runs from training data only. Re-enabling web search requires multi-turn agent loop.
+- ~~Three execution surfaces drift~~ — **resolved in Phase 1**: skills are the only execution surface; `run-pipeline.js` and `agents-service/` deleted.
+- ~~Web search ⊥ structured output~~ — **no longer relevant**: the Anthropic SDK direct path (`agents-service/`) was deleted in Phase 1. Skill-based dispatch uses Claude Code subagents, which can web-search freely.
 - **MultiSection wrapper unreliable.** Production already worked around it (commit 27bd562 — N sequential single-section calls). Agent prompts still spec MultiSection; align them.
 - **Compensation scraper is fragile.** 94.8% accuracy on DEF 14A; will break when filing formats change.
 - **`useOnePager` / `usePitchDeck` / `useFullStory`** poll dev-only Vite middleware paths that 404 in prod. Either gate on `IS_DEV` or remove.

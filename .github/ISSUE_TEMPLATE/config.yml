@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Contributing Guide
+    url: https://github.com/kyleghoff707/thesis/blob/main/CONTRIBUTING.md
+    about: How to contribute to Thesis. Read this before opening a PR.
+  - name: Code of Conduct
+    url: https://github.com/kyleghoff707/thesis/blob/main/CODE_OF_CONDUCT.md
+    about: How we conduct ourselves in this community.

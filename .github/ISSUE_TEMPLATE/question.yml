@@ -1,0 +1,30 @@
+name: Question
+description: Ask a question about using Thesis
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before asking, please check:
+        1. The [README](../../blob/main/README.md)
+        2. Existing [open](../../issues) and [closed](../../issues?q=is%3Aissue+is%3Aclosed) issues — your question may already be answered
+        3. The [CONTRIBUTING guide](../../blob/main/CONTRIBUTING.md)
+
+        If your question isn't covered there, ask away.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: Be specific. "How do I X?" is better than "I'm confused."
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: What have you tried?
+      description: What did you attempt before asking? What did you find that almost worked?
+    validations:
+      required: false
