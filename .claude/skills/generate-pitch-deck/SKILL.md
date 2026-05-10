@@ -1,15 +1,15 @@
 ---
 name: generate-pitch-deck
-description: Generate a 10-section value investing Pitch Deck using v2 agent prompts, Claude Code subagent orchestration, 5-wave dispatch, and FGR derivation
+description: Generate a 12-section value investing Pitch Deck using v2 agent prompts, Claude Code subagent orchestration, 5-wave dispatch, and FGR derivation
 argument-hint: TICKER
 disable-model-invocation: true
 ---
 
 # Generate Pitch Deck (v2)
 
-Generate a complete 10-section value investing Pitch Deck investment analysis for **$0**.
+Generate a complete 12-section value investing Pitch Deck investment analysis for **$0**.
 
-Orchestrates 10 specialist agents across 5 waves via Claude Code Agent tool dispatch, preceded by Primary Source Reading (annual + quarterly), with an FGR derivation sub-workflow. Runs end-to-end without stopping.
+Orchestrates specialist agents across 5 waves via Claude Code Agent tool dispatch, preceded by Primary Source Reading (annual + quarterly), with an FGR derivation sub-workflow. Runs end-to-end without stopping.
 
 ---
 
@@ -35,7 +35,7 @@ AGENT_REGISTRY:
   business-analyst:
     prompt: agents/business-analyst-pitchdeck/prompt.md
     model: sonnet
-    sections: [radar, simple_predictable]
+    sections: [setup, business_quality]
     wave: 1
     dpFields: [companyInfo, classification, thesisScore, peers, gurus, financials, ttm, growthRates, caveats]
 
@@ -49,28 +49,28 @@ AGENT_REGISTRY:
   competitor-moats:
     prompt: agents/competitor-evaluator-moats-pitchdeck/prompt.md
     model: sonnet
-    sections: [barriers_moats]
+    sections: [moat_analysis]
     wave: 2
     dpFields: [companyInfo, classification, thesisScore, peers, peerMetrics, financials, ttm, growthRates, caveats]
 
   financial-analyst:
     prompt: agents/financial-analyst-pitchdeck/prompt.md
     model: sonnet
-    sections: [fcf, roe_roic_debt, balance_sheet]
+    sections: [cash_generation, returns_leverage, balance_sheet, accounting_red_flags]
     wave: 2
     dpFields: [companyInfo, classification, financials, ttm, growthRates, returnMetrics, debtMetrics, fcf, keyMetrics, caveats]
 
   management-evaluator:
     prompt: agents/management-evaluator-pitchdeck/prompt.md
     model: sonnet
-    sections: [management]
+    sections: [management_capital_allocation]
     wave: 2
     dpFields: [companyInfo, classification, compensation, insiders, gurus, financials, ttm, returnMetrics, caveats]
 
   risk-analyst:
     prompt: agents/risk-analyst-pitchdeck/prompt.md
     model: sonnet
-    sections: [pest]
+    sections: [risk_profile]
     wave: 3
     dpFields: [companyInfo, classification, financials, ttm, growthRates, peers, insiders, caveats]
 
@@ -84,7 +84,7 @@ AGENT_REGISTRY:
   synthesis-writer:
     prompt: agents/synthesis-writer-pitchdeck/prompt.md
     model: sonnet
-    sections: [overall_verdict]
+    sections: [investment_verdict]
     wave: 4
     dpFields: []
 ```
@@ -96,7 +96,7 @@ Wave 0 (PSR):       annual-reader (1 per 10-K, up to 5) + quarterly-reader (10-Q
 Wave 1 (Business):  business-analyst + competitor-market-position
 Wave 2 (Deep):      competitor-moats (needs S3) + financial-analyst + management-evaluator
 Wave 3 (Risk/Val):  risk-analyst + valuation-specialist
-Wave 4 (Synthesis): synthesis-writer
+Wave 4 (Synthesis): synthesis-writer  → investment_verdict
 ```
 
 Agents within a wave dispatch **in parallel** (multiple Agent tool calls in a single message). Waves run strictly sequential.
@@ -247,12 +247,12 @@ If a PSR agent fails entirely, log the error and continue. Partial PSR is still 
 
 Dispatch BOTH agents in a single message (2 Agent tool calls).
 
-**Agent 1: business-analyst** — sections: radar (S1), simple_predictable (S2)
+**Agent 1: business-analyst** — sections: setup (S1), business_quality (S2)
 1. Full prompt
 2. DataPacket slice
 3. PSR findings
 4. One Pager summary
-5. Task: "Analyze {TICKER} and produce Pitch Deck sections 1 (Radar) and 2 (Simple & Predictable). Use web search for current information. Return a JSON array containing both section objects matching ReportSectionSchema."
+5. Task: "Analyze {TICKER} and produce Pitch Deck sections 1 (Setup) and 2 (Business Quality). Use web search for current information. Return a JSON array containing both section objects matching ReportSectionSchema."
 
 **Agent 2: competitor-market-position** — section: market_position (S3)
 1. Full prompt
@@ -261,7 +261,7 @@ Dispatch BOTH agents in a single message (2 Agent tool calls).
 4. Sections 1-2 summaries
 5. Task: "Analyze {TICKER}'s competitive position and produce section 3. Screen 15+ industry peers. Include market share ceiling analysis. Return a single JSON object matching ReportSectionSchema."
 
-After BOTH return, extract COMPLETE JSON from each response and Write to disk. Save to `sections/radar.json`, `sections/simple_predictable.json`, `sections/market_position.json`. Each 10-50KB.
+After BOTH return, extract COMPLETE JSON from each response and Write to disk. Save to `sections/setup.json`, `sections/business_quality.json`, `sections/market_position.json`. Each 10-50KB.
 
 ### 4c: Validate Wave 1 Outputs
 
@@ -283,27 +283,27 @@ Format Wave 1 outputs as "Prior Analysis Context" — per-section summary + verd
 
 Dispatch ALL 3 agents in a single message (3 Agent tool calls).
 
-**Agent 1: competitor-moats** — section: barriers_moats (S4). Depends on S3.
+**Agent 1: competitor-moats** — section: moat_analysis (S4). Depends on S3.
 1. Full prompt
 2. DataPacket slice
 3. PSR findings
 4. Wave 1 context (especially full S3 market_position)
 5. One Pager verdict + summary
-6. Task: "Validate {TICKER}'s competitive moats and produce section 4 (Barriers & Moats). Use Section 3 (Market Position) findings as competitive landscape foundation. Return a single JSON object matching ReportSectionSchema."
+6. Task: "Validate {TICKER}'s competitive moats and produce section 4 (Moat Analysis). Use Section 3 (Market Position) findings as competitive landscape foundation. Return a single JSON object matching ReportSectionSchema."
 
-**Agent 2: financial-analyst** — sections: fcf (S5), roe_roic_debt (S7), balance_sheet (S8)
+**Agent 2: financial-analyst** — sections: cash_generation (S5), returns_leverage (S6), balance_sheet (S7), accounting_red_flags (S8)
 1. Full prompt
 2. DataPacket slice (full financials, growth rates, return metrics, debt metrics, FCF, key metrics, analyst estimates)
 3. PSR findings
-4. Wave 1 context + S4 barriers_moats
-5. Task: "Analyze {TICKER}'s financials and produce sections 5 (FCF), 7 (ROE/ROIC/ROA & Debt), and 8 (Balance Sheet). Include dual Owner Earnings (value investing + Graham). Return a JSON array containing all three section objects matching ReportSectionSchema."
+4. Wave 1 context + S4 moat_analysis
+5. Task: "Analyze {TICKER}'s financials and produce sections 5 (Cash Generation), 6 (Returns & Leverage), 7 (Balance Sheet), and 8 (Accounting Red Flags). Include dual Owner Earnings (value investing + Graham). Return a JSON array containing all FOUR section objects matching ReportSectionSchema."
 
-**Agent 3: management-evaluator** — section: management (S6)
+**Agent 3: management-evaluator** — section: management_capital_allocation (S9)
 1. Full prompt
 2. DataPacket slice
 3. PSR findings
 4. Wave 1 context
-5. Task: "Evaluate {TICKER}'s management team and produce section 6. Assess CEO track record, insider ownership, compensation alignment, and Guru ownership context (context only — NOT a buy signal). Return a single JSON object matching ReportSectionSchema."
+5. Task: "Evaluate {TICKER}'s management team and produce section 9. Assess CEO track record, insider ownership, compensation alignment, capital allocation track record, and Guru ownership context (context only — NOT a buy signal). Return a single JSON object matching ReportSectionSchema."
 
 After ALL 3 return, extract COMPLETE JSON and Write to disk. Each file 10-50KB.
 
@@ -326,18 +326,18 @@ Wave 1 + Wave 2 per-section summaries + verdicts + cumulative red flags + cumula
 
 Dispatch BOTH agents in a single message (2 Agent tool calls).
 
-**Agent 1: risk-analyst** — section: pest (S9)
+**Agent 1: risk-analyst** — section: risk_profile (S11)
 1. Full prompt
 2. DataPacket slice
 3. PSR findings
 4. Full Wave 1+2 context
-5. Task: "Conduct a comprehensive PEST risk analysis for {TICKER}. Produce section 9. Apply 3-red-flag minimum per PEST category. Assess FGR vulnerability. Pressure-test the bull case with the strongest evidence-based challenges. Classify each risk by severity (thesis-killing / material but manageable / speculative or already priced in). Return a single JSON object matching ReportSectionSchema."
+5. Task: "Conduct a comprehensive risk analysis for {TICKER}. Produce section 11 (Risk Profile). Apply 3-red-flag minimum per category. Assess FGR vulnerability. Pressure-test the bull case with the strongest evidence-based challenges. Classify each risk by severity (thesis-killing / material but manageable / speculative or already priced in). Return a single JSON object matching ReportSectionSchema."
 
 **Agent 2: valuation-specialist** — section: valuation (S10)
 1. Full prompt
 2. DataPacket slice
 3. PSR findings
-4. Full Wave 1+2 context + S9 pest
+4. Full Wave 1+2 context + S11 risk_profile
 5. Task: "Produce the complete valuation analysis for {TICKER} as section 10. Derive FGR using all 5 inputs with evidence. Run all four methods (MOS, PBT, Ten Cap, Equity Bond) with buy price RANGES. Include sensitivity tables. The FGR derivation must be in the section's `data` field with structure: `{ fgrDerivation: { inputs: [...], proposedRange: { low, high }, weightedAverage } }`. Return a single JSON object matching ReportSectionSchema."
 
 After BOTH return, extract JSON and save.
@@ -400,19 +400,19 @@ Receives NO raw DataPacket. Works exclusively from section outputs.
 
 Dispatch via Agent tool with:
 1. Full prompt
-2. ALL 10 section outputs (full JSON — verdicts, summaries, narratives, red flags, citations, data fields)
+2. ALL 11 section outputs (full JSON — verdicts, summaries, narratives, red flags, citations, data fields)
 3. PSR findings summary
 4. One Pager verdict + summary
 5. FGR derivation with PM-confirmed values
-6. Task: "Review all 10 Pitch Deck sections for {TICKER}. Check cross-section consistency. Identify contradictions. Produce the overall verdict section (key: 'overall_verdict', sectionNumber: 11). Weight moat and financial sections most heavily, PEST lightest, management as contextual. Return a single JSON object matching ReportSectionSchema with `data` containing: `{ sectionVerdicts: {...}, overallVerdict: 'PASS|FAIL|WATCHLIST', keyStrengths: [...], keyConcerns: [...], nextSteps: [...] }`."
+6. Task: "Review all 11 Pitch Deck sections for {TICKER}. Check cross-section consistency. Identify contradictions. Produce the Investment Verdict section (key: 'investment_verdict', sectionNumber: 12). Weight moat and financial sections most heavily, risk lightest, management as contextual. Close the narrative with a Pre-Decision Quality Check (Calibrated Confidence + Anticipated Regret). Return a single JSON object matching ReportSectionSchema with `data` containing: `{ sectionVerdicts: {...}, overallVerdict: 'PASS|FAIL|WATCHLIST', keyStrengths: [...], keyConcerns: [...], nextSteps: [...], preDecisionCheck: { highConfidenceSections, lowConfidenceSections, overconfidenceRisks, anticipatedFailureMode, anticipatedFailureSignal, variantPerceptionStatement } }`."
 
-Wait for completion. Save to `.thesis/reports/{TICKER}/sections/overall_verdict.json`.
+Wait for completion. Save to `.thesis/reports/{TICKER}/sections/investment_verdict.json`.
 
 **Fallback if synthesis-writer fails:** Compute overall verdict from individual section verdicts (majority rule weighted by confidence: HIGH=3, MEDIUM=2, LOW=1).
 
 ## Step 12: Assemble Final Report
 
-Collect all **11 sections** (S1-S10 + S11 synthesis) + checkpoints + FGR derivation. The synthesis-writer's output is a full ReportSectionSchema object with `key: "overall_verdict"`, `sectionNumber: 11`. Append it to `sections[]` as the 11th element. The top-level `overallVerdict`/`verdictRationale`/`synthesisNarrative` are MIRRORS of section 11.
+Collect all **12 sections** (S1-S11 + S12 synthesis) + checkpoints + FGR derivation. The synthesis-writer's output is a full ReportSectionSchema object with `key: "investment_verdict"`, `sectionNumber: 12`. Append it to `sections[]` as the 12th element. The top-level `overallVerdict`/`verdictRationale`/`synthesisNarrative` are MIRRORS of section 12.
 
 ```json
 {
@@ -421,24 +421,25 @@ Collect all **11 sections** (S1-S10 + S11 synthesis) + checkpoints + FGR derivat
   "stage": "pitchDeck",
   "generatedAt": "{ISO timestamp}",
   "sections": [
-    /* 11 ReportSectionSchema objects ordered by sectionNumber:
-         S1  radar              (business-analyst)
-         S2  simple_predictable (business-analyst)
-         S3  market_position    (competitor-market-position)
-         S4  barriers_moats     (competitor-moats)
-         S5  fcf                (financial-analyst)
-         S6  management         (management-evaluator)
-         S7  roe_roic_debt      (financial-analyst)
-         S8  balance_sheet      (financial-analyst)
-         S9  pest               (risk-analyst)
-         S10 valuation          (valuation-specialist)
-         S11 overall_verdict    (synthesis-writer)  ← MUST BE IN THE ARRAY
+    /* 12 ReportSectionSchema objects ordered by sectionNumber:
+         S1  setup                          (business-analyst)
+         S2  business_quality               (business-analyst)
+         S3  market_position                (competitor-market-position)
+         S4  moat_analysis                  (competitor-moats)
+         S5  cash_generation                (financial-analyst)
+         S6  returns_leverage               (financial-analyst)
+         S7  balance_sheet                  (financial-analyst)
+         S8  accounting_red_flags           (financial-analyst)
+         S9  management_capital_allocation  (management-evaluator)
+         S10 valuation                      (valuation-specialist)
+         S11 risk_profile                   (risk-analyst)
+         S12 investment_verdict             (synthesis-writer)  ← MUST BE IN THE ARRAY
     */
   ],
-  "overallVerdict": "{MIRROR of sections[10].verdict}",
-  "verdictRationale": "{MIRROR of sections[10].verdictRationale}",
-  "synthesisNarrative": "{MIRROR of sections[10].narrative}",
-  "sectionKeys": ["radar", "simple_predictable", "market_position", "barriers_moats", "fcf", "management", "roe_roic_debt", "balance_sheet", "pest", "valuation", "overall_verdict"],
+  "overallVerdict": "{MIRROR of sections[11].verdict}",
+  "verdictRationale": "{MIRROR of sections[11].verdictRationale}",
+  "synthesisNarrative": "{MIRROR of sections[11].narrative}",
+  "sectionKeys": ["setup", "business_quality", "market_position", "moat_analysis", "cash_generation", "returns_leverage", "balance_sheet", "accounting_red_flags", "management_capital_allocation", "valuation", "risk_profile", "investment_verdict"],
   "onePagerVerdict": "{verdict from gate check}",
   "fgrDerivation": {
     "finalLow": 0.10,
@@ -462,7 +463,7 @@ Collect all **11 sections** (S1-S10 + S11 synthesis) + checkpoints + FGR derivat
 
 Write JSON to `.thesis/reports/{TICKER}/pitch-deck.json`.
 
-Generate human-readable markdown at `.thesis/reports/{TICKER}/pitch-deck.md`. Structure: title + verdict + FGR range header → Executive Summary (synthesisNarrative) → all 10 sections grouped by wave with narrative + verdict + red flags → FGR Derivation table → Buy Price Ranges table → Sensitivity Tables → Citations.
+Generate human-readable markdown at `.thesis/reports/{TICKER}/pitch-deck.md`. Structure: title + verdict + FGR range header → Executive Summary (synthesisNarrative) → all 11 analytical sections grouped by wave with narrative + verdict + red flags → Investment Verdict (S12) with Pre-Decision Quality Check → FGR Derivation table → Buy Price Ranges table → Sensitivity Tables → Citations.
 
 ## Step 13: Quality Check
 
@@ -518,11 +519,12 @@ node --import ./scripts/node-esm-loader.js -e "
     const tc = section.tokenCost || { input: 0, output: 0 };
     const model = section.modelUsed || 'claude-sonnet-4-6';
     const agentMap = {
-      radar: 'business-analyst', simple_predictable: 'business-analyst',
-      market_position: 'competitor-market-position', barriers_moats: 'competitor-moats',
-      fcf: 'financial-analyst', management: 'management-evaluator',
-      roe_roic_debt: 'financial-analyst', balance_sheet: 'financial-analyst',
-      pest: 'risk-analyst', valuation: 'valuation-specialist'
+      setup: 'business-analyst', business_quality: 'business-analyst',
+      market_position: 'competitor-market-position', moat_analysis: 'competitor-moats',
+      cash_generation: 'financial-analyst', returns_leverage: 'financial-analyst',
+      balance_sheet: 'financial-analyst', accounting_red_flags: 'financial-analyst',
+      management_capital_allocation: 'management-evaluator',
+      risk_profile: 'risk-analyst', valuation: 'valuation-specialist'
     };
     tracker.record(agentMap[section.key] || 'unknown', section.key, tc.input || 0, tc.output || 0, model);
   }
@@ -546,16 +548,16 @@ const sections = r.sections || [];
 const maxSectionNumber = sections.reduce((m,s) => Math.max(m, s.sectionNumber || 0), 0);
 console.log('sections.length:', sections.length);
 console.log('max sectionNumber in array:', maxSectionNumber);
-console.log('has overall_verdict in sections:', sections.some(s => s.key === 'overall_verdict'));
-if (sections.length !== 11 || maxSectionNumber !== 11 || !sections.some(s => s.key === 'overall_verdict')) {
-  console.error('CONTRACT VIOLATION: pitch deck must have 11 sections with overall_verdict as section 11');
+console.log('has investment_verdict in sections:', sections.some(s => s.key === 'investment_verdict'));
+if (sections.length !== 12 || maxSectionNumber !== 12 || !sections.some(s => s.key === 'investment_verdict')) {
+  console.error('CONTRACT VIOLATION: pitch deck must have 12 sections with investment_verdict as section 12');
   process.exit(1);
 }
 console.log('✓ contract check passed');
 "
 ```
 
-If this fails, do NOT proceed. Go back to Step 12, append `sections/overall_verdict.json` as the 11th element.
+If this fails, do NOT proceed. Go back to Step 12, append `sections/investment_verdict.json` as the 12th element.
 
 ## Step 16: Generate PDF
 
@@ -580,7 +582,7 @@ Retry once on error.
 
 ## Step 18: Print Summary
 
-Print: sections completed (X/11), overall verdict + confidence, per-section verdicts, FGR range, combined buy price range vs current price, quality score + issue counts, citation total, red flag total, output paths.
+Print: sections completed (X/12), overall verdict + confidence, per-section verdicts, FGR range, combined buy price range vs current price, quality score + issue counts, citation total, red flag total, output paths.
 
 ---
 
@@ -594,7 +596,7 @@ After every subagent completes:
 4. If all parsing fails, retry once with: "Your previous response could not be parsed as JSON. Output ONLY the raw JSON — no markdown fences, no commentary. Start with `{` or `[` and end with `}` or `]`."
 5. If retry fails, create a minimal section with `status: "failed"` and save the raw response text in `sections/{key}-raw.txt` for debugging.
 
-**Multi-section agents** (business-analyst returns 2, financial-analyst returns 3): parse the JSON array, split into individual section objects by `key`, save each to its own file.
+**Multi-section agents** (business-analyst returns 2, financial-analyst returns 4): parse the JSON array, split into individual section objects by `key`, save each to its own file.
 
 ## Narrative Recovery
 
