@@ -46,11 +46,21 @@ const SCAN_GLOBS = [
   '.claude/skills/generate-pitch-deck/SKILL.md',
 ];
 
+// Schema-field phrases need exact-case matching (e.g., "BAG" must not match "bag" inside
+// "subagent"); prose phrases match case-insensitively. We use word boundaries on every
+// pattern so substring matches inside legitimate words ("subagent", "manager") don't fire.
+const SCHEMA_FIELD_SET = new Set(SCHEMA_FIELDS);
+// Acronyms that should match case-sensitively (avoid hits on lowercase substrings).
+const CASE_SENSITIVE_ACRONYMS = new Set(['BAG']);
+
 export function scanFileForBannedPhrases(content, banned, filePath) {
   const violations = [];
   const lines = content.split('\n');
   for (const phrase of banned) {
-    const re = new RegExp(escapeRegex(phrase), 'gi');
+    const isCaseSensitive = SCHEMA_FIELD_SET.has(phrase) || CASE_SENSITIVE_ACRONYMS.has(phrase);
+    const flags = isCaseSensitive ? 'g' : 'gi';
+    // \b is word-boundary; \B?\b allows leading punctuation like ".bag" to match too.
+    const re = new RegExp('\\b' + escapeRegex(phrase) + '\\b', flags);
     for (let i = 0; i < lines.length; i++) {
       if (re.test(lines[i])) {
         violations.push({ file: filePath, line: i + 1, phrase, snippet: lines[i].trim().slice(0, 120) });
