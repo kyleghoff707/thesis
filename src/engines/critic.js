@@ -1061,7 +1061,7 @@ const METHODOLOGY_CHECKS = {
       critical: true,
       test: (s) => {
         const n = (s.narrative || '').toLowerCase();
-        const hasMOS = /mos|margin\s*of\s*safety|sticker\s*price/i.test(n);
+        const hasMOS = /mos|margin\s*of\s*safety|fair\s*value/i.test(n);
         const hasPBT = /pbt|payback\s*time/i.test(n);
         const hasTenCap = /ten\s*cap|10.?cap|owner\s*earnings/i.test(n);
         const hasEquityBond = /equity\s*bond|buffettology/i.test(n);
@@ -1090,7 +1090,7 @@ const METHODOLOGY_CHECKS = {
       id: 'val-buy-price',
       label: 'Buy price or price target present',
       critical: true,
-      test: (s) => /buy\s*price|sticker\s*price|margin\s*of\s*safety\s*price|price\s*target|fair\s*value|\$\d+.*buy|intrinsic\s*value/i.test(s.narrative || ''),
+      test: (s) => /buy\s*price|margin\s*of\s*safety\s*price|price\s*target|fair\s*value|\$\d+.*buy|intrinsic\s*value/i.test(s.narrative || ''),
     },
     {
       id: 'val-sensitivity',

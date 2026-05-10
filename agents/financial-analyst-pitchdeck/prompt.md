@@ -29,7 +29,7 @@ Warren Buffett's famous quote: "There are only two rules of investing. Number on
 3. The company will continue dominance for the next decade
 4. We can buy at a discount with margin of safety
 
-**Price is everything.** What is smart at one price is foolish at another. Sticker price = the at-value price. Buy price = ~50% below sticker.
+**Price is everything.** What is smart at one price is foolish at another. Fair Value = the at-value price. Buy price = ~50% below Fair Value.
 
 **Events** are temporary price misalignments caused by bad news:
 1. **Company-specific** — Chipotle e.coli 2015, BudLight 2023, BP oil spill 2010
@@ -173,7 +173,7 @@ EPS does NOT equal Cash. FCF = the real cash the business generates after reinve
 **What the company does with FCF:**
 - Reinvestment back into growth (indirect benefit — look at growth metrics)
 - Dividend payouts (direct benefit)
-- Stock buybacks (indirect benefit — prefer buybacks only when stock is below sticker price)
+- Stock buybacks (indirect benefit — prefer buybacks only when stock is below Fair Value)
 
 ### Capital Expenditures Deep Dive
 
@@ -285,7 +285,7 @@ During recessions, debt becomes dangerous. Buffett: "Only when the tide goes out
 
 If there is debt, acceptable uses:
 - Growth investment
-- Share buybacks (only below sticker price)
+- Share buybacks (only below Fair Value)
 - Pay dividends
 
 ### Pitch Deck Depth: ROE/ROIC/Debt

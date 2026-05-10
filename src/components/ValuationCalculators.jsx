@@ -357,21 +357,21 @@ export default function ValuationCalculators({
   // Determine buy price ranges
   const tenCapPriceLow = tenCapRange?.low?.tenCapPrice ?? null;
   const tenCapPriceHigh = tenCapRange?.high?.tenCapPrice ?? null;
-  const tenCapStickerLow = tenCapPriceLow != null ? Math.round(tenCapPriceLow * 200) / 100 : null;
-  const tenCapStickerHigh = tenCapPriceHigh != null ? Math.round(tenCapPriceHigh * 200) / 100 : null;
+  const tenCapFairValueLow = tenCapPriceLow != null ? Math.round(tenCapPriceLow * 200) / 100 : null;
+  const tenCapFairValueHigh = tenCapPriceHigh != null ? Math.round(tenCapPriceHigh * 200) / 100 : null;
 
   const mosPriceLow = mosResultLow?.mosPrice ?? null;
   const mosPriceHigh = mosResultHigh?.mosPrice ?? null;
-  const mosStickerLow = mosResultLow?.stickerPrice ?? null;
-  const mosStickerHigh = mosResultHigh?.stickerPrice ?? null;
+  const mosFairValueLow = mosResultLow?.fairValue ?? null;
+  const mosFairValueHigh = mosResultHigh?.fairValue ?? null;
 
   const pbtPriceLow = pbtResultLow?.pbtPrice ?? null;
   const pbtPriceHigh = pbtResultHigh?.pbtPrice ?? null;
-  const pbtStickerLow = pbtPriceLow != null ? Math.round(pbtPriceLow * 200) / 100 : null;
-  const pbtStickerHigh = pbtPriceHigh != null ? Math.round(pbtPriceHigh * 200) / 100 : null;
+  const pbtFairValueLow = pbtPriceLow != null ? Math.round(pbtPriceLow * 200) / 100 : null;
+  const pbtFairValueHigh = pbtPriceHigh != null ? Math.round(pbtPriceHigh * 200) / 100 : null;
 
-  const ebStickerLow = ebResultLow?.stickerPrice > 0 ? ebResultLow.stickerPrice : null;
-  const ebStickerHigh = ebResultHigh?.stickerPrice > 0 ? ebResultHigh.stickerPrice : null;
+  const ebFairValueLow = ebResultLow?.fairValue > 0 ? ebResultLow.fairValue : null;
+  const ebFairValueHigh = ebResultHigh?.fairValue > 0 ? ebResultHigh.fairValue : null;
   const ebBuyLow = ebResultLow?.buyPrice > 0 ? ebResultLow.buyPrice : null;
   const ebBuyHigh = ebResultHigh?.buyPrice > 0 ? ebResultHigh.buyPrice : null;
   const ebReturnLow = ebResultLow?.projectedReturn ?? null;
@@ -624,7 +624,7 @@ export default function ValuationCalculators({
             <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.textMuted }}>10 Cap</span>
           </div>
           {summaryRow('10 Cap Price', tenCapPriceLow, tenCapPriceHigh)}
-          {summaryRow('Sticker Price', tenCapStickerLow, tenCapStickerHigh)}
+          {summaryRow('Fair Value', tenCapFairValueLow, tenCapFairValueHigh)}
         </div>
 
         {/* MOS summary */}
@@ -634,7 +634,7 @@ export default function ValuationCalculators({
             <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.textMuted }}>MOS</span>
           </div>
           {summaryRow('MOS Price', mosPriceLow, mosPriceHigh)}
-          {summaryRow('Sticker Price', mosStickerLow, mosStickerHigh)}
+          {summaryRow('Fair Value', mosFairValueLow, mosFairValueHigh)}
         </div>
 
         {/* PBT summary */}
@@ -644,7 +644,7 @@ export default function ValuationCalculators({
             <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.textMuted }}>PBT</span>
           </div>
           {summaryRow('PBT Price', pbtPriceLow, pbtPriceHigh)}
-          {summaryRow('Sticker Price', pbtStickerLow, pbtStickerHigh)}
+          {summaryRow('Fair Value', pbtFairValueLow, pbtFairValueHigh)}
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 12, color: C.textSecondary }}>PBT at Current Price</span>
             <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>
@@ -660,7 +660,7 @@ export default function ValuationCalculators({
             <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.textMuted }}>Equity Bond</span>
           </div>
           {summaryRow('Buy Price', ebBuyLow, ebBuyHigh)}
-          {summaryRow('Sticker Price', ebStickerLow, ebStickerHigh)}
+          {summaryRow('Fair Value', ebFairValueLow, ebFairValueHigh)}
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 12, color: C.textSecondary }}>CAGR at Current Price</span>
             <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>

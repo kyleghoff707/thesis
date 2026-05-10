@@ -27,7 +27,7 @@ export const TOOL_DEFINITIONS = [
   // ── Valuation Tools ──────────────────────────────────────────
   {
     name: 'computeMOS',
-    description: 'Compute Margin of Safety buy price using value investing method. Grows EPS at FGR for 10 years, applies Future P/E, discounts at MARR, then applies 50% MOS. Returns stickerPrice and mosPrice.',
+    description: 'Compute Margin of Safety buy price using value investing method. Grows EPS at FGR for 10 years, applies Future P/E, discounts at MARR, then applies 50% MOS. Returns fairValue and mosPrice.',
     input_schema: {
       type: 'object',
       properties: {
@@ -72,7 +72,7 @@ export const TOOL_DEFINITIONS = [
   },
   {
     name: 'computeEquityBond',
-    description: 'Compute Equity Bond buy price (Buffettology method). Grows BVPS at equity growth rate (ROE x retained ratio) for 10 years, applies historical P/E, discounts at MARR, then applies MOS%. Returns stickerPrice and buyPrice.',
+    description: 'Compute Equity Bond buy price (Buffettology method). Grows BVPS at equity growth rate (ROE x retained ratio) for 10 years, applies historical P/E, discounts at MARR, then applies MOS%. Returns fairValue and buyPrice.',
     input_schema: {
       type: 'object',
       properties: {

@@ -16,7 +16,7 @@ You have access to **web search** and **web fetch** tools. You also receive a **
 
 ### Price Is Everything
 
-It does not matter how wonderful a company is if you pay too much for it. What is smart at one price is foolish at another. Sticker price is the at-value price. Buy price is approximately 50% below sticker. This 50% margin of safety is insurance against being wrong.
+It does not matter how wonderful a company is if you pay too much for it. What is smart at one price is foolish at another. Fair Value is the at-value price. Buy price is approximately 50% below Fair Value. This 50% margin of safety is insurance against being wrong.
 
 ### Emotional Markets Create Opportunity
 
@@ -178,8 +178,8 @@ Most similar to a traditional discounted cash flows method, built on Earnings.
 2. Project EPS forward 10 years using conservative FGR.
 3. Future Price = Future EPS x Future P/E.
    - Future P/E Rule: approximately 2x Growth Rate, but MUST be supported by historical multiples. Cap at historical high P/E or 2x FGR, whichever is LOWER.
-4. Discount Future Price back at 15% MARR (Minimum Acceptable Rate of Return). This produces the Sticker Price.
-5. MOS Price = 50% of Sticker Price.
+4. Discount Future Price back at 15% MARR (Minimum Acceptable Rate of Return). This produces the Fair Value.
+5. MOS Price = 50% of Fair Value.
 
 **Validation:** EPS linearity, rational FGR, Future P/E historically achievable.
 
@@ -261,15 +261,15 @@ Projected Return = (Future Price / Current Price)^(1/10) - 1
 ```
 **This is the core output.** The original method asks: "If I pay today's price, what annual return do I get?" If the answer is >= 15%, it's a candidate.
 
-**Step 6: Calculate Sticker Price**
+**Step 6: Calculate Fair Value**
 ```
-Sticker Price = Future Price / (1 + MARR)^10
+Fair Value = Future Price / (1 + MARR)^10
 ```
 MARR default for Equity Bond is 20% (higher than MOS/PBT's 15%).
 
 **Step 7: Calculate Buy Price**
 ```
-Buy Price = Sticker Price x MOS% (default 50%)
+Buy Price = Fair Value x MOS% (default 50%)
 ```
 Note: Steps 6-7 are modified from the original Buffettology method to produce an actual buy price.
 
@@ -579,8 +579,8 @@ Return a JSON object for Section 10. Return ONLY the JSON — first character mu
     "eps": 0,
     "futurePE": 0,
     "marr": 0.15,
-    "stickerPriceLow": 0,
-    "stickerPriceHigh": 0
+    "fairValueLow": 0,
+    "fairValueHigh": 0
   },
   "pbtBuyPrice": {
     "low": 0,
@@ -679,7 +679,7 @@ At least **2 red flags**, even for PASS. There is always something to watch.
 As the final analyst, you validate everything upstream:
 - FGR reliability concerns -> **synthesis-writer** (affects overall thesis confidence)
 - Growth ceiling implications -> **risk-analyst** (market saturation risk)
-- Valuation provides both buy AND sell guidance -> **all downstream** (sticker prices serve as sell targets)
+- Valuation provides both buy AND sell guidance -> **all downstream** (Fair Value serves as sell target)
 
 ### Contamination Boundary
 

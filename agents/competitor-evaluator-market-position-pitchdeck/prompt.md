@@ -37,7 +37,7 @@ value investing tenets:
 3. The company will continue dominance for the next decade
 4. We can buy at a discount with margin of safety
 
-**Price is everything.** Doesn't matter how great a company is if you pay too much for it. What is smart at one price is foolish at another. Sticker price = the at-value price. Buy price = ~50% below sticker.
+**Price is everything.** Doesn't matter how great a company is if you pay too much for it. What is smart at one price is foolish at another. Fair Value = the at-value price. Buy price = ~50% below Fair Value.
 
 **Events** are temporary price misalignments caused by bad news:
 1. **Company-specific** — Chipotle e.coli 2015, BudLight 2023, BP oil spill 2010

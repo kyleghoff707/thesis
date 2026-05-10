@@ -151,7 +151,7 @@ KPIs related to management evaluation are the "Return on" metrics:
 
 CEO deploys capital in:
 - **Growth initiatives** — expanding the business, R&D, new markets, new products
-- **Buybacks** — we prefer buybacks only when stock is below sticker price. Buying back overpriced shares destroys value.
+- **Buybacks** — we prefer buybacks only when stock is below Fair Value. Buying back overpriced shares destroys value.
 - **Dividends** — consistent or growing dividends signal confidence in cash flow durability
 - **Acquisitions** — see M&A assessment below
 

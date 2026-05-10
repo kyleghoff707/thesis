@@ -232,7 +232,7 @@ export default function HistoricalBuyPrices({
         endDate,
         price: Math.round(yearEndPrice * 100) / 100,
         mosPrice: (mos?.mosPrice > 0) ? mos.mosPrice : null,
-        mosStickerPrice: (mos?.stickerPrice > 0) ? mos.stickerPrice : null,
+        mosFairValue: (mos?.fairValue > 0) ? mos.fairValue : null,
         pbtPrice: (pbt?.pbtPrice > 0) ? pbt.pbtPrice : null,
         tenCapPrice: (tenCap?.tenCapPrice > 0) ? tenCap.tenCapPrice : null,
         ebPrice: (eb?.buyPrice > 0) ? eb.buyPrice : null,

@@ -9,7 +9,7 @@
 // EPS: TTM or 3-year average (user documents which and why)
 // Future P/E: ≤ 2× Growth Rate, capped at historical high
 // MARR = 15%
-// Sticker Price → MOS Price (50% discount)
+// Fair Value → MOS Price (50% discount)
 
 export function computeMOS({ fgr, eps, futurePE, marr = 0.15, years = 10 }) {
   if (!fgr || !eps || !futurePE) return null;
@@ -20,16 +20,16 @@ export function computeMOS({ fgr, eps, futurePE, marr = 0.15, years = 10 }) {
   // Future price = Future EPS × Future P/E
   const futurePrice = futureEPS * futurePE;
 
-  // Sticker price = Future price discounted at MARR
-  const stickerPrice = futurePrice / Math.pow(1 + marr, years);
+  // Fair Value = Future price discounted at MARR
+  const fairValue = futurePrice / Math.pow(1 + marr, years);
 
-  // MOS price = 50% of sticker
-  const mosPrice = stickerPrice / 2;
+  // MOS price = 50% of Fair Value
+  const mosPrice = fairValue / 2;
 
   return {
     futureEPS: round2(futureEPS),
     futurePrice: round2(futurePrice),
-    stickerPrice: round2(stickerPrice),
+    fairValue: round2(fairValue),
     mosPrice: round2(mosPrice),
     inputs: { fgr, eps, futurePE, marr, years },
   };
@@ -135,7 +135,7 @@ export function estimateMaintenanceCapEx(totalCapEx, maintenancePct = 0.70) {
 // 5. Grow book value 10 years at equity growth rate
 // 6. Future earnings = future book value × ROE
 // 7. Future price = future earnings × historically reasonable P/E
-// 8. Back-track to present value at MARR → sticker price
+// 8. Back-track to present value at MARR → Fair Value
 // 9. Apply margin of safety discount → buy price
 // 10. Projected CAGR at current price (the original Buffettology output)
 
@@ -154,11 +154,11 @@ export function computeEquityBond({ bvps, roe, retainedRatio, historicalPE, marr
   // Future price
   const futurePrice = futureEPS * historicalPE;
 
-  // Sticker price = future price discounted at MARR
-  const stickerPrice = futurePrice / Math.pow(1 + marr, years);
+  // Fair Value = future price discounted at MARR
+  const fairValue = futurePrice / Math.pow(1 + marr, years);
 
-  // Buy price = sticker price × MOS%
-  const buyPrice = stickerPrice * mosPercent;
+  // Buy price = Fair Value × MOS%
+  const buyPrice = fairValue * mosPercent;
 
   // Projected annual return at current market price
   const projectedReturn = (currentPrice && currentPrice > 0)
@@ -170,7 +170,7 @@ export function computeEquityBond({ bvps, roe, retainedRatio, historicalPE, marr
     futureBVPS: round2(futureBVPS),
     futureEPS: round2(futureEPS),
     futurePrice: round2(futurePrice),
-    stickerPrice: round2(stickerPrice),
+    fairValue: round2(fairValue),
     buyPrice: round2(buyPrice),
     projectedReturn,
     inputs: { bvps, roe, retainedRatio, historicalPE, marr, mosPercent, years },

@@ -735,7 +735,7 @@ describe('Methodology Scoring', () => {
 
   describe('Valuation (valuation)', () => {
     it('should check for all 4 methods, FGR derivation, and buy price', () => {
-      const narrative = 'We computed the MOS (Margin of Safety) price at $45, Payback Time (PBT) target of 6.2 years, Ten Cap price at $52, and Equity Bond price at $48. The FGR (future growth rate) was derived from historical growth of 15%, analyst consensus of 12%, company guidance of 14%, and sector CAGR of 8%. The buy price range is $42-$52 with a sticker price of $90. Sensitivity analysis across conservative and optimistic scenarios confirms the range. The 10-year outlook suggests durable growth.';
+      const narrative = 'We computed the MOS (Margin of Safety) price at $45, Payback Time (PBT) target of 6.2 years, Ten Cap price at $52, and Equity Bond price at $48. The FGR (future growth rate) was derived from historical growth of 15%, analyst consensus of 12%, company guidance of 14%, and sector CAGR of 8%. The buy price range is $42-$52 with a fair value of $90. Sensitivity analysis across conservative and optimistic scenarios confirms the range. The 10-year outlook suggests durable growth.';
       const section = makeMethodSection('valuation', 10, narrative);
       const result = scoreMethodology(section);
       expect(result.score).toBeGreaterThanOrEqual(80);

@@ -64,7 +64,7 @@ export function verdictDotColor(verdict) {
 // --- Data Grid Formatters ---
 
 // Dollar-related key patterns
-const DOLLAR_KEYS = /revenue|income|debt|assets|cash|capex|market_cap|book_value|earnings|fcf|price|cost|expense|profit|ebitda|ebit|sales|liabilities|equity|dividend|owner_earnings|sticker|buy_price/i;
+const DOLLAR_KEYS = /revenue|income|debt|assets|cash|capex|market_cap|book_value|earnings|fcf|price|cost|expense|profit|ebitda|ebit|sales|liabilities|equity|dividend|owner_earnings|fair_value|fairValue|buy_price/i;
 // Percentage-related key patterns
 const PCT_KEYS = /margin|ratio|yield|growth|return|pct|rate|roe|roic|roa|cagr/i;
 

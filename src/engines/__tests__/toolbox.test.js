@@ -83,11 +83,11 @@ describe('TOOL_DEFINITIONS', () => {
 // ─── executeTool Smoke Tests ────────────────────────────────────
 
 describe('executeTool', () => {
-  it('computeMOS returns object with stickerPrice and mosPrice > 0', () => {
+  it('computeMOS returns object with fairValue and mosPrice > 0', () => {
     const result = executeTool('computeMOS', { fgr: 0.12, eps: 5.0, futurePE: 24 });
     expect(result).not.toBeNull();
-    expect(typeof result.stickerPrice).toBe('number');
-    expect(result.stickerPrice).toBeGreaterThan(0);
+    expect(typeof result.fairValue).toBe('number');
+    expect(result.fairValue).toBeGreaterThan(0);
     expect(typeof result.mosPrice).toBe('number');
     expect(result.mosPrice).toBeGreaterThan(0);
   });
@@ -212,7 +212,7 @@ describe('createToolExecutor', () => {
     const executor = createToolExecutor({});
     const result = await executor('computeMOS', { fgr: 0.12, eps: 5.0, futurePE: 24 });
     expect(result).not.toBeNull();
-    expect(result.stickerPrice).toBeGreaterThan(0);
+    expect(result.fairValue).toBeGreaterThan(0);
   });
 
   it('every tool in TOOL_DEFINITIONS has a corresponding handler in executeTool', () => {
