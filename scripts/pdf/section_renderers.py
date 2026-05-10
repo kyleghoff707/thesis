@@ -351,6 +351,21 @@ def _camel_to_words(s):
     return s[:1].upper() + s[1:] if s else s
 
 
+def _format_verdict_value(value):
+    """Flatten nested dicts/lists for safe single-line PDF rendering.
+
+    FPDF's multi_cell cannot break on `{}` `[]` characters, and nested
+    dict/list reprs also tend to overflow narrow callout cells. Convert
+    to compact human-readable form (e.g. {'low':255,'high':380} -> 'low=255, high=380').
+    """
+    if isinstance(value, dict):
+        return ', '.join(f'{_camel_to_words(k).lower()}={v}' for k, v in value.items())
+    if isinstance(value, (list, tuple)):
+        head = '; '.join(str(v) for v in list(value)[:3])
+        return head + ('…' if len(value) > 3 else '')
+    return str(value)
+
+
 def render_verdict_box(pdf, section):
     """
     Render the prose-section verdict callout for Final Thesis prose sections.
@@ -398,13 +413,16 @@ def render_verdict_box(pdf, section):
     pdf.set_text_color(*color)
     pdf.cell(0, 6, f'{title} verdict', new_x="LMARGIN", new_y="NEXT")
 
-    # Verdict-detail lines (skip the 'overall' key, render everything else)
+    # Verdict-detail lines (skip the 'overall' key, render everything else).
+    # `new_x="LMARGIN"` is required: fpdf2's multi_cell defaults to
+    # XPos.RIGHT, which leaves the cursor at the right margin and gives the
+    # next call zero available width (FPDFException: not enough horizontal space).
     pdf.set_font('ArialUni', '', 10)
     pdf.set_text_color(*pdf.slate_700)
     for key, value in extras:
         label = _camel_to_words(key)
-        text = f'  {label}: {value}'
-        pdf.multi_cell(0, 5, text)
+        text = f'  {label}: {_format_verdict_value(value)}'
+        pdf.multi_cell(0, 5, text, new_x="LMARGIN", new_y="NEXT")
 
     # Overall stamp
     pdf.ln(1)
