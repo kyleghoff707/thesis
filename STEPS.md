@@ -119,6 +119,7 @@ To be picked up after the brainstorm pods produce decisions on Thesis Score, Val
 - [ ] **Valuation methods** — drop or rework. Equity Bond is from Buffettology (1997, public domain methodology) — safe to keep. Ten Cap and Payback Time are most R1-coded.
 - [ ] **Guru list** — current 43 are copy-pasted from R1. Rebuild from your own 13F screening criteria (AUM threshold, holding concentration, value-tilt heuristics). Phil Town stays in the list regardless (public 13F filer).
 - [x] **Final Thesis (formerly Full Story) — spec locked 2026-05-09.** See [docs/specs/2026-05-09-final-thesis-redesign.md](docs/specs/2026-05-09-final-thesis-redesign.md). Implementation pending; gates W2 semantic UI rewrite for Stage 3 components.
+- [x] **Pitch Deck (Stage 2 redesign) — spec locked 2026-05-09.** See [docs/specs/2026-05-09-pitch-deck-redesign.md](docs/specs/2026-05-09-pitch-deck-redesign.md). Implementation in [docs/plans/2026-05-09-pitch-deck-redesign-plan.md](docs/plans/2026-05-09-pitch-deck-redesign-plan.md).
 
 These four can run as parallel pods. Lock them before Phase 5. W2 (semantic UI rewrite) follows from their outputs.
 
@@ -239,7 +240,7 @@ From the audit of the existing codebase. These are the footguns; carry them forw
 - **`edgarFinancials.js` cache key is `v9`.** Bump on any taxonomy/derivation change or browsers serve stale data.
 - **`negate` flag silently flips signs** on cash flow fields. Easy to misuse. Currently only on 4 fields.
 - **FY label offset for Jan/Feb fiscal years** runs late. Out-of-band reads of `years` array must be aware.
-- **`KEY_NORMALIZATION` lives in PitchDeck.jsx + FullStory.jsx** with different aliases. The two `scripts/run-*.js` copies were deleted in Phase 1. Centralize the surviving frontend copies during the Phase 2 rebrand.
+- ~~**`KEY_NORMALIZATION` lives in PitchDeck.jsx + FullStory.jsx**~~ — **resolved** as part of pitch-deck redesign (2026-05-09): consolidated to `src/utils/keyNormalization.js`.
 - **`Spinner.jsx` injects keyframes globally** as a side effect on import. Don't remove the import without moving the keyframes.
 - **Toolbox is 7 tabs, not 8.** Old CLAUDE.md says 8 (no Audit tab exists).
 - **Static taxonomy JSON drifts from D1.** Decide single source of truth.
