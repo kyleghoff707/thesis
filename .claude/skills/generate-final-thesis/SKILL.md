@@ -7,9 +7,9 @@ disable-model-invocation: true
 
 # Generate Final Thesis (v2)
 
-Generate a complete 6-section value investing Full Story conviction document for **$0**.
+Generate a complete 7-section value investing Final Thesis conviction document for **$0**.
 
-Orchestrates 7 specialist agents across 2 phases via Claude Code Agent tool dispatch. Phase 1 dispatches 5 deep-analysis agents in parallel. Phase 2 runs a 4-step adversarial debate (Bull, Bear, Rebuttal, Judge) plus a composition step to produce final Section 6. Runs end-to-end without stopping. Builds entirely on the completed Pitch Deck — PSR findings are inherited, not re-run.
+Orchestrates 11 specialist agents across 3 phases via Claude Code Agent tool dispatch. Phase 1 dispatches 5 deep-analysis agents in parallel. Phase 2 runs a 4-step adversarial debate (Bull, Bear, Rebuttal, Judge) plus a composition step to produce final Section 6. Phase 3 dispatches the trade-plan agent to produce Section 7 once Section 6 is composed. Runs end-to-end without stopping. Builds entirely on the completed Pitch Deck — PSR findings are inherited, not re-run.
 
 ---
 
@@ -18,61 +18,91 @@ Orchestrates 7 specialist agents across 2 phases via Claude Code Agent tool disp
 ```
 AGENT_REGISTRY:
 
-  risk-analyst:
-    prompt: agents/risk-analyst-fullstory/prompt.md
+  risk-analyst-event:
+    prompt: agents/risk-analyst-finalthesis-event/prompt.md
     model: sonnet
     sections: [event_analysis]
     phase: 1
-    debateRole: bear (Phase 2, Step 2)
     pdInheritance: [pest, radar]
     dpFields: [companyInfo, classification, financials, ttm, growthRates, peers, insiders, caveats]
 
   business-analyst:
-    prompt: agents/business-analyst-fullstory/prompt.md
+    prompt: agents/business-analyst-finalthesis/prompt.md
     model: sonnet
-    sections: [meaning_checklist]
+    sections: [business_analysis]
     phase: 1
     pdInheritance: [simple_predictable, market_position]
     dpFields: [companyInfo, classification, thesisScore, peers, gurus, financials, ttm, growthRates, caveats]
 
   competitor-evaluator:
-    prompt: agents/competitor-evaluator-fullstory/prompt.md
+    prompt: agents/competitor-evaluator-finalthesis/prompt.md
     model: sonnet
-    sections: [moat_checklist]
+    sections: [moat_analysis]
     phase: 1
     pdInheritance: [barriers_moats, market_position]
     dpFields: [companyInfo, classification, thesisScore, peers, peerMetrics, financials, ttm, growthRates, caveats]
 
   management-evaluator:
-    prompt: agents/management-evaluator-fullstory/prompt.md
+    prompt: agents/management-evaluator-finalthesis/prompt.md
     model: sonnet
-    sections: [management_checklist]
+    sections: [management_analysis]
     phase: 1
     pdInheritance: [management, balance_sheet]
     dpFields: [companyInfo, classification, compensation, insiders, gurus, financials, ttm, returnMetrics, caveats]
 
   valuation-specialist:
-    prompt: agents/valuation-specialist-fullstory/prompt.md
+    prompt: agents/valuation-specialist-finalthesis/prompt.md
     model: sonnet
-    sections: [valuation_confirmation]
+    sections: [valuation_analysis]
     phase: 1
     pdInheritance: [fcf, roe_roic_debt, valuation]
     dpFields: [companyInfo, classification, financials, ttm, growthRates, returnMetrics, fcf, keyMetrics, caveats]
 
-  synthesis-writer:
-    prompt: agents/synthesis-writer-fullstory/prompt.md
+  bull:
+    prompt: agents/synthesis-writer-finalthesis-bull/prompt.md
     model: sonnet
-    sections: [inversion_rebuttal]
+    sections: []
     phase: 2
-    debateRoles: bull (Step 1), bull_rebuttal (Step 3), compose (Final)
+    debateRole: bull (Step 1)
     dpFields: []
 
-  financial-analyst:
-    prompt: agents/financial-analyst-fullstory/prompt.md
+  bear:
+    prompt: agents/risk-analyst-finalthesis-bear/prompt.md
+    model: sonnet
+    sections: []
+    phase: 2
+    debateRole: bear (Step 2)
+    dpFields: [companyInfo, classification, financials, ttm, growthRates, peers, insiders, caveats]
+
+  rebuttal:
+    prompt: agents/synthesis-writer-finalthesis-rebuttal/prompt.md
+    model: sonnet
+    sections: []
+    phase: 2
+    debateRole: rebuttal (Step 3)
+    dpFields: []
+
+  judge:
+    prompt: agents/financial-analyst-finalthesis/prompt.md
     model: sonnet
     sections: []
     phase: 2
     debateRole: judge (Step 4)
+    dpFields: []
+
+  compose:
+    prompt: agents/synthesis-writer-finalthesis-compose/prompt.md
+    model: sonnet
+    sections: [debate]
+    phase: 2
+    debateRole: compose (Final Section 6)
+    dpFields: []
+
+  trade-plan:
+    prompt: agents/trade-plan-finalthesis/prompt.md
+    model: sonnet
+    sections: [trade_plan]
+    phase: 3
     dpFields: []
 ```
 
@@ -80,21 +110,24 @@ AGENT_REGISTRY:
 
 ```
 PD_INHERITANCE_MAP:
-  event_analysis:         [pest, radar]
-  meaning_checklist:      [simple_predictable, market_position]
-  moat_checklist:         [barriers_moats, market_position]
-  management_checklist:   [management, balance_sheet]
-  valuation_confirmation: [fcf, roe_roic_debt, valuation]
+  event_analysis:        [pest, radar]
+  business_analysis:     [simple_predictable, market_position]
+  moat_analysis:         [barriers_moats, market_position]
+  management_analysis:   [management, balance_sheet]
+  valuation_analysis:    [fcf, roe_roic_debt, valuation]
 ```
+
+(Sections 6 and 7 don't inherit from Pitch Deck — they synthesize from the other Final Thesis sections.)
 
 ## Phase Structure
 
 ```
-Phase 1 (Deep Analysis):  risk-analyst + business-analyst + competitor-evaluator + management-evaluator + valuation-specialist  [PARALLEL]
-Phase 2 (The Debate):     Bull (synthesis-writer) → Bear (risk-analyst) → Rebuttal (synthesis-writer) → Judge (financial-analyst) → Compose (synthesis-writer)  [SEQUENTIAL]
+Phase 1 (Deep Analysis):  risk-analyst-event + business-analyst + competitor-evaluator + management-evaluator + valuation-specialist  [PARALLEL — 5 Agent dispatches in single message]
+Phase 2 (The Debate):     Bull → Bear → Rebuttal → Judge → Compose  [SEQUENTIAL — each step depends on prior step's output]
+Phase 3 (Trade Plan):     trade-plan  [SEQUENTIAL — depends on composed Section 6]
 ```
 
-Phase 1 agents dispatch in a single message (5 Agent tool calls). Phase 2 debate steps are strictly sequential — each step depends on the prior step's output.
+Phase 1 agents dispatch in a single message (5 Agent tool calls). Phase 2 debate steps are strictly sequential — each step depends on the prior step's output. Phase 3 dispatches the trade-plan agent once Section 6 is composed.
 
 ---
 
@@ -108,7 +141,7 @@ Phase 1 agents dispatch in a single message (5 Agent tool calls). Phase 2 debate
 
 The ticker symbol is `$0`. Uppercase it and store as `TICKER`.
 
-If `$0` is empty, print usage `/generate-full-story TICKER` and stop.
+If `$0` is empty, print usage `/generate-final-thesis TICKER` and stop.
 
 Clean stale section data (preserve pitch-deck.json + data-packet.json):
 ```bash
@@ -136,11 +169,11 @@ Store both for downstream use.
 
 ### 3a: Read Phase 1 Agent Prompts
 
-- `agents/risk-analyst-fullstory/prompt.md`
-- `agents/business-analyst-fullstory/prompt.md`
-- `agents/competitor-evaluator-fullstory/prompt.md`
-- `agents/management-evaluator-fullstory/prompt.md`
-- `agents/valuation-specialist-fullstory/prompt.md`
+- `agents/risk-analyst-finalthesis-event/prompt.md`
+- `agents/business-analyst-finalthesis/prompt.md`
+- `agents/competitor-evaluator-finalthesis/prompt.md`
+- `agents/management-evaluator-finalthesis/prompt.md`
+- `agents/valuation-specialist-finalthesis/prompt.md`
 
 ### 3b: Build DataPacket and Pitch Deck Context
 
@@ -183,11 +216,11 @@ For each agent, the prompt is concatenated as:
 
 ### Task Instructions
 
-**Risk Analyst (S1: Event Analysis):**
+**Risk Analyst — Event (S1: Event Analysis):**
 ```
-Analyze {TICKER} ({COMPANY_NAME}) for the Full Story.
+Analyze {TICKER} ({COMPANY_NAME}) for the Final Thesis.
 
-You are producing Full Story Section 1: Event Analysis.
+You are producing Final Thesis Section 1: Event Analysis.
 Your inherited Pitch Deck sections are above (PEST, Radar).
 The DataPacket and PSR findings are provided.
 
@@ -195,56 +228,56 @@ Determine if any current price dislocation is temporary or structural.
 Identify upcoming catalyst events, recent material events, and the event calendar.
 Use web search for current news, upcoming events, and market sentiment.
 
-Return your output as Format A (ReportSectionSchema) JSON.
+Return your output as Format A (ReportSectionSchema) JSON with key `event_analysis`, sectionNumber 1.
 ```
 
-**Business Analyst (S2: Meaning Checklist):**
+**Business Analyst (S2: Business Analysis):**
 ```
-Analyze {TICKER} ({COMPANY_NAME}) for the Full Story.
+Analyze {TICKER} ({COMPANY_NAME}) for the Final Thesis.
 
-You are producing Full Story Section 2: Meaning Checklist (15-point).
+You are producing Final Thesis Section 2: Business Analysis.
 Your inherited Pitch Deck sections are above (Simple & Predictable, Market Position).
 The DataPacket and PSR findings are provided.
 
-Deepen the business understanding from the Pitch Deck into a structured 15-point conviction assessment.
+Deepen the business understanding from the Pitch Deck into a prose conviction assessment.
 Use web search for current business developments and industry context.
 
-Return a single ReportSectionSchema JSON object.
+Return a single ReportSectionSchema JSON object with key `business_analysis`, sectionNumber 2.
 ```
 
-**Competitor Evaluator (S3: Moat Checklist):**
+**Competitor Evaluator (S3: Moat Analysis):**
 ```
-Analyze {TICKER} ({COMPANY_NAME}) for the Full Story.
+Analyze {TICKER} ({COMPANY_NAME}) for the Final Thesis.
 
-You are producing Full Story Section 3: Moat Checklist (15-point).
+You are producing Final Thesis Section 3: Moat Analysis.
 Your inherited Pitch Deck sections are above (Barriers & Moats, Market Position).
 The DataPacket and PSR findings are provided.
 
-Validate competitive durability point by point with a 15-point moat checklist.
+Validate competitive durability with a prose analysis of moat sources, durability, and erosion risks.
 Use web search for competitive dynamics, recent entrants, and moat erosion signals.
 
-Return a single ReportSectionSchema JSON object.
+Return a single ReportSectionSchema JSON object with key `moat_analysis`, sectionNumber 3.
 ```
 
-**Management Evaluator (S4: Management Checklist):**
+**Management Evaluator (S4: Management Analysis):**
 ```
-Analyze {TICKER} ({COMPANY_NAME}) for the Full Story.
+Analyze {TICKER} ({COMPANY_NAME}) for the Final Thesis.
 
-You are producing Full Story Section 4: Management Checklist (13-point).
+You are producing Final Thesis Section 4: Management Analysis.
 Your inherited Pitch Deck sections are above (Management, Balance Sheet).
 The DataPacket and PSR findings are provided.
 
-Assess leadership quality, integrity, and shareholder alignment with a 13-point checklist.
+Assess leadership quality, integrity, and shareholder alignment.
 Use web search for recent management actions, governance issues, and leadership changes.
 
-Return a single ReportSectionSchema JSON object.
+Return a single ReportSectionSchema JSON object with key `management_analysis`, sectionNumber 4.
 ```
 
-**Valuation Specialist (S5: Valuation Confirmation):**
+**Valuation Specialist (S5: Valuation Analysis):**
 ```
-Analyze {TICKER} ({COMPANY_NAME}) for the Full Story.
+Analyze {TICKER} ({COMPANY_NAME}) for the Final Thesis.
 
-You are producing Full Story Section 5: Valuation Confirmation.
+You are producing Final Thesis Section 5: Valuation Analysis.
 Your inherited Pitch Deck sections are above (FCF, ROE/ROIC & Debt, Valuation).
 The DataPacket and PSR findings are provided.
 
@@ -252,7 +285,7 @@ Stress-test the Pitch Deck's valuation assumptions. Do NOT re-run the calculator
 Is the FGR achievable or does it require unrealistic market share? Is the growth real or debt-fueled?
 Use web search for current analyst estimates, market conditions, and growth rate validation.
 
-Return a single ReportSectionSchema JSON object.
+Return a single ReportSectionSchema JSON object with key `valuation_analysis`, sectionNumber 5.
 ```
 
 ### Collect Phase 1 Outputs
@@ -268,54 +301,56 @@ If an agent fails entirely, wait 30 seconds and retry once.
 
 ### 6a: Read Debate Prompts
 
-- `agents/synthesis-writer-fullstory/prompt.md` (Bull, Rebuttal, Compose)
-- `agents/risk-analyst-fullstory/prompt.md` (Bear — already read)
-- `agents/financial-analyst-fullstory/prompt.md` (Judge)
+- `agents/synthesis-writer-finalthesis-bull/prompt.md` (Bull — Step 1)
+- `agents/risk-analyst-finalthesis-bear/prompt.md` (Bear — Step 2)
+- `agents/synthesis-writer-finalthesis-rebuttal/prompt.md` (Rebuttal — Step 3)
+- `agents/financial-analyst-finalthesis/prompt.md` (Judge — Step 4)
+- `agents/synthesis-writer-finalthesis-compose/prompt.md` (Compose — Final Section 6)
 
 ### 6b: Build Section Summaries
 
 ```
-## Completed Full Story Sections (S1-S5)
+## Completed Final Thesis Sections (S1-S5)
 
 ### S1: Event Analysis — {verdict} ({confidence})
 {summary}
 Red Flags: {list}
 Key Data: {event risk score, upcoming events count}
 
-### S2: Meaning Checklist — {verdict} ({confidence})
+### S2: Business Analysis — {verdict} ({confidence})
 {summary}
 Red Flags: {list}
-Key Data: {checklist score, e.g. 12/15}
+Key Data: {key business findings}
 
-### S3: Moat Checklist — {verdict} ({confidence})
+### S3: Moat Analysis — {verdict} ({confidence})
 {summary}
 Red Flags: {list}
-Key Data: {checklist score, e.g. 11/15}
+Key Data: {moat width, moat sources}
 
-### S4: Management Checklist — {verdict} ({confidence})
+### S4: Management Analysis — {verdict} ({confidence})
 {summary}
 Red Flags: {list}
-Key Data: {checklist score, e.g. 10/13}
+Key Data: {key management findings}
 
-### S5: Valuation Confirmation — {verdict} ({confidence})
+### S5: Valuation Analysis — {verdict} ({confidence})
 {summary}
 Red Flags: {list}
-Key Data: {FGR assessment, buy price confirmation}
+Key Data: {FGR assessment, buy price range}
 ```
 
-### 6c: Step 1 — Bull (Synthesis Writer)
+### 6c: Step 1 — Bull (Synthesis Writer — Bull)
 
 Dispatch via Agent tool with:
-1. Full prompt
+1. Full prompt (`agents/synthesis-writer-finalthesis-bull/prompt.md`)
 2. All 5 section outputs (full JSON)
 3. Task:
 
 ```
-You are the BULL in the Full Story Section 6 adversarial debate for {TICKER} ({COMPANY_NAME}).
+You are the BULL in the Final Thesis Section 6 adversarial debate for {TICKER} ({COMPANY_NAME}).
 
 Your role is Step 1: Bull Thesis. Synthesize the strongest possible investment thesis from Sections 1-5 above.
 
-Extract 5-7 thesis points covering meaning, moat, management, valuation, and events.
+Extract 5-7 thesis points covering business, moat, management, valuation, and events.
 Each point must cite the source section. Write a compelling overallThesis summary.
 
 You HAVE web search. Use it to surface positive catalysts, insider buying, guru activity, analyst upgrades, validating third-party signals. Primary job is still distilling section findings — web search is for sharpening and validating, not inventing a thesis the sections don't support.
@@ -325,17 +360,17 @@ Return your output as the Bull Thesis JSON format (Step 1).
 
 Wait. Extract COMPLETE JSON, save to `sections/debate-step-1-bull.json`.
 
-### 6d: Step 2 — Bear (Risk Analyst)
+### 6d: Step 2 — Bear (Risk Analyst — Bear)
 
 Dispatch via Agent tool with:
-1. Full prompt
+1. Full prompt (`agents/risk-analyst-finalthesis-bear/prompt.md`)
 2. Bull thesis output (Step 1 JSON)
-3. DataPacket slice (full risk-analyst dpFields)
+3. DataPacket slice (full bear dpFields)
 4. All 5 section outputs (reference)
 5. Task:
 
 ```
-You are the BEAR in the Full Story Section 6 adversarial debate for {TICKER} ({COMPANY_NAME}).
+You are the BEAR in the Final Thesis Section 6 adversarial debate for {TICKER} ({COMPANY_NAME}).
 
 Your role is Step 2: Bear Inversion. The bull has presented their thesis above. Attack EVERY thesis point with cited counter-evidence.
 
@@ -348,17 +383,17 @@ Return your output as the Bear Debate Step JSON format (Step 2 / Format B).
 
 Wait. Extract COMPLETE JSON, save to `sections/debate-step-2-bear.json`.
 
-### 6e: Step 3 — Rebuttal (Synthesis Writer)
+### 6e: Step 3 — Rebuttal (Synthesis Writer — Rebuttal)
 
 Dispatch via Agent tool with:
-1. Full prompt
+1. Full prompt (`agents/synthesis-writer-finalthesis-rebuttal/prompt.md`)
 2. Bull thesis (Step 1 JSON)
 3. Bear inversion (Step 2 JSON)
 4. All 5 section outputs (evidence)
 5. Task:
 
 ```
-You are the BULL REBUTTAL in the Full Story Section 6 adversarial debate for {TICKER} ({COMPANY_NAME}).
+You are the BULL REBUTTAL in the Final Thesis Section 6 adversarial debate for {TICKER} ({COMPANY_NAME}).
 
 Your role is Step 3: Bull Rebuttal. The bear has attacked your thesis above. Respond to EACH inversion with evidence-based counter-arguments.
 
@@ -373,7 +408,7 @@ Wait. Extract COMPLETE JSON, save to `sections/debate-step-3-rebuttal.json`.
 ### 6f: Step 4 — Judge (Financial Analyst)
 
 Dispatch via Agent tool with:
-1. Full prompt
+1. Full prompt (`agents/financial-analyst-finalthesis/prompt.md`)
 2. Bull thesis (Step 1 JSON)
 3. Bear inversion (Step 2 JSON)
 4. Rebuttal (Step 3 JSON)
@@ -381,7 +416,7 @@ Dispatch via Agent tool with:
 6. Task:
 
 ```
-You are the JUDGE in the Full Story Section 6 adversarial debate for {TICKER} ({COMPANY_NAME}).
+You are the JUDGE in the Final Thesis Section 6 adversarial debate for {TICKER} ({COMPANY_NAME}).
 
 Your role is Step 4: Judge Verdict. Score EACH exchange between the bull and bear impartially.
 
@@ -394,16 +429,16 @@ Return your output as the JudgeVerdictSchema JSON format (Step 4).
 
 Wait. Extract COMPLETE JSON, save to `sections/debate-step-4-judge.json`.
 
-### 6g: Compose — Final Section 6 (Synthesis Writer)
+### 6g: Compose — Final Section 6 (Synthesis Writer — Compose)
 
 Dispatch via Agent tool with:
-1. Full prompt
+1. Full prompt (`agents/synthesis-writer-finalthesis-compose/prompt.md`)
 2. All 4 debate step outputs (full JSON)
 3. All 5 section outputs (reference and citation propagation)
 4. Task:
 
 ```
-You are COMPOSING the final Section 6 (Inversion & Rebuttal) for {TICKER} ({COMPANY_NAME}).
+You are COMPOSING the final Section 6 (The Debate) for {TICKER} ({COMPANY_NAME}).
 
 Your role is Compose (Final Call). Weave all 4 debate outputs into a cohesive Buffett-style narrative.
 
@@ -412,10 +447,48 @@ Structure: thesis → antithesis → synthesis. Highlight which bear points were
 
 The narrative must be 600+ words. Synthesize, do NOT concatenate.
 
-Return your output as the Composition ReportSectionSchema JSON (key: "inversion_rebuttal", sectionNumber: 6).
+Return your output as the Composition ReportSectionSchema JSON (key: "debate", sectionNumber: 6).
 ```
 
-Wait. Extract COMPLETE JSON, validate ReportSectionSchema, save to `sections/inversion_rebuttal.json`. 10-50KB.
+Wait. Extract COMPLETE JSON, validate ReportSectionSchema, save to `sections/debate.json`. 10-50KB.
+
+## Step 7: Phase 3 — Trade Plan Dispatch
+
+### 7a: Read Trade Plan Prompt
+
+- `agents/trade-plan-finalthesis/prompt.md`
+
+### 7b: Build Trade Plan Context
+
+Trade Plan receives as context:
+1. The full Trade Plan agent prompt
+2. All 5 Phase 1 section outputs (full JSON) — for buy prices, moat width, KPIs
+3. The composed Section 6 (`sections/debate.json`) — for verdict, watchpoints, debate outcome
+4. Task instruction (below)
+
+### 7c: Dispatch Trade Plan
+
+Dispatch via Agent tool with the context above and:
+
+```
+You are producing Final Thesis Section 7: Trade Plan for {TICKER} ({COMPANY_NAME}).
+
+The 6 prior sections are above. Section 6 (The Debate) has produced the verdict
+that gates this section: a FAIL verdict means produce a "no trade" plan; a PASS
+or WATCHLIST verdict means produce a real trade plan.
+
+Cover all 5 required components: position sizing, entry tranches, sell rules,
+PACE plan, and the closing forcing question. Be concrete — every recommendation
+must have a specific number, trigger, and action.
+
+Honor the Section 5 buy price range and the Section 6 watchpoints — the trade
+plan inherits from these and must not contradict them.
+
+Return your output as Format A (ReportSectionSchema) JSON with key `trade_plan`,
+sectionNumber 7.
+```
+
+Wait. Extract COMPLETE JSON, save to `sections/trade_plan.json`. 5-30KB.
 
 ## Step 8: Assemble Final Report
 
@@ -423,12 +496,12 @@ Wait. Extract COMPLETE JSON, validate ReportSectionSchema, save to `sections/inv
 {
   "ticker": "{TICKER}",
   "companyName": "{from DataPacket companyInfo}",
-  "stage": "fullStory",
+  "stage": "finalThesis",
   "generatedAt": "{ISO timestamp}",
   "sections": [
-    /* 6 ReportSectionSchema objects ordered by sectionNumber (1-6) */
+    /* 7 ReportSectionSchema objects ordered by sectionNumber (1-7) */
   ],
-  "sectionKeys": ["event_analysis", "meaning_checklist", "moat_checklist", "management_checklist", "valuation_confirmation", "inversion_rebuttal"],
+  "sectionKeys": ["event_analysis", "business_analysis", "moat_analysis", "management_analysis", "valuation_analysis", "debate", "trade_plan"],
   "overallVerdict": "{from Section 6 / judge direction: Bull=PASS, Bear=FAIL, Mixed=WATCHLIST}",
   "verdictRationale": "{from Section 6 verdictRationale}",
   "debateOutcome": {
@@ -450,17 +523,17 @@ Wait. Extract COMPLETE JSON, validate ReportSectionSchema, save to `sections/inv
 }
 ```
 
-Write JSON to `.thesis/reports/{TICKER}/full-story.json`.
+Write JSON to `.thesis/reports/{TICKER}/final-thesis.json`.
 
-Generate human-readable markdown at `.thesis/reports/{TICKER}/full-story.md`. Structure: title + verdict + Pitch Deck verdict + debate direction header → Executive Summary (Section 6 verdictRationale + debate outcome) → Phase 1 sections (1-5) with narrative + verdict + checklist score + red flags → Section 6 (Inversion & Rebuttal) narrative + debate scorecard table (per-exchange Bull/Bear/Outcome) → Section verdicts table → All red flags aggregated → Citations.
+Generate human-readable markdown at `.thesis/reports/{TICKER}/final-thesis.md`. Structure: title + verdict + Pitch Deck verdict + debate direction header → Executive Summary (Section 6 verdictRationale + debate outcome) → Phase 1 sections (1-5) with narrative + verdict + red flags → Section 6 (The Debate) narrative + debate scorecard table (per-exchange Bull/Bear/Outcome) → Section 7 (Trade Plan) narrative with position sizing, entry tranches, sell rules, PACE plan, and forcing question → Section verdicts table → All red flags aggregated → Citations.
 
 ## Step 10: Generate PDF
 
-The PDF reader expects `full-story-api.json`, so copy first:
+The PDF reader expects `final-thesis-api.json`, so copy first:
 
 ```bash
-cp .thesis/reports/{TICKER}/full-story.json .thesis/reports/{TICKER}/full-story-api.json
-python3 scripts/pdf/generate_full_story_pdf.py {TICKER}
+cp .thesis/reports/{TICKER}/final-thesis.json .thesis/reports/{TICKER}/final-thesis-api.json
+python3 scripts/pdf/generate_final_thesis_pdf.py {TICKER}
 ```
 
 If it fails, print warning and continue.
@@ -470,9 +543,10 @@ If it fails, print warning and continue.
 ```bash
 ARCHIVE_ID=$(date +%Y%m%d-%H%M%S)
 mkdir -p .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}
-cp .thesis/reports/{TICKER}/full-story.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
-cp .thesis/reports/{TICKER}/full-story-api.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thesis/reports/{TICKER}/final-thesis.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thesis/reports/{TICKER}/final-thesis-api.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
 cp .thesis/reports/{TICKER}/sections/debate-*.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thesis/reports/{TICKER}/sections/trade_plan.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
 cp .thesis/reports/{TICKER}/*.pdf .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
 ```
 
@@ -480,7 +554,7 @@ Retry once on error.
 
 ## Step 12: Print Summary
 
-Print: sections completed (X/6), overall verdict + confidence, Pitch Deck verdict, debate direction + Strong Bull/Bear/Unresolved counts, thesis killer count, investment implication, red flag total, citation total, output paths.
+Print: sections completed (X/7), overall verdict + confidence, Pitch Deck verdict, debate direction + Strong Bull/Bear/Unresolved counts, thesis killer count, investment implication, red flag total, citation total, output paths.
 
 ---
 
@@ -511,24 +585,30 @@ If any agent fails entirely (rate limit, timeout, error):
 3. If retry fails, log the error, save partial output with `status: "failed"`, and continue
 4. Do NOT retry more than once
 
-**Anti-pattern specific to Full Story:** when a debate step (Bear, Rebuttal, Compose) stalls, the orchestrator's instinct is to write the debate step output directly from its own context using the Write tool instead of re-dispatching the agent. Do not. Re-dispatch the agent.
+**Anti-pattern specific to Final Thesis:** when a debate step (Bear, Rebuttal, Compose) or the Trade Plan stalls, the orchestrator's instinct is to write the agent output directly from its own context using the Write tool instead of re-dispatching the agent. Do not. Re-dispatch the agent.
 
 ## Constraints
 
 **Contamination boundary.** During generation, NEVER read from:
 - `knowledge/stage-1-one-pager/examples/`
 - `knowledge/stage-2-pitch-deck/examples/`
-- `knowledge/stage-3-full-story/examples/`
+- `knowledge/stage-3-final-thesis/examples/`
 - `knowledge/pre-course-examples/`
 
-**Schema enforcement.** Every section output MUST conform to ReportSectionSchema. Required fields: `key`, `title`, `sectionNumber`, `status`, `confidence`, `verdict`, `verdictRationale`, `summary`, `data`, `narrative`, `citations`, `redFlags` (>= 1), `modelUsed`, `tokenCost`. Debate step outputs (Steps 1-4) use lightweight formats, NOT ReportSectionSchema. Only Compose produces a ReportSectionSchema.
+**Schema enforcement.** Every section output MUST conform to ReportSectionSchema. Required fields: `key`, `title`, `sectionNumber`, `status`, `confidence`, `verdict`, `verdictRationale`, `summary`, `data`, `narrative`, `citations`, `redFlags` (>= 1), `modelUsed`, `tokenCost`. Debate step outputs (Steps 1-4) use lightweight formats, NOT ReportSectionSchema. Only Compose (Section 6) and Trade Plan (Section 7) produce ReportSectionSchema sections in Phases 2-3.
 
-**Multi-role agents.** Two agents play multiple roles. When dispatching, the message MUST explicitly state the role:
-- **Risk Analyst** — Phase 1 (S1: Event Analysis) + Phase 2 Step 2 (Bear). Bear dispatch MUST say: "Your role is Step 2: Bear Inversion" so Format B activates.
-- **Synthesis Writer** — Phase 2 Steps 1, 3, Compose. Each dispatch MUST say: "Your role is Step 1: Bull Thesis" or "Your role is Step 3: Bull Rebuttal" or "Your role is Compose (Final Call)".
+**Single-role agents.** Each agent in the registry plays exactly one role — the previous combined-role Risk Analyst and Synthesis Writer prompts have been split into single-role prompts:
+- `risk-analyst-finalthesis-event` — Phase 1 only (S1: Event Analysis)
+- `risk-analyst-finalthesis-bear` — Phase 2 Step 2 only (Bear Inversion)
+- `synthesis-writer-finalthesis-bull` — Phase 2 Step 1 only (Bull Thesis)
+- `synthesis-writer-finalthesis-rebuttal` — Phase 2 Step 3 only (Bull Rebuttal)
+- `synthesis-writer-finalthesis-compose` — Phase 2 Final only (Compose Section 6)
+- `trade-plan-finalthesis` — Phase 3 only (S7: Trade Plan)
 
-**Web search rule.** Phase 1 agents all have web search. Phase 2: Bull, Bear, Rebuttal have web search. Judge and Compose do NOT.
+Each dispatch task instruction should still name the role for clarity, but the prompt itself no longer needs to branch by role.
 
-**Error resilience.** Phase 1 agent fails after retry → log, save what succeeded, continue to Phase 2 with available sections. Debate step fails after retry → debate cannot continue past that step; assemble report with Phase 1 sections only and note the failure. Compose fails → use judge verdict to construct minimal Section 6 with judge's direction as verdict and judge's summary as narrative. Always produce partial results rather than nothing.
+**Web search rule.** Phase 1 agents all have web search. Phase 2: Bull, Bear, Rebuttal have web search. Judge and Compose do NOT. Phase 3: Trade Plan does NOT.
+
+**Error resilience.** Phase 1 agent fails after retry → log, save what succeeded, continue to Phase 2 with available sections. Debate step fails after retry → debate cannot continue past that step; assemble report with Phase 1 sections only and note the failure. Compose fails → use judge verdict to construct minimal Section 6 with judge's direction as verdict and judge's summary as narrative. Trade Plan fails after retry → log and assemble report with Sections 1-6 only, noting the missing Section 7. Always produce partial results rather than nothing.
 
 **Agent model.** Defaults from Agent Registry (all sonnet). Pass the `model` param to the Agent tool per registry.
