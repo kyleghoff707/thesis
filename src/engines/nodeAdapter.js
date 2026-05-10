@@ -225,6 +225,16 @@ export function readBundledTranscript(ticker, year, quarter) {
   }
 }
 
+/**
+ * Does the repo-bundled corpus have ANY transcripts for this ticker?
+ * Used by dataExport.js to populate transcriptAvailability without enumerating
+ * individual quarters. Returns true if ./transcripts/{TICKER}/ exists.
+ */
+export function hasBundledTranscripts(ticker) {
+  if (!ticker || typeof ticker !== 'string') return false;
+  return existsSync(join(TRANSCRIPTS_DIR, ticker.toUpperCase()));
+}
+
 // ─── Node.js Global Shims ──────────────────────────────────────
 // When running in Node.js, inject browser-like globals so engines
 // can run unmodified. This block must run at import time (side-effect)
@@ -316,6 +326,7 @@ if (IS_NODE) {
   // (Phase 3: CLI users get S&P 500 transcripts from ./transcripts/
   // without needing R2 or an Alpha Vantage key.)
   globalThis.__nodeTranscriptRead = readBundledTranscript;
+  globalThis.__nodeBundledTranscriptsExist = hasBundledTranscripts;
 
   // 5. Patch fetch to intercept Vite middleware URLs
   // In the browser, engines call /api/yahoo-summary/:ticker etc.

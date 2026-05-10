@@ -24,6 +24,26 @@ export function isEarningsFiling(form) {
   return EARNINGS_FORMS.has(form);
 }
 
+/**
+ * Report transcript availability for a ticker as a DataPacket field.
+ * Considers both the repo-bundled corpus (preferred) and Alpha Vantage keys.
+ * Returns null when neither source is available.
+ */
+export function getTranscriptAvailability(ticker) {
+  const hasBundled =
+    typeof globalThis.__nodeBundledTranscriptsExist === 'function' &&
+    globalThis.__nodeBundledTranscriptsExist(ticker);
+  const hasAV = AV_KEYS.length > 0;
+  if (!hasBundled && !hasAV) return null;
+  // Bundled is preferred when available (free, instant, no rate limit).
+  // Report the primary source; AV is the fallback for missing quarters.
+  return {
+    available: true,
+    source: hasBundled ? 'bundled' : 'alpha_vantage',
+    fallbackSource: hasBundled && hasAV ? 'alpha_vantage' : null,
+  };
+}
+
 // ─── Fetch Single Transcript ────────────────────────────────
 
 /**

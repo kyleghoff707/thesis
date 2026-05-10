@@ -20,7 +20,7 @@ import { fetchCompensation } from './compensation.js';
 import { fetchPeersByTier } from './peers.js';
 import { fetchPeerFrameData, computePeerMetrics, computePeerScores } from './peerMetrics.js';
 import { fetchBatchQuotes } from './batchQuotes.js';
-import { ALPHA_VANTAGE_KEY, ALPHA_VANTAGE_KEY_2 } from './config.js';
+import { getTranscriptAvailability } from './transcripts.js';
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const IS_NODE = typeof window === 'undefined';
@@ -165,13 +165,11 @@ export async function assembleDataPacket(ticker) {
   const derivedDebtMetrics = deriveDebtMetrics(statements, fcf);
 
   // ── Build transcript availability summary ──
-  // Alpha Vantage is the sole transcript source (2-key failover).
-  // We report key availability; actual transcripts are fetched on-demand per quarter.
+  // Prefers the repo-bundled corpus (free, instant, no rate limit);
+  // falls back to Alpha Vantage when configured. Returns null only when
+  // neither source has anything for this ticker.
 
-  const hasAVKeys = !!(ALPHA_VANTAGE_KEY || ALPHA_VANTAGE_KEY_2);
-  const transcriptAvailability = hasAVKeys
-    ? { available: true, source: 'alpha_vantage' }
-    : null;
+  const transcriptAvailability = getTranscriptAvailability(ticker);
 
   // ── TTM field aliases + BVPS derivation ──
 
