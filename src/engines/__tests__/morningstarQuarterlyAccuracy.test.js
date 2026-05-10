@@ -1,7 +1,7 @@
 /**
  * morningstarQuarterlyAccuracy.test.js — Quarterly Morningstar Parity Test Suite
  *
- * Compares Thes1s XBRL quarterly engine output against 50 Morningstar quarterly fixtures.
+ * Compares Thesis XBRL quarterly engine output against 50 Morningstar quarterly fixtures.
  * Calls the live quarterly engine pipeline (with disk-cached EDGAR responses for speed).
  *
  * First run:  ~2-3 min (downloads EDGAR data, caches to disk)
@@ -371,7 +371,7 @@ function compareCompanyQuarterly(ticker, fixture, engineData) {
         // Apply sign multiplier
         let { sign } = mapInfo;
 
-        // Special handling: effective_tax_rate (MS decimal → Thes1s percentage)
+        // Special handling: effective_tax_rate (MS decimal → Thesis percentage)
         let adjustedMsValue = msValue;
         if (mapInfo.thesisField === 'effective_tax_rate') {
           adjustedMsValue = msValue * 100;

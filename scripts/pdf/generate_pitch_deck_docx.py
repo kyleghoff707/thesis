@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Pitch Deck Word Document Generator — Thes1s-branded .docx export.
+Pitch Deck Word Document Generator — Thesis-branded .docx export.
 
 Generates a professional Word document from any ticker's Pitch Deck pipeline output
 with embedded chart images (verdict scorecard, financial trends, price ranges),
-styled tables, citations, and Thes1s branding.
+styled tables, citations, and Thesis branding.
 
 Usage:
     python3 scripts/pdf/generate_pitch_deck_docx.py MNST
@@ -25,7 +25,7 @@ from scripts.pdf.chart_image_generator import (
     generate_price_range_chart, generate_comparison_chart,
 )
 from scripts.pdf.docx_helpers import (
-    create_thes1s_doc, add_title_page, add_styled_table,
+    create_thesis_doc, add_title_page, add_styled_table,
     add_verdict_table, add_section_heading, add_body_paragraphs,
     embed_chart, add_red_flags as render_red_flags, add_citations_section,
     cleanup_temp_charts, VERDICT_COLORS_RGB, SLATE_600,
@@ -175,7 +175,7 @@ def generate_pitch_deck_docx(ticker, base_dir=None):
     company_name = data.get_company_name()
     verdict = data.get_overall_verdict()
 
-    doc = create_thes1s_doc()
+    doc = create_thesis_doc()
     temp_charts = []
     all_citations = []
 

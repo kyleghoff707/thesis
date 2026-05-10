@@ -48,7 +48,7 @@ describe('QUAL-01: Citation Validation', () => {
     it('should classify DataPacket citations correctly', () => {
       expect(classifyCitation({ source: 'DataPacket', ref: 'growthRates.earnings.10yr' }))
         .toBe('datapacket');
-      expect(classifyCitation({ source: 'Rule One Toolbox', ref: 'Moat Score' }))
+      expect(classifyCitation({ source: 'value investing Toolbox', ref: 'Moat Score' }))
         .toBe('datapacket');
       expect(classifyCitation({ source: 'Computed', ref: 'FCF calculation' }))
         .toBe('datapacket');
@@ -146,7 +146,7 @@ describe('QUAL-01: Citation Validation', () => {
     });
 
     it('should handle nested object path', () => {
-      const result = resolveDataPath(dataPacketSlice, 'ruleOneScore.moat');
+      const result = resolveDataPath(dataPacketSlice, 'thesisScore.moat');
       expect(result.found).toBe(true);
       expect(result.value).toBe(88);
     });
@@ -372,7 +372,7 @@ describe('QUAL-03: Confidence Validation', () => {
       ...companyInfoSection,
       confidence: 'HIGH',
       citations: [
-        { id: 1, ref: 'dataPacket.ruleOneScore.moat', text: '88', source: 'DataPacket' },
+        { id: 1, ref: 'dataPacket.thesisScore.moat', text: '88', source: 'DataPacket' },
         { id: 2, source: 'SEC EDGAR 10-K FY2025', url: '', note: 'Filing data' },
         { id: 3, source: 'Morningstar', url: 'https://morningstar.com/cost', note: 'Research' },
       ],
@@ -397,7 +397,7 @@ describe('QUAL-04: Multi-Source Verification', () => {
     const singleType = [
       { id: 1, ref: 'growth', text: '13%', source: 'DataPacket' },
       { id: 2, ref: 'score', text: '91', source: 'Computed' },
-      { id: 3, ref: 'metric', text: '88', source: 'Rule One Toolbox' },
+      { id: 3, ref: 'metric', text: '88', source: 'value investing Toolbox' },
     ];
     const issues = checkMultiSource(singleType);
     expect(issues.length).toBeGreaterThan(0);
@@ -568,7 +568,7 @@ describe('validateSection', () => {
     const cleanSection = {
       ...companyInfoSection,
       citations: [
-        { id: 1, ref: 'dataPacket.ruleOneScore.moat', text: '88', source: 'DataPacket' },
+        { id: 1, ref: 'dataPacket.thesisScore.moat', text: '88', source: 'DataPacket' },
         { id: 2, ref: 'SEC filing', text: '10-K data', source: 'SEC EDGAR 10-K FY2025' },
       ],
     };

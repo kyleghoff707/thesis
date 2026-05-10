@@ -47,7 +47,7 @@ class ReportData:
             # Navigate from scripts/pdf/ up to project root
             base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 
-        self.report_dir = os.path.join(base_dir, '.thes1s', 'reports', ticker)
+        self.report_dir = os.path.join(base_dir, '.thesis', 'reports', ticker)
 
         # Load the stage-specific report JSON
         report_file = STAGE_FILE_MAP.get(stage)
@@ -200,9 +200,9 @@ class ReportData:
         return self.report.get('debateOutputs', {})
 
     def get_scores(self):
-        """Get Rule One scores and metrics from data packet."""
+        """Get value investing scores and metrics from data packet."""
         return {
-            'ruleOneScore': self.data_packet.get('ruleOneScore', {}),
+            'thesisScore': self.data_packet.get('thesisScore', {}),
             'growthRates': self.data_packet.get('growthRates', {}),
             'returnMetrics': self.data_packet.get('returnMetrics', {}),
             'debtMetrics': self.data_packet.get('debtMetrics', {}),

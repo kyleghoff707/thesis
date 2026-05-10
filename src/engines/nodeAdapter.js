@@ -63,7 +63,7 @@ export const PROXY_MAP = {
   '/api/yahoo/': 'https://query1.finance.yahoo.com/',
   '/api/finviz/': 'https://finviz.com/',
   '/api/alpha/': 'https://www.alphavantage.co/',
-  '/data/': 'https://api.thes1sinvesting.com/data/',
+  '/data/': 'https://api.thesis-investing.com/data/',
 };
 
 /**
@@ -127,7 +127,7 @@ export function createDOMParser() {
 
 /** SEC-required headers for EDGAR API requests */
 export const SEC_HEADERS = {
-  'User-Agent': 'Thes1s/1.0 (contact@thes1s.com)',
+  'User-Agent': 'Thesis/1.0 (contact@thesis.com)',
   'Accept': 'application/json',
 };
 
@@ -140,7 +140,7 @@ export function createNodeFetch() {
   return async function nodeFetch(url, options = {}) {
     const resolvedURL = resolveURL(url);
     const headers = {
-      'User-Agent': 'Thes1s/1.0 (contact@thes1s.com)',
+      'User-Agent': 'Thesis/1.0 (contact@thesis.com)',
       ...options.headers,
     };
     return fetch(resolvedURL, { ...options, headers });
@@ -149,9 +149,9 @@ export function createNodeFetch() {
 
 // ─── File-based cache ────────────────────────────────────────
 // Replaces localStorage/IndexedDB for Node.js execution.
-// Stores JSON files in .thes1s/cache/ with TTL expiration.
+// Stores JSON files in .thesis/cache/ with TTL expiration.
 
-const CACHE_DIR = join(process.cwd(), '.thes1s', 'cache');
+const CACHE_DIR = join(process.cwd(), '.thesis', 'cache');
 
 /**
  * Ensure the cache directory exists. Creates it recursively if needed.
@@ -389,7 +389,7 @@ if (IS_NODE) {
       ? Object.fromEntries(opts.headers.entries())
       : (opts.headers || {});
     const headers = {
-      'User-Agent': 'Thes1s/1.0 (contact@thes1s.com)',
+      'User-Agent': 'Thesis/1.0 (contact@thesis.com)',
       ...incomingHeaders,
     };
     return _origFetch(resolvedURL, { ...opts, headers });

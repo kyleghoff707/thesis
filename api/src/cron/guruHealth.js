@@ -127,9 +127,9 @@ export async function checkGuruHealth(env, healthSignals) {
         method: 'POST',
         headers: { 'api-key': env.BREVO_API_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sender: { name: 'Thes1s', email: 'noreply@thes1sinvesting.com' },
+          sender: { name: 'Thesis', email: 'noreply@thesis-investing.com' },
           to: [{ email: ALERT_EMAIL }],
-          subject: `Thes1s Guru Health Alert — ${toAlert.length} issue(s) detected`,
+          subject: `Thesis Guru Health Alert — ${toAlert.length} issue(s) detected`,
           textContent: emailBody,
         }),
       });

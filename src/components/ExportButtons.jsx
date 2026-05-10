@@ -16,7 +16,7 @@ export default function ExportButtons({ ticker, stage, report }) {
       if (IS_DEV) {
         // Dev: use Python generators via Vite middleware
         const res = await fetch(
-          `/api/thes1s/reports/${encodeURIComponent(ticker)}/export/${stage}/${format}`,
+          `/api/thesis/reports/${encodeURIComponent(ticker)}/export/${stage}/${format}`,
           { method: 'POST' },
         );
         const data = await res.json();
@@ -26,7 +26,7 @@ export default function ExportButtons({ ticker, stage, report }) {
           return;
         }
         const filename = stage + (format === 'pdf' ? '.pdf' : '.docx');
-        const downloadUrl = `/api/thes1s/reports/${encodeURIComponent(ticker)}/download/${filename}`;
+        const downloadUrl = `/api/thesis/reports/${encodeURIComponent(ticker)}/download/${filename}`;
         const a = document.createElement('a');
         a.href = downloadUrl;
         a.download = `${ticker}-${filename}`;

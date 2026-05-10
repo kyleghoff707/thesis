@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Injects locally-generated pipeline reports into a Thes1s user's account via
-// the admin HTTP API. Reads .thes1s/reports/{TICKER}/{one-pager,pitch-deck,full-story}.json
-// and POSTs them to /admin/inject-report on api.thes1sinvesting.com.
+// Injects locally-generated pipeline reports into a Thesis user's account via
+// the admin HTTP API. Reads .thesis/reports/{TICKER}/{one-pager,pitch-deck,full-story}.json
+// and POSTs them to /admin/inject-report on api.thesis-investing.com.
 //
 // Usage:
 //   node scripts/inject-report.mjs --ticker INTU --ticker NOW
@@ -13,7 +13,7 @@
 //   --ticker,-t    Ticker to inject (repeatable). Required.
 //   --email,-e     Target user's email (the account to inject into). Default: kyleghoff707@gmail.com
 //   --stages       Comma list of stages. Default: onePager,pitchDeck,fullStory
-//   --api          API base URL. Default: https://api.thes1sinvesting.com
+//   --api          API base URL. Default: https://api.thesis-investing.com
 //   --admin-email  Admin login email. Default: $THES1S_ADMIN_EMAIL or --email
 //   --password,-p  Admin password. Default: $THES1S_ADMIN_PASSWORD (prompted if missing).
 //   --help,-h      Show this help.
@@ -26,7 +26,7 @@ import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 
 const PROJECT_ROOT = resolve(import.meta.dirname, '..');
-const REPORTS_DIR = resolve(PROJECT_ROOT, '.thes1s/reports');
+const REPORTS_DIR = resolve(PROJECT_ROOT, '.thesis/reports');
 
 const STAGE_FILES = {
   onePager: 'one-pager.json',
@@ -45,7 +45,7 @@ function parseArgs(argv) {
     tickers: [],
     email: 'kyleghoff707@gmail.com',
     stages: VALID_STAGES,
-    api: 'https://api.thes1sinvesting.com',
+    api: 'https://api.thesis-investing.com',
     adminEmail: process.env.THES1S_ADMIN_EMAIL || null,
     password: process.env.THES1S_ADMIN_PASSWORD || null,
   };
@@ -79,8 +79,8 @@ async function promptPassword(label) {
 }
 
 // Resolve the path to a stage JSON for a ticker. Tries working dir first
-// (.thes1s/reports/{TICKER}/{file}.json), then the newest matching archive dir
-// (.thes1s/reports/{TICKER}/archive/YYYYMMDD-HHMMSS-{TICKER}-{stage}/{file}.json).
+// (.thesis/reports/{TICKER}/{file}.json), then the newest matching archive dir
+// (.thesis/reports/{TICKER}/archive/YYYYMMDD-HHMMSS-{TICKER}-{stage}/{file}.json).
 // Archive dir names sort lexicographically = chronologically, so the max-named
 // dir is the most recent run for that stage.
 function resolveStagePath(ticker, stage) {
@@ -107,7 +107,7 @@ function resolveStagePath(ticker, stage) {
 }
 
 // The agent's full-story.json stores debate.{step1Bull,step2Bear,step3Rebuttal,step4Judge}
-// as path strings (e.g. ".thes1s/reports/INTU/sections/debate-step-1-bull.json") —
+// as path strings (e.g. ".thesis/reports/INTU/sections/debate-step-1-bull.json") —
 // the actual content lives in those sibling files. Inline them so D1 has real data.
 function inlineDebatePaths(raw, sourcePath) {
   if (!raw?.debate || typeof raw.debate !== 'object') return raw;

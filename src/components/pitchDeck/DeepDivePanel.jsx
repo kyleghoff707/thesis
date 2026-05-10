@@ -137,7 +137,7 @@ export default function DeepDivePanel({ isOpen, onClose, title, content, loading
                 border: '2px solid ' + C.border,
                 borderTopColor: C.accent,
                 borderRadius: '50%',
-                animation: 'thes1s-spin 1s linear infinite',
+                animation: 'thesis-spin 1s linear infinite',
               }} />
               <span style={{
                 fontSize: 13,

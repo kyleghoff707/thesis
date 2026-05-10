@@ -2,8 +2,8 @@
   "metadata": {
     "version": "1.0.0",
     "createdDate": "2026-03-17",
-    "author": "Thes1s Research (Claude Code)",
-    "description": "Thes1s custom 3-tier stock market industry taxonomy optimized for Rule One investment research",
+    "author": "Thesis Research (Claude Code)",
+    "description": "Thesis custom 3-tier stock market industry taxonomy optimized for value investing research",
     "structure": "Sector (2-digit) > Industry Group (4-digit) > Industry (8-digit)",
     "counts": {
       "sectors": 12,

@@ -1,4 +1,4 @@
-// 43 value investor funds tracked by Thes1s.
+// 43 value investor funds tracked by Thesis.
 // CIK numbers verified against live EDGAR data.
 
 export const GURUS = [

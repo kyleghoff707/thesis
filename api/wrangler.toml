@@ -1,4 +1,4 @@
-name = "thes1s-api"
+name = "thesis-api"
 main = "src/index.js"
 compatibility_date = "2025-04-01"
 compatibility_flags = ["nodejs_compat"]
@@ -11,7 +11,7 @@ compatibility_flags = ["nodejs_compat"]
 # Specific defines below take precedence for exact dot-notation expressions.
 "import.meta.env" = "{}"
 "import.meta.env.DEV" = "false"
-"import.meta.env.VITE_API_URL" = "'https://api.thes1sinvesting.com'"
+"import.meta.env.VITE_API_URL" = "'https://api.thesis-investing.com'"
 "import.meta.env.VITE_ALPHA_VANTAGE_KEY" = "''"
 "import.meta.env.VITE_ALPHA_VANTAGE_KEY_2" = "''"
 "import.meta.env.VITE_EODHD_KEY" = "''"
@@ -19,16 +19,16 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 ENVIRONMENT = "production"
 
-# D1 database — create with: wrangler d1 create thes1s
+# D1 database — create with: wrangler d1 create thesis
 [[d1_databases]]
 binding = "DB"
-database_name = "thes1s"
+database_name = "thesis"
 database_id = "86cba902-d3d3-4f96-a941-94998bdc060e"
 
-# R2 bucket — create with: wrangler r2 bucket create thes1s-transcripts
+# R2 bucket — create with: wrangler r2 bucket create thesis-transcripts
 [[r2_buckets]]
 binding = "TRANSCRIPTS"
-bucket_name = "thes1s-transcripts"
+bucket_name = "thesis-transcripts"
 
 # Durable Objects — migration history (all classes deleted, kept for Cloudflare migration chain)
 [[migrations]]

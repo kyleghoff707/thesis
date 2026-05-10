@@ -2,7 +2,7 @@
 // Fetches all income statement, balance sheet, and cash flow data from SEC XBRL.
 // Single source of truth for all financial statement data.
 //
-// Taxonomy covers ~100 line items matching both Rule One Toolbox and Morningstar structures.
+// Taxonomy covers ~100 line items matching both value investing Toolbox and Morningstar structures.
 // Each field uses ordered fallback tags — first tag's value wins per year, later tags fill gaps.
 
 import { lookupCIK, fetchCompanyFacts, fetchCompanyInfo, extractAnnualFact, extractAnnualFactOriginal, extractFiscalYearEnds, findLatestQuarter } from './edgar';
@@ -530,7 +530,7 @@ const CASHFLOW_TAXONOMY = [
   // XBRL tags use balance-sheet-change convention (positive = asset increased).
   // Cash flow convention: asset increase = cash used = negative.
   // negate: true flips the sign at extraction time so downstream values
-  // match R1 Toolbox / Morningstar cash-impact convention.
+  // match Toolbox / Morningstar cash-impact convention.
   // Exception: payables increase = source of cash = already positive in both conventions.
   { field: 'change_in_receivables', unit: 'USD', negate: true, tags: [
     'IncreaseDecreaseInAccountsReceivable',
@@ -978,7 +978,7 @@ function computeDerivedFields(years, income, balance, cashFlow) {
 
     // Normalized Operating Income = as-reported + irregular charges (absolute values)
     // Strips out restructuring, goodwill write-offs, and asset impairments to show
-    // ongoing business profitability. Used for Rule One restated view.
+    // ongoing business profitability. Used for value investing restated view.
     // Guard: if company reports a combined restructuring+impairment tag, use it instead
     // of summing separate components (prevents double-counting asset impairment).
     if (inc.operating_income_loss != null) {
@@ -1031,7 +1031,7 @@ function computeDerivedFields(years, income, balance, cashFlow) {
 
     // ── Balance Sheet Derived ──
 
-    // Cash & Marketable Securities combined (matches R1 Toolbox "Cash, Cash Equivalents, & Marketable Securities")
+    // Cash & Marketable Securities combined (matches Toolbox "Cash, Cash Equivalents, & Marketable Securities")
     if (bal.cash_and_marketable_securities == null) {
       const c = bal.cash_and_short_term_investments ?? bal.cash ?? 0;
       const sti = bal.cash_and_short_term_investments ? 0 : (bal.short_term_investments ?? 0);
@@ -1142,7 +1142,7 @@ function computeDerivedFields(years, income, balance, cashFlow) {
     }
 
     // Total Debt with Leases = Total Debt + Operating Lease Obligations
-    // (matches Rule One Toolbox "Total Debt (Short & Long-Term)" display)
+    // (matches value investing Toolbox "Total Debt (Short & Long-Term)" display)
     const olCurrent = bal.operating_lease_liability_current ?? 0;
     const olNoncurrent = bal.operating_lease_liability_noncurrent ?? 0;
     bal.total_debt_with_leases = bal.total_debt + olCurrent + olNoncurrent;
@@ -2048,7 +2048,7 @@ export async function fetchEdgarStatements(ticker, options = {}) {
 
   // ── Fiscal Year Label Offset ──────────────────────────────
   // Companies with Jan/Feb FY ends: XBRL `fy` is 1 less than the calendar year of
-  // the period end date. R1/MS use end-date calendar year. Re-label to match.
+  // the period end date. Toolbox/MS use end-date calendar year. Re-label to match.
   // Example: LULU FY ending Feb 2, 2025 → XBRL fy=2024 → relabel to 2025.
   // Only applies to Jan/Feb — all other non-Dec months have fy = calendar year.
   // The Frames API (edgarFrames.js) is NOT affected — it uses its own XBRL-convention logic.

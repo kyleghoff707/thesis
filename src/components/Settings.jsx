@@ -424,9 +424,9 @@ export default function Settings({ settings, updateSettings, isDark, toggleTheme
         {/* ── About (divider only, no section header) ── */}
         <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 16 }}>
-            <img src="/logo.svg" alt="Thes1s" style={{ width: 28, height: 28, borderRadius: 6 }} />
+            <img src="/logo.svg" alt="Thesis" style={{ width: 28, height: 28, borderRadius: 6 }} />
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Thes1s</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Thesis</div>
               <div style={{ fontSize: 11, color: C.textMuted }}>AI-Powered Stock Research</div>
             </div>
           </div>

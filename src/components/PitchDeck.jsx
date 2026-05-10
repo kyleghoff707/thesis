@@ -266,7 +266,7 @@ function GenerationStatusPanel({ generationStatus, ticker }) {
               iconColor = C.yellow;
               iconBg = C.yellowBg;
               iconBorder = C.yellow;
-              animation = 'thes1s-pulse 2s ease-in-out infinite';
+              animation = 'thesis-pulse 2s ease-in-out infinite';
             }
 
             return (
@@ -613,7 +613,7 @@ export default function PitchDeck({ getReport, updateReport }) {
   if (error) {
     return (
       <div style={{ fontSize: 13, color: C.red, padding: 20 }}>
-        Failed to load Pitch Deck. Check that the report file exists at .thes1s/reports/{report?.ticker || 'TICKER'}/pitch-deck.json and try refreshing.
+        Failed to load Pitch Deck. Check that the report file exists at .thesis/reports/{report?.ticker || 'TICKER'}/pitch-deck.json and try refreshing.
       </div>
     );
   }
@@ -798,7 +798,7 @@ export default function PitchDeck({ getReport, updateReport }) {
           } else if (status === 'active') {
             circleColor = C.accent;
             circleFill = C.accent;
-            pulseAnim = 'thes1s-pulse 2s ease-in-out infinite';
+            pulseAnim = 'thesis-pulse 2s ease-in-out infinite';
             // Left connector solid, right dashed (handled by previous being complete)
           }
 
@@ -893,9 +893,9 @@ export default function PitchDeck({ getReport, updateReport }) {
       )}
 
       {/* C. Two-Column Layout */}
-      <div className="thes1s-two-col" style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+      <div className="thesis-two-col" style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
         {/* C1. Sticky Section Nav (200px) */}
-        <div className="thes1s-section-nav" style={{
+        <div className="thesis-section-nav" style={{
           position: 'sticky',
           top: 72,
           width: 200,
@@ -997,7 +997,7 @@ export default function PitchDeck({ getReport, updateReport }) {
               <div key={def.key}>
                 {/* Render section or placeholder */}
                 {section ? (
-                  <div style={{ animation: 'thes1s-fadeIn 0.4s ease' }}>
+                  <div style={{ animation: 'thesis-fadeIn 0.4s ease' }}>
                     <SectionRenderer
                       section={section}
                       sectionId={'section-' + def.key}

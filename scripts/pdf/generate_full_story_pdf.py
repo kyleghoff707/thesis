@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Generic Full Story PDF Generator
-Generates a chart-heavy, Thes1s-branded Full Story PDF for any ticker.
+Generates a chart-heavy, Thesis-branded Full Story PDF for any ticker.
 Includes checklist tables, adversarial debate rendering, and evidence sections.
 Reads from full-story-api.json and DataPacket (data-packet.json).
 
@@ -14,7 +14,7 @@ import json
 from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from thes1s_pdf import Thes1sPDF
+from thesis_pdf import ThesisPDF
 from report_data_reader import ReportData
 from section_renderers import (
     get_narrative, get_tables, get_red_flags, get_citations,
@@ -356,7 +356,7 @@ def generate_full_story(ticker, base_dir=None):
     """Build the Full Story PDF with checklists, debate, and evidence."""
     if base_dir is None:
         base_dir = os.path.join(os.path.dirname(__file__), '..', '..')
-    report_dir = os.path.join(base_dir, '.thes1s', 'reports', ticker)
+    report_dir = os.path.join(base_dir, '.thesis', 'reports', ticker)
 
     data = ReportData(ticker, 'full-story', base_dir=base_dir)
     company_name = data.get_company_name()
@@ -364,9 +364,9 @@ def generate_full_story(ticker, base_dir=None):
     # Full Story may not have a single overall verdict -- the debate IS the verdict
     overall_verdict = data.get_overall_verdict()
 
-    pdf = Thes1sPDF(
+    pdf = ThesisPDF(
         title=f'{company_name} ({ticker})',
-        subtitle='Rule One Full Story \u2014 Investment Thesis Deep Dive',
+        subtitle='value investing Full Story \u2014 Investment Thesis Deep Dive',
         stage_label='Full Story'
     )
 

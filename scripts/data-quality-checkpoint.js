@@ -11,7 +11,7 @@ import { join } from 'path';
 
 export const CRITICAL_FIELDS = ['companyInfo', 'financials', 'filings'];
 
-export const IMPORTANT_FIELDS = ['growthRates', 'returnMetrics', 'fcf', 'ruleOneScore', 'ttm'];
+export const IMPORTANT_FIELDS = ['growthRates', 'returnMetrics', 'fcf', 'thesisScore', 'ttm'];
 
 export const NICE_TO_HAVE_FIELDS = [
   'analystEstimates', 'gurus', 'insiders', 'compensation',
@@ -137,7 +137,7 @@ function describeField(field, value) {
   if (field === 'returnMetrics') return 'populated';
   if (field === 'fcf') return 'populated';
   if (field === 'ttm') return 'populated';
-  if (field === 'ruleOneScore') return `composite: ${value.composite ?? '--'}`;
+  if (field === 'thesisScore') return `composite: ${value.composite ?? '--'}`;
   return 'populated';
 }
 
@@ -152,7 +152,7 @@ async function main() {
     process.exit(1);
   }
 
-  const baseDir = join(process.cwd(), '.thes1s', 'reports', ticker);
+  const baseDir = join(process.cwd(), '.thesis', 'reports', ticker);
   const dpPath = join(baseDir, 'data-packet.json');
 
   if (!existsSync(dpPath)) {

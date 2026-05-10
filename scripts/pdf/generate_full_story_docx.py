@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Full Story Word Document Generator — Thes1s-branded .docx export.
+Full Story Word Document Generator — Thesis-branded .docx export.
 
 Generates a professional Word document from any ticker's Full Story pipeline output
 with embedded chart images (checklist summaries, price ranges), checklist tables with
-color-coded verdict cells, adversarial debate rendering, and Thes1s branding.
+color-coded verdict cells, adversarial debate rendering, and Thesis branding.
 
 Usage:
     python3 scripts/pdf/generate_full_story_docx.py MNST
@@ -25,7 +25,7 @@ from scripts.pdf.chart_image_generator import (
     generate_checklist_summary, generate_price_range_chart,
 )
 from scripts.pdf.docx_helpers import (
-    create_thes1s_doc, add_title_page, add_styled_table,
+    create_thesis_doc, add_title_page, add_styled_table,
     add_section_heading, add_body_paragraphs,
     embed_chart, add_red_flags as render_red_flags,
     add_checklist_table, add_citations_section,
@@ -261,7 +261,7 @@ def generate_full_story_docx(ticker, base_dir=None):
     data = ReportData(ticker, 'full-story', base_dir=base_dir)
     company_name = data.get_company_name()
 
-    doc = create_thes1s_doc()
+    doc = create_thesis_doc()
     temp_charts = []
     all_citations = []
 

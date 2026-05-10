@@ -13,13 +13,13 @@ function makeFullDataPacket(overrides = {}) {
     debtMetrics: { netDebtToEarnings: 0.3 },
     fcf: { fcfTTM: 420_000_000 },
     keyMetrics: { pe: 28, marketCap: 7_200_000_000 },
-    gurus: [{ name: 'Phil Town', shares: 100000 }],
+    gurus: [{ name: 'Test Guru', shares: 100000 }],
     insiders: [{ name: 'CEO', shares: 50000 }],
     compensation: { ceo: 12_500_000 },
     peers: [{ ticker: 'KR' }, { ticker: 'WMK' }],
     peerMetrics: { KR: { pe: 15 } },
     filings: [{ form: '10-K', accession: '...' }],
-    ruleOneScore: { overall: 72 },
+    thesisScore: { overall: 72 },
     caveats: [],
     ...overrides,
   };
@@ -57,7 +57,7 @@ describe('sliceDataPacket', () => {
     expect('filings' in slice).toBe(false);
     expect('peers' in slice).toBe(false);
     expect('peerMetrics' in slice).toBe(false);
-    expect('ruleOneScore' in slice).toBe(false);
+    expect('thesisScore' in slice).toBe(false);
   });
 
   it('populates _sliceMetadata with ticker, agentRole, sizes, and field lists', () => {

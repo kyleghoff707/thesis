@@ -1,12 +1,12 @@
 // Generation State Persistence
-// Manages .thes1s/reports/{TICKER}/progress.json for crash recovery and progress tracking
+// Manages .thesis/reports/{TICKER}/progress.json for crash recovery and progress tracking
 // Used by orchestrator to persist generation state across process restarts
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
 import { join, dirname } from 'path';
 import { ProgressSchema, createInitialProgress } from '../schemas/progress.js';
 
-const THES1S_DIR = join(process.cwd(), '.thes1s');
+const THES1S_DIR = join(process.cwd(), '.thesis');
 const REPORTS_DIR = join(THES1S_DIR, 'reports');
 
 // Section keys per stage — matches dispatch-table.json sectionKeys
@@ -131,7 +131,7 @@ export function deleteProgress(ticker) {
   }
 }
 
-// Save a completed section's output to .thes1s/reports/{TICKER}/sections/{sectionKey}.json
+// Save a completed section's output to .thesis/reports/{TICKER}/sections/{sectionKey}.json
 export function saveSectionOutput(ticker, sectionKey, sectionData) {
   const sectionsDir = getSectionsDir(ticker);
   mkdirSync(sectionsDir, { recursive: true });
@@ -165,7 +165,7 @@ function getTickerDir(ticker) {
   return join(REPORTS_DIR, ticker.toUpperCase());
 }
 
-// Save a quality report to .thes1s/reports/{TICKER}/quality/one-pager.quality.json
+// Save a quality report to .thesis/reports/{TICKER}/quality/one-pager.quality.json
 export function saveQualityReport(ticker, qualityData) {
   const qualityDir = getQualityDir(ticker);
   mkdirSync(qualityDir, { recursive: true });
@@ -173,7 +173,7 @@ export function saveQualityReport(ticker, qualityData) {
   writeFileSync(filePath, JSON.stringify(qualityData, null, 2));
 }
 
-// Save a budget report to .thes1s/reports/{TICKER}/budget.json
+// Save a budget report to .thesis/reports/{TICKER}/budget.json
 export function saveBudgetReport(ticker, budgetData) {
   const tickerDir = getTickerDir(ticker);
   mkdirSync(tickerDir, { recursive: true });

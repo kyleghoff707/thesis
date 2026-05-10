@@ -5,7 +5,7 @@
 
 import { openDB } from 'idb';
 
-const DB_NAME = 'thes1s-cache';
+const DB_NAME = 'thesis-cache';
 const DB_VERSION = 7;
 const STORES = ['edgar-facts', 'edgar-statements', 'guru-data', 'nport-data', 'filing-markdown', 'insider-data', 'comp-data', 'transcript-data', 'reports', 'checkpoint-attachments'];
 

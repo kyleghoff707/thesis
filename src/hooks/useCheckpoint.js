@@ -31,7 +31,7 @@ export function useCheckpoint(ticker, checkpointNum) {
       try {
         // Fetch server-side state and local IndexedDB state in parallel
         const [serverRes, localData] = await Promise.all([
-          fetch(`/api/thes1s/reports/${encodeURIComponent(ticker)}/checkpoint/${checkpointNum}`)
+          fetch(`/api/thesis/reports/${encodeURIComponent(ticker)}/checkpoint/${checkpointNum}`)
             .then(r => r.ok ? r.json() : null)
             .catch(() => null),
           idbGet(ATTACHMENT_STORE, idbKey),
@@ -237,7 +237,7 @@ export function useCheckpoint(ticker, checkpointNum) {
     }
 
     try {
-      const res = await fetch(`/api/thes1s/reports/${encodeURIComponent(ticker)}/checkpoint`, {
+      const res = await fetch(`/api/thesis/reports/${encodeURIComponent(ticker)}/checkpoint`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(feedback),

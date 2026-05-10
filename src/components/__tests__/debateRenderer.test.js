@@ -4,20 +4,20 @@ import { _testExports } from '../DebateRenderer.jsx';
 const { DATA_KEYS, getStrengthStyle, getSeverityStyle, getExchangeVerdictColor, DEFAULT_TAB } = _testExports;
 
 describe('DebateRenderer: DATA_KEYS', () => {
-  it('maps rebuttal tab to bull_rebuttal data key', () => {
-    expect(DATA_KEYS.rebuttal).toBe('bull_rebuttal');
+  it('maps rebuttal tab to step3Rebuttal data key', () => {
+    expect(DATA_KEYS.rebuttal).toBe('step3Rebuttal');
   });
 
-  it('maps bull tab to bull data key', () => {
-    expect(DATA_KEYS.bull).toBe('bull');
+  it('maps bull tab to step1Bull data key', () => {
+    expect(DATA_KEYS.bull).toBe('step1Bull');
   });
 
-  it('maps bear tab to bear data key', () => {
-    expect(DATA_KEYS.bear).toBe('bear');
+  it('maps bear tab to step2Bear data key', () => {
+    expect(DATA_KEYS.bear).toBe('step2Bear');
   });
 
-  it('maps judge tab to judge data key', () => {
-    expect(DATA_KEYS.judge).toBe('judge');
+  it('maps judge tab to step4Judge data key', () => {
+    expect(DATA_KEYS.judge).toBe('step4Judge');
   });
 });
 
@@ -32,21 +32,21 @@ describe('DebateRenderer: getStrengthStyle', () => {
     const style = getStrengthStyle('strong');
     expect(style).not.toBeNull();
     expect(style.label).toBe('STRONG');
-    expect(style.text).toBe('#fff');
+    expect(style.text).toBe('#ffffff');
   });
 
   it('moderate returns yellow background', () => {
     const style = getStrengthStyle('moderate');
     expect(style).not.toBeNull();
     expect(style.label).toBe('MODERATE');
-    expect(style.text).toBe('#fff');
+    expect(style.text).toBe('#ffffff');
   });
 
   it('weak returns red background', () => {
     const style = getStrengthStyle('weak');
     expect(style).not.toBeNull();
     expect(style.label).toBe('WEAK');
-    expect(style.text).toBe('#fff');
+    expect(style.text).toBe('#ffffff');
   });
 
   it('unknown strength returns fallback style', () => {
@@ -66,14 +66,14 @@ describe('DebateRenderer: getSeverityStyle', () => {
     const style = getSeverityStyle('thesis_killer');
     expect(style).not.toBeNull();
     expect(style.label).toBe('THESIS KILLER');
-    expect(style.text).toBe('#fff');
+    expect(style.text).toBe('#ffffff');
   });
 
   it('significant returns yellow background with SIGNIFICANT label', () => {
     const style = getSeverityStyle('significant');
     expect(style).not.toBeNull();
     expect(style.label).toBe('SIGNIFICANT');
-    expect(style.text).toBe('#fff');
+    expect(style.text).toBe('#ffffff');
   });
 
   it('unknown severity returns fallback with uppercased label', () => {

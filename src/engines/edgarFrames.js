@@ -10,7 +10,7 @@ function framesUrl(tag, unit, cyYear) {
   return `${edgarBase()}/api/xbrl/frames/us-gaap/${tag}/${unit}/CY${cyYear}.json`;
 }
 
-// The 9 most critical tags for Rule One scoring/valuation.
+// The 9 most critical tags for value investing scoring/valuation.
 // Each entry: { tag, fallbacks, unit, ourField }
 // fallbacks: alternative XBRL tags to try if primary returns no data for this CIK
 export const FRAMES_TAGS = [

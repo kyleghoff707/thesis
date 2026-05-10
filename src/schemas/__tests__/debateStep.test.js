@@ -24,10 +24,10 @@ const bullFixture = {
       { point: 'CEO Sinclair has delivered one of the strongest operational turnarounds', evidence: 'Operating income grew from $212M to $686M (+224%)', sourceSection: 'S4: Management Checklist' },
       { point: 'Growth ceiling analysis proves SFM can triple its store count to 1,400', evidence: 'SFM operates 477 stores against a CEO-stated target of 1,400', sourceSection: 'S5: Valuation Confirmation' },
       { point: 'The stock has declined 58% from its 2025 peak', evidence: 'SFM trades at $78.14 against a composite buy range of $27-$77', sourceSection: 'S5: Valuation Confirmation' },
-      { point: 'The FY2025 earnings miss represents a textbook Rule One event', evidence: 'FY2025 delivered $8.81B revenue (+14.1%), $524M net income', sourceSection: 'S1: Event Analysis' },
+      { point: 'The FY2025 earnings miss represents a textbook value investing event', evidence: 'FY2025 delivered $8.81B revenue (+14.1%), $524M net income', sourceSection: 'S1: Event Analysis' },
       { point: 'SFM secular tailwinds are structural and multi-decade', evidence: 'Organic food market growing at 10.8-12.2% CAGR through 2034', sourceSection: 'S2: Meaning Checklist' },
     ],
-    overallThesis: 'Sprouts Farmers Market is a wonderful company experiencing a textbook Rule One event. The business is simple to understand and has delivered extraordinary results.',
+    overallThesis: 'Sprouts Farmers Market is a wonderful company experiencing a textbook value investing event. The business is simple to understand and has delivered extraordinary results.',
   },
 };
 

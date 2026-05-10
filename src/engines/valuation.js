@@ -94,7 +94,7 @@ export function yearsToPayback({ fcfPerShare, fgr, price }) {
 // Ten Cap Price = 10 × (Owner Earnings / Shares Outstanding)
 //
 // Supports two methods:
-//   Rule One Workshop: OpCF - Maintenance CapEx + Tax Provision
+//   value investing Workshop: OpCF - Maintenance CapEx + Tax Provision
 //   Graham/Intelligent Investor: Operating Income + D&A of Goodwill - Federal Tax
 //                                - Stock Option Costs - Unsustainable Pension - Maintenance CapEx
 

@@ -1,5 +1,5 @@
 // Generation State Persistence — Tests
-// Validates CRUD operations on .thes1s/reports/{TICKER}/progress.json
+// Validates CRUD operations on .thesis/reports/{TICKER}/progress.json
 // Uses a __TEST_PS__ ticker to avoid polluting real data
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
@@ -23,7 +23,7 @@ import {
 } from '../progressState.js';
 
 const TEST_TICKER = '__TEST_PS__';
-const THES1S_DIR = join(process.cwd(), '.thes1s');
+const THES1S_DIR = join(process.cwd(), '.thesis');
 const TEST_DIR = join(THES1S_DIR, 'reports', TEST_TICKER);
 
 afterAll(() => {
@@ -78,7 +78,7 @@ describe('progressState', () => {
   });
 
   describe('writeProgress + readProgress (round-trip)', () => {
-    it('should write progress JSON to .thes1s/reports/{TICKER}/progress.json', () => {
+    it('should write progress JSON to .thesis/reports/{TICKER}/progress.json', () => {
       const progress = createProgress(TEST_TICKER, 'pitchDeck');
       writeProgress(TEST_TICKER, progress);
       const progressPath = join(TEST_DIR, 'progress.json');

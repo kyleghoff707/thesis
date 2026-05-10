@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Generic One Pager PDF Generator
-Generates a chart-heavy, Thes1s-branded One Pager PDF for any ticker.
+Generates a chart-heavy, Thesis-branded One Pager PDF for any ticker.
 Reads from pipeline output (one-pager.json) and DataPacket (data-packet.json).
 
 Usage: python3 scripts/pdf/generate_one_pager_pdf.py MNST
@@ -13,7 +13,7 @@ import json
 from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from thes1s_pdf import Thes1sPDF
+from thesis_pdf import ThesisPDF
 from report_data_reader import ReportData
 from section_renderers import (
     get_narrative, get_tables, get_red_flags, get_citations,
@@ -136,8 +136,8 @@ def _render_opcf_chart(pdf, data):
 
 
 def _render_metric_gauges(pdf, data):
-    """Rule One score gauges from DataPacket if available."""
-    scores = data.data_packet.get('ruleOneScore', {})
+    """value investing score gauges from DataPacket if available."""
+    scores = data.data_packet.get('thesisScore', {})
     rm = data.data_packet.get('returnMetrics', {})
     averages = rm.get('averages', {})
 
@@ -173,7 +173,7 @@ def _render_metric_gauges(pdf, data):
         gauges.append(('Rev Growth', round(rev_3yr * 100, 1), 10, '%', True))
 
     if gauges:
-        pdf.draw_metric_gauges('Rule One Quick Screen', gauges)
+        pdf.draw_metric_gauges('value investing Quick Screen', gauges)
 
 
 # =========================================================================
@@ -206,16 +206,16 @@ def generate_one_pager(ticker, base_dir=None):
     """Build the full visual PDF for a One Pager."""
     if base_dir is None:
         base_dir = os.path.join(os.path.dirname(__file__), '..', '..')
-    report_dir = os.path.join(base_dir, '.thes1s', 'reports', ticker)
+    report_dir = os.path.join(base_dir, '.thesis', 'reports', ticker)
 
     # Load data through the unified reader
     data = ReportData(ticker, 'one-pager', base_dir=base_dir)
     company_name = data.get_company_name()
     overall_verdict = data.get_overall_verdict()
 
-    pdf = Thes1sPDF(
+    pdf = ThesisPDF(
         title=f'{company_name} ({ticker})',
-        subtitle='Rule One One Pager \u2014 Investment Screening Analysis',
+        subtitle='value investing One Pager \u2014 Investment Screening Analysis',
         stage_label='One Pager'
     )
 

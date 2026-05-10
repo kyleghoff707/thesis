@@ -12,9 +12,9 @@ import { authenticate } from './middleware/auth.js';
 // CORS headers for the frontend.
 // credentials: 'include' requires a specific origin (not *).
 const ALLOWED_ORIGINS = [
-  'https://thes1sinvesting.com',
-  'https://www.thes1sinvesting.com',
-  'https://thes1s.pages.dev',
+  'https://thesis-investing.com',
+  'https://www.thesis-investing.com',
+  'https://thesis.pages.dev',
   'http://localhost:5173',   // Vite dev
   'http://localhost:4173',   // Vite preview
 ];

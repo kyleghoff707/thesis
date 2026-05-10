@@ -18,7 +18,7 @@ export function useOnePager(ticker) {
 
     async function fetchReport() {
       try {
-        const res = await fetch(`/api/thes1s/reports/${encodeURIComponent(ticker)}/one-pager`);
+        const res = await fetch(`/api/thesis/reports/${encodeURIComponent(ticker)}/one-pager`);
         if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
@@ -31,7 +31,7 @@ export function useOnePager(ticker) {
 
     async function fetchProgress() {
       try {
-        const res = await fetch(`/api/thes1s/reports/${encodeURIComponent(ticker)}/progress`);
+        const res = await fetch(`/api/thesis/reports/${encodeURIComponent(ticker)}/progress`);
         if (cancelled) return null;
         if (res.ok) {
           const data = await res.json();

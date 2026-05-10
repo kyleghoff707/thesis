@@ -4,7 +4,7 @@
 // Reads the DataPacket to find filing accession numbers, fetches HTML from EDGAR,
 // converts to markdown, and extracts standard sections (Business, Risk Factors, MD&A, etc.).
 //
-// Output: JSON files in .thes1s/reports/{TICKER}/filings-md/ — one per filing.
+// Output: JSON files in .thesis/reports/{TICKER}/filings-md/ — one per filing.
 // Each file contains: { form, date, sections: { item1: "...", item1a: "...", ... }, fullLength }
 
 import '../src/engines/nodeAdapter.js';
@@ -22,7 +22,7 @@ if (!ticker) {
 
 async function main() {
   // Read the DataPacket to get filing metadata
-  const dpPath = join(process.cwd(), '.thes1s', 'reports', ticker, 'data-packet.json');
+  const dpPath = join(process.cwd(), '.thesis', 'reports', ticker, 'data-packet.json');
   if (!existsSync(dpPath)) {
     console.error(`DataPacket not found at ${dpPath}. Run assemble-data.js first.`);
     process.exit(1);
@@ -44,7 +44,7 @@ async function main() {
   console.log(`Pre-processing ${annuals.length} 10-Ks (max 5) and ${quarterly.length} 10-Qs (max 8) for ${ticker}...`);
 
   // Create output directory
-  const outDir = join(process.cwd(), '.thes1s', 'reports', ticker, 'filings-md');
+  const outDir = join(process.cwd(), '.thesis', 'reports', ticker, 'filings-md');
   mkdirSync(outDir, { recursive: true });
 
   let successCount = 0;

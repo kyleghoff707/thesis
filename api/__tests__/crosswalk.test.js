@@ -10,7 +10,7 @@ describe('crosswalk', () => {
     it('contains known exact match (Semiconductors)', () => {
       const entry = YAHOO_TO_THES1S.get('Technology|Semiconductors');
       expect(entry).toBeDefined();
-      expect(entry.thes1sCode).toBe('10301010');
+      expect(entry.thesisCode).toBe('10301010');
       expect(entry.confidence).toBe(0.85);
     });
 
@@ -46,7 +46,7 @@ describe('crosswalk', () => {
       expect(result.status).toBe('classified');
       expect(result.sector).toBe('Technology');
       expect(result.industry).toBe('Semiconductors');
-      expect(result.thes1sCode).toBe('10301010');
+      expect(result.thesisCode).toBe('10301010');
       expect(result.confidence).toBe(0.85);
       expect(result.exchange).toBe('NMS');
     });

@@ -7,7 +7,7 @@ export function createFGR() {
   return {
     rearViewMirror: {
       value: null,      // percentage as decimal (0.15 = 15%)
-      source: '',       // e.g., "Rule One Toolbox composite: BVPS+Div 18%, EPS 22%, OpCash 20%, Rev 23%"
+      source: '',       // e.g., "value investing Toolbox composite: BVPS+Div 18%, EPS 22%, OpCash 20%, Rev 23%"
       notes: '',
     },
     marketRelativity: {

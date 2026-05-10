@@ -384,7 +384,7 @@ export default function OnePager({ getReport, updateReport, refreshReport }) {
             // Section exists — render it
             if (section) {
               return (
-                <div key={key} style={{ animation: 'thes1s-fadeIn 0.4s ease' }}>
+                <div key={key} style={{ animation: 'thesis-fadeIn 0.4s ease' }}>
                   <SectionRenderer
                     section={section}
                     sectionId={'section-' + section.key}

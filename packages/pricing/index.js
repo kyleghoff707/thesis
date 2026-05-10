@@ -1,5 +1,5 @@
 // pricing — shared Claude model pricing used by both
-// the Thes1s frontend (browser) and the Cloudflare Worker (proxy billing).
+// the Thesis frontend (browser) and the Cloudflare Worker (proxy billing).
 //
 // Single source of truth for model costs. Update here when Anthropic changes pricing.
 

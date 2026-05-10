@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Generic Pitch Deck PDF Generator
-Generates a chart-heavy, Thes1s-branded 10-section Pitch Deck PDF for any ticker.
+Generates a chart-heavy, Thesis-branded 10-section Pitch Deck PDF for any ticker.
 Reads from pipeline output (pipeline-output.json) and DataPacket (data-packet.json).
 
 Usage: python3 scripts/pdf/generate_pitch_deck_pdf.py MNST
@@ -13,7 +13,7 @@ import json
 from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from thes1s_pdf import Thes1sPDF
+from thesis_pdf import ThesisPDF
 from report_data_reader import ReportData
 from section_renderers import (
     get_narrative, get_tables, get_red_flags, get_citations,
@@ -327,7 +327,7 @@ def _render_valuation_deep_dive(pdf, data, section):
         r1 = dual_oe.get('ruleOneOE')
         gr = dual_oe.get('grahamOE')
         if r1 is not None:
-            oe_rows.append(['Rule One Method', format_currency(r1)])
+            oe_rows.append(['Value Investing Method', format_currency(r1)])
         if gr is not None:
             oe_rows.append(['Graham Method', format_currency(gr)])
         if oe_rows:
@@ -408,7 +408,7 @@ def _render_section_charts(pdf, data, section_key):
             if 'composite' in scores:
                 gauges.append(('Composite', scores['composite'], 70, '', True))
             if gauges:
-                pdf.draw_metric_gauges('Rule One Scores', gauges)
+                pdf.draw_metric_gauges('Thesis Scores', gauges)
 
 
 # =========================================================================
@@ -419,15 +419,15 @@ def generate_pitch_deck(ticker, base_dir=None):
     """Build the full visual Pitch Deck PDF."""
     if base_dir is None:
         base_dir = os.path.join(os.path.dirname(__file__), '..', '..')
-    report_dir = os.path.join(base_dir, '.thes1s', 'reports', ticker)
+    report_dir = os.path.join(base_dir, '.thesis', 'reports', ticker)
 
     data = ReportData(ticker, 'pitch-deck', base_dir=base_dir)
     company_name = data.get_company_name()
     overall_verdict = data.get_overall_verdict()
 
-    pdf = Thes1sPDF(
+    pdf = ThesisPDF(
         title=f'{company_name} ({ticker})',
-        subtitle='Rule One Pitch Deck \u2014 10-Section Business Case',
+        subtitle='value investing Pitch Deck \u2014 10-Section Business Case',
         stage_label='Pitch Deck'
     )
 

@@ -4,7 +4,7 @@
 import { PERIODS } from './growthRates';
 
 // ROE = Net Income / Total Equity
-// ROIC = Net Income / (Total Equity + Long-Term Debt) — matches Rule One Toolbox
+// ROIC = Net Income / (Total Equity + Long-Term Debt) — matches value investing Toolbox
 // ROA = Net Income / Total Assets
 // All return as decimals (0.15 = 15%)
 
@@ -60,7 +60,7 @@ export function computeReturnMetrics(statements) {
   return { yearly: yearlyMetrics, averages };
 }
 
-// Debt metrics for Rule One Management Score
+// Debt metrics for value investing Management Score
 // Uses EDGAR's pre-computed net_debt (traditional debt - cash, no leases)
 // Net Debt to Earnings = Net Debt / Net Income (in years)
 // Net Debt to FCF = Net Debt / FCF (in years)

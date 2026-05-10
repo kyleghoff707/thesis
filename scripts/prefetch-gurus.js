@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // CLI: node --loader ./scripts/node-esm-loader.js scripts/prefetch-gurus.js TICKER
 // Fetches all 43 guru 13F portfolios, finds which ones hold the given ticker.
-// Results are cached in .thes1s/cache/ for subsequent pipeline runs.
+// Results are cached in .thesis/cache/ for subsequent pipeline runs.
 //
 // Output: JSON to stdout with { portfolioCount, holdingGurus: [...] }
 // Also re-runs assemble-data.js to pick up cached guru data in the DataPacket.

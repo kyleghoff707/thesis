@@ -1,12 +1,12 @@
 // ─── Peer Discovery Engine ─────────────────────────────────────────
-// Discovers peer companies using the Thes1s taxonomy.
+// Discovers peer companies using the Thesis taxonomy.
 // Instant in-memory lookup from prebuilt company assignments —
 // no HTTP requests needed. Replaces the old SIC-based approach
 // that required dozens of SEC requests per lookup.
 //
 // Returns arrays of { cik, name, ticker } for use in competitor comparison.
 
-import { getCompaniesForTier } from './thes1sClassification';
+import { getCompaniesForTier } from './thesisClassification';
 import { getTickerSearchIndex } from './edgar';
 import { dataUrl } from './apiBase';
 
@@ -14,7 +14,7 @@ import { dataUrl } from './apiBase';
 
 /**
  * Get peers for a given classification tier.
- * Instant — filters the prebuilt Thes1s company index in memory.
+ * Instant — filters the prebuilt Thesis company index in memory.
  * @param {'sector'|'industryGroup'|'industry'} tier
  * @param {{ sector, industryGroup, industry }} classification
  * @returns {Array<{ cik, name, ticker }>}
@@ -45,7 +45,7 @@ export async function fetchPeersByTier(tier, classification, ticker) {
 
 /**
  * Enrich peer list with ticker symbols from the EDGAR ticker map.
- * Mostly a pass-through now (Thes1s assignments already include tickers),
+ * Mostly a pass-through now (Thesis assignments already include tickers),
  * but fills gaps for any peers that are missing tickers.
  * Returns [{ cik, name, ticker }] — ticker may be null if not found.
  */

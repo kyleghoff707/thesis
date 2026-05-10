@@ -136,7 +136,7 @@ const TABS = [
   { key: 'cashFlow', label: 'Cash Flow' },
 ];
 
-// ─── Row Definitions (Rule One Toolbox structure) ────────────
+// ─── Row Definitions (value investing Toolbox structure) ────────────
 // type: 'header' = section divider, 'row' = data row, 'spacer' = visual gap
 // bold: true for totals/subtotals
 // negate: display as negative (e.g., CapEx, Buybacks shown as negative cash)

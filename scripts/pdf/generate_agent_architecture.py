@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Thes1s Agent Architecture — Visual Breakdown
+Thesis Agent Architecture — Visual Breakdown
 =============================================
 Generates a branded PDF documenting the complete agent system:
 - 3-stage workflow overview
@@ -24,7 +24,7 @@ from datetime import date
 
 def build_pdf():
     pdf = ReportPDF(
-        title='Thes1s Agent Architecture',
+        title='Thesis Agent Architecture',
         subtitle='Complete AI Analyst Team Breakdown'
     )
 
@@ -52,7 +52,7 @@ def build_pdf():
             f'Date: {date.today().strftime("%B %d, %Y")}',
             'Version: Pre-v1.2 (Full Story Milestone)',
             '',
-            'AI-Powered Rule One Investment Research',
+            'AI-Powered value investing Investment Research',
             '9 Specialist Agents | 3-Stage Gated Workflow'
         ]
     )
@@ -79,7 +79,7 @@ def build_pdf():
     pdf.add_section_header('1. 3-Stage Gated Workflow Overview')
 
     pdf.add_body_text(
-        'Thes1s follows a 3-stage gated research workflow inspired by Rule One investing. '
+        'Thesis follows a 3-stage gated research workflow inspired by value investing. '
         'Each stage is a filter — the user (Portfolio Manager) must approve before the next '
         'stage unlocks. The stages increase in depth and conviction:'
     )
@@ -242,7 +242,7 @@ def build_pdf():
         ['#', 'Section Key', 'Agent', 'Model', 'What It Produces'],
         [
             ['1', 'company_info', 'business-analyst', 'Sonnet', 'Company snapshot, industry, revenue sources'],
-            ['2', 'minimum_standards', 'business-analyst', 'Sonnet', 'Pass/fail on Rule One minimums'],
+            ['2', 'minimum_standards', 'business-analyst', 'Sonnet', 'Pass/fail on value investing minimums'],
             ['3', 'meaning', 'financial-analyst', 'Sonnet', 'Business understanding, KPIs'],
             ['4', 'growth_metrics', 'financial-analyst', 'Sonnet', 'Big 4 growth rates, consistency'],
             ['5', 'valuation_summary', 'valuation-specialist', 'Opus', 'Quick MOS/PBT check'],
@@ -401,7 +401,7 @@ def build_pdf():
     pdf.add_section_header('The Debate — Phase 2 Detail', level=2)
     pdf.add_body_text(
         'Phase 2 is unique: three agents take adversarial roles on the SAME section (S6). '
-        'This is inversion and rebuttal — a core Rule One concept. The Bull summarizes the '
+        'This is inversion and rebuttal — a core value investing concept. The Bull summarizes the '
         'thesis, the Bear attacks it with evidence, and the Judge scores each rebuttal for '
         'strength and identifies gaps in reasoning.'
     )
@@ -548,11 +548,11 @@ def build_pdf():
             '(requires peers from Stage 3)',
 
             'Stage 5: Composite Scores\n'
-            'moatScore, managementScore, ruleOneScore\n'
+            'moatScore, managementScore, thesisScore\n'
             '(requires growth + returns from Stage 2)',
 
             'Stage 6-7: Classification + Enrichment\n'
-            'Thes1s taxonomy, batch quotes, TTM rollup\n'
+            'Thesis taxonomy, batch quotes, TTM rollup\n'
             '→ Final DataPacket JSON (~200-500KB)',
         ],
         arrow_color=TEAL,
@@ -568,7 +568,7 @@ def build_pdf():
     pdf.add_table(
         ['Agent', 'DataPacket Slice'],
         [
-            ['business-analyst', 'companyInfo, classification, ruleOneScore, peers'],
+            ['business-analyst', 'companyInfo, classification, thesisScore, peers'],
             ['financial-analyst', 'financials, ttm, growthRates, returnMetrics, debtMetrics, fcf, keyMetrics'],
             ['valuation-specialist', 'growthRates, returnMetrics, fcf, analystEstimates, ttm, currentPrice, keyMetrics'],
             ['competitor-evaluator', 'peers, peerMetrics, classification, companyInfo'],
@@ -587,7 +587,7 @@ def build_pdf():
     pdf.add_section_header('8. Curriculum & Context Loading')
 
     pdf.add_body_text(
-        'Every agent receives: (1) Universal context — Rule One fundamentals + tools, '
+        'Every agent receives: (1) Universal context — value investing fundamentals + tools, '
         '(2) Agent-specific curriculum — methodology files relevant to their role, '
         '(3) PSR findings — insights from preprocessing agents. Universal context is '
         'cached across agents for cost savings.'
@@ -718,7 +718,7 @@ def build_pdf():
     # ═══════════════════════════════════════════════════════════════
     # OUTPUT
     # ═══════════════════════════════════════════════════════════════
-    output_path = os.path.join(os.path.dirname(__file__), '..', '..', 'Thes1s-Agent-Architecture.pdf')
+    output_path = os.path.join(os.path.dirname(__file__), '..', '..', 'Thesis-Agent-Architecture.pdf')
     output_path = os.path.abspath(output_path)
     pdf.output(output_path)
     print(f'PDF generated: {output_path}')

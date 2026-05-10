@@ -27,7 +27,7 @@ export const TOOL_DEFINITIONS = [
   // ── Valuation Tools ──────────────────────────────────────────
   {
     name: 'computeMOS',
-    description: 'Compute Margin of Safety buy price using Rule One method. Grows EPS at FGR for 10 years, applies Future P/E, discounts at MARR, then applies 50% MOS. Returns stickerPrice and mosPrice.',
+    description: 'Compute Margin of Safety buy price using value investing method. Grows EPS at FGR for 10 years, applies Future P/E, discounts at MARR, then applies 50% MOS. Returns stickerPrice and mosPrice.',
     input_schema: {
       type: 'object',
       properties: {
@@ -156,7 +156,7 @@ export const TOOL_DEFINITIONS = [
     input_schema: {
       type: 'object',
       properties: {
-        metric: { type: 'string', description: 'Dot-notation path to the metric (e.g., "growthRates.earnings.5yr", "ruleOneScore.moat")' },
+        metric: { type: 'string', description: 'Dot-notation path to the metric (e.g., "growthRates.earnings.5yr", "thesisScore.moat")' },
       },
       required: ['metric'],
       additionalProperties: false,

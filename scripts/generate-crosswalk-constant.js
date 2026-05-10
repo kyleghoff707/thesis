@@ -8,8 +8,8 @@ import { readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 
 const ROOT = resolve(import.meta.dirname, '..');
-const cw = JSON.parse(readFileSync(resolve(ROOT, 'industry-classification/yahoo-to-thes1s-crosswalk.json'), 'utf8'));
-const tree = JSON.parse(readFileSync(resolve(ROOT, 'industry-classification/thes1s-taxonomy-tree.json'), 'utf8'));
+const cw = JSON.parse(readFileSync(resolve(ROOT, 'industry-classification/yahoo-to-thesis-crosswalk.json'), 'utf8'));
+const tree = JSON.parse(readFileSync(resolve(ROOT, 'industry-classification/thesis-taxonomy-tree.json'), 'utf8'));
 
 function esc(s) { return s.replace(/'/g, "\\'"); }
 
@@ -27,12 +27,12 @@ for (const sector of tree.sectors) {
 const mapEntries = [];
 for (const m of cw.mappings) {
   const key = m.yahooSector + '|' + m.yahooIndustry;
-  let code = m.thes1sCode;
+  let code = m.thesisCode;
   let confidence = 0.85;
 
   if (m.mappingType === 'split' && m.splitOptions && m.splitOptions.length > 0) {
     const def = m.splitOptions.find(o => o.isDefault) || m.splitOptions[0];
-    code = def.thes1sCode;
+    code = def.thesisCode;
     confidence = 0.65;
   }
 
@@ -40,7 +40,7 @@ for (const m of cw.mappings) {
   if (!tax) { console.warn('Missing taxonomy for code:', code); continue; }
 
   mapEntries.push(
-    "  ['" + esc(key) + "', { thes1sCode: '" + code + "', sector: '" + esc(tax.sector) +
+    "  ['" + esc(key) + "', { thesisCode: '" + code + "', sector: '" + esc(tax.sector) +
     "', industryGroup: '" + esc(tax.industryGroup) + "', industry: '" + esc(tax.industry) +
     "', confidence: " + confidence + " }]"
   );
@@ -48,7 +48,7 @@ for (const m of cw.mappings) {
 
 // Assemble output
 const lines = [];
-lines.push('// Auto-generated from yahoo-to-thes1s-crosswalk.json + thes1s-taxonomy-tree.json');
+lines.push('// Auto-generated from yahoo-to-thesis-crosswalk.json + thesis-taxonomy-tree.json');
 lines.push('// Regenerate: node scripts/generate-crosswalk-constant.js');
 lines.push('// ' + mapEntries.length + ' mappings, ' + Object.keys(codeLookup).length + ' taxonomy codes');
 lines.push('');
@@ -72,7 +72,7 @@ lines.push('  /[.\\-\\/]P[A-Z]?$/,    // preferred');
 lines.push('  /[.\\-\\/]PR[.\\-\\/]?[A-Z]?$/, // preferred (alt)');
 lines.push('];');
 lines.push('');
-lines.push('// Yahoo sector|industry -> Thes1s classification');
+lines.push('// Yahoo sector|industry -> Thesis classification');
 lines.push('export const YAHOO_TO_THES1S = new Map([');
 lines.push(mapEntries.join(',\n'));
 lines.push(']);');
@@ -110,7 +110,7 @@ lines.push('  }');
 lines.push('');
 lines.push('  return {');
 lines.push("    status: 'classified',");
-lines.push('    thes1sCode: match.thes1sCode,');
+lines.push('    thesisCode: match.thesisCode,');
 lines.push('    sector: match.sector,');
 lines.push('    industryGroup: match.industryGroup,');
 lines.push('    industry: match.industry,');

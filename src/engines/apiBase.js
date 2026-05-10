@@ -1,14 +1,14 @@
-// API base URL for the Thes1s Worker.
+// API base URL for the Thesis Worker.
 // Dev: empty string (Vite proxy handles /api/* and /proxy/* routes locally).
 // Production: hardcoded to the deployed Worker. Not env-driven so nothing has
 // to flow through .env.local — keeps the bundle reproducible and avoids
 // tempting anyone to add VITE_*_KEY back into the build environment.
 
-export const API_BASE = import.meta.env.DEV ? '' : 'https://api.thes1sinvesting.com';
+export const API_BASE = import.meta.env.DEV ? '' : 'https://api.thesis-investing.com';
 
 // Production proxy base — prepended to external API paths.
 // Dev: Vite proxy routes (e.g. /api/sec/..., /api/edgar/...)
-// Production: Worker proxy routes (e.g. https://api.thes1s.com/proxy/sec/...)
+// Production: Worker proxy routes (e.g. https://api.thesis.com/proxy/sec/...)
 const IS_DEV = import.meta.env.DEV;
 
 export function secBase() {

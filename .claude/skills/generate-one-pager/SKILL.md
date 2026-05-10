@@ -1,13 +1,13 @@
 ---
 name: generate-one-pager
-description: "Generate a Rule One One Pager investment screening for a given stock ticker"
+description: "Generate a value investing One Pager investment screening for a given stock ticker"
 argument-hint: TICKER
 disable-model-invocation: true
 ---
 
 # Generate One Pager
 
-Generate a Rule One One Pager investment screening for **$0**.
+Generate a value investing One Pager investment screening for **$0**.
 
 ## Step 1: Validate Input
 
@@ -15,11 +15,11 @@ The ticker symbol is `$0`. Uppercase it and store as `TICKER`.
 
 If `$0` is empty, print usage `/generate-one-pager TICKER` and stop.
 
-Create `.thes1s/reports/{TICKER}/` and clean stale data:
+Create `.thesis/reports/{TICKER}/` and clean stale data:
 
 ```bash
-rm -rf .thes1s/reports/{TICKER}/sections/
-rm -rf .thes1s/reports/{TICKER}/quality/
+rm -rf .thesis/reports/{TICKER}/sections/
+rm -rf .thesis/reports/{TICKER}/quality/
 ```
 
 ## Step 2: Assemble DataPacket
@@ -49,7 +49,7 @@ Dispatch a single Sonnet subagent via the **Agent tool** with:
   ```
   Analyze {TICKER} and produce the complete One Pager screening.
 
-  ## DataPacket (sliced — core Rule One metrics only)
+  ## DataPacket (sliced — core value investing metrics only)
 
   {contents of /tmp/{TICKER}-one-pager-slice.json}
 
@@ -112,7 +112,7 @@ Wrap parsed output into the canonical schema:
 
 Map verdict → status: PASS → "pass", FAIL → "fail", WATCHLIST → "review".
 
-Write to `.thes1s/reports/{TICKER}/one-pager.json`.
+Write to `.thesis/reports/{TICKER}/one-pager.json`.
 
 ## Step 6: Generate PDF
 
@@ -126,10 +126,10 @@ If it fails, print warning and continue.
 
 ```bash
 ARCHIVE_ID=$(date +%Y%m%d-%H%M%S)
-mkdir -p .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}
-cp .thes1s/reports/{TICKER}/one-pager.json .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
-cp .thes1s/reports/{TICKER}/data-packet.json .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
-cp .thes1s/reports/{TICKER}/*.pdf .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+mkdir -p .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}
+cp .thesis/reports/{TICKER}/one-pager.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thesis/reports/{TICKER}/data-packet.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thesis/reports/{TICKER}/*.pdf .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
 ```
 
 ## Step 8: Print Summary

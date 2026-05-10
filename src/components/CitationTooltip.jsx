@@ -7,23 +7,23 @@ const THES1S_SOURCES = [
   'Filings Tab',
 ];
 
-// Detect citation type: thes1s (app data), sec (SEC filings), web (external)
+// Detect citation type: thesis (app data), sec (SEC filings), web (external)
 function getCitationType(source) {
   if (!source) return 'web';
   const lower = source.toLowerCase();
-  if (THES1S_SOURCES.some(s => lower.includes(s.toLowerCase()))) return 'thes1s';
+  if (THES1S_SOURCES.some(s => lower.includes(s.toLowerCase()))) return 'thesis';
   if (/10-k|10-q|8-k|proxy|sec\b/i.test(source)) return 'sec';
   return 'web';
 }
 
 const TYPE_STYLES = {
-  thes1s: () => ({ color: C.accent }),
+  thesis: () => ({ color: C.accent }),
   sec: () => ({ color: C.textSecondary }),
   web: () => ({ color: '#3b82f6' }),
 };
 
 const TYPE_ICONS = {
-  thes1s: (
+  thesis: (
     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
       <polyline points="9 22 9 12 15 12 15 22" />

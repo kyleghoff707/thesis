@@ -29,13 +29,13 @@ try {
   const { extractAllSections } = await vite.ssrLoadModule('/src/engines/filingSections.js');
 
   // Install fetch interceptor (same as the test file)
-  const SEC_UA = 'Thes1s/1.0 kylehoff@thes1sinvesting.com';
+  const SEC_UA = 'Thesis/1.0 kylehoff@thesis-investing.com';
   const origFetch = globalThis.fetch;
   globalThis.fetch = (url, opts = {}) => {
     const u = typeof url === 'string' ? url : url?.url || String(url);
     if (u.startsWith('/api/sec/')) return origFetch('https://www.sec.gov/' + u.slice(9), { ...opts, headers: { ...opts.headers, 'User-Agent': SEC_UA, Accept: 'application/json' } });
     if (u.startsWith('/api/edgar/')) return origFetch('https://data.sec.gov/' + u.slice(11), { ...opts, headers: { ...opts.headers, 'User-Agent': SEC_UA, Accept: 'application/json' } });
-    if (u.startsWith('/data/')) return origFetch('https://api.thes1sinvesting.com' + u, opts);
+    if (u.startsWith('/data/')) return origFetch('https://api.thesis-investing.com' + u, opts);
     if (u.startsWith('/api/finviz/') || u.startsWith('/api/yahoo')) return Promise.resolve(new Response('{}', { status: 503 }));
     return origFetch(url, opts);
   };

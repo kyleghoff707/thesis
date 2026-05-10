@@ -1,4 +1,4 @@
--- Thes1s D1 Schema
+-- Thesis D1 Schema
 -- Auth + user data + shared data (gurus, insiders, taxonomy)
 
 -- ═══ Auth ═══════════════════════════════════════════════════════
@@ -133,7 +133,7 @@ CREATE TABLE IF NOT EXISTS company_assignments (
   sector TEXT NOT NULL,
   industry_group TEXT NOT NULL,
   industry TEXT NOT NULL,
-  thes1s_code TEXT,
+  thesis_code TEXT,
   sic_code TEXT,
   exchange TEXT,
   status TEXT DEFAULT 'active',

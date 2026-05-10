@@ -15,7 +15,7 @@ export function yoyGrowth(oldValue, newValue) {
   return (newValue - oldValue) / Math.abs(oldValue);
 }
 
-// Standard periods used by Rule One Toolbox
+// Standard periods used by value investing Toolbox
 export const PERIODS = [10, 7, 5, 3, 1];
 
 // Compute CAGR for all standard periods from a time series
@@ -75,7 +75,7 @@ function findClosest(series, targetYear) {
 // Compute 3-year smoothed growth rate for each year in a series.
 // The "3 year Average Growth Rate" = arithmetic mean of 3 consecutive YoY growth rates.
 // For year Y: mean(YoY_{Y-2}, YoY_{Y-1}, YoY_Y)
-// This is NOT a 3-year CAGR — verified against Rule One Toolbox screenshots.
+// This is NOT a 3-year CAGR — verified against value investing Toolbox screenshots.
 // series: [{ year, value }] sorted oldest→newest
 // Returns [{ year, rate }] where rate is the 3-year smoothed rate (as decimal, e.g. 0.10 = 10%)
 export function compute3YearSmoothedRates(series) {
@@ -236,7 +236,7 @@ export function computeAllGrowthRates(statements, excludeYears = new Set()) {
   }
 
   // 2. Earnings growth (total Net Income, not per-share EPS)
-  //    Rule One Toolbox uses total Net Income for "Earnings Growth".
+  //    value investing Toolbox uses total Net Income for "Earnings Growth".
   //    EPS grows faster than Net Income when companies buy back shares (e.g., AAPL),
   //    so using EPS would overstate growth and inflate the Moat Score.
   const earningsSeries = buildSeries(income, 'net_income_loss');

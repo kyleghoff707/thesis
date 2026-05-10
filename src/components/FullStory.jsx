@@ -733,7 +733,7 @@ export default function FullStory({ getReport, updateReport }) {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      animation: status === 'active' ? 'thes1s-pulse 2s ease-in-out infinite' : 'none',
+                      animation: status === 'active' ? 'thesis-pulse 2s ease-in-out infinite' : 'none',
                     }}>
                       {status === 'complete' && (
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -761,9 +761,9 @@ export default function FullStory({ getReport, updateReport }) {
       )}
 
       {/* B. Two-Column Layout */}
-      <div className="thes1s-two-col" style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+      <div className="thesis-two-col" style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
         {/* B1. Sticky Section Nav (200px) */}
-        <div className="thes1s-section-nav" style={{
+        <div className="thesis-section-nav" style={{
           position: 'sticky',
           top: 72,
           width: 200,
@@ -818,7 +818,7 @@ export default function FullStory({ getReport, updateReport }) {
                     : item.status === 'running' ? C.accent
                     : C.border,
                   flexShrink: 0,
-                  animation: item.status === 'running' ? 'thes1s-pulse 2s ease-in-out infinite' : 'none',
+                  animation: item.status === 'running' ? 'thesis-pulse 2s ease-in-out infinite' : 'none',
                 }} />
                 <span>{item.index}. {truncated}</span>
               </div>

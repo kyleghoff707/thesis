@@ -1,12 +1,12 @@
-// ─── Thes1s Taxonomy Classification Engine ────────────────────────────
+// ─── Thesis Taxonomy Classification Engine ────────────────────────────
 // Modern 3-tier taxonomy (Sector > Industry Group > Industry) covering
 // 5,758 US public companies. Replaces SIC-based classification for
 // peer discovery and competitive analysis.
 //
-// Data: thes1s-company-assignments.json (5,758 classifications)
+// Data: thesis-company-assignments.json (5,758 classifications)
 // Lookup priority: CIK → ticker → SIC fallback
 
-import companyAssignments from '../../industry-classification/thes1s-company-assignments.json';
+import companyAssignments from '../../industry-classification/thesis-company-assignments.json';
 import { classifyBySIC as classifyBySIC_legacy } from './sicClassification';
 
 // ─── Lazy Indexes ──────────────────────────────────────────
@@ -41,9 +41,9 @@ function ensureIndexes() {
 // ─── Classification ────────────────────────────────────────
 
 /**
- * Classify a company using the Thes1s taxonomy.
+ * Classify a company using the Thesis taxonomy.
  * Tries CIK → ticker → SIC fallback.
- * @returns {{ sector, industryGroup, industry, thes1sCode }} or null
+ * @returns {{ sector, industryGroup, industry, thesisCode }} or null
  */
 export function classifyCompany(ticker, cik, sicCode, sicDescription) {
   ensureIndexes();
@@ -57,7 +57,7 @@ export function classifyCompany(ticker, cik, sicCode, sicDescription) {
         sector: entry.sector,
         industryGroup: entry.industryGroup,
         industry: entry.industry,
-        thes1sCode: entry.thes1sCode,
+        thesisCode: entry.thesisCode,
       };
     }
   }
@@ -70,19 +70,19 @@ export function classifyCompany(ticker, cik, sicCode, sicDescription) {
         sector: entry.sector,
         industryGroup: entry.industryGroup,
         industry: entry.industry,
-        thes1sCode: entry.thes1sCode,
+        thesisCode: entry.thesisCode,
       };
     }
   }
 
-  // SIC fallback (legacy — for companies not in Thes1s assignments)
+  // SIC fallback (legacy — for companies not in Thesis assignments)
   if (sicCode) {
     const legacy = classifyBySIC_legacy(sicCode, sicDescription);
     return {
       sector: legacy.sector,
       industryGroup: legacy.industryGroup,
       industry: legacy.industry,
-      thes1sCode: null,
+      thesisCode: null,
     };
   }
 
@@ -96,7 +96,7 @@ export function classifyCompany(ticker, cik, sicCode, sicDescription) {
  * Instant — in-memory filter, no network calls.
  * @param {'sector'|'industryGroup'|'industry'} tier
  * @param {string} value - e.g., "Technology" or "Software"
- * @returns {Array<{ ticker, cik, name, thes1sCode, sector, industryGroup, industry }>}
+ * @returns {Array<{ ticker, cik, name, thesisCode, sector, industryGroup, industry }>}
  */
 export function getCompaniesForTier(tier, value) {
   ensureIndexes();

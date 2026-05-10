@@ -1,13 +1,13 @@
 ---
 name: generate-pitch-deck
-description: Generate a 10-section Rule One Pitch Deck using v2 agent prompts, Claude Code subagent orchestration, 5-wave dispatch, and FGR derivation
+description: Generate a 10-section value investing Pitch Deck using v2 agent prompts, Claude Code subagent orchestration, 5-wave dispatch, and FGR derivation
 argument-hint: TICKER
 disable-model-invocation: true
 ---
 
 # Generate Pitch Deck (v2)
 
-Generate a complete 10-section Rule One Pitch Deck investment analysis for **$0**.
+Generate a complete 10-section value investing Pitch Deck investment analysis for **$0**.
 
 Orchestrates 10 specialist agents across 5 waves via Claude Code Agent tool dispatch, preceded by Primary Source Reading (annual + quarterly), with an FGR derivation sub-workflow. Runs end-to-end without stopping.
 
@@ -37,21 +37,21 @@ AGENT_REGISTRY:
     model: sonnet
     sections: [radar, simple_predictable]
     wave: 1
-    dpFields: [companyInfo, classification, ruleOneScore, peers, gurus, financials, ttm, growthRates, caveats]
+    dpFields: [companyInfo, classification, thesisScore, peers, gurus, financials, ttm, growthRates, caveats]
 
   competitor-market-position:
     prompt: agents/competitor-evaluator-market-position-pitchdeck/prompt.md
     model: sonnet
     sections: [market_position]
     wave: 1
-    dpFields: [companyInfo, classification, ruleOneScore, peers, peerMetrics, financials, ttm, growthRates, caveats]
+    dpFields: [companyInfo, classification, thesisScore, peers, peerMetrics, financials, ttm, growthRates, caveats]
 
   competitor-moats:
     prompt: agents/competitor-evaluator-moats-pitchdeck/prompt.md
     model: sonnet
     sections: [barriers_moats]
     wave: 2
-    dpFields: [companyInfo, classification, ruleOneScore, peers, peerMetrics, financials, ttm, growthRates, caveats]
+    dpFields: [companyInfo, classification, thesisScore, peers, peerMetrics, financials, ttm, growthRates, caveats]
 
   financial-analyst:
     prompt: agents/financial-analyst-pitchdeck/prompt.md
@@ -117,15 +117,15 @@ If `$0` is empty, print usage `/generate-pitch-deck TICKER` and stop.
 
 Clean stale data:
 ```bash
-rm -rf .thes1s/reports/{TICKER}/sections/
-rm -rf .thes1s/reports/{TICKER}/filings-md/
-rm -rf .thes1s/reports/{TICKER}/transcripts/
-rm -rf .thes1s/reports/{TICKER}/quality/
+rm -rf .thesis/reports/{TICKER}/sections/
+rm -rf .thesis/reports/{TICKER}/filings-md/
+rm -rf .thesis/reports/{TICKER}/transcripts/
+rm -rf .thesis/reports/{TICKER}/quality/
 ```
 
-Create `.thes1s/reports/{TICKER}/sections/` and `.thes1s/reports/{TICKER}/quality/`.
+Create `.thesis/reports/{TICKER}/sections/` and `.thesis/reports/{TICKER}/quality/`.
 
-**Gate Check.** Read `.thes1s/reports/{TICKER}/one-pager.json`. Verify it exists and `overallVerdict` is set. If not, print:
+**Gate Check.** Read `.thesis/reports/{TICKER}/one-pager.json`. Verify it exists and `overallVerdict` is set. If not, print:
 ```
 Gate check FAILED: One Pager must exist with a verdict.
 Run /generate-one-pager {TICKER} first.
@@ -147,13 +147,13 @@ Parse the JSON summary from stdout for `checkpointVerdict`, `dataPacketFields`, 
 2. Re-run prepare-data.js
 3. Abort
 
-Save PM-provided data to `.thes1s/reports/{TICKER}/pm-supplementary.md`, re-run prepare-data.js to verify.
+Save PM-provided data to `.thesis/reports/{TICKER}/pm-supplementary.md`, re-run prepare-data.js to verify.
 
 **Exit code 0 (PROCEED):** Print summary and continue.
 
 ## Step 3: Wave 0 — Primary Source Reading (PARALLEL)
 
-Read the DataPacket from `.thes1s/reports/{TICKER}/data-packet.json`.
+Read the DataPacket from `.thesis/reports/{TICKER}/data-packet.json`.
 
 ### 3a: Read PSR Agent Prompts
 
@@ -168,7 +168,7 @@ Read the DataPacket from `.thes1s/reports/{TICKER}/data-packet.json`.
 > Sequential annual-then-quarterly dispatch costs ~10 minutes of wall time and provides zero quality benefit.
 > Anti-pattern to avoid: dispatching annual readers, waiting for them to finish, then dispatching quarterly readers. Do NOT do this.
 
-Identify all 10-K filings from `.thes1s/reports/{TICKER}/filings-md/`. Sort chronologically, oldest first. Up to 5. Identify all 10-Q filings, sort chronologically, split into batches of 4.
+Identify all 10-K filings from `.thesis/reports/{TICKER}/filings-md/`. Sort chronologically, oldest first. Up to 5. Identify all 10-Q filings, sort chronologically, split into batches of 4.
 
 In a single message, dispatch:
 - **One Agent call per 10-K** (annual reader)
@@ -204,7 +204,7 @@ For each batch, the prompt is concatenated as:
 1. Full contents of `agents/quarterly-reader/prompt.md`
 2. DataPacket slice: same fields as annual reader
 3. All sections from each 10-Q in the batch
-4. Earnings transcripts from `.thes1s/reports/{TICKER}/transcripts/`:
+4. Earnings transcripts from `.thesis/reports/{TICKER}/transcripts/`:
 ```
 ## Earnings Call Transcript: Q{N} FY{YYYY}
 {full transcript text}
@@ -218,7 +218,7 @@ If an agent fails entirely, wait 30 seconds and retry once.
 
 After all PSR agents return:
 1. Extract JSON from each agent response (see JSON Extraction Fallback Chain)
-2. Merge annual reader outputs into `annual-reader-insights.json` (combine per-year findings, aggregate discrepancies, compile strategic themes and long-term management promises). Write to `.thes1s/reports/{TICKER}/sections/annual-reader-insights.json`.
+2. Merge annual reader outputs into `annual-reader-insights.json` (combine per-year findings, aggregate discrepancies, compile strategic themes and long-term management promises). Write to `.thesis/reports/{TICKER}/sections/annual-reader-insights.json`.
 3. Merge quarterly reader outputs into `quarterly-reader-insights.json` (combine per-batch findings, aggregate guidance evolution, compile short-term promise tracking). Write to same dir.
 4. **Cross-period reconciliation** (this used to happen implicitly inside the quarterly reader; now it happens here): walk the annual `managementPromises[]` and check whether quarterly `guidanceEvolution` honors, abandons, or contradicts each long-term promise. Add a `promiseReconciliation[]` array per promise: `{ promise, source, status: "honored|abandoned|contradicted|unmentioned", quarterlyEvidence }`.
 5. Build combined `psrFindings` for downstream agents:
@@ -296,7 +296,7 @@ Dispatch ALL 3 agents in a single message (3 Agent tool calls).
 2. DataPacket slice (full financials, growth rates, return metrics, debt metrics, FCF, key metrics, analyst estimates)
 3. PSR findings
 4. Wave 1 context + S4 barriers_moats
-5. Task: "Analyze {TICKER}'s financials and produce sections 5 (FCF), 7 (ROE/ROIC/ROA & Debt), and 8 (Balance Sheet). Include dual Owner Earnings (Rule One + Graham). Return a JSON array containing all three section objects matching ReportSectionSchema."
+5. Task: "Analyze {TICKER}'s financials and produce sections 5 (FCF), 7 (ROE/ROIC/ROA & Debt), and 8 (Balance Sheet). Include dual Owner Earnings (value investing + Graham). Return a JSON array containing all three section objects matching ReportSectionSchema."
 
 **Agent 3: management-evaluator** — section: management (S6)
 1. Full prompt
@@ -406,7 +406,7 @@ Dispatch via Agent tool with:
 5. FGR derivation with PM-confirmed values
 6. Task: "Review all 10 Pitch Deck sections for {TICKER}. Check cross-section consistency. Identify contradictions. Produce the overall verdict section (key: 'overall_verdict', sectionNumber: 11). Weight moat and financial sections most heavily, PEST lightest, management as contextual. Return a single JSON object matching ReportSectionSchema with `data` containing: `{ sectionVerdicts: {...}, overallVerdict: 'PASS|FAIL|WATCHLIST', keyStrengths: [...], keyConcerns: [...], nextSteps: [...] }`."
 
-Wait for completion. Save to `.thes1s/reports/{TICKER}/sections/overall_verdict.json`.
+Wait for completion. Save to `.thesis/reports/{TICKER}/sections/overall_verdict.json`.
 
 **Fallback if synthesis-writer fails:** Compute overall verdict from individual section verdicts (majority rule weighted by confidence: HIGH=3, MEDIUM=2, LOW=1).
 
@@ -460,9 +460,9 @@ Collect all **11 sections** (S1-S10 + S11 synthesis) + checkpoints + FGR derivat
 }
 ```
 
-Write JSON to `.thes1s/reports/{TICKER}/pitch-deck.json`.
+Write JSON to `.thesis/reports/{TICKER}/pitch-deck.json`.
 
-Generate human-readable markdown at `.thes1s/reports/{TICKER}/pitch-deck.md`. Structure: title + verdict + FGR range header → Executive Summary (synthesisNarrative) → all 10 sections grouped by wave with narrative + verdict + red flags → FGR Derivation table → Buy Price Ranges table → Sensitivity Tables → Citations.
+Generate human-readable markdown at `.thesis/reports/{TICKER}/pitch-deck.md`. Structure: title + verdict + FGR range header → Executive Summary (synthesisNarrative) → all 10 sections grouped by wave with narrative + verdict + red flags → FGR Derivation table → Buy Price Ranges table → Sensitivity Tables → Citations.
 
 ## Step 13: Quality Check
 
@@ -470,11 +470,11 @@ Generate human-readable markdown at `.thes1s/reports/{TICKER}/pitch-deck.md`. St
 node --import ./scripts/node-esm-loader.js -e "
   import { validateStage } from './src/engines/critic.js';
   import { readFileSync, writeFileSync, mkdirSync } from 'fs';
-  const report = JSON.parse(readFileSync('.thes1s/reports/{TICKER}/pitch-deck.json', 'utf8'));
-  const dp = JSON.parse(readFileSync('.thes1s/reports/{TICKER}/data-packet.json', 'utf8'));
+  const report = JSON.parse(readFileSync('.thesis/reports/{TICKER}/pitch-deck.json', 'utf8'));
+  const dp = JSON.parse(readFileSync('.thesis/reports/{TICKER}/data-packet.json', 'utf8'));
   const quality = validateStage(report.sections, dp);
-  mkdirSync('.thes1s/reports/{TICKER}/quality', { recursive: true });
-  writeFileSync('.thes1s/reports/{TICKER}/quality/pitch-deck.quality.json', JSON.stringify(quality, null, 2));
+  mkdirSync('.thesis/reports/{TICKER}/quality', { recursive: true });
+  writeFileSync('.thesis/reports/{TICKER}/quality/pitch-deck.quality.json', JSON.stringify(quality, null, 2));
   console.log('Quality check complete. Overall score:', quality.overallScore, 'Passed:', quality.overallPassed);
   console.log('Issues:', quality.sections.reduce((s, r) => s + r.issues.length, 0), 'total');
   for (const r of quality.sections) {
@@ -485,7 +485,7 @@ node --import ./scripts/node-esm-loader.js -e "
   }
   const { formatQualityReport } = await import('./src/engines/qualityFormatter.js');
   const qualityMd = formatQualityReport(quality, { ticker: '{TICKER}', stage: 'pitch-deck' });
-  writeFileSync('.thes1s/reports/{TICKER}/quality/pitch-deck.quality.md', qualityMd);
+  writeFileSync('.thesis/reports/{TICKER}/quality/pitch-deck.quality.md', qualityMd);
   console.log('Quality report written.');
 "
 ```
@@ -498,13 +498,13 @@ Quality is informational. Print overall score, per-section scores + issue counts
 node --import ./scripts/node-esm-loader.js -e "
   import { createBudgetTracker, formatBudgetReport } from './src/engines/contextBudget.js';
   import { readFileSync, writeFileSync, existsSync } from 'fs';
-  const report = JSON.parse(readFileSync('.thes1s/reports/{TICKER}/pitch-deck.json', 'utf8'));
+  const report = JSON.parse(readFileSync('.thesis/reports/{TICKER}/pitch-deck.json', 'utf8'));
   const tracker = createBudgetTracker();
-  const annualPSR = existsSync('.thes1s/reports/{TICKER}/sections/annual-reader-insights.json')
-    ? JSON.parse(readFileSync('.thes1s/reports/{TICKER}/sections/annual-reader-insights.json', 'utf8'))
+  const annualPSR = existsSync('.thesis/reports/{TICKER}/sections/annual-reader-insights.json')
+    ? JSON.parse(readFileSync('.thesis/reports/{TICKER}/sections/annual-reader-insights.json', 'utf8'))
     : null;
-  const quarterlyPSR = existsSync('.thes1s/reports/{TICKER}/sections/quarterly-reader-insights.json')
-    ? JSON.parse(readFileSync('.thes1s/reports/{TICKER}/sections/quarterly-reader-insights.json', 'utf8'))
+  const quarterlyPSR = existsSync('.thesis/reports/{TICKER}/sections/quarterly-reader-insights.json')
+    ? JSON.parse(readFileSync('.thesis/reports/{TICKER}/sections/quarterly-reader-insights.json', 'utf8'))
     : null;
   if (annualPSR) {
     const chars = JSON.stringify(annualPSR).length;
@@ -528,11 +528,11 @@ node --import ./scripts/node-esm-loader.js -e "
   }
   const summary = tracker.getSummary();
   let existing = {};
-  if (existsSync('.thes1s/reports/{TICKER}/budget.json')) {
-    existing = JSON.parse(readFileSync('.thes1s/reports/{TICKER}/budget.json', 'utf8'));
+  if (existsSync('.thesis/reports/{TICKER}/budget.json')) {
+    existing = JSON.parse(readFileSync('.thesis/reports/{TICKER}/budget.json', 'utf8'));
   }
   const combined = { ...existing, pitchDeck: summary };
-  writeFileSync('.thes1s/reports/{TICKER}/budget.json', JSON.stringify(combined, null, 2));
+  writeFileSync('.thesis/reports/{TICKER}/budget.json', JSON.stringify(combined, null, 2));
   console.log(formatBudgetReport(summary));
 "
 ```
@@ -541,7 +541,7 @@ node --import ./scripts/node-esm-loader.js -e "
 
 ```bash
 node -e "
-const r = JSON.parse(require('fs').readFileSync('.thes1s/reports/{TICKER}/pitch-deck.json','utf8'));
+const r = JSON.parse(require('fs').readFileSync('.thesis/reports/{TICKER}/pitch-deck.json','utf8'));
 const sections = r.sections || [];
 const maxSectionNumber = sections.reduce((m,s) => Math.max(m, s.sectionNumber || 0), 0);
 console.log('sections.length:', sections.length);
@@ -569,11 +569,11 @@ If it fails, print warning and continue.
 
 ```bash
 ARCHIVE_ID=$(date +%Y%m%d-%H%M%S)
-mkdir -p .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}
-cp .thes1s/reports/{TICKER}/pitch-deck.json .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
-cp .thes1s/reports/{TICKER}/data-packet.json .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
-cp .thes1s/reports/{TICKER}/sections/*.json .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
-cp .thes1s/reports/{TICKER}/*.pdf .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+mkdir -p .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}
+cp .thesis/reports/{TICKER}/pitch-deck.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thesis/reports/{TICKER}/data-packet.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thesis/reports/{TICKER}/sections/*.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thesis/reports/{TICKER}/*.pdf .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
 ```
 
 Retry once on error.

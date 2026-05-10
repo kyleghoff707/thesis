@@ -60,7 +60,7 @@ function WelcomeCard({ onSetup, loading }) {
       padding: 24, marginBottom: 20,
     }}>
       <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 8 }}>
-        Welcome to Thes1s!
+        Welcome to Thesis!
       </div>
       <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 16, lineHeight: 1.5 }}>
         To run AI analyses, set up billing so we can track your usage.

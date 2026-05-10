@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Seed company_assignments in D1 from thes1s-company-assignments.json.
+// Seed company_assignments in D1 from thesis-company-assignments.json.
 // Run: node api/scripts/seed-taxonomy.mjs
 //
 // Uses wrangler d1 execute to batch-insert rows.
@@ -10,7 +10,7 @@ import { execSync } from 'child_process';
 import { resolve } from 'path';
 import { setTimeout as sleep } from 'timers/promises';
 
-const TAXONOMY_PATH = resolve(import.meta.dirname, '../../industry-classification/thes1s-company-assignments.json');
+const TAXONOMY_PATH = resolve(import.meta.dirname, '../../industry-classification/thesis-company-assignments.json');
 const BATCH_SIZE = 50; // D1 supports ~100 per batch, stay conservative
 
 const raw = JSON.parse(readFileSync(TAXONOMY_PATH, 'utf8'));
@@ -28,7 +28,7 @@ let currentBatch = [];
 for (const [cik, data] of entries) {
   if (!data.ticker) continue;
 
-  const sql = `INSERT OR REPLACE INTO company_assignments (cik, ticker, name, sector, industry_group, industry, thes1s_code, sic_code, exchange, confidence, yahoo_sector, yahoo_industry, status) VALUES ('${esc(cik)}', '${esc(data.ticker)}', '${esc(data.name)}', '${esc(data.sector)}', '${esc(data.industryGroup)}', '${esc(data.industry)}', '${esc(data.thes1sCode)}', '${esc(data.sicCode || '')}', '${esc(data.exchange || '')}', ${data.confidence || 0.85}, '${esc(data.yahooSector || '')}', '${esc(data.yahooIndustry || '')}', 'active');`;
+  const sql = `INSERT OR REPLACE INTO company_assignments (cik, ticker, name, sector, industry_group, industry, thesis_code, sic_code, exchange, confidence, yahoo_sector, yahoo_industry, status) VALUES ('${esc(cik)}', '${esc(data.ticker)}', '${esc(data.name)}', '${esc(data.sector)}', '${esc(data.industryGroup)}', '${esc(data.industry)}', '${esc(data.thesisCode)}', '${esc(data.sicCode || '')}', '${esc(data.exchange || '')}', ${data.confidence || 0.85}, '${esc(data.yahooSector || '')}', '${esc(data.yahooIndustry || '')}', 'active');`;
 
   currentBatch.push(sql);
 
@@ -53,7 +53,7 @@ for (let i = 0; i < batches.length; i++) {
   let ok = false;
   for (let attempt = 0; attempt < 3 && !ok; attempt++) {
     try {
-      execSync(`npx wrangler d1 execute thes1s --remote --file=${tmpFile}`, {
+      execSync(`npx wrangler d1 execute thesis --remote --file=${tmpFile}`, {
         cwd: resolve(import.meta.dirname, '..'),
         stdio: 'pipe',
         timeout: 30_000,

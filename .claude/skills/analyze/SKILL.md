@@ -1,13 +1,13 @@
 ---
 name: analyze
-description: "Run the full 3-stage Thes1s pipeline (One Pager -> Pitch Deck -> Full Story) for a stock ticker using Claude Code subagents"
+description: "Run the full 3-stage Thesis pipeline (One Pager -> Pitch Deck -> Full Story) for a stock ticker using Claude Code subagents"
 argument-hint: TICKER
 disable-model-invocation: true
 ---
 
 # Analyze
 
-Run the complete Thes1s investment analysis pipeline for **$0** using Claude Code subagents.
+Run the complete Thesis investment analysis pipeline for **$0** using Claude Code subagents.
 
 Chains all 3 stages sequentially: One Pager -> Pitch Deck -> Full Story.
 Gates between stages — stops on first failure. One command, walk away.
@@ -20,9 +20,9 @@ The ticker symbol is `$0`. Uppercase it and store as `TICKER`.
 
 - If `$0` is empty, print usage: `/analyze TICKER` and stop.
 - Create output directories:
-  - `.thes1s/reports/{TICKER}/`
-  - `.thes1s/reports/{TICKER}/sections/`
-  - `.thes1s/reports/{TICKER}/quality/`
+  - `.thesis/reports/{TICKER}/`
+  - `.thesis/reports/{TICKER}/sections/`
+  - `.thesis/reports/{TICKER}/quality/`
 
 ## Step 2: Run One Pager (Stage 1)
 
@@ -31,14 +31,14 @@ Invoke the skill:
 /generate-one-pager {TICKER}
 ```
 
-Wait for completion. When it finishes, read `.thes1s/reports/{TICKER}/one-pager.json` and check `overallVerdict`.
+Wait for completion. When it finishes, read `.thesis/reports/{TICKER}/one-pager.json` and check `overallVerdict`.
 
 **Gate check:**
 - If verdict is `PASS` or `WATCHLIST` → continue to Step 3 (WATCHLIST means "worth deeper research")
 - If verdict is `FAIL` → log the verdict and **stop**. Print:
   ```
   GATE FAILED: One Pager verdict is FAIL. Pipeline stopped at Stage 1.
-  Review: .thes1s/reports/{TICKER}/one-pager.json
+  Review: .thesis/reports/{TICKER}/one-pager.json
   ```
 
 ## Step 3: Run Pitch Deck (Stage 2)
@@ -50,7 +50,7 @@ Invoke the skill:
 
 The pitch deck skill runs end-to-end without checkpoints — no PM interaction needed.
 
-When it finishes, verify `.thes1s/reports/{TICKER}/pitch-deck.json` exists with sections.
+When it finishes, verify `.thesis/reports/{TICKER}/pitch-deck.json` exists with sections.
 
 **Gate check:** If fewer than 10 sections were produced or the pipeline errored, log the issue and **stop**.
 
@@ -63,7 +63,7 @@ Invoke the skill:
 
 The full story skill runs end-to-end without checkpoints — no PM interaction needed.
 
-When it finishes, verify `.thes1s/reports/{TICKER}/full-story.json` exists.
+When it finishes, verify `.thesis/reports/{TICKER}/full-story.json` exists.
 
 ## Step 5: Report Results
 
@@ -77,10 +77,10 @@ Stage 1 (One Pager):  {verdict}
 Stage 2 (Pitch Deck): {sectionCount} sections
 Stage 3 (Full Story):  {sectionCount} sections + debate
 
-Output: .thes1s/reports/{TICKER}/
+Output: .thesis/reports/{TICKER}/
 ```
 
-Each stage auto-archives its outputs to `.thes1s/reports/{TICKER}/archive/{RUN_ID}/` so prior runs are preserved.
+Each stage auto-archives its outputs to `.thesis/reports/{TICKER}/archive/{RUN_ID}/` so prior runs are preserved.
 
 ## Constraints
 

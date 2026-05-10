@@ -218,7 +218,7 @@ export default function App() {
 
   // Dev mode: skip auth gate (no Worker running locally by default)
   if (import.meta.env.DEV) {
-    return <AuthenticatedApp user={{ name: 'Dev User', email: 'dev@thes1sinvesting.com', role: 'admin' }} logout={() => {}} />;
+    return <AuthenticatedApp user={{ name: 'Dev User', email: 'dev@thesis-investing.com', role: 'admin' }} logout={() => {}} />;
   }
 
   // Production: auth gate

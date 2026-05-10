@@ -13,7 +13,7 @@
     {
       "id": 1,
       "ref": 1,
-      "text": "SFM moatScore: 79, managementScore: 100, ruleOneScore: 90 \u2014 highest moat score among all 12 screened peers",
+      "text": "SFM moatScore: 79, managementScore: 100, thesisScore: 90 \u2014 highest moat score among all 12 screened peers",
       "source": "DataPacket peerMetrics (CIK 1575515)"
     },
     {

@@ -90,7 +90,7 @@ export function useResearch() {
           }
         }
 
-        // Dev: auto-seed from .thes1s reports if no data exists
+        // Dev: auto-seed from .thesis reports if no data exists
         if (IS_DEV) {
           try {
             const res = await fetch('/seed-reports.json');

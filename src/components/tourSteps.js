@@ -8,8 +8,8 @@ export const FULL_TOUR_STEPS = [
     target: null,
     route: null,
     position: 'center',
-    title: 'Welcome to Thes1s',
-    body: "Your AI analyst team is ready. You're the portfolio manager \u2014 Thes1s does the 40+ hours of Rule One research per company so you can focus on the investment decision. This 60-second tour shows you where everything lives. You can replay it anytime from the ? button in the header.",
+    title: 'Welcome to Thesis',
+    body: "Your AI analyst team is ready. You're the portfolio manager \u2014 Thesis does the 40+ hours of value investing research per company so you can focus on the investment decision. This 60-second tour shows you where everything lives. You can replay it anytime from the ? button in the header.",
   },
   {
     id: 'nav-tabs',
@@ -33,7 +33,7 @@ export const FULL_TOUR_STEPS = [
     route: '/research/{demoId}',
     position: 'below',
     title: 'Company Overview',
-    body: "The header shows the ticker, company name, and current price. The colored score badges on the right \u2014 Rule #1 Score, Moat, and Management \u2014 are computed from 10 years of SEC EDGAR filings. Green means passing, red means failing. Scores appear after data loads.",
+    body: "The header shows the ticker, company name, and current price. The colored score badges on the right \u2014 Thesis Score, Moat, and Management \u2014 are computed from 10 years of SEC EDGAR filings. Green means passing, red means failing. Scores appear after data loads.",
     demoTicker: 'AAPL',
   },
   {
@@ -41,8 +41,8 @@ export const FULL_TOUR_STEPS = [
     target: 'score-badges',
     route: null,
     position: 'left',
-    title: 'Rule One Scores',
-    body: 'Three scores at a glance. The overall Rule #1 Score combines Moat (growth rate quality across BVPS, EPS, revenue, and operating cash flow) and Management (return on equity, return on invested capital, and debt levels). These update automatically as financial data loads.',
+    title: 'Thesis Scores',
+    body: 'Three scores at a glance. The overall Thesis Score combines Moat (growth rate quality across BVPS, EPS, revenue, and operating cash flow) and Management (return on equity, return on invested capital, and debt levels). These update automatically as financial data loads.',
   },
   {
     id: 'toolbox-tabs',
@@ -121,9 +121,9 @@ export const FULL_TOUR_STEPS = [
 export const SECTION_TOUR_STEPS = {
   research: [
     { id: 'res-header', target: 'company-header', route: null, position: 'below',
-      title: 'Company Overview', body: 'The header shows ticker, company name, price, and Rule One score badges. Green = passing, red = failing.' },
+      title: 'Company Overview', body: 'The header shows ticker, company name, price, and value investing score badges. Green = passing, red = failing.' },
     { id: 'res-scores', target: 'score-badges', route: null, position: 'left',
-      title: 'Rule One Scores', body: 'Overall score combines Moat (growth rates) and Management (returns + debt). Computed from 10 years of SEC filings.' },
+      title: 'Thesis Scores', body: 'Overall score combines Moat (growth rates) and Management (returns + debt). Computed from 10 years of SEC filings.' },
     { id: 'res-tabs', target: 'toolbox-tabs', route: null, position: 'below',
       title: 'Toolbox Tabs', body: 'Overview, Financials, Growth, Valuation, Competitors, Insiders, and Filings. Each tab pulls data from SEC EDGAR.' },
     { id: 'res-generate', target: 'generate-button', route: null, position: 'left',

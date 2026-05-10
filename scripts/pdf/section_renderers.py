@@ -20,7 +20,7 @@ def _clean_narrative(text):
 
     1. <cite index="...">visible text</cite> -> just the visible text
     2. Self-closing <cite .../> tags -> removed entirely
-    3. "DataPacket" / "data packet" references -> "Thes1s toolbox"
+    3. "DataPacket" / "data packet" references -> "Thesis toolbox"
     """
     import re
 
@@ -34,10 +34,10 @@ def _clean_narrative(text):
     text = re.sub(r'<cite\s+[^/]*/>', '', text)
 
     # Replace internal "DataPacket" terminology with user-facing name
-    text = re.sub(r'(?i)\bthe\s+DataPacket\b', 'the Thes1s toolbox', text)
-    text = re.sub(r'(?i)\bDataPacket\b', 'Thes1s toolbox', text)
-    text = re.sub(r'(?i)\bdata\s+packet\b', 'Thes1s toolbox', text)
-    text = re.sub(r'(?i)\baccording to Thes1s toolbox\b', 'according to the Thes1s toolbox', text)
+    text = re.sub(r'(?i)\bthe\s+DataPacket\b', 'the Thesis toolbox', text)
+    text = re.sub(r'(?i)\bDataPacket\b', 'Thesis toolbox', text)
+    text = re.sub(r'(?i)\bdata\s+packet\b', 'Thesis toolbox', text)
+    text = re.sub(r'(?i)\baccording to Thesis toolbox\b', 'according to the Thesis toolbox', text)
 
     # Clean up any double spaces left by tag removal
     text = re.sub(r'  +', ' ', text)
@@ -55,7 +55,7 @@ def get_narrative(section):
     3. Empty string if nothing available
 
     Inline <cite> tags are stripped and "DataPacket" references are replaced
-    with "Thes1s toolbox" for user-facing display.
+    with "Thesis toolbox" for user-facing display.
 
     Args:
         section: Section dict from pipeline output

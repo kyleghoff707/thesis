@@ -27,7 +27,7 @@ export function usePitchDeck(ticker) {
 
     async function fetchReport() {
       try {
-        const res = await fetch(`/api/thes1s/reports/${encodeURIComponent(ticker)}/pitch-deck`);
+        const res = await fetch(`/api/thesis/reports/${encodeURIComponent(ticker)}/pitch-deck`);
         if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
@@ -40,7 +40,7 @@ export function usePitchDeck(ticker) {
 
     async function fetchProgress() {
       try {
-        const res = await fetch(`/api/thes1s/reports/${encodeURIComponent(ticker)}/progress`);
+        const res = await fetch(`/api/thesis/reports/${encodeURIComponent(ticker)}/progress`);
         if (cancelled) return null;
         if (res.ok) {
           const data = await res.json();
@@ -56,7 +56,7 @@ export function usePitchDeck(ticker) {
 
     async function fetchGenerationStatus() {
       try {
-        const res = await fetch(`/api/thes1s/reports/${encodeURIComponent(ticker)}/generation-status`);
+        const res = await fetch(`/api/thesis/reports/${encodeURIComponent(ticker)}/generation-status`);
         if (cancelled) return null;
         if (res.ok) {
           const data = await res.json();

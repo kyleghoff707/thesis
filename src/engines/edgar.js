@@ -393,7 +393,7 @@ export function extractAnnualFactMulti(companyFacts, tags, unit = 'USD') {
 
 // ─── Public API ──────────────────────────────────────────────
 
-// Fetch CapEx (Purchase of PP&E) — the standard Rule One definition
+// Fetch CapEx (Purchase of PP&E) — the standard value investing definition
 // Returns { [year]: value } in raw dollars (positive number = cash spent)
 export async function fetchCapEx(ticker) {
   const cik = await lookupCIK(ticker);

@@ -5,7 +5,7 @@
 
 import { openDB } from 'idb';
 
-const DB_NAME = 'thes1s-prices';
+const DB_NAME = 'thesis-prices';
 const DB_VERSION = 1;
 const STORE_NAME = 'prices';
 

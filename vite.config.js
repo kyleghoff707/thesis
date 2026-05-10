@@ -433,22 +433,22 @@ function irEventsPlugin() {
   };
 }
 
-// Thes1s report file server middleware.
-// Serves generated One Pager / Pitch Deck / Full Story JSON from .thes1s/reports/
+// Thesis report file server middleware.
+// Serves generated One Pager / Pitch Deck / Full Story JSON from .thesis/reports/
 // to the browser. Endpoints:
-//   GET /api/thes1s/reports                    — list tickers with any report
-//   GET /api/thes1s/reports/:ticker/one-pager  — serve one-pager.json
-//   GET /api/thes1s/reports/:ticker/pitch-deck — serve pitch-deck.json
-//   GET /api/thes1s/reports/:ticker/progress   — serve progress.json
-//   GET /api/thes1s/reports/:ticker/generation-status — serve generation-status.json
-function thes1sReportsPlugin() {
+//   GET /api/thesis/reports                    — list tickers with any report
+//   GET /api/thesis/reports/:ticker/one-pager  — serve one-pager.json
+//   GET /api/thesis/reports/:ticker/pitch-deck — serve pitch-deck.json
+//   GET /api/thesis/reports/:ticker/progress   — serve progress.json
+//   GET /api/thesis/reports/:ticker/generation-status — serve generation-status.json
+function thesisReportsPlugin() {
   let fs = null;
   let path = null;
 
   return {
-    name: 'thes1s-reports',
+    name: 'thesis-reports',
     configureServer(server) {
-      server.middlewares.use('/api/thes1s/reports', async (req, res) => {
+      server.middlewares.use('/api/thesis/reports', async (req, res) => {
         try {
           // Lazy-load fs and path on first invocation
           if (!fs) {
@@ -456,13 +456,13 @@ function thes1sReportsPlugin() {
             path = await import('path');
           }
 
-          const reportsDir = path.join(process.cwd(), '.thes1s', 'reports');
+          const reportsDir = path.join(process.cwd(), '.thesis', 'reports');
 
           // Parse URL path: req.url is relative to the middleware mount point
           // e.g. "/" for listing, "/COST/one-pager" for report, "/COST/progress" for progress
           const urlPath = (req.url || '/').replace(/^\//, '').split('?')[0];
 
-          // Listing endpoint: /api/thes1s/reports (urlPath is empty or "/")
+          // Listing endpoint: /api/thesis/reports (urlPath is empty or "/")
           if (!urlPath) {
             if (!fs.existsSync(reportsDir)) {
               res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -498,7 +498,7 @@ function thes1sReportsPlugin() {
           const ticker = parts[0].toUpperCase();
           const tickerDir = path.join(reportsDir, ticker);
 
-          // --- GET /api/thes1s/reports/:ticker/psr-summary — Read PSR summary ---
+          // --- GET /api/thesis/reports/:ticker/psr-summary — Read PSR summary ---
           if (parts[1] === 'psr-summary' && req.method === 'GET') {
             const psrPath = path.join(tickerDir, 'psr-summary.json');
             if (!fs.existsSync(psrPath)) {
@@ -512,7 +512,7 @@ function thes1sReportsPlugin() {
             return;
           }
 
-          // --- POST /api/thes1s/reports/:ticker/export/:stage/:format — Generate PDF/DOCX export ---
+          // --- POST /api/thesis/reports/:ticker/export/:stage/:format — Generate PDF/DOCX export ---
           if (parts[1] === 'export' && req.method === 'POST') {
             const stage = parts[2];    // one-pager, pitch-deck, full-story
             const format = parts[3];   // pdf, docx
@@ -556,7 +556,7 @@ function thes1sReportsPlugin() {
             return;
           }
 
-          // --- GET /api/thes1s/reports/:ticker/download/:filename — Download exported file ---
+          // --- GET /api/thesis/reports/:ticker/download/:filename — Download exported file ---
           if (parts[1] === 'download' && req.method === 'GET') {
             const filename = parts[2];
             if (!filename || filename.includes('..')) {
@@ -621,7 +621,7 @@ function thes1sReportsPlugin() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), yahooSummaryPlugin(), finvizPlugin(), gurufocusPlugin(), yahooQuotesPlugin(), irEventsPlugin(), thes1sReportsPlugin()],
+  plugins: [react(), yahooSummaryPlugin(), finvizPlugin(), gurufocusPlugin(), yahooQuotesPlugin(), irEventsPlugin(), thesisReportsPlugin()],
   server: {
     proxy: {
       // Yahoo Finance doesn't send CORS headers, so browser blocks direct calls.

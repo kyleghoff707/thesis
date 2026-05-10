@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Thes1sPDF — Shared base class for all Thes1s-branded PDF report generators.
+ThesisPDF — Shared base class for all Thesis-branded PDF report generators.
 
 Extracts the 95% duplicated code from OnePagerPDF and PitchDeckPDF into a single
 base class that all 3 stage generators (One Pager, Pitch Deck, Full Story) inherit from.
 
 Provides:
-- Thes1s color palette (teal + slate + accent colors)
+- Thesis color palette (teal + slate + accent colors)
 - Logo drawing (fused T1 letterform)
 - Title page with branding
 - Verdict scorecard table
@@ -17,9 +17,9 @@ Provides:
 - Branded header and footer
 
 Usage:
-    from scripts.pdf.thes1s_pdf import Thes1sPDF
+    from scripts.pdf.thesis_pdf import ThesisPDF
 
-    class OnePagerPDF(Thes1sPDF):
+    class OnePagerPDF(ThesisPDF):
         def __init__(self, title, subtitle=''):
             super().__init__(title, subtitle, stage_label='One Pager')
 """
@@ -32,14 +32,14 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pdf_template_toolkit import ReportPDF
 
 
-class Thes1sPDF(ReportPDF):
-    """Shared Thes1s-branded PDF base class for all 3 report stages."""
+class ThesisPDF(ReportPDF):
+    """Shared Thesis-branded PDF base class for all 3 report stages."""
 
     def __init__(self, title, subtitle='', stage_label='Report'):
         super().__init__(title, subtitle)
         self.stage_label = stage_label  # "One Pager", "Pitch Deck", "Full Story"
 
-        # Thes1s palette (identical in both existing generators)
+        # Thesis palette (identical in both existing generators)
         self.color_primary = (15, 118, 110)
         self.color_secondary = (30, 41, 59)
         self.color_text = (30, 41, 59)
@@ -73,7 +73,7 @@ class Thes1sPDF(ReportPDF):
     # ── Logo ─────────────────────────────────────────────────────────────────
 
     def draw_logo(self, x, y, size=22):
-        """Draw the Thes1s fused T1 letterform logo."""
+        """Draw the Thesis fused T1 letterform logo."""
         s = size / 32
         self.set_fill_color(*self.slate_800)
         self.rect(x, y, 32 * s, 32 * s, 'F')
@@ -107,19 +107,19 @@ class Thes1sPDF(ReportPDF):
         self.set_font('ArialUni', '', 7.5)
         self.set_text_color(*self.slate_500)
         if self.page_no() > 1:
-            self.cell(0, 10, f'Thes1s  |  {self.stage_label}  |  Page {self.page_no() - 1}', align='C')
+            self.cell(0, 10, f'Thesis  |  {self.stage_label}  |  Page {self.page_no() - 1}', align='C')
 
     # ── Title Page ────────────────────────────────────────────────────────────
 
     def title_page(self, ticker='', company='', stage_title='', subtitle_text='',
                    verdict='', disclaimer='', info_lines=None):
         """
-        Add a Thes1s-branded cover page.
+        Add a Thesis-branded cover page.
 
         Args:
             ticker: Stock ticker symbol
             company: Company name
-            stage_title: e.g., "Rule One One Pager"
+            stage_title: e.g., "value investing One Pager"
             subtitle_text: Subtitle line
             verdict: Overall verdict string
             disclaimer: Disclaimer text at bottom
@@ -131,10 +131,10 @@ class Thes1sPDF(ReportPDF):
         self.draw_logo((self.w - logo_size) / 2, self.get_y(), logo_size)
         self.ln(logo_size + 8)
 
-        # Thes1s branding
+        # Thesis branding
         self.set_font('ArialUni', 'B', 12)
         self.set_text_color(*self.teal_500)
-        self.cell(0, 6, 'Thes1s', align='C', new_x="LMARGIN", new_y="NEXT")
+        self.cell(0, 6, 'Thesis', align='C', new_x="LMARGIN", new_y="NEXT")
         self.ln(12)
 
         # Title
@@ -344,7 +344,7 @@ class Thes1sPDF(ReportPDF):
 
     def draw_bar_chart(self, title, labels, values, colors, unit='', max_val=None, subtitle=''):
         """
-        Draw a horizontal bar chart with Thes1s styling.
+        Draw a horizontal bar chart with Thesis styling.
 
         Args:
             title: Chart title

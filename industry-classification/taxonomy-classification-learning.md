@@ -1,5 +1,5 @@
 ---
-title: Thes1s Taxonomy Classification Guide
+title: Thesis Taxonomy Classification Guide
 date: 2026-03-18
 author: Computer Learning — Claude Code
 data-type: other
@@ -11,7 +11,7 @@ project-folder: ~/Desktop/stock-analyzer/
 
 ## 1. Purpose & Scope
 
-This document teaches Claude Code agents how to classify publicly traded US companies into the Thes1s custom industry taxonomy. Use this guide when:
+This document teaches Claude Code agents how to classify publicly traded US companies into the Thesis custom industry taxonomy. Use this guide when:
 
 - Assigning a new company to the taxonomy
 - Verifying an existing classification
@@ -19,7 +19,7 @@ This document teaches Claude Code agents how to classify publicly traded US comp
 - Deciding whether a company needs reclassification
 - Working on the Competitors tab or peer discovery features
 
-The taxonomy lives at `taxonomy-research/thes1s-taxonomy-tree.json`. Company assignments are at `taxonomy-research/thes1s-company-assignments.json` (5,758 companies classified).
+The taxonomy lives at `taxonomy-research/thesis-taxonomy-tree.json`. Company assignments are at `taxonomy-research/thesis-company-assignments.json` (5,758 companies classified).
 
 ---
 
@@ -33,7 +33,7 @@ The SEC's SIC codes (designed 1937) are the only freely available company-level 
 - Groups by production process, not competitive dynamics
 - Amazon is SIC 5961 "Catalog & Mail-Order Houses"
 
-The Thes1s taxonomy replaces SIC with a modern 3-tier system optimized for Rule One investment research — grouping companies by **who they compete with for customers and revenue**.
+The Thesis taxonomy replaces SIC with a modern 3-tier system optimized for value investing research — grouping companies by **who they compete with for customers and revenue**.
 
 ### How It Relates to Existing Systems
 
@@ -86,13 +86,13 @@ The taxonomy is modeled after Morningstar's classification (which Yahoo Finance 
 When you encounter a company that needs classification, follow this process in order:
 
 **Step 1 — Check existing assignment**
-Look up the company in `thes1s-company-assignments.json` by CIK or ticker. If already assigned with confidence ≥ 0.8, use the existing classification.
+Look up the company in `thesis-company-assignments.json` by CIK or ticker. If already assigned with confidence ≥ 0.8, use the existing classification.
 
 **Step 2 — Check Yahoo Finance label**
-If the company has a Yahoo Finance sector and industry (available via `quoteSummary` → `assetProfile`), look up the Yahoo label in `yahoo-to-thes1s-crosswalk.json` to get the Thes1s code.
+If the company has a Yahoo Finance sector and industry (available via `quoteSummary` → `assetProfile`), look up the Yahoo label in `yahoo-to-thesis-crosswalk.json` to get the Thesis code.
 
 **Step 3 — Check SIC code**
-Look up the company's SIC code (from SEC EDGAR submissions) in `sic-to-thes1s-crosswalk.json`.
+Look up the company's SIC code (from SEC EDGAR submissions) in `sic-to-thesis-crosswalk.json`.
 
 **Step 4 — Compare sources**
 - If Yahoo and SIC agree at the Industry Group level → assign with high confidence (0.95)
@@ -106,7 +106,7 @@ Read the company's 10-K Item 1 (Business Description) or their website. Ask:
 3. **Who do they compete with?** (direct competitors)
 4. **Where does most of their revenue come from?** (primary revenue segment)
 
-Match the answers to the Thes1s taxonomy. The primary revenue source determines the classification.
+Match the answers to the Thesis taxonomy. The primary revenue source determines the classification.
 
 ---
 
@@ -234,7 +234,7 @@ Utility companies DISTRIBUTE energy to end consumers.
 
 ## 6. Categorization Schema
 
-The complete taxonomy is defined in `taxonomy-research/thes1s-taxonomy-tree.json`. Each entry has:
+The complete taxonomy is defined in `taxonomy-research/thesis-taxonomy-tree.json`. Each entry has:
 - `code`: 8-digit numeric identifier
 - `name`: Human-readable industry name
 - `description`: What companies belong here, with examples
@@ -295,17 +295,17 @@ When classifying, always assign to the most specific (8-digit) level. The sector
 
 ## 8. Project-Specific Instructions
 
-### File Locations in the Thes1s Codebase
+### File Locations in the Thesis Codebase
 
 | File | Purpose | Location |
 |------|---------|----------|
-| Taxonomy tree (definition) | The taxonomy structure itself | `taxonomy-research/thes1s-taxonomy-tree.json` |
-| Company assignments | Every company's classification | `taxonomy-research/thes1s-company-assignments.json` |
-| SIC crosswalk | SIC → Thes1s mapping | `taxonomy-research/sic-to-thes1s-crosswalk.json` |
-| Yahoo crosswalk | Yahoo label → Thes1s mapping | `taxonomy-research/yahoo-to-thes1s-crosswalk.json` |
+| Taxonomy tree (definition) | The taxonomy structure itself | `taxonomy-research/thesis-taxonomy-tree.json` |
+| Company assignments | Every company's classification | `taxonomy-research/thesis-company-assignments.json` |
+| SIC crosswalk | SIC → Thesis mapping | `taxonomy-research/sic-to-thesis-crosswalk.json` |
+| Yahoo crosswalk | Yahoo label → Thesis mapping | `taxonomy-research/yahoo-to-thesis-crosswalk.json` |
 | SIC engine (legacy fallback) | SIC-based classification, used as fallback | `src/engines/sicClassification.js` |
-| Thes1s classification engine | Primary classification (CIK → ticker → SIC fallback) | `src/engines/thes1sClassification.js` |
-| Peer discovery | In-memory lookup from Thes1s assignments (instant) | `src/engines/peers.js` |
+| Thesis classification engine | Primary classification (CIK → ticker → SIC fallback) | `src/engines/thesisClassification.js` |
+| Peer discovery | In-memory lookup from Thesis assignments (instant) | `src/engines/peers.js` |
 | Competitors UI | Displays peer benchmarks | `src/components/Competitors.jsx` |
 | Competitors hook | Progressive loading: peers → metrics → scores | `src/hooks/useCompetitors.js` |
 | Batch classification script | Standalone Node script for seeding assignments | `scripts/classify-universe.js` |
@@ -313,12 +313,12 @@ When classifying, always assign to the most specific (8-digit) level. The sector
 ### How to Add a New Company
 
 1. Look up Yahoo Finance sector/industry via `quoteSummary`
-2. Map through `yahoo-to-thes1s-crosswalk.json`
+2. Map through `yahoo-to-thesis-crosswalk.json`
 3. Look up SIC from EDGAR submissions
-4. Map through `sic-to-thes1s-crosswalk.json`
+4. Map through `sic-to-thesis-crosswalk.json`
 5. If both agree → assign with confidence 0.95
 6. If they disagree → read 10-K business description and decide manually
-7. Add entry to `thes1s-company-assignments.json`
+7. Add entry to `thesis-company-assignments.json`
 
 ### How to Propose a Taxonomy Structure Change
 
@@ -369,11 +369,11 @@ Taxonomy structure changes (adding/removing/renaming industries) are significant
 When a user searches a ticker not in the assignments file:
 1. The app falls back to SIC classification via `classifyBySIC_legacy()`
 2. This gives usable sector/industryGroup/industry labels for display
-3. But peer discovery may return fewer/different results since the company isn't in the Thes1s index
+3. But peer discovery may return fewer/different results since the company isn't in the Thesis index
 
 To add a new company to the assignments file:
 1. Look up Yahoo Finance sector/industry via the batch script: `node scripts/classify-universe.js --step 2`
-2. Or manually add an entry to `thes1s-company-assignments.json`:
+2. Or manually add an entry to `thesis-company-assignments.json`:
 ```json
 {
   "ticker": "NEWCO",
@@ -381,7 +381,7 @@ To add a new company to the assignments file:
   "cik": "0001234567",
   "exchange": "NMS",
   "exchangeName": "NasdaqGS",
-  "thes1sCode": "10101010",
+  "thesisCode": "10101010",
   "sector": "Technology",
   "industryGroup": "Software",
   "industry": "Software - Application",
@@ -399,7 +399,7 @@ To add a new company to the assignments file:
 
 To reclassify companies from one industry to another (e.g., after identifying all cybersecurity companies):
 1. Query the assignments file for candidates: filter by current industry + flags
-2. Update each entry's `thes1sCode`, `sector`, `industryGroup`, `industry`
+2. Update each entry's `thesisCode`, `sector`, `industryGroup`, `industry`
 3. Set `source: "manual-override"` and add a flag explaining the change
 4. **Critical**: Only reclassify if the target industry has enough peers (5+). Moving a company to a 1-company industry makes the Competitors tab useless for that ticker.
 
@@ -432,7 +432,7 @@ Biotechnology has ~598 companies in one industry — genuinely that many publicl
 
 ### Yahoo's Split Mapping Problem
 
-~10 Yahoo industries map to multiple Thes1s industries (e.g., Yahoo "Software - Application" could be Thes1s Application, SaaS, Cybersecurity, or AI/ML). These split mappings produce 492 `needsReview` companies with confidence 0.65. They're assigned to the default (most common) Thes1s industry, which is usually correct for 70-80% of cases but wrong for notable companies.
+~10 Yahoo industries map to multiple Thesis industries (e.g., Yahoo "Software - Application" could be Thesis Application, SaaS, Cybersecurity, or AI/ML). These split mappings produce 492 `needsReview` companies with confidence 0.65. They're assigned to the default (most common) Thesis industry, which is usually correct for 70-80% of cases but wrong for notable companies.
 
 The 8 most impactful splits to resolve via NLP:
 1. **Software - Application** → separate SaaS, Cybersecurity, AI companies
@@ -446,7 +446,7 @@ The 8 most impactful splits to resolve via NLP:
 
 ### SIC Fallback Accuracy
 
-The SIC fallback (for companies not in the 5,758 assignments) uses sector names matching Morningstar/Thes1s (Technology, Consumer Cyclical, etc.), so sector-level peer discovery still works. But SIC industryGroup/industry names differ from Thes1s, so industry-level peers won't be found for fallback companies. This affects ~2,300 EDGAR filers that are OTC, foreign, or delisted — unlikely to be searched by the user.
+The SIC fallback (for companies not in the 5,758 assignments) uses sector names matching Morningstar/Thesis (Technology, Consumer Cyclical, etc.), so sector-level peer discovery still works. But SIC industryGroup/industry names differ from Thesis, so industry-level peers won't be found for fallback companies. This affects ~2,300 EDGAR filers that are OTC, foreign, or delisted — unlikely to be searched by the user.
 
 ### Bundle Size
 
@@ -484,7 +484,7 @@ The company assignments JSON is 2.9MB, adding ~2.9MB to the Vite bundle (570KB g
 
 ### Sector Name Mapping (Morningstar ↔ GICS)
 
-| Thes1s / Morningstar | GICS Equivalent |
+| Thesis / Morningstar | GICS Equivalent |
 |---------------------|-----------------|
 | Technology | Information Technology |
 | Consumer Cyclical | Consumer Discretionary |

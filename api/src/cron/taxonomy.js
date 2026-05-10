@@ -214,11 +214,11 @@ async function classifyNewListings(env, secByCik) {
 
       if (classification.status === 'classified') {
         await env.DB.prepare(
-          "INSERT OR REPLACE INTO company_assignments (cik, ticker, name, sector, industry_group, industry, thes1s_code, exchange, confidence, yahoo_sector, yahoo_industry, status, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', datetime('now'))"
+          "INSERT OR REPLACE INTO company_assignments (cik, ticker, name, sector, industry_group, industry, thesis_code, exchange, confidence, yahoo_sector, yahoo_industry, status, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', datetime('now'))"
         ).bind(
           entry.cik, entry.ticker, entry.name,
           classification.sector, classification.industryGroup, classification.industry,
-          classification.thes1sCode, classification.exchange,
+          classification.thesisCode, classification.exchange,
           classification.confidence, classification.yahooSector, classification.yahooIndustry
         ).run();
 
@@ -258,7 +258,7 @@ async function refreshSP500(env) {
   const result = { added: 0, removed: 0 };
 
   const res = await fetch('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies', {
-    headers: { 'User-Agent': 'Thes1s/1.0 (investment research)' },
+    headers: { 'User-Agent': 'Thesis/1.0 (investment research)' },
   });
   if (!res.ok) throw new Error(`Wikipedia returned ${res.status}`);
   const html = await res.text();
@@ -355,10 +355,10 @@ async function spotCheckRotation(env) {
           const reclass = classifyTicker(data.assetProfile, data.price);
           if (reclass.status === 'classified') {
             await env.DB.prepare(
-              "UPDATE company_assignments SET sector = ?, industry_group = ?, industry = ?, thes1s_code = ?, confidence = ?, yahoo_sector = ?, yahoo_industry = ?, updated_at = datetime('now') WHERE cik = ?"
+              "UPDATE company_assignments SET sector = ?, industry_group = ?, industry = ?, thesis_code = ?, confidence = ?, yahoo_sector = ?, yahoo_industry = ?, updated_at = datetime('now') WHERE cik = ?"
             ).bind(
               reclass.sector, reclass.industryGroup, reclass.industry,
-              reclass.thes1sCode, reclass.confidence,
+              reclass.thesisCode, reclass.confidence,
               reclass.yahooSector, reclass.yahooIndustry, row.cik
             ).run();
             result.reclassified++;

@@ -159,7 +159,7 @@ describe('file cache', () => {
 
   afterAll(() => {
     // Clean up test cache file
-    const cachePath = join(process.cwd(), '.thes1s', 'cache', `${TEST_CACHE_KEY}.json`);
+    const cachePath = join(process.cwd(), '.thesis', 'cache', `${TEST_CACHE_KEY}.json`);
     if (existsSync(cachePath)) {
       rmSync(cachePath);
     }
@@ -200,11 +200,11 @@ describe('constants', () => {
     expect(PROXY_MAP['/api/yahoo/']).toBe('https://query1.finance.yahoo.com/');
     expect(PROXY_MAP['/api/finviz/']).toBe('https://finviz.com/');
     expect(PROXY_MAP['/api/alpha/']).toBe('https://www.alphavantage.co/');
-    expect(PROXY_MAP['/data/']).toBe('https://api.thes1sinvesting.com/data/');
+    expect(PROXY_MAP['/data/']).toBe('https://api.thesis-investing.com/data/');
   });
 
   it('SEC_HEADERS includes User-Agent', () => {
-    expect(SEC_HEADERS['User-Agent']).toBe('Thes1s/1.0 (contact@thes1s.com)');
+    expect(SEC_HEADERS['User-Agent']).toBe('Thesis/1.0 (contact@thesis.com)');
   });
 
   it('SEC_HEADERS includes Accept', () => {

@@ -7,7 +7,7 @@ export default function PsrSummaryCard({ ticker }) {
 
   useEffect(() => {
     if (!ticker) return;
-    fetch(`/api/thes1s/reports/${encodeURIComponent(ticker)}/psr-summary`)
+    fetch(`/api/thesis/reports/${encodeURIComponent(ticker)}/psr-summary`)
       .then(r => r.ok ? r.json() : null)
       .then(d => setSummary(d))
       .catch(() => {});

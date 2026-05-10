@@ -32,7 +32,7 @@ export default function LoginPage({ onLogin }) {
         boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
       }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <img src="/logo.svg" alt="Thes1s" style={{ height: 36, marginBottom: 12 }} />
+          <img src="/logo.svg" alt="Thesis" style={{ height: 36, marginBottom: 12 }} />
           <p style={{ color: C.textSecondary, fontSize: 13, margin: 0 }}>
             AI-powered investment research
           </p>

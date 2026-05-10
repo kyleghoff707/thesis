@@ -2,7 +2,7 @@
 """
 Chart Image Generator — Matplotlib-based chart images for Word doc embedding.
 
-Generates Thes1s-branded PNG chart images that can be embedded in python-docx Word
+Generates Thesis-branded PNG chart images that can be embedded in python-docx Word
 documents. Mirrors the visual style of the fpdf2 PDF chart methods so that Word docs
 and PDFs have a consistent look.
 
@@ -28,7 +28,7 @@ import matplotlib.patches as mpatches
 import os
 import tempfile
 
-# ── Thes1s Color Palette (hex format for matplotlib) ─────────────────────────
+# ── Thesis Color Palette (hex format for matplotlib) ─────────────────────────
 
 TEAL_500 = '#0f766e'
 TEAL_400 = '#2dd4bf'
@@ -68,7 +68,7 @@ DEFAULT_DPI = 150
 
 
 def _setup_style():
-    """Set matplotlib rcParams for Thes1s look."""
+    """Set matplotlib rcParams for Thesis look."""
     plt.rcParams.update({
         'font.family': 'sans-serif',
         'font.sans-serif': ['Arial', 'Helvetica', 'DejaVu Sans'],

@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "description": "Maps Morningstar CSV field names to Thes1s XBRL engine field names",
-    "signConvention": "sign = multiplier to convert MS value to Thes1s sign convention. thesisValue ≈ sign × msValue",
+    "description": "Maps Morningstar CSV field names to Thesis XBRL engine field names",
+    "signConvention": "sign = multiplier to convert MS value to Thesis sign convention. thesisValue ≈ sign × msValue",
     "toleranceTiers": {
       "exact": "< 1% or < $1M difference — scoring-critical fields",
       "close": "< 5% — important display fields",
@@ -357,7 +357,7 @@
       "thesisField": "effective_tax_rate",
       "sign": 1,
       "tolerance": "approximate",
-      "notes": "Derived in Thes1s as income_tax / income_before_tax. MS stores as decimal (0.24 = 24%)"
+      "notes": "Derived in Thesis as income_tax / income_before_tax. MS stores as decimal (0.24 = 24%)"
     }
   },
   "balance_sheet": {
@@ -425,7 +425,7 @@
       "thesisField": "noncurrent_assets",
       "sign": 1,
       "tolerance": "close",
-      "notes": "Derived in Thes1s: assets - current_assets"
+      "notes": "Derived in Thesis: assets - current_assets"
     },
     "Net Property, Plant and Equipment": {
       "thesisField": "property_plant_equipment",
@@ -581,7 +581,7 @@
       "thesisField": "noncurrent_liabilities",
       "sign": 1,
       "tolerance": "exact",
-      "notes": "Derived in Thes1s if not directly tagged"
+      "notes": "Derived in Thesis if not directly tagged"
     },
     "Total Liabilities": {
       "thesisField": "liabilities",
@@ -721,7 +721,7 @@
       "thesisField": "capital_expenditures_net",
       "sign": 1,
       "tolerance": "close",
-      "notes": "Net CapEx (purchases - disposals). Derived in Thes1s"
+      "notes": "Net CapEx (purchases - disposals). Derived in Thesis"
     },
     "Purchase of Investments": {
       "thesisField": "purchase_of_investments",
@@ -775,7 +775,7 @@
       "thesisField": null,
       "sign": 1,
       "tolerance": "informational",
-      "notes": "MS nets short-term debt; Thes1s has separate proceeds/repayments fields"
+      "notes": "MS nets short-term debt; Thesis has separate proceeds/repayments fields"
     },
     "Payments for Common Stock": {
       "thesisField": "share_repurchases",
@@ -823,13 +823,13 @@
       "thesisField": "ending_cash_position",
       "sign": 1,
       "tolerance": "close",
-      "notes": "Derived in Thes1s"
+      "notes": "Derived in Thesis"
     },
     "Change in Cash": {
       "thesisField": "net_change_in_cash",
       "sign": 1,
       "tolerance": "close",
-      "notes": "Derived in Thes1s"
+      "notes": "Derived in Thesis"
     }
   }
 }

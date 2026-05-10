@@ -35,7 +35,7 @@ if (!ticker || !agentRole) {
   process.exit(1);
 }
 
-const dpPath = join(process.cwd(), `.thes1s/reports/${ticker}/data-packet.json`);
+const dpPath = join(process.cwd(), `.thesis/reports/${ticker}/data-packet.json`);
 if (!existsSync(dpPath)) {
   console.error(`DataPacket not found: ${dpPath}`);
   process.exit(1);

@@ -1,13 +1,13 @@
 ---
 name: generate-full-story
-description: Generate a 6-section Rule One Full Story (Stage 3) using v2 agent prompts, Claude Code subagent orchestration, adversarial debate, and Pitch Deck inheritance
+description: Generate a 6-section value investing Full Story (Stage 3) using v2 agent prompts, Claude Code subagent orchestration, adversarial debate, and Pitch Deck inheritance
 argument-hint: TICKER
 disable-model-invocation: true
 ---
 
 # Generate Full Story (v2)
 
-Generate a complete 6-section Rule One Full Story conviction document for **$0**.
+Generate a complete 6-section value investing Full Story conviction document for **$0**.
 
 Orchestrates 7 specialist agents across 2 phases via Claude Code Agent tool dispatch. Phase 1 dispatches 5 deep-analysis agents in parallel. Phase 2 runs a 4-step adversarial debate (Bull, Bear, Rebuttal, Judge) plus a composition step to produce final Section 6. Runs end-to-end without stopping. Builds entirely on the completed Pitch Deck — PSR findings are inherited, not re-run.
 
@@ -33,7 +33,7 @@ AGENT_REGISTRY:
     sections: [meaning_checklist]
     phase: 1
     pdInheritance: [simple_predictable, market_position]
-    dpFields: [companyInfo, classification, ruleOneScore, peers, gurus, financials, ttm, growthRates, caveats]
+    dpFields: [companyInfo, classification, thesisScore, peers, gurus, financials, ttm, growthRates, caveats]
 
   competitor-evaluator:
     prompt: agents/competitor-evaluator-fullstory/prompt.md
@@ -41,7 +41,7 @@ AGENT_REGISTRY:
     sections: [moat_checklist]
     phase: 1
     pdInheritance: [barriers_moats, market_position]
-    dpFields: [companyInfo, classification, ruleOneScore, peers, peerMetrics, financials, ttm, growthRates, caveats]
+    dpFields: [companyInfo, classification, thesisScore, peers, peerMetrics, financials, ttm, growthRates, caveats]
 
   management-evaluator:
     prompt: agents/management-evaluator-fullstory/prompt.md
@@ -112,13 +112,13 @@ If `$0` is empty, print usage `/generate-full-story TICKER` and stop.
 
 Clean stale section data (preserve pitch-deck.json + data-packet.json):
 ```bash
-rm -rf .thes1s/reports/{TICKER}/sections/
-rm -rf .thes1s/reports/{TICKER}/quality/
+rm -rf .thesis/reports/{TICKER}/sections/
+rm -rf .thesis/reports/{TICKER}/quality/
 ```
 
-Create `.thes1s/reports/{TICKER}/sections/`.
+Create `.thesis/reports/{TICKER}/sections/`.
 
-**Gate Check.** Read `.thes1s/reports/{TICKER}/pitch-deck.json` and `.thes1s/reports/{TICKER}/data-packet.json`. Verify:
+**Gate Check.** Read `.thesis/reports/{TICKER}/pitch-deck.json` and `.thesis/reports/{TICKER}/data-packet.json`. Verify:
 1. Both files exist
 2. `overallVerdict` is set
 3. `overallVerdict` is NOT `"FAIL"`
@@ -450,16 +450,16 @@ Wait. Extract COMPLETE JSON, validate ReportSectionSchema, save to `sections/inv
 }
 ```
 
-Write JSON to `.thes1s/reports/{TICKER}/full-story.json`.
+Write JSON to `.thesis/reports/{TICKER}/full-story.json`.
 
-Generate human-readable markdown at `.thes1s/reports/{TICKER}/full-story.md`. Structure: title + verdict + Pitch Deck verdict + debate direction header → Executive Summary (Section 6 verdictRationale + debate outcome) → Phase 1 sections (1-5) with narrative + verdict + checklist score + red flags → Section 6 (Inversion & Rebuttal) narrative + debate scorecard table (per-exchange Bull/Bear/Outcome) → Section verdicts table → All red flags aggregated → Citations.
+Generate human-readable markdown at `.thesis/reports/{TICKER}/full-story.md`. Structure: title + verdict + Pitch Deck verdict + debate direction header → Executive Summary (Section 6 verdictRationale + debate outcome) → Phase 1 sections (1-5) with narrative + verdict + checklist score + red flags → Section 6 (Inversion & Rebuttal) narrative + debate scorecard table (per-exchange Bull/Bear/Outcome) → Section verdicts table → All red flags aggregated → Citations.
 
 ## Step 10: Generate PDF
 
 The PDF reader expects `full-story-api.json`, so copy first:
 
 ```bash
-cp .thes1s/reports/{TICKER}/full-story.json .thes1s/reports/{TICKER}/full-story-api.json
+cp .thesis/reports/{TICKER}/full-story.json .thesis/reports/{TICKER}/full-story-api.json
 python3 scripts/pdf/generate_full_story_pdf.py {TICKER}
 ```
 
@@ -469,11 +469,11 @@ If it fails, print warning and continue.
 
 ```bash
 ARCHIVE_ID=$(date +%Y%m%d-%H%M%S)
-mkdir -p .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}
-cp .thes1s/reports/{TICKER}/full-story.json .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
-cp .thes1s/reports/{TICKER}/full-story-api.json .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
-cp .thes1s/reports/{TICKER}/sections/debate-*.json .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
-cp .thes1s/reports/{TICKER}/*.pdf .thes1s/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+mkdir -p .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}
+cp .thesis/reports/{TICKER}/full-story.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thesis/reports/{TICKER}/full-story-api.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thesis/reports/{TICKER}/sections/debate-*.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp .thesis/reports/{TICKER}/*.pdf .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
 ```
 
 Retry once on error.

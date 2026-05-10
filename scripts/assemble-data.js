@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // CLI wrapper: node --import scripts/node-esm-loader.js scripts/assemble-data.js TICKER
-// Assembles a full DataPacket and writes to .thes1s/reports/{TICKER}/data-packet.json
+// Assembles a full DataPacket and writes to .thesis/reports/{TICKER}/data-packet.json
 //
 // Prerequisites:
 //   - .env.local with API keys (VITE_CLAUDE_KEY, etc.)
@@ -31,7 +31,7 @@ async function main() {
   const packet = await assembleDataPacket(ticker);
 
   // Create output directory
-  const outputDir = join(process.cwd(), '.thes1s', 'reports', ticker);
+  const outputDir = join(process.cwd(), '.thesis', 'reports', ticker);
   mkdirSync(outputDir, { recursive: true });
 
   // Write DataPacket JSON

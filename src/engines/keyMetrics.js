@@ -1,4 +1,4 @@
-// Key Metrics — 61 derived metrics matching Rule One Toolbox Key Metrics export
+// Key Metrics — 61 derived metrics matching value investing Toolbox Key Metrics export
 // Computed from EDGAR financial statement data (edgarFinancials.js output).
 //
 // Categories: Per Share (15), Shares (3), Liquidity (5), Profitability (10),
@@ -252,7 +252,7 @@ export function computeKeyMetrics(edgarData, latestPrice = null) {
 }
 
 // ─── Row Definitions for UI ──────────────────────────────────
-// Matches Rule One Toolbox Key Metrics CSV structure exactly
+// Matches value investing Toolbox Key Metrics CSV structure exactly
 
 export const KEY_METRICS_ROWS = {
   perShare: {

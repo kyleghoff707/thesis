@@ -15,7 +15,7 @@
 // Usage: node --loader ./scripts/node-esm-loader.js scripts/prepare-data.js TICKER
 //
 // Output: Structured JSON summary to stdout, human-readable logs to stderr.
-//         Also writes all artifacts to .thes1s/reports/{TICKER}/
+//         Also writes all artifacts to .thesis/reports/{TICKER}/
 
 import '../src/engines/nodeAdapter.js';
 import { assembleDataPacket } from '../src/engines/dataExport.js';
@@ -38,7 +38,7 @@ function timed(label) {
 }
 
 const totalStart = Date.now();
-const reportDir = join(process.cwd(), '.thes1s', 'reports', ticker);
+const reportDir = join(process.cwd(), '.thesis', 'reports', ticker);
 
 // ── Step 1: Gate Check ──────────────────────────────────────
 log(`\n=== Step 1: Gate Check for ${ticker} ===`);

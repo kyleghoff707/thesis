@@ -25,7 +25,7 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
-const dir = join(ROOT, '.thes1s/reports', ticker);
+const dir = join(ROOT, '.thesis/reports', ticker);
 const sectionsDir = join(dir, 'sections');
 
 // Auto-detect stage if not specified

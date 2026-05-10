@@ -1,0 +1,1228 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "createdDate": "2026-03-17",
+    "description": "Maps 145 Yahoo Finance (Morningstar) industry labels to Thesis 8-digit taxonomy codes",
+    "source": "yahoo-finance-taxonomy.json (145 industries) + thesis-taxonomy-tree.json (176 industries)",
+    "mappingTypes": {
+      "exact": "Yahoo industry name matches Thesis industry name exactly or near-exactly",
+      "rename": "Clear 1:1 mapping but different naming convention",
+      "split": "Yahoo industry maps to multiple Thesis industries — first splitOption is default, companies get needsReview: true"
+    },
+    "counts": {
+      "total": 145,
+      "exact": 58,
+      "rename": 79,
+      "split": 8,
+      "crossSector": 9
+    },
+    "notes": "26 Thesis industries have no Yahoo source (SaaS, Fintech, EV, Cannabis, etc.) — these populate only from NLP or manual assignment"
+  },
+  "mappings": [
+    {
+      "yahooSector": "Technology",
+      "yahooIndustry": "Semiconductors",
+      "thesisCode": "10301010",
+      "thesisSector": "Technology",
+      "thesisIndustry": "Semiconductors",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Technology",
+      "yahooIndustry": "Software - Infrastructure",
+      "thesisCode": "10101020",
+      "thesisSector": "Technology",
+      "thesisIndustry": "Software - Infrastructure",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Technology",
+      "yahooIndustry": "Consumer Electronics",
+      "thesisCode": "10201010",
+      "thesisSector": "Technology",
+      "thesisIndustry": "Consumer Electronics",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Technology",
+      "yahooIndustry": "Software - Application",
+      "thesisCode": "10101010",
+      "thesisSector": "Technology",
+      "thesisIndustry": "Software - Application",
+      "mappingType": "split",
+      "splitOptions": [
+        { "thesisCode": "10101010", "industry": "Software - Application", "isDefault": true },
+        { "thesisCode": "10101030", "industry": "Software - SaaS & Cloud" },
+        { "thesisCode": "10101040", "industry": "Software - Cybersecurity" },
+        { "thesisCode": "10101050", "industry": "Software - AI & Machine Learning" }
+      ]
+    },
+    {
+      "yahooSector": "Technology",
+      "yahooIndustry": "Semiconductor Equipment & Materials",
+      "thesisCode": "10301020",
+      "thesisSector": "Technology",
+      "thesisIndustry": "Semiconductor Equipment & Materials",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Technology",
+      "yahooIndustry": "Computer Hardware",
+      "thesisCode": "10201020",
+      "thesisSector": "Technology",
+      "thesisIndustry": "Computer Hardware & Storage",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Technology",
+      "yahooIndustry": "Communication Equipment",
+      "thesisCode": "10201030",
+      "thesisSector": "Technology",
+      "thesisIndustry": "Communication Equipment",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Technology",
+      "yahooIndustry": "Information Technology Services",
+      "thesisCode": "10501010",
+      "thesisSector": "Technology",
+      "thesisIndustry": "Information Technology Services",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Technology",
+      "yahooIndustry": "Electronic Components",
+      "thesisCode": "10401010",
+      "thesisSector": "Technology",
+      "thesisIndustry": "Electronic Components",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Technology",
+      "yahooIndustry": "Scientific & Technical Instruments",
+      "thesisCode": "10201040",
+      "thesisSector": "Technology",
+      "thesisIndustry": "Scientific & Technical Instruments",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Technology",
+      "yahooIndustry": "Solar",
+      "thesisCode": "45201010",
+      "thesisSector": "Energy",
+      "thesisIndustry": "Solar Energy",
+      "mappingType": "rename",
+      "crossSector": true
+    },
+    {
+      "yahooSector": "Technology",
+      "yahooIndustry": "Electronics & Computer Distributors",
+      "thesisCode": "10601010",
+      "thesisSector": "Technology",
+      "thesisIndustry": "Technology Distributors",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Communication Services",
+      "yahooIndustry": "Internet Content & Information",
+      "thesisCode": "15301010",
+      "thesisSector": "Communication Services",
+      "thesisIndustry": "Internet Content & Information",
+      "mappingType": "split",
+      "splitOptions": [
+        { "thesisCode": "15301010", "industry": "Internet Content & Information", "isDefault": true },
+        { "thesisCode": "15301020", "industry": "Social Media Platforms" },
+        { "thesisCode": "15301030", "industry": "Digital Advertising Platforms" }
+      ]
+    },
+    {
+      "yahooSector": "Communication Services",
+      "yahooIndustry": "Telecom Services",
+      "thesisCode": "15101010",
+      "thesisSector": "Communication Services",
+      "thesisIndustry": "Telecom - Diversified",
+      "mappingType": "split",
+      "splitOptions": [
+        { "thesisCode": "15101010", "industry": "Telecom - Diversified", "isDefault": true },
+        { "thesisCode": "15101020", "industry": "Telecom - Wireless" },
+        { "thesisCode": "15101030", "industry": "Telecom - Regional & Rural" }
+      ]
+    },
+    {
+      "yahooSector": "Communication Services",
+      "yahooIndustry": "Entertainment",
+      "thesisCode": "15201010",
+      "thesisSector": "Communication Services",
+      "thesisIndustry": "Entertainment - Diversified",
+      "mappingType": "split",
+      "splitOptions": [
+        { "thesisCode": "15201010", "industry": "Entertainment - Diversified", "isDefault": true },
+        { "thesisCode": "15201020", "industry": "Entertainment - Streaming" }
+      ]
+    },
+    {
+      "yahooSector": "Communication Services",
+      "yahooIndustry": "Advertising Agencies",
+      "thesisCode": "15201060",
+      "thesisSector": "Communication Services",
+      "thesisIndustry": "Advertising & Marketing Services",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Communication Services",
+      "yahooIndustry": "Electronic Gaming & Multimedia",
+      "thesisCode": "15201030",
+      "thesisSector": "Communication Services",
+      "thesisIndustry": "Gaming & Interactive Entertainment",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Communication Services",
+      "yahooIndustry": "Publishing",
+      "thesisCode": "15201050",
+      "thesisSector": "Communication Services",
+      "thesisIndustry": "Publishing & Information Services",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Communication Services",
+      "yahooIndustry": "Broadcasting",
+      "thesisCode": "15201040",
+      "thesisSector": "Communication Services",
+      "thesisIndustry": "Broadcasting - TV & Radio",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Energy",
+      "yahooIndustry": "Oil & Gas Integrated",
+      "thesisCode": "45101010",
+      "thesisSector": "Energy",
+      "thesisIndustry": "Oil & Gas - Integrated",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Energy",
+      "yahooIndustry": "Oil & Gas Midstream",
+      "thesisCode": "45101040",
+      "thesisSector": "Energy",
+      "thesisIndustry": "Oil & Gas - Midstream",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Energy",
+      "yahooIndustry": "Oil & Gas E&P",
+      "thesisCode": "45101020",
+      "thesisSector": "Energy",
+      "thesisIndustry": "Oil & Gas - Exploration & Production",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Energy",
+      "yahooIndustry": "Oil & Gas Equipment & Services",
+      "thesisCode": "45101050",
+      "thesisSector": "Energy",
+      "thesisIndustry": "Oil & Gas - Equipment & Services",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Energy",
+      "yahooIndustry": "Oil & Gas Refining & Marketing",
+      "thesisCode": "45101030",
+      "thesisSector": "Energy",
+      "thesisIndustry": "Oil & Gas - Refining & Marketing",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Energy",
+      "yahooIndustry": "Uranium",
+      "thesisCode": "45301020",
+      "thesisSector": "Energy",
+      "thesisIndustry": "Coal & Consumable Fuels",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Energy",
+      "yahooIndustry": "Oil & Gas Drilling",
+      "thesisCode": "45101060",
+      "thesisSector": "Energy",
+      "thesisIndustry": "Oil & Gas - Drilling",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Energy",
+      "yahooIndustry": "Thermal Coal",
+      "thesisCode": "45301020",
+      "thesisSector": "Energy",
+      "thesisIndustry": "Coal & Consumable Fuels",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Healthcare",
+      "yahooIndustry": "Drug Manufacturers - General",
+      "thesisCode": "30101010",
+      "thesisSector": "Healthcare",
+      "thesisIndustry": "Drug Manufacturers - Major",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Healthcare",
+      "yahooIndustry": "Biotechnology",
+      "thesisCode": "30201010",
+      "thesisSector": "Healthcare",
+      "thesisIndustry": "Biotechnology",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Healthcare",
+      "yahooIndustry": "Medical Devices",
+      "thesisCode": "30301010",
+      "thesisSector": "Healthcare",
+      "thesisIndustry": "Medical Devices",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Healthcare",
+      "yahooIndustry": "Diagnostics & Research",
+      "thesisCode": "30501010",
+      "thesisSector": "Healthcare",
+      "thesisIndustry": "Diagnostics & Research",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Healthcare",
+      "yahooIndustry": "Healthcare Plans",
+      "thesisCode": "30401030",
+      "thesisSector": "Healthcare",
+      "thesisIndustry": "Healthcare Plans & Insurance",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Healthcare",
+      "yahooIndustry": "Medical Instruments & Supplies",
+      "thesisCode": "30301020",
+      "thesisSector": "Healthcare",
+      "thesisIndustry": "Medical Instruments & Supplies",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Healthcare",
+      "yahooIndustry": "Medical Distribution",
+      "thesisCode": "30401040",
+      "thesisSector": "Healthcare",
+      "thesisIndustry": "Medical Distribution",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Healthcare",
+      "yahooIndustry": "Medical Care Facilities",
+      "thesisCode": "30401010",
+      "thesisSector": "Healthcare",
+      "thesisIndustry": "Healthcare Providers & Facilities",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Healthcare",
+      "yahooIndustry": "Drug Manufacturers - Specialty & Generic",
+      "thesisCode": "30101020",
+      "thesisSector": "Healthcare",
+      "thesisIndustry": "Drug Manufacturers - Specialty & Generic",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Healthcare",
+      "yahooIndustry": "Health Information Services",
+      "thesisCode": "30401020",
+      "thesisSector": "Healthcare",
+      "thesisIndustry": "Health Information Technology",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Healthcare",
+      "yahooIndustry": "Pharmaceutical Retailers",
+      "thesisCode": "25301030",
+      "thesisSector": "Consumer Defensive",
+      "thesisIndustry": "Retail - Pharmacy & Drug Stores",
+      "mappingType": "rename",
+      "crossSector": true
+    },
+    {
+      "yahooSector": "Utilities",
+      "yahooIndustry": "Utilities - Regulated Electric",
+      "thesisCode": "55101010",
+      "thesisSector": "Utilities",
+      "thesisIndustry": "Electric Utilities - Regulated",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Utilities",
+      "yahooIndustry": "Utilities - Independent Power Producers",
+      "thesisCode": "55101020",
+      "thesisSector": "Utilities",
+      "thesisIndustry": "Electric Utilities - Independent Power",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Utilities",
+      "yahooIndustry": "Utilities - Regulated Gas",
+      "thesisCode": "55201010",
+      "thesisSector": "Utilities",
+      "thesisIndustry": "Gas Utilities",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Utilities",
+      "yahooIndustry": "Utilities - Diversified",
+      "thesisCode": "55301010",
+      "thesisSector": "Utilities",
+      "thesisIndustry": "Multi-Utilities",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Utilities",
+      "yahooIndustry": "Utilities - Renewable",
+      "thesisCode": "55401010",
+      "thesisSector": "Utilities",
+      "thesisIndustry": "Renewable Utilities",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Utilities",
+      "yahooIndustry": "Utilities - Regulated Water",
+      "thesisCode": "55201020",
+      "thesisSector": "Utilities",
+      "thesisIndustry": "Water Utilities",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Basic Materials",
+      "yahooIndustry": "Gold",
+      "thesisCode": "50201010",
+      "thesisSector": "Basic Materials",
+      "thesisIndustry": "Gold Mining",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Basic Materials",
+      "yahooIndustry": "Specialty Chemicals",
+      "thesisCode": "50101010",
+      "thesisSector": "Basic Materials",
+      "thesisIndustry": "Chemicals - Specialty",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Basic Materials",
+      "yahooIndustry": "Copper",
+      "thesisCode": "50201030",
+      "thesisSector": "Basic Materials",
+      "thesisIndustry": "Copper & Base Metals Mining",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Basic Materials",
+      "yahooIndustry": "Building Materials",
+      "thesisCode": "50301010",
+      "thesisSector": "Basic Materials",
+      "thesisIndustry": "Building Materials",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Basic Materials",
+      "yahooIndustry": "Steel",
+      "thesisCode": "50201040",
+      "thesisSector": "Basic Materials",
+      "thesisIndustry": "Steel",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Basic Materials",
+      "yahooIndustry": "Agricultural Inputs",
+      "thesisCode": "50101030",
+      "thesisSector": "Basic Materials",
+      "thesisIndustry": "Chemicals - Agricultural",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Basic Materials",
+      "yahooIndustry": "Other Industrial Metals & Mining",
+      "thesisCode": "50201060",
+      "thesisSector": "Basic Materials",
+      "thesisIndustry": "Other Industrial Metals & Mining",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Basic Materials",
+      "yahooIndustry": "Chemicals",
+      "thesisCode": "50101020",
+      "thesisSector": "Basic Materials",
+      "thesisIndustry": "Chemicals - Diversified",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Basic Materials",
+      "yahooIndustry": "Other Precious Metals & Mining",
+      "thesisCode": "50201020",
+      "thesisSector": "Basic Materials",
+      "thesisIndustry": "Silver & Precious Metals Mining",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Basic Materials",
+      "yahooIndustry": "Aluminum",
+      "thesisCode": "50201050",
+      "thesisSector": "Basic Materials",
+      "thesisIndustry": "Aluminum",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Basic Materials",
+      "yahooIndustry": "Silver",
+      "thesisCode": "50201020",
+      "thesisSector": "Basic Materials",
+      "thesisIndustry": "Silver & Precious Metals Mining",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Basic Materials",
+      "yahooIndustry": "Lumber & Wood Production",
+      "thesisCode": "50301020",
+      "thesisSector": "Basic Materials",
+      "thesisIndustry": "Lumber & Wood Products",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Basic Materials",
+      "yahooIndustry": "Coking Coal",
+      "thesisCode": "45301020",
+      "thesisSector": "Energy",
+      "thesisIndustry": "Coal & Consumable Fuels",
+      "mappingType": "rename",
+      "crossSector": true
+    },
+    {
+      "yahooSector": "Basic Materials",
+      "yahooIndustry": "Paper & Paper Products",
+      "thesisCode": "50401010",
+      "thesisSector": "Basic Materials",
+      "thesisIndustry": "Paper & Forest Products",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Aerospace & Defense",
+      "thesisCode": "40101010",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Aerospace & Defense",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Specialty Industrial Machinery",
+      "thesisCode": "40201010",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Specialty Industrial Machinery",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Farm & Heavy Construction Machinery",
+      "thesisCode": "40201050",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Farm & Heavy Construction Machinery",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Railroads",
+      "thesisCode": "40301020",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Railroads",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Engineering & Construction",
+      "thesisCode": "40401010",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Engineering & Construction Services",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Building Products & Equipment",
+      "thesisCode": "20501020",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Building Products",
+      "mappingType": "rename",
+      "crossSector": true
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Specialty Business Services",
+      "thesisCode": "40501030",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Commercial Services & Supplies",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Electrical Equipment & Parts",
+      "thesisCode": "40201030",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Electrical Equipment",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Conglomerates",
+      "thesisCode": "99101010",
+      "thesisSector": "Special Classifications",
+      "thesisIndustry": "Conglomerates",
+      "mappingType": "exact",
+      "crossSector": true
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Industrial Distribution",
+      "thesisCode": "40501050",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Industrial Distribution",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Integrated Freight & Logistics",
+      "thesisCode": "40301050",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Logistics & Supply Chain",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Waste Management",
+      "thesisCode": "40601010",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Waste Management",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Rental & Leasing Services",
+      "thesisCode": "40701010",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Rental & Leasing Services",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Airlines",
+      "thesisCode": "40301010",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Airlines",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Trucking",
+      "thesisCode": "40301030",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Trucking & Freight",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Tools & Accessories",
+      "thesisCode": "40201060",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Tools & Accessories",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Metal Fabrication",
+      "thesisCode": "40201040",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Metal Fabrication",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Consulting Services",
+      "thesisCode": "40501010",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Consulting & Professional Services",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Marine Shipping",
+      "thesisCode": "40301040",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Marine Shipping",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Security & Protection Services",
+      "thesisCode": "40501040",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Security & Protection Services",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Pollution & Treatment Controls",
+      "thesisCode": "40601020",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Environmental & Facilities Services",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Airports & Air Services",
+      "thesisCode": "40301070",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Airports & Air Services",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Staffing & Employment Services",
+      "thesisCode": "40501020",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Staffing & Employment Services",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Business Equipment & Supplies",
+      "thesisCode": "40501030",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Commercial Services & Supplies",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Industrials",
+      "yahooIndustry": "Infrastructure Operations",
+      "thesisCode": "40401030",
+      "thesisSector": "Industrials",
+      "thesisIndustry": "Infrastructure Operations",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Internet Retail",
+      "thesisCode": "20301010",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Retail - Broadline & E-Commerce",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Auto Manufacturers",
+      "thesisCode": "20101010",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Auto Manufacturers",
+      "mappingType": "split",
+      "splitOptions": [
+        { "thesisCode": "20101010", "industry": "Auto Manufacturers", "isDefault": true },
+        { "thesisCode": "20101020", "industry": "Auto Manufacturers - Electric Vehicles" }
+      ]
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Restaurants",
+      "thesisCode": "20401020",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Restaurants & Dining",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Home Improvement Retail",
+      "thesisCode": "20301030",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Retail - Home Improvement",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Travel Services",
+      "thesisCode": "20401030",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Travel & Booking Services",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Apparel Retail",
+      "thesisCode": "20301050",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Retail - Apparel & Accessories",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Auto Parts",
+      "thesisCode": "20101030",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Auto Parts & Equipment",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Specialty Retail",
+      "thesisCode": "20301020",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Retail - Specialty",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Lodging",
+      "thesisCode": "20401010",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Lodging & Resorts",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Residential Construction",
+      "thesisCode": "20501010",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Homebuilders",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Packaging & Containers",
+      "thesisCode": "50401020",
+      "thesisSector": "Basic Materials",
+      "thesisIndustry": "Packaging & Containers",
+      "mappingType": "exact",
+      "crossSector": true
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Auto & Truck Dealerships",
+      "thesisCode": "20101040",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Auto Dealerships",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Footwear & Accessories",
+      "thesisCode": "20201040",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Footwear & Accessories",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Resorts & Casinos",
+      "thesisCode": "20401050",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Casinos & Gaming",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Leisure",
+      "thesisCode": "20401040",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Leisure Products & Activities",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Apparel Manufacturing",
+      "thesisCode": "20201030",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Apparel - Mass Market",
+      "mappingType": "split",
+      "splitOptions": [
+        { "thesisCode": "20201030", "industry": "Apparel - Mass Market", "isDefault": true },
+        { "thesisCode": "20201010", "industry": "Apparel - Athletic & Lifestyle" }
+      ]
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Furnishings, Fixtures & Appliances",
+      "thesisCode": "20501030",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Furnishings & Home Décor",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Gambling",
+      "thesisCode": "20401050",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Casinos & Gaming",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Personal Services",
+      "thesisCode": "20601010",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Personal Services",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Luxury Goods",
+      "thesisCode": "20201020",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Apparel - Fashion & Luxury",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Recreational Vehicles",
+      "thesisCode": "20101050",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Recreational Vehicles",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Department Stores",
+      "thesisCode": "20301010",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Retail - Broadline & E-Commerce",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Cyclical",
+      "yahooIndustry": "Textile Manufacturing",
+      "thesisCode": "20201050",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Textile Manufacturing",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Consumer Defensive",
+      "yahooIndustry": "Packaged Foods",
+      "thesisCode": "25101030",
+      "thesisSector": "Consumer Defensive",
+      "thesisIndustry": "Food - Packaged & Processed",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Defensive",
+      "yahooIndustry": "Education & Training Services",
+      "thesisCode": "20601020",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Education & Training Services",
+      "mappingType": "exact",
+      "crossSector": true
+    },
+    {
+      "yahooSector": "Consumer Defensive",
+      "yahooIndustry": "Beverages - Wineries & Distilleries",
+      "thesisCode": "25101020",
+      "thesisSector": "Consumer Defensive",
+      "thesisIndustry": "Beverages - Alcoholic",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Defensive",
+      "yahooIndustry": "Beverages - Brewers",
+      "thesisCode": "25101020",
+      "thesisSector": "Consumer Defensive",
+      "thesisIndustry": "Beverages - Alcoholic",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Defensive",
+      "yahooIndustry": "Discount Stores",
+      "thesisCode": "20301040",
+      "thesisSector": "Consumer Cyclical",
+      "thesisIndustry": "Retail - Discount & Dollar Stores",
+      "mappingType": "rename",
+      "crossSector": true
+    },
+    {
+      "yahooSector": "Consumer Defensive",
+      "yahooIndustry": "Food Distribution",
+      "thesisCode": "25101030",
+      "thesisSector": "Consumer Defensive",
+      "thesisIndustry": "Food - Packaged & Processed",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Defensive",
+      "yahooIndustry": "Grocery Stores",
+      "thesisCode": "25301010",
+      "thesisSector": "Consumer Defensive",
+      "thesisIndustry": "Retail - Grocery & Supermarkets",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Defensive",
+      "yahooIndustry": "Household & Personal Products",
+      "thesisCode": "25201010",
+      "thesisSector": "Consumer Defensive",
+      "thesisIndustry": "Household Products",
+      "mappingType": "split",
+      "splitOptions": [
+        { "thesisCode": "25201010", "industry": "Household Products", "isDefault": true },
+        { "thesisCode": "25201020", "industry": "Personal Products & Cosmetics" }
+      ]
+    },
+    {
+      "yahooSector": "Consumer Defensive",
+      "yahooIndustry": "Beverages - Non-Alcoholic",
+      "thesisCode": "25101010",
+      "thesisSector": "Consumer Defensive",
+      "thesisIndustry": "Beverages - Non-Alcoholic",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Consumer Defensive",
+      "yahooIndustry": "Farm Products",
+      "thesisCode": "25401010",
+      "thesisSector": "Consumer Defensive",
+      "thesisIndustry": "Agricultural Products & Processing",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Defensive",
+      "yahooIndustry": "Confectioners",
+      "thesisCode": "25101030",
+      "thesisSector": "Consumer Defensive",
+      "thesisIndustry": "Food - Packaged & Processed",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Consumer Defensive",
+      "yahooIndustry": "Tobacco",
+      "thesisCode": "25201030",
+      "thesisSector": "Consumer Defensive",
+      "thesisIndustry": "Tobacco",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Financial Services",
+      "yahooIndustry": "Banks - Diversified",
+      "thesisCode": "35101010",
+      "thesisSector": "Financial Services",
+      "thesisIndustry": "Banks - Diversified",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Financial Services",
+      "yahooIndustry": "Credit Services",
+      "thesisCode": "35401010",
+      "thesisSector": "Financial Services",
+      "thesisIndustry": "Credit Services & Lending",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Financial Services",
+      "yahooIndustry": "Asset Management",
+      "thesisCode": "35301010",
+      "thesisSector": "Financial Services",
+      "thesisIndustry": "Asset Management",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Financial Services",
+      "yahooIndustry": "Insurance - Diversified",
+      "thesisCode": "35201010",
+      "thesisSector": "Financial Services",
+      "thesisIndustry": "Insurance - Life",
+      "mappingType": "split",
+      "splitOptions": [
+        { "thesisCode": "35201010", "industry": "Insurance - Life", "isDefault": true },
+        { "thesisCode": "35201020", "industry": "Insurance - Property & Casualty" }
+      ]
+    },
+    {
+      "yahooSector": "Financial Services",
+      "yahooIndustry": "Capital Markets",
+      "thesisCode": "35301020",
+      "thesisSector": "Financial Services",
+      "thesisIndustry": "Investment Banking & Brokerage",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Financial Services",
+      "yahooIndustry": "Banks - Regional",
+      "thesisCode": "35101020",
+      "thesisSector": "Financial Services",
+      "thesisIndustry": "Banks - Regional",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Financial Services",
+      "yahooIndustry": "Financial Data & Stock Exchanges",
+      "thesisCode": "35301030",
+      "thesisSector": "Financial Services",
+      "thesisIndustry": "Financial Exchanges & Data",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Financial Services",
+      "yahooIndustry": "Insurance - Property & Casualty",
+      "thesisCode": "35201020",
+      "thesisSector": "Financial Services",
+      "thesisIndustry": "Insurance - Property & Casualty",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Financial Services",
+      "yahooIndustry": "Insurance Brokers",
+      "thesisCode": "35201050",
+      "thesisSector": "Financial Services",
+      "thesisIndustry": "Insurance Brokers & Services",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Financial Services",
+      "yahooIndustry": "Insurance - Life",
+      "thesisCode": "35201010",
+      "thesisSector": "Financial Services",
+      "thesisIndustry": "Insurance - Life",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Financial Services",
+      "yahooIndustry": "Insurance - Specialty",
+      "thesisCode": "35201030",
+      "thesisSector": "Financial Services",
+      "thesisIndustry": "Insurance - Specialty",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Financial Services",
+      "yahooIndustry": "Mortgage Finance",
+      "thesisCode": "35401010",
+      "thesisSector": "Financial Services",
+      "thesisIndustry": "Credit Services & Lending",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Financial Services",
+      "yahooIndustry": "Insurance - Reinsurance",
+      "thesisCode": "35201040",
+      "thesisSector": "Financial Services",
+      "thesisIndustry": "Insurance - Reinsurance",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Financial Services",
+      "yahooIndustry": "Financial Conglomerates",
+      "thesisCode": "35601010",
+      "thesisSector": "Financial Services",
+      "thesisIndustry": "Financial Conglomerates",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Financial Services",
+      "yahooIndustry": "Shell Companies",
+      "thesisCode": "99101030",
+      "thesisSector": "Special Classifications",
+      "thesisIndustry": "Shell Companies",
+      "mappingType": "exact",
+      "crossSector": true
+    },
+    {
+      "yahooSector": "Real Estate",
+      "yahooIndustry": "REIT - Specialty",
+      "thesisCode": "60101080",
+      "thesisSector": "Real Estate",
+      "thesisIndustry": "REIT - Specialty",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Real Estate",
+      "yahooIndustry": "REIT - Industrial",
+      "thesisCode": "60101030",
+      "thesisSector": "Real Estate",
+      "thesisIndustry": "REIT - Industrial",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Real Estate",
+      "yahooIndustry": "REIT - Healthcare Facilities",
+      "thesisCode": "60101050",
+      "thesisSector": "Real Estate",
+      "thesisIndustry": "REIT - Healthcare",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Real Estate",
+      "yahooIndustry": "REIT - Retail",
+      "thesisCode": "60101040",
+      "thesisSector": "Real Estate",
+      "thesisIndustry": "REIT - Retail",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Real Estate",
+      "yahooIndustry": "REIT - Residential",
+      "thesisCode": "60101010",
+      "thesisSector": "Real Estate",
+      "thesisIndustry": "REIT - Residential",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Real Estate",
+      "yahooIndustry": "Real Estate Services",
+      "thesisCode": "60201010",
+      "thesisSector": "Real Estate",
+      "thesisIndustry": "Real Estate Services & Brokerage",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Real Estate",
+      "yahooIndustry": "REIT - Mortgage",
+      "thesisCode": "60101110",
+      "thesisSector": "Real Estate",
+      "thesisIndustry": "REIT - Mortgage",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Real Estate",
+      "yahooIndustry": "REIT - Diversified",
+      "thesisCode": "60101090",
+      "thesisSector": "Real Estate",
+      "thesisIndustry": "REIT - Diversified",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Real Estate",
+      "yahooIndustry": "REIT - Office",
+      "thesisCode": "60101020",
+      "thesisSector": "Real Estate",
+      "thesisIndustry": "REIT - Office",
+      "mappingType": "exact"
+    },
+    {
+      "yahooSector": "Real Estate",
+      "yahooIndustry": "REIT - Hotel & Motel",
+      "thesisCode": "60101070",
+      "thesisSector": "Real Estate",
+      "thesisIndustry": "REIT - Hotel & Resort",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Real Estate",
+      "yahooIndustry": "Real Estate - Development",
+      "thesisCode": "60201020",
+      "thesisSector": "Real Estate",
+      "thesisIndustry": "Real Estate Development",
+      "mappingType": "rename"
+    },
+    {
+      "yahooSector": "Real Estate",
+      "yahooIndustry": "Real Estate - Diversified",
+      "thesisCode": "60201010",
+      "thesisSector": "Real Estate",
+      "thesisIndustry": "Real Estate Services & Brokerage",
+      "mappingType": "rename"
+    }
+  ]
+}

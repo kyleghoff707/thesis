@@ -20,7 +20,7 @@ export const DataPacketSchema = z.object({
   debtMetrics: z.looseObject({}).optional(),
   fcf: z.looseObject({}).optional(),
   keyMetrics: z.looseObject({}).optional(),
-  ruleOneScore: z.looseObject({}).optional(),
+  thesisScore: z.looseObject({}).optional(),
   gurus: z.looseObject({}).nullable().optional(),
   insiders: z.looseObject({}).nullable().optional(),
   compensation: z.looseObject({}).nullable().optional(),

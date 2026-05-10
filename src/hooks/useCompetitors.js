@@ -1,11 +1,11 @@
 // ─── useCompetitors Hook ───────────────────────────────────────────
 // Progressive data loading for the Competitors tab.
-// Phase 1: Peer discovery (Thes1s taxonomy — instant in-memory)
+// Phase 1: Peer discovery (Thesis taxonomy — instant in-memory)
 // Phase 2: Single-year metrics (Frames API) + batch quotes (Yahoo)
 // Phase 3: Multi-year scores (on-demand)
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { classifyCompany, getTierCounts } from '../engines/thes1sClassification';
+import { classifyCompany, getTierCounts } from '../engines/thesisClassification';
 import { fetchPeersByTier, enrichPeersWithTickers } from '../engines/peers';
 import { fetchPeerFrameData, computePeerMetrics, computePeerScores, mergeYahooData, computeCompleteness } from '../engines/peerMetrics';
 import { fetchBatchQuotes } from '../engines/batchQuotes';
@@ -34,12 +34,12 @@ export function useCompetitors(company) {
   const cancelledRef = useRef(false);
   const tierRef = useRef(tier);
 
-  // Classification from Thes1s taxonomy (CIK → ticker → SIC fallback)
+  // Classification from Thesis taxonomy (CIK → ticker → SIC fallback)
   const classification = company?.cik || company?.ticker || company?.sic
     ? classifyCompany(company.ticker, company.cik, company.sic, company.sicDescription)
     : null;
 
-  // Tier counts — instant from Thes1s index (no HTTP needed)
+  // Tier counts — instant from Thesis index (no HTTP needed)
   const tierCounts = useMemo(() => getTierCounts(classification), [company?.cik]);
 
   // Persist tier preference

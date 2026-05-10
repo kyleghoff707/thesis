@@ -206,7 +206,7 @@ export function useGeneratePipeline(ticker) {
     if (IS_DEV) {
       try {
         const res = await fetch(
-          `/api/thes1s/reports/${encodeURIComponent(ticker)}/generate/${encodeURIComponent(stage)}`,
+          `/api/thesis/reports/${encodeURIComponent(ticker)}/generate/${encodeURIComponent(stage)}`,
           { method: 'POST' },
         );
 
