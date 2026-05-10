@@ -35,7 +35,7 @@ function GearIcon({ size = 16, color }) {
   );
 }
 
-const REPORT_STAGE_SUFFIXES = ['/one-pager', '/pitch-deck', '/full-story'];
+const REPORT_STAGE_SUFFIXES = ['/one-pager', '/pitch-deck', '/final-thesis'];
 
 export default function Layout({ children, onNewResearch, onSettingsOpen, user, onLogout, tourCompleted, onStartTour, onSectionTour, showHelpMenu, setShowHelpMenu, helpMenuRef }) {
   const navigate = useNavigate();

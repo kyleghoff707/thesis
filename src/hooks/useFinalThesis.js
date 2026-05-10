@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-// Hook for fetching Full Story report data + quality scores,
+// Hook for fetching Final Thesis report data + quality scores,
 // polling generation progress, and polling generation-status.json.
 // Returns { report, quality, progress, generationStatus, loading, error, startPolling }.
 // When generation is in progress, polls every 2s.
 // On completion, waits 500ms then re-fetches report + quality.
 // Call startPolling() after triggering generation to begin polling immediately.
-export function useFullStory(ticker) {
+export function useFinalThesis(ticker) {
   const [report, setReport] = useState(null);
   const [quality, setQuality] = useState(null);
   const [progress, setProgress] = useState(null);
@@ -28,20 +28,20 @@ export function useFullStory(ticker) {
 
     async function fetchReport() {
       try {
-        const res = await fetch(`/api/thesis/reports/${encodeURIComponent(ticker)}/full-story`);
+        const res = await fetch(`/api/thesis/reports/${encodeURIComponent(ticker)}/final-thesis`);
         if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
           if (!cancelled) setReport(data);
         }
       } catch (e) {
-        if (!cancelled) console.warn('useFullStory: report fetch failed:', e.message);
+        if (!cancelled) console.warn('useFinalThesis: report fetch failed:', e.message);
       }
     }
 
     async function fetchQuality() {
       try {
-        const res = await fetch(`/api/thesis/reports/${encodeURIComponent(ticker)}/full-story-quality`);
+        const res = await fetch(`/api/thesis/reports/${encodeURIComponent(ticker)}/final-thesis-quality`);
         if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
@@ -49,7 +49,7 @@ export function useFullStory(ticker) {
         }
         // Silently degrade if quality not found (404) — older reports may not have it
       } catch (e) {
-        if (!cancelled) console.warn('useFullStory: quality fetch failed:', e.message);
+        if (!cancelled) console.warn('useFinalThesis: quality fetch failed:', e.message);
       }
     }
 
@@ -64,7 +64,7 @@ export function useFullStory(ticker) {
         }
         return null;
       } catch (e) {
-        if (!cancelled) console.warn('useFullStory: progress fetch failed:', e.message);
+        if (!cancelled) console.warn('useFinalThesis: progress fetch failed:', e.message);
         return null;
       }
     }
@@ -80,7 +80,7 @@ export function useFullStory(ticker) {
         }
         return null;
       } catch (e) {
-        if (!cancelled) console.warn('useFullStory: generation status fetch failed:', e.message);
+        if (!cancelled) console.warn('useFinalThesis: generation status fetch failed:', e.message);
         return null;
       }
     }

@@ -62,8 +62,8 @@ describe('progressState', () => {
       expect(sectionKeys).toContain('overall_verdict');
     });
 
-    it('should include all 6 fullStory section keys', () => {
-      const progress = createProgress(TEST_TICKER, 'fullStory');
+    it('should include all 6 finalThesis section keys', () => {
+      const progress = createProgress(TEST_TICKER, 'finalThesis');
       const sectionKeys = Object.keys(progress.sections);
       expect(sectionKeys.length).toBe(6);
       expect(sectionKeys).toContain('event_analysis');

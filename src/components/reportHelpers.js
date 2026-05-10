@@ -1,4 +1,4 @@
-// Shared formatting functions for all report viewers (OnePager, PitchDeck, FullStory)
+// Shared formatting functions for all report viewers (OnePager, PitchDeck, FinalThesis)
 // Single source of truth — eliminates duplication across stage components
 
 import { C } from '../theme';

@@ -235,7 +235,7 @@ export function useGeneratePipeline(ticker) {
 
     // ─── Production: POST to Worker → poll for progress ───
 
-    const stageMap = { 'one-pager': 'onePager', 'pitch-deck': 'pitchDeck', 'full-story': 'fullStory' };
+    const stageMap = { 'one-pager': 'onePager', 'pitch-deck': 'pitchDeck', 'final-thesis': 'finalThesis' };
     const pipelineStage = stageMap[stage] || stage;
 
     try {

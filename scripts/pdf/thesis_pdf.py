@@ -3,7 +3,7 @@
 ThesisPDF — Shared base class for all Thesis-branded PDF report generators.
 
 Extracts the 95% duplicated code from OnePagerPDF and PitchDeckPDF into a single
-base class that all 3 stage generators (One Pager, Pitch Deck, Full Story) inherit from.
+base class that all 3 stage generators (One Pager, Pitch Deck, Final Thesis) inherit from.
 
 Provides:
 - Thesis color palette (teal + slate + accent colors)
@@ -37,7 +37,7 @@ class ThesisPDF(ReportPDF):
 
     def __init__(self, title, subtitle='', stage_label='Report'):
         super().__init__(title, subtitle)
-        self.stage_label = stage_label  # "One Pager", "Pitch Deck", "Full Story"
+        self.stage_label = stage_label  # "One Pager", "Pitch Deck", "Final Thesis"
 
         # Thesis palette (identical in both existing generators)
         self.color_primary = (15, 118, 110)

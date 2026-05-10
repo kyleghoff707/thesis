@@ -1208,7 +1208,7 @@ export default function PitchDeck({ getReport, updateReport }) {
             }}>
               <span style={{ fontSize: 13, color: C.text, flex: 1 }}>
                 <span style={{ fontWeight: 600 }}>Ready for approval</span>
-                <span style={{ color: C.textMuted }}> -- Review the Pitch Deck and approve or reject to proceed to Full Story.</span>
+                <span style={{ color: C.textMuted }}> -- Review the Pitch Deck and approve or reject to proceed to Final Thesis.</span>
               </span>
               <button
                 onClick={handleApprove}

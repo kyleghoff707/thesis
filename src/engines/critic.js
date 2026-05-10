@@ -655,7 +655,7 @@ function checkSearchCompliance(section) {
   return { score, issues };
 }
 
-// ─── Full Story Helpers ────────────────────────────────────────────
+// ─── Final Thesis Helpers ────────────────────────────────────────────
 
 /**
  * Normalize non-standard verdicts to standard ones per D-06.
@@ -1106,7 +1106,7 @@ const METHODOLOGY_CHECKS = {
     },
   ],
 
-  // ─── Full Story Section Checks (story-form-I.md & story-form-II.md) ───
+  // ─── Final Thesis Section Checks (story-form-I.md & story-form-II.md) ───
 
   // S1: Event Analysis (5 checks)
   event_analysis: [

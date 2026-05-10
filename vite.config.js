@@ -434,7 +434,7 @@ function irEventsPlugin() {
 }
 
 // Thesis report file server middleware.
-// Serves generated One Pager / Pitch Deck / Full Story JSON from .thesis/reports/
+// Serves generated One Pager / Pitch Deck / Final Thesis JSON from .thesis/reports/
 // to the browser. Endpoints:
 //   GET /api/thesis/reports                    — list tickers with any report
 //   GET /api/thesis/reports/:ticker/one-pager  — serve one-pager.json
@@ -477,11 +477,11 @@ function thesisReportsPlugin() {
                 const stages = {
                   onePager: fs.existsSync(path.join(dir, 'one-pager.json')),
                   pitchDeck: fs.existsSync(path.join(dir, 'pitch-deck.json')),
-                  fullStory: fs.existsSync(path.join(dir, 'full-story-api.json')),
+                  finalThesis: fs.existsSync(path.join(dir, 'final-thesis-api.json')),
                 };
                 return { ticker: e.name, stages };
               })
-              .filter(t => t.stages.onePager || t.stages.pitchDeck || t.stages.fullStory);
+              .filter(t => t.stages.onePager || t.stages.pitchDeck || t.stages.finalThesis);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ tickers }));
             return;
@@ -514,12 +514,12 @@ function thesisReportsPlugin() {
 
           // --- POST /api/thesis/reports/:ticker/export/:stage/:format — Generate PDF/DOCX export ---
           if (parts[1] === 'export' && req.method === 'POST') {
-            const stage = parts[2];    // one-pager, pitch-deck, full-story
+            const stage = parts[2];    // one-pager, pitch-deck, final-thesis
             const format = parts[3];   // pdf, docx
             const scriptMap = {
               'one-pager':  { pdf: 'generate_one_pager_pdf.py',  docx: 'generate_one_pager_docx.py' },
               'pitch-deck': { pdf: 'generate_pitch_deck_pdf.py', docx: 'generate_pitch_deck_docx.py' },
-              'full-story': { pdf: 'generate_full_story_pdf.py', docx: 'generate_full_story_docx.py' },
+              'final-thesis': { pdf: 'generate_final_thesis_pdf.py', docx: 'generate_final_thesis_docx.py' },
             };
             if (!scriptMap[stage] || !scriptMap[stage][format]) {
               res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -587,8 +587,8 @@ function thesisReportsPlugin() {
           const fileMap = {
             'one-pager': 'one-pager.json',
             'pitch-deck': 'pitch-deck.json',
-            'full-story': 'full-story-api.json',
-            'full-story-quality': 'quality/full-story-v4.quality.json',
+            'final-thesis': 'final-thesis-api.json',
+            'final-thesis-quality': 'quality/final-thesis-v4.quality.json',
             'progress': 'progress.json',
             'generation-status': 'generation-status.json',
           };

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Full Story Word Document Generator — Thesis-branded .docx export.
+Final Thesis Word Document Generator — Thesis-branded .docx export.
 
-Generates a professional Word document from any ticker's Full Story pipeline output
+Generates a professional Word document from any ticker's Final Thesis pipeline output
 with embedded chart images (checklist summaries, price ranges), checklist tables with
 color-coded verdict cells, adversarial debate rendering, and Thesis branding.
 
 Usage:
-    python3 scripts/pdf/generate_full_story_docx.py MNST
+    python3 scripts/pdf/generate_final_thesis_docx.py MNST
 """
 
 import os
@@ -255,10 +255,10 @@ def _render_debate(doc, debate_outputs, temp_charts):
                                     run.font.color.rgb = WHITE
 
 
-def generate_full_story_docx(ticker, base_dir=None):
-    """Generate Full Story Word document for the given ticker."""
+def generate_final_thesis_docx(ticker, base_dir=None):
+    """Generate Final Thesis Word document for the given ticker."""
 
-    data = ReportData(ticker, 'full-story', base_dir=base_dir)
+    data = ReportData(ticker, 'final-thesis', base_dir=base_dir)
     company_name = data.get_company_name()
 
     doc = create_thesis_doc()
@@ -267,7 +267,7 @@ def generate_full_story_docx(ticker, base_dir=None):
 
     # ── Title Page (no single verdict — the debate IS the verdict) ───────────
     add_title_page(
-        doc, ticker, company_name, 'Full Story',
+        doc, ticker, company_name, 'Final Thesis',
         subtitle='Investment Conviction Analysis',
     )
 
@@ -383,17 +383,17 @@ def generate_full_story_docx(ticker, base_dir=None):
         add_citations_section(doc, all_citations)
 
     # ── Save ─────────────────────────────────────────────────────────────────
-    output_path = os.path.join(data.report_dir, 'full-story.docx')
+    output_path = os.path.join(data.report_dir, 'final-thesis.docx')
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     doc.save(output_path)
 
     cleanup_temp_charts(temp_charts)
-    print(f'Full Story Word doc saved: {output_path}')
+    print(f'Final Thesis Word doc saved: {output_path}')
     return output_path
 
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print('Usage: python3 scripts/pdf/generate_full_story_docx.py TICKER')
+        print('Usage: python3 scripts/pdf/generate_final_thesis_docx.py TICKER')
         sys.exit(1)
-    generate_full_story_docx(sys.argv[1])
+    generate_final_thesis_docx(sys.argv[1])

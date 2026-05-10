@@ -130,10 +130,10 @@ export function useResearch() {
       createdAt: now,
       updatedAt: now,
       currentStage: 1,
-      stageApprovals: { onePager: null, pitchDeck: null, fullStory: null },
+      stageApprovals: { onePager: null, pitchDeck: null, finalThesis: null },
       onePager: {},
       pitchDeck: null,
-      fullStory: null,
+      finalThesis: null,
       notes: '',
       watchlist: false,
       competitors: { privateCompetitors: [] },
@@ -166,7 +166,7 @@ export function useResearch() {
           );
         } else {
           // Separate stage data from metadata
-          const stageKeys = ['onePager', 'pitchDeck', 'fullStory'];
+          const stageKeys = ['onePager', 'pitchDeck', 'finalThesis'];
           const stageUpdates = {};
           const metaUpdates = {};
           for (const [k, v] of Object.entries(updates)) {

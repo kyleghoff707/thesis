@@ -176,11 +176,11 @@ describe('StageReportSchema', () => {
       stageApprovals: {
         onePager: null,
         pitchDeck: null,
-        fullStory: null,
+        finalThesis: null,
       },
       onePager: {},
       pitchDeck: null,
-      fullStory: null,
+      finalThesis: null,
       notes: '',
       watchlist: false,
       competitors: { privateCompetitors: [] },

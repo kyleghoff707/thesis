@@ -3,7 +3,7 @@
 Section Renderers — Pure functions for extracting render-ready data from pipeline sections.
 
 Handles the polymorphism across all 3 pipeline output formats (One Pager, Pitch Deck,
-Full Story) where section data structures vary in shape and key names.
+Final Thesis) where section data structures vary in shape and key names.
 
 Usage:
     from scripts.pdf.section_renderers import get_narrative, get_tables, get_red_flags
@@ -254,7 +254,7 @@ def get_citations(section):
 
 def get_checklist_items(section):
     """
-    Extract checklist items from Full Story checklist sections.
+    Extract checklist items from Final Thesis checklist sections.
 
     Looks in section.data.items and section.data.checklistItems.
     Each item normalized to: {number, item, verdict, evidence, confidence}

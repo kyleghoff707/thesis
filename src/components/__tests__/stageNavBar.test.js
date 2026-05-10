@@ -37,11 +37,11 @@ describe('StageNavBar', () => {
     expect(stage.gate).toBe('onePager');
   });
 
-  it('STAGES[2] is Full Story gated by pitchDeck approval', async () => {
+  it('STAGES[2] is Final Thesis gated by pitchDeck approval', async () => {
     const { _testExports } = await import('../StageNavBar.jsx');
     const stage = _testExports.STAGES[2];
-    expect(stage.key).toBe('full-story');
-    expect(stage.label).toBe('Full Story');
+    expect(stage.key).toBe('final-thesis');
+    expect(stage.label).toBe('Final Thesis');
     expect(stage.gate).toBe('pitchDeck');
   });
 
@@ -54,7 +54,7 @@ describe('StageNavBar', () => {
 
   it('gate values reference valid stageApprovals keys', async () => {
     const { _testExports } = await import('../StageNavBar.jsx');
-    const validApprovalKeys = ['onePager', 'pitchDeck', 'fullStory'];
+    const validApprovalKeys = ['onePager', 'pitchDeck', 'finalThesis'];
     for (const stage of _testExports.STAGES) {
       if (stage.gate !== null) {
         expect(validApprovalKeys).toContain(stage.gate);

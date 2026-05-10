@@ -7,7 +7,7 @@ const PITCH_DECK_SECTIONS = [
   'FCF', 'Management', 'ROE/ROIC & Debt', 'Balance Sheet', 'PEST Risks', 'Valuation',
 ];
 
-const FULL_STORY_SECTIONS = [
+const FINAL_THESIS_SECTIONS = [
   'Event Analysis', 'Meaning (15pt)', 'Moat (15pt)', 'Management (13pt)',
   'Valuation Confirmation', 'Inversion & Rebuttal',
 ];
@@ -90,7 +90,7 @@ export default function GenerationProgressPanel({ stage, ticker, generating, pro
 
   // Stage-specific config
   const sectionNames = stage === 'pitchDeck' ? PITCH_DECK_SECTIONS
-    : stage === 'fullStory' ? FULL_STORY_SECTIONS
+    : stage === 'finalThesis' ? FINAL_THESIS_SECTIONS
     : [];
   const totalSections = sectionNames.length || 1;
   const completedCount = completedSections?.length || 0;
@@ -107,7 +107,7 @@ export default function GenerationProgressPanel({ stage, ticker, generating, pro
       const phaseNames = ['Business Fundamentals', 'Financial Deep-Dive', 'Risk & Valuation', 'Synthesis'];
       const waveIdx = Math.max(0, Math.min((currentWave || 1) - 1, phaseNames.length - 1));
       phaseLabel = `Phase ${currentWave || 1} of ${totalWaves || 4} — ${phaseNames[waveIdx]}`;
-    } else if (stage === 'fullStory') {
+    } else if (stage === 'finalThesis') {
       const phaseNames = ['Deep Analysis', 'The Debate'];
       const waveIdx = Math.max(0, Math.min((currentWave || 1) - 1, phaseNames.length - 1));
       phaseLabel = `Phase ${currentWave || 1} of ${totalWaves || 2} — ${phaseNames[waveIdx]}`;
@@ -186,7 +186,7 @@ export default function GenerationProgressPanel({ stage, ticker, generating, pro
     );
   }
 
-  // ── Pitch Deck / Full Story (full panel) ──
+  // ── Pitch Deck / Final Thesis (full panel) ──
   return (
     <div style={{
       marginBottom: 16,
@@ -204,7 +204,7 @@ export default function GenerationProgressPanel({ stage, ticker, generating, pro
         borderBottom: `1px solid ${C.border}`,
       }}>
         <span style={{ fontSize: 13, fontWeight: 500, color: C.text }}>
-          Generating {stage === 'pitchDeck' ? 'Pitch Deck' : 'Full Story'} for {ticker}
+          Generating {stage === 'pitchDeck' ? 'Pitch Deck' : 'Final Thesis'} for {ticker}
         </span>
         <span style={{ fontSize: 12, color: C.muted, fontFamily: 'monospace' }}>
           {formatElapsed(elapsed)}
@@ -309,8 +309,8 @@ export default function GenerationProgressPanel({ stage, ticker, generating, pro
           );
         })}
 
-        {/* Debate steps (Full Story only) */}
-        {stage === 'fullStory' && currentWave >= 2 && (
+        {/* Debate steps (Final Thesis only) */}
+        {stage === 'finalThesis' && currentWave >= 2 && (
           <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${C.border}` }}>
             <div style={{ fontSize: 11, color: C.secondary, fontWeight: 500, marginBottom: 4 }}>
               THE DEBATE

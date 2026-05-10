@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Run quality check on V4 API pipeline output for a given ticker and stage.
 // Usage:
-//   node --loader ./scripts/node-esm-loader.js scripts/run-quality-v4.js [TICKER] [--stage pitchDeck|fullStory]
+//   node --loader ./scripts/node-esm-loader.js scripts/run-quality-v4.js [TICKER] [--stage pitchDeck|finalThesis]
 // Default ticker: SFM
-// Default stage: auto-detect (fullStory if section files exist, else pitchDeck)
+// Default stage: auto-detect (finalThesis if section files exist, else pitchDeck)
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { validateStage } from '../src/engines/critic.js';
@@ -32,18 +32,18 @@ const sectionsDir = join(dir, 'sections');
 function detectStage() {
   if (stageArg) return stageArg;
 
-  // Check for Full Story section files
+  // Check for Final Thesis section files
   if (existsSync(sectionsDir)) {
-    const files = readdirSync(sectionsDir).filter(f => f.startsWith('fullStory-S') && f.endsWith('.json'));
-    if (files.length > 0) return 'fullStory';
+    const files = readdirSync(sectionsDir).filter(f => f.startsWith('finalThesis-S') && f.endsWith('.json'));
+    if (files.length > 0) return 'finalThesis';
   }
 
-  // Check for full-story.json with sections array
-  const fullStoryPath = join(dir, 'full-story.json');
-  if (existsSync(fullStoryPath)) {
+  // Check for final-thesis.json with sections array
+  const finalThesisPath = join(dir, 'final-thesis.json');
+  if (existsSync(finalThesisPath)) {
     try {
-      const fs = JSON.parse(readFileSync(fullStoryPath, 'utf8'));
-      if (Array.isArray(fs.sections) && fs.sections.length > 0) return 'fullStory';
+      const fs = JSON.parse(readFileSync(finalThesisPath, 'utf8'));
+      if (Array.isArray(fs.sections) && fs.sections.length > 0) return 'finalThesis';
     } catch { /* fall through */ }
   }
 
@@ -54,14 +54,14 @@ const stage = detectStage();
 
 let analysisSections;
 
-if (stage === 'fullStory') {
-  // Read Full Story sections from individual files or assembled report
+if (stage === 'finalThesis') {
+  // Read Final Thesis sections from individual files or assembled report
   analysisSections = [];
 
   // Try individual section files first
   if (existsSync(sectionsDir)) {
     const files = readdirSync(sectionsDir)
-      .filter(f => f.startsWith('fullStory-S') && f.endsWith('.json'))
+      .filter(f => f.startsWith('finalThesis-S') && f.endsWith('.json'))
       .sort();
     for (const file of files) {
       try {
@@ -73,11 +73,11 @@ if (stage === 'fullStory') {
     }
   }
 
-  // Fallback: read from full-story.json if no individual files found
+  // Fallback: read from final-thesis.json if no individual files found
   if (analysisSections.length === 0) {
-    const fullStoryPath = join(dir, 'full-story.json');
-    if (existsSync(fullStoryPath)) {
-      const fs = JSON.parse(readFileSync(fullStoryPath, 'utf8'));
+    const finalThesisPath = join(dir, 'final-thesis.json');
+    if (existsSync(finalThesisPath)) {
+      const fs = JSON.parse(readFileSync(finalThesisPath, 'utf8'));
       if (Array.isArray(fs.sections)) {
         analysisSections = fs.sections;
       }
@@ -85,7 +85,7 @@ if (stage === 'fullStory') {
   }
 
   if (analysisSections.length === 0) {
-    console.error(`No Full Story sections found for ${ticker}`);
+    console.error(`No Final Thesis sections found for ${ticker}`);
     process.exit(1);
   }
 
@@ -141,7 +141,7 @@ const report = validateStage(analysisSections, dataPacket);
 mkdirSync(join(dir, 'quality'), { recursive: true });
 
 // Output files named per stage
-const prefix = stage === 'fullStory' ? 'full-story' : 'pitch-deck';
+const prefix = stage === 'finalThesis' ? 'final-thesis' : 'pitch-deck';
 writeFileSync(join(dir, `quality/${prefix}-v4.quality.json`), JSON.stringify(report, null, 2));
 
 const md = formatQualityReport(report, { stage, ticker });

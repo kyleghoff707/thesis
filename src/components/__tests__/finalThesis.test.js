@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-// NOTE: These imports will fail until Plan 02 rewrites FullStory.jsx with _testExports.
+// NOTE: These imports will fail until Plan 02 rewrites FinalThesis.jsx with _testExports.
 // This is intentional Wave 0 — tests define the contract before implementation.
 // For now, test the constants and helpers directly by defining expected values.
 
@@ -16,7 +16,7 @@ describe('SECTION_DEFS', () => {
   ];
 
   it('has exactly 6 entries', () => {
-    // Will be replaced with import test once FullStory.jsx exports _testExports
+    // Will be replaced with import test once FinalThesis.jsx exports _testExports
     expect(EXPECTED_KEYS).toHaveLength(6);
   });
 
@@ -32,7 +32,7 @@ describe('SECTION_DEFS', () => {
 
 describe('qualityColor', () => {
   // Inline implementation matching D-03 spec for testing
-  // Will be replaced with import from _testExports once FullStory.jsx is rewritten
+  // Will be replaced with import from _testExports once FinalThesis.jsx is rewritten
   const GREEN = '#16a34a';
   const YELLOW = '#ca8a04';
   const RED = '#dc2626';

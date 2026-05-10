@@ -1,11 +1,11 @@
 ---
-name: generate-full-story
-description: Generate a 6-section value investing Full Story (Stage 3) using v2 agent prompts, Claude Code subagent orchestration, adversarial debate, and Pitch Deck inheritance
+name: generate-final-thesis
+description: Generate a 7-section value investing Final Thesis (Stage 3) using v2 agent prompts, Claude Code subagent orchestration, adversarial debate, and Pitch Deck inheritance
 argument-hint: TICKER
 disable-model-invocation: true
 ---
 
-# Generate Full Story (v2)
+# Generate Final Thesis (v2)
 
 Generate a complete 6-section value investing Full Story conviction document for **$0**.
 

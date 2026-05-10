@@ -3,7 +3,7 @@
 Report Data Reader — Unified pipeline output access for all 3 report stages.
 
 Normalizes the 3 different pipeline output formats (one-pager.json, pipeline-output.json,
-full-story-api.json) into one consistent API that all 6 export generators can use.
+final-thesis-api.json) into one consistent API that all 6 export generators can use.
 
 Usage:
     from scripts.pdf.report_data_reader import ReportData
@@ -24,7 +24,7 @@ import json
 STAGE_FILE_MAP = {
     'one-pager': 'one-pager.json',
     'pitch-deck': 'pipeline-output.json',
-    'full-story': 'full-story-api.json',
+    'final-thesis': 'final-thesis-api.json',
 }
 
 
@@ -37,7 +37,7 @@ class ReportData:
 
         Args:
             ticker: Stock ticker symbol (e.g., 'MNST')
-            stage: 'one-pager' | 'pitch-deck' | 'full-story'
+            stage: 'one-pager' | 'pitch-deck' | 'final-thesis'
             base_dir: Optional base directory override (defaults to project root)
         """
         self.ticker = ticker
@@ -60,9 +60,9 @@ class ReportData:
         if stage == 'pitch-deck' and not self.report:
             self.report = self._load_json(os.path.join(self.report_dir, 'pitch-deck.json'))
 
-        # Fallback for full-story stage: try full-story.json
-        if stage == 'full-story' and not self.report:
-            self.report = self._load_json(os.path.join(self.report_dir, 'full-story.json'))
+        # Fallback for final-thesis stage: try final-thesis.json
+        if stage == 'final-thesis' and not self.report:
+            self.report = self._load_json(os.path.join(self.report_dir, 'final-thesis.json'))
 
         # Load data packet (shared financial data for charts)
         self.data_packet = self._load_json(os.path.join(self.report_dir, 'data-packet.json'))
@@ -111,7 +111,7 @@ class ReportData:
 
         One Pager: report['overallVerdict'] (top-level string like 'PASS')
         Pitch Deck: report['overallVerdict'] (top-level) or sections['overall_verdict'].data.overallVerdict
-        Full Story: sections['overall_verdict'].data.overallVerdict or report-level
+        Final Thesis: sections['overall_verdict'].data.overallVerdict or report-level
         """
         # Top-level overallVerdict (works for One Pager and Pitch Deck)
         verdict = self.report.get('overallVerdict', '')
@@ -138,7 +138,7 @@ class ReportData:
         Get ordered list of section keys.
 
         One Pager: report['sectionKeys'] (preserved order)
-        Pitch Deck/Full Story: [s['key'] for s in report['sections']]
+        Pitch Deck/Final Thesis: [s['key'] for s in report['sections']]
         """
         # One Pager has explicit sectionKeys
         keys = self.report.get('sectionKeys', [])
@@ -196,7 +196,7 @@ class ReportData:
         return result
 
     def get_debate_outputs(self):
-        """Full Story only: return debate outputs dict (bull, bear, bull_rebuttal, judge)."""
+        """Final Thesis only: return debate outputs dict (bull, bear, bull_rebuttal, judge)."""
         return self.report.get('debateOutputs', {})
 
     def get_scores(self):

@@ -58,7 +58,7 @@ export const FULL_TOUR_STEPS = [
     route: null,
     position: 'left',
     title: 'Generate a Report',
-    body: 'When you\'re ready for a full analysis, click Generate. Your AI analyst team produces reports in three gated stages: One Pager (quick screen), Pitch Deck (deep research), and Full Story (conviction thesis). Each stage must be approved before the next unlocks.',
+    body: 'When you\'re ready for a full analysis, click Generate. Your AI analyst team produces reports in three gated stages: One Pager (quick screen), Pitch Deck (deep research), and Final Thesis (conviction thesis). Each stage must be approved before the next unlocks.',
   },
   {
     id: 'nav-reports',
@@ -74,7 +74,7 @@ export const FULL_TOUR_STEPS = [
     route: null,
     position: 'below',
     title: 'Report Stages',
-    body: 'One Pager is a quick AI summary to decide if a company is worth deeper research. Pitch Deck adds 10 deep-dive sections with assumption tracking. Full Story is the comprehensive investment thesis with adversarial bull/bear debate. Approve each stage to unlock the next.',
+    body: 'One Pager is a quick AI summary to decide if a company is worth deeper research. Pitch Deck adds 10 deep-dive sections with assumption tracking. Final Thesis is the comprehensive investment thesis with adversarial bull/bear debate. Approve each stage to unlock the next.',
   },
   {
     id: 'nav-gurus',
@@ -127,7 +127,7 @@ export const SECTION_TOUR_STEPS = {
     { id: 'res-tabs', target: 'toolbox-tabs', route: null, position: 'below',
       title: 'Toolbox Tabs', body: 'Overview, Financials, Growth, Valuation, Competitors, Insiders, and Filings. Each tab pulls data from SEC EDGAR.' },
     { id: 'res-generate', target: 'generate-button', route: null, position: 'left',
-      title: 'Generate a Report', body: 'Click Generate to start the AI analysis pipeline. Three stages: One Pager, Pitch Deck, Full Story.' },
+      title: 'Generate a Report', body: 'Click Generate to start the AI analysis pipeline. Three stages: One Pager, Pitch Deck, Final Thesis.' },
   ],
   reports: [
     { id: 'rpt-card', target: 'report-card', route: null, position: 'below',

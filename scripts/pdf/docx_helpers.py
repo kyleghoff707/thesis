@@ -7,7 +7,7 @@ Provides reusable building blocks for all 3 Word doc generators:
 - Title pages with branding
 - Styled tables with teal headers and alternating row shading
 - Verdict tables with color-coded cells
-- Checklist tables for Full Story
+- Checklist tables for Final Thesis
 - Chart image embedding
 - Red flag rendering
 - Citations section
@@ -126,7 +126,7 @@ def add_title_page(doc, ticker, company_name, stage_title, subtitle='', verdict=
         doc: Document instance
         ticker: Stock ticker symbol
         company_name: Full company name
-        stage_title: E.g., 'One Pager', 'Pitch Deck', 'Full Story'
+        stage_title: E.g., 'One Pager', 'Pitch Deck', 'Final Thesis'
         subtitle: Optional subtitle text
         verdict: Optional verdict string (PASS/FAIL/PARTIAL/WATCHLIST)
     """
@@ -490,7 +490,7 @@ def add_citations_section(doc, all_citations):
 
 def add_checklist_table(doc, items):
     """
-    Create a checklist table for Full Story sections with color-coded verdict cells.
+    Create a checklist table for Final Thesis sections with color-coded verdict cells.
 
     Args:
         doc: Document instance

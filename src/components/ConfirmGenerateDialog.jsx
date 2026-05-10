@@ -6,7 +6,7 @@ const STAGE_COPY = {
     title: ticker => `Generate One Pager for ${ticker}`,
     estimate: '~2-3 minutes, ~$1-2',
     body: 'This kicks off an AI research pipeline. The One Pager is a screening filter -- only generate for companies you\'re seriously considering as investment targets.',
-    extra: 'You are beginning a 3-stage research process (One Pager, Pitch Deck, Full Story). The full pipeline takes about an hour and ~$12-15 total.',
+    extra: 'You are beginning a 3-stage research process (One Pager, Pitch Deck, Final Thesis). The full pipeline takes about an hour and ~$12-15 total.',
     confirmLabel: 'Generate One Pager',
   },
   'pitch-deck': {
@@ -16,12 +16,12 @@ const STAGE_COPY = {
     extra: null,
     confirmLabel: 'Generate Pitch Deck',
   },
-  'full-story': {
-    title: ticker => `Generate Full Story for ${ticker}`,
+  'final-thesis': {
+    title: ticker => `Generate Final Thesis for ${ticker}`,
     estimate: '~10-15 minutes, ~$3-4',
     body: 'This is the final conviction gate. Includes checklists, adversarial debate, and valuation confirmation.',
     extra: null,
-    confirmLabel: 'Generate Full Story',
+    confirmLabel: 'Generate Final Thesis',
   },
 };
 

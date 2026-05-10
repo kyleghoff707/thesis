@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { C } from '../theme';
-import { useFullStory } from '../hooks/useFullStory';
+import { useFinalThesis } from '../hooks/useFinalThesis';
 import { useGeneratePipeline } from '../hooks/useGeneratePipeline';
 import ConfirmGenerateDialog from './ConfirmGenerateDialog';
 import { useScrollSpy } from '../hooks/useScrollSpy';
@@ -20,7 +20,7 @@ import { formatTitle, formatRelativeTime, verdictDotColor } from './reportHelper
 import Spinner from './Spinner';
 import PsrSummaryCard from './PsrSummaryCard';
 
-// Map AI-produced key variants to canonical keys (mirrors KEY_NORMALIZATION in run-full-story.js)
+// Map AI-produced key variants to canonical keys (mirrors KEY_NORMALIZATION in run-final-thesis.js)
 const KEY_ALIASES = {
   // Section 1: Event Analysis
   event: 'event_analysis',
@@ -67,7 +67,7 @@ const KEY_ALIASES = {
   debate: 'inversion_rebuttal',
 };
 
-// --- Section definitions for the Full Story (7 sections: 6 original + Promise Tracker) ---
+// --- Section definitions for the Final Thesis (7 sections: 6 original + Promise Tracker) ---
 const SECTION_DEFS = [
   { key: 'event_analysis', label: 'Event Analysis', phase: 1 },
   { key: 'meaning_checklist', label: 'Meaning Checklist', phase: 1 },
@@ -175,23 +175,23 @@ function QualityBadge({ mechanical, methodology }) {
 }
 
 // --- Main component ---
-export default function FullStory({ getReport, updateReport }) {
+export default function FinalThesis({ getReport, updateReport }) {
   const CHECKLIST_KEYS = new Set(['meaning_checklist', 'moat_checklist', 'management_checklist']);
 
   const { id } = useParams();
   const report = getReport ? getReport(id) : null;
   const ticker = report?.ticker;
-  const { report: hookData, quality, progress: rawProgress, generationStatus: rawGenStatus, loading, error, startPolling } = useFullStory(ticker);
-  // Production: report.fullStory is loaded from D1 via useResearch → GET /user/reports/:id.
+  const { report: hookData, quality, progress: rawProgress, generationStatus: rawGenStatus, loading, error, startPolling } = useFinalThesis(ticker);
+  // Production: report.finalThesis is loaded from D1 via useResearch → GET /user/reports/:id.
   // Dev: hookData comes from the Vite middleware. Prefer D1 data when present.
-  const fullStoryData = report?.fullStory || hookData;
+  const finalThesisData = report?.finalThesis || hookData;
   const { triggerGeneration, generating } = useGeneratePipeline(ticker);
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [graceActive, setGraceActive] = useState(false);
 
   // Filter out stale progress/generationStatus from other stages
-  const progress = rawProgress?.stage === 'fullStory' ? rawProgress : null;
-  const generationStatus = rawGenStatus?.stage === 'fullStory' ? rawGenStatus : null;
+  const progress = rawProgress?.stage === 'finalThesis' ? rawProgress : null;
+  const generationStatus = rawGenStatus?.stage === 'finalThesis' ? rawGenStatus : null;
 
   // Timer: wall-clock elapsed during generation
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -251,14 +251,14 @@ export default function FullStory({ getReport, updateReport }) {
         }
       }
     }
-    if (fullStoryData?.sections) {
-      for (const s of fullStoryData.sections) {
+    if (finalThesisData?.sections) {
+      for (const s of finalThesisData.sections) {
         const canonical = KEY_ALIASES[s.key] || s.key;
         m[canonical] = { ...s, key: canonical };
       }
     }
     return m;
-  }, [fullStoryData, generationStatus]);
+  }, [finalThesisData, generationStatus]);
 
   // Phase statuses for indicators (computed once, not per-render-iteration)
   const phaseStatuses = useMemo(() => getPhaseStatuses(sectionMap, progressState), [sectionMap, progressState]);
@@ -310,7 +310,7 @@ export default function FullStory({ getReport, updateReport }) {
   // Judge verdict — read from inlined debate content. Newer agents emit overallVerdict as an
   // object; older runs emit it as a bare string ("MIXED") with overallDirection/overallSummary
   // as siblings. Normalize to the object shape downstream code expects.
-  const judgeContent = fullStoryData?.debate?.step4Judge?.content;
+  const judgeContent = finalThesisData?.debate?.step4Judge?.content;
   const rawVerdict = judgeContent?.overallVerdict;
   const verdict = (rawVerdict && typeof rawVerdict === 'object')
     ? rawVerdict
@@ -320,16 +320,16 @@ export default function FullStory({ getReport, updateReport }) {
         investmentImplication: judgeContent.investmentImplication,
       } : null);
 
-  // Company name fallback: report.companyName > fullStoryData.ticker > ''
-  const companyName = report?.companyName || fullStoryData?.ticker || '';
+  // Company name fallback: report.companyName > finalThesisData.ticker > ''
+  const companyName = report?.companyName || finalThesisData?.ticker || '';
 
   // Timestamp: completedAt (legacy) or generatedAt (current agent output).
-  const timestamp = fullStoryData?.completedAt || fullStoryData?.generatedAt;
+  const timestamp = finalThesisData?.completedAt || finalThesisData?.generatedAt;
 
   // Completion state
   const isComplete = !progress || progress.state === 'COMPLETE';
-  const allSectionsRendered = fullStoryData?.sections?.length >= 6;
-  const approvalStatus = report?.stageApprovals?.fullStory;
+  const allSectionsRendered = finalThesisData?.sections?.length >= 6;
+  const approvalStatus = report?.stageApprovals?.finalThesis;
   const showApprovalBar = allSectionsRendered && isComplete && !approvalStatus;
   const pitchDeckApproved = report?.stageApprovals?.pitchDeck === 'approved';
 
@@ -473,25 +473,25 @@ export default function FullStory({ getReport, updateReport }) {
   function handleApprove() {
     if (!updateReport || !id || !report) return;
     updateReport(id, {
-      stageApprovals: { ...report.stageApprovals, fullStory: 'approved' },
+      stageApprovals: { ...report.stageApprovals, finalThesis: 'approved' },
       updatedAt: new Date().toISOString().slice(0, 10),
     });
   }
 
   function handleReject() {
     if (!updateReport || !id || !report) return;
-    const notes = window.prompt('Why are you rejecting the Full Story? (optional)') || '';
+    const notes = window.prompt('Why are you rejecting the Final Thesis? (optional)') || '';
     const existingNotes = report.notes || '';
     const separator = existingNotes && notes ? '\n' : '';
     updateReport(id, {
-      stageApprovals: { ...report.stageApprovals, fullStory: 'rejected' },
+      stageApprovals: { ...report.stageApprovals, finalThesis: 'rejected' },
       notes: existingNotes + separator + (notes ? `[Rejection] ${notes}` : ''),
       updatedAt: new Date().toISOString().slice(0, 10),
     });
   }
 
   // --- Loading State ---
-  if (loading && !fullStoryData) {
+  if (loading && !finalThesisData) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40vh', gap: 10 }}>
         <Spinner />
@@ -510,7 +510,7 @@ export default function FullStory({ getReport, updateReport }) {
   }
 
   // --- Gate Check (Pitch Deck not approved) ---
-  if (!pitchDeckApproved && !fullStoryData && !progress) {
+  if (!pitchDeckApproved && !finalThesisData && !progress) {
     return (
       <div style={{
         display: 'flex',
@@ -524,14 +524,14 @@ export default function FullStory({ getReport, updateReport }) {
           Pitch Deck must be approved first
         </div>
         <div style={{ fontSize: 13, fontWeight: 400, color: C.textMuted }}>
-          Approve the Pitch Deck before viewing the Full Story.
+          Approve the Pitch Deck before viewing the Final Thesis.
         </div>
       </div>
     );
   }
 
   // --- Grace period (pipeline starting, progress files not yet created) ---
-  if (graceActive && !fullStoryData && !progress) {
+  if (graceActive && !finalThesisData && !progress) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40vh', gap: 10 }}>
         <Spinner />
@@ -541,7 +541,7 @@ export default function FullStory({ getReport, updateReport }) {
   }
 
   // --- Empty State ---
-  if (!fullStoryData && !progress) {
+  if (!finalThesisData && !progress) {
     return (
       <div style={{
         display: 'flex',
@@ -552,7 +552,7 @@ export default function FullStory({ getReport, updateReport }) {
         gap: 16,
       }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>
-          No Full Story generated yet
+          No Final Thesis generated yet
         </div>
         <button
           onClick={() => setShowGenerateDialog(true)}
@@ -573,17 +573,17 @@ export default function FullStory({ getReport, updateReport }) {
           onMouseEnter={e => { if (!generating) e.currentTarget.style.background = C.accentHover; }}
           onMouseLeave={e => { if (!generating) e.currentTarget.style.background = C.accent; }}
         >
-          {generating ? 'Generating...' : 'Generate Full Story'}
+          {generating ? 'Generating...' : 'Generate Final Thesis'}
         </button>
         {showGenerateDialog && (
           <ConfirmGenerateDialog
             ticker={ticker}
-            stage="full-story"
+            stage="final-thesis"
             onConfirm={() => {
               setShowGenerateDialog(false);
               setGraceActive(true);
               setTimeout(() => setGraceActive(false), 5000);
-              triggerGeneration('full-story', null, report?.id);
+              triggerGeneration('final-thesis', null, report?.id);
             }}
             onCancel={() => setShowGenerateDialog(false)}
           />
@@ -594,8 +594,8 @@ export default function FullStory({ getReport, updateReport }) {
 
   // --- Fallback verdict (D-09): most common section verdict when no judge ---
   let fallbackVerdict = null;
-  if (!verdict && fullStoryData?.sections) {
-    const verdicts = fullStoryData.sections.map(s => s.verdict).filter(Boolean);
+  if (!verdict && finalThesisData?.sections) {
+    const verdicts = finalThesisData.sections.map(s => s.verdict).filter(Boolean);
     const counts = {};
     for (const v of verdicts) counts[v] = (counts[v] || 0) + 1;
     const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
@@ -614,7 +614,7 @@ export default function FullStory({ getReport, updateReport }) {
         {/* Row 1: Ticker */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: C.accent }}>
-            {fullStoryData?.ticker || report?.ticker}
+            {finalThesisData?.ticker || report?.ticker}
           </span>
         </div>
 
@@ -632,10 +632,10 @@ export default function FullStory({ getReport, updateReport }) {
         {/* Row 3: Stage label, timestamp, quality, approval status, export */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: C.textSecondary }}>
-            Stage 3: Full Story
+            Stage 3: Final Thesis
           </span>
-          {fullStoryData && isComplete && (
-            <ExportButtons ticker={ticker} stage="full-story" report={report} />
+          {finalThesisData && isComplete && (
+            <ExportButtons ticker={ticker} stage="final-thesis" report={report} />
           )}
           {timestamp && (
             <span style={{ fontSize: 11, fontWeight: 400, color: C.textMuted }}>
@@ -756,7 +756,7 @@ export default function FullStory({ getReport, updateReport }) {
       )}
 
       {/* PSR Summary Card — shown above sections when report is complete */}
-      {(!progress || progress.state === 'COMPLETE') && fullStoryData && (
+      {(!progress || progress.state === 'COMPLETE') && finalThesisData && (
         <PsrSummaryCard ticker={ticker} />
       )}
 
@@ -834,10 +834,10 @@ export default function FullStory({ getReport, updateReport }) {
 
             // Promise Tracker — promises live in management_checklist section.data.promises
             if (def.key === 'promise_tracker') {
-              const promises = fullStoryData?.sections?.find(s => s.key === 'management_checklist')?.data?.promises
-                || fullStoryData?.promises
+              const promises = finalThesisData?.sections?.find(s => s.key === 'management_checklist')?.data?.promises
+                || finalThesisData?.promises
                 || [];
-              if (!promises.length && !fullStoryData) return null;
+              if (!promises.length && !finalThesisData) return null;
               return (
                 <div key={def.key} id={'section-' + def.key}>
                   {qs && (
@@ -901,7 +901,7 @@ export default function FullStory({ getReport, updateReport }) {
                 <DebateRenderer
                   section={section}
                   sectionId={'section-' + def.key}
-                  debate={fullStoryData?.debate}
+                  debate={finalThesisData?.debate}
                   onCitationClick={handleCitationClick}
                 />
               );
@@ -946,7 +946,7 @@ export default function FullStory({ getReport, updateReport }) {
             }}>
               <span style={{ fontSize: 13, color: C.text, flex: 1 }}>
                 <span style={{ fontWeight: 700 }}>Ready for approval</span>
-                <span style={{ color: C.textMuted }}> -- Review the Full Story and approve or reject.</span>
+                <span style={{ color: C.textMuted }}> -- Review the Final Thesis and approve or reject.</span>
               </span>
               <button
                 onClick={handleApprove}
@@ -961,7 +961,7 @@ export default function FullStory({ getReport, updateReport }) {
                   cursor: 'pointer',
                 }}
               >
-                Approve Full Story
+                Approve Final Thesis
               </button>
               <button
                 onClick={handleReject}
@@ -976,7 +976,7 @@ export default function FullStory({ getReport, updateReport }) {
                   cursor: 'pointer',
                 }}
               >
-                Reject Full Story
+                Reject Final Thesis
               </button>
             </div>
           )}

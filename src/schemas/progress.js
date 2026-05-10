@@ -10,7 +10,7 @@ import { z } from 'zod';
 // ProgressSchema — the state machine for a single stage generation run
 export const ProgressSchema = z.object({
   ticker: z.string(),
-  stage: z.enum(['onePager', 'pitchDeck', 'fullStory']),
+  stage: z.enum(['onePager', 'pitchDeck', 'finalThesis']),
   state: z.enum([
     'IDLE', 'DATA_ASSEMBLY', 'PRIMARY_SOURCE_READING',
     'WAVE_1_RUNNING', 'WAVE_2_RUNNING', 'WAVE_3_RUNNING',
@@ -35,7 +35,7 @@ export const ProgressSchema = z.object({
 });
 
 // Create an initial progress object with all sections set to "pending"
-// ticker: string, stage: "onePager"|"pitchDeck"|"fullStory", sectionKeys: string[]
+// ticker: string, stage: "onePager"|"pitchDeck"|"finalThesis", sectionKeys: string[]
 export function createInitialProgress(ticker, stage, sectionKeys) {
   const now = new Date().toISOString();
   const sections = {};

@@ -16,7 +16,7 @@ function getButtonState(ticker, report, stageAvailability, generating) {
     const reportId = report?.id;
     if (!avail.onePager) return { label: 'Generating One Pager...', action: 'view', stage: 'one-pager', route: `/research/${reportId}/one-pager`, style: 'generating' };
     if (approvals.onePager === 'approved' && !avail.pitchDeck) return { label: 'Generating Pitch Deck...', action: 'view', stage: 'pitch-deck', route: `/research/${reportId}/pitch-deck`, style: 'generating' };
-    if (approvals.pitchDeck === 'approved' && !avail.fullStory) return { label: 'Generating Full Story...', action: 'view', stage: 'full-story', route: `/research/${reportId}/full-story`, style: 'generating' };
+    if (approvals.pitchDeck === 'approved' && !avail.finalThesis) return { label: 'Generating Final Thesis...', action: 'view', stage: 'final-thesis', route: `/research/${reportId}/final-thesis`, style: 'generating' };
     return { label: 'Generating...', action: 'disabled', stage: null, style: 'disabled' };
   }
 
@@ -31,9 +31,9 @@ function getButtonState(ticker, report, stageAvailability, generating) {
   if (!avail.pitchDeck) return { label: 'Generate Pitch Deck', action: 'generate', stage: 'pitch-deck', style: 'primary' };
   if (approvals.pitchDeck !== 'approved') return { label: 'View Pitch Deck', action: 'view', stage: 'pitch-deck', route: `/research/${reportId}/pitch-deck`, style: 'ghost' };
 
-  if (!avail.fullStory) return { label: 'Generate Full Story', action: 'generate', stage: 'full-story', style: 'primary' };
+  if (!avail.finalThesis) return { label: 'Generate Final Thesis', action: 'generate', stage: 'final-thesis', style: 'primary' };
   // FS exists (generated or approved)
-  return { label: 'View Full Story', action: 'view', stage: 'full-story', route: `/research/${reportId}/full-story`, style: 'ghost' };
+  return { label: 'View Final Thesis', action: 'view', stage: 'final-thesis', route: `/research/${reportId}/final-thesis`, style: 'ghost' };
 }
 
 export default function GenerateButton({ ticker, report, stageAvailability, generating, onGenerate }) {

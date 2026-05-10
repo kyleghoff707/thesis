@@ -1,4 +1,4 @@
-// Stage navigation tab bar — switches between One Pager, Pitch Deck, Full Story
+// Stage navigation tab bar — switches between One Pager, Pitch Deck, Final Thesis
 // Tabs lock/unlock based on stageApprovals gate conditions (D-04, D-05, D-06)
 
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
@@ -7,13 +7,13 @@ import { C } from '../theme';
 const STAGES = [
   { key: 'one-pager', label: 'One Pager', gate: null },
   { key: 'pitch-deck', label: 'Pitch Deck', gate: 'onePager' },
-  { key: 'full-story', label: 'Full Story', gate: 'pitchDeck' },
+  { key: 'final-thesis', label: 'Final Thesis', gate: 'pitchDeck' },
 ];
 
 // Tooltip text for locked stages
 const GATE_TOOLTIPS = {
   onePager: 'Approve One Pager to unlock Pitch Deck',
-  pitchDeck: 'Approve Pitch Deck to unlock Full Story',
+  pitchDeck: 'Approve Pitch Deck to unlock Final Thesis',
 };
 
 // Lock icon SVG (12x12px closed padlock)

@@ -1,6 +1,6 @@
 ---
 name: analyze
-description: "Run the full 3-stage Thesis pipeline (One Pager -> Pitch Deck -> Full Story) for a stock ticker using Claude Code subagents"
+description: "Run the full 3-stage Thesis pipeline (One Pager -> Pitch Deck -> Final Thesis) for a stock ticker using Claude Code subagents"
 argument-hint: TICKER
 disable-model-invocation: true
 ---
@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 Run the complete Thesis investment analysis pipeline for **$0** using Claude Code subagents.
 
-Chains all 3 stages sequentially: One Pager -> Pitch Deck -> Full Story.
+Chains all 3 stages sequentially: One Pager -> Pitch Deck -> Final Thesis.
 Gates between stages — stops on first failure. One command, walk away.
 
 All AI work runs as Claude Code subagents (Pro Max subscription compute). No API calls.
@@ -54,16 +54,16 @@ When it finishes, verify `.thesis/reports/{TICKER}/pitch-deck.json` exists with 
 
 **Gate check:** If fewer than 10 sections were produced or the pipeline errored, log the issue and **stop**.
 
-## Step 4: Run Full Story (Stage 3)
+## Step 4: Run Final Thesis (Stage 3)
 
 Invoke the skill:
 ```
-/generate-full-story {TICKER}
+/generate-final-thesis {TICKER}
 ```
 
-The full story skill runs end-to-end without checkpoints — no PM interaction needed.
+The final thesis skill runs end-to-end without checkpoints — no PM interaction needed.
 
-When it finishes, verify `.thesis/reports/{TICKER}/full-story.json` exists.
+When it finishes, verify `.thesis/reports/{TICKER}/final-thesis.json` exists.
 
 ## Step 5: Report Results
 
@@ -75,7 +75,7 @@ Print a summary:
 
 Stage 1 (One Pager):  {verdict}
 Stage 2 (Pitch Deck): {sectionCount} sections
-Stage 3 (Full Story):  {sectionCount} sections + debate
+Stage 3 (Final Thesis):  {sectionCount} sections + debate
 
 Output: .thesis/reports/{TICKER}/
 ```
@@ -91,7 +91,7 @@ This skill runs unattended. Never pause to ask the user questions. All sub-skill
 During generation, NEVER read from any of these paths:
 - `knowledge/stage-1-one-pager/examples/`
 - `knowledge/stage-2-pitch-deck/examples/`
-- `knowledge/stage-3-full-story/examples/`
+- `knowledge/stage-3-final-thesis/examples/`
 - `knowledge/pre-course-examples/`
 
 ### No API Calls

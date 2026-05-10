@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Generic Full Story PDF Generator
-Generates a chart-heavy, Thesis-branded Full Story PDF for any ticker.
+Generic Final Thesis PDF Generator
+Generates a chart-heavy, Thesis-branded Final Thesis PDF for any ticker.
 Includes checklist tables, adversarial debate rendering, and evidence sections.
-Reads from full-story-api.json and DataPacket (data-packet.json).
+Reads from final-thesis-api.json and DataPacket (data-packet.json).
 
-Usage: python3 scripts/pdf/generate_full_story_pdf.py MNST
+Usage: python3 scripts/pdf/generate_final_thesis_pdf.py MNST
 """
 
 import os
@@ -352,34 +352,34 @@ def _render_price_range(pdf, data):
 # MAIN GENERATOR
 # =========================================================================
 
-def generate_full_story(ticker, base_dir=None):
-    """Build the Full Story PDF with checklists, debate, and evidence."""
+def generate_final_thesis(ticker, base_dir=None):
+    """Build the Final Thesis PDF with checklists, debate, and evidence."""
     if base_dir is None:
         base_dir = os.path.join(os.path.dirname(__file__), '..', '..')
     report_dir = os.path.join(base_dir, '.thesis', 'reports', ticker)
 
-    data = ReportData(ticker, 'full-story', base_dir=base_dir)
+    data = ReportData(ticker, 'final-thesis', base_dir=base_dir)
     company_name = data.get_company_name()
 
-    # Full Story may not have a single overall verdict -- the debate IS the verdict
+    # Final Thesis may not have a single overall verdict -- the debate IS the verdict
     overall_verdict = data.get_overall_verdict()
 
     pdf = ThesisPDF(
         title=f'{company_name} ({ticker})',
-        subtitle='value investing Full Story \u2014 Investment Thesis Deep Dive',
-        stage_label='Full Story'
+        subtitle='value investing Final Thesis \u2014 Investment Thesis Deep Dive',
+        stage_label='Final Thesis'
     )
 
     # ── Title Page ───────────────────────────────────────────────────────
     pdf.title_page(
-        ticker, company_name, 'Full Story',
+        ticker, company_name, 'Final Thesis',
         'Investment Thesis Deep Dive',
         verdict=overall_verdict if overall_verdict != 'N/A' else '',
         disclaimer='AI-generated research report for educational purposes only. Not financial advice.'
     )
 
     # ── Per-Section Rendering ────────────────────────────────────────────
-    # Full Story sections: event_analysis, meaning_checklist, moat_checklist,
+    # Final Thesis sections: event_analysis, meaning_checklist, moat_checklist,
     # management_checklist, valuation_confirmation, inversion_rebuttal
     CHECKLIST_SECTIONS = {'meaning_checklist', 'moat_checklist', 'management_checklist'}
 
@@ -485,7 +485,7 @@ def generate_full_story(ticker, base_dir=None):
 
     # ── Save ─────────────────────────────────────────────────────────────
     os.makedirs(report_dir, exist_ok=True)
-    out_path = os.path.join(report_dir, 'full-story.pdf')
+    out_path = os.path.join(report_dir, 'final-thesis.pdf')
     pdf.output(out_path)
     print(f'PDF generated: {out_path}')
     print(f'Pages: {pdf.page_no()}')
@@ -494,7 +494,7 @@ def generate_full_story(ticker, base_dir=None):
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print('Usage: python3 generate_full_story_pdf.py <TICKER>')
+        print('Usage: python3 generate_final_thesis_pdf.py <TICKER>')
         sys.exit(1)
     ticker = sys.argv[1].upper()
-    generate_full_story(ticker)
+    generate_final_thesis(ticker)

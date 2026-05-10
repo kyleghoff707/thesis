@@ -33,13 +33,13 @@ const {
 import companyInfoSection from './fixtures/cost-section-company-info.json' with { type: 'json' };
 import dataPacketSlice from './fixtures/cost-data-packet-slice.json' with { type: 'json' };
 
-// Fixtures — real SFM Full Story data
-import eventAnalysisSection from './fixtures/sfm-fullstory-event-analysis.json' with { type: 'json' };
-import meaningChecklistSection from './fixtures/sfm-fullstory-meaning-checklist.json' with { type: 'json' };
-import moatChecklistSection from './fixtures/sfm-fullstory-moat-checklist.json' with { type: 'json' };
-import managementChecklistSection from './fixtures/sfm-fullstory-management-checklist.json' with { type: 'json' };
-import valuationConfirmationSection from './fixtures/sfm-fullstory-valuation-confirmation.json' with { type: 'json' };
-import inversionRebuttalSection from './fixtures/sfm-fullstory-inversion-rebuttal.json' with { type: 'json' };
+// Fixtures — real SFM Final Thesis data
+import eventAnalysisSection from './fixtures/sfm-finalthesis-event-analysis.json' with { type: 'json' };
+import meaningChecklistSection from './fixtures/sfm-finalthesis-meaning-checklist.json' with { type: 'json' };
+import moatChecklistSection from './fixtures/sfm-finalthesis-moat-checklist.json' with { type: 'json' };
+import managementChecklistSection from './fixtures/sfm-finalthesis-management-checklist.json' with { type: 'json' };
+import valuationConfirmationSection from './fixtures/sfm-finalthesis-valuation-confirmation.json' with { type: 'json' };
+import inversionRebuttalSection from './fixtures/sfm-finalthesis-inversion-rebuttal.json' with { type: 'json' };
 
 // ─── QUAL-01: Citation Validation ─────────────────────────────────────
 
@@ -877,7 +877,7 @@ describe('Methodology Scoring', () => {
   });
 });
 
-// ─── Full Story Helper Tests ──────────────────────────────────────────
+// ─── Final Thesis Helper Tests ──────────────────────────────────────────
 
 describe('normalizeVerdict', () => {
   it('should return PASS for "PASS"', () => {
@@ -1023,9 +1023,9 @@ describe('flagNonStandardVerdicts', () => {
   });
 });
 
-// ─── Full Story Methodology Checks ──────────────────────────────────
+// ─── Final Thesis Methodology Checks ──────────────────────────────────
 
-describe('Full Story Methodology Checks', () => {
+describe('Final Thesis Methodology Checks', () => {
   describe('event_analysis', () => {
     it('should return score > 0 with 5 checks on SFM fixture', () => {
       const result = scoreMethodology(eventAnalysisSection);
@@ -1260,9 +1260,9 @@ describe('Full Story Methodology Checks', () => {
   });
 });
 
-// ─── Full Story Completeness Weight Adjustment ──────────────────────
+// ─── Final Thesis Completeness Weight Adjustment ──────────────────────
 
-describe('Full Story Completeness Weight Adjustment', () => {
+describe('Final Thesis Completeness Weight Adjustment', () => {
   it('should use adjusted weights for checklist sections', () => {
     // Meaning checklist uses adjusted weights (narrativeDepth: 15, dataPopulation: 25)
     const checklistResult = scoreCompleteness(meaningChecklistSection);
@@ -1308,10 +1308,10 @@ describe('Full Story Completeness Weight Adjustment', () => {
   });
 });
 
-// ─── Full Story validateStage Integration ───────────────────────────
+// ─── Final Thesis validateStage Integration ───────────────────────────
 
-describe('Full Story validateStage integration', () => {
-  it('should return overallMethodologyScore for 6 Full Story sections', () => {
+describe('Final Thesis validateStage integration', () => {
+  it('should return overallMethodologyScore for 6 Final Thesis sections', () => {
     const sections = [
       eventAnalysisSection,
       meaningChecklistSection,

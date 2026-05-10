@@ -5,7 +5,7 @@ Thesis Agent Architecture — Visual Breakdown
 Generates a branded PDF documenting the complete agent system:
 - 3-stage workflow overview
 - Agent roster with roles, models, curriculum
-- Pipeline flows for One Pager, Pitch Deck, Full Story
+- Pipeline flows for One Pager, Pitch Deck, Final Thesis
 - DataPacket assembly and slicing
 - Curriculum/context loading per agent
 - Section-to-agent mapping
@@ -50,7 +50,7 @@ def build_pdf():
     pdf.add_title_page(
         info_lines=[
             f'Date: {date.today().strftime("%B %d, %Y")}',
-            'Version: Pre-v1.2 (Full Story Milestone)',
+            'Version: Pre-v1.2 (Final Thesis Milestone)',
             '',
             'AI-Powered value investing Investment Research',
             '9 Specialist Agents | 3-Stage Gated Workflow'
@@ -66,7 +66,7 @@ def build_pdf():
         'Agent Model Assignment & Cost Profile',
         'One Pager Pipeline (Stage 1)',
         'Pitch Deck Pipeline (Stage 2)',
-        'Full Story Pipeline (Stage 3)',
+        'Final Thesis Pipeline (Stage 3)',
         'DataPacket Assembly & Slicing',
         'Curriculum & Context Loading',
         'Section-to-Agent Mapping (All Stages)',
@@ -109,8 +109,8 @@ def build_pdf():
 
     pdf.add_section_header('Key Principle: Inheritance', level=2)
     pdf.add_body_text(
-        'Each stage inherits ALL findings from the previous stage. The Full Story doesn\'t '
-        'redo the Pitch Deck — it deepens it. Pitch Deck findings flow into Full Story agents '
+        'Each stage inherits ALL findings from the previous stage. The Final Thesis doesn\'t '
+        'redo the Pitch Deck — it deepens it. Pitch Deck findings flow into Final Thesis agents '
         'as prior context. The DataPacket is also refreshed with any new data.'
     )
 
@@ -139,7 +139,7 @@ def build_pdf():
         ],
         col_widths=[34, 72, 16, 22]
     )
-    pdf.add_body_text('OP = One Pager | PD = Pitch Deck | FS = Full Story')
+    pdf.add_body_text('OP = One Pager | PD = Pitch Deck | FS = Final Thesis')
 
     pdf.add_section_header('Preprocessing Agents (3)', level=2)
     pdf.add_table(
@@ -338,17 +338,17 @@ def build_pdf():
     # ═══════════════════════════════════════════════════════════════
     # 6. FULL STORY PIPELINE
     # ═══════════════════════════════════════════════════════════════
-    pdf.add_section_header('6. Full Story Pipeline (Stage 3) — NOT YET BUILT')
+    pdf.add_section_header('6. Final Thesis Pipeline (Stage 3) — NOT YET BUILT')
 
     pdf.add_body_text(
-        'The Full Story is "conviction engineering." It is the final gate before capital '
+        'The Final Thesis is "conviction engineering." It is the final gate before capital '
         'deployment. It includes 43-item scored checklists, an adversarial Bull/Bear/Judge '
         'debate, and a complete trading + PACE strategy. The dispatch table is defined but '
         'NO implementation exists yet.'
     )
 
     pdf.draw_flow_chart(
-        'Full Story Planned Execution Flow',
+        'Final Thesis Planned Execution Flow',
         [
             'PREPROCESSING\n'
             'Inherit ALL Pitch Deck findings + refreshed DataPacket\n'
@@ -382,7 +382,7 @@ def build_pdf():
         text_color=(80, 20, 20)
     )
 
-    pdf.add_section_header('Full Story Section Map', level=2)
+    pdf.add_section_header('Final Thesis Section Map', level=2)
     pdf.add_table(
         ['#', 'Section Key', 'Agent', 'Model', 'Phase', 'Checklist Points'],
         [
@@ -627,7 +627,7 @@ def build_pdf():
     )
     pdf.add_bullet('knowledge/stage-1-one-pager/examples/ (LULU One Pager)')
     pdf.add_bullet('knowledge/stage-2-pitch-deck/examples/ (LULU Pitch Deck)')
-    pdf.add_bullet('knowledge/stage-3-full-story/examples/ (LULU Full Story)')
+    pdf.add_bullet('knowledge/stage-3-final-thesis/examples/ (LULU Final Thesis)')
     pdf.add_bullet('knowledge/pre-course-examples/ (EW, SFM, MU, ODFL)')
     pdf.add_body_text(
         'These exist only for the PM to compare output quality after generation. '
@@ -647,7 +647,7 @@ def build_pdf():
 
     pdf.add_section_header('Cross-Stage Agent Usage', level=2)
     pdf.add_table(
-        ['Agent', 'One Pager Sections', 'Pitch Deck Sections', 'Full Story Sections'],
+        ['Agent', 'One Pager Sections', 'Pitch Deck Sections', 'Final Thesis Sections'],
         [
             ['business-analyst', 'S1, S2', 'S1, S2', 'S2 (meaning), S3 (moat)'],
             ['financial-analyst', 'S3, S4', 'S5, S7, S8', 'S5 (valuation), S6 (judge)'],
@@ -680,39 +680,39 @@ def build_pdf():
     # ═══════════════════════════════════════════════════════════════
     # 10. CURRENT STATUS & GAPS
     # ═══════════════════════════════════════════════════════════════
-    pdf.add_section_header('10. Current Status & Gaps for Full Story')
+    pdf.add_section_header('10. Current Status & Gaps for Final Thesis')
 
     pdf.add_section_header('What EXISTS Today', level=2)
     pdf.add_bullet('All 10 agent configs (config.json) — roles, models, curriculum, DataPacket slices defined')
     pdf.add_bullet('All 10 agent prompts (prompt.md) — investigation mandate, web research, curriculum sections')
-    pdf.add_bullet('Dispatch table — Full Story workflow defined in dispatch-table.json (3 phases + debate)')
+    pdf.add_bullet('Dispatch table — Final Thesis workflow defined in dispatch-table.json (3 phases + debate)')
     pdf.add_bullet('Section keys defined: event_analysis, meaning_checklist, moat_checklist, management_checklist, valuation_confirmation, inversion_rebuttal, trading_strategy, pace_plan')
     pdf.add_bullet('ReportSectionSchema — output format already defined and validated')
-    pdf.add_bullet('API dispatch engine (aiResearch.js) — proven on Pitch Deck, ready for Full Story')
+    pdf.add_bullet('API dispatch engine (aiResearch.js) — proven on Pitch Deck, ready for Final Thesis')
     pdf.add_bullet('Pipeline manager (pipelineManager.js) — wave orchestration, checkpoints, budget tracking')
     pdf.add_bullet('Quality system (critic.js) — mechanical + methodology scoring')
     pdf.add_bullet('Curriculum files — story-form-I.md (sections 1-4) and story-form-II.md (sections 5-8)')
     pdf.ln(3)
 
     pdf.add_section_header('What NEEDS to Be Built', level=2)
-    pdf.add_bullet('Full Story CC skill orchestration — like generate-one-pager but for Stage 3')
+    pdf.add_bullet('Final Thesis CC skill orchestration — like generate-one-pager but for Stage 3')
     pdf.add_bullet('Checklist scoring mechanism — 43-item checklists (15+15+13) need scored output format')
     pdf.add_bullet('Debate orchestration — Bull/Bear/Judge sequential dispatch with role switching')
     pdf.add_bullet('Pitch Deck inheritance — loading prior PD findings as context for FS agents')
-    pdf.add_bullet('Full Story methodology checks in critic.js — new curriculum-derived checks')
+    pdf.add_bullet('Final Thesis methodology checks in critic.js — new curriculum-derived checks')
     pdf.add_bullet('Trading strategy + PACE plan prompt engineering — new section types')
     pdf.add_bullet('Growth ceiling analysis — market share ceiling validation')
     pdf.add_bullet('Inversion protocol — structured "for every reason, create counter-argument"')
     pdf.ln(3)
 
     pdf.add_section_header('Key Questions for v1.2 Planning', level=2)
-    pdf.add_numbered_item(1, 'Are the existing agent prompts sufficient for Full Story, or do they need '
-                            'Full Story-specific prompt sections?')
-    pdf.add_numbered_item(2, 'The dispatch table shows competitor-evaluator on Full Story S3 (moat_checklist) '
+    pdf.add_numbered_item(1, 'Are the existing agent prompts sufficient for Final Thesis, or do they need '
+                            'Final Thesis-specific prompt sections?')
+    pdf.add_numbered_item(2, 'The dispatch table shows competitor-evaluator on Final Thesis S3 (moat_checklist) '
                             'but the orchestrator mapping shows business-analyst. Which is correct?')
     pdf.add_numbered_item(3, 'Phase 2 debate: should Bull → Bear → Judge be strictly sequential, or can '
                             'Bull and Bear run in parallel with Judge receiving both?')
-    pdf.add_numbered_item(4, 'Do we need new agents for the Full Story, or just new prompts for existing ones?')
+    pdf.add_numbered_item(4, 'Do we need new agents for the Final Thesis, or just new prompts for existing ones?')
     pdf.add_numbered_item(5, 'How should checklist items be scored? Binary pass/fail? 1-5 scale? Narrative + score?')
 
     # ═══════════════════════════════════════════════════════════════

@@ -11,7 +11,7 @@ import { renderTextWithCitations } from './CitationTooltip.jsx';
 
 const DEFAULT_TAB = 'bull';
 
-// Maps tab keys to the agent's debate-step keys in fullStoryData.debate.
+// Maps tab keys to the agent's debate-step keys in finalThesisData.debate.
 const DATA_KEYS = { bull: 'step1Bull', bear: 'step2Bear', rebuttal: 'step3Rebuttal', judge: 'step4Judge' };
 
 // Badge ink — picks a contrasting text color that works in both themes.

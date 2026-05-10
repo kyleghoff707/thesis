@@ -618,7 +618,7 @@ If any agent fails entirely (rate limit, timeout, error):
 **Contamination boundary.** During generation, NEVER read from:
 - `knowledge/stage-1-one-pager/examples/`
 - `knowledge/stage-2-pitch-deck/examples/`
-- `knowledge/stage-3-full-story/examples/`
+- `knowledge/stage-3-final-thesis/examples/`
 - `knowledge/pre-course-examples/`
 
 **Schema enforcement.** Every section output MUST conform to ReportSectionSchema. Required fields: `key`, `title`, `sectionNumber`, `status`, `confidence`, `verdict`, `verdictRationale`, `summary`, `data`, `narrative`, `citations`, `redFlags` (>= 1), `modelUsed`, `tokenCost`.

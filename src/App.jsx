@@ -16,7 +16,7 @@ import Validation from './components/Validation';
 import Settings from './components/Settings';
 import OnePager from './components/OnePager';
 import PitchDeck from './components/PitchDeck';
-import FullStory from './components/FullStory';
+import FinalThesis from './components/FinalThesis';
 import ReportsList from './components/ReportsList';
 import BillingPage from './components/BillingPage';
 import StageNavBar from './components/StageNavBar';
@@ -128,7 +128,7 @@ function AuthenticatedApp({ user, logout }) {
     let section = 'research';
     if (path.startsWith('/watchlists')) section = 'watchlists';
     else if (path.startsWith('/gurus')) section = 'gurus';
-    else if (path.startsWith('/reports') || path.includes('/one-pager') || path.includes('/pitch-deck') || path.includes('/full-story')) section = 'reports';
+    else if (path.startsWith('/reports') || path.includes('/one-pager') || path.includes('/pitch-deck') || path.includes('/final-thesis')) section = 'reports';
     setTourMode(section);
     setTourStep(0);
     setShowHelpMenu(false);
@@ -183,7 +183,7 @@ function AuthenticatedApp({ user, logout }) {
         <Route path="/research/:id/toolbox" element={<ToolboxRedirect />} />
         <Route path="/research/:id/one-pager" element={<ReportStageLayout getReport={getReport}><OnePager getReport={getReport} updateReport={updateReport} refreshReport={refreshReport} /></ReportStageLayout>} />
         <Route path="/research/:id/pitch-deck" element={<ReportStageLayout getReport={getReport}><PitchDeck getReport={getReport} updateReport={updateReport} /></ReportStageLayout>} />
-        <Route path="/research/:id/full-story" element={<ReportStageLayout getReport={getReport}><FullStory getReport={getReport} updateReport={updateReport} /></ReportStageLayout>} />
+        <Route path="/research/:id/final-thesis" element={<ReportStageLayout getReport={getReport}><FinalThesis getReport={getReport} updateReport={updateReport} /></ReportStageLayout>} />
         <Route path="/reports" element={<ReportsList reports={reports} getReport={getReport} createReport={createReport} />} />
         <Route path="/gurus" element={<Gurus />} />
         <Route path="/gurus/:cik" element={<GuruPortfolio />} />

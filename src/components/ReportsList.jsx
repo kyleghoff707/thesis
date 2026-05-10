@@ -27,12 +27,12 @@ export default function ReportsList({ reports, getReport, createReport }) {
   const STAGE_DEFS = [
     { key: 'one-pager', pillLabel: 'One Pager', approvalKey: 'onePager', stagesKey: 'onePager', gate: null },
     { key: 'pitch-deck', pillLabel: 'Pitch Deck', approvalKey: 'pitchDeck', stagesKey: 'pitchDeck', gate: 'onePager' },
-    { key: 'full-story', pillLabel: 'Full Story', approvalKey: 'fullStory', stagesKey: 'fullStory', gate: 'pitchDeck' },
+    { key: 'final-thesis', pillLabel: 'Final Thesis', approvalKey: 'finalThesis', stagesKey: 'finalThesis', gate: 'pitchDeck' },
   ];
 
   const GATE_TOOLTIPS = {
     onePager: 'Approve One Pager to unlock Pitch Deck',
-    pitchDeck: 'Approve Pitch Deck to unlock Full Story',
+    pitchDeck: 'Approve Pitch Deck to unlock Final Thesis',
   };
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export default function ReportsList({ reports, getReport, createReport }) {
                 stages: {
                   onePager: !!(r.onePager && Object.keys(r.onePager).length > 0),
                   pitchDeck: !!r.pitchDeck,
-                  fullStory: !!r.fullStory,
+                  finalThesis: !!r.finalThesis,
                 },
               }));
             setTickerData(derived);

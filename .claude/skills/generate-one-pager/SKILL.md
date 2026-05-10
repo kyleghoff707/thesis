@@ -143,5 +143,5 @@ Print: overall verdict, per-section verdicts + confidence, red flag count, outpu
 **Contamination boundary.** During generation, NEVER read from:
 - `knowledge/stage-1-one-pager/examples/`
 - `knowledge/stage-2-pitch-deck/examples/`
-- `knowledge/stage-3-full-story/examples/`
+- `knowledge/stage-3-final-thesis/examples/`
 - `knowledge/pre-course-examples/`
