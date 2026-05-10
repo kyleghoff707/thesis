@@ -23,7 +23,10 @@ import { normalizeKey } from '../utils/keyNormalization.js';
 // src/utils/keyNormalization.js for the full migration table.
 
 // --- Section definitions for the Pitch Deck (9 content sections, 3 phases) ---
-// overall_verdict is rendered as a hero banner, not a numbered section
+// overall_verdict is rendered as a hero banner, not a numbered section.
+// NOTE: keys here remain the legacy/old keys to preserve nav/scroll-spy/phase
+// progress behavior. The 2026-05-09 redesign render loop drives off
+// TOP_LEVEL_GROUPS (canonical post-rename keys) below.
 const SECTION_DEFS = [
   { key: 'radar', label: 'Radar', phase: 1 },
   { key: 'simple_predictable', label: 'Simple & Predictable', phase: 1 },
@@ -37,12 +40,273 @@ const SECTION_DEFS = [
   { key: 'valuation', label: 'Valuation', phase: 3 },
 ];
 
+// --- TOP_LEVEL_GROUPS — drives the post-redesign render loop ---
+// 8 top-level groups using canonical post-rename keys. Industry & Competitive
+// Position and Financial Analysis each fold multiple subsections into a
+// single visible group. The Investment Verdict group renders the
+// Pre-Decision Quality Check closing block.
+const TOP_LEVEL_GROUPS = [
+  { title: 'Setup & Situation', keys: ['setup'] },
+  { title: 'Business Quality', keys: ['business_quality'] },
+  { title: 'Industry & Competitive Position', keys: ['market_position', 'moat_analysis'] },
+  { title: 'Financial Analysis', keys: ['cash_generation', 'returns_leverage', 'balance_sheet', 'accounting_red_flags'] },
+  { title: 'Management & Capital Allocation', keys: ['management_capital_allocation'] },
+  { title: 'Valuation', keys: ['valuation'] },
+  { title: 'Risk Profile', keys: ['risk_profile'] },
+  { title: 'Investment Verdict', keys: ['investment_verdict'] },
+];
+
 const PHASE_LABELS = [
   'Phase 1: Business Fundamentals',
   'Phase 2: Financial Deep-Dive',
   'Phase 3: Risk & Valuation',
   'Final: Synthesis',
 ];
+
+// Defensive parse — section.data may be a JSON string or an object
+function parseSectionData(data) {
+  if (data == null) return {};
+  if (typeof data === 'string') {
+    try { return JSON.parse(data) || {}; } catch { return {}; }
+  }
+  return data;
+}
+
+// Verdict color from PASS / WATCHLIST / FAIL strings
+function verdictColor(verdict) {
+  const v = (verdict || '').toString().toUpperCase();
+  if (v === 'PASS') return C.green;
+  if (v === 'WATCHLIST' || v === 'WATCH') return C.yellow;
+  if (v === 'FAIL') return C.red;
+  return C.textMuted;
+}
+
+// --- VerdictBox — bordered call-out summarizing a section's verdict.
+// Reads section.data.verdict (object) when present, else falls back to
+// section.verdict + section.summary so older reports still render a box.
+function VerdictBox({ section }) {
+  if (!section) return null;
+  const data = parseSectionData(section.data);
+  const verdictObj = data && typeof data.verdict === 'object' && data.verdict !== null ? data.verdict : null;
+  const overall = (verdictObj?.overall ?? section.verdict ?? '').toString();
+  if (!overall && !verdictObj && !section.summary) return null;
+
+  const color = verdictColor(overall);
+  const labelText = section?.title ? `${section.title} verdict` : 'Verdict';
+
+  return (
+    <div style={{
+      marginTop: 12,
+      padding: '12px 16px',
+      border: '1px solid ' + color,
+      borderLeft: '4px solid ' + color,
+      borderRadius: 6,
+      background: C.bgHover,
+    }}>
+      <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6, color, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        {labelText}
+      </div>
+      {verdictObj && Object.entries(verdictObj).map(([k, value]) => {
+        if (k === 'overall') return null;
+        const label = k
+          .replace(/_/g, ' ')
+          .replace(/([a-z])([A-Z])/g, '$1 $2')
+          .replace(/^./, s => s.toUpperCase());
+        return (
+          <div key={k} style={{ fontSize: 13, color: C.text, marginBottom: 4, lineHeight: 1.5 }}>
+            <strong style={{ color: C.textSecondary }}>{label}:</strong> {String(value)}
+          </div>
+        );
+      })}
+      {!verdictObj && section.summary && (
+        <div style={{ fontSize: 13, color: C.text, marginBottom: 4, lineHeight: 1.5 }}>
+          {section.summary}
+        </div>
+      )}
+      {overall && (
+        <div style={{ fontSize: 13, marginTop: 8, fontWeight: 700, color: C.text }}>
+          Verdict: <span style={{ color }}>{overall.toUpperCase()}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- TopLevelSection — wrapper that renders a numbered top-level group
+// containing one or more subsection cards.
+function TopLevelSection({ index, title, children }) {
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        marginBottom: 12,
+        paddingBottom: 8,
+        borderBottom: '2px solid ' + C.border,
+      }}>
+        {index != null && (
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 28,
+            height: 28,
+            borderRadius: '50%',
+            background: C.accent,
+            color: '#fff',
+            fontSize: 12,
+            fontWeight: 700,
+            flexShrink: 0,
+          }}>
+            {index}
+          </span>
+        )}
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: C.text, margin: 0 }}>
+          {title}
+        </h2>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// --- AccountingRedFlagsRenderer — §4d render: maps over data.categories[]
+// showing each category's flagsFound[] or "Clean" state.
+function AccountingRedFlagsRenderer({ section }) {
+  const data = parseSectionData(section?.data);
+  const categories = Array.isArray(data?.categories) ? data.categories : [];
+  if (categories.length === 0) return null;
+
+  return (
+    <div style={{
+      marginTop: 12,
+      border: '1px solid ' + C.border,
+      borderRadius: 8,
+      padding: '12px 16px',
+      background: C.bgCard,
+    }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>
+        Accounting categories
+      </div>
+      {categories.map((cat, i) => {
+        const flags = Array.isArray(cat.flagsFound) ? cat.flagsFound : [];
+        const v = (cat.verdict || '').toString().toLowerCase();
+        const catColor = v === 'red' ? C.red : v === 'yellow' ? C.yellow : v === 'clean' ? C.green : C.textMuted;
+        const catLabel = (cat.category || `category ${i + 1}`).toString();
+        return (
+          <div key={i} style={{
+            padding: '8px 0',
+            borderBottom: i < categories.length - 1 ? '1px solid ' + C.borderLight : 'none',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <span style={{
+                display: 'inline-block',
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: catColor,
+                flexShrink: 0,
+              }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: C.text, textTransform: 'capitalize' }}>
+                {catLabel}
+              </span>
+              <span style={{ fontSize: 11, color: catColor, fontWeight: 700, textTransform: 'uppercase', marginLeft: 'auto' }}>
+                {flags.length === 0 ? 'Clean' : `${flags.length} flag${flags.length === 1 ? '' : 's'}`}
+              </span>
+            </div>
+            {flags.length === 0 ? (
+              <div style={{ fontSize: 12, color: C.textMuted, paddingLeft: 16, fontStyle: 'italic' }}>
+                No issues identified.
+              </div>
+            ) : (
+              <ul style={{ margin: 0, paddingLeft: 28 }}>
+                {flags.map((f, fi) => (
+                  <li key={fi} style={{ fontSize: 12, color: C.text, marginBottom: 2, lineHeight: 1.5 }}>
+                    {f.description || String(f)}
+                    {f.severity && (
+                      <span style={{ color: getSeverityColor(f.severity), fontWeight: 600, marginLeft: 6 }}>
+                        [{String(f.severity).toUpperCase()}]
+                      </span>
+                    )}
+                    {f.source && (
+                      <span style={{ color: C.textMuted, fontSize: 11, marginLeft: 6 }}>
+                        — {f.source}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Helper for accounting-flag severity dot
+function getSeverityColor(severity) {
+  const s = (severity || '').toString().toLowerCase();
+  if (s === 'high') return C.red;
+  if (s === 'medium') return C.yellow;
+  if (s === 'low') return C.green;
+  return C.textMuted;
+}
+
+// --- PreDecisionCheckRenderer — closing block on the Investment Verdict
+// section. Reads data.preDecisionCheck and renders calibration + anticipated
+// regret + variant perception in a distinct visual style.
+function PreDecisionCheckRenderer({ section }) {
+  const data = parseSectionData(section?.data);
+  const pdc = data?.preDecisionCheck;
+  if (!pdc || typeof pdc !== 'object') return null;
+
+  const renderList = (label, items) => {
+    if (!Array.isArray(items) || items.length === 0) return null;
+    return (
+      <div style={{ marginBottom: 8 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary, marginBottom: 2 }}>{label}</div>
+        <ul style={{ margin: 0, paddingLeft: 20 }}>
+          {items.map((it, i) => (
+            <li key={i} style={{ fontSize: 13, color: C.text, marginBottom: 2, lineHeight: 1.5 }}>
+              {String(it)}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+  const renderField = (label, value) => {
+    if (!value) return null;
+    return (
+      <div style={{ marginBottom: 8 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary, marginBottom: 2 }}>{label}</div>
+        <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5 }}>{String(value)}</div>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{
+      marginTop: 16,
+      padding: '14px 18px',
+      border: '1px dashed ' + C.accent,
+      borderRadius: 8,
+      background: C.accentLight,
+    }}>
+      <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 10, color: C.accent, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        Pre-Decision Quality Check
+      </div>
+      {renderList('High-confidence sections', pdc.highConfidenceSections)}
+      {renderList('Low-confidence sections', pdc.lowConfidenceSections)}
+      {renderList('Overconfidence risks', pdc.overconfidenceRisks)}
+      {renderField('Anticipated failure mode', pdc.anticipatedFailureMode)}
+      {renderField('Anticipated failure signal', pdc.anticipatedFailureSignal)}
+      {renderField('Variant perception', pdc.variantPerceptionStatement)}
+    </div>
+  );
+}
 
 // --- Pure helper functions (exported via _testExports) ---
 
@@ -979,89 +1243,141 @@ export default function PitchDeck({ getReport, updateReport }) {
             </div>
           )}
 
-          {SECTION_DEFS.map((def, idx) => {
-            const section = sectionMap[def.key];
-            const status = sectionStatuses[def.key];
+          {/* 2026-05-09 redesign render loop — top-level groups containing
+              one or more canonical subsections. Old archived reports are
+              auto-migrated by normalizeKey. */}
+          {TOP_LEVEL_GROUPS.map((group, groupIdx) => {
+            // Collect subsection sections + statuses for this group
+            const subsections = group.keys.map(canonicalKey => {
+              const section = sectionMap[canonicalKey] || null;
+              const status = sectionStatuses[canonicalKey] || null;
+              return { canonicalKey, section, status };
+            });
+
+            // Skip groups with no section data and no in-flight status
+            const hasAny = subsections.some(s => s.section || s.status);
+            if (!hasAny) {
+              return (
+                <TopLevelSection key={group.title} index={groupIdx + 1} title={group.title}>
+                  <div style={{
+                    border: '1px solid ' + C.border,
+                    borderRadius: 8,
+                    padding: '16px 20px',
+                    marginBottom: 20,
+                    background: C.bgCard,
+                    opacity: 0.4,
+                    minHeight: 60,
+                  }}>
+                    <span style={{ fontSize: 13, color: C.textMuted }}>
+                      {group.title} -- Pending...
+                    </span>
+                  </div>
+                </TopLevelSection>
+              );
+            }
 
             return (
-              <div key={def.key}>
-                {/* Render section or placeholder */}
-                {section ? (
-                  <div style={{ animation: 'thesis-fadeIn 0.4s ease' }}>
-                    <SectionRenderer
-                      section={section}
-                      sectionId={'section-' + def.key}
-                      onCitationClick={handleCitationClick}
-                      notableClaims={section.notableClaims}
-                      onDeepDiveClick={(claimIdx) => handleDeepDiveClick(def.key, claimIdx, section.notableClaims?.[claimIdx], section.narrative)}
-                      glossaryTerms={section.glossaryTerms}
-                      onGlossaryClick={handleGlossaryClick}
-                    />
-                  </div>
-                ) : status === 'running' ? (
-                  <div
-                    id={'section-' + def.key}
-                    style={{
-                      border: '1px solid ' + C.border,
-                      borderRadius: 8,
-                      padding: '16px 20px',
-                      marginBottom: 20,
-                      background: C.bgCard,
-                      opacity: 0.6,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      minHeight: 80,
-                      scrollMarginTop: 160,
-                    }}
-                  >
-                    <Spinner />
-                    <span style={{ fontSize: 13, color: C.textMuted }}>
-                      Agent: {progress?.sections?.[def.key]?.agentRole || 'analyst'} working...
-                    </span>
-                  </div>
-                ) : status === 'failed' ? (
-                  <div
-                    id={'section-' + def.key}
-                    style={{
-                      border: '1px solid ' + C.red,
-                      borderRadius: 8,
-                      padding: '16px 20px',
-                      marginBottom: 20,
-                      background: C.redBg,
-                      scrollMarginTop: 160,
-                    }}
-                  >
-                    <span style={{ fontSize: 13, fontWeight: 600, color: C.red }}>
-                      {def.label} -- Generation failed
-                    </span>
-                    {progress?.sections?.[def.key]?.error && (
-                      <div style={{ fontSize: 12, color: C.red, marginTop: 4 }}>
-                        {progress.sections[def.key].error}
+              <TopLevelSection key={group.title} index={groupIdx + 1} title={group.title}>
+                {subsections.map(({ canonicalKey, section, status }) => {
+                  if (section) {
+                    return (
+                      <div key={canonicalKey} style={{ animation: 'thesis-fadeIn 0.4s ease' }}>
+                        <SectionRenderer
+                          section={section}
+                          sectionId={'section-' + canonicalKey}
+                          onCitationClick={handleCitationClick}
+                          notableClaims={section.notableClaims}
+                          onDeepDiveClick={(claimIdx) => handleDeepDiveClick(canonicalKey, claimIdx, section.notableClaims?.[claimIdx], section.narrative)}
+                          glossaryTerms={section.glossaryTerms}
+                          onGlossaryClick={handleGlossaryClick}
+                        />
+                        {/* §4d Accounting Red Flags — categories breakdown */}
+                        {canonicalKey === 'accounting_red_flags' && (
+                          <AccountingRedFlagsRenderer section={section} />
+                        )}
+                        {/* Verdict box — closes every analytical subsection */}
+                        <VerdictBox section={section} />
+                        {/* Investment Verdict Pre-Decision Quality Check —
+                            distinct dashed-accent block at the very end. */}
+                        {canonicalKey === 'investment_verdict' && (
+                          <PreDecisionCheckRenderer section={section} />
+                        )}
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <div
-                    id={'section-' + def.key}
-                    style={{
-                      border: '1px solid ' + C.border,
-                      borderRadius: 8,
-                      padding: '16px 20px',
-                      marginBottom: 20,
-                      background: C.bgCard,
-                      opacity: 0.4,
-                      minHeight: 60,
-                      scrollMarginTop: 160,
-                    }}
-                  >
-                    <span style={{ fontSize: 13, color: C.textMuted }}>
-                      {def.label} -- Pending...
-                    </span>
-                  </div>
-                )}
-
-              </div>
+                    );
+                  }
+                  if (status === 'running') {
+                    return (
+                      <div
+                        key={canonicalKey}
+                        id={'section-' + canonicalKey}
+                        style={{
+                          border: '1px solid ' + C.border,
+                          borderRadius: 8,
+                          padding: '16px 20px',
+                          marginBottom: 20,
+                          background: C.bgCard,
+                          opacity: 0.6,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          minHeight: 80,
+                          scrollMarginTop: 160,
+                        }}
+                      >
+                        <Spinner />
+                        <span style={{ fontSize: 13, color: C.textMuted }}>
+                          Agent: {progress?.sections?.[canonicalKey]?.agentRole || 'analyst'} working...
+                        </span>
+                      </div>
+                    );
+                  }
+                  if (status === 'failed') {
+                    return (
+                      <div
+                        key={canonicalKey}
+                        id={'section-' + canonicalKey}
+                        style={{
+                          border: '1px solid ' + C.red,
+                          borderRadius: 8,
+                          padding: '16px 20px',
+                          marginBottom: 20,
+                          background: C.redBg,
+                          scrollMarginTop: 160,
+                        }}
+                      >
+                        <span style={{ fontSize: 13, fontWeight: 600, color: C.red }}>
+                          {canonicalKey} -- Generation failed
+                        </span>
+                        {progress?.sections?.[canonicalKey]?.error && (
+                          <div style={{ fontSize: 12, color: C.red, marginTop: 4 }}>
+                            {progress.sections[canonicalKey].error}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                  return (
+                    <div
+                      key={canonicalKey}
+                      id={'section-' + canonicalKey}
+                      style={{
+                        border: '1px solid ' + C.border,
+                        borderRadius: 8,
+                        padding: '16px 20px',
+                        marginBottom: 20,
+                        background: C.bgCard,
+                        opacity: 0.4,
+                        minHeight: 60,
+                        scrollMarginTop: 160,
+                      }}
+                    >
+                      <span style={{ fontSize: 13, color: C.textMuted }}>
+                        {canonicalKey} -- Pending...
+                      </span>
+                    </div>
+                  );
+                })}
+              </TopLevelSection>
             );
           })}
 
