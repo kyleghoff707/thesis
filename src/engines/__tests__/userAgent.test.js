@@ -29,7 +29,8 @@ describe('getUserAgent', () => {
   it('returns the default UA when no config file exists', () => {
     const ua = getUserAgent();
     expect(ua).toMatch(/^Thesis CLI\//);
-    expect(ua).toContain('github.com/kyleghoff707/thesis');
+    // SEC EDGAR requires email-format UA; the default ships with a project inbox.
+    expect(ua).toMatch(/\S+@\S+\.\S+$/);
   });
 
   it('returns the override when config.json has userAgent', () => {

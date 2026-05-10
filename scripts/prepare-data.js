@@ -15,11 +15,13 @@
 // Usage: node --loader ./scripts/node-esm-loader.js scripts/prepare-data.js TICKER
 //
 // Output: Structured JSON summary to stdout, human-readable logs to stderr.
-//         Also writes all artifacts to .thesis/reports/{TICKER}/
+//         Reports artifacts go to ~/thesis/reports/{TICKER}/; intermediate
+//         scratch (sections/, quality/) goes to ~/thesis/cache/{TICKER}/.
 
 import '../src/engines/nodeAdapter.js';
 import { assembleDataPacket } from '../src/engines/dataExport.js';
 import { fetchTranscript } from '../src/engines/transcripts.js';
+import { reportsDir, cacheDir } from '../src/utils/thesisDir.js';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
@@ -38,14 +40,16 @@ function timed(label) {
 }
 
 const totalStart = Date.now();
-const reportDir = join(process.cwd(), '.thesis', 'reports', ticker);
+const reportDir = reportsDir(ticker);
+const cacheBase = cacheDir(ticker);
 
 // ── Step 1: Gate Check ──────────────────────────────────────
 log(`\n=== Step 1: Gate Check for ${ticker} ===`);
 const done1 = timed('gateCheck');
 
-mkdirSync(join(reportDir, 'sections'), { recursive: true });
-mkdirSync(join(reportDir, 'quality'), { recursive: true });
+mkdirSync(join(cacheBase, 'sections'), { recursive: true });
+mkdirSync(join(cacheBase, 'quality'), { recursive: true });
+mkdirSync(reportDir, { recursive: true });
 
 const onePagerPath = join(reportDir, 'one-pager.json');
 if (!existsSync(onePagerPath)) {

@@ -13,6 +13,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { reportsDir } from '../src/utils/thesisDir.js';
 
 // Agent registry — which DataPacket fields each agent needs.
 // Source of truth: src/data/datapacket-slice-registry.json — shared with the
@@ -35,7 +36,7 @@ if (!ticker || !agentRole) {
   process.exit(1);
 }
 
-const dpPath = join(process.cwd(), `.thesis/reports/${ticker}/data-packet.json`);
+const dpPath = join(reportsDir(ticker), 'data-packet.json');
 if (!existsSync(dpPath)) {
   console.error(`DataPacket not found: ${dpPath}`);
   process.exit(1);

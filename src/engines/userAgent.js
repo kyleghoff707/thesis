@@ -1,14 +1,15 @@
 // Single User-Agent constant for SEC EDGAR + other identified-fetch APIs.
-// SEC asks researchers to identify themselves so they can contact us if
-// our traffic gets weird. We identify the project, not a person.
+// SEC enforces an email-format UA — URL-only or no-email returns 403. The default
+// is a real inbox on a project domain (not a personal Gmail). Users may override
+// via ~/thesis/config.json { "userAgent": "..." } to surface their own contact info.
 //
-// Power users may override via ~/thesis/config.json { "userAgent": "..." }
-// to surface their own contact info if they're running heavy queries.
+// Caveat: appending anything after the email (e.g. " (+https://...)") also returns
+// 403. The string must end with the email.
 
 import { configPath } from '../utils/thesisDir.js';
 import { readFileSync, existsSync } from 'node:fs';
 
-const DEFAULT_UA = 'Thesis CLI/0.1 (+https://github.com/kyleghoff707/thesis)';
+const DEFAULT_UA = 'Thesis CLI/0.1 kyle@thesis-investing.com';
 
 let cached = null;
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Injects locally-generated pipeline reports into a Thesis user's account via
-// the admin HTTP API. Reads .thesis/reports/{TICKER}/{one-pager,pitch-deck,final-thesis}.json
+// the admin HTTP API. Reads ~/thesis/reports/{TICKER}/{one-pager,pitch-deck,final-thesis}.json
 // and POSTs them to /admin/inject-report on api.thesis-investing.com.
 //
 // Usage:
@@ -24,9 +24,10 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
+import { reportsDir } from '../src/utils/thesisDir.js';
 
 const PROJECT_ROOT = resolve(import.meta.dirname, '..');
-const REPORTS_DIR = resolve(PROJECT_ROOT, '.thesis/reports');
+const REPORTS_DIR = reportsDir();
 
 const STAGE_FILES = {
   onePager: 'one-pager.json',
@@ -83,8 +84,8 @@ async function promptPassword(label) {
 }
 
 // Resolve the path to a stage JSON for a ticker. Tries working dir first
-// (.thesis/reports/{TICKER}/{file}.json), then the newest matching archive dir
-// (.thesis/reports/{TICKER}/archive/YYYYMMDD-HHMMSS-{TICKER}-{stage}/{file}.json).
+// (~/thesis/reports/{TICKER}/{file}.json), then the newest matching archive dir
+// (~/thesis/reports/{TICKER}/archive/YYYYMMDD-HHMMSS-{TICKER}-{stage}/{file}.json).
 // Archive dir names sort lexicographically = chronologically, so the max-named
 // dir is the most recent run for that stage.
 function resolveStagePath(ticker, stage) {
@@ -111,7 +112,7 @@ function resolveStagePath(ticker, stage) {
 }
 
 // The agent's final-thesis.json stores debate.{step1Bull,step2Bear,step3Rebuttal,step4Judge}
-// as path strings (e.g. ".thesis/reports/INTU/sections/debate-step-1-bull.json") —
+// as path strings (e.g. "~/thesis/reports/INTU/sections/debate-step-1-bull.json") —
 // the actual content lives in those sibling files. Inline them so D1 has real data.
 function inlineDebatePaths(raw, sourcePath) {
   if (!raw?.debate || typeof raw.debate !== 'object') return raw;

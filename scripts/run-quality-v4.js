@@ -8,8 +8,7 @@ import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from 
 import { join } from 'path';
 import { validateStage } from '../src/engines/critic.js';
 import { formatQualityReport } from '../src/engines/qualityFormatter.js';
-
-const ROOT = process.cwd();
+import { reportsDir, cacheDir } from '../src/utils/thesisDir.js';
 
 // Parse arguments
 const args = process.argv.slice(2);
@@ -25,8 +24,9 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
-const dir = join(ROOT, '.thesis/reports', ticker);
-const sectionsDir = join(dir, 'sections');
+const dir = reportsDir(ticker);            // reads final-thesis.json, pipeline-output.json, data-packet.json
+const cacheBase = cacheDir(ticker);        // reads sections/, writes quality/
+const sectionsDir = join(cacheBase, 'sections');
 
 // Auto-detect stage if not specified
 function detectStage() {
@@ -138,14 +138,14 @@ try {
 
 const report = validateStage(analysisSections, dataPacket);
 
-mkdirSync(join(dir, 'quality'), { recursive: true });
+mkdirSync(join(cacheBase, 'quality'), { recursive: true });
 
 // Output files named per stage
 const prefix = stage === 'finalThesis' ? 'final-thesis' : 'pitch-deck';
-writeFileSync(join(dir, `quality/${prefix}-v4.quality.json`), JSON.stringify(report, null, 2));
+writeFileSync(join(cacheBase, `quality/${prefix}-v4.quality.json`), JSON.stringify(report, null, 2));
 
 const md = formatQualityReport(report, { stage, ticker });
-writeFileSync(join(dir, `quality/${prefix}-v4.quality.md`), md);
+writeFileSync(join(cacheBase, `quality/${prefix}-v4.quality.md`), md);
 
 console.log('\n=== QUALITY SUMMARY ===');
 console.log(`Overall Score: ${report.overallScore} (mechanical) | ${report.overallMethodologyScore ?? '--'} (methodology)`);
@@ -168,4 +168,4 @@ if (methGaps.length > 0) {
   }
 }
 
-console.log(`\nWritten to: ${join(dir, 'quality/')}`);
+console.log(`\nWritten to: ${join(cacheBase, 'quality/')}`);
