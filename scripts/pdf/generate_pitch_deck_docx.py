@@ -29,16 +29,62 @@ from scripts.pdf.docx_helpers import (
     add_verdict_table, add_section_heading, add_body_paragraphs,
     embed_chart, add_red_flags as render_red_flags, add_citations_section,
     cleanup_temp_charts, VERDICT_COLORS_RGB, SLATE_600,
+    render_verdict_box, render_accounting_red_flags, render_pre_decision_check,
 )
 from docx.shared import Pt
 
 
-# Section keys that get specific chart treatments
+# =========================================================================
+# PITCH DECK REDESIGN (2026-05-09) — KEY MIGRATION + GROUPING
+# =========================================================================
+
+# Legacy section-key → current section-key. Routes archived pitch-deck JSON
+# (generated before the 2026-05-09 redesign) through the new top-level grouping.
+LEGACY_KEY_MAP = {
+    'radar': 'setup',
+    'simple_predictable': 'business_quality',
+    'simple_and_predictable': 'business_quality',
+    'barriers_moats': 'moat_analysis',
+    'fcf': 'cash_generation',
+    'roe_roic_debt': 'returns_leverage',
+    'management': 'management_capital_allocation',
+    'pest': 'risk_profile',
+    'pest_risks': 'risk_profile',
+    'overall_verdict': 'investment_verdict',
+    'valuation_summary': 'valuation',
+}
+
+
+def normalize_section_key(key):
+    """Map legacy section keys to current keys; pass through if already current."""
+    if not isinstance(key, str):
+        return key
+    return LEGACY_KEY_MAP.get(key, key)
+
+
+# 8 top-level groupings, mirrored across PDF + DOCX + UI for consistency.
+TOP_LEVEL_GROUPS = [
+    {'title': 'Setup & Situation', 'subsection_keys': ['setup']},
+    {'title': 'Business Quality', 'subsection_keys': ['business_quality']},
+    {'title': 'Industry & Competitive Position',
+     'subsection_keys': ['market_position', 'moat_analysis']},
+    {'title': 'Financial Analysis',
+     'subsection_keys': ['cash_generation', 'returns_leverage',
+                         'balance_sheet', 'accounting_red_flags']},
+    {'title': 'Management & Capital Allocation',
+     'subsection_keys': ['management_capital_allocation']},
+    {'title': 'Valuation', 'subsection_keys': ['valuation']},
+    {'title': 'Risk Profile', 'subsection_keys': ['risk_profile']},
+    {'title': 'Investment Verdict', 'subsection_keys': ['investment_verdict']},
+]
+
+
+# Chart treatments keyed by NORMALIZED (current) keys.
 CHART_SECTIONS = {
-    'simple_and_predictable': 'revenue',
-    'fcf': 'fcf',
+    'business_quality': 'revenue',
+    'cash_generation': 'fcf',
     'balance_sheet': 'debt_equity',
-    'valuation_summary': 'price_range',
+    'valuation': 'price_range',
 }
 
 
@@ -160,7 +206,7 @@ def _add_price_range_chart(doc, data, temp_charts):
         if methods and current_price > 0:
             path = generate_price_range_chart(
                 methods, float(current_price),
-                title=f'{data.ticker} Buy Price Ranges',
+                title=f'{data.ticker} Fair Value Ranges',
             )
             temp_charts.append(path)
             embed_chart(doc, path)
@@ -186,14 +232,21 @@ def generate_pitch_deck_docx(ticker, base_dir=None):
         verdict=verdict,
     )
 
+    # Build a normalized-key index so legacy reports resolve to current keys.
+    section_index = {}
+    for raw_key in data.get_section_keys():
+        norm = normalize_section_key(raw_key)
+        s = data.get_section(raw_key)
+        if s and norm not in section_index:
+            section_index[norm] = (raw_key, s)
+
     # ── Verdict Scorecard ────────────────────────────────────────────────────
     try:
         scorecard_sections = []
-        for key in data.get_section_keys():
-            if key == 'overall_verdict':
+        for norm_key, (raw_key, section) in section_index.items():
+            if norm_key == 'investment_verdict':
                 continue
-            section = data.get_section(key)
-            name = section.get('title', key.replace('_', ' ').title())
+            name = section.get('title', norm_key.replace('_', ' ').title())
             v = section.get('verdict', 'N/A')
             conf = section.get('confidence', '')
             signal = str(section.get('verdictRationale', ''))[:60]
@@ -210,75 +263,80 @@ def generate_pitch_deck_docx(ticker, base_dir=None):
     except Exception:
         pass
 
-    # ── Per-Section Rendering ────────────────────────────────────────────────
-    for key in data.get_section_keys():
-        if key == 'overall_verdict':
+    # ── Per-Section Rendering (7-group structure) ────────────────────────────
+    for group_num, group in enumerate(TOP_LEVEL_GROUPS, start=1):
+        sub_keys = group['subsection_keys']
+        present_subs = [(sk, section_index[sk]) for sk in sub_keys if sk in section_index]
+        if not present_subs:
             continue
 
-        section = data.get_section(key)
-        title = section.get('title', key.replace('_', ' ').title())
+        add_section_heading(doc, f'{group_num}. {group["title"]}', level=1)
 
-        add_section_heading(doc, title, level=1)
+        for norm_key, (raw_key, section) in present_subs:
+            sub_title = section.get('title', norm_key.replace('_', ' ').title())
+            add_section_heading(doc, sub_title, level=2)
 
-        # Section verdict
-        sec_verdict = section.get('verdict', '')
-        if sec_verdict:
-            p = doc.add_paragraph()
-            run = p.add_run(f'Verdict: {sec_verdict}')
-            run.font.bold = True
-            run.font.size = Pt(10)
-            run.font.name = 'Arial'
-            run.font.color.rgb = VERDICT_COLORS_RGB.get(
-                str(sec_verdict).upper().strip(), SLATE_600
-            )
-
-            # Confidence
-            sec_conf = section.get('confidence', '')
-            if sec_conf:
-                run = p.add_run(f'  |  Confidence: {sec_conf}')
+            # Section verdict line
+            sec_verdict = section.get('verdict', '')
+            if sec_verdict:
+                p = doc.add_paragraph()
+                run = p.add_run(f'Verdict: {sec_verdict}')
+                run.font.bold = True
                 run.font.size = Pt(10)
                 run.font.name = 'Arial'
-                run.font.color.rgb = SLATE_600
+                run.font.color.rgb = VERDICT_COLORS_RGB.get(
+                    str(sec_verdict).upper().strip(), SLATE_600
+                )
+                sec_conf = section.get('confidence', '')
+                if sec_conf:
+                    run = p.add_run(f'  |  Confidence: {sec_conf}')
+                    run.font.size = Pt(10)
+                    run.font.name = 'Arial'
+                    run.font.color.rgb = SLATE_600
 
-        # Strategic chart for specific sections
-        chart_type = CHART_SECTIONS.get(key)
-        if chart_type == 'revenue':
-            _add_revenue_chart(doc, data, temp_charts)
-        elif chart_type == 'fcf':
-            _add_fcf_chart(doc, data, temp_charts)
-        elif chart_type == 'debt_equity':
-            _add_debt_equity_chart(doc, data, temp_charts)
-        elif chart_type == 'price_range':
-            _add_price_range_chart(doc, data, temp_charts)
+            # Strategic chart for specific sections (keyed by NORMALIZED key)
+            chart_type = CHART_SECTIONS.get(norm_key)
+            if chart_type == 'revenue':
+                _add_revenue_chart(doc, data, temp_charts)
+            elif chart_type == 'fcf':
+                _add_fcf_chart(doc, data, temp_charts)
+            elif chart_type == 'debt_equity':
+                _add_debt_equity_chart(doc, data, temp_charts)
+            elif chart_type == 'price_range':
+                _add_price_range_chart(doc, data, temp_charts)
 
-        # Narrative
-        narrative = get_narrative(section)
-        if narrative:
-            add_body_paragraphs(doc, narrative)
+            # Narrative
+            narrative = get_narrative(section)
+            if narrative:
+                add_body_paragraphs(doc, narrative)
 
-        # Tables
-        tables = get_tables(section)
-        for t in tables:
-            if t.get('title'):
-                add_section_heading(doc, t['title'], level=3)
-            add_styled_table(doc, t.get('headers', []), t.get('rows', []))
+            # Tables
+            tables = get_tables(section)
+            for t in tables:
+                if t.get('title'):
+                    add_section_heading(doc, t['title'], level=3)
+                add_styled_table(doc, t.get('headers', []), t.get('rows', []))
 
-        # Red flags
-        flags = get_red_flags(section)
-        if flags:
-            render_red_flags(doc, flags)
+            # Red flags (skip on accounting_red_flags — categories block covers)
+            if norm_key != 'accounting_red_flags':
+                flags = get_red_flags(section)
+                if flags:
+                    render_red_flags(doc, flags)
 
-        # Collect citations for end-of-doc section
-        cites = get_citations(section)
-        all_citations.extend(cites)
+            # §4d Accounting Red Flags categories block
+            if norm_key == 'accounting_red_flags':
+                render_accounting_red_flags(doc, section)
 
-    # ── Overall Verdict Section ──────────────────────────────────────────────
-    ov_section = data.get_section('overall_verdict')
-    if ov_section:
-        add_section_heading(doc, 'Overall Verdict', level=1)
-        narrative = get_narrative(ov_section)
-        if narrative:
-            add_body_paragraphs(doc, narrative)
+            # Verdict box after each subsection narrative
+            render_verdict_box(doc, section)
+
+            # Investment verdict gets the closing pre-decision check block
+            if norm_key == 'investment_verdict':
+                render_pre_decision_check(doc, section)
+
+            # Collect citations for end-of-doc section
+            cites = get_citations(section)
+            all_citations.extend(cites)
 
     # ── Citations ────────────────────────────────────────────────────────────
     if all_citations:

@@ -572,6 +572,516 @@ def add_checklist_table(doc, items):
             run.font.name = 'Arial'
 
 
+def _section_data_dict(section):
+    """Return section['data'] as a dict, parsing JSON-string payloads safely."""
+    if not isinstance(section, dict):
+        return {}
+    data = section.get('data', {})
+    if isinstance(data, str):
+        import json
+        try:
+            data = json.loads(data)
+        except (json.JSONDecodeError, ValueError):
+            return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _camel_to_words_docx(s):
+    """Convert camelCase or snake_case to 'Title Words' for DOCX labels."""
+    s = str(s).replace('_', ' ')
+    s = re.sub(r'([a-z])([A-Z])', r'\1 \2', s)
+    return s[:1].upper() + s[1:] if s else s
+
+
+def render_verdict_box_docx(doc, section):
+    """
+    Render the verdict callout for a Final Thesis prose section as a
+    1-cell shaded table (DOCX equivalent of the bordered PDF box).
+
+    Reads `data.verdict`. Renders nothing if missing or not a dict —
+    graceful for legacy reports.
+    """
+    data = _section_data_dict(section)
+    verdict = data.get('verdict')
+    if not isinstance(verdict, dict):
+        return
+
+    overall = str(verdict.get('overall', 'WATCHLIST')).upper().strip()
+    color_map = {
+        'PASS': (GREEN_500, GREEN_500_HEX),
+        'WATCHLIST': (AMBER_500, AMBER_500_HEX),
+        'PARTIAL': (AMBER_500, AMBER_500_HEX),
+        'CONTEXT': (AMBER_500, AMBER_500_HEX),
+        'FAIL': (RED_500, RED_500_HEX),
+    }
+    rgb, _ = color_map.get(overall, (SLATE_600, SLATE_100_HEX))
+
+    # 1-cell single-row table with light shading + coloured text
+    table = doc.add_table(rows=1, cols=1)
+    table.style = 'Table Grid'
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    cell = table.rows[0].cells[0]
+    _set_cell_shading(cell, SLATE_100_HEX)
+
+    # Heading
+    title = section.get('title') or section.get('key', 'Section')
+    p = cell.paragraphs[0]
+    run = p.add_run(f'{title} verdict')
+    run.font.bold = True
+    run.font.size = Pt(11)
+    run.font.name = 'Arial'
+    run.font.color.rgb = rgb
+
+    # Verdict-detail lines (skip 'overall')
+    for k, v in verdict.items():
+        if k == 'overall':
+            continue
+        label = _camel_to_words_docx(k)
+        p = cell.add_paragraph()
+        run = p.add_run(f'{label}: {v}')
+        run.font.size = Pt(10)
+        run.font.name = 'Arial'
+        run.font.color.rgb = SLATE_600
+
+    # Overall stamp
+    p = cell.add_paragraph()
+    run = p.add_run(f'Verdict: {overall}')
+    run.font.bold = True
+    run.font.size = Pt(11)
+    run.font.name = 'Arial'
+    run.font.color.rgb = rgb
+
+    doc.add_paragraph('')
+
+
+def render_promise_tracker_docx(doc, section):
+    """
+    Render the Management Promise Tracker as a 5-column DOCX subsection.
+
+    Pulled from `data.promises`. Renders nothing if absent.
+    """
+    data = _section_data_dict(section)
+    promises = data.get('promises', [])
+    if not isinstance(promises, list) or not promises:
+        return
+
+    doc.add_heading('Management Promise Tracker', level=2)
+    headers = ['Quarter', 'Category', 'Promise', 'Evidence', 'Status']
+    rows = []
+    for p in promises:
+        if not isinstance(p, dict):
+            continue
+        rows.append([
+            str(p.get('quarterYear', p.get('quarter', ''))),
+            str(p.get('category', '')),
+            str(p.get('quote', p.get('promise', '')))[:160],
+            str(p.get('evidence', ''))[:160],
+            str(p.get('status', '')),
+        ])
+    if rows:
+        add_styled_table(doc, headers, rows)
+
+
+def render_trade_plan_docx(doc, section):
+    """
+    Render Section 7 Trade Plan: position sizing, entry tranches table,
+    sell rules list, PACE plan, forcing question.
+    """
+    data = _section_data_dict(section)
+
+    # Position sizing
+    sizing = data.get('positionSizing')
+    if sizing:
+        doc.add_heading('Position Sizing', level=2)
+        if isinstance(sizing, str):
+            add_body_paragraphs(doc, sizing)
+        elif isinstance(sizing, dict):
+            for label, value in sizing.items():
+                if value is None or value == '':
+                    continue
+                p = doc.add_paragraph(style='List Bullet')
+                run = p.add_run(f'{_camel_to_words_docx(label)}: {value}')
+                run.font.size = Pt(10)
+                run.font.name = 'Arial'
+                run.font.color.rgb = SLATE_800
+
+    # Entry tranches table
+    tranches = data.get('tranches', data.get('entryTranches', []))
+    if isinstance(tranches, list) and tranches:
+        doc.add_heading('Entry Tranches', level=2)
+        headers = ['Tranche', 'Size', 'Trigger Price', 'Rationale']
+        rows = []
+        for t in tranches:
+            if not isinstance(t, dict):
+                continue
+            rows.append([
+                str(t.get('tranche', t.get('label', ''))),
+                str(t.get('size', t.get('sizePct', ''))),
+                str(t.get('triggerPrice', t.get('trigger', ''))),
+                str(t.get('rationale', ''))[:160],
+            ])
+        if rows:
+            add_styled_table(doc, headers, rows)
+
+    # Sell rules
+    sell_rules = data.get('sellRules', [])
+    if isinstance(sell_rules, list) and sell_rules:
+        doc.add_heading('Sell Rules', level=2)
+        for r in sell_rules:
+            if isinstance(r, dict):
+                trigger = r.get('trigger', '')
+                action = r.get('action', '')
+                threshold = r.get('threshold', '')
+                line = f'{trigger}: {action}' if action else str(trigger)
+                if threshold:
+                    line += f' (threshold: {threshold})'
+            elif isinstance(r, str):
+                line = r
+            else:
+                continue
+            p = doc.add_paragraph(style='List Bullet')
+            run = p.add_run(line)
+            run.font.size = Pt(10)
+            run.font.name = 'Arial'
+            run.font.color.rgb = SLATE_800
+
+    # PACE plan
+    pace = data.get('pacePlan')
+    if isinstance(pace, dict):
+        doc.add_heading('PACE Plan', level=2)
+        for label in ('primary', 'alternative', 'contingency', 'emergency'):
+            value = pace.get(label, '')
+            if value:
+                p = doc.add_paragraph(style='List Bullet')
+                run = p.add_run(f'{label.capitalize()}: {value}')
+                run.font.size = Pt(10)
+                run.font.name = 'Arial'
+                run.font.color.rgb = SLATE_800
+
+    # Forcing question
+    fq = data.get('forcingQuestion')
+    if fq:
+        doc.add_heading('Forcing Question', level=2)
+        p = doc.add_paragraph()
+        run = p.add_run(str(fq))
+        run.font.italic = True
+        run.font.size = Pt(10)
+        run.font.name = 'Arial'
+        run.font.color.rgb = SLATE_600
+
+
+def render_watchpoints_docx(doc, section):
+    """
+    Render the "What we're monitoring" subsection at the end of §6 Compose.
+
+    Reads `data.watchpoints`. Renders nothing if absent.
+    """
+    data = _section_data_dict(section)
+    watchpoints = data.get('watchpoints', [])
+    if not isinstance(watchpoints, list) or not watchpoints:
+        return
+
+    doc.add_heading("What we're monitoring", level=2)
+    for wp in watchpoints:
+        if not isinstance(wp, dict):
+            continue
+        metric = wp.get('metric', '')
+        current = wp.get('currentValue', wp.get('current', ''))
+        threshold = wp.get('threshold', '')
+        direction = str(wp.get('direction', '')).lower()
+        if direction == 'below':
+            change = 'drops below'
+        elif direction == 'above':
+            change = 'rises above'
+        else:
+            change = 'crosses'
+        line = f'{metric}.'
+        if current != '' and current is not None:
+            line += f' Currently {current}.'
+        if threshold != '' and threshold is not None:
+            line += f' Re-evaluate if it {change} {threshold}.'
+        src = wp.get('sourceInversionId')
+        if src is not None and src != '':
+            line += f' (Source: bear inversion #{src}.)'
+        p = doc.add_paragraph(style='List Bullet')
+        run = p.add_run(line)
+        run.font.size = Pt(10)
+        run.font.name = 'Arial'
+        run.font.color.rgb = SLATE_800
+
+
+# =============================================================================
+# PITCH DECK REDESIGN (2026-05-09) — VERDICT BOX + REDESIGN-SPECIFIC HELPERS
+# =============================================================================
+
+# Verdict colors matching the redesign-plan spec.
+VERDICT_BOX_HEX = {
+    'PASS':       '4CAF50',
+    'WATCHLIST':  'FF9800',
+    'PARTIAL':    'FF9800',
+    'CONTEXT':    'FF9800',
+    'FAIL':       'F44336',
+}
+
+
+def _verdict_box_hex(verdict):
+    v = str(verdict or '').upper().strip()
+    return VERDICT_BOX_HEX.get(v, '64748B')  # slate fallback
+
+
+def _verdict_rgb(verdict):
+    """Return RGBColor matching the verdict-box hex palette."""
+    h = _verdict_box_hex(verdict)
+    return RGBColor(int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+
+
+def _strip_cite_tags(text):
+    """Lightweight wrapper that strips <cite> tags. Local import keeps this
+    module free of a hard dependency on section_renderers at import time."""
+    if not text or not isinstance(text, str):
+        return text or ''
+    try:
+        from section_renderers import _clean_narrative
+        return _clean_narrative(text)
+    except Exception:
+        return text
+
+
+def render_verdict_box(doc, section):
+    """Render a color-coded bordered call-out summarizing the section verdict.
+
+    DOCX-equivalent of the PDF verdict box — a single-cell bordered table
+    with a colored left edge stripe (via cell-border XML), a colored heading
+    row, and body text. Reads section.verdict (PASS/WATCHLIST/FAIL),
+    section.verdictRationale, section.confidence, and any section.data.verdictBox
+    payload (bullCase/bearCase/whatWouldChange/watchItems).
+    """
+    if not isinstance(section, dict):
+        return
+    verdict = str(section.get('verdict', '') or '').upper().strip()
+    if not verdict:
+        return
+
+    rationale = _strip_cite_tags(section.get('verdictRationale', '') or '')
+    confidence = section.get('confidence', '') or ''
+    data = section.get('data', {}) if isinstance(section.get('data'), dict) else {}
+    box_payload = data.get('verdictBox') if isinstance(data.get('verdictBox'), dict) else {}
+
+    color_hex = _verdict_box_hex(verdict)
+    color_rgb = _verdict_rgb(verdict)
+
+    table = doc.add_table(rows=1, cols=1)
+    table.style = 'Table Grid'
+    cell = table.rows[0].cells[0]
+    _set_cell_shading(cell, 'F8FAFC')
+
+    # Header paragraph
+    header_p = cell.paragraphs[0]
+    run = header_p.add_run(f'Verdict: {verdict}')
+    run.font.bold = True
+    run.font.size = Pt(11)
+    run.font.name = 'Arial'
+    run.font.color.rgb = color_rgb
+    if confidence:
+        run2 = header_p.add_run(f'   |   Confidence: {confidence}')
+        run2.font.size = Pt(10)
+        run2.font.name = 'Arial'
+        run2.font.color.rgb = SLATE_600
+
+    # Rationale
+    if rationale:
+        p = cell.add_paragraph()
+        run = p.add_run(rationale)
+        run.font.size = Pt(9)
+        run.font.name = 'Arial'
+        run.font.color.rgb = SLATE_800
+
+    # Optional structured fields
+    if box_payload:
+        for label, key in [
+            ('Bull Case', 'bullCase'),
+            ('Bear Case', 'bearCase'),
+            ('What Would Change This', 'whatWouldChange'),
+            ('Watch Items', 'watchItems'),
+        ]:
+            val = box_payload.get(key)
+            if not val:
+                continue
+            p = cell.add_paragraph()
+            run = p.add_run(f'{label}: ')
+            run.font.bold = True
+            run.font.size = Pt(9)
+            run.font.name = 'Arial'
+            run.font.color.rgb = SLATE_800
+            if isinstance(val, list):
+                content = '; '.join(str(x) for x in val)
+            else:
+                content = str(val)
+            run = p.add_run(content)
+            run.font.size = Pt(9)
+            run.font.name = 'Arial'
+            run.font.color.rgb = SLATE_600
+
+    # Colored left-edge accent + colored borders via cell-border XML
+    tc_pr = cell._tc.get_or_add_tcPr()
+    borders_xml = (
+        f'<w:tcBorders {nsdecls("w")}>'
+        f'<w:top w:val="single" w:sz="4" w:space="0" w:color="{color_hex}"/>'
+        f'<w:left w:val="single" w:sz="24" w:space="0" w:color="{color_hex}"/>'
+        f'<w:bottom w:val="single" w:sz="4" w:space="0" w:color="{color_hex}"/>'
+        f'<w:right w:val="single" w:sz="4" w:space="0" w:color="{color_hex}"/>'
+        f'</w:tcBorders>'
+    )
+    tc_pr.append(parse_xml(borders_xml))
+
+    doc.add_paragraph('')
+
+
+def render_accounting_red_flags(doc, section):
+    """Render the §4d Accounting Red Flags categories block.
+
+    Iterates `data.categories[]`, color-coding each by status
+    ("Clean" → green, anything else → amber/red). Each category renders
+    its `flagsFound[]` list (or a "Clean" note).
+    """
+    if not isinstance(section, dict):
+        return
+    data = section.get('data', {})
+    if not isinstance(data, dict):
+        return
+    categories = data.get('categories', [])
+    if not isinstance(categories, list) or not categories:
+        return
+
+    add_section_heading(doc, 'Accounting Red Flag Categories', level=2)
+
+    for cat in categories:
+        if not isinstance(cat, dict):
+            continue
+        name = str(cat.get('name', cat.get('category', 'Category')))
+        status = str(cat.get('status', cat.get('verdict', '')) or '').strip()
+        flags = cat.get('flagsFound', cat.get('flags', []))
+        if not isinstance(flags, list):
+            flags = []
+
+        status_upper = status.upper()
+        if status_upper in ('CLEAN', 'PASS', 'OK'):
+            color_rgb = _verdict_rgb('PASS')
+            display_status = 'Clean'
+        elif status_upper in ('FAIL', 'CRITICAL'):
+            color_rgb = _verdict_rgb('FAIL')
+            display_status = status or 'Issues Found'
+        else:
+            color_rgb = _verdict_rgb('WATCHLIST')
+            display_status = status or 'Issues Found'
+
+        # Category header
+        p = doc.add_paragraph()
+        run = p.add_run(f'{name}: {display_status}')
+        run.font.bold = True
+        run.font.size = Pt(11)
+        run.font.name = 'Arial'
+        run.font.color.rgb = color_rgb
+
+        # Flags or "Clean" note
+        if flags:
+            for f in flags:
+                if isinstance(f, dict):
+                    txt = f.get('flag') or f.get('description') or f.get('detail') or str(f)
+                else:
+                    txt = str(f)
+                p = doc.add_paragraph()
+                run = p.add_run('• ')
+                run.font.color.rgb = color_rgb
+                run.font.size = Pt(10)
+                run.font.name = 'Arial'
+                run = p.add_run(str(txt))
+                run.font.size = Pt(10)
+                run.font.name = 'Arial'
+                run.font.color.rgb = SLATE_800
+        else:
+            p = doc.add_paragraph()
+            run = p.add_run('No issues identified in this category.')
+            run.font.size = Pt(9)
+            run.font.italic = True
+            run.font.name = 'Arial'
+            run.font.color.rgb = SLATE_600
+
+
+def render_pre_decision_check(doc, section):
+    """Render the closing Pre-Decision Quality Check block on Investment Verdict.
+
+    Reads section.data.preDecisionCheck. Visually distinct: bordered single-cell
+    table with light-gray fill, italic body text, and bold field labels.
+    """
+    if not isinstance(section, dict):
+        return
+    data = section.get('data', {})
+    if not isinstance(data, dict):
+        return
+    pdc = data.get('preDecisionCheck')
+    if not pdc:
+        return
+
+    confidence_calibration = ''
+    anticipated_regret = ''
+    free_text = ''
+    if isinstance(pdc, dict):
+        confidence_calibration = str(pdc.get('confidenceCalibration', '') or '')
+        anticipated_regret = str(pdc.get('anticipatedRegret', '') or '')
+        free_text = str(pdc.get('text', '') or pdc.get('summary', '') or '')
+    elif isinstance(pdc, str):
+        free_text = pdc
+
+    if not (confidence_calibration or anticipated_regret or free_text):
+        return
+
+    add_section_heading(doc, 'Pre-Decision Quality Check', level=3)
+
+    table = doc.add_table(rows=1, cols=1)
+    table.style = 'Table Grid'
+    cell = table.rows[0].cells[0]
+    _set_cell_shading(cell, SLATE_100_HEX)
+
+    # First-paragraph anchor (cell starts with one empty paragraph)
+    first_used = False
+    if confidence_calibration:
+        p = cell.paragraphs[0]
+        first_used = True
+        run = p.add_run('Confidence calibration: ')
+        run.font.bold = True
+        run.font.size = Pt(9)
+        run.font.name = 'Arial'
+        run.font.color.rgb = SLATE_800
+        run = p.add_run(confidence_calibration)
+        run.font.size = Pt(9)
+        run.font.italic = True
+        run.font.name = 'Arial'
+        run.font.color.rgb = SLATE_600
+    if anticipated_regret:
+        target = cell.add_paragraph() if first_used else cell.paragraphs[0]
+        first_used = True
+        run = target.add_run('Anticipated regret: ')
+        run.font.bold = True
+        run.font.size = Pt(9)
+        run.font.name = 'Arial'
+        run.font.color.rgb = SLATE_800
+        run = target.add_run(anticipated_regret)
+        run.font.size = Pt(9)
+        run.font.italic = True
+        run.font.name = 'Arial'
+        run.font.color.rgb = SLATE_600
+    if free_text and not first_used:
+        p = cell.paragraphs[0]
+        run = p.add_run(free_text)
+        run.font.size = Pt(9)
+        run.font.italic = True
+        run.font.name = 'Arial'
+        run.font.color.rgb = SLATE_600
+
+    doc.add_paragraph('')
+
+
 def cleanup_temp_charts(chart_paths):
     """
     Delete temporary PNG chart files after they have been embedded.
