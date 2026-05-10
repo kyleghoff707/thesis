@@ -254,3 +254,44 @@ describe('sliceDataPacket', () => {
     expect(Object.keys(sliced)).not.toContain('insiders');
   });
 });
+
+// ─── Pitch deck redesign: 12 new section keys ────────────────────────
+
+describe('ReportSectionSchema — pitch deck redesign keys', () => {
+  const newKeys = [
+    'setup',
+    'business_quality',
+    'market_position',
+    'moat_analysis',
+    'cash_generation',
+    'returns_leverage',
+    'balance_sheet',
+    'accounting_red_flags',
+    'management_capital_allocation',
+    'valuation',
+    'risk_profile',
+    'investment_verdict',
+  ];
+
+  for (const key of newKeys) {
+    it(`accepts new key "${key}"`, () => {
+      const minimal = {
+        key,
+        title: 'Test',
+        sectionNumber: 1,
+        status: 'pass',
+        confidence: 'HIGH',
+        verdict: 'PASS',
+        verdictRationale: 'test',
+        summary: 'test',
+        data: '{}',
+        narrative: 'a'.repeat(250),
+        citations: [{ id: 1, ref: 'test', text: 'test', source: 'test' }],
+        redFlags: ['flag1', 'flag2'],
+        modelUsed: 'claude-sonnet-4-6',
+        tokenCost: { input: 1000, output: 500 },
+      };
+      expect(() => ReportSectionSchema.parse(minimal)).not.toThrow();
+    });
+  }
+});
