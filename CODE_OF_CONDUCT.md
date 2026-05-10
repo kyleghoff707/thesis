@@ -10,7 +10,7 @@ This code applies to all project spaces — GitHub issues, pull requests, discus
 
 ## Reporting
 
-Concerns about behavior in this community should be reported to **kyle@thes1sinvesting.com**. Reports are reviewed promptly and confidentially. The project maintainer is obligated to respect the privacy and security of anyone reporting an incident.
+Concerns about behavior in this community should be reported to **kyle@thesis-investing.com**. Reports are reviewed promptly and confidentially. The project maintainer is obligated to respect the privacy and security of anyone reporting an incident.
 
 ## Enforcement
 

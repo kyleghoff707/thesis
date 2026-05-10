@@ -2,7 +2,7 @@
 **/*.pyc
 **/.DS_Store
 .git
-.thes1s
+.thesis
 node_modules
 dist
 api/node_modules

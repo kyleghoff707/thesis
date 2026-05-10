@@ -5,15 +5,15 @@
 
 The user is NOT a programmer — keep explanations in plain English.
 
-**Status**: Mid-migration from the closed-product website (`Thes1s`) to a public OSS repo (`Thesis`). [STEPS.md](STEPS.md) is the authoritative phase plan. We are early in Phase 1.
+**Status**: Mid-migration to public OSS. Phase 1 (foundation) and Phase 2 lead step (mass rename) complete. Phase 2 parallel workstreams still pending: agent prompt framing rewrite, UI text, PDF/DOCX branding, and four brainstorm pods (Thesis Score rubric, valuation methods, guru list, Full Story redesign). [STEPS.md](STEPS.md) is the authoritative phase plan.
 
 ---
 
 ## Branding rules (non-negotiable)
 
-- **No "Rule One" / "Phil Town" / "R1"** anywhere — code, prompts, comments, docs, UI. Includes derivatives: "Rule One Score" → "Thesis Score".
+- **Do not reintroduce** "Rule One", "Phil Town", "R1", "Thes1s", or "thes1sinvesting" anywhere — code, prompts, comments, docs, UI. The Phase 2 rename stripped them; keep them stripped.
 - **Buffett, Graham, Lynch, Munger** are fine to reference by name (their methodology is public-domain; the disclaimer in [STEPS.md](STEPS.md) Appendix A handles legal coverage). Don't *frame* the product as theirs.
-- **Never use** `Thes1s` or `thes1sinvesting.com` in new work. New domain: `thesis-investing.com`. Copyright holder: Kyle Hoff. License: MIT.
+- **Identity**: product name is `Thesis`. Domain: `thesis-investing.com` (purchased). Copyright holder: Kyle Hoff. License: MIT.
 
 ---
 
@@ -85,4 +85,4 @@ STEPS.md           — Migration plan (private; gitignored before public release
 - **Default to deletion over preservation.** We're starting from a clean slate.
 - **Don't add features, tests, or polish** until Phase 2 rebrand finishes.
 - **Don't commit anything without explicit user approval.**
-- Anything matching `Thes1s`, `thes1sinvesting`, `Rule One`, `R1`, or `Phil Town` is a deletion target, not a refactor target.
+- Don't reintroduce old branding strings (`Thes1s`, `thes1sinvesting`, `Rule One`, `R1`, `Phil Town`); they were deleted in the Phase 2 rename.

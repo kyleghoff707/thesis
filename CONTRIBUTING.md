@@ -35,7 +35,7 @@ This policy may relax over time as the project matures and prompt-quality toolin
 
 ## Be civil
 
-This project follows the [Code of Conduct](CODE_OF_CONDUCT.md). Disagreements happen; harassment, ad hominem attacks, and bad-faith engagement do not. Report problems to kyle@thes1sinvesting.com.
+This project follows the [Code of Conduct](CODE_OF_CONDUCT.md). Disagreements happen; harassment, ad hominem attacks, and bad-faith engagement do not. Report problems to kyle@thesis-investing.com.
 
 ## License
 

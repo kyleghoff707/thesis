@@ -56,7 +56,7 @@ gstack/deploy-reports/*.png
 src/engines/__tests__/fixtures/edgar-cache/
 
 # Node adapter file cache (runtime, regenerated on demand)
-.thes1s/
+.thesis/
 .claude/worktrees/
 .claude/scheduled_tasks.lock
 .council/
