@@ -66,11 +66,11 @@
       },
       {
         "type": "text",
-        "text": "{\"key\":\"radar\",\"title\":\"Radar: Simple and Predictable\"}"
+        "text": "{\"key\":\"setup\",\"title\":\"Radar: Simple and Predictable\"}"
       }
     ],
     "parsed_output": {
-      "key": "radar",
+      "key": "setup",
       "title": "Radar: Simple and Predictable",
       "sectionNumber": 1,
       "status": "pass",
@@ -155,7 +155,7 @@
     "content": [
       {
         "type": "text",
-        "text": "{\"key\":\"radar\",\"title\":\"Radar: Simple and"
+        "text": "{\"key\":\"setup\",\"title\":\"Radar: Simple and"
       }
     ],
     "parsed_output": null,
