@@ -13,7 +13,8 @@ See [STEPS.md](STEPS.md) Phase 2B for the broader migration context.
 | Tag | Unblocked when… |
 |---|---|
 | `[POD-SCORE]` | **RESOLVED 2026-05-09** — see [docs/specs/2026-05-09-thesis-score-redesign.md](docs/specs/2026-05-09-thesis-score-redesign.md). All `[POD-SCORE]`-tagged rows below are addressed by the v2 engine + UI swap. |
-| `[POD-VAL]` | Valuation methods brainstorm decides which calculators stay, drop, or get reworked |
+| `[POD-PD]` | **RESOLVED 2026-05-09** — see [docs/specs/2026-05-09-pitch-deck-redesign.md](docs/specs/2026-05-09-pitch-deck-redesign.md). All `[POD-PD]`-tagged rows below are addressed by this spec. |
+| `[POD-VAL]` | Valuation methods brainstorm decides which calculators stay, drop, or get reworked (Stage 3 valuation only — Stage 2 valuation labels are now `[POD-PD]`) |
 | `[POD-GURU]` | Guru list rebuild produces the new criteria + curated 13F filer list |
 | `[POD-FS]` | Full Story redesign locks the rename + structural changes |
 | `[INDEP]` | Not pod-blocked. Safe to rewrite anytime in Phase 2B (or skip if it's already fine) |
@@ -30,7 +31,7 @@ File: [src/components/tourSteps.js](src/components/tourSteps.js)
 | 20 | "Watchlists … Research … Gurus … Reports for your AI-generated investment theses" | "investment theses" presumes thesis-driven workflow | `[POD-FS]` |
 | 36 | "colored score badges on the right — Thesis Score, Moat, and Management — are computed from 10 years of SEC EDGAR filings" | "Moat" / "Management" are Four Ms framework labels; the inputs/weights described will change with the new score | `[POD-SCORE]` |
 | 45 | "Three scores at a glance. The overall Thesis Score combines Moat (growth rate quality across BVPS, EPS, revenue, and operating cash flow) and Management (return on equity, return on invested capital, and debt levels)…" | Names the exact Rule-One inputs (Big Five rates, ROE/ROIC/Debt) and the Moat/Management dichotomy | `[POD-SCORE]` |
-| 53 | "Valuation for buy price calculators" | "Buy price calculators" = the Rule-One specific calculators (Ten Cap, MOS, Payback Time) | `[POD-VAL]` |
+| 53 | "Valuation for buy price calculators" | Stage 2 Toolbox valuation tab — redesign keeps 4 calculators (MOS / Payback Time / Ten Cap / Equity Bond) and renames buy-price output to "Fair Value" | `[POD-PD]` |
 | 61 | "One Pager (quick screen), Pitch Deck (deep research), and Full Story (conviction thesis)" | "Full Story" name + "conviction thesis" framing depend on the rename decision | `[POD-FS]` |
 | 69 | "stage pills: green means approved, teal means generated and ready for your review, gray means not yet generated, and dimmed means locked until the previous stage is approved" | Approval-gating language fine; the stage NAMES referenced will change | `[POD-FS]` |
 | 85 | "See what the world's top investors are buying and selling. … gurus have different time horizons and strategies" | "gurus" terminology + framing of which investors are featured | `[POD-GURU]` |
@@ -66,7 +67,7 @@ File: [src/components/PitchDeck.jsx](src/components/PitchDeck.jsx)
 | 41 | `{ key: 'barriers_moats', label: 'Barriers & Moats', phase: 2 }` | Four Ms framework label | `[POD-SCORE]` |
 | 43 | `{ key: 'management', label: 'Management', phase: 2 }` | Four Ms framework label | `[POD-SCORE]` |
 | 46 | `{ key: 'pest', label: 'PEST Risks', phase: 3 }` | Specific risk-framework choice | `[INDEP]` |
-| 47 | `{ key: 'valuation', label: 'Valuation', phase: 3 }` | Generic, but content depends on valuation pod | `[POD-VAL]` |
+| 47 | `{ key: 'valuation', label: 'Valuation', phase: 3 }` | Stage 2 section — redesign retains "Valuation" as one of 7 top-level sections; content uses 4 calculators with "Fair Value" output naming | `[POD-PD]` |
 | 50–55 | `Phase 1: Business Fundamentals`, `Phase 2: Financial Deep-Dive`, `Phase 3: Risk & Valuation`, `Final: Synthesis` | Generic — likely fine to keep | `[INDEP]` |
 
 ### FullStory section keys
@@ -111,7 +112,7 @@ File: [src/components/Toolbox.jsx](src/components/Toolbox.jsx)
 
 ## 5. Valuation calculators (heaviest concentration)
 
-All blocked on `[POD-VAL]` — drop or rework decision will set the final shape.
+**`[POD-PD]` — RESOLVED 2026-05-09.** All rows in this section are Stage 2 valuation UI (Toolbox calculators + Pitch Deck Valuation section). The pitch-deck redesign spec retains all four calculators (MOS / Payback Time / Ten Cap / Equity Bond) and renames the buy-price output to "Fair Value". See [docs/specs/2026-05-09-pitch-deck-redesign.md](docs/specs/2026-05-09-pitch-deck-redesign.md).
 
 File: [src/components/ValuationCalculators.jsx](src/components/ValuationCalculators.jsx)
 
@@ -139,7 +140,7 @@ File: [src/components/Valuation.jsx](src/components/Valuation.jsx)
 | Line | String | Why |
 |---|---|---|
 | 175 | `const ALL_HERO_KEYS = ['10 Cap', 'MOS', 'PBT', 'Equity Bond'];` | All four method names hardcoded |
-| 36–41 | Sub-tab labels: `Growth Rate Analysis`, `Valuation Inputs`, `Valuation Calculators`, `Price vs Value` | Generic labels — likely fine, but content depends on POD-VAL |
+| 36–41 | Sub-tab labels: `Growth Rate Analysis`, `Valuation Inputs`, `Valuation Calculators`, `Price vs Value` | Generic labels — likely fine; content covered by `[POD-PD]` resolution above |
 
 File: [src/components/HistoricalBuyPrices.jsx](src/components/HistoricalBuyPrices.jsx)
 
