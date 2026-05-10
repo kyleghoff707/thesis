@@ -20,6 +20,8 @@ from section_renderers import (
     get_verdict_color, format_currency, format_pct,
     _clean_narrative
 )
+from citation_links import extract_url
+from prose_structurer import structure_prose
 
 
 # =========================================================================
@@ -91,22 +93,22 @@ def _verdict_box_color(verdict):
 # =========================================================================
 
 def _render_narrative(pdf, narrative):
-    """Render a section narrative, splitting on paragraph headers."""
+    """Render a section narrative as a sequence of typed blocks."""
     if not narrative:
         return
-    # Clean cite tags and internal jargon before rendering
     narrative = _clean_narrative(narrative)
-    for para in narrative.split('\n\n'):
-        para = para.strip()
-        if not para:
-            continue
-        # Bold markdown sub-headers: **Title Text**
-        if para.startswith('**') and para.endswith('**') and len(para) < 120:
-            pdf.add_section_header(para[2:-2], level=3)
-        elif para.endswith(':') or (len(para) < 120 and '\u2014' in para):
-            pdf.add_section_header(para.rstrip(':'), level=3)
+    for block in structure_prose(narrative):
+        kind = block['kind']
+        if kind == 'subheader':
+            pdf.add_section_header(block['text'], level=3)
+        elif kind == 'bullets':
+            for item in block['items']:
+                pdf.add_bullet(item, indent=2)
+        elif kind == 'numbered':
+            for i, item in enumerate(block['items'], 1):
+                pdf.add_numbered_item(i, item)
         else:
-            pdf.add_body_text(para)
+            pdf.add_body_text(block['text'])
 
 
 def _render_tables(pdf, tables):
@@ -173,9 +175,16 @@ def _render_citations_page(pdf, all_citations):
             line = f'[{i}] {ref}'
             if text:
                 line += f': {text}'
-            if source and source != 'DataPacket':
+            url_info = extract_url(source) if source else None
+            if url_info:
+                url, display = url_info
+                line += f'  ({display})'
+                pdf.add_bullet(line, indent=2, link=url, link_text=display)
+            elif source and source != 'DataPacket':
                 line += f'  ({source})'
-            pdf.add_bullet(line, indent=2)
+                pdf.add_bullet(line, indent=2)
+            else:
+                pdf.add_bullet(line, indent=2)
 
 
 # =========================================================================
@@ -287,7 +296,7 @@ def _render_price_range(pdf, data):
                 methods.append((name, float(low), float(high), color))
 
     if methods:
-        pdf.draw_price_range_chart('Fair Value Ranges vs Current Price',
+        pdf.draw_price_range_chart('Full Price Ranges vs Current Price',
                                    methods, current_price)
 
 
@@ -356,7 +365,7 @@ def _render_valuation_deep_dive(pdf, data, section):
             method_data.append([label, vals[0], vals[1] if len(vals) > 1 else 'N/A'])
 
     if method_data:
-        pdf.add_section_header('Fair Value Summary by Method', level=2)
+        pdf.add_section_header('Full Price Summary by Method', level=2)
         col_labels = ['Method', 'Conservative', 'Optimistic']
         pdf.add_table(col_labels, method_data)
 
@@ -388,10 +397,10 @@ def _render_valuation_deep_dive(pdf, data, section):
     if isinstance(dual_oe, dict) and dual_oe:
         pdf.add_section_header('Dual Owner Earnings', level=2)
         oe_rows = []
-        r1 = dual_oe.get('ruleOneOE')
+        vi = dual_oe.get('valueInvestingOE')
         gr = dual_oe.get('grahamOE')
-        if r1 is not None:
-            oe_rows.append(['Value Investing Method', format_currency(r1)])
+        if vi is not None:
+            oe_rows.append(['Value Investing Method', format_currency(vi)])
         if gr is not None:
             oe_rows.append(['Graham Method', format_currency(gr)])
         if oe_rows:
@@ -465,25 +474,169 @@ CHART_SECTIONS = {
 }
 
 
-def _render_section_charts(pdf, data, section_key, original_key=None):
-    """Inject section-specific charts based on the NORMALIZED section key.
+def _section_data_dict(section):
+    """Return section.data as a dict, decoding JSON-string variants."""
+    if not isinstance(section, dict):
+        return {}
+    raw = section.get('data')
+    if isinstance(raw, dict):
+        return raw
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+            return parsed if isinstance(parsed, dict) else {}
+        except (ValueError, TypeError):
+            return {}
+    return {}
 
-    `section_key` is the normalized current key. `original_key` (optional)
-    is the raw key from JSON, used to look up the raw section for legacy
-    code paths that still call ReportData.get_section() with the old key.
-    """
+
+def _render_moat_radar(pdf, data):
+    """Radar chart of moat axes from moat_analysis section."""
+    section = data.get_section('moat_analysis') or data.get_section('barriers_moats')
+    raw = _section_data_dict(section)
+    moats = raw.get('moatTypes')
+    if not isinstance(moats, list) or len(moats) < 3:
+        return
+    strength_map = {'strong': 9, 'wide': 9, 'moderate': 6, 'narrow': 4, 'weak': 2, 'none': 0}
+    labels, values = [], []
+    for m in moats:
+        if not isinstance(m, dict):
+            continue
+        t = str(m.get('type', '')).strip()
+        s = str(m.get('strength', '')).lower().strip()
+        if not t:
+            continue
+        labels.append(t.title())
+        values.append(strength_map.get(s, 5))
+    if len(labels) >= 3:
+        pdf.draw_radar('Moat Strength by Type', labels, values, max_value=10)
+
+
+def _render_capex_donut(pdf, data):
+    """Donut showing maintenance vs growth capex split."""
+    section = data.get_section('cash_generation') or data.get_section('fcf')
+    raw = _section_data_dict(section)
+    cb = raw.get('capexBreakdown')
+    if not isinstance(cb, dict):
+        return
+    maint = cb.get('maintenanceCapex')
+    growth = cb.get('growthCapex')
+    if not (isinstance(maint, (int, float)) and isinstance(growth, (int, float))):
+        return
+    if maint + growth <= 0:
+        return
+    pdf.draw_donut('Capex Split: Maintenance vs Growth (latest FY)',
+                   [('Maintenance', maint), ('Growth', growth)],
+                   colors=[pdf.teal_500, pdf.amber_500])
+
+
+def _render_capital_allocation_stack(pdf, data):
+    """5-year stacked bar of CapEx, Buybacks, Dividends from financial statements."""
+    cf = data.data_packet.get('financials', {}).get('cashFlow', {})
+    yrs = sorted([y for y in cf.keys() if str(y).isdigit()])[-5:]
+    if len(yrs) < 3:
+        return
+    capex, buybacks, divs = [], [], []
+    for y in yrs:
+        rec = cf.get(y) or cf.get(str(y)) or {}
+        capex.append(abs(rec.get('payments_to_acquire_property_plant_and_equipment') or
+                         rec.get('capital_expenditures') or 0))
+        buybacks.append(abs(rec.get('payments_for_repurchase_of_common_stock') or 0))
+        divs.append(abs(rec.get('payments_of_dividends_common_stock') or
+                        rec.get('payments_of_dividends') or 0))
+    if not any(capex) and not any(buybacks) and not any(divs):
+        return
+    pdf.draw_stacked_bar_chart(
+        'Capital Allocation (5y, billions)',
+        [str(y) for y in yrs],
+        [capex, buybacks, divs],
+        ['CapEx', 'Buybacks', 'Dividends'],
+        [pdf.teal_500, pdf.teal_400, pdf.amber_500],
+        unit='B',
+    )
+
+
+def _render_peer_comparison(pdf, data):
+    """Subject vs peer-median comparison for ROIC, ROE, Margin."""
+    averages = data.data_packet.get('returnMetrics', {}).get('averages', {})
+    income = data.data_packet.get('financials', {}).get('income', {})
+    yrs = sorted([y for y in income.keys() if str(y).isdigit()])
+    latest_yr = yrs[-1] if yrs else None
+    if not latest_yr:
+        return
+
+    subj_roic = averages.get('roic_3yr')
+    subj_roe = averages.get('roe_3yr')
+    if subj_roic is None or subj_roe is None:
+        return
+
+    peers = data.data_packet.get('peers') or []
+    peer_roic, peer_roe = [], []
+    for p in peers:
+        if not isinstance(p, dict):
+            continue
+        rm = p.get('returnMetrics') or p.get('returns') or {}
+        if isinstance(rm, dict):
+            avgs = rm.get('averages') or {}
+            if isinstance(avgs.get('roic_3yr'), (int, float)):
+                peer_roic.append(avgs['roic_3yr'])
+            if isinstance(avgs.get('roe_3yr'), (int, float)):
+                peer_roe.append(avgs['roe_3yr'])
+
+    def _median(xs):
+        xs = sorted(xs)
+        if not xs:
+            return None
+        n = len(xs)
+        return xs[n // 2] if n % 2 else (xs[n // 2 - 1] + xs[n // 2]) / 2
+
+    p_roic = _median(peer_roic)
+    p_roe = _median(peer_roe)
+    if p_roic is None and p_roe is None:
+        return
+
+    series_subj, series_peer, labels = [], [], []
+    if subj_roic is not None and p_roic is not None:
+        labels.append('ROIC (3y)')
+        series_subj.append(round(subj_roic, 1))
+        series_peer.append(round(p_roic, 1))
+    if subj_roe is not None and p_roe is not None:
+        labels.append('ROE (3y)')
+        series_subj.append(round(subj_roe, 1))
+        series_peer.append(round(p_roe, 1))
+
+    if not labels:
+        return
+
+    pdf.draw_comparison_bar_chart(
+        'Peer Comparison — Subject vs. Peer Median',
+        labels,
+        [series_subj, series_peer],
+        ['Subject', 'Peer Median'],
+        [pdf.teal_500, pdf.slate_600],
+        unit='%',
+    )
+
+
+def _render_section_charts(pdf, data, section_key, original_key=None):
+    """Inject section-specific charts based on the NORMALIZED section key."""
     raw_key = original_key or section_key
     if section_key == 'business_quality':
         _render_revenue_chart(pdf, data)
+    elif section_key == 'market_position':
+        _render_peer_comparison(pdf, data)
+    elif section_key == 'moat_analysis':
+        _render_moat_radar(pdf, data)
     elif section_key == 'cash_generation':
         _render_fcf_chart(pdf, data)
+        _render_capex_donut(pdf, data)
+        _render_capital_allocation_stack(pdf, data)
     elif section_key == 'balance_sheet':
         _render_balance_sheet_chart(pdf, data)
     elif section_key == 'valuation':
         _render_price_range(pdf, data)
         _render_valuation_deep_dive(pdf, data, data.get_section(raw_key))
     elif section_key == 'management_capital_allocation':
-        # Score gauges if data available
         scores = data.get_scores()
         if scores:
             gauges = []
@@ -766,7 +919,7 @@ def generate_pitch_deck(ticker, base_dir=None):
 
     pdf = ThesisPDF(
         title=f'{company_name} ({ticker})',
-        subtitle='value investing Pitch Deck \u2014 Business Research Case',
+        subtitle='Pitch Deck \u2014 Business Research Case',
         stage_label='Pitch Deck'
     )
 
@@ -777,6 +930,9 @@ def generate_pitch_deck(ticker, base_dir=None):
         verdict=overall_verdict,
         disclaimer='AI-generated research report for educational purposes only. Not financial advice.'
     )
+
+    # Pipeline flow on cover
+    pdf.draw_pipeline_flow('Pitch Deck')
 
     # ── Verdict Scorecard ────────────────────────────────────────────────
     pdf.add_section_header('Section Verdict Scorecard', level=1)

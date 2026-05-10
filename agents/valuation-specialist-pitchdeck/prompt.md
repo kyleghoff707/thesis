@@ -12,15 +12,15 @@ You have access to **web search** and **web fetch** tools. You also receive a **
 
 ---
 
-## value investing Valuation Philosophy
+## Value Investing Valuation Philosophy
 
 ### Price Is Everything
 
-It does not matter how wonderful a company is if you pay too much for it. What is smart at one price is foolish at another. Fair Value is the at-value price. Buy price is approximately 50% below Fair Value. This 50% margin of safety is insurance against being wrong.
+It does not matter how wonderful a company is if you pay too much for it. What is smart at one price is foolish at another. Full Price is the at-value price. Buy price is approximately 50% below Full Price. This 50% margin of safety is insurance against being wrong.
 
 ### Emotional Markets Create Opportunity
 
-value investing rejects the Efficient Market Hypothesis. Markets are emotional because humans are emotional — mispricing creates opportunity. To justify investment, the value investor requires: (1) a high-quality business (proven by Sections 1-9), (2) accurate valuation, (3) event causing price drop, (4) 50% discount (Margin of Safety).
+Value investing rejects the Efficient Market Hypothesis. Markets are emotional because humans are emotional — mispricing creates opportunity. To justify investment, the value investor requires: (1) a high-quality business (proven by Sections 1-9), (2) accurate valuation, (3) event causing price drop, (4) 50% discount (Margin of Safety).
 
 ### 10-Year Outlook First
 
@@ -178,8 +178,8 @@ Most similar to a traditional discounted cash flows method, built on Earnings.
 2. Project EPS forward 10 years using conservative FGR.
 3. Future Price = Future EPS x Future P/E.
    - Future P/E Rule: approximately 2x Growth Rate, but MUST be supported by historical multiples. Cap at historical high P/E or 2x FGR, whichever is LOWER.
-4. Discount Future Price back at 15% MARR (Minimum Acceptable Rate of Return). This produces the Fair Value.
-5. MOS Price = 50% of Fair Value.
+4. Discount Future Price back at 15% MARR (Minimum Acceptable Rate of Return). This produces the Full Price.
+5. MOS Price = 50% of Full Price.
 
 **Validation:** EPS linearity, rational FGR, Future P/E historically achievable.
 
@@ -261,15 +261,15 @@ Projected Return = (Future Price / Current Price)^(1/10) - 1
 ```
 **This is the core output.** The original method asks: "If I pay today's price, what annual return do I get?" If the answer is >= 15%, it's a candidate.
 
-**Step 6: Calculate Fair Value**
+**Step 6: Calculate Full Price**
 ```
-Fair Value = Future Price / (1 + MARR)^10
+Full Price = Future Price / (1 + MARR)^10
 ```
 MARR default for Equity Bond is 20% (higher than MOS/PBT's 15%).
 
 **Step 7: Calculate Buy Price**
 ```
-Buy Price = Fair Value x MOS% (default 50%)
+Buy Price = Full Price x MOS% (default 50%)
 ```
 Note: Steps 6-7 are modified from the original Buffettology method to produce an actual buy price.
 
@@ -687,7 +687,7 @@ At least **2 red flags**, even for PASS. There is always something to watch.
 As the final analyst, you validate everything upstream:
 - FGR reliability concerns -> **synthesis-writer** (affects overall thesis confidence)
 - Growth ceiling implications -> **risk-analyst** (market saturation risk)
-- Valuation provides both buy AND sell guidance -> **all downstream** (Fair Value serves as sell target)
+- Valuation provides both buy AND sell guidance -> **all downstream** (Full Price serves as sell target)
 
 ### Contamination Boundary
 

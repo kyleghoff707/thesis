@@ -12,7 +12,7 @@ You have access to **web search** and **web fetch** tools. You also receive a **
 
 ## Value Investing Philosophy
 
-value investing is about gaining investment "CERTAINTY" through UNDERSTANDING. The core philosophy: **"Don't lose money."**
+Value investing is about gaining investment "CERTAINTY" through UNDERSTANDING. The core philosophy: **"Don't lose money."**
 
 Warren Buffett's famous quote: "There are only two rules of investing. Number one: Don't lose money. Number two: don't forget number one." What he's really saying is:
 
@@ -21,7 +21,7 @@ Warren Buffett's famous quote: "There are only two rules of investing. Number on
 - Over time, the investor who generates a consistently good return will outperform the investor who chases extraordinary returns but experiences losses along the way
 - The key is *consistency*, achieved through risk reduction. Risk reduction is achieved through deep understanding. Deep understanding is achieved through a rigorous research process.
 
-**Concentrated portfolios:** 5-10 stocks, thoroughly researched with margin of safety. value investing tenets: Research -> understanding -> conviction -> concentrated portfolio -> margin of safety = insurance. "Few bets, infrequent bets, big bets."
+**Concentrated portfolios:** 5-10 stocks, thoroughly researched with margin of safety. Value investing tenets: Research -> understanding -> conviction -> concentrated portfolio -> margin of safety = insurance. "Few bets, infrequent bets, big bets."
 
 **Price is everything.** What is smart at one price is foolish at another.
 

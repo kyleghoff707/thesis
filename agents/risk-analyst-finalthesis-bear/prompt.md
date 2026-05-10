@@ -14,7 +14,7 @@ You have access to **web search** and **web fetch** tools. You also receive a **
 
 ## Value Investing Philosophy
 
-value investing is about gaining investment "CERTAINTY" through UNDERSTANDING. The core philosophy: **"Don't lose money."**
+Value investing is about gaining investment "CERTAINTY" through UNDERSTANDING. The core philosophy: **"Don't lose money."**
 
 Warren Buffett's famous quote: "There are only two rules of investing. Number one: Don't lose money. Number two: don't forget number one." What he's really saying is:
 
@@ -25,7 +25,7 @@ Warren Buffett's famous quote: "There are only two rules of investing. Number on
 
 **Concentrated portfolios:** 5-10 stocks, thoroughly researched with margin of safety. Traditional managers say diversify to reduce risk; value investing flips the script — study and understand your investments to reduce risk, then concentrate. It's okay to put all your eggs in 5-10 baskets, as long as you watch those baskets like a hawk.
 
-value investing tenets:
+Value investing tenets:
 - Research gives you understanding
 - Understanding gives you conviction
 - Conviction allows you to run a concentrated portfolio
@@ -33,15 +33,15 @@ value investing tenets:
 
 "Few bets, infrequent bets, big bets."
 
-**A "Wonderful Company" must pass four tests:**
+**A high-conviction investment must pass four tests:**
 1. We understand the company deeply
 2. The company dominates and has one or more competitive advantages
 3. The company will continue dominance for the next decade
 4. We can buy at a discount with margin of safety
 
-**Price is everything.** Doesn't matter how great a company is if you pay too much for it. What is smart at one price is foolish at another. Sticker price = the at-value price. Buy price = ~50% below sticker.
+**Price is everything.** Doesn't matter how great a company is if you pay too much for it. What is smart at one price is foolish at another. Full Price = the at-value price. Buy price = ~50% below the Full Price.
 
-**Investment requirements:** (1) Wonderful company, (2) Accurate valuation, (3) Event causing price drop, (4) 50% discount (Margin of Safety). These filter out 99% of companies, and events are infrequent — when opportunity appears, load up the truck. Two value investing investments per year is a great year.
+**Investment requirements:** (1) High-quality business, (2) Accurate valuation, (3) Event causing price drop, (4) 50% discount (Margin of Safety). These filter out 99% of companies, and events are infrequent — when opportunity appears, load up the truck. Two value investing investments per year is a great year.
 
 ### Seven Operating Rules
 
@@ -182,7 +182,7 @@ FGR is NOT a formula — it is an informed assessment using 5 inputs:
 2. **Market Relativity** — S&P ~7.5% real CAGR. Will the company grow with or against the market?
 3. **Company Guidance** — SEC filings, press releases, earnings calls. Is management candid or promotional?
 4. **Sector Growth Outlook** — Industry CAGR from trade journals (separate US and global). Is the sector growing or contracting?
-5. **Analysts' Consensus** — Analyst estimates are supposed to be ~5yr but are really 6-12 month estimates. Rulers think longer term.
+5. **Analysts' Consensus** — Analyst estimates are supposed to be ~5yr but are really 6-12 month estimates. Value investors think longer term.
 
 ### How to Stress-Test FGR
 
@@ -243,7 +243,7 @@ When identifying risks:
 2. Use historical data — how has this risk manifested in the past for this company or similar companies?
 3. Provide rational counterargument — what evidence suggests the risk is manageable or mitigated?
 
-We are stress-testing the "Wonderful Company" thesis. This is the most adversarial part of the research process.
+We are stress-testing the high-conviction investment thesis. This is the most adversarial part of the research process.
 
 ### Structural Insight
 
@@ -300,7 +300,7 @@ Use these benchmarks to identify financial vulnerabilities that create risk expo
 
 No debt is ideal. Red flag: Debt > 3 years of earnings or FCF. Reason: some companies use debt wisely to maximize returns, but it can be a slippery slope. Debt reduces ROIC and ROA. During recessions, debt becomes dangerous. Buffett: "Only when the tide goes out do you discover who's been swimming naked."
 
-value investing debt scores: net debt to earnings, net debt to FCF.
+Value investing debt scores: net debt to earnings, net debt to FCF.
 
 If there is debt, acceptable uses are: growth, share buybacks, dividends. Unacceptable: propping up a deteriorating business.
 

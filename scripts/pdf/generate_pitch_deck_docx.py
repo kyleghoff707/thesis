@@ -10,6 +10,7 @@ Usage:
     python3 scripts/pdf/generate_pitch_deck_docx.py MNST
 """
 
+import json
 import os
 import sys
 
@@ -23,6 +24,8 @@ from scripts.pdf.section_renderers import (
 from scripts.pdf.chart_image_generator import (
     generate_bar_chart, generate_verdict_scorecard,
     generate_price_range_chart, generate_comparison_chart,
+    generate_pipeline_flow, generate_donut, generate_radar,
+    generate_stacked_bar,
 )
 from scripts.pdf.docx_helpers import (
     create_thesis_doc, add_title_page, add_styled_table,
@@ -32,6 +35,21 @@ from scripts.pdf.docx_helpers import (
     render_verdict_box, render_accounting_red_flags, render_pre_decision_check,
 )
 from docx.shared import Pt
+
+
+def _section_data_dict(section):
+    if not isinstance(section, dict):
+        return {}
+    raw = section.get('data')
+    if isinstance(raw, dict):
+        return raw
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+            return parsed if isinstance(parsed, dict) else {}
+        except (ValueError, TypeError):
+            return {}
+    return {}
 
 
 # =========================================================================
@@ -163,6 +181,141 @@ def _add_debt_equity_chart(doc, data, temp_charts):
         pass
 
 
+def _add_moat_radar(doc, data, temp_charts):
+    """Radar of moat strengths from moat_analysis section."""
+    try:
+        section = data.get_section('moat_analysis') or data.get_section('barriers_moats')
+        raw = _section_data_dict(section)
+        moats = raw.get('moatTypes')
+        if not isinstance(moats, list) or len(moats) < 3:
+            return
+        strength_map = {'strong': 9, 'wide': 9, 'moderate': 6,
+                        'narrow': 4, 'weak': 2, 'none': 0}
+        labels, values = [], []
+        for m in moats:
+            if not isinstance(m, dict):
+                continue
+            t = str(m.get('type', '')).strip()
+            s = str(m.get('strength', '')).lower().strip()
+            if not t:
+                continue
+            labels.append(t.title())
+            values.append(strength_map.get(s, 5))
+        if len(labels) >= 3:
+            path = generate_radar(labels, values, title='Moat Strength by Type', max_value=10)
+            temp_charts.append(path)
+            embed_chart(doc, path)
+    except Exception:
+        pass
+
+
+def _add_capex_donut(doc, data, temp_charts):
+    """Donut: maintenance vs growth capex from cash_generation section."""
+    try:
+        section = data.get_section('cash_generation') or data.get_section('fcf')
+        raw = _section_data_dict(section)
+        cb = raw.get('capexBreakdown')
+        if not isinstance(cb, dict):
+            return
+        maint = cb.get('maintenanceCapex')
+        growth = cb.get('growthCapex')
+        if not (isinstance(maint, (int, float)) and isinstance(growth, (int, float))):
+            return
+        if maint + growth <= 0:
+            return
+        path = generate_donut([('Maintenance', maint), ('Growth', growth)],
+                               title='Capex Split: Maintenance vs Growth')
+        if path:
+            temp_charts.append(path)
+            embed_chart(doc, path)
+    except Exception:
+        pass
+
+
+def _add_capital_allocation_stack(doc, data, temp_charts):
+    """5-year stacked bar: CapEx + Buybacks + Dividends."""
+    try:
+        cf = data.data_packet.get('financials', {}).get('cashFlow', {})
+        yrs = sorted([y for y in cf.keys() if str(y).isdigit()])[-5:]
+        if len(yrs) < 3:
+            return
+        capex, buybacks, divs = [], [], []
+        for y in yrs:
+            rec = cf.get(y) or cf.get(str(y)) or {}
+            capex.append(abs(rec.get('payments_to_acquire_property_plant_and_equipment') or
+                             rec.get('capital_expenditures') or 0))
+            buybacks.append(abs(rec.get('payments_for_repurchase_of_common_stock') or 0))
+            divs.append(abs(rec.get('payments_of_dividends_common_stock') or
+                            rec.get('payments_of_dividends') or 0))
+        if not any(capex) and not any(buybacks) and not any(divs):
+            return
+        path = generate_stacked_bar(
+            [str(y) for y in yrs],
+            [capex, buybacks, divs],
+            ['CapEx', 'Buybacks', 'Dividends'],
+            title='Capital Allocation (5y)',
+            unit='B',
+        )
+        temp_charts.append(path)
+        embed_chart(doc, path)
+    except Exception:
+        pass
+
+
+def _add_peer_comparison(doc, data, temp_charts):
+    """Subject vs peer-median grouped bar for ROIC/ROE."""
+    try:
+        averages = data.data_packet.get('returnMetrics', {}).get('averages', {})
+        subj_roic = averages.get('roic_3yr')
+        subj_roe = averages.get('roe_3yr')
+        if subj_roic is None or subj_roe is None:
+            return
+        peers = data.data_packet.get('peers') or []
+        peer_roic, peer_roe = [], []
+        for p in peers:
+            if not isinstance(p, dict):
+                continue
+            rm = p.get('returnMetrics') or p.get('returns') or {}
+            avgs = rm.get('averages') if isinstance(rm, dict) else None
+            if isinstance(avgs, dict):
+                if isinstance(avgs.get('roic_3yr'), (int, float)):
+                    peer_roic.append(avgs['roic_3yr'])
+                if isinstance(avgs.get('roe_3yr'), (int, float)):
+                    peer_roe.append(avgs['roe_3yr'])
+
+        def _median(xs):
+            xs = sorted(xs)
+            if not xs:
+                return None
+            n = len(xs)
+            return xs[n // 2] if n % 2 else (xs[n // 2 - 1] + xs[n // 2]) / 2
+
+        p_roic = _median(peer_roic)
+        p_roe = _median(peer_roe)
+        if p_roic is None and p_roe is None:
+            return
+
+        labels, subj_vals, peer_vals = [], [], []
+        if subj_roic is not None and p_roic is not None:
+            labels.append('ROIC (3y)')
+            subj_vals.append(round(subj_roic, 1))
+            peer_vals.append(round(p_roic, 1))
+        if subj_roe is not None and p_roe is not None:
+            labels.append('ROE (3y)')
+            subj_vals.append(round(subj_roe, 1))
+            peer_vals.append(round(p_roe, 1))
+        if not labels:
+            return
+        path = generate_comparison_chart(
+            labels, [subj_vals, peer_vals], ['Subject', 'Peer Median'],
+            title='Peer Comparison — Subject vs. Peer Median', unit='%',
+        )
+        temp_charts.append(path)
+        embed_chart(doc, path)
+    except Exception:
+        pass
+
+
 def _add_price_range_chart(doc, data, temp_charts):
     """Add buy price range chart for valuation_summary section."""
     try:
@@ -206,7 +359,7 @@ def _add_price_range_chart(doc, data, temp_charts):
         if methods and current_price > 0:
             path = generate_price_range_chart(
                 methods, float(current_price),
-                title=f'{data.ticker} Fair Value Ranges',
+                title=f'{data.ticker} Full Price Ranges',
             )
             temp_charts.append(path)
             embed_chart(doc, path)
@@ -231,6 +384,14 @@ def generate_pitch_deck_docx(ticker, base_dir=None):
         subtitle='Investment Research Analysis',
         verdict=verdict,
     )
+
+    # Pipeline flow on cover
+    try:
+        flow_path = generate_pipeline_flow('Pitch Deck')
+        temp_charts.append(flow_path)
+        embed_chart(doc, flow_path)
+    except Exception:
+        pass
 
     # Build a normalized-key index so legacy reports resolve to current keys.
     section_index = {}
@@ -300,10 +461,16 @@ def generate_pitch_deck_docx(ticker, base_dir=None):
                 _add_revenue_chart(doc, data, temp_charts)
             elif chart_type == 'fcf':
                 _add_fcf_chart(doc, data, temp_charts)
+                _add_capex_donut(doc, data, temp_charts)
+                _add_capital_allocation_stack(doc, data, temp_charts)
             elif chart_type == 'debt_equity':
                 _add_debt_equity_chart(doc, data, temp_charts)
             elif chart_type == 'price_range':
                 _add_price_range_chart(doc, data, temp_charts)
+            elif norm_key == 'market_position':
+                _add_peer_comparison(doc, data, temp_charts)
+            elif norm_key == 'moat_analysis':
+                _add_moat_radar(doc, data, temp_charts)
 
             # Narrative
             narrative = get_narrative(section)

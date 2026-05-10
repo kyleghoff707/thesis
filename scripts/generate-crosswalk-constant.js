@@ -73,7 +73,7 @@ lines.push('  /[.\\-\\/]PR[.\\-\\/]?[A-Z]?$/, // preferred (alt)');
 lines.push('];');
 lines.push('');
 lines.push('// Yahoo sector|industry -> Thesis classification');
-lines.push('export const YAHOO_TO_THES1S = new Map([');
+lines.push('export const YAHOO_TO_THESIS = new Map([');
 lines.push(mapEntries.join(',\n'));
 lines.push(']);');
 lines.push('');
@@ -103,7 +103,7 @@ lines.push("    return { status: 'unmapped', reason: 'missing-yahoo-classificati
 lines.push('  }');
 lines.push('');
 lines.push("  const key = yahooSector + '|' + yahooIndustry;");
-lines.push('  const match = YAHOO_TO_THES1S.get(key);');
+lines.push('  const match = YAHOO_TO_THESIS.get(key);');
 lines.push('  if (!match) {');
 lines.push("    return { status: 'unmapped', reason: 'no-crosswalk-match', yahooSector, yahooIndustry };");
 lines.push('  }');

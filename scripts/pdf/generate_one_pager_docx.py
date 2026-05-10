@@ -10,6 +10,7 @@ Usage:
     python3 scripts/pdf/generate_one_pager_docx.py MNST
 """
 
+import json
 import os
 import sys
 
@@ -22,6 +23,8 @@ from scripts.pdf.section_renderers import (
 )
 from scripts.pdf.chart_image_generator import (
     generate_bar_chart, generate_verdict_scorecard, generate_trend_chart,
+    generate_pipeline_flow, generate_gate_grid, generate_sparkline_trio,
+    generate_metric_gauges,
 )
 from scripts.pdf.docx_helpers import (
     create_thesis_doc, add_title_page, add_styled_table,
@@ -47,6 +50,77 @@ def generate_one_pager_docx(ticker, base_dir=None):
         subtitle='Investment Screening Analysis',
         verdict=verdict,
     )
+
+    # Pipeline flow on cover
+    try:
+        flow_path = generate_pipeline_flow('One Pager')
+        temp_charts.append(flow_path)
+        embed_chart(doc, flow_path)
+    except Exception:
+        pass
+
+    # ── Thesis Score 4-pillar gauge cluster (NEW) ────────────────────────────
+    try:
+        score = data.data_packet.get('thesisScore', {})
+        pillars = score.get('pillars') or score.get('pillarScores')
+        if isinstance(pillars, dict) and pillars:
+            label_map = {
+                'compounding': 'Compounding',
+                'capitalEfficiency': 'Capital Efficiency',
+                'capital_efficiency': 'Capital Efficiency',
+                'capitalAllocation': 'Capital Allocation',
+                'capital_allocation': 'Capital Allocation',
+                'resilience': 'Resilience',
+            }
+            gauges = []
+            for k, v in pillars.items():
+                if isinstance(v, dict):
+                    v = v.get('score')
+                if isinstance(v, (int, float)):
+                    gauges.append((label_map.get(k, k), float(v), 70.0, '%', True))
+            if gauges:
+                add_section_heading(doc, 'Thesis Score — 4 Pillars', level=2)
+                path = generate_metric_gauges(gauges, title='Thesis Score — 4 Pillars')
+                temp_charts.append(path)
+                embed_chart(doc, path)
+    except Exception:
+        pass
+
+    # ── Minimum Standards gate grid (NEW) ────────────────────────────────────
+    try:
+        ms = data.get_section('minimum_standards')
+        if ms:
+            raw = ms.get('data')
+            if isinstance(raw, str):
+                raw = json.loads(raw)
+            gates = raw.get('gates') if isinstance(raw, dict) else None
+            if isinstance(gates, dict) and gates:
+                gate_rows = []
+                if 'marketCap' in gates:
+                    g = gates['marketCap']
+                    gate_rows.append(('Market Cap', g.get('result', 'WARN'),
+                                      f"{g.get('estimated', '')} (req {g.get('threshold', '')})"))
+                if 'usHeadquarters' in gates:
+                    g = gates['usHeadquarters']
+                    gate_rows.append(('US Headquarters', g.get('result', 'WARN'),
+                                      str(g.get('value', ''))[:80]))
+                if 'publicHistory' in gates:
+                    g = gates['publicHistory']
+                    gate_rows.append(('Public History', g.get('result', 'WARN'),
+                                      f"IPO {g.get('ipoYear', '?')} "
+                                      f"({g.get('yearsPublic', '?')} yrs, req {g.get('threshold', '')})"))
+                if 'debtToEarnings' in gates:
+                    g = gates['debtToEarnings']
+                    gate_rows.append(('Debt / Earnings', g.get('result', 'WARN'),
+                                      f"{g.get('ratio', '?')} yrs (req {g.get('threshold', '')})"))
+                if gate_rows:
+                    add_section_heading(doc, 'Minimum Standards — Gate Audit', level=2)
+                    path = generate_gate_grid(gate_rows, title='')
+                    if path:
+                        temp_charts.append(path)
+                        embed_chart(doc, path)
+    except Exception:
+        pass
 
     # ── Verdict Scorecard Chart ──────────────────────────────────────────────
     try:
@@ -119,6 +193,38 @@ def generate_one_pager_docx(ticker, base_dir=None):
                     chart_years, chart_values,
                     title='Operating Cash Flow', unit='B',
                 )
+                temp_charts.append(path)
+                embed_chart(doc, path)
+        except Exception:
+            pass
+
+        # Margin trend sparkline trio (NEW)
+        try:
+            income_block = data.data_packet.get('financials', {}).get('income', {})
+            yrs = sorted([y for y in income_block.keys() if str(y).isdigit()])[-5:]
+
+            def _ratio(y, num_field):
+                rec = income_block.get(y) or income_block.get(str(y)) or {}
+                num = rec.get(num_field)
+                den = rec.get('revenues')
+                if num is None or den is None or den == 0:
+                    return None
+                return num / den * 100
+
+            gross_vals = [_ratio(y, 'gross_profit') for y in yrs]
+            op_vals = [_ratio(y, 'operating_income_loss') for y in yrs]
+            net_vals = [_ratio(y, 'net_income_loss') for y in yrs]
+
+            series = []
+            if all(v is not None for v in gross_vals) and len(gross_vals) >= 3:
+                series.append(('Gross Margin', gross_vals, '#0f766e'))
+            if all(v is not None for v in op_vals) and len(op_vals) >= 3:
+                series.append(('Operating Margin', op_vals, '#2dd4bf'))
+            if all(v is not None for v in net_vals) and len(net_vals) >= 3:
+                series.append(('Net Margin', net_vals, '#3b82f6'))
+
+            if series:
+                path = generate_sparkline_trio(series, title='Margin Trends (last 5 fiscal years)')
                 temp_charts.append(path)
                 embed_chart(doc, path)
         except Exception:

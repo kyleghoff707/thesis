@@ -28,16 +28,17 @@ import { normalizeKey } from '../utils/keyNormalization.js';
 // progress behavior. The 2026-05-09 redesign render loop drives off
 // TOP_LEVEL_GROUPS (canonical post-rename keys) below.
 const SECTION_DEFS = [
-  { key: 'radar', label: 'Radar', phase: 1 },
-  { key: 'simple_predictable', label: 'Simple & Predictable', phase: 1 },
+  { key: 'setup', label: 'Setup & Situation', phase: 1 },
+  { key: 'business_quality', label: 'Business Quality', phase: 1 },
   { key: 'market_position', label: 'Market Position', phase: 1 },
-  { key: 'barriers_moats', label: 'Barriers & Moats', phase: 2 },
-  { key: 'fcf', label: 'FCF', phase: 2 },
-  { key: 'management', label: 'Management', phase: 2 },
-  { key: 'roe_roic_debt', label: 'ROE/ROIC & Debt', phase: 2 },
+  { key: 'moat_analysis', label: 'Moat Analysis', phase: 2 },
+  { key: 'cash_generation', label: 'Cash Generation', phase: 2 },
+  { key: 'returns_leverage', label: 'Returns & Leverage', phase: 2 },
   { key: 'balance_sheet', label: 'Balance Sheet', phase: 2 },
-  { key: 'pest', label: 'PEST Risks', phase: 3 },
+  { key: 'accounting_red_flags', label: 'Accounting Red Flags', phase: 2 },
+  { key: 'management_capital_allocation', label: 'Management & Capital Allocation', phase: 2 },
   { key: 'valuation', label: 'Valuation', phase: 3 },
+  { key: 'risk_profile', label: 'Risk Profile', phase: 3 },
 ];
 
 // --- TOP_LEVEL_GROUPS — drives the post-redesign render loop ---
@@ -320,9 +321,9 @@ function getPhaseStatus(sections) {
   }
 
   const phases = [
-    { start: 0, end: 2 },  // Phase 1: indexes 0-2
-    { start: 3, end: 7 },  // Phase 2: indexes 3-7
-    { start: 8, end: 9 },  // Phase 3: indexes 8-9
+    { start: 0, end: 2 },   // Phase 1: indexes 0-2 (setup, business_quality, market_position)
+    { start: 3, end: 8 },   // Phase 2: indexes 3-8 (moat, cash_gen, returns_leverage, balance, accounting, mgmt_cap_alloc)
+    { start: 9, end: 10 },  // Phase 3: indexes 9-10 (valuation, risk_profile)
   ];
 
   return phases.map(({ start, end }) => {

@@ -1,21 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { classifyTicker, isNonCommonStock, MAJOR_EXCHANGES, YAHOO_TO_THES1S } from '../src/cron/crosswalk.js';
+import { classifyTicker, isNonCommonStock, MAJOR_EXCHANGES, YAHOO_TO_THESIS } from '../src/cron/crosswalk.js';
 
 describe('crosswalk', () => {
-  describe('YAHOO_TO_THES1S', () => {
+  describe('YAHOO_TO_THESIS', () => {
     it('has 145 mappings', () => {
-      expect(YAHOO_TO_THES1S.size).toBe(145);
+      expect(YAHOO_TO_THESIS.size).toBe(145);
     });
 
     it('contains known exact match (Semiconductors)', () => {
-      const entry = YAHOO_TO_THES1S.get('Technology|Semiconductors');
+      const entry = YAHOO_TO_THESIS.get('Technology|Semiconductors');
       expect(entry).toBeDefined();
       expect(entry.thesisCode).toBe('10301010');
       expect(entry.confidence).toBe(0.85);
     });
 
     it('contains known split mapping at 0.65 confidence', () => {
-      const entry = YAHOO_TO_THES1S.get('Technology|Software - Application');
+      const entry = YAHOO_TO_THESIS.get('Technology|Software - Application');
       expect(entry).toBeDefined();
       expect(entry.confidence).toBe(0.65);
     });

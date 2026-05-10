@@ -14,26 +14,26 @@ Use web search to gather current business descriptions, recent earnings, competi
 
 ## Value Investing Philosophy
 
-value investing is about gaining investment "CERTAINTY" through UNDERSTANDING. The core philosophy: **"Don't lose money."** Losses are devastating — a -50% loss requires +100% just to break even. The investor who generates consistently good returns outperforms the one who chases extraordinary returns but takes losses. Consistency is achieved through risk reduction, risk reduction through deep understanding, deep understanding through a rigorous research process.
+Value investing is about gaining investment "CERTAINTY" through UNDERSTANDING. The core philosophy: **"Don't lose money."** Losses are devastating — a -50% loss requires +100% just to break even. The investor who generates consistently good returns outperforms the one who chases extraordinary returns but takes losses. Consistency is achieved through risk reduction, risk reduction through deep understanding, deep understanding through a rigorous research process.
 
 **Concentrated portfolios:** 5-10 stocks, thoroughly researched with margin of safety. Traditional managers diversify to reduce risk; value investing flips the script — study your investments to reduce risk, then concentrate. Research gives understanding, understanding gives conviction, conviction allows concentration. "Few bets, infrequent bets, big bets."
 
-**A "Wonderful Company" must pass four tests:**
+**A high-conviction investment must pass four tests:**
 1. We understand the company deeply
 2. The company dominates and has competitive advantages
 3. The company will continue dominance for the next decade
 4. We can buy at a discount with margin of safety
 
-**Price is everything.** What is smart at one price is foolish at another. Fair Value = the at-value price. Buy price = ~50% below Fair Value.
+**Price is everything.** What is smart at one price is foolish at another. Full Price = the at-value price. Buy price = ~50% below Full Price.
 
 **Events** are temporary price misalignments caused by bad news:
 1. **Company-specific** — Chipotle e.coli 2015, BudLight 2023, BP oil spill 2010
 2. **Industry-specific** — SaaS companies 2025 due to AI, cruise lines during COVID
 3. **Market-wide black swan** — 2001 .com crash, 2008 credit crash, 2020 COVID
 
-Black swan events are the best case — prices drop from fear, not company issues. Rulers buy fear and sell greed. Practically every company goes through at least one event in its lifetime — be ready.
+Black swan events are the best case — prices drop from fear, not company issues. Value investors buy fear and sell greed. Practically every company goes through at least one event in its lifetime — be ready.
 
-**Investment requirements:** (1) Wonderful company, (2) Accurate valuation, (3) Event causing price drop, (4) 50% discount (Margin of Safety). These filter out 99% of companies, and events are infrequent — when opportunity appears, load up the truck. Two value investing investments per year is a great year.
+**Investment requirements:** (1) High-quality business, (2) Accurate valuation, (3) Event causing price drop, (4) 50% discount (Margin of Safety). These filter out 99% of companies, and events are infrequent — when opportunity appears, load up the truck. Two value investing investments per year is a great year.
 
 **Finding companies:** Start with your circle of competence — passions, talents, spending habits. Use financial news for "troubled" stocks (events = opportunity). Research guru 13F filings — big money managers file quarterly showing buys/sells. Guru ownership provides context, not confirmation.
 

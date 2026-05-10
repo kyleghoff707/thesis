@@ -48,6 +48,8 @@ const ALL_COLUMNS = [
   { key: 'thesisScore', label: 'Thesis Score', align: 'right', format: fmtScore, defaultVisible: true, source: 'score' },
   { key: 'compoundingScore', label: 'Compounding', align: 'right', format: fmtScore, defaultVisible: true, source: 'score' },
   { key: 'capitalEfficiencyScore', label: 'Capital Efficiency', align: 'right', format: fmtScore, defaultVisible: true, source: 'score' },
+  { key: 'capitalAllocationScore', label: 'Capital Allocation', align: 'right', format: fmtScore, defaultVisible: false, source: 'score' },
+  { key: 'resilienceScore', label: 'Resilience', align: 'right', format: fmtScore, defaultVisible: false, source: 'score' },
   { key: 'roe', label: 'Return On Equity', align: 'right', format: fmtPct, defaultVisible: true, source: 'metric' },
   { key: 'roic', label: 'Return On Invested Capital', align: 'right', format: fmtPct, defaultVisible: true, source: 'metric' },
   { key: 'fcf', label: 'Free Cash Flow', align: 'right', format: fmtValue, defaultVisible: true, source: 'metric' },
@@ -401,6 +403,8 @@ export default function Competitors({ company, guruActivities, report, updateRep
       case 'thesisScore': return scores?.composite ?? null;
       case 'compoundingScore': return scores?.pillars?.compounding?.score ?? null;
       case 'capitalEfficiencyScore': return scores?.pillars?.capitalEfficiency?.score ?? null;
+      case 'capitalAllocationScore': return scores?.pillars?.capitalAllocation?.score ?? null;
+      case 'resilienceScore': return scores?.pillars?.resilience?.score ?? null;
       case 'roe': return metrics?.roe ?? null;
       case 'roic': return metrics?.roic ?? null;
       case 'roa': return metrics?.roa ?? null;

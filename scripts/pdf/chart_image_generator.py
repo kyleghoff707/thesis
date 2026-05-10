@@ -486,3 +486,325 @@ def generate_trend_chart(years, values, title='', unit='', output_path=None):
         ax.set_title(title, color=TEAL_500, fontweight='bold', loc='left')
 
     return _save_and_close(fig, output_path)
+
+
+# ── Pipeline Flow (cover page) ────────────────────────────────────────────────
+
+def generate_pipeline_flow(current_stage, output_path=None):
+    """3-stage pipeline flow chart for DOCX cover pages."""
+    _setup_style()
+    output_path = _get_output_path(output_path, '_pipeline_flow.png')
+
+    stages = ['One Pager', 'Pitch Deck', 'Final Thesis']
+    fig, ax = plt.subplots(figsize=(8.0, 1.4))
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 1.5)
+    ax.axis('off')
+
+    box_w = 2.5
+    gap = 0.75
+    for i, stage in enumerate(stages):
+        x = i * (box_w + gap)
+        is_current = (stage == current_stage)
+        face = TEAL_50 if is_current else 'white'
+        edge = TEAL_500 if is_current else SLATE_200
+        lw = 2.0 if is_current else 1.0
+        text_color = TEAL_500 if is_current else SLATE_500
+        rect = mpatches.FancyBboxPatch((x, 0.3), box_w, 0.9,
+                                        boxstyle='round,pad=0.05',
+                                        facecolor=face, edgecolor=edge, linewidth=lw)
+        ax.add_patch(rect)
+        ax.text(x + box_w / 2, 0.95, f'Stage {i+1}',
+                ha='center', va='center', fontsize=9, fontweight='bold', color=text_color)
+        ax.text(x + box_w / 2, 0.55, stage,
+                ha='center', va='center', fontsize=10, color=text_color)
+
+        if i < len(stages) - 1:
+            arrow_x = x + box_w
+            ax.annotate('', xy=(arrow_x + gap, 0.75), xytext=(arrow_x, 0.75),
+                        arrowprops=dict(arrowstyle='->', color=SLATE_500, lw=1.2))
+            ax.text(arrow_x + gap / 2, 0.4, 'gate',
+                    ha='center', va='center', fontsize=7, color=SLATE_500, fontstyle='italic')
+
+    return _save_and_close(fig, output_path)
+
+
+def generate_donut(slices, title='', colors=None, output_path=None):
+    """Donut chart. slices: list of (label, value) tuples."""
+    _setup_style()
+    output_path = _get_output_path(output_path, '_donut.png')
+
+    labels = [s[0] for s in slices]
+    values = [max(0, s[1]) for s in slices]
+    if sum(values) <= 0:
+        return None
+    colors = colors or [TEAL_500, BLUE_500, AMBER_500, SLATE_600, TEAL_300]
+    palette = [colors[i % len(colors)] for i in range(len(values))]
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    wedges, _ = ax.pie(values, colors=palette, startangle=90, counterclock=False,
+                       wedgeprops=dict(width=0.42, edgecolor='white'))
+    ax.set_aspect('equal')
+
+    total = sum(values)
+    legend_labels = [f'{l}: {v / total * 100:.0f}%' for l, v in zip(labels, values)]
+    ax.legend(wedges, legend_labels, loc='center left',
+              bbox_to_anchor=(1.0, 0.5), fontsize=10, frameon=False)
+
+    if title:
+        fig.suptitle(title, color=TEAL_500, fontweight='bold', x=0.05, ha='left')
+
+    return _save_and_close(fig, output_path)
+
+
+def generate_radar(axes_labels, values, title='', max_value=10, output_path=None):
+    """Radar/spider chart with N axes."""
+    _setup_style()
+    output_path = _get_output_path(output_path, '_radar.png')
+
+    import numpy as np
+    n = len(axes_labels)
+    angles = np.linspace(0, 2 * np.pi, n, endpoint=False).tolist()
+    vals = list(values) + [values[0]]
+    angles_closed = angles + [angles[0]]
+
+    fig, ax = plt.subplots(figsize=(6, 5), subplot_kw=dict(polar=True))
+    ax.set_theta_offset(np.pi / 2)
+    ax.set_theta_direction(-1)
+
+    ax.fill(angles_closed, vals, color=TEAL_300, alpha=0.5)
+    ax.plot(angles_closed, vals, color=TEAL_500, linewidth=2)
+
+    ax.set_xticks(angles)
+    ax.set_xticklabels(axes_labels, fontsize=9, color=SLATE_700)
+    ax.set_yticks([max_value * f for f in (0.25, 0.5, 0.75, 1.0)])
+    ax.set_yticklabels([])
+    ax.set_ylim(0, max_value)
+    ax.spines['polar'].set_color(SLATE_200)
+
+    if title:
+        ax.set_title(title, color=TEAL_500, fontweight='bold', pad=18)
+
+    return _save_and_close(fig, output_path)
+
+
+def generate_stacked_bar(periods, stacks, stack_names, title='', unit='B',
+                          colors=None, output_path=None):
+    """Vertical stacked bar over multiple periods."""
+    _setup_style()
+    output_path = _get_output_path(output_path, '_stacked.png')
+
+    colors = colors or [TEAL_500, TEAL_400, AMBER_500, BLUE_500, SLATE_600]
+
+    fig, ax = plt.subplots(figsize=(7.5, 4))
+    bottoms = [0] * len(periods)
+    for i, (vals, name) in enumerate(zip(stacks, stack_names)):
+        ax.bar(periods, vals, bottom=bottoms, label=name,
+               color=colors[i % len(colors)], width=0.65, edgecolor='white', linewidth=0.5)
+        bottoms = [b + v for b, v in zip(bottoms, vals)]
+
+    ax.legend(loc='upper left', frameon=False, fontsize=9)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    if unit == 'B':
+        ax.yaxis.set_major_formatter(mticker.FuncFormatter(
+            lambda v, _: f'${v / 1e9:.0f}B' if v >= 1e9 else f'${v / 1e6:.0f}M'))
+    elif unit == '%':
+        ax.yaxis.set_major_formatter(mticker.PercentFormatter(decimals=0))
+
+    if title:
+        ax.set_title(title, color=TEAL_500, fontweight='bold', loc='left')
+
+    return _save_and_close(fig, output_path)
+
+
+def generate_divergent_bar(bulls, bears, title='', output_path=None):
+    """Bull (right, teal) vs Bear (left, red) divergent horizontal bars."""
+    _setup_style()
+    output_path = _get_output_path(output_path, '_divergent.png')
+
+    n = max(len(bulls), len(bears))
+    fig, ax = plt.subplots(figsize=(8, max(3.5, 0.55 * n + 1.5)))
+    y_pos = list(range(n))[::-1]
+
+    for i in range(n):
+        if i < len(bulls):
+            label, weight = bulls[i]
+            ax.barh(y_pos[i], weight, left=0, color=TEAL_500, height=0.6, edgecolor='white')
+            ax.text(weight + 0.15, y_pos[i], str(label)[:60], va='center', fontsize=8.5,
+                    color=SLATE_800)
+        if i < len(bears):
+            label, weight = bears[i]
+            ax.barh(y_pos[i], -weight, left=0, color=RED_500, height=0.6, edgecolor='white')
+            ax.text(-weight - 0.15, y_pos[i], str(label)[:60], va='center', ha='right',
+                    fontsize=8.5, color=SLATE_800)
+
+    max_weight = max(([w for _, w in bulls] or [1]) + ([w for _, w in bears] or [1]))
+    ax.set_xlim(-max_weight * 1.5, max_weight * 1.5)
+    ax.axvline(0, color=SLATE_500, linewidth=0.8)
+    ax.set_yticks([])
+    ax.set_xticks([])
+    for s in ('top', 'right', 'left', 'bottom'):
+        ax.spines[s].set_visible(False)
+
+    ax.text(-max_weight * 1.5, n + 0.4, 'BEAR THESIS',
+            ha='left', fontsize=10, fontweight='bold', color=RED_500)
+    ax.text(max_weight * 1.5, n + 0.4, 'BULL THESIS',
+            ha='right', fontsize=10, fontweight='bold', color=TEAL_500)
+
+    if title:
+        ax.set_title(title, color=TEAL_500, fontweight='bold', loc='left', pad=24)
+
+    return _save_and_close(fig, output_path)
+
+
+def generate_price_ladder(current_price, levels, title='', output_path=None):
+    """Vertical price ladder with entry/trim/exit zones."""
+    _setup_style()
+    output_path = _get_output_path(output_path, '_ladder.png')
+
+    if not levels:
+        return None
+
+    zone_color = {'entry': TEAL_500, 'trim': AMBER_500, 'exit': RED_500}
+
+    fig, ax = plt.subplots(figsize=(6.5, 5))
+    all_prices = [current_price] + [low for _, low, _, _ in levels] + \
+                 [high for _, _, high, _ in levels]
+    pmin = min(all_prices) * 0.95
+    pmax = max(all_prices) * 1.05
+
+    for label, low, high, kind in levels:
+        ax.barh(0, high - low, left=low, color=zone_color.get(kind, SLATE_500),
+                height=0.4, alpha=0.7, edgecolor='white')
+        ax.text((low + high) / 2, 0, f'{label}\n${low:.0f}-${high:.0f}',
+                ha='center', va='center', fontsize=8.5, color='white', fontweight='bold')
+
+    ax.axvline(current_price, color=SLATE_800, linewidth=1.5, linestyle='--')
+    ax.text(current_price, 0.4, f'Current ${current_price:.0f}',
+            ha='center', fontsize=9, fontweight='bold', color=SLATE_800)
+
+    ax.set_xlim(pmin, pmax)
+    ax.set_ylim(-0.5, 0.7)
+    ax.set_yticks([])
+    ax.set_xlabel('Share Price ($)', fontsize=9, color=SLATE_600)
+    for s in ('top', 'right', 'left'):
+        ax.spines[s].set_visible(False)
+    ax.grid(axis='x', alpha=0.3)
+
+    if title:
+        ax.set_title(title, color=TEAL_500, fontweight='bold', loc='left')
+
+    return _save_and_close(fig, output_path)
+
+
+def generate_status_grid(rows, columns, statuses, title='', output_path=None):
+    """Gantt-lite status heatmap."""
+    _setup_style()
+    output_path = _get_output_path(output_path, '_grid.png')
+
+    color_map = {
+        'delivered': GREEN_500, 'pass': GREEN_500,
+        'partial': AMBER_500,
+        'missed': RED_500, 'fail': RED_500,
+        'pending': SLATE_200,
+    }
+
+    fig, ax = plt.subplots(figsize=(8, max(2.5, 0.5 * len(rows) + 1.5)))
+    ax.set_xlim(0, len(columns))
+    ax.set_ylim(0, len(rows))
+
+    for ri in range(len(rows)):
+        for ci in range(len(columns)):
+            s = None
+            if ri < len(statuses) and ci < len(statuses[ri]):
+                v = statuses[ri][ci]
+                s = str(v).lower() if v else None
+            color = color_map.get(s, SLATE_100)
+            rect = mpatches.Rectangle((ci, len(rows) - ri - 1), 0.92, 0.85,
+                                       facecolor=color, edgecolor='white', linewidth=2)
+            ax.add_patch(rect)
+
+    ax.set_xticks([i + 0.5 for i in range(len(columns))])
+    ax.set_xticklabels(columns, fontsize=9, color=SLATE_700)
+    ax.set_yticks([len(rows) - i - 0.5 for i in range(len(rows))])
+    ax.set_yticklabels([str(r)[:50] for r in rows], fontsize=9, color=SLATE_700)
+    ax.tick_params(length=0)
+    for s in ax.spines.values():
+        s.set_visible(False)
+    ax.grid(False)
+
+    if title:
+        ax.set_title(title, color=TEAL_500, fontweight='bold', loc='left')
+
+    return _save_and_close(fig, output_path)
+
+
+def generate_sparkline_trio(series, title='', output_path=None):
+    """Stacked sparklines. series: list of (label, values, color) tuples."""
+    _setup_style()
+    output_path = _get_output_path(output_path, '_spark.png')
+
+    fig, axes = plt.subplots(len(series), 1, figsize=(7, 0.8 * len(series) + 0.6),
+                              sharex=True)
+    if len(series) == 1:
+        axes = [axes]
+
+    for ax, (label, values, color) in zip(axes, series):
+        ax.plot(values, color=color, linewidth=1.8)
+        ax.fill_between(range(len(values)), values, min(values), color=color, alpha=0.15)
+        ax.set_yticks([])
+        ax.set_xticks([])
+        for s in ax.spines.values():
+            s.set_visible(False)
+        if values:
+            ax.text(-0.3, sum(values) / len(values), label, fontsize=9,
+                    color=SLATE_700, fontweight='bold', ha='right',
+                    transform=ax.transData)
+            ax.text(len(values) - 1, values[-1],
+                    f'  {values[0]:.1f}% -> {values[-1]:.1f}%',
+                    fontsize=8, color=SLATE_600, va='center')
+
+    if title:
+        fig.suptitle(title, color=TEAL_500, fontweight='bold', x=0.05, ha='left')
+
+    return _save_and_close(fig, output_path)
+
+
+def generate_gate_grid(gates, title='', output_path=None):
+    """2-column grid of pass/fail gate cards."""
+    _setup_style()
+    output_path = _get_output_path(output_path, '_gates.png')
+
+    if not gates:
+        return None
+
+    color_map = {'PASS': GREEN_500, 'FAIL': RED_500, 'WARN': AMBER_500}
+
+    n = len(gates)
+    cols = 2
+    rows = (n + cols - 1) // cols
+    fig, axes = plt.subplots(rows, cols, figsize=(8, 0.9 * rows + 0.6))
+    axes = axes.flatten() if hasattr(axes, 'flatten') else [axes]
+
+    for i, ax in enumerate(axes):
+        ax.set_xlim(0, 10)
+        ax.set_ylim(0, 2)
+        ax.axis('off')
+        if i >= n:
+            continue
+        label, status, detail = gates[i]
+        color = color_map.get(str(status).upper(), SLATE_500)
+        circle = mpatches.Circle((0.5, 1.0), 0.4, facecolor=color, edgecolor=color)
+        ax.add_patch(circle)
+        ax.text(0.5, 1.0, {'PASS': 'OK', 'FAIL': 'X', 'WARN': '!'}.get(
+                str(status).upper(), '?'),
+                ha='center', va='center', fontsize=10, fontweight='bold', color='white')
+        ax.text(1.2, 1.4, str(label), fontsize=10, fontweight='bold', color=SLATE_800)
+        ax.text(1.2, 0.7, str(detail)[:80], fontsize=8.5, color=SLATE_600)
+
+    if title:
+        fig.suptitle(title, color=TEAL_500, fontweight='bold', x=0.05, ha='left')
+
+    return _save_and_close(fig, output_path)

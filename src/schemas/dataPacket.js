@@ -1,6 +1,6 @@
 // DataPacket Schema — canonical JSON structure for all engine output
 // Zod v4.3 — loose validation with passthrough() for extensibility
-// Each agent receives a sliced view of the full DataPacket via sliceDataPacket()
+// Each agent receives a sliced view of the full DataPacket via src/utils/sliceDataPacket.js
 //
 // NOTE: Uses z.looseObject({}) instead of z.record(z.unknown()) for flexible
 // object fields — Zod v4 z.record() requires explicit (keySchema, valueSchema).
@@ -32,30 +32,3 @@ export const DataPacketSchema = z.object({
   assembledAt: z.string(),
 }).passthrough();
 
-// Always-included fields in every DataPacket slice (DATA-04)
-const ALWAYS_INCLUDED = ['ticker', 'companyInfo', 'classification', 'caveats'];
-
-// Slice a full DataPacket to only the fields an agent needs
-// agentConfig.dataPacketSlice: string[] of field names the agent requires
-// Always includes ticker, companyInfo, classification, caveats regardless of config
-export function sliceDataPacket(fullPacket, agentConfig) {
-  if (!fullPacket || !agentConfig?.dataPacketSlice) return fullPacket;
-
-  const slice = {};
-
-  // Always include core fields
-  for (const key of ALWAYS_INCLUDED) {
-    if (key in fullPacket) {
-      slice[key] = fullPacket[key];
-    }
-  }
-
-  // Include requested fields
-  for (const key of agentConfig.dataPacketSlice) {
-    if (key in fullPacket) {
-      slice[key] = fullPacket[key];
-    }
-  }
-
-  return slice;
-}

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Injects locally-generated pipeline reports into a Thesis user's account via
-// the admin HTTP API. Reads .thesis/reports/{TICKER}/{one-pager,pitch-deck,full-story}.json
+// the admin HTTP API. Reads .thesis/reports/{TICKER}/{one-pager,pitch-deck,final-thesis}.json
 // and POSTs them to /admin/inject-report on api.thesis-investing.com.
 //
 // Usage:
@@ -12,10 +12,10 @@
 // Flags:
 //   --ticker,-t    Ticker to inject (repeatable). Required.
 //   --email,-e     Target user's email (the account to inject into). Default: kyleghoff707@gmail.com
-//   --stages       Comma list of stages. Default: onePager,pitchDeck,fullStory
+//   --stages       Comma list of stages. Default: onePager,pitchDeck,finalThesis
 //   --api          API base URL. Default: https://api.thesis-investing.com
-//   --admin-email  Admin login email. Default: $THES1S_ADMIN_EMAIL or --email
-//   --password,-p  Admin password. Default: $THES1S_ADMIN_PASSWORD (prompted if missing).
+//   --admin-email  Admin login email. Default: $THESIS_ADMIN_EMAIL or --email
+//   --password,-p  Admin password. Default: $THESIS_ADMIN_PASSWORD (prompted if missing).
 //   --help,-h      Show this help.
 //
 // The caller MUST be an admin (role='admin'). Non-admins get 403.
@@ -31,7 +31,7 @@ const REPORTS_DIR = resolve(PROJECT_ROOT, '.thesis/reports');
 const STAGE_FILES = {
   onePager: 'one-pager.json',
   pitchDeck: 'pitch-deck.json',
-  fullStory: 'full-story.json',
+  finalThesis: 'final-thesis.json',
 };
 const VALID_STAGES = Object.keys(STAGE_FILES);
 
@@ -46,8 +46,8 @@ function parseArgs(argv) {
     email: 'kyleghoff707@gmail.com',
     stages: VALID_STAGES,
     api: 'https://api.thesis-investing.com',
-    adminEmail: process.env.THES1S_ADMIN_EMAIL || null,
-    password: process.env.THES1S_ADMIN_PASSWORD || null,
+    adminEmail: process.env.THESIS_ADMIN_EMAIL || null,
+    password: process.env.THESIS_ADMIN_PASSWORD || null,
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -106,7 +106,7 @@ function resolveStagePath(ticker, stage) {
   return null;
 }
 
-// The agent's full-story.json stores debate.{step1Bull,step2Bear,step3Rebuttal,step4Judge}
+// The agent's final-thesis.json stores debate.{step1Bull,step2Bear,step3Rebuttal,step4Judge}
 // as path strings (e.g. ".thesis/reports/INTU/sections/debate-step-1-bull.json") —
 // the actual content lives in those sibling files. Inline them so D1 has real data.
 function inlineDebatePaths(raw, sourcePath) {
@@ -143,7 +143,7 @@ function loadStage(ticker, stage) {
       console.warn(`  [${ticker}] ${stage}: ${found.source} has no sections — skipping`);
       return null;
     }
-    if (stage === 'fullStory') raw = inlineDebatePaths(raw, found.path);
+    if (stage === 'finalThesis') raw = inlineDebatePaths(raw, found.path);
     console.log(`  [${ticker}] ${stage}: loaded from ${found.source}`);
     return raw;
   } catch (err) {
@@ -172,7 +172,7 @@ async function login(api, email, password) {
 async function injectOne({ api, cookie, targetEmail, ticker, stageData }) {
   const companyName = stageData.onePager?.companyName ||
     stageData.pitchDeck?.companyName ||
-    stageData.fullStory?.companyName || ticker;
+    stageData.finalThesis?.companyName || ticker;
 
   const res = await fetch(`${api}/admin/inject-report`, {
     method: 'POST',

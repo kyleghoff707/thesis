@@ -1,8 +1,6 @@
-# W2 — UI Copy Punch-List (Phase 2B)
+# W2 — UI Copy Punch-List (Phase 2B — RESOLVED 2026-05-10)
 
-**Status:** observation only. **Do not rewrite copy from this list yet.**
-
-**Why deferred:** the semantic UI rewrite is blocked on the four brainstorm pods (Thesis Score, Valuation methods, Guru list, Full Story redesign). Each item below is tagged with the pod whose output unblocks it. When a pod's output lands, grep this file for that tag and address only those items — that way the copy gets rewritten once, not per-pod.
+**Status:** ✅ Closed. All `[POD-SCORE]`, `[POD-PD]`, `[POD-FS]`, `[POD-GURU]`, and `[INDEP]` items addressed by the W2 semantic rewrite shipped on 2026-05-10. See [docs/specs/2026-05-10-w2-w5-completion.md](docs/specs/2026-05-10-w2-w5-completion.md) and the updated [STEPS.md](STEPS.md#phase-2b--complete-2026-05-10) Phase 2B section. This file is preserved as a historical inventory of the rewrite scope.
 
 See [STEPS.md](STEPS.md) Phase 2B for the broader migration context.
 

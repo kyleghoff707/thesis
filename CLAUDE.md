@@ -5,7 +5,7 @@
 
 The user is NOT a programmer — keep explanations in plain English.
 
-**Status**: Mid-migration to public OSS. Phase 1 (foundation) and Phase 2 lead step (mass rename) complete. Phase 2 parallel workstreams still pending: agent prompt framing rewrite, UI text, PDF/DOCX branding, and four brainstorm pods (Thesis Score rubric, valuation methods, guru list, Full Story redesign). [STEPS.md](STEPS.md) is the authoritative phase plan.
+**Status**: Mid-migration to public OSS. Phase 1 (foundation) and Phase 2 (rebrand) complete. Phase 3 (portability) is next. [STEPS.md](STEPS.md) is the authoritative phase plan.
 
 ---
 
@@ -33,7 +33,7 @@ The user is NOT a programmer — keep explanations in plain English.
 3-stage gated workflow:
 1. **One Pager** — quick screen, pass/fail (1 agent)
 2. **Pitch Deck** — research case across 10 sections (10 agents, 5 waves)
-3. **Final Thesis** *(rename TBD — Phase 2 brainstorm: Conviction Brief / Investment Memo / Final Thesis)* — conviction-level analysis with adversarial debate (7 agents)
+3. **Final Thesis** — conviction-level analysis with adversarial debate (7 agents)
 
 Each stage gates the next: user must approve the prior verdict before unlocking generation of the subsequent stage.
 
@@ -43,7 +43,7 @@ Each stage gates the next: user must approve the prior verdict before unlocking 
 
 ```
 agents/         — Agent prompts (production path)
-.claude/skills/    — generate-one-pager, generate-pitch-deck, generate-full-story, analyze
+.claude/skills/    — generate-one-pager, generate-pitch-deck, generate-final-thesis, analyze
 api/               — Cloudflare Worker (optional connected-mode backend)
 scripts/           — CLI runners + PDF/DOCX toolkit
 src/

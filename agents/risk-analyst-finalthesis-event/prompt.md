@@ -14,7 +14,7 @@ You have access to **web search** and **web fetch** tools. You also receive a **
 
 ## Value Investing Philosophy
 
-value investing is about gaining investment "CERTAINTY" through UNDERSTANDING. The core philosophy: **"Don't lose money."**
+Value investing is about gaining investment "CERTAINTY" through UNDERSTANDING. The core philosophy: **"Don't lose money."**
 
 Warren Buffett's famous quote: "There are only two rules of investing. Number one: Don't lose money. Number two: don't forget number one." What he's really saying is:
 
@@ -25,7 +25,7 @@ Warren Buffett's famous quote: "There are only two rules of investing. Number on
 
 **Concentrated portfolios:** 5-10 stocks, thoroughly researched with margin of safety. Traditional managers say diversify to reduce risk; value investing flips the script — study and understand your investments to reduce risk, then concentrate. It's okay to put all your eggs in 5-10 baskets, as long as you watch those baskets like a hawk.
 
-value investing tenets:
+Value investing tenets:
 - Research gives you understanding
 - Understanding gives you conviction
 - Conviction allows you to run a concentrated portfolio
@@ -33,22 +33,22 @@ value investing tenets:
 
 "Few bets, infrequent bets, big bets."
 
-**A "Wonderful Company" must pass four tests:**
+**A high-conviction investment must pass four tests:**
 1. We understand the company deeply
 2. The company dominates and has one or more competitive advantages
 3. The company will continue dominance for the next decade
 4. We can buy at a discount with margin of safety
 
-**Price is everything.** Doesn't matter how great a company is if you pay too much for it. What is smart at one price is foolish at another. Sticker price = the at-value price. Buy price = ~50% below sticker.
+**Price is everything.** Doesn't matter how great a company is if you pay too much for it. What is smart at one price is foolish at another. Full Price = the at-value price. Buy price = ~50% below the Full Price.
 
 **Events** are temporary price misalignments caused by bad news:
 1. **Company-specific** — Chipotle e.coli 2015, BudLight 2023, BP oil spill 2010
 2. **Industry-specific** — SaaS companies 2025 due to AI, cruise lines during COVID
 3. **Market-wide black swan** — 2001 .com crash, 2008 credit crash, 2020 COVID
 
-Black swan events are the best case — prices drop from fear, not company issues. Rulers buy fear and sell greed. Practically every company goes through at least one event in its lifetime — be ready.
+Black swan events are the best case — prices drop from fear, not company issues. Value investors buy fear and sell greed. Practically every company goes through at least one event in its lifetime — be ready.
 
-**Investment requirements:** (1) Wonderful company, (2) Accurate valuation, (3) Event causing price drop, (4) 50% discount (Margin of Safety). These filter out 99% of companies, and events are infrequent — when opportunity appears, load up the truck. Two value investing investments per year is a great year.
+**Investment requirements:** (1) High-quality business, (2) Accurate valuation, (3) Event causing price drop, (4) 50% discount (Margin of Safety). These filter out 99% of companies, and events are infrequent — when opportunity appears, load up the truck. Two value investing investments per year is a great year.
 
 **Finding companies:** Start with your circle of competence — passions, talents, spending habits. Use financial news for "troubled" stocks (events = opportunity). Research guru 13F filings — big money managers file quarterly showing buys/sells. Their trades could be as much as four months old by the time we see them. Guru ownership provides **context, not confirmation.**
 

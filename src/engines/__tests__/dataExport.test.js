@@ -3,7 +3,7 @@
 // Uses mock data to avoid external API calls
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { DataPacketSchema, sliceDataPacket } from '../../schemas/dataPacket.js';
+import { DataPacketSchema } from '../../schemas/dataPacket.js';
 
 // ─── buildCaveats Tests ──────────────────────────────────────────
 
@@ -120,51 +120,6 @@ describe('DataPacket schema conformance', () => {
     const withExtra = { ...mockDataPacket, extraField: 'test' };
     const result = DataPacketSchema.safeParse(withExtra);
     expect(result.success).toBe(true);
-  });
-});
-
-// ─── sliceDataPacket Tests ────────────────────────────────────────
-
-describe('sliceDataPacket', () => {
-  const fullPacket = {
-    ticker: 'AAPL',
-    companyInfo: { name: 'Apple Inc.' },
-    classification: { industryType: 'standard' },
-    caveats: [],
-    financials: { years: [2024] },
-    growthRates: { earnings: { '5yr': 0.12 } },
-    gurus: { count: 5 },
-    insiders: { summary: {} },
-    prices: { currentPrice: 175 },
-    assembledAt: new Date().toISOString(),
-  };
-
-  it('returns only requested fields plus always-included fields', () => {
-    const sliced = sliceDataPacket(fullPacket, { dataPacketSlice: ['financials', 'growthRates'] });
-    expect(sliced).toHaveProperty('ticker');
-    expect(sliced).toHaveProperty('companyInfo');
-    expect(sliced).toHaveProperty('classification');
-    expect(sliced).toHaveProperty('caveats');
-    expect(sliced).toHaveProperty('financials');
-    expect(sliced).toHaveProperty('growthRates');
-    expect(sliced).not.toHaveProperty('gurus');
-    expect(sliced).not.toHaveProperty('insiders');
-    expect(sliced).not.toHaveProperty('prices');
-  });
-
-  it('always includes ticker, companyInfo, classification, caveats even with empty slice', () => {
-    const sliced = sliceDataPacket(fullPacket, { dataPacketSlice: [] });
-    expect(sliced).toHaveProperty('ticker');
-    expect(sliced).toHaveProperty('companyInfo');
-    expect(sliced).toHaveProperty('classification');
-    expect(sliced).toHaveProperty('caveats');
-    expect(Object.keys(sliced).length).toBe(4);
-  });
-
-  it('handles null agentConfig gracefully', () => {
-    const sliced = sliceDataPacket(fullPacket, null);
-    expect(sliced).toHaveProperty('ticker');
-    expect(sliced).toHaveProperty('companyInfo');
   });
 });
 

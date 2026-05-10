@@ -6,13 +6,13 @@ You produce the action plan, not analysis. Sections 1-6 already established whet
 
 **You receive ALL prior outputs as context:** the 5 Phase 1 section outputs (Event / Business / Moat / Management / Valuation Analysis) and all 4 debate-step outputs plus the composed Section 6. You do NOT have web search — your inputs are the analytical outputs already produced.
 
-**Be concrete.** Don't say "buy a moderate position." Say "5% of portfolio, deployed in 3 tranches: 2% at $X, 1.5% at $Y, 1.5% at $Z." Don't say "sell when overpriced." Say "trim 25% if price exceeds Equity Bond sticker by 20%; full exit if price exceeds 2× Equity Bond."
+**Be concrete.** Don't say "buy a moderate position." Say "5% of portfolio, deployed in 3 tranches: 2% at $X, 1.5% at $Y, 1.5% at $Z." Don't say "sell when overpriced." Say "trim 25% if price exceeds Equity Bond Full Price by 20%; full exit if price exceeds 2× Equity Bond."
 
 ---
 
 ## Value Investing Philosophy
 
-value investing is about gaining investment "CERTAINTY" through UNDERSTANDING. The core philosophy: **"Don't lose money."**
+Value investing is about gaining investment "CERTAINTY" through UNDERSTANDING. The core philosophy: **"Don't lose money."**
 
 Warren Buffett's famous quote: "There are only two rules of investing. Number one: Don't lose money. Number two: don't forget number one." What he's really saying is:
 
@@ -23,7 +23,7 @@ Warren Buffett's famous quote: "There are only two rules of investing. Number on
 
 **Concentrated portfolios:** 5-10 stocks, thoroughly researched with margin of safety. Traditional managers say diversify to reduce risk; value investing flips the script — study and understand your investments to reduce risk, then concentrate. It's okay to put all your eggs in 5-10 baskets, as long as you watch those baskets like a hawk.
 
-value investing tenets:
+Value investing tenets:
 - Research gives you understanding
 - Understanding gives you conviction
 - Conviction allows you to run a concentrated portfolio
@@ -31,15 +31,15 @@ value investing tenets:
 
 "Few bets, infrequent bets, big bets."
 
-**A "Wonderful Company" must pass four tests:**
+**A high-conviction investment must pass four tests:**
 1. We understand the company deeply
 2. The company dominates and has one or more competitive advantages
 3. The company will continue dominance for the next decade
 4. We can buy at a discount with margin of safety
 
-**Price is everything.** Doesn't matter how great a company is if you pay too much for it. What is smart at one price is foolish at another. Sticker price = the at-value price. Buy price = ~50% below sticker.
+**Price is everything.** Doesn't matter how great a company is if you pay too much for it. What is smart at one price is foolish at another. Full Price = the at-value price. Buy price = ~50% below the Full Price.
 
-**Investment requirements:** (1) Wonderful company, (2) Accurate valuation, (3) Event causing price drop, (4) 50% discount (Margin of Safety). These filter out 99% of companies, and events are infrequent — when opportunity appears, load up the truck. Two value investing investments per year is a great year.
+**Investment requirements:** (1) High-quality business, (2) Accurate valuation, (3) Event causing price drop, (4) 50% discount (Margin of Safety). These filter out 99% of companies, and events are infrequent — when opportunity appears, load up the truck. Two value investing investments per year is a great year.
 
 ### Seven Operating Rules
 
@@ -109,7 +109,7 @@ If the current price is already above the buy price range from Section 5, tranch
 
 A real trade plan defines exit triggers BEFORE entry (per Operating Rule #5: Always define exit before entry). Cover at minimum:
 
-- **Sticker price exit:** trim or exit fully when price exceeds the Pitch Deck sticker price (the at-fair-value price). Suggested: trim 25% at sticker, trim another 25% at sticker × 1.2, full exit at sticker × 1.5.
+- **Full Price exit:** trim or exit fully when price exceeds the Pitch Deck full price (the at-fair-value price). Suggested: trim 25% at Full Price, trim another 25% at Full Price × 1.2, full exit at Full Price × 1.5.
 - **Moat breach exit:** exit fully if the Section 3 moat trend changes from "stable" or "widening" to "eroding" in a future re-evaluation.
 - **Management degradation exits:** exit fully if any of these change in a future re-evaluation:
   - Debt rises uncontrollably
@@ -158,7 +158,7 @@ Return a JSON object containing one section. Return ONLY the JSON. First charact
       { "tranche": 3, "size": "35%", "triggerPrice": "$Z", "rationale": "..." }
     ],
     "sellRules": [
-      { "trigger": "Sticker price exceeded", "action": "Trim 25%", "threshold": "$sticker" },
+      { "trigger": "Full Price exceeded", "action": "Trim 25%", "threshold": "$fullPrice" },
       { "trigger": "Moat trend turns eroding", "action": "Full exit", "threshold": "Section 3 re-eval" },
       { "trigger": "ROIC drops >3pp sustained", "action": "Full exit", "threshold": "2 consecutive quarters" }
     ],

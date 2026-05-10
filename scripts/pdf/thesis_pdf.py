@@ -610,3 +610,588 @@ class ThesisPDF(ReportPDF):
         self.line(price_x, y_chart_top, price_x, y_chart_bottom)
         self.set_dash_pattern()
         self.ln(4)
+
+    # ── Pipeline Flow (cover page) ────────────────────────────────────────────
+
+    def draw_pipeline_flow(self, current_stage):
+        """3-stage pipeline flow chart for cover pages.
+
+        current_stage: 'One Pager', 'Pitch Deck', or 'Final Thesis'.
+        Highlights the current stage in teal; others in slate.
+        """
+        stages = ['One Pager', 'Pitch Deck', 'Final Thesis']
+        aw = self.w - self.l_margin - self.r_margin
+        box_w = (aw - 30) / 3
+        box_h = 14
+        gap = 15
+
+        y = self.get_y()
+        x = self.l_margin
+
+        for i, stage in enumerate(stages):
+            is_current = (stage == current_stage)
+            border = self.teal_500 if is_current else self.slate_200
+            fill = self.teal_50 if is_current else (255, 255, 255)
+            label_color = self.teal_500 if is_current else self.slate_500
+
+            self.set_draw_color(*border)
+            self.set_line_width(0.8 if is_current else 0.4)
+            self.set_fill_color(*fill)
+            self.rect(x, y, box_w, box_h, 'DF')
+
+            self.set_font('ArialUni', 'B', 9)
+            self.set_text_color(*label_color)
+            self.set_xy(x, y + 3.5)
+            self.cell(box_w, 4, f'Stage {i+1}', align='C')
+            self.set_xy(x, y + 7.5)
+            self.cell(box_w, 4, stage, align='C')
+
+            if i < len(stages) - 1:
+                arrow_y = y + box_h / 2
+                arrow_x_start = x + box_w + 2
+                arrow_x_end = x + box_w + gap - 2
+                self.set_draw_color(*self.slate_500)
+                self.set_line_width(0.5)
+                self.line(arrow_x_start, arrow_y, arrow_x_end - 2, arrow_y)
+                self.line(arrow_x_end - 4, arrow_y - 1.5, arrow_x_end - 2, arrow_y)
+                self.line(arrow_x_end - 4, arrow_y + 1.5, arrow_x_end - 2, arrow_y)
+
+                # 'Gate' label between boxes
+                self.set_font('ArialUni', '', 6.5)
+                self.set_text_color(*self.slate_500)
+                self.set_xy(arrow_x_start, arrow_y + 1)
+                self.cell(gap - 4, 3, 'gate', align='C')
+
+            x += box_w + gap
+
+        self.set_y(y + box_h + 6)
+        self.set_text_color(*self.slate_800)
+
+    # ── Sparkline ─────────────────────────────────────────────────────────────
+
+    def draw_sparkline(self, x, y, w, h, values, color=None, label=''):
+        """Inline sparkline. Renders nothing if values is empty or all-equal."""
+        if not values or len(values) < 2:
+            return
+        vmin, vmax = min(values), max(values)
+        if vmax == vmin:
+            return
+        color = color or self.teal_500
+        self.set_draw_color(*color)
+        self.set_line_width(0.6)
+        n = len(values)
+        prev = None
+        for i, v in enumerate(values):
+            px = x + (i / (n - 1)) * w
+            py = y + h - ((v - vmin) / (vmax - vmin)) * h
+            if prev is not None:
+                self.line(prev[0], prev[1], px, py)
+            prev = (px, py)
+        if label:
+            self.set_font('ArialUni', '', 7)
+            self.set_text_color(*self.slate_600)
+            self.set_xy(x, y - 3.5)
+            self.cell(w, 3, f'{label}: {values[0]:.1f}% → {values[-1]:.1f}%')
+
+    def draw_sparkline_trio(self, title, series):
+        """Stacked sparkline trio. series is a list of (label, values, color)."""
+        if not series:
+            return
+        if self.get_y() + 50 > self.h - 25:
+            self.add_page()
+        self.ln(2)
+        self.set_font('ArialUni', 'B', 10)
+        self.set_text_color(*self.teal_500)
+        self.cell(0, 7, title, new_x="LMARGIN", new_y="NEXT")
+        self.ln(4)
+
+        aw = self.w - self.l_margin - self.r_margin
+        spark_h = 8
+        for label, values, color in series:
+            y = self.get_y() + 4
+            self.draw_sparkline(self.l_margin + 50, y, aw - 60, spark_h, values, color, label)
+            self.ln(spark_h + 5)
+
+    # ── Gate Grid (One Pager minimum standards) ──────────────────────────────
+
+    def draw_gate_grid(self, title, gates):
+        """2×N grid of pass/fail gates with status circle.
+
+        gates: list of (label, status, detail) where status in {'PASS','FAIL','WARN'}.
+        """
+        if not gates:
+            return
+        if self.get_y() + 50 > self.h - 25:
+            self.add_page()
+        self.ln(2)
+        self.set_font('ArialUni', 'B', 10)
+        self.set_text_color(*self.teal_500)
+        self.cell(0, 7, title, new_x="LMARGIN", new_y="NEXT")
+        self.ln(3)
+
+        aw = self.w - self.l_margin - self.r_margin
+        cols = 2
+        rows = (len(gates) + cols - 1) // cols
+        cell_w = aw / cols
+        cell_h = 18
+
+        status_color = {
+            'PASS': self.green_500,
+            'FAIL': self.red_500,
+            'WARN': self.amber_500,
+        }
+
+        y_top = self.get_y()
+        for i, (label, status, detail) in enumerate(gates):
+            r, c = divmod(i, cols)
+            cx = self.l_margin + c * cell_w
+            cy = y_top + r * cell_h
+
+            color = status_color.get(str(status).upper(), self.slate_500)
+            self.set_draw_color(*self.slate_200)
+            self.set_line_width(0.3)
+            self.rect(cx + 1, cy, cell_w - 4, cell_h - 2, 'D')
+
+            # Status circle
+            self.set_fill_color(*color)
+            self.set_draw_color(*color)
+            self.ellipse(cx + 4, cy + 5, 5, 5, 'F')
+
+            # Status text inside circle
+            self.set_font('ArialUni', 'B', 6)
+            self.set_text_color(255, 255, 255)
+            self.set_xy(cx + 4, cy + 6)
+            stext = {'PASS': 'OK', 'FAIL': 'X', 'WARN': '!'}.get(str(status).upper(), '?')
+            self.cell(5, 3, stext, align='C')
+
+            # Label and detail
+            self.set_font('ArialUni', 'B', 9)
+            self.set_text_color(*self.slate_800)
+            self.set_xy(cx + 12, cy + 2)
+            self.cell(cell_w - 16, 5, str(label))
+            self.set_font('ArialUni', '', 7.5)
+            self.set_text_color(*self.slate_600)
+            self.set_xy(cx + 12, cy + 8)
+            self.cell(cell_w - 16, 5, str(detail)[:80])
+
+        self.set_y(y_top + rows * cell_h + 2)
+        self.set_text_color(*self.slate_800)
+
+    # ── Donut Chart ───────────────────────────────────────────────────────────
+
+    def draw_donut(self, title, slices, colors=None):
+        """Donut chart approximating arcs with line segments.
+
+        slices: list of (label, value) tuples.
+        """
+        if not slices:
+            return
+        total = sum(v for _, v in slices if v > 0)
+        if total <= 0:
+            return
+        if self.get_y() + 70 > self.h - 25:
+            self.add_page()
+        self.ln(2)
+        self.set_font('ArialUni', 'B', 10)
+        self.set_text_color(*self.teal_500)
+        self.cell(0, 7, title, new_x="LMARGIN", new_y="NEXT")
+        self.ln(3)
+
+        default_palette = [self.teal_500, self.blue_500, self.amber_500,
+                           self.slate_600, self.teal_300, self.green_500]
+        colors = colors or default_palette
+
+        aw = self.w - self.l_margin - self.r_margin
+        cx = self.l_margin + 30
+        cy = self.get_y() + 28
+        r_outer = 22
+        r_inner = 12
+
+        import math
+        start = -math.pi / 2  # start at top
+        seg_step = math.pi / 90  # 2-degree segments
+
+        for i, (label, value) in enumerate(slices):
+            if value <= 0:
+                continue
+            color = colors[i % len(colors)]
+            sweep = (value / total) * 2 * math.pi
+            self.set_fill_color(*color)
+            self.set_draw_color(*color)
+            t = start
+            while t < start + sweep:
+                t_next = min(t + seg_step, start + sweep)
+                # Triangle fan from center to two arc points (donut: outer ring only)
+                x0 = cx + r_outer * math.cos(t)
+                y0 = cy + r_outer * math.sin(t)
+                x1 = cx + r_outer * math.cos(t_next)
+                y1 = cy + r_outer * math.sin(t_next)
+                xi0 = cx + r_inner * math.cos(t)
+                yi0 = cy + r_inner * math.sin(t)
+                xi1 = cx + r_inner * math.cos(t_next)
+                yi1 = cy + r_inner * math.sin(t_next)
+                # Render quad as two triangles via polygon
+                self.polygon([(x0, y0), (x1, y1), (xi1, yi1), (xi0, yi0)], style='F')
+                t = t_next
+            start += sweep
+
+        # Legend
+        legend_x = self.l_margin + 70
+        legend_y = cy - 22
+        for i, (label, value) in enumerate(slices):
+            color = colors[i % len(colors)]
+            pct = value / total * 100
+            self.set_fill_color(*color)
+            self.rect(legend_x, legend_y + i * 6, 4, 4, 'F')
+            self.set_font('ArialUni', '', 8)
+            self.set_text_color(*self.slate_700)
+            self.set_xy(legend_x + 6, legend_y + i * 6 - 1)
+            self.cell(aw - 80, 6, f'{label}: {pct:.0f}%')
+
+        self.set_y(cy + r_outer + 6)
+        self.set_text_color(*self.slate_800)
+
+    # ── Radar Chart ───────────────────────────────────────────────────────────
+
+    def draw_radar(self, title, axes, values, max_value=10):
+        """Radar/spider chart with N axes.
+
+        axes: list of axis labels.
+        values: list of numeric values (same length).
+        """
+        if not axes or len(axes) != len(values) or len(axes) < 3:
+            return
+        if self.get_y() + 75 > self.h - 25:
+            self.add_page()
+        self.ln(2)
+        self.set_font('ArialUni', 'B', 10)
+        self.set_text_color(*self.teal_500)
+        self.cell(0, 7, title, new_x="LMARGIN", new_y="NEXT")
+        self.ln(3)
+
+        import math
+        aw = self.w - self.l_margin - self.r_margin
+        cx = self.l_margin + aw / 2
+        cy = self.get_y() + 32
+        r = 26
+
+        n = len(axes)
+        # Concentric grid (4 rings)
+        self.set_draw_color(*self.slate_200)
+        self.set_line_width(0.2)
+        for k in range(1, 5):
+            grid_r = r * k / 4
+            pts = []
+            for i in range(n):
+                a = -math.pi / 2 + 2 * math.pi * i / n
+                pts.append((cx + grid_r * math.cos(a), cy + grid_r * math.sin(a)))
+            for i in range(n):
+                p, q = pts[i], pts[(i + 1) % n]
+                self.line(p[0], p[1], q[0], q[1])
+
+        # Axes
+        for i in range(n):
+            a = -math.pi / 2 + 2 * math.pi * i / n
+            self.set_draw_color(*self.slate_200)
+            self.line(cx, cy, cx + r * math.cos(a), cy + r * math.sin(a))
+
+        # Values polygon
+        pts = []
+        for i, v in enumerate(values):
+            a = -math.pi / 2 + 2 * math.pi * i / n
+            frac = max(0, min(1, v / max_value))
+            pts.append((cx + r * frac * math.cos(a), cy + r * frac * math.sin(a)))
+        self.set_fill_color(*self.teal_300)
+        self.set_draw_color(*self.teal_500)
+        self.set_line_width(0.6)
+        self.polygon(pts, style='DF')
+
+        # Axis labels
+        self.set_font('ArialUni', '', 7)
+        self.set_text_color(*self.slate_700)
+        for i, label in enumerate(axes):
+            a = -math.pi / 2 + 2 * math.pi * i / n
+            lx = cx + (r + 4) * math.cos(a) - 14
+            ly = cy + (r + 4) * math.sin(a) - 1
+            self.set_xy(lx, ly)
+            self.cell(28, 4, str(label)[:18], align='C')
+
+        self.set_y(cy + r + 8)
+        self.set_text_color(*self.slate_800)
+
+    # ── Stacked Bar Chart ─────────────────────────────────────────────────────
+
+    def draw_stacked_bar_chart(self, title, periods, stacks, stack_names, stack_colors,
+                               unit='B'):
+        """Vertical-style stacked bars over multiple periods.
+
+        periods: list of period labels (x-axis).
+        stacks: list of value lists, one per stack name. Each inner list aligns
+                with periods.
+        """
+        if not periods or not stacks:
+            return
+        n_periods = len(periods)
+        if any(len(s) != n_periods for s in stacks):
+            return
+        if self.get_y() + 75 > self.h - 25:
+            self.add_page()
+        self.ln(2)
+        self.set_font('ArialUni', 'B', 10)
+        self.set_text_color(*self.teal_500)
+        self.cell(0, 7, title, new_x="LMARGIN", new_y="NEXT")
+
+        # Legend
+        self.ln(2)
+        legend_y = self.get_y()
+        for si, (sn, sc) in enumerate(zip(stack_names, stack_colors)):
+            self.set_fill_color(*sc)
+            self.rect(self.l_margin + si * 42, legend_y, 6, 4, 'F')
+            self.set_font('ArialUni', '', 7)
+            self.set_text_color(*self.slate_600)
+            self.set_xy(self.l_margin + si * 42 + 8, legend_y - 0.5)
+            self.cell(34, 5, sn[:16])
+        self.ln(8)
+
+        aw = self.w - self.l_margin - self.r_margin
+        chart_h = 45
+        bar_w = (aw - 20) / n_periods * 0.6
+        gap = (aw - 20) / n_periods * 0.4
+
+        # Compute period totals to determine scale
+        totals = [sum(s[i] for s in stacks) for i in range(n_periods)]
+        max_total = max(totals) * 1.10 if totals else 1
+
+        y_base = self.get_y() + chart_h
+        for pi, period in enumerate(periods):
+            x = self.l_margin + 10 + pi * (bar_w + gap) + gap / 2
+            cum = 0
+            for si, s in enumerate(stacks):
+                v = max(0, s[pi])
+                seg_h = (v / max_total) * chart_h if max_total > 0 else 0
+                color = stack_colors[si]
+                self.set_fill_color(*color)
+                self.rect(x, y_base - cum - seg_h, bar_w, seg_h, 'F')
+                cum += seg_h
+
+            # Period label
+            self.set_font('ArialUni', '', 7.5)
+            self.set_text_color(*self.slate_600)
+            self.set_xy(x - 5, y_base + 1)
+            self.cell(bar_w + 10, 4, str(period), align='C')
+
+            # Total label above bar
+            self.set_font('ArialUni', 'B', 7)
+            self.set_text_color(*self.slate_700)
+            t = totals[pi]
+            if unit == 'B':
+                t_str = f'${t/1e9:.1f}B' if abs(t) >= 1e9 else f'${t/1e6:.0f}M'
+            elif unit == '%':
+                t_str = f'{t:.1f}%'
+            else:
+                t_str = f'{t:.1f}'
+            self.set_xy(x - 5, y_base - cum - 5)
+            self.cell(bar_w + 10, 4, t_str, align='C')
+
+        self.set_y(y_base + 8)
+        self.set_text_color(*self.slate_800)
+
+    # ── Divergent Bar (Bull vs Bear) ──────────────────────────────────────────
+
+    def draw_divergent_bar_chart(self, title, bulls, bears):
+        """Side-by-side divergent horizontal bars: bulls right (teal), bears left (red).
+
+        bulls/bears: list of (label, weight) tuples (weight 1-10 typical).
+        """
+        if not bulls and not bears:
+            return
+        n = max(len(bulls), len(bears))
+        if self.get_y() + 30 + n * 11 > self.h - 25:
+            self.add_page()
+        self.ln(2)
+        self.set_font('ArialUni', 'B', 10)
+        self.set_text_color(*self.teal_500)
+        self.cell(0, 7, title, new_x="LMARGIN", new_y="NEXT")
+        self.ln(2)
+
+        # Subtitle row
+        self.set_font('ArialUni', 'B', 8)
+        aw = self.w - self.l_margin - self.r_margin
+        col_w = aw / 2
+        self.set_text_color(*self.red_500)
+        self.cell(col_w, 5, 'BEAR THESIS', align='R')
+        self.set_text_color(*self.teal_500)
+        self.cell(col_w, 5, 'BULL THESIS', align='L', new_x="LMARGIN", new_y="NEXT")
+        self.ln(1)
+
+        center_x = self.l_margin + aw / 2
+        max_weight = max(
+            ([w for _, w in bulls] or [1]) +
+            ([w for _, w in bears] or [1])
+        )
+
+        bar_h = 8
+        for i in range(n):
+            y = self.get_y()
+            # Bear (left)
+            if i < len(bears):
+                label, weight = bears[i]
+                bar_w = (weight / max_weight) * (aw / 2 - 5)
+                self.set_fill_color(*self.red_500)
+                self.rect(center_x - bar_w, y, bar_w, bar_h, 'F')
+                self.set_font('ArialUni', '', 7.5)
+                self.set_text_color(*self.slate_700)
+                self.set_xy(self.l_margin, y)
+                txt = str(label)[:60]
+                self.cell(aw / 2 - bar_w - 3, bar_h, txt, align='R')
+            # Bull (right)
+            if i < len(bulls):
+                label, weight = bulls[i]
+                bar_w = (weight / max_weight) * (aw / 2 - 5)
+                self.set_fill_color(*self.teal_500)
+                self.rect(center_x, y, bar_w, bar_h, 'F')
+                self.set_font('ArialUni', '', 7.5)
+                self.set_text_color(*self.slate_700)
+                self.set_xy(center_x + bar_w + 3, y)
+                self.cell(aw / 2 - bar_w - 3, bar_h, str(label)[:60])
+
+            self.set_xy(self.l_margin, y + bar_h + 3)
+
+        # Center axis line
+        self.set_draw_color(*self.slate_400 if hasattr(self, 'slate_400') else self.slate_500)
+        self.set_line_width(0.4)
+        self.set_y(self.get_y() + 2)
+
+    # ── Price Ladder (trade plan) ─────────────────────────────────────────────
+
+    def draw_price_ladder(self, title, current_price, levels):
+        """Vertical price ladder showing entry/trim/exit zones.
+
+        levels: list of (zone_label, low, high, kind) where kind in
+                {'entry','trim','exit'} controls color.
+        """
+        if not levels:
+            return
+        if self.get_y() + 90 > self.h - 25:
+            self.add_page()
+        self.ln(2)
+        self.set_font('ArialUni', 'B', 10)
+        self.set_text_color(*self.teal_500)
+        self.cell(0, 7, title, new_x="LMARGIN", new_y="NEXT")
+        self.ln(2)
+
+        aw = self.w - self.l_margin - self.r_margin
+        chart_h = 70
+        y_top = self.get_y() + 4
+        y_bot = y_top + chart_h
+        axis_x = self.l_margin + 80
+
+        all_prices = [current_price] + [l for _, l, _, _ in levels] + [h for _, _, h, _ in levels]
+        pmin = min(all_prices) * 0.95
+        pmax = max(all_prices) * 1.05
+        if pmax == pmin:
+            pmax = pmin + 1
+
+        def y_for(p):
+            return y_bot - ((p - pmin) / (pmax - pmin)) * chart_h
+
+        # Draw axis line
+        self.set_draw_color(*self.slate_300 if hasattr(self, 'slate_300') else self.slate_500)
+        self.set_line_width(0.4)
+        self.line(axis_x, y_top, axis_x, y_bot)
+
+        zone_color = {
+            'entry': self.teal_500,
+            'trim': self.amber_500,
+            'exit': self.red_500,
+        }
+
+        # Zones as horizontal bands on the right of the axis
+        zone_x = axis_x + 3
+        zone_w = aw - (axis_x - self.l_margin) - 5
+        for label, low, high, kind in levels:
+            color = zone_color.get(kind, self.slate_500)
+            yh = y_for(high)
+            yl = y_for(low)
+            self.set_fill_color(*color)
+            self.set_draw_color(*color)
+            self.rect(zone_x, yh, zone_w, yl - yh, 'F')
+            # Label inside zone
+            self.set_font('ArialUni', 'B', 7.5)
+            self.set_text_color(255, 255, 255)
+            self.set_xy(zone_x + 2, yh + 1)
+            self.cell(zone_w - 4, 4, f'{label} (${low:.0f}–${high:.0f})')
+
+        # Current price marker
+        cy = y_for(current_price)
+        self.set_draw_color(*self.slate_800)
+        self.set_line_width(0.8)
+        self.set_dash_pattern(2, 1.5)
+        self.line(self.l_margin + 10, cy, axis_x, cy)
+        self.set_dash_pattern()
+
+        self.set_font('ArialUni', 'B', 8)
+        self.set_text_color(*self.slate_800)
+        self.set_xy(self.l_margin + 10, cy - 2.5)
+        self.cell(60, 4, f'Current ${current_price:.0f}', align='R')
+
+        self.set_y(y_bot + 4)
+
+    # ── Status Grid (promise tracker) ─────────────────────────────────────────
+
+    def draw_status_grid(self, title, rows, columns, statuses):
+        """Gantt-lite status heatmap.
+
+        rows: list of row labels.
+        columns: list of column labels (e.g. quarters).
+        statuses: 2D list shape [len(rows)][len(columns)] with values in
+                  {'delivered','partial','missed','pending', None}.
+        """
+        if not rows or not columns:
+            return
+        if self.get_y() + 20 + len(rows) * 7 > self.h - 25:
+            self.add_page()
+        self.ln(2)
+        self.set_font('ArialUni', 'B', 10)
+        self.set_text_color(*self.teal_500)
+        self.cell(0, 7, title, new_x="LMARGIN", new_y="NEXT")
+        self.ln(2)
+
+        aw = self.w - self.l_margin - self.r_margin
+        label_w = 60
+        cell_w = (aw - label_w - 4) / max(len(columns), 1)
+        cell_h = 6
+
+        # Header row
+        self.set_font('ArialUni', 'B', 7.5)
+        self.set_text_color(*self.slate_700)
+        self.set_x(self.l_margin + label_w + 2)
+        for col in columns:
+            self.cell(cell_w, cell_h, str(col)[:14], align='C')
+        self.ln(cell_h)
+
+        color_map = {
+            'delivered': self.green_500,
+            'pass': self.green_500,
+            'partial': self.amber_500,
+            'missed': self.red_500,
+            'fail': self.red_500,
+            'pending': self.slate_300 if hasattr(self, 'slate_300') else self.slate_500,
+        }
+
+        for ri, label in enumerate(rows):
+            y = self.get_y()
+            self.set_font('ArialUni', '', 7.5)
+            self.set_text_color(*self.slate_700)
+            self.cell(label_w, cell_h, str(label)[:50])
+            for ci in range(len(columns)):
+                status = None
+                if ri < len(statuses) and ci < len(statuses[ri]):
+                    status = str(statuses[ri][ci]).lower() if statuses[ri][ci] else None
+                color = color_map.get(status, self.slate_200)
+                self.set_fill_color(*color)
+                self.set_draw_color(255, 255, 255)
+                self.rect(self.l_margin + label_w + 2 + ci * cell_w, y, cell_w - 1, cell_h - 1, 'F')
+            self.ln(cell_h)
+        self.ln(3)
+        self.set_text_color(*self.slate_800)

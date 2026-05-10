@@ -19,6 +19,8 @@ from section_renderers import (
     get_narrative, get_tables, get_red_flags, get_citations,
     get_verdict_color, format_currency, _clean_narrative
 )
+from citation_links import extract_url
+from prose_structurer import structure_prose
 
 
 # =========================================================================
@@ -26,22 +28,22 @@ from section_renderers import (
 # =========================================================================
 
 def _render_narrative(pdf, narrative):
-    """Render a section narrative, splitting on paragraph headers."""
+    """Render a section narrative as a sequence of typed blocks."""
     if not narrative:
         return
-    # Clean cite tags and internal jargon before rendering
     narrative = _clean_narrative(narrative)
-    for para in narrative.split('\n\n'):
-        para = para.strip()
-        if not para:
-            continue
-        # Bold markdown sub-headers: **Title Text**
-        if para.startswith('**') and para.endswith('**') and len(para) < 120:
-            pdf.add_section_header(para[2:-2], level=3)
-        elif para.endswith(':') or (len(para) < 120 and '\u2014' in para):
-            pdf.add_section_header(para.rstrip(':'), level=3)
+    for block in structure_prose(narrative):
+        kind = block['kind']
+        if kind == 'subheader':
+            pdf.add_section_header(block['text'], level=3)
+        elif kind == 'bullets':
+            for item in block['items']:
+                pdf.add_bullet(item, indent=2)
+        elif kind == 'numbered':
+            for i, item in enumerate(block['items'], 1):
+                pdf.add_numbered_item(i, item)
         else:
-            pdf.add_body_text(para)
+            pdf.add_body_text(block['text'])
 
 
 def _render_citations_page(pdf, all_citations):
@@ -62,8 +64,14 @@ def _render_citations_page(pdf, all_citations):
             line = f'[{i}] {ref}'
             if text:
                 line += f' = {text}'
-            line += f'  ({source})'
-            pdf.add_bullet(line, indent=2)
+            url_info = extract_url(source) if source else None
+            if url_info:
+                url, display = url_info
+                line += f'  ({display})'
+                pdf.add_bullet(line, indent=2, link=url, link_text=display)
+            else:
+                line += f'  ({source})'
+                pdf.add_bullet(line, indent=2)
 
 
 # =========================================================================
@@ -173,7 +181,105 @@ def _render_metric_gauges(pdf, data):
         gauges.append(('Rev Growth', round(rev_3yr * 100, 1), 10, '%', True))
 
     if gauges:
-        pdf.draw_metric_gauges('value investing Quick Screen', gauges)
+        pdf.draw_metric_gauges('Thesis Score — Quick Screen', gauges)
+
+
+def _render_thesis_pillar_gauges(pdf, data):
+    """4-pillar Thesis Score (Compounding / Capital Efficiency / Capital Allocation / Resilience).
+
+    Reads dataPacket.thesisScore.pillars if present. Each pillar may be a flat
+    score number or a dict {score, metrics}. Falls back silently if missing.
+    """
+    score = data.data_packet.get('thesisScore', {})
+    pillars = score.get('pillars') or score.get('pillarScores')
+    if not isinstance(pillars, dict) or not pillars:
+        return
+    label_map = {
+        'compounding': 'Compounding',
+        'capitalEfficiency': 'Capital Efficiency',
+        'capital_efficiency': 'Capital Efficiency',
+        'capitalAllocation': 'Capital Allocation',
+        'capital_allocation': 'Capital Allocation',
+        'resilience': 'Resilience',
+    }
+    gauges = []
+    for k, v in pillars.items():
+        if isinstance(v, dict):
+            v = v.get('score')
+        if not isinstance(v, (int, float)):
+            continue
+        gauges.append((label_map.get(k, k), float(v), 70.0, '%', True))
+    if gauges:
+        pdf.draw_metric_gauges('Thesis Score — 4 Pillars', gauges)
+
+
+def _render_minimum_standards_grid(pdf, data):
+    """Render the minimum standards as a 2x2 pass/fail gate grid."""
+    section = data.get_section('minimum_standards')
+    if not section:
+        return
+    raw = section.get('data')
+    gates = None
+    if isinstance(raw, str):
+        try:
+            gates = json.loads(raw).get('gates')
+        except (ValueError, TypeError):
+            gates = None
+    elif isinstance(raw, dict):
+        gates = raw.get('gates')
+    if not isinstance(gates, dict):
+        return
+
+    rows = []
+    if 'marketCap' in gates:
+        g = gates['marketCap']
+        rows.append(('Market Cap', g.get('result', 'WARN'),
+                     f"{g.get('estimated', '')} (req {g.get('threshold', '')})"))
+    if 'usHeadquarters' in gates:
+        g = gates['usHeadquarters']
+        rows.append(('US Headquarters', g.get('result', 'WARN'),
+                     str(g.get('value', ''))[:80]))
+    if 'publicHistory' in gates:
+        g = gates['publicHistory']
+        rows.append(('Public History', g.get('result', 'WARN'),
+                     f"IPO {g.get('ipoYear', '?')} ({g.get('yearsPublic', '?')} yrs, req {g.get('threshold', '')})"))
+    if 'debtToEarnings' in gates:
+        g = gates['debtToEarnings']
+        rows.append(('Debt / Earnings', g.get('result', 'WARN'),
+                     f"{g.get('ratio', '?')} yrs (req {g.get('threshold', '')})"))
+    if rows:
+        pdf.draw_gate_grid('Minimum Standards — Gate Audit', rows)
+
+
+def _render_margin_sparklines(pdf, data):
+    """Sparkline trio for gross / operating / net margin trends (5y)."""
+    income_block = data.data_packet.get('financials', {}).get('income', {})
+    years = sorted([y for y in income_block.keys() if str(y).isdigit()])[-5:]
+    if len(years) < 3:
+        return
+
+    def _ratio(y, num_field, den_field='revenues'):
+        rec = income_block.get(y) or income_block.get(str(y)) or {}
+        num = rec.get(num_field)
+        den = rec.get(den_field)
+        if num is None or den is None or den == 0:
+            return None
+        return num / den * 100
+
+    series = []
+    gross_vals = [_ratio(y, 'gross_profit') for y in years]
+    op_vals = [_ratio(y, 'operating_income_loss') for y in years]
+    net_vals = [_ratio(y, 'net_income_loss') for y in years]
+
+    if all(v is not None for v in gross_vals):
+        series.append(('Gross Margin', gross_vals, pdf.teal_500))
+    if all(v is not None for v in op_vals):
+        series.append(('Operating Margin', op_vals, pdf.teal_400))
+    if all(v is not None for v in net_vals):
+        series.append(('Net Margin', net_vals, pdf.blue_500))
+
+    if series:
+        pdf.draw_sparkline_trio('Margin Trends (last 5 fiscal years)', series)
 
 
 # =========================================================================
@@ -215,7 +321,7 @@ def generate_one_pager(ticker, base_dir=None):
 
     pdf = ThesisPDF(
         title=f'{company_name} ({ticker})',
-        subtitle='value investing One Pager \u2014 Investment Screening Analysis',
+        subtitle='One Pager \u2014 Investment Screening Analysis',
         stage_label='One Pager'
     )
 
@@ -242,6 +348,9 @@ def generate_one_pager(ticker, base_dir=None):
         disclaimer='AI-generated research report for educational purposes only. Not financial advice.'
     )
 
+    # Pipeline flow chart on cover
+    pdf.draw_pipeline_flow('One Pager')
+
     # ── Executive Summary + Verdict Scorecard ────────────────────────────
     pdf.add_section_header('Executive Summary', level=1)
 
@@ -257,7 +366,13 @@ def generate_one_pager(ticker, base_dir=None):
     if scorecard_rows:
         pdf.draw_verdict_scorecard('Section Verdicts', scorecard_rows)
 
-    # Metric gauges from DataPacket
+    # Thesis Score 4-pillar gauges (NEW) — falls back silently if data absent
+    _render_thesis_pillar_gauges(pdf, data)
+
+    # Minimum standards gate grid (NEW)
+    _render_minimum_standards_grid(pdf, data)
+
+    # Existing metric gauges from DataPacket (ROIC, ROE, etc.)
     _render_metric_gauges(pdf, data)
 
     # ── Financial Overview (charts from DataPacket) ──────────────────────
@@ -265,6 +380,7 @@ def generate_one_pager(ticker, base_dir=None):
     _render_revenue_chart(pdf, data)
     _render_eps_chart(pdf, data)
     _render_opcf_chart(pdf, data)
+    _render_margin_sparklines(pdf, data)
 
     # ── Section Narratives ───────────────────────────────────────────────
     section_num = 0

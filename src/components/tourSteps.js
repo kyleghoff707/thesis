@@ -9,7 +9,7 @@ export const FULL_TOUR_STEPS = [
     route: null,
     position: 'center',
     title: 'Welcome to Thesis',
-    body: "Your AI analyst team is ready. You're the portfolio manager \u2014 Thesis does the 40+ hours of value investing research per company so you can focus on the investment decision. This 60-second tour shows you where everything lives. You can replay it anytime from the ? button in the header.",
+    body: "Your AI analyst team is ready. You're the portfolio manager \u2014 Thesis does the 40+ hours of fundamental research per company so you can focus on the investment decision. This 60-second tour shows you where everything lives. You can replay it anytime from the ? button in the header.",
   },
   {
     id: 'nav-tabs',
@@ -33,7 +33,7 @@ export const FULL_TOUR_STEPS = [
     route: '/research/{demoId}',
     position: 'below',
     title: 'Company Overview',
-    body: "The header shows the ticker, company name, and current price. The colored score badges on the right \u2014 Thesis Score, Moat, and Management \u2014 are computed from 10 years of SEC EDGAR filings. Green means passing, red means failing. Scores appear after data loads.",
+    body: "The header shows the ticker, company name, and current price. The colored Thesis Score badge on the right is a single 0-100 composite computed from 10 years of SEC EDGAR filings. Green means passing, red means failing. The score appears after data loads.",
     demoTicker: 'AAPL',
   },
   {
@@ -41,8 +41,8 @@ export const FULL_TOUR_STEPS = [
     target: 'score-badges',
     route: null,
     position: 'left',
-    title: 'Thesis Scores',
-    body: 'Three scores at a glance. The overall Thesis Score combines Moat (growth rate quality across BVPS, EPS, revenue, and operating cash flow) and Management (return on equity, return on invested capital, and debt levels). These update automatically as financial data loads.',
+    title: 'Thesis Score',
+    body: 'A single composite score combining four pillars: Compounding (growth quality), Capital Efficiency (returns on capital), Capital Allocation (how cash is deployed), and Resilience (downside protection). Click into the Toolbox to see the per-pillar breakdown.',
   },
   {
     id: 'toolbox-tabs',
@@ -50,7 +50,7 @@ export const FULL_TOUR_STEPS = [
     route: null,
     position: 'below',
     title: 'The Toolbox',
-    body: 'Seven tabs of financial data: Overview for a quick snapshot, Financials for income statement and balance sheet, Growth for historical rates and charts, Valuation for buy price calculators, Competitors for peer comparison, Insiders for insider trading activity, and Filings for raw SEC documents.',
+    body: 'Seven tabs of financial data: Overview for a quick snapshot, Financials for income statement and balance sheet, Growth for historical rates and charts, Valuation for On Sale and Full Price calculators, Competitors for peer comparison, Insiders for insider trading activity, and Filings for raw SEC documents.',
   },
   {
     id: 'generate-button',
@@ -74,23 +74,23 @@ export const FULL_TOUR_STEPS = [
     route: null,
     position: 'below',
     title: 'Report Stages',
-    body: 'One Pager is a quick AI summary to decide if a company is worth deeper research. Pitch Deck adds 10 deep-dive sections with assumption tracking. Final Thesis is the comprehensive investment thesis with adversarial bull/bear debate. Approve each stage to unlock the next.',
+    body: 'One Pager is a quick AI summary to decide if a company is worth deeper research. Pitch Deck adds seven deep-dive sections covering business quality, financials, management, valuation, and risk. Final Thesis is the conviction-grade investment memo with adversarial bull/bear debate and a structured trade plan. Approve each stage to unlock the next.',
   },
   {
     id: 'nav-gurus',
     target: 'nav-tab-gurus',
     route: '/gurus',
     position: 'below',
-    title: 'Guru Portfolios',
-    body: "See what the world's top investors are buying and selling. Data comes from SEC 13F filings, updated quarterly. Use this as context for your research, not as a buy signal \u2014 gurus have different time horizons and strategies.",
+    title: 'Top Investor Portfolios',
+    body: "See what the world's top investors are buying and selling. Data comes from SEC 13F filings, updated quarterly. Use this as context for your research, not as a buy signal \u2014 every investor has different time horizons and strategies.",
   },
   {
     id: 'gurus-tabs',
     target: 'gurus-tabs',
     route: null,
     position: 'below',
-    title: 'Guru Views',
-    body: 'Latest shows recent buys and sells across all tracked gurus. Directory lists every tracked investor with their portfolio size and top holdings. Stock Lookup lets you search by ticker to see which gurus own a specific company.',
+    title: 'Investor Views',
+    body: 'Latest shows recent buys and sells across all tracked investors. Directory lists every tracked investor with their portfolio size and top holdings. Stock Lookup lets you search by ticker to see which investors own a specific company.',
   },
   {
     id: 'nav-watchlists',
@@ -114,16 +114,16 @@ export const FULL_TOUR_STEPS = [
     route: null,
     position: 'left',
     title: "You're All Set",
-    body: 'The gear icon opens Settings \u2014 dark mode, display defaults, and data preferences. We left Apple in your Research tab so you have a real company to explore. Go find your first thesis.',
+    body: 'The gear icon opens Settings \u2014 dark mode, display defaults, and data preferences. We left Apple in your Research tab so you have a real company to explore. Go build your first thesis.',
   },
 ];
 
 export const SECTION_TOUR_STEPS = {
   research: [
     { id: 'res-header', target: 'company-header', route: null, position: 'below',
-      title: 'Company Overview', body: 'The header shows ticker, company name, price, and value investing score badges. Green = passing, red = failing.' },
+      title: 'Company Overview', body: 'The header shows ticker, company name, price, and the composite Thesis Score. Green = passing, red = failing.' },
     { id: 'res-scores', target: 'score-badges', route: null, position: 'left',
-      title: 'Thesis Scores', body: 'Overall score combines Moat (growth rates) and Management (returns + debt). Computed from 10 years of SEC filings.' },
+      title: 'Thesis Score', body: 'A 0-100 composite combining four pillars: Compounding, Capital Efficiency, Capital Allocation, and Resilience. Computed from 10 years of SEC filings.' },
     { id: 'res-tabs', target: 'toolbox-tabs', route: null, position: 'below',
       title: 'Toolbox Tabs', body: 'Overview, Financials, Growth, Valuation, Competitors, Insiders, and Filings. Each tab pulls data from SEC EDGAR.' },
     { id: 'res-generate', target: 'generate-button', route: null, position: 'left',
@@ -137,7 +137,7 @@ export const SECTION_TOUR_STEPS = {
   ],
   gurus: [
     { id: 'guru-tabs', target: 'gurus-tabs', route: null, position: 'below',
-      title: 'Guru Tabs', body: 'Latest for recent activity, Directory for all tracked investors, Stock Lookup to search by ticker.' },
+      title: 'Investor Tabs', body: 'Latest for recent activity, Directory for all tracked investors, Stock Lookup to search by ticker.' },
   ],
   watchlists: [
     { id: 'wl-create', target: 'watchlist-create', route: null, position: 'below',

@@ -1,4 +1,4 @@
-// stickeR1-inspired slate palette + value investing Toolbox teal accent
+// Slate palette + Toolbox teal accent
 // Mutable C object switches between palettes
 
 export const C_LIGHT = {

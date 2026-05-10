@@ -3,13 +3,14 @@ import { C } from '../theme';
 
 // Section display names by stage
 const PITCH_DECK_SECTIONS = [
-  'Radar', 'Simple & Predictable', 'Market Position', 'Barriers & Moats',
-  'FCF', 'Management', 'ROE/ROIC & Debt', 'Balance Sheet', 'PEST Risks', 'Valuation',
+  'Setup & Situation', 'Business Quality', 'Market Position', 'Moat Analysis',
+  'Cash Generation', 'Returns & Leverage', 'Balance Sheet', 'Accounting Red Flags',
+  'Management & Capital Allocation', 'Valuation', 'Risk Profile',
 ];
 
 const FINAL_THESIS_SECTIONS = [
-  'Event Analysis', 'Meaning (15pt)', 'Moat (15pt)', 'Management (13pt)',
-  'Valuation Confirmation', 'Inversion & Rebuttal',
+  'Event Analysis', 'Business Analysis', 'Moat Analysis', 'Management Analysis',
+  'Valuation Analysis', 'Debate', 'Trade Plan',
 ];
 
 const DEBATE_STEPS = [

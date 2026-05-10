@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { C } from '../theme';
 
-const THES1S_SOURCES = [
+const THESIS_SOURCES = [
   'DataPacket', 'Competitors Tab', 'Growth Analysis', 'Guru Holdings',
   'Financials Tab', 'Valuation Tab', 'Overview Tab', 'Insiders Tab',
   'Filings Tab',
@@ -11,7 +11,7 @@ const THES1S_SOURCES = [
 function getCitationType(source) {
   if (!source) return 'web';
   const lower = source.toLowerCase();
-  if (THES1S_SOURCES.some(s => lower.includes(s.toLowerCase()))) return 'thesis';
+  if (THESIS_SOURCES.some(s => lower.includes(s.toLowerCase()))) return 'thesis';
   if (/10-k|10-q|8-k|proxy|sec\b/i.test(source)) return 'sec';
   return 'web';
 }

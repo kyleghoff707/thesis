@@ -11,7 +11,7 @@
 //   node scripts/sync-agent-yamls.mjs --check    # verify staging files match prompt.md content
 //   node scripts/sync-agent-yamls.mjs --commit   # overwrites real YAMLs (auto-stages + checks first)
 //
-// Scope: 12 platform-deployed agents only. Full Story agents (*-fullstory/, coordinator-fullstory)
+// Scope: 12 platform-deployed agents only. Final Thesis agents (*-finalthesis/, coordinator-finalthesis)
 // are intentionally not synced — their platform agents don't exist yet.
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';

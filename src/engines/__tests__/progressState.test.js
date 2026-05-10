@@ -23,8 +23,8 @@ import {
 } from '../progressState.js';
 
 const TEST_TICKER = '__TEST_PS__';
-const THES1S_DIR = join(process.cwd(), '.thesis');
-const TEST_DIR = join(THES1S_DIR, 'reports', TEST_TICKER);
+const THESIS_DIR = join(process.cwd(), '.thesis');
+const TEST_DIR = join(THESIS_DIR, 'reports', TEST_TICKER);
 
 afterAll(() => {
   // Clean up test artifacts

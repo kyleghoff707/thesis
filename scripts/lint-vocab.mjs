@@ -35,6 +35,9 @@ const SCHEMA_FIELDS = [
 const BANNED = [...TIER_1_PHRASES, ...TIER_2_PHRASES, ...SCHEMA_FIELDS];
 
 const SCAN_GLOBS = [
+  'agents/one-pager/prompt.md',
+  'agents/annual-reader/prompt.md',
+  'agents/quarterly-reader/prompt.md',
   'agents/business-analyst-pitchdeck/prompt.md',
   'agents/competitor-evaluator-market-position-pitchdeck/prompt.md',
   'agents/competitor-evaluator-moats-pitchdeck/prompt.md',
@@ -43,7 +46,20 @@ const SCAN_GLOBS = [
   'agents/risk-analyst-pitchdeck/prompt.md',
   'agents/valuation-specialist-pitchdeck/prompt.md',
   'agents/synthesis-writer-pitchdeck/prompt.md',
+  'agents/business-analyst-finalthesis/prompt.md',
+  'agents/competitor-evaluator-finalthesis/prompt.md',
+  'agents/management-evaluator-finalthesis/prompt.md',
+  'agents/financial-analyst-finalthesis/prompt.md',
+  'agents/valuation-specialist-finalthesis/prompt.md',
+  'agents/risk-analyst-finalthesis-bear/prompt.md',
+  'agents/risk-analyst-finalthesis-event/prompt.md',
+  'agents/synthesis-writer-finalthesis-bull/prompt.md',
+  'agents/synthesis-writer-finalthesis-rebuttal/prompt.md',
+  'agents/synthesis-writer-finalthesis-compose/prompt.md',
+  'agents/trade-plan-finalthesis/prompt.md',
   '.claude/skills/generate-pitch-deck/SKILL.md',
+  '.claude/skills/generate-one-pager/SKILL.md',
+  '.claude/skills/generate-final-thesis/SKILL.md',
 ];
 
 // Schema-field phrases need exact-case matching (e.g., "BAG" must not match "bag" inside

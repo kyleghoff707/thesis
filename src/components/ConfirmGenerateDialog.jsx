@@ -19,7 +19,7 @@ const STAGE_COPY = {
   'final-thesis': {
     title: ticker => `Generate Final Thesis for ${ticker}`,
     estimate: '~10-15 minutes, ~$3-4',
-    body: 'This is the final conviction gate. Includes checklists, adversarial debate, and valuation confirmation.',
+    body: 'The final conviction gate. Deep prose analysis across event, business, moat, management, and valuation, plus an adversarial bull/bear debate and a structured trade plan.',
     extra: null,
     confirmLabel: 'Generate Final Thesis',
   },

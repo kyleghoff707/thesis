@@ -11,7 +11,7 @@ import {
   StageReportSchema,
   getReportSectionJSONSchema,
 } from '../reportSection.js';
-import { DataPacketSchema, sliceDataPacket } from '../dataPacket.js';
+import { DataPacketSchema } from '../dataPacket.js';
 
 // Fixture: a valid report section (COST FCF analysis)
 // data is a JSON string per FMT-01 (agent serializes flexible data as JSON string)
@@ -222,36 +222,6 @@ describe('DataPacketSchema', () => {
       assembledAt: '2026-03-24T10:00:00Z',
     });
     expect(result.success).toBe(true);
-  });
-});
-
-describe('sliceDataPacket', () => {
-  const fullPacket = {
-    ticker: 'COST',
-    companyInfo: { name: 'Costco Wholesale Corporation', sic: '5311' },
-    classification: { sector: 'Consumer Staples', industryGroup: 'Retail' },
-    caveats: ['Quarterly data may lag by 1 quarter'],
-    financials: { income: { 2024: { revenues: 242290000000 } } },
-    gurus: { topHolders: ['Berkshire Hathaway'] },
-    insiders: { recentTransactions: [] },
-    assembledAt: '2026-03-24T10:00:00Z',
-  };
-
-  it('Test 12: returns only requested fields plus always-included fields', () => {
-    const sliced = sliceDataPacket(fullPacket, { dataPacketSlice: ['financials'] });
-    expect(sliced.ticker).toBe('COST');
-    expect(sliced.companyInfo).toBeDefined();
-    expect(sliced.classification).toBeDefined();
-    expect(sliced.caveats).toBeDefined();
-    expect(sliced.financials).toBeDefined();
-  });
-
-  it('Test 13: excludes fields not in dataPacketSlice', () => {
-    const sliced = sliceDataPacket(fullPacket, { dataPacketSlice: ['financials'] });
-    expect(sliced.gurus).toBeUndefined();
-    expect(sliced.insiders).toBeUndefined();
-    expect(Object.keys(sliced)).not.toContain('gurus');
-    expect(Object.keys(sliced)).not.toContain('insiders');
   });
 });
 

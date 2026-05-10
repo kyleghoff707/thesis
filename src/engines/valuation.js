@@ -9,7 +9,7 @@
 // EPS: TTM or 3-year average (user documents which and why)
 // Future P/E: ≤ 2× Growth Rate, capped at historical high
 // MARR = 15%
-// Fair Value → MOS Price (50% discount)
+// Full Price → MOS Price (50% discount)
 
 export function computeMOS({ fgr, eps, futurePE, marr = 0.15, years = 10 }) {
   if (!fgr || !eps || !futurePE) return null;
@@ -20,10 +20,10 @@ export function computeMOS({ fgr, eps, futurePE, marr = 0.15, years = 10 }) {
   // Future price = Future EPS × Future P/E
   const futurePrice = futureEPS * futurePE;
 
-  // Fair Value = Future price discounted at MARR
+  // Full Price = Future price discounted at MARR
   const fairValue = futurePrice / Math.pow(1 + marr, years);
 
-  // MOS price = 50% of Fair Value
+  // MOS price = 50% of Full Price
   const mosPrice = fairValue / 2;
 
   return {
@@ -135,7 +135,7 @@ export function estimateMaintenanceCapEx(totalCapEx, maintenancePct = 0.70) {
 // 5. Grow book value 10 years at equity growth rate
 // 6. Future earnings = future book value × ROE
 // 7. Future price = future earnings × historically reasonable P/E
-// 8. Back-track to present value at MARR → Fair Value
+// 8. Back-track to present value at MARR → Full Price
 // 9. Apply margin of safety discount → buy price
 // 10. Projected CAGR at current price (the original Buffettology output)
 
@@ -154,10 +154,10 @@ export function computeEquityBond({ bvps, roe, retainedRatio, historicalPE, marr
   // Future price
   const futurePrice = futureEPS * historicalPE;
 
-  // Fair Value = future price discounted at MARR
+  // Full Price = future price discounted at MARR
   const fairValue = futurePrice / Math.pow(1 + marr, years);
 
-  // Buy price = Fair Value × MOS%
+  // Buy price = Full Price × MOS%
   const buyPrice = fairValue * mosPercent;
 
   // Projected annual return at current market price

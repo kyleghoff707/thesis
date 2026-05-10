@@ -10,7 +10,9 @@ Usage:
     python3 scripts/pdf/generate_final_thesis_docx.py MNST
 """
 
+import json
 import os
+import re
 import sys
 
 # Ensure scripts/pdf is importable
@@ -22,6 +24,8 @@ from scripts.pdf.section_renderers import (
 )
 from scripts.pdf.chart_image_generator import (
     generate_price_range_chart,
+    generate_pipeline_flow, generate_divergent_bar, generate_price_ladder,
+    generate_status_grid,
 )
 from scripts.pdf.docx_helpers import (
     create_thesis_doc, add_title_page, add_styled_table,
@@ -33,6 +37,118 @@ from scripts.pdf.docx_helpers import (
     render_verdict_box_docx, render_promise_tracker_docx,
     render_trade_plan_docx, render_watchpoints_docx,
 )
+
+
+def _section_data_dict(section):
+    if not isinstance(section, dict):
+        return {}
+    raw = section.get('data')
+    if isinstance(raw, dict):
+        return raw
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+            return parsed if isinstance(parsed, dict) else {}
+        except (ValueError, TypeError):
+            return {}
+    return {}
+
+
+def _add_debate_divergent_bar(doc, section, temp_charts):
+    raw = _section_data_dict(section)
+    exchanges = raw.get('exchanges')
+    if not isinstance(exchanges, list) or not exchanges:
+        return
+    bulls, bears = [], []
+    for ex in exchanges:
+        if not isinstance(ex, dict):
+            continue
+        topic = str(ex.get('topic', ''))[:60]
+        outcome = str(ex.get('outcome', '')).lower()
+        if 'strong bull' in outcome or outcome == 'bull':
+            bulls.append((topic, 9 if 'strong' in outcome else 6))
+        elif 'strong bear' in outcome or outcome == 'bear':
+            bears.append((topic, 9 if 'strong' in outcome else 6))
+        elif 'unresolved' in outcome or 'mixed' in outcome:
+            bulls.append((topic, 4))
+            bears.append((topic, 4))
+    if bulls or bears:
+        path = generate_divergent_bar(bulls, bears, title='Debate Outcomes by Exchange')
+        temp_charts.append(path)
+        embed_chart(doc, path)
+
+
+def _add_trade_plan_ladder(doc, section, current_price, temp_charts):
+    raw = _section_data_dict(section)
+    tranches = raw.get('entryTranches') or raw.get('tranches') or []
+    sell_rules = raw.get('sellRules') or []
+
+    levels = []
+    for t in tranches:
+        if not isinstance(t, dict):
+            continue
+        trig = t.get('triggerPrice') or t.get('trigger')
+        try:
+            price = float(str(trig).replace('$', '').replace(',', '').split('-')[0])
+        except (ValueError, TypeError):
+            continue
+        levels.append((f"Tranche {t.get('tranche', '')}", price * 0.97, price * 1.03, 'entry'))
+
+    for r in sell_rules:
+        if not isinstance(r, dict):
+            continue
+        m = re.search(r'\$([\d,]+(?:\.\d+)?)', str(r.get('threshold', '')))
+        if not m:
+            continue
+        try:
+            price = float(m.group(1).replace(',', ''))
+        except (ValueError, TypeError):
+            continue
+        action = str(r.get('action', '')).lower()
+        kind = 'exit' if 'full exit' in action or '100%' in action else 'trim'
+        levels.append((str(r.get('trigger', ''))[:32], price * 0.97, price * 1.03, kind))
+
+    if levels and current_price:
+        path = generate_price_ladder(float(current_price), levels,
+                                     title='Trade Plan — Entry, Trim, Exit Levels')
+        if path:
+            temp_charts.append(path)
+            embed_chart(doc, path)
+
+
+def _add_promise_status_grid(doc, section, temp_charts):
+    raw = _section_data_dict(section)
+    promises = raw.get('promises')
+    if not isinstance(promises, list) or not promises:
+        return
+    rows, cols, cell_status = [], [], {}
+    smap = {'kept': 'delivered', 'partial': 'partial', 'missed': 'missed',
+            'broken': 'missed', 'pending': 'pending', 'delivered': 'delivered'}
+    for p in promises:
+        if not isinstance(p, dict):
+            continue
+        cat = str(p.get('category', 'OTHER'))[:24]
+        q = str(p.get('quarterYear', p.get('quarter', '?')))[:14]
+        s = smap.get(str(p.get('status', '')).lower(), 'pending')
+        if cat not in rows:
+            rows.append(cat)
+        if q not in cols:
+            cols.append(q)
+        cell_status[(cat, q)] = s
+
+    if not rows or not cols:
+        return
+
+    def _qkey(q):
+        m = re.search(r'Q(\d).*?(\d{4})', q)
+        return (int(m.group(2)), int(m.group(1))) if m else (9999, 9)
+    cols.sort(key=_qkey)
+
+    statuses = [[cell_status.get((r, c)) for c in cols] for r in rows]
+    path = generate_status_grid(rows, cols, statuses,
+                                title='Management Promise Tracker — Status Grid')
+    temp_charts.append(path)
+    embed_chart(doc, path)
 from docx.shared import Pt
 from docx.oxml.ns import nsdecls
 from docx.oxml import parse_xml
@@ -276,6 +392,16 @@ def generate_final_thesis_docx(ticker, base_dir=None):
         subtitle='Investment Conviction Analysis',
     )
 
+    # Pipeline flow on cover
+    try:
+        flow_path = generate_pipeline_flow('Final Thesis')
+        temp_charts.append(flow_path)
+        embed_chart(doc, flow_path)
+    except Exception:
+        pass
+
+    current_price = data.data_packet.get('currentPrice', {}).get('price') if hasattr(data, 'data_packet') else None
+
     # ── Section Rendering ────────────────────────────────────────────────────
     for key in data.get_section_keys():
         section = data.get_section(key)
@@ -290,6 +416,7 @@ def generate_final_thesis_docx(ticker, base_dir=None):
             narrative = get_narrative(section)
             if narrative:
                 add_body_paragraphs(doc, narrative)
+            _add_trade_plan_ladder(doc, section, current_price, temp_charts)
             render_trade_plan_docx(doc, section)
             flags = get_red_flags(section)
             if flags:
@@ -303,6 +430,7 @@ def generate_final_thesis_docx(ticker, base_dir=None):
             narrative = get_narrative(section)
             if narrative:
                 add_body_paragraphs(doc, narrative)
+            _add_debate_divergent_bar(doc, section, temp_charts)
             debate_outputs = data.get_debate_outputs()
             if debate_outputs:
                 _render_debate(doc, debate_outputs, temp_charts)
@@ -396,6 +524,7 @@ def generate_final_thesis_docx(ticker, base_dir=None):
 
         # Promise Tracker as a §4 subsection
         if key == 'management_analysis':
+            _add_promise_status_grid(doc, section, temp_charts)
             render_promise_tracker_docx(doc, section)
 
         # Red flags

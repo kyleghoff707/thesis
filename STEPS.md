@@ -106,12 +106,27 @@ All foundation work executed. Repo is ready for Phase 2 rebrand.
 
 - ✅ **W4 — Web search re-enable on One Pager.** Verified already enabled and operational. `agents/one-pager/prompt.md:9` explicitly instructs *"Research first. Before emitting your structured output, perform at least 2–3 web searches"*. The dispatching `.claude/skills/generate-one-pager/SKILL.md` mirrors this instruction (lines 39, 60, 62). Claude Code subagents have `web_search` available by default through the Agent tool. No code change needed.
 
-### Phase 2B — Deferred work
+### Phase 2B — Complete (2026-05-10)
 
-To be picked up after the brainstorm pods produce decisions on Thesis Score, Valuation methods, Guru list, and Full Story redesign:
+Both remaining workstreams shipped together. Spec: [docs/specs/2026-05-10-w2-w5-completion.md](docs/specs/2026-05-10-w2-w5-completion.md).
 
-- [ ] **W2 (semantic rewrite of UI text + tour)** — rewrite tour, glossary, button labels, empty-state messages to match the methodology decisions from the brainstorm pods. Touches: `src/components/*`, `tourSteps.js`, glossary content. See [W2-PUNCHLIST.md](W2-PUNCHLIST.md) for the full inventory of methodology-laden strings, with `file:line` refs and per-pod (`POD-SCORE` / `POD-VAL` / `POD-GURU` / `POD-FS` / `INDEP`) dependency tags. Use it as the rewrite checklist once each brainstorm pod's output lands.
-- [ ] **W5 (code/doc cleanup, audit findings)** — `CLAUDE.md` (3-layer XBRL claim vs dormant Layers 2+3; 8-tab Toolbox claim vs 7 actual tabs); `src/schemas/dataPacket.js` + `src/utils/sliceDataPacket.js` (duplicated `sliceDataPacket()` — consolidate to utils version); `src/theme.js:1` comment cleanup ("value investing Toolbox teal accent" → "Toolbox teal accent"); cleanup of awkward sentence-start lowercase "value investing" / retained "Rulers" terminology in agent prompts.
+- ✅ **W2 (semantic rewrite of UI text + tour)** — `tourSteps.js` rewritten end-to-end to match the 4-pillar Thesis Score, Final Thesis name, redesigned Pitch Deck section labels, and neutral "investors" framing. `CompanyHeader.jsx` shows composite Thesis Score badge only. `Competitors.jsx` columns dropdown adds 4 pillars (Compounding + Capital Efficiency default-checked; Capital Allocation + Resilience default-unchecked). `PitchDeck.jsx` `SECTION_DEFS` and phase index ranges updated to 11 new keys per POD-PD. `ConfirmGenerateDialog.jsx` Final Thesis copy aligned with the prose-narrative-with-verdict-box redesign (dropped "checklists" language). `GenerationProgressPanel.jsx` `PITCH_DECK_SECTIONS` + `FINAL_THESIS_SECTIONS` aligned with both pod outputs. **Followup (Phase 5 polish):** extend `src/engines/peerMetrics.js` to compute Capital Allocation + Resilience pillars for peer companies (currently only computes 2 of 4 due to sparse peer data — UI columns render "--" until then).
+
+- ✅ **W5 (code/doc cleanup + expanded audit findings)**:
+  - `theme.js:1` comment: dropped `stickeR1` pun + lowercase "value investing"
+  - `.claude/settings.local.json`: curl User-Agent `Thes1s/1.0` → `Thesis/1.0`
+  - `src/schemas/dataPacket.js`: dropped legacy `sliceDataPacket()` (utils version remains as production path; obsolete tests removed)
+  - **Cross-stage terminology cascade**: "Sticker price" / POD-PD's interim "Fair Value" → "Full Price" across ~22 agent prompts, `ValuationCalculators.jsx` summary labels, `valuation.js` engine comments, PDF/DOCX templates. "Buy price" / "On Sale Price" treated as interchangeable approved vocabulary.
+  - **Tier-1 R1 vocabulary scrubbed from Stage 1 + Stage 3 prompts** (lint-vocab `SCAN_GLOBS` extended to cover One Pager, readers, and all 11 Final Thesis prompts; mirrored Pitch Deck redesign substitution patterns: "Wonderful Company" → "high-conviction investment" / "high-quality business"; "Three Ms framework" → "core dimensions"; "Six-Inch Bar Concept" → "Simplicity Test"; "Rulers" → "Value investors")
+  - **`R1 moat types`** branding violation in `competitor-evaluator-finalthesis/prompt.md` cleared (3 occurrences)
+  - **`THES1S_*` → `THESIS_*`** rename: `THES1S_DIR` (engines/progressState), `THES1S_SOURCES` (CitationTooltip), `YAHOO_TO_THES1S` (api/cron/crosswalk + tests + generator), `THES1S_ADMIN_EMAIL` / `THES1S_ADMIN_PASSWORD` env vars (inject-report.mjs)
+  - **`ruleOneOE` JSON key** in `scripts/pdf/generate_pitch_deck_pdf.py` → `valueInvestingOE`
+  - **Final Thesis rename closure**: `inject-report.mjs` stage key `fullStory` → `finalThesis`, file `full-story.json` → `final-thesis.json`; 3 Pitch Deck agent prompt cross-references; `sync-agent-yamls.mjs` comment; CLAUDE.md TBD parenthetical closed; STEPS.md `useFullStory` reference updated
+  - **Lowercase "value investing" sentence-starts** capitalized across ~12 agent prompts (~30 occurrences)
+  - **CLAUDE.md status block** rewritten: Phase 1 + Phase 2 both marked complete
+  - **Kept dormant Layers 2 & 3 in `engines/edgarFinancials.js`** as-is (user decision: optionality for future reactivation)
+
+**Verification:** 1262 tests pass; `npm run build` succeeds; `node scripts/lint-vocab.mjs` exits 0 across 25 scanned files; manual grep sweep finds no residual R1 / Sticker / Full Story / Thes1s in production code.
 
 ### Brainstorm pods (run in parallel — each deserves its own session)
 
@@ -249,7 +264,7 @@ From the audit of the existing codebase. These are the footguns; carry them forw
 - ~~Web search ⊥ structured output~~ — **no longer relevant**: the Anthropic SDK direct path (`agents-service/`) was deleted in Phase 1. Skill-based dispatch uses Claude Code subagents, which can web-search freely.
 - **MultiSection wrapper unreliable.** Production already worked around it (commit 27bd562 — N sequential single-section calls). Agent prompts still spec MultiSection; align them.
 - **Compensation scraper is fragile.** 94.8% accuracy on DEF 14A; will break when filing formats change.
-- **`useOnePager` / `usePitchDeck` / `useFullStory`** poll dev-only Vite middleware paths that 404 in prod. Either gate on `IS_DEV` or remove.
+- **`useOnePager` / `usePitchDeck` / `useFinalThesis`** poll dev-only Vite middleware paths that 404 in prod. Either gate on `IS_DEV` or remove.
 - **`edgarFinancials.js` Layers 2 and 3 are dormant.** Imports commented out at lines 11–15. Engine runs Layer 1 only (~120 fields, ~200 tag mappings). CLAUDE.md falsely claims a live 3-layer system. Decide during Phase 2: re-enable, document as future work, or rip out the dead imports plus the now-unused JSON (`src/data/taxonomy-hierarchy.json`, `src/data/sp500-tag-classifications.json`).
 
 ---

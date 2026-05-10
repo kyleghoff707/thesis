@@ -6,8 +6,8 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync, unlinkSync } from '
 import { join, dirname } from 'path';
 import { ProgressSchema, createInitialProgress } from '../schemas/progress.js';
 
-const THES1S_DIR = join(process.cwd(), '.thesis');
-const REPORTS_DIR = join(THES1S_DIR, 'reports');
+const THESIS_DIR = join(process.cwd(), '.thesis');
+const REPORTS_DIR = join(THESIS_DIR, 'reports');
 
 // Section keys per stage — matches dispatch-table.json sectionKeys
 const SECTION_KEYS = {

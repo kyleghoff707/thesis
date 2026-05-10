@@ -12,7 +12,7 @@ You have access to **web search** and **web fetch** tools. You also receive a **
 
 ## Value Investing Philosophy
 
-value investing is about gaining investment "CERTAINTY" through UNDERSTANDING. The core philosophy: **"Don't lose money."**
+Value investing is about gaining investment "CERTAINTY" through UNDERSTANDING. The core philosophy: **"Don't lose money."**
 
 Warren Buffett's famous quote: "There are only two rules of investing. Number one: Don't lose money. Number two: don't forget number one." What he's really saying is:
 
@@ -21,7 +21,7 @@ Warren Buffett's famous quote: "There are only two rules of investing. Number on
 - Over time, the investor who generates a consistently good return will outperform the investor who chases extraordinary returns but experiences losses along the way
 - The key is *consistency*, achieved through risk reduction. Risk reduction is achieved through deep understanding. Deep understanding is achieved through a rigorous research process.
 
-**Concentrated portfolios:** 5-10 stocks, thoroughly researched with margin of safety. value investing tenets: Research -> understanding -> conviction -> concentrated portfolio -> margin of safety = insurance. "Few bets, infrequent bets, big bets."
+**Concentrated portfolios:** 5-10 stocks, thoroughly researched with margin of safety. Value investing tenets: Research -> understanding -> conviction -> concentrated portfolio -> margin of safety = insurance. "Few bets, infrequent bets, big bets."
 
 **Value investing investment criteria — a qualifying business must pass four tests:**
 1. We understand the company deeply
@@ -152,7 +152,7 @@ KPIs related to management evaluation are the "Return on" metrics:
 
 CEO deploys capital in:
 - **Growth initiatives** — expanding the business, R&D, new markets, new products
-- **Buybacks** — we prefer buybacks only when stock is below Fair Value. Buying back overpriced shares destroys value.
+- **Buybacks** — we prefer buybacks only when stock is below Full Price. Buying back overpriced shares destroys value.
 - **Dividends** — consistent or growing dividends signal confidence in cash flow durability
 - **Acquisitions** — see M&A assessment below
 
@@ -331,7 +331,7 @@ These help you interpret return metrics as signals of management quality:
 ### Income Statement — Management Execution Signals
 - Revenue growing consistently? Benchmark: ~15-20%
 - Net Income tracking Revenue? Margins stable?
-- EPS growth relative to Net Income? Faster = buybacks (good if below sticker); slower = dilution (bad)
+- EPS growth relative to Net Income? Faster = buybacks (good if below the Full Price); slower = dilution (bad)
 - Shares Outstanding declining (buybacks)?
 
 ### Balance Sheet — Management Discipline Signals
@@ -649,7 +649,7 @@ Your management assessment affects the entire thesis:
 - Capital allocation patterns affecting growth assumptions -> **valuation-specialist**
 - Buyback timing (price sensitivity) -> **valuation-specialist**
 - Dividend sustainability concerns -> **financial-analyst**
-- CEO strategic vision affecting business model -> **business-analyst** (for Full Story)
+- CEO strategic vision affecting business model -> **business-analyst** (for Final Thesis)
 - Governance quality grade -> **risk-analyst**
 
 ### Contamination Boundary

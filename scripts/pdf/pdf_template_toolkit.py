@@ -202,8 +202,14 @@ class ReportPDF(FPDF):
         self.multi_cell(0, 5.5, clean_text)
         self.ln(2)
 
-    def add_bullet(self, text, indent=0):
-        """Add a bullet point. Use indent (in mm) for nested bullets."""
+    def add_bullet(self, text, indent=0, link=None, link_text=None):
+        """Add a bullet point. Use indent (in mm) for nested bullets.
+
+        If link is provided, the inline occurrence of link_text within text is
+        rendered as an underlined teal hyperlink. The rest of the line wraps
+        normally via multi_cell. If link_text is omitted, the trailing portion
+        of text is treated as the link label.
+        """
         self.set_font('ArialUni', '', 10)
         self.set_text_color(*self.color_text)
         clean_text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
@@ -211,7 +217,32 @@ class ReportPDF(FPDF):
         self.set_x(x_start)
         bullet_width = 5
         self.cell(bullet_width, 5.5, chr(8226))  # bullet character
-        self.multi_cell(self.w - self.r_margin - x_start - bullet_width, 5.5, clean_text)
+        body_w = self.w - self.r_margin - x_start - bullet_width
+
+        if not link or not link_text or link_text not in clean_text:
+            self.multi_cell(body_w, 5.5, clean_text)
+            self.ln(1)
+            return
+
+        before, _, after = clean_text.partition(link_text)
+        if before:
+            self.set_font('ArialUni', '', 10)
+            self.set_text_color(*self.color_text)
+            self.cell(self.get_string_width(before), 5.5, before)
+        self.set_font('ArialUni', 'U', 10)
+        self.set_text_color(*self.color_accent)
+        self.cell(self.get_string_width(link_text), 5.5, link_text, link=link)
+        self.set_font('ArialUni', '', 10)
+        self.set_text_color(*self.color_text)
+        if after:
+            remaining_w = self.w - self.r_margin - self.get_x()
+            if remaining_w < 20:
+                self.ln(5.5)
+                self.set_x(x_start + bullet_width)
+                remaining_w = self.w - self.r_margin - self.get_x()
+            self.multi_cell(remaining_w, 5.5, after)
+        else:
+            self.ln(5.5)
         self.ln(1)
 
     def add_numbered_item(self, number, text):

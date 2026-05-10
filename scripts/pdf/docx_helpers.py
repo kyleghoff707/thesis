@@ -24,8 +24,13 @@ from docx import Document
 from docx.shared import Inches, Pt, RGBColor, Cm, Emu
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.oxml.ns import nsdecls
-from docx.oxml import parse_xml
+from docx.oxml.ns import nsdecls, qn
+from docx.oxml import parse_xml, OxmlElement
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
+
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from citation_links import extract_url
 
 
 # ── Thesis Colors as RGBColor objects ────────────────────────────────────────
@@ -337,54 +342,50 @@ def add_section_heading(doc, title, level=1):
     return doc.add_heading(title, level=level)
 
 
+def _add_runs_with_bold(p, text, color=None):
+    """Append runs to paragraph p, splitting on **bold** markdown."""
+    parts = re.split(r'(\*\*[^*]+\*\*)', text)
+    for part in parts:
+        if not part:
+            continue
+        is_bold = part.startswith('**') and part.endswith('**')
+        run = p.add_run(part[2:-2] if is_bold else part)
+        run.bold = is_bold
+        run.font.name = 'Arial'
+        run.font.size = Pt(10)
+        run.font.color.rgb = color if color is not None else SLATE_800
+
+
 def add_body_paragraphs(doc, text):
-    """
-    Split text on double newlines into paragraphs with bold formatting support.
+    """Render narrative text as a sequence of typed blocks (paragraphs, bullets,
+    numbered lists, subheaders).
 
-    Handles **bold** markdown syntax by creating bold runs.
-    Strips inline <cite> tags and replaces "DataPacket" with "Thesis toolbox".
-    Skips empty paragraphs.
-
-    Args:
-        doc: Document instance
-        text: Multi-paragraph text string
+    Strips inline <cite> tags and "DataPacket" jargon, then routes through
+    prose_structurer to surface bullet patterns the agent intended (discourse
+    markers, ordinal sequences, semicolon lists, markdown bullets).
     """
     if not text or not isinstance(text, str):
         return
 
-    # Clean cite tags and internal jargon
     from section_renderers import _clean_narrative
+    from prose_structurer import structure_prose
     text = _clean_narrative(text)
 
-    paragraphs = text.split('\n\n')
-    for para_text in paragraphs:
-        para_text = para_text.strip()
-        if not para_text:
-            continue
-
-        # Standalone bold paragraphs are sub-headers (e.g. "**Capital Allocation**")
-        if para_text.startswith('**') and para_text.endswith('**') and len(para_text) < 120:
-            add_section_heading(doc, para_text[2:-2], level=3)
-            continue
-
-        p = doc.add_paragraph()
-
-        # Parse markdown bold (**text**) into runs
-        parts = re.split(r'(\*\*[^*]+\*\*)', para_text)
-        for part in parts:
-            if part.startswith('**') and part.endswith('**'):
-                # Bold text
-                run = p.add_run(part[2:-2])
-                run.bold = True
-                run.font.name = 'Arial'
-                run.font.size = Pt(10)
-                run.font.color.rgb = SLATE_800
-            else:
-                if part:
-                    run = p.add_run(part)
-                    run.font.name = 'Arial'
-                    run.font.size = Pt(10)
-                    run.font.color.rgb = SLATE_800
+    for block in structure_prose(text):
+        kind = block['kind']
+        if kind == 'subheader':
+            add_section_heading(doc, block['text'], level=3)
+        elif kind == 'bullets':
+            for item in block['items']:
+                p = doc.add_paragraph(style='List Bullet')
+                _add_runs_with_bold(p, item)
+        elif kind == 'numbered':
+            for item in block['items']:
+                p = doc.add_paragraph(style='List Number')
+                _add_runs_with_bold(p, item)
+        else:
+            p = doc.add_paragraph()
+            _add_runs_with_bold(p, block['text'])
 
 
 def embed_chart(doc, chart_path, width_inches=5.5):
@@ -438,6 +439,55 @@ def add_red_flags(doc, flags):
         run.font.color.rgb = SLATE_800
 
 
+def add_hyperlink(paragraph, url, text, color='0F766E', size=9, italic=True):
+    """Append a styled hyperlink run to an existing paragraph.
+
+    Renders the link text as underlined teal (matches Thesis brand). Caller is
+    responsible for paragraph-level layout; this only contributes a single
+    hyperlink run.
+    """
+    part = paragraph.part
+    r_id = part.relate_to(url, RT.HYPERLINK, is_external=True)
+
+    hyperlink = OxmlElement('w:hyperlink')
+    hyperlink.set(qn('r:id'), r_id)
+
+    new_run = OxmlElement('w:r')
+    rPr = OxmlElement('w:rPr')
+
+    rFonts = OxmlElement('w:rFonts')
+    rFonts.set(qn('w:ascii'), 'Arial')
+    rFonts.set(qn('w:hAnsi'), 'Arial')
+    rPr.append(rFonts)
+
+    sz = OxmlElement('w:sz')
+    sz.set(qn('w:val'), str(size * 2))  # half-points
+    rPr.append(sz)
+
+    color_el = OxmlElement('w:color')
+    color_el.set(qn('w:val'), color)
+    rPr.append(color_el)
+
+    underline = OxmlElement('w:u')
+    underline.set(qn('w:val'), 'single')
+    rPr.append(underline)
+
+    if italic:
+        italic_el = OxmlElement('w:i')
+        rPr.append(italic_el)
+
+    new_run.append(rPr)
+
+    text_el = OxmlElement('w:t')
+    text_el.text = text
+    text_el.set(qn('xml:space'), 'preserve')
+    new_run.append(text_el)
+
+    hyperlink.append(new_run)
+    paragraph._p.append(hyperlink)
+    return hyperlink
+
+
 def add_citations_section(doc, all_citations):
     """
     Add a numbered citations/sources section.
@@ -481,11 +531,26 @@ def add_citations_section(doc, all_citations):
             run.font.name = 'Arial'
 
         if source:
-            run = p.add_run(f' ({source})')
-            run.font.size = Pt(9)
-            run.font.italic = True
-            run.font.color.rgb = SLATE_600
-            run.font.name = 'Arial'
+            url_info = extract_url(source)
+            if url_info:
+                url, display = url_info
+                run = p.add_run(' (')
+                run.font.size = Pt(9)
+                run.font.italic = True
+                run.font.color.rgb = SLATE_600
+                run.font.name = 'Arial'
+                add_hyperlink(p, url, display)
+                run = p.add_run(')')
+                run.font.size = Pt(9)
+                run.font.italic = True
+                run.font.color.rgb = SLATE_600
+                run.font.name = 'Arial'
+            else:
+                run = p.add_run(f' ({source})')
+                run.font.size = Pt(9)
+                run.font.italic = True
+                run.font.color.rgb = SLATE_600
+                run.font.name = 'Arial'
 
 
 def add_checklist_table(doc, items):

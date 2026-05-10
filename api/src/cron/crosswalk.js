@@ -23,7 +23,7 @@ export const NON_COMMON_STOCK = [
 ];
 
 // Yahoo sector|industry -> Thesis classification
-export const YAHOO_TO_THES1S = new Map([
+export const YAHOO_TO_THESIS = new Map([
   ['Technology|Semiconductors', { thesisCode: '10301010', sector: 'Technology', industryGroup: 'Semiconductors', industry: 'Semiconductors', confidence: 0.85 }],
   ['Technology|Software - Infrastructure', { thesisCode: '10101020', sector: 'Technology', industryGroup: 'Software', industry: 'Software - Infrastructure', confidence: 0.85 }],
   ['Technology|Consumer Electronics', { thesisCode: '10201010', sector: 'Technology', industryGroup: 'Hardware', industry: 'Consumer Electronics', confidence: 0.85 }],
@@ -197,7 +197,7 @@ export function classifyTicker(assetProfile, priceData) {
   }
 
   const key = yahooSector + '|' + yahooIndustry;
-  const match = YAHOO_TO_THES1S.get(key);
+  const match = YAHOO_TO_THESIS.get(key);
   if (!match) {
     return { status: 'unmapped', reason: 'no-crosswalk-match', yahooSector, yahooIndustry };
   }

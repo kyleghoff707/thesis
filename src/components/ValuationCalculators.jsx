@@ -624,7 +624,7 @@ export default function ValuationCalculators({
             <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.textMuted }}>10 Cap</span>
           </div>
           {summaryRow('10 Cap Price', tenCapPriceLow, tenCapPriceHigh)}
-          {summaryRow('Fair Value', tenCapFairValueLow, tenCapFairValueHigh)}
+          {summaryRow('Full Price', tenCapFairValueLow, tenCapFairValueHigh)}
         </div>
 
         {/* MOS summary */}
@@ -634,7 +634,7 @@ export default function ValuationCalculators({
             <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.textMuted }}>MOS</span>
           </div>
           {summaryRow('MOS Price', mosPriceLow, mosPriceHigh)}
-          {summaryRow('Fair Value', mosFairValueLow, mosFairValueHigh)}
+          {summaryRow('Full Price', mosFairValueLow, mosFairValueHigh)}
         </div>
 
         {/* PBT summary */}
@@ -644,7 +644,7 @@ export default function ValuationCalculators({
             <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.textMuted }}>PBT</span>
           </div>
           {summaryRow('PBT Price', pbtPriceLow, pbtPriceHigh)}
-          {summaryRow('Fair Value', pbtFairValueLow, pbtFairValueHigh)}
+          {summaryRow('Full Price', pbtFairValueLow, pbtFairValueHigh)}
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 12, color: C.textSecondary }}>PBT at Current Price</span>
             <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>
@@ -660,7 +660,7 @@ export default function ValuationCalculators({
             <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.textMuted }}>Equity Bond</span>
           </div>
           {summaryRow('Buy Price', ebBuyLow, ebBuyHigh)}
-          {summaryRow('Fair Value', ebFairValueLow, ebFairValueHigh)}
+          {summaryRow('Full Price', ebFairValueLow, ebFairValueHigh)}
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 12, color: C.textSecondary }}>CAGR at Current Price</span>
             <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontVariantNumeric: 'tabular-nums' }}>

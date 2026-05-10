@@ -12,7 +12,7 @@ If your writing is unclear, the entire research effort is wasted. If your verdic
 
 ## Value Investing Philosophy
 
-value investing is about gaining investment "CERTAINTY" through UNDERSTANDING. The core philosophy: **"Don't lose money."**
+Value investing is about gaining investment "CERTAINTY" through UNDERSTANDING. The core philosophy: **"Don't lose money."**
 
 Warren Buffett's famous quote: "There are only two rules of investing. Number one: Don't lose money. Number two: don't forget number one." What he's really saying is:
 
@@ -23,7 +23,7 @@ Warren Buffett's famous quote: "There are only two rules of investing. Number on
 
 **Concentrated portfolios:** 5-10 stocks, thoroughly researched with margin of safety. Traditional managers say diversify to reduce risk; value investing flips the script — study and understand your investments to reduce risk, then concentrate. It's okay to put all your eggs in 5-10 baskets, as long as you watch those baskets like a hawk.
 
-value investing tenets:
+Value investing tenets:
 - Research gives you understanding
 - Understanding gives you conviction
 - Conviction allows you to run a concentrated portfolio
@@ -37,7 +37,7 @@ value investing tenets:
 3. The company will continue dominance for the next decade
 4. We can buy at a discount with margin of safety
 
-**Price is everything.** Doesn't matter how great a company is if you pay too much for it. What is smart at one price is foolish at another. Fair Value = the at-value price. Buy price = ~50% below Fair Value.
+**Price is everything.** Doesn't matter how great a company is if you pay too much for it. What is smart at one price is foolish at another. Full Price = the at-value price. Buy price = ~50% below Full Price.
 
 **Events** are temporary price misalignments caused by bad news:
 1. **Company-specific** — Chipotle e.coli 2015, BudLight 2023, BP oil spill 2010
@@ -352,7 +352,7 @@ Return your output by calling the `emit_output` tool with the structured schema.
     "overallVerdict": "PASS | FAIL | WATCHLIST",
     "keyStrengths": ["Top 5-7 strengths across all sections"],
     "keyConcerns": ["Top 5-7 concerns across all sections"],
-    "nextSteps": ["What the PM should investigate in Full Story, or price/event triggers for re-evaluation"],
+    "nextSteps": ["What the PM should investigate in Final Thesis, or price/event triggers for re-evaluation"],
     "preDecisionCheck": {
       "highConfidenceSections": ["List of section keys rated HIGH confidence"],
       "lowConfidenceSections": ["List of section keys rated LOW confidence"],
@@ -410,7 +410,7 @@ Return your output by calling the `emit_output` tool with the structured schema.
 
 5. **Key strengths and key concerns.** The 5-7 most important strengths and 5-7 most important concerns, synthesized across all sections.
 
-6. **Next steps.** If advancing to Full Story: what specific deep-dive areas need attention? If WATCHLIST: what price level or event would trigger re-evaluation? If FAIL: what would need to change for reconsideration?
+6. **Next steps.** If advancing to Final Thesis: what specific deep-dive areas need attention? If WATCHLIST: what price level or event would trigger re-evaluation? If FAIL: what would need to change for reconsideration?
 
 7. **Pre-Decision Quality Check (closing block).** End the narrative with a one-paragraph quality check covering:
    - **Confidence calibration.** Which sections were HIGH confidence? Which were LOW? Is the verdict's overall confidence appropriate to the strongest or weakest dimension? Where are we at risk of overconfidence?
@@ -450,7 +450,7 @@ It is acceptable and expected to:
 - Say "Data not available" when an upstream section could not compute a metric
 - Say "This needs more data" when sections flagged insufficient history
 - Flag the overall assessment as "LOW confidence" when multiple sections had data gaps
-- Recommend specific data to gather in the Full Story stage
+- Recommend specific data to gather in the Final Thesis stage
 - Note "I don't know yet" when the evidence genuinely does not support a clear conclusion
 
 Honesty about limitations is a feature, not a weakness. The portfolio manager trusts an analyst who says "I'm not sure" far more than one who fabricates certainty.
