@@ -145,10 +145,7 @@ All five pods are now resolved (4 original + Pitch Deck sibling). W2 (semantic U
 Current pipeline assumes Cloudflare D1 + R2 + Worker proxy + invite auth. Repo users have none of that.
 
 - [ ] Audit every engine for D1/R2 dependency. Confirm direct-fetch fallbacks (most already exist).
-- [ ] **Alpha Vantage strategy** — three options:
-   - (a) User provides own key, optional (degrades to no transcripts) ← recommend
-   - (b) Drop transcripts entirely
-   - (c) Replace with SEC 8-K mining
+- [x] **Transcripts strategy — resolved 2026-05-10: ship the R2 mirror in-repo at `./transcripts/`.** ~1,677 markdown files, ~72 MB, 492/500 S&P companies covered. CLI users get transcripts with zero setup; no Alpha Vantage key needed. R2 + cron stay alive (powers the website + serves as the upstream source). Monthly refresh: `npm run dump:transcripts` → review diff → commit. Engine reads from local files first via `__nodeTranscriptRead` shim ([src/engines/nodeAdapter.js](src/engines/nodeAdapter.js)), falls through to R2 then Alpha Vantage. Switch to GitHub Releases tarball (Option C from the brainstorm) when user count justifies cleaning up history bloat.
 - [ ] **Cross-platform paths** — `~/.thesis/reports/{TICKER}/` via `os.homedir()`. Never hardcode `/Users/...`.
 - [ ] **Filename safety** — tickers like `BRK.B`, `RDS-A`. Sanitize for Windows (no dots/colons in directory names).
 - [ ] **Compensation scraper fate** (1,693 LOC, 94.8% accuracy on DEF 14A) — keep, simplify to top 3 fields only, or drop. Public exposure = user complaints when SEC formats change.

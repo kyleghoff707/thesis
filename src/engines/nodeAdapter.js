@@ -196,6 +196,30 @@ export function cacheSet(key, value, ttlMs = 24 * 60 * 60 * 1000) {
   }));
 }
 
+// ─── Repo-bundled transcript reader ──────────────────────────
+// Phase 3: ./transcripts/{TICKER}/{YEAR}/Q{N}.md ships in the repo so
+// CLI users get earnings call transcripts without R2 access. transcripts.js
+// calls globalThis.__nodeTranscriptRead before falling through to R2/AV.
+
+const TRANSCRIPTS_DIR = join(process.cwd(), 'transcripts');
+
+/**
+ * Read a repo-bundled transcript. Returns { text, meta } or null.
+ * @param {string} ticker - Uppercase ticker symbol
+ * @param {number} year - 4-digit year
+ * @param {number} quarter - 1..4
+ */
+export function readBundledTranscript(ticker, year, quarter) {
+  const path = join(TRANSCRIPTS_DIR, ticker, String(year), `Q${quarter}.md`);
+  if (!existsSync(path)) return null;
+  try {
+    const text = readFileSync(path, 'utf8');
+    return { text, meta: { source: 'repo', year, quarterNum: quarter } };
+  } catch {
+    return null;
+  }
+}
+
 // ─── Node.js Global Shims ──────────────────────────────────────
 // When running in Node.js, inject browser-like globals so engines
 // can run unmodified. This block must run at import time (side-effect)
@@ -282,6 +306,11 @@ if (IS_NODE) {
   // cache.js checks globalThis.__nodeCache to redirect all
   // cacheGet/cacheSet/cacheGetAsync to file-based storage.
   globalThis.__nodeCache = { cacheGet, cacheSet };
+
+  // 4b. Expose repo-bundled transcript reader for transcripts.js
+  // (Phase 3: CLI users get S&P 500 transcripts from ./transcripts/
+  // without needing R2 or an Alpha Vantage key.)
+  globalThis.__nodeTranscriptRead = readBundledTranscript;
 
   // 5. Patch fetch to intercept Vite middleware URLs
   // In the browser, engines call /api/yahoo-summary/:ticker etc.

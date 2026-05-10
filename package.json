@@ -13,6 +13,7 @@
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "scan-tags": "node validation/scripts/bundle.mjs && node validation/scripts/scan-unknown-tags.mjs",
+    "dump:transcripts": "node scripts/dump-r2-transcripts.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

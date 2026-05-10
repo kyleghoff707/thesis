@@ -66,3 +66,6 @@ api/src/pipeline/curriculumBundle.js
 # Agent YAML sync backups (pre-migration snapshots, local-only)
 agents/.backup-*/
 agents/.staging-sync/
+
+# Personal notes / runbooks — not part of the public repo
+_notes/

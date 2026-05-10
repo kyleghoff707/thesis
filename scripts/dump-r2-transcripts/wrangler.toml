@@ -1,0 +1,15 @@
+name = "dump-r2-transcripts"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# This is a throwaway worker spawned by scripts/dump-r2-transcripts.mjs.
+# It is NOT deployed — only used locally via `wrangler dev --remote` to
+# stream the contents of the production R2 transcripts bucket so the dump
+# script can write them to ./transcripts/.
+#
+# The bucket name is the literal Cloudflare resource name (`thes1s-transcripts`);
+# the resource rename to `thesis-transcripts` is deferred to Phase 4 per STEPS.md.
+
+[[r2_buckets]]
+binding = "TRANSCRIPTS"
+bucket_name = "thes1s-transcripts"

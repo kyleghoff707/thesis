@@ -50,6 +50,16 @@ export async function fetchTranscript(ticker, transcriptEntry) {
     };
   }
 
+  // Try repo-bundled transcripts (Node only — set up by nodeAdapter).
+  // CLI users have no R2 access, so this is the primary path.
+  if (typeof globalThis.__nodeTranscriptRead === 'function') {
+    const local = globalThis.__nodeTranscriptRead(ticker.toUpperCase(), year, quarter);
+    if (local) {
+      cacheSet(cacheKey, local, 'transcript');
+      return { found: true, text: local.text, meta: local.meta, fromCache: false, charCount: local.text.length };
+    }
+  }
+
   // Try R2 (cron-cached transcripts — free, instant)
   // Works in browser (relative URL) and Node.js (nodeAdapter resolves /data/ to production API)
   try {
