@@ -19,26 +19,31 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'
 from scripts.pdf.report_data_reader import ReportData
 from scripts.pdf.section_renderers import (
     get_narrative, get_tables, get_red_flags, get_citations,
-    get_checklist_items,
 )
 from scripts.pdf.chart_image_generator import (
-    generate_checklist_summary, generate_price_range_chart,
+    generate_price_range_chart,
 )
 from scripts.pdf.docx_helpers import (
     create_thesis_doc, add_title_page, add_styled_table,
     add_section_heading, add_body_paragraphs,
     embed_chart, add_red_flags as render_red_flags,
-    add_checklist_table, add_citations_section,
+    add_citations_section,
     cleanup_temp_charts, VERDICT_COLORS_RGB, VERDICT_COLORS_HEX,
     TEAL_500, SLATE_600, SLATE_800, WHITE,
+    render_verdict_box_docx, render_promise_tracker_docx,
+    render_trade_plan_docx, render_watchpoints_docx,
 )
 from docx.shared import Pt
 from docx.oxml.ns import nsdecls
 from docx.oxml import parse_xml
 
 
-# Checklist section keys
-CHECKLIST_SECTIONS = {'meaning_checklist', 'moat_checklist', 'management_checklist'}
+# Final Thesis section-key sets used to dispatch special renderers.
+# New pipeline keys: event_analysis, business_analysis, moat_analysis,
+# management_analysis, valuation_analysis, debate, trade_plan.
+# Legacy keys still understood: valuation_confirmation, inversion_rebuttal.
+DEBATE_KEYS = {'debate', 'inversion_rebuttal'}
+VALUATION_KEYS = {'valuation_analysis', 'valuation_confirmation'}
 
 
 def _render_debate(doc, debate_outputs, temp_charts):
@@ -274,41 +279,49 @@ def generate_final_thesis_docx(ticker, base_dir=None):
     # ── Section Rendering ────────────────────────────────────────────────────
     for key in data.get_section_keys():
         section = data.get_section(key)
+        if not section:
+            continue
         title = section.get('title', key.replace('_', ' ').title())
 
         add_section_heading(doc, title, level=1)
 
-        # Section verdict
-        sec_verdict = section.get('verdict', '')
-        if sec_verdict:
-            p = doc.add_paragraph()
-            run = p.add_run(f'Verdict: {sec_verdict}')
-            run.font.bold = True
-            run.font.size = Pt(10)
-            run.font.name = 'Arial'
-            run.font.color.rgb = VERDICT_COLORS_RGB.get(
-                str(sec_verdict).upper().strip(), SLATE_600
-            )
+        # ── Trade Plan (§7) — own renderer, no verdict box ──────────────────
+        if key == 'trade_plan':
+            narrative = get_narrative(section)
+            if narrative:
+                add_body_paragraphs(doc, narrative)
+            render_trade_plan_docx(doc, section)
+            flags = get_red_flags(section)
+            if flags:
+                render_red_flags(doc, flags)
+            cites = get_citations(section)
+            all_citations.extend(cites)
+            continue
 
-        # ── Checklist Sections ───────────────────────────────────────────────
-        if key in CHECKLIST_SECTIONS:
-            items = get_checklist_items(section)
-            if items:
-                # Checklist summary chart
-                try:
-                    chart_path = generate_checklist_summary(
-                        items, title=f'{title} Results'
-                    )
-                    temp_charts.append(chart_path)
-                    embed_chart(doc, chart_path)
-                except Exception:
-                    pass
-
-                # Checklist table with color-coded verdicts
-                add_checklist_table(doc, items)
+        # ── Debate / Inversion-Rebuttal (§6) ────────────────────────────────
+        if key in DEBATE_KEYS:
+            narrative = get_narrative(section)
+            if narrative:
+                add_body_paragraphs(doc, narrative)
+            debate_outputs = data.get_debate_outputs()
+            if debate_outputs:
+                _render_debate(doc, debate_outputs, temp_charts)
+            # Watchpoints (§6 Compose closing subsection)
+            render_watchpoints_docx(doc, section)
+            # Standard verdict box for the Compose section
+            render_verdict_box_docx(doc, section)
+            flags = get_red_flags(section)
+            if flags:
+                render_red_flags(doc, flags)
+            cites = get_citations(section)
+            all_citations.extend(cites)
+            continue
 
         # ── Valuation Confirmation — Price Range Chart ───────────────────────
-        if key == 'valuation_confirmation':
+        if key in VALUATION_KEYS:
+            narrative = get_narrative(section)
+            if narrative:
+                add_body_paragraphs(doc, narrative)
             try:
                 buy_prices = data.get_buy_prices()
                 current_price = buy_prices.get('currentPrice', 0) or data.get_current_price()
@@ -350,6 +363,21 @@ def generate_final_thesis_docx(ticker, base_dir=None):
                         embed_chart(doc, path)
             except Exception:
                 pass
+            tables = get_tables(section)
+            for t in tables:
+                if t.get('title'):
+                    add_section_heading(doc, t['title'], level=3)
+                add_styled_table(doc, t.get('headers', []), t.get('rows', []))
+            render_verdict_box_docx(doc, section)
+            flags = get_red_flags(section)
+            if flags:
+                render_red_flags(doc, flags)
+            cites = get_citations(section)
+            all_citations.extend(cites)
+            continue
+
+        # ── Standard prose sections (event_analysis, business_analysis,
+        #    moat_analysis, management_analysis) ─────────────────────────────
 
         # Narrative
         narrative = get_narrative(section)
@@ -363,6 +391,13 @@ def generate_final_thesis_docx(ticker, base_dir=None):
                 add_section_heading(doc, t['title'], level=3)
             add_styled_table(doc, t.get('headers', []), t.get('rows', []))
 
+        # Verdict box callout (no-op if data.verdict missing)
+        render_verdict_box_docx(doc, section)
+
+        # Promise Tracker as a §4 subsection
+        if key == 'management_analysis':
+            render_promise_tracker_docx(doc, section)
+
         # Red flags
         flags = get_red_flags(section)
         if flags:
@@ -371,12 +406,6 @@ def generate_final_thesis_docx(ticker, base_dir=None):
         # Collect citations
         cites = get_citations(section)
         all_citations.extend(cites)
-
-    # ── Inversion & Rebuttal — Debate Rendering ─────────────────────────────
-    debate_outputs = data.get_debate_outputs()
-    if debate_outputs:
-        add_section_heading(doc, 'Adversarial Debate', level=1)
-        _render_debate(doc, debate_outputs, temp_charts)
 
     # ── Citations ────────────────────────────────────────────────────────────
     if all_citations:

@@ -18,8 +18,10 @@ from thesis_pdf import ThesisPDF
 from report_data_reader import ReportData
 from section_renderers import (
     get_narrative, get_tables, get_red_flags, get_citations,
-    get_checklist_items, get_verdict_color, format_currency,
-    _clean_narrative
+    get_verdict_color, format_currency,
+    _clean_narrative,
+    render_verdict_box, render_promise_tracker,
+    render_trade_plan, render_watchpoints,
 )
 
 
@@ -112,75 +114,6 @@ def _render_citations_page(pdf, all_citations):
             if source and source != 'DataPacket':
                 line += f'  ({source})'
             pdf.add_bullet(line, indent=2)
-
-
-# =========================================================================
-# CHECKLIST RENDERING
-# =========================================================================
-
-def _render_checklist_summary(pdf, items):
-    """Render a visual summary of checklist pass/fail/partial counts."""
-    if not items:
-        return
-
-    total = len(items)
-    pass_count = sum(1 for it in items
-                     if str(it.get('verdict', '')).upper() == 'PASS')
-    fail_count = sum(1 for it in items
-                     if str(it.get('verdict', '')).upper() == 'FAIL')
-    partial_count = total - pass_count - fail_count
-
-    gauges = [
-        ('PASS', pass_count, total, '', True),
-        ('FAIL', fail_count, 0, '', False),  # 0 threshold = any is bad
-        ('PARTIAL', partial_count, total, '', True),
-    ]
-    pdf.draw_metric_gauges(
-        f'Checklist Results ({pass_count}/{total} PASS)',
-        gauges
-    )
-
-
-def _render_checklist_table(pdf, items):
-    """Render a checklist as a table with colored verdict badges."""
-    if not items:
-        return
-
-    headers = ['#', 'Item', 'Verdict', 'Confidence']
-    rows = []
-    for it in items:
-        num = str(it.get('number', ''))
-        item_text = str(it.get('item', ''))
-        # Truncate long item text for table
-        if len(item_text) > 80:
-            item_text = item_text[:77] + '...'
-        verdict = str(it.get('verdict', 'N/A'))
-        confidence = str(it.get('confidence', 'N/A'))
-        rows.append([num, item_text, verdict, confidence])
-
-    if rows:
-        pdf.add_table(headers, rows)
-
-
-def _render_checklist_evidence(pdf, items, max_items=None):
-    """Render detailed evidence for checklist items."""
-    rendered = 0
-    for it in items:
-        evidence = str(it.get('evidence', ''))
-        if len(evidence) < 100:
-            continue  # Skip items with sparse evidence
-
-        item_name = str(it.get('item', ''))
-        num = it.get('number', '')
-        verdict = str(it.get('verdict', 'N/A'))
-
-        pdf.add_section_header(f'Item {num}: {item_name} [{verdict}]', level=3)
-        _render_narrative(pdf, evidence)
-
-        rendered += 1
-        if max_items and rendered >= max_items:
-            pdf.add_body_text(f'... and {len(items) - rendered} more items (see full report)')
-            break
 
 
 # =========================================================================
@@ -379,9 +312,12 @@ def generate_final_thesis(ticker, base_dir=None):
     )
 
     # ── Per-Section Rendering ────────────────────────────────────────────
-    # Final Thesis sections: event_analysis, meaning_checklist, moat_checklist,
-    # management_checklist, valuation_confirmation, inversion_rebuttal
-    CHECKLIST_SECTIONS = {'meaning_checklist', 'moat_checklist', 'management_checklist'}
+    # Final Thesis sections (new pipeline): event_analysis, business_analysis,
+    # moat_analysis, management_analysis, valuation_analysis, debate, trade_plan.
+    # Legacy reports may also include: meaning_checklist, moat_checklist,
+    # management_checklist, valuation_confirmation, inversion_rebuttal.
+    DEBATE_KEYS = {'debate', 'inversion_rebuttal'}
+    VALUATION_KEYS = {'valuation_analysis', 'valuation_confirmation'}
 
     section_num = 0
     for key in data.get_section_keys():
@@ -393,80 +329,64 @@ def generate_final_thesis(ticker, base_dir=None):
         title = section.get('title', key.replace('_', ' ').title())
         pdf.add_smart_section_header(f'{section_num}. {title}')
 
-        # ── Checklist Sections ───────────────────────────────────────────
-        if key in CHECKLIST_SECTIONS:
-            # Narrative intro (if present)
+        # ── Trade Plan (§7) — own renderer, no verdict box ──────────────
+        if key == 'trade_plan':
             narr = get_narrative(section)
             if narr:
                 _render_narrative(pdf, narr)
+            render_trade_plan(pdf, section)
+            # Red flags (rare on §7, but render if present)
+            flags = get_red_flags(section)
+            _render_red_flags(pdf, flags)
+            continue
 
-            # Checklist items
-            items = get_checklist_items(section)
-            if items:
-                # Summary visual (pass/fail/partial counts)
-                _render_checklist_summary(pdf, items)
-
-                # Checklist table
-                _render_checklist_table(pdf, items)
-
-                # Detailed evidence for items with substantial content
-                pdf.add_section_header('Evidence Detail', level=2)
-                _render_checklist_evidence(pdf, items, max_items=8)
-
-            # Checklist section summary from data
-            section_data = section.get('data', {})
-            if isinstance(section_data, dict):
-                summary = section_data.get('summary', '')
-                if isinstance(summary, dict):
-                    # Structured summary: {passCount, failCount, partialCount, totalItems, scoreDisplay}
-                    score = summary.get('scoreDisplay', '')
-                    total = summary.get('totalItems', 0)
-                    passes = summary.get('passCount', 0)
-                    fails = summary.get('failCount', 0)
-                    partials = summary.get('partialCount', 0)
-                    summary_text = (f'Score: {score}  |  '
-                                    f'{passes} PASS, {fails} FAIL, {partials} PARTIAL '
-                                    f'out of {total} items')
-                    pdf.add_section_header('Checklist Summary', level=3)
-                    pdf.add_body_text(summary_text)
-                elif isinstance(summary, str) and summary:
-                    pdf.add_section_header('Checklist Summary', level=3)
-                    pdf.add_body_text(summary)
-
-        # ── Valuation Confirmation ───────────────────────────────────────
-        elif key == 'valuation_confirmation':
+        # ── Debate / Inversion-Rebuttal (§6) — own renderer + watchpoints
+        if key in DEBATE_KEYS:
             narr = get_narrative(section)
             if narr:
                 _render_narrative(pdf, narr)
-
-            # Price range chart
-            _render_price_range(pdf, data)
-
-            # Tables (sensitivity tables if present)
-            tables = get_tables(section)
-            _render_tables(pdf, tables)
-
-        # ── Inversion & Rebuttal ─────────────────────────────────────────
-        elif key == 'inversion_rebuttal':
-            # Section narrative first (if present)
-            narr = get_narrative(section)
-            if narr:
-                _render_narrative(pdf, narr)
-
             # Adversarial debate rendering
             debate_outputs = data.get_debate_outputs()
             _render_debate(pdf, debate_outputs)
+            # Watchpoints subsection at the end of §6 Compose
+            render_watchpoints(pdf, section)
+            # Standard verdict box for the Compose section (it does have a verdict)
+            render_verdict_box(pdf, section)
+            # Red flags
+            flags = get_red_flags(section)
+            _render_red_flags(pdf, flags)
+            continue
 
-        # ── Standard Sections (event_analysis, etc.) ─────────────────────
-        else:
+        # ── Valuation §5 — narrative + price range chart + tables ───────
+        if key in VALUATION_KEYS:
             narr = get_narrative(section)
             if narr:
                 _render_narrative(pdf, narr)
-
+            _render_price_range(pdf, data)
             tables = get_tables(section)
             _render_tables(pdf, tables)
+            render_verdict_box(pdf, section)
+            flags = get_red_flags(section)
+            _render_red_flags(pdf, flags)
+            continue
 
-        # Red flags (all sections)
+        # ── Standard prose sections (event_analysis, business_analysis,
+        #    moat_analysis, management_analysis) ─────────────────────────
+        narr = get_narrative(section)
+        if narr:
+            _render_narrative(pdf, narr)
+
+        tables = get_tables(section)
+        _render_tables(pdf, tables)
+
+        # Verdict box callout (no-op if data.verdict missing)
+        render_verdict_box(pdf, section)
+
+        # Promise Tracker as a §4 subsection
+        if key == 'management_analysis':
+            render_promise_tracker(pdf, section)
+
+        # Red flags
         flags = get_red_flags(section)
         _render_red_flags(pdf, flags)
 

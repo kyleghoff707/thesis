@@ -252,49 +252,6 @@ def get_citations(section):
     return result
 
 
-def get_checklist_items(section):
-    """
-    Extract checklist items from Final Thesis checklist sections.
-
-    Looks in section.data.items and section.data.checklistItems.
-    Each item normalized to: {number, item, verdict, evidence, confidence}
-
-    Returns:
-        list of dicts
-    """
-    if not isinstance(section, dict):
-        return []
-
-    data = section.get('data', {})
-    if not isinstance(data, dict):
-        return []
-
-    # Try multiple locations
-    items = data.get('items') or data.get('checklistItems') or []
-    if not isinstance(items, list):
-        return []
-
-    result = []
-    for i, item in enumerate(items):
-        if isinstance(item, dict):
-            result.append({
-                'number': item.get('number', item.get('itemNumber', i + 1)),
-                'item': item.get('item') or item.get('question') or item.get('name', ''),
-                'verdict': item.get('verdict', 'N/A'),
-                'evidence': item.get('evidence') or item.get('rationale') or item.get('explanation', ''),
-                'confidence': item.get('confidence', 'MEDIUM'),
-            })
-        elif isinstance(item, str):
-            result.append({
-                'number': i + 1,
-                'item': item,
-                'verdict': 'N/A',
-                'evidence': '',
-                'confidence': 'LOW',
-            })
-    return result
-
-
 def get_verdict_color(verdict):
     """
     Map verdict string to RGB color tuple.
@@ -364,3 +321,242 @@ def format_pct(value):
     if -1 < value < 1 and value != 0:
         return f'{value * 100:.1f}%'
     return f'{value:.1f}%'
+
+
+# =============================================================================
+# Final Thesis section helpers (verdict box, trade plan, watchpoints,
+# promise tracker). Used by generate_final_thesis_pdf.py.
+# =============================================================================
+
+
+def _section_data(section):
+    """Return section['data'] as a dict, parsing JSON-string payloads safely."""
+    if not isinstance(section, dict):
+        return {}
+    data = section.get('data', {})
+    if isinstance(data, str):
+        import json
+        try:
+            data = json.loads(data)
+        except (json.JSONDecodeError, ValueError):
+            return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _camel_to_words(s):
+    """Convert camelCase or snake_case to 'Title Words'."""
+    import re
+    s = str(s).replace('_', ' ')
+    s = re.sub(r'([a-z])([A-Z])', r'\1 \2', s)
+    return s[:1].upper() + s[1:] if s else s
+
+
+def render_verdict_box(pdf, section):
+    """
+    Render the prose-section verdict callout for Final Thesis prose sections.
+
+    Reads `data.verdict` (a dict with an 'overall' field plus arbitrary
+    extra keys describing the rationale) and draws a small bordered
+    callout coloured by the overall verdict (PASS / WATCHLIST / FAIL).
+
+    Renders nothing if `data.verdict` is missing or not a dict — graceful
+    for legacy reports.
+    """
+    data = _section_data(section)
+    verdict = data.get('verdict')
+    if not isinstance(verdict, dict):
+        return
+
+    overall = str(verdict.get('overall', 'WATCHLIST')).upper().strip()
+    color_map = {
+        'PASS': pdf.green_500,
+        'WATCHLIST': pdf.amber_500,
+        'PARTIAL': pdf.amber_500,
+        'CONTEXT': pdf.amber_500,
+        'FAIL': pdf.red_500,
+    }
+    color = color_map.get(overall, pdf.slate_500)
+
+    # Page-break if the box won't fit
+    extras = [(k, v) for k, v in verdict.items() if k != 'overall']
+    needed = 22 + 6 * len(extras)
+    if pdf.get_y() + needed > pdf.h - 25:
+        pdf.add_page()
+
+    pdf.ln(2)
+
+    # Border line above the box
+    pdf.set_draw_color(*color)
+    pdf.set_line_width(0.5)
+    y = pdf.get_y()
+    pdf.line(pdf.l_margin, y, pdf.w - pdf.r_margin, y)
+    pdf.ln(2)
+
+    # Heading
+    title = section.get('title') or section.get('key', 'Section')
+    pdf.set_font('ArialUni', 'B', 11)
+    pdf.set_text_color(*color)
+    pdf.cell(0, 6, f'{title} verdict', new_x="LMARGIN", new_y="NEXT")
+
+    # Verdict-detail lines (skip the 'overall' key, render everything else)
+    pdf.set_font('ArialUni', '', 10)
+    pdf.set_text_color(*pdf.slate_700)
+    for key, value in extras:
+        label = _camel_to_words(key)
+        text = f'  {label}: {value}'
+        pdf.multi_cell(0, 5, text)
+
+    # Overall stamp
+    pdf.ln(1)
+    pdf.set_font('ArialUni', 'B', 11)
+    pdf.set_text_color(*color)
+    pdf.cell(0, 6, f'Verdict: {overall}', new_x="LMARGIN", new_y="NEXT")
+
+    # Reset state for following content
+    pdf.set_text_color(*pdf.slate_800)
+    pdf.set_font('ArialUni', '', 10)
+    pdf.ln(3)
+
+
+def render_promise_tracker(pdf, section):
+    """
+    Render the Management Promise Tracker as a 5-column subsection table.
+
+    Pulled from `data.promises` (list of dicts with quarterYear, category,
+    quote, evidence, status). Renders nothing if missing.
+    """
+    data = _section_data(section)
+    promises = data.get('promises', [])
+    if not isinstance(promises, list) or not promises:
+        return
+
+    pdf.add_section_header('Management Promise Tracker', level=2)
+
+    headers = ['Quarter', 'Category', 'Promise', 'Evidence', 'Status']
+    rows = []
+    for p in promises:
+        if not isinstance(p, dict):
+            continue
+        rows.append([
+            str(p.get('quarterYear', p.get('quarter', ''))),
+            str(p.get('category', '')),
+            str(p.get('quote', p.get('promise', '')))[:160],
+            str(p.get('evidence', ''))[:160],
+            str(p.get('status', '')),
+        ])
+    if rows:
+        pdf.add_table(headers, rows)
+
+
+def render_trade_plan(pdf, section):
+    """
+    Render Section 7 Trade Plan: position sizing, entry tranches table,
+    sell rules list, PACE plan, forcing question.
+
+    All sub-blocks render only if their backing data is present.
+    """
+    data = _section_data(section)
+
+    # Position sizing
+    sizing = data.get('positionSizing')
+    if sizing:
+        pdf.add_section_header('Position Sizing', level=2)
+        if isinstance(sizing, str):
+            pdf.add_body_text(sizing)
+        elif isinstance(sizing, dict):
+            for label, value in sizing.items():
+                if value is None or value == '':
+                    continue
+                pdf.add_bullet(f'{_camel_to_words(label)}: {value}')
+
+    # Entry tranches table
+    tranches = data.get('tranches', data.get('entryTranches', []))
+    if isinstance(tranches, list) and tranches:
+        pdf.add_section_header('Entry Tranches', level=2)
+        headers = ['Tranche', 'Size', 'Trigger Price', 'Rationale']
+        rows = []
+        for t in tranches:
+            if not isinstance(t, dict):
+                continue
+            rows.append([
+                str(t.get('tranche', t.get('label', ''))),
+                str(t.get('size', t.get('sizePct', ''))),
+                str(t.get('triggerPrice', t.get('trigger', ''))),
+                str(t.get('rationale', ''))[:160],
+            ])
+        if rows:
+            pdf.add_table(headers, rows)
+
+    # Sell rules
+    sell_rules = data.get('sellRules', [])
+    if isinstance(sell_rules, list) and sell_rules:
+        pdf.add_section_header('Sell Rules', level=2)
+        for r in sell_rules:
+            if isinstance(r, dict):
+                trigger = r.get('trigger', '')
+                action = r.get('action', '')
+                threshold = r.get('threshold', '')
+                line = f'{trigger}: {action}' if action else str(trigger)
+                if threshold:
+                    line += f' (threshold: {threshold})'
+                pdf.add_bullet(line)
+            elif isinstance(r, str):
+                pdf.add_bullet(r)
+
+    # PACE plan
+    pace = data.get('pacePlan')
+    if isinstance(pace, dict):
+        pdf.add_section_header('PACE Plan', level=2)
+        for label in ('primary', 'alternative', 'contingency', 'emergency'):
+            value = pace.get(label, '')
+            if value:
+                pdf.add_bullet(f'{label.capitalize()}: {value}')
+
+    # Forcing question
+    fq = data.get('forcingQuestion')
+    if fq:
+        pdf.add_section_header('Forcing Question', level=2)
+        pdf.set_font('ArialUni', 'I', 10)
+        pdf.set_text_color(*pdf.slate_700)
+        pdf.multi_cell(0, 5.5, str(fq))
+        pdf.set_font('ArialUni', '', 10)
+        pdf.set_text_color(*pdf.slate_800)
+        pdf.ln(2)
+
+
+def render_watchpoints(pdf, section):
+    """
+    Render the "What we're monitoring" subsection at the end of §6 Compose.
+
+    Reads `data.watchpoints` (list of dicts with metric, currentValue,
+    threshold, direction, sourceInversionId). Renders nothing if absent.
+    """
+    data = _section_data(section)
+    watchpoints = data.get('watchpoints', [])
+    if not isinstance(watchpoints, list) or not watchpoints:
+        return
+
+    pdf.add_section_header("What we're monitoring", level=2)
+    for wp in watchpoints:
+        if not isinstance(wp, dict):
+            continue
+        metric = wp.get('metric', '')
+        current = wp.get('currentValue', wp.get('current', ''))
+        threshold = wp.get('threshold', '')
+        direction = str(wp.get('direction', '')).lower()
+        if direction == 'below':
+            change = 'drops below'
+        elif direction == 'above':
+            change = 'rises above'
+        else:
+            change = 'crosses'
+        line = f'{metric}.'
+        if current != '' and current is not None:
+            line += f' Currently {current}.'
+        if threshold != '' and threshold is not None:
+            line += f' Re-evaluate if it {change} {threshold}.'
+        src = wp.get('sourceInversionId')
+        if src is not None and src != '':
+            line += f' (Source: bear inversion #{src}.)'
+        pdf.add_bullet(line)
+    pdf.ln(2)
