@@ -4,7 +4,12 @@
 // we filter in-memory by peer CIK set.
 
 import { fetchFrame, PEER_FRAMES_TAGS } from './edgarFrames';
-import { scoreCompoundingPillar, scoreCapitalEfficiencyPillar } from './thesisScoreV2';
+import {
+  scoreCompoundingPillar,
+  scoreCapitalEfficiencyPillar,
+  scoreCapitalAllocationPillar,
+  scoreResiliencePillar,
+} from './thesisScoreV2';
 
 // ─── Single-Year Peer Frame Data ───────────────────────────────────
 
@@ -197,10 +202,19 @@ const RETURN_TAGS = [
 ];
 
 /**
- * Compute Moat + Management + Thesis scores for all peers.
- * Requires multi-year Frames data. Returns Map<cik, { moatScore, managementScore, thesisScore }>
+ * Compute Thesis Score (4 pillars) for all peers.
+ *
+ * Compounding + Capital Efficiency: scored from multi-year Frames data
+ * (equity/NI/revenue/opCash series + ROIC averages).
+ *
+ * Capital Allocation + Resilience: scored from a degraded subset using
+ * Phase-2 single-year metrics (latestYearMetrics, optional). Sub-metrics
+ * that require data peers don't expose (dividend history, interest expense)
+ * are skipped — the pillar averages whatever is present.
+ *
+ * Returns Map<cik, { composite, pillars }>.
  */
-export async function computePeerScores(peerCIKs, latestYear) {
+export async function computePeerScores(peerCIKs, latestYear, latestYearMetrics = null) {
   const numericCIKs = new Set();
   for (const cik of peerCIKs) numericCIKs.add(parseInt(cik, 10));
 
@@ -259,11 +273,31 @@ export async function computePeerScores(peerCIKs, latestYear) {
     }
   }
 
-  // Compute scores per peer using a degraded subset of Thesis Score v2.
-  // Frames API only exposes equity / NI / revenue / opCash / ltDebt / assets,
-  // so we can score Compounding (bvps + opCash) and Capital Efficiency (ROIC)
-  // but not Capital Allocation or Resilience (need dividends, shares,
-  // interest expense, current_assets / current_liabilities).
+  // Fetch shares-outstanding 5 years prior for buyback discipline scoring.
+  // (Latest-year shares come from latestYearMetrics; 5yr-prior needs a
+  // separate Frames call.)
+  const sharesPriorByCik = new Map();
+  {
+    const priorYear = `${latestYear - 5}Q4I`;
+    const sharesTags = ['CommonStockSharesOutstanding', 'EntityCommonStockSharesOutstanding'];
+    for (const tag of sharesTags) {
+      const framesData = await fetchFrame(tag, 'shares', priorYear);
+      if (!framesData?.data) continue;
+      for (const entry of framesData.data) {
+        if (!numericCIKs.has(entry.cik)) continue;
+        if (!sharesPriorByCik.has(entry.cik)) {
+          sharesPriorByCik.set(entry.cik, entry.val);
+        }
+      }
+      // Stop once primary tag covers everyone we can find
+      if (sharesPriorByCik.size >= numericCIKs.size) break;
+    }
+  }
+
+  // Compute scores per peer. Compounding + Capital Efficiency from multi-year
+  // Frames; Capital Allocation + Resilience from latestYearMetrics + shares
+  // history. Sub-metrics requiring unavailable peer data (dividend history,
+  // interest expense, reinvestment composite series) are skipped.
   const scores = new Map();
 
   for (const cik of numericCIKs) {
@@ -333,8 +367,44 @@ export async function computePeerScores(peerCIKs, latestYear) {
       grossMarginSlope: null,
     });
 
-    const pillars = { compounding, capitalEfficiency };
-    const present = [compounding.score, capitalEfficiency.score].filter(s => s != null);
+    // Pillar 3: Capital Allocation — buyback discipline only (peers lack
+    // dividend cash-flow data and the BVPS composite series needed for
+    // reinvestment effectiveness).
+    const m = latestYearMetrics?.get(cik);
+    const sharesNow = m?.shares_outstanding ?? null;
+    const sharesThen = sharesPriorByCik.get(cik) ?? null;
+    const sharesPct = (sharesNow != null && sharesThen != null && sharesThen !== 0)
+      ? (sharesNow - sharesThen) / sharesThen
+      : null;
+
+    const capitalAllocation = scoreCapitalAllocationPillar({
+      sharesOutstanding5yrPctChange: sharesPct,
+      dividendInfo:                  null,  // not fetched for peers
+      reinvestmentEffectiveness:     null,  // requires composite BVPS series
+    });
+
+    // Pillar 4: Resilience — netDebtToFCF + currentRatio (peers lack interest
+    // expense for interestCoverage).
+    const cash    = m?.cash ?? null;
+    const ltDebt  = m?.long_term_debt ?? 0;
+    const fcf     = m?.fcf ?? null;
+    const netDebt = (cash != null) ? ltDebt - cash : null;
+    const netDebtToFCF = (netDebt != null && fcf != null && fcf > 0) ? netDebt / fcf : null;
+    const currentRatio = (m?.current_assets != null && m?.current_liabilities && m.current_liabilities !== 0)
+      ? m.current_assets / m.current_liabilities
+      : null;
+    const isNetCash = (cash != null) ? cash > ltDebt : false;
+
+    const resilience = scoreResiliencePillar({
+      netDebtToFCF,
+      interestCoverage: null,  // not fetched for peers
+      currentRatio,
+      isNetCash,
+    });
+
+    const pillars = { compounding, capitalEfficiency, capitalAllocation, resilience };
+    const present = [compounding.score, capitalEfficiency.score, capitalAllocation.score, resilience.score]
+      .filter(s => s != null);
     const composite = present.length > 0
       ? Math.round(present.reduce((a, b) => a + b, 0) / present.length)
       : null;

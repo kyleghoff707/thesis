@@ -134,14 +134,14 @@ export function useCompetitors(company) {
     try {
       const cikSet = new Set(peers.map(p => p.cik));
       const latestYear = getLatestFramesYear();
-      const scores = await computePeerScores(cikSet, latestYear);
+      const scores = await computePeerScores(cikSet, latestYear, peerMetrics);
       if (!cancelledRef.current) setPeerScores(scores);
     } catch (err) {
       console.warn('Score computation failed:', err.message);
     } finally {
       if (!cancelledRef.current) setLoading(prev => ({ ...prev, scores: false }));
     }
-  }, [peers, loading.scores, peerScores.size]);
+  }, [peers, loading.scores, peerScores.size, peerMetrics]);
 
   return {
     peers,
