@@ -99,7 +99,7 @@ export default function Layout({ children, onNewResearch, onSettingsOpen, user, 
             letterSpacing: '-0.02em',
             WebkitFontSmoothing: 'antialiased',
           }}>
-            <span style={{ fontWeight: 500, color: C.text }}>Thes</span><span style={{ fontWeight: 500, color: C.accent }}>i</span><span style={{ fontWeight: 500, color: C.text }}>s</span>
+            <span style={{ fontWeight: 500, color: C.text }}>Thes</span><svg width="3" height="13" viewBox="0 0 10 43" aria-hidden="true" style={{ verticalAlign: 'baseline', marginLeft: 2, marginRight: 1 }}><circle cx="5" cy="4" r="4" fill={C.accent}/><rect x="1" y="13" width="8" height="30" rx="3" fill={C.accent}/></svg><span style={{ fontWeight: 500, color: C.text }}>s</span>
           </span>
         </div>
 
