@@ -2,9 +2,10 @@
 // Returns { content, error } for all code paths; never throws.
 
 import { CLAUDE_KEY } from './config';
-import { claudeBaseUrl } from './apiBase.js';
+import { API_BASE } from './apiBase.js';
 
 const IS_DEV = import.meta.env.DEV;
+const CLAUDE_BASE_URL = IS_DEV ? 'https://api.anthropic.com' : `${API_BASE}/proxy/claude`;
 
 const MAX_DEPTH = 3;
 
@@ -40,7 +41,7 @@ export async function generateDeepDive({ claim, sectionContext, ticker, previous
   const prompt = buildDeepDivePrompt(claim, sectionContext, ticker, previousDives, depth);
 
   try {
-    const response = await fetch(`${claudeBaseUrl()}/v1/messages`, {
+    const response = await fetch(`${CLAUDE_BASE_URL}/v1/messages`, {
       method: 'POST',
       credentials: IS_DEV ? 'omit' : 'include',
       headers: {

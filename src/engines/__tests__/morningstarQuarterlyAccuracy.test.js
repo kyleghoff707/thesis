@@ -19,6 +19,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getUserAgent } from '../userAgent.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES_DIR = path.join(__dirname, 'fixtures', 'morningstar-quarterly');
@@ -31,7 +32,7 @@ const EDGAR_CACHE_DIR = path.join(ANNUAL_FIXTURES_DIR, 'edgar-cache');
 // add the required User-Agent header, and cache responses to disk.
 
 const SEC_HEADERS = {
-  'User-Agent': 'StockAnalyzer/1.0 kylehoff@example.com',
+  'User-Agent': getUserAgent(),
   'Accept-Encoding': 'identity',
 };
 

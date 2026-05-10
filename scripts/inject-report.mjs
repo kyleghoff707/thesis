@@ -11,7 +11,7 @@
 //
 // Flags:
 //   --ticker,-t    Ticker to inject (repeatable). Required.
-//   --email,-e     Target user's email (the account to inject into). Default: kyleghoff707@gmail.com
+//   --email,-e     Target user's email (the account to inject into). Required for connected mode.
 //   --stages       Comma list of stages. Default: onePager,pitchDeck,finalThesis
 //   --api          API base URL. Default: https://api.thesis-investing.com
 //   --admin-email  Admin login email. Default: $THESIS_ADMIN_EMAIL or --email
@@ -43,7 +43,7 @@ function printHelp() {
 function parseArgs(argv) {
   const args = {
     tickers: [],
-    email: 'kyleghoff707@gmail.com',
+    email: process.env.THESIS_ACCOUNT_EMAIL || null,
     stages: VALID_STAGES,
     api: 'https://api.thesis-investing.com',
     adminEmail: process.env.THESIS_ADMIN_EMAIL || null,
@@ -67,7 +67,11 @@ function parseArgs(argv) {
       process.exit(1);
     }
   }
-  if (!args.adminEmail) args.adminEmail = 'kyleghoff707@gmail.com';
+  if (!args.adminEmail) args.adminEmail = process.env.THESIS_ADMIN_EMAIL || null;
+  if (!args.email) {
+    console.error('Error: --email required, or set THESIS_ACCOUNT_EMAIL.');
+    process.exit(1);
+  }
   return args;
 }
 

@@ -8,11 +8,8 @@
 import { lookupCIK, fetchCompanyFacts, fetchCompanyInfo, extractAnnualFact, extractAnnualFactOriginal, extractFiscalYearEnds, findLatestQuarter } from './edgar';
 import { cacheGetAsync, cacheSet } from './cache';
 import { fetchSplits, cumulativeSplitFactor } from './splits';
-// Layer 2/3 disconnected — kept dormant, not deleted
-// import { augmentTaxonomy } from './taxonomyResolver';
 import { classifyIndustryType } from './industryClassifier';
 import { getOverlay } from './industryOverlays';
-// import { collectKnownTags, getLayer3Suggestions } from './companyAdapter';
 
 // ─── XBRL Taxonomy Map ──────────────────────────────────────
 // Each field: { tags: [...fallback order], unit: 'USD' | 'USD/shares' | 'shares' }
