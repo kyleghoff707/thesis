@@ -1,5 +1,5 @@
 import { C } from '../theme';
-import { cellColor, badgeColor } from '../engines/ruleOneScore';
+import { cellColor, badgeColor } from '../engines/thesisScoreV2';
 
 const PERIOD_COLS = [
   { key: '10yr', label: '10 Years' },
@@ -26,9 +26,13 @@ const cellBase = {
   fontVariantNumeric: 'tabular-nums',
 };
 
-function RateCell({ rate, scored = true }) {
+// thresholds: { full, partial } — caller supplies per-metric cutoffs.
+// Falls back to gray when not provided (v1 used hardcoded 10%/5%).
+function RateCell({ rate, scored = true, thresholds }) {
   if (rate == null) return <td style={{ ...cellBase, color: C.textMuted }}>-</td>;
-  const color = scored ? cellColor(rate) : 'gray';
+  const color = (scored && thresholds)
+    ? cellColor(rate, thresholds.full, thresholds.partial)
+    : 'gray';
   return (
     <td style={{ ...cellBase, background: getCellBg(color), color: color === 'gray' ? C.textMuted : '#fff' }}>
       {(rate * 100).toFixed(1)}%
@@ -70,8 +74,9 @@ function ScoreBadge({ score }) {
   );
 }
 
-// rows: [{ label, rates, score, type?, debtValue?, isNetCash? }]
-//   type: 'rate' (default) | 'debt'
+// rows: [{ label, rates, score, type?, thresholds?, debtValue?, isNetCash?, valueText? }]
+//   type: 'rate' (default — uses rates+thresholds), 'debt' (uses debtValue+isNetCash),
+//         'simple' (single-cell row, optional valueText, no period columns)
 export default function ScoreTable({ sectionTitle, rows, overallLabel, overallScore }) {
   return (
     <div style={{ marginBottom: 16 }}>
@@ -125,9 +130,13 @@ export default function ScoreTable({ sectionTitle, rows, overallLabel, overallSc
                     <td style={cellBase} />
                     <DebtCell value={row.debtValue} isNetCash={row.isNetCash} />
                   </>
+                ) : row.type === 'simple' ? (
+                  <td colSpan={PERIOD_COLS.length} style={{ ...cellBase, color: C.textMuted, textAlign: 'left', paddingLeft: 14 }}>
+                    {row.valueText || ''}
+                  </td>
                 ) : (
                   PERIOD_COLS.map(p => (
-                    <RateCell key={p.key} rate={row.rates?.[p.key]} scored={p.key !== '1yr'} />
+                    <RateCell key={p.key} rate={row.rates?.[p.key]} scored={p.key !== '1yr'} thresholds={row.thresholds} />
                   ))
                 )}
                 <ScoreBadge score={row.score} />

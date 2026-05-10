@@ -149,7 +149,15 @@ describe('createToolExecutor', () => {
   it('getMetric retrieves dot-notation path from DataPacket', async () => {
     const mockPacket = {
       growthRates: { earnings: { '5yr': 12.5, '10yr': 15.0 } },
-      ruleOneScore: { moat: 85, management: 78, composite: 82 },
+      thesisScore: {
+        composite: 82,
+        pillars: {
+          compounding: { score: 75, metrics: {} },
+          capitalEfficiency: { score: 90, metrics: {} },
+          capitalAllocation: { score: 85, metrics: {} },
+          resilience: { score: 78, metrics: {} },
+        },
+      },
     };
     const executor = createToolExecutor(mockPacket);
     expect(await executor('getMetric', { metric: 'growthRates.earnings.5yr' })).toBe(12.5);

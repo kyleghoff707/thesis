@@ -71,7 +71,15 @@ describe('DataPacket schema conformance', () => {
     debtMetrics: { netDebt: 50000000000, isNetCash: false },
     fcf: { yearly: [], fcfRatio: 1.1 },
     keyMetrics: { 2024: {} },
-    ruleOneScore: { moat: 85, management: 78, composite: 82 },
+    thesisScore: {
+      composite: 82,
+      pillars: {
+        compounding: { score: 75, metrics: { bvpsGrowth: 80, operatingCashGrowth: 70, fcfGrowth: 75 } },
+        capitalEfficiency: { score: 90, metrics: { roic: 95, cashQuality: 90, grossMarginTrend: 85 } },
+        capitalAllocation: { score: 85, metrics: { buybackDiscipline: 100, dividendTrackRecord: 70, reinvestmentEffectiveness: 85 } },
+        resilience: { score: 78, metrics: { netDebtToFCF: 75, interestCoverage: 100, currentRatio: 50 } },
+      },
+    },
     gurus: { count: 5, holdings: [] },
     insiders: { summary: {}, recentTransactions: [] },
     compensation: { executives: [], directors: [] },

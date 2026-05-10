@@ -4,7 +4,7 @@
 // we filter in-memory by peer CIK set.
 
 import { fetchFrame, PEER_FRAMES_TAGS } from './edgarFrames';
-import { computeMoatScore, computeManagementScore, computeRuleOneScore } from './ruleOneScore';
+import { scoreCompoundingPillar, scoreCapitalEfficiencyPillar } from './thesisScoreV2';
 
 // ─── Single-Year Peer Frame Data ───────────────────────────────────
 
@@ -197,8 +197,8 @@ const RETURN_TAGS = [
 ];
 
 /**
- * Compute Moat + Management + R1 scores for all peers.
- * Requires multi-year Frames data. Returns Map<cik, { moatScore, managementScore, ruleOneScore }>
+ * Compute Moat + Management + Thesis scores for all peers.
+ * Requires multi-year Frames data. Returns Map<cik, { moatScore, managementScore, thesisScore }>
  */
 export async function computePeerScores(peerCIKs, latestYear) {
   const numericCIKs = new Set();
@@ -259,87 +259,87 @@ export async function computePeerScores(peerCIKs, latestYear) {
     }
   }
 
-  // Compute scores per peer
+  // Compute scores per peer using a degraded subset of Thesis Score v2.
+  // Frames API only exposes equity / NI / revenue / opCash / ltDebt / assets,
+  // so we can score Compounding (bvps + opCash) and Capital Efficiency (ROIC)
+  // but not Capital Allocation or Resilience (need dividends, shares,
+  // interest expense, current_assets / current_liabilities).
   const scores = new Map();
 
   for (const cik of numericCIKs) {
     const gd = growthData.get(cik);
     const rd = returnData.get(cik);
 
-    // ── Moat Score (growth CAGRs) ──
-    const growthRates = {};
-    if (gd) {
-      for (const gDef of GROWTH_TAGS) {
-        const series = gd[gDef.field];
-        if (!series) { growthRates[gDef.metric] = {}; continue; }
-        const latest = series[latestYear];
-        const rates = {};
-        if (latest != null) {
-          const periods = { '10yr': 10, '7yr': 7, '5yr': 5, '3yr': 3, '1yr': 1 };
-          for (const [label, span] of Object.entries(periods)) {
-            const start = series[latestYear - span];
-            if (span === 1) {
-              // Simple YoY growth
-              const prev = series[latestYear - 1];
-              rates[label] = (prev && prev !== 0) ? (latest - prev) / Math.abs(prev) : null;
-            } else {
-              rates[label] = cagr(start, latest, span);
-            }
-          }
-        }
-        growthRates[gDef.metric] = rates;
-      }
-    }
-    // FCF growth (derived: opCash - capEx per year — skip for simplicity, use operatingCash as proxy)
-    if (!growthRates.fcf) growthRates.fcf = {};
-
-    const { moatScore } = computeMoatScore(growthRates);
-
-    // ── Management Score (return averages + debt) ──
-    const returnAverages = {};
-    if (rd) {
-      const periods = { '10yr': 10, '7yr': 7, '5yr': 5, '3yr': 3 };
-      for (const [label, span] of Object.entries(periods)) {
-        const yearRange = [];
-        for (let y = latestYear; y > latestYear - span; y--) {
-          if (rd[y]) yearRange.push(rd[y]);
-        }
-        if (yearRange.length > 0) {
-          const avg = (field, denom) => {
-            const vals = yearRange
-              .map(yr => (yr.netIncome && yr[denom] && yr[denom] !== 0) ? yr.netIncome / yr[denom] : null)
-              .filter(v => v != null);
-            return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-          };
-          returnAverages[label] = {
-            roe: avg('netIncome', 'equity'),
-            roic: (() => {
-              const vals = yearRange
-                .map(yr => (yr.netIncome && (yr.equity || yr.ltDebt)) ? yr.netIncome / ((yr.equity || 0) + (yr.ltDebt || 0)) : null)
-                .filter(v => v != null);
-              return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-            })(),
-            roa: avg('netIncome', 'assets'),
-          };
-        } else {
-          returnAverages[label] = { roe: null, roic: null, roa: null };
-        }
-      }
-    }
-
-    // Debt metrics from latest year
-    const latestReturn = rd?.[latestYear] || {};
-    const netIncome = latestReturn.netIncome;
-    const ltDebt = latestReturn.ltDebt || 0;
-    const debtMetrics = {
-      netDebtToEarnings: (netIncome && netIncome > 0) ? ltDebt / netIncome : null,
-      netDebtToFCF: null, // Would need opCF + capEx — skip
+    // Build per-share BV+Div proxy from equity series (no dividend/buyback data
+    // for peers, so the proxy is just BV per share if shares available, else
+    // raw equity). Use raw equity series since shares aren't in the peer fetch.
+    const buildSeries = (field) => {
+      const series = gd?.[field];
+      if (!series) return [];
+      return Object.entries(series)
+        .map(([y, v]) => ({ year: Number(y), value: v }))
+        .filter(d => d.value != null)
+        .sort((a, b) => a.year - b.year);
     };
 
-    const { managementScore } = computeManagementScore(returnAverages, debtMetrics);
-    const ruleOneScore = computeRuleOneScore(moatScore, managementScore);
+    const bvpsSeriesRaw = buildSeries('equity');
+    const opCashSeriesRaw = buildSeries('opCash');
 
-    scores.set(cik, { moatScore, managementScore, ruleOneScore });
+    const cagrFromSeries = (series, span) => {
+      if (series.length < 2) return null;
+      const latest = series[series.length - 1];
+      const target = series.find(d => d.year === latest.year - span);
+      return target ? cagr(target.value, latest.value, span) : null;
+    };
+
+    const compoundingInput = {
+      growthRates: {
+        bvps:          { '10yr': cagrFromSeries(bvpsSeriesRaw, 10),  '5yr': cagrFromSeries(bvpsSeriesRaw, 5) },
+        operatingCash: { '10yr': cagrFromSeries(opCashSeriesRaw, 10), '5yr': cagrFromSeries(opCashSeriesRaw, 5) },
+        // No FCF for peers (no capex in Frames)
+        fcf:           {},
+      },
+      bvpsSeries:          [], // skip consistency for peer (need YoY rate series, not enough points)
+      operatingCashSeries: [],
+      fcfSeries:           [],
+    };
+    const compounding = scoreCompoundingPillar(compoundingInput);
+
+    // Capital Efficiency: average ROIC over 5yr window
+    let roic5yr = null;
+    let roic10yr = null;
+    if (rd) {
+      const avgRoic = (span) => {
+        const vals = [];
+        for (let y = latestYear; y > latestYear - span; y--) {
+          const r = rd[y];
+          if (r && r.netIncome != null && (r.equity || r.ltDebt)) {
+            vals.push(r.netIncome / ((r.equity || 0) + (r.ltDebt || 0)));
+          }
+        }
+        return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+      };
+      roic5yr = avgRoic(5);
+      roic10yr = avgRoic(10);
+    }
+
+    const capitalEfficiency = scoreCapitalEfficiencyPillar({
+      returnAverages: {
+        '10yr': { roic: roic10yr },
+        '5yr':  { roic: roic5yr },
+      },
+      roicSeries:   [],   // no consistency for peers (sparse)
+      fcfNiRatios:  [],   // no FCF/NI for peers
+      grossMarginSlope: null,
+    });
+
+    const pillars = { compounding, capitalEfficiency };
+    const present = [compounding.score, capitalEfficiency.score].filter(s => s != null);
+    const composite = present.length > 0
+      ? Math.round(present.reduce((a, b) => a + b, 0) / present.length)
+      : null;
+
+    scores.set(cik, { composite, pillars });
   }
 
   return scores;

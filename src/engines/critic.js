@@ -29,11 +29,11 @@ const CANONICAL_CITATION_FIELDS = ['id', 'ref', 'text', 'source'];
 // Fields that map section keys to DataPacket domains for gap detection
 const SECTION_DATA_DOMAINS = {
   company_info: ['companyInfo', 'currentPrice'],
-  minimum_standards: ['ruleOneScore', 'returnMetrics', 'debtMetrics'],
-  meaning: ['companyInfo', 'ruleOneScore'],
+  minimum_standards: ['thesisScore', 'returnMetrics', 'debtMetrics'],
+  meaning: ['companyInfo', 'thesisScore'],
   growth_metrics: ['growthRates', 'returnMetrics'],
   valuation_summary: ['currentPrice', 'growthRates', 'fcf'],
-  overall_verdict: ['ruleOneScore', 'growthRates', 'currentPrice'],
+  overall_verdict: ['thesisScore', 'growthRates', 'currentPrice'],
 };
 
 // ─── Citation Classification (QUAL-01) ─────────────────────────────
@@ -57,7 +57,7 @@ function classifyCitation(citation) {
 
   // DataPacket/Computed/Toolbox citations
   if (source === 'datapacket' || source === 'computed' ||
-      source.includes('rule one toolbox') || ref.includes('datapacket')) {
+      source.includes('toolbox') || ref.includes('datapacket')) {
     return 'datapacket';
   }
 
@@ -603,10 +603,13 @@ function getDomainPatterns(domain) {
         { pattern: /ROE\s+(of|is|at)\s+[\d.]+%/i, label: 'ROE' },
         { pattern: /ROIC\s+(of|is|at)\s+[\d.]+%/i, label: 'ROIC' },
       ];
-    case 'ruleOneScore':
+    case 'thesisScore':
       return [
-        { pattern: /rule\s+one\s+score\s+(of|is|at)\s+\d+/i, label: 'Rule One score' },
-        { pattern: /moat\s+score\s+(of|is|at)\s+\d+/i, label: 'moat score' },
+        { pattern: /thesis\s+score\s+(of|is|at)\s+\d+/i, label: 'thesis score' },
+        { pattern: /compounding\s+score\s+(of|is|at)\s+\d+/i, label: 'compounding score' },
+        { pattern: /capital\s+efficiency\s+score\s+(of|is|at)\s+\d+/i, label: 'capital efficiency score' },
+        { pattern: /capital\s+allocation\s+score\s+(of|is|at)\s+\d+/i, label: 'capital allocation score' },
+        { pattern: /resilience\s+score\s+(of|is|at)\s+\d+/i, label: 'resilience score' },
       ];
     default:
       return [];
@@ -789,7 +792,7 @@ function isExemptSection(section) {
   return EXEMPT_METHODOLOGY_KEYS.some(k => key === k || key.startsWith(k));
 }
 
-// Per-section methodology checks derived from Rule One curriculum (pitch-deck-I through IV).
+// Per-section methodology checks derived from value investing curriculum (pitch-deck-I through IV).
 // Each check has: id, label, critical (weighted 2x if true, 1x if false), test function.
 const METHODOLOGY_CHECKS = {
   // Radar / Company Info (pitch-deck-I: sections 1-2)

@@ -45,9 +45,9 @@ function fmtDivYield(val) {
 
 const ALL_COLUMNS = [
   { key: 'marketCap', label: 'Market Cap', align: 'right', format: fmtValue, defaultVisible: true, source: 'quote' },
-  { key: 'moatScore', label: 'Moat Score', align: 'right', format: fmtScore, defaultVisible: true, source: 'score' },
-  { key: 'mgmtScore', label: 'Management Score', align: 'right', format: fmtScore, defaultVisible: true, source: 'score' },
-  { key: 'r1Score', label: 'Rule #1 Score', align: 'right', format: fmtScore, defaultVisible: true, source: 'score' },
+  { key: 'thesisScore', label: 'Thesis Score', align: 'right', format: fmtScore, defaultVisible: true, source: 'score' },
+  { key: 'compoundingScore', label: 'Compounding', align: 'right', format: fmtScore, defaultVisible: true, source: 'score' },
+  { key: 'capitalEfficiencyScore', label: 'Capital Efficiency', align: 'right', format: fmtScore, defaultVisible: true, source: 'score' },
   { key: 'roe', label: 'Return On Equity', align: 'right', format: fmtPct, defaultVisible: true, source: 'metric' },
   { key: 'roic', label: 'Return On Invested Capital', align: 'right', format: fmtPct, defaultVisible: true, source: 'metric' },
   { key: 'fcf', label: 'Free Cash Flow', align: 'right', format: fmtValue, defaultVisible: true, source: 'metric' },
@@ -79,7 +79,7 @@ function loadColumnPrefs() {
 // Industry-aware defaults: financials don't have gross margin / FCF in the traditional sense
 function getDefaultColumns(classification) {
   if (classification?.sector === 'Financial Services') {
-    return ['marketCap', 'moatScore', 'mgmtScore', 'r1Score', 'roe', 'roic', 'roa', 'peRatio', 'netDebtToEarnings'];
+    return ['marketCap', 'thesisScore', 'compoundingScore', 'capitalEfficiencyScore', 'roe', 'roic', 'roa', 'peRatio', 'netDebtToEarnings'];
   }
   return DEFAULT_COLUMNS;
 }
@@ -349,7 +349,7 @@ export default function Competitors({ company, guruActivities, report, updateRep
   const [showSparsePeers, setShowSparsePeers] = useState(false);
 
   // Trigger score loading when score columns become visible
-  const hasScoreCols = visibleColumns.some(k => ['moatScore', 'mgmtScore', 'r1Score'].includes(k));
+  const hasScoreCols = visibleColumns.some(k => ['thesisScore', 'compoundingScore', 'capitalEfficiencyScore'].includes(k));
   useEffect(() => {
     if (hasScoreCols && !scoresRequested && peers.length > 0 && !loading.metrics) {
       loadScores();
@@ -398,9 +398,9 @@ export default function Competitors({ company, guruActivities, report, updateRep
 
     switch (colKey) {
       case 'marketCap': return quote?.marketCap ?? null;
-      case 'moatScore': return scores?.moatScore ?? null;
-      case 'mgmtScore': return scores?.managementScore ?? null;
-      case 'r1Score': return scores?.ruleOneScore ?? null;
+      case 'thesisScore': return scores?.composite ?? null;
+      case 'compoundingScore': return scores?.pillars?.compounding?.score ?? null;
+      case 'capitalEfficiencyScore': return scores?.pillars?.capitalEfficiency?.score ?? null;
       case 'roe': return metrics?.roe ?? null;
       case 'roic': return metrics?.roic ?? null;
       case 'roa': return metrics?.roa ?? null;
@@ -652,7 +652,7 @@ export default function Competitors({ company, guruActivities, report, updateRep
                   {visibleCols.map(col => {
                     const val = getMetricValue(peer, col.key);
                     const isBest = bestValues[col.key] === peer.cik;
-                    const isScoreCol = ['moatScore', 'mgmtScore', 'r1Score'].includes(col.key);
+                    const isScoreCol = ['thesisScore', 'compoundingScore', 'capitalEfficiencyScore'].includes(col.key);
                     const isLoading = (col.source === 'metric' && loading.metrics) ||
                                      (col.source === 'score' && (loading.scores || (!scoresRequested && hasScoreCols)));
 

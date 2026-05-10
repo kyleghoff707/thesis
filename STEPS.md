@@ -4,6 +4,37 @@ Skeleton plan for forking the current Thes1s repo into a public-facing **Thesis*
 
 ---
 
+## Why this migration
+
+**Strategic pivot, 2026-05-07.** The closed-product Thes1s effort hit a structural blocker: Anthropic hasn't approved multiagent orchestration (`callable_agents`) for the user's Managed Agents account, which means the Pitch Deck and Full Story pipelines can't ship as a hosted SaaS the way they were architected. Rather than wait indefinitely on a Research Preview decision, the strategy switched to open-source.
+
+**The model is Langchain-style** — ship the research pipeline as a free public GitHub repo. Users clone it, plug in their own Claude Code subscription, and run `/analyze TICKER` locally to get PDF/DOCX reports in `~/.thesis/reports/`. The free repo becomes the funnel into a (potential, future) paid software stack — most likely a hosted website tier where users can browse and interact with their reports more comfortably than reading raw files.
+
+**Trade-offs accepted:**
+- Narrower audience than a hosted SaaS would have reached.
+- Giving away considerable work for free, on the bet that visibility and adoption are more valuable than gated revenue at this stage. "Free" is the strongest attention magnet available, especially in a niche like value investing.
+- If a meaningful user base materializes (order of hundreds, not tens), a paid website tier becomes viable. Until then, no monetization.
+
+**Two distribution modes:**
+1. **Standalone (CLI only)** — clone repo, run skills, get PDFs/DOCX locally. Expected to be most users.
+2. **Connected (CLI + website)** — same as above, plus optionally push reports to a personal account at `thesis-investing.com` for a friendlier reading/sharing UX. The website is the eventual paid tier.
+
+**Why we have to "de-Rule-1-ify" everything:** the closed-product Thes1s was built around Phil Town's *Rule One* methodology — branding, scoring concepts, terminology, even the curated guru list. Shipping a public/eventually-paid product on top of someone else's IP without permission is a real legal/ethical concern. Phase 2 strips every Rule One / R1 / Phil Town reference from the product surface (with one principled exception: Phil Town remains in the guru list as a public 13F filer — tracking, not branding). The methodology becomes generic-but-Buffett-flavored value investing, with a new "Thesis Score" rubric to be designed in brainstorm pods.
+
+**Contingency clause for the agent pipeline:** if Anthropic eventually approves multiagent orchestration in the Managed Agents account, migrating the pipeline back into a hosted dispatch model (the v3 Inngest + Fly stack already prototyped in the `stock-analyzer` repo) becomes a real option. Until then, Claude Code skills + subagents are the only execution path.
+
+---
+
+## Reference: the closed-product source repo
+
+This **Thesis** working copy lives at `/Users/kylehoff/Desktop/Thesis` (the directory you're in right now).
+
+The original closed-product **Thes1s** lives at `/Users/kylehoff/Desktop/stock-analyzer` on the same machine, with its own GitHub remote at `https://github.com/kyleghoff707/stock-analyzer.git`. **It is the source of truth for any pre-migration code that has been deleted from this repo** — observatory subsystem, `agents-service` (Fly + Inngest), v1/v3 pipeline routes, the validation harness, the export-service, etc. If something is unexpectedly missing here and the migration plan says "deleted in Phase 1, resurrect from `stock-analyzer.git` if needed," that's where to look.
+
+**Hard rule:** the `stock-analyzer` repo is read-only from this migration's perspective. Reference it freely; **never modify it**. All work happens in this **Thesis** repo.
+
+---
+
 ## Phase 0 — Strategic decisions (lock these BEFORE forking)
 
 These cascade through every later phase.
@@ -57,29 +88,39 @@ All foundation work executed. Repo is ready for Phase 2 rebrand.
 
 ## Phase 2 — Rebrand & de-Rule-1-ify
 
-This is the bulk of the work. Mass rename comes first; everything else is parallelizable.
+### Phase 2A — Mass rename + W1/W3/W4 (COMPLETE — 2026-05-09)
 
-### Sequential lead step
-- [ ] Repo-wide rename `Thes1s` → `Thesis`, `thes1s` → `thesis`. Touches: filenames, package names, env vars, agent prompts, schemas, comments, CSS classes, observatory paths, PDF branding constants, file paths in scripts. One mechanical pass + full test run.
+#### Sequential lead step (mass rename)
+- ✅ **Repo-wide `Thes1s` → `Thesis`, `thes1s` → `thesis`.** 143 files changed (~7,400 lines insertions/deletions). 7 git-tracked file/dir renames: `scripts/pdf/thes1s_pdf.py` → `thesis_pdf.py`, `src/engines/thes1sClassification.js` → `thesisClassification.js`, 4 industry-classification JSONs (e.g. `thes1s-taxonomy-tree.json` → `thesis-taxonomy-tree.json`), and the engine module rename below.
+- ✅ **Schema field rename** `ruleOneScore` → `thesisScore` (and `RuleOneScore` → `ThesisScore`) across 31 files (schema, engine, registry, fixtures, components, tests, agent prompts). Engine file `ruleOneScore.js` → `thesisScore.js`. Subsequent audit-driven sweep also caught `r1Score` camelCase in `Competitors.jsx` (5 hits) and `<ScoreBadge label="Rule #1 Score">` in `CompanyHeader.jsx` that were missed in the initial pass.
+- ✅ **Cache directory** `.thes1s/` → `.thesis/`.
+- ✅ **Configuration**: `package.json` (`"thesis"`), `api/package.json` (`"thesis-api"`), `api/wrangler.toml` (`database_name = "thesis"`, `bucket_name = "thesis-transcripts"`, `VITE_API_URL = "https://api.thesis-investing.com"`). **Note:** D1/R2 resources keep their original UUID/name in Cloudflare; the actual resource rename in the dashboard is deferred to Phase 4 when connected-mode is rebuilt.
 
-### Parallel workstreams (start after rename completes)
+#### Workstream coverage
 
-| Workstream | Touches | Effort |
-|---|---|---|
-| Agent prompts: Rule 1 → "Buffett-style value investing" | `agents/*/prompt.md`, `knowledge/` curriculum files | High |
-| Website UI text + tour | `src/components/*`, `tourSteps.js`, glossary | Medium |
-| PDF/DOCX branding (logo, colors, wordmark) | `scripts/pdf/thes1s_pdf.py` → `thesis_pdf.py`, `docx_helpers.py` | Medium |
-| Re-enable web search on One Pager analyst | `agents/one-pager/`, skill orchestration | Medium |
-| Code/doc cleanup (audit findings) | `CLAUDE.md` (3-layer XBRL claim vs dormant Layers 2+3; 8-tab Toolbox claim vs 7 actual tabs); `src/schemas/dataPacket.js` + `src/utils/sliceDataPacket.js` (duplicated `sliceDataPacket()` — consolidate to utils version) | Low |
+- ✅ **W1 — Agent prompts: Rule 1 → Buffett-style value investing.** Rule One / Phil Town / R1 references stripped from agent prompts; replaced with generic value-investing language (Buffett, Graham, Lynch, Munger framing). 22 agent prompts have a clean `## Value Investing Philosophy` section header. **Phil Town stays in `packages/sec-parsers/gurusList.js`** (43 entries) — tracking a public 13F filer is unrelated to product branding. **Followup**: some agent prompts have residual prose awkwardness (sentence-start lowercase "value investing", retained "Rulers" terminology, etc.) — to be cleaned up alongside the agent-prompt framing rewrite that comes out of the brainstorm pods.
+
+- ⏸️ **W2 — Website UI text + tour.** Mechanical rename done (variable names, button labels, "Thesis Score" replacing "Rule #1 Score" in tour copy). **Semantic rewrite deferred** to Phase 2B, after brainstorm pods produce real methodology. Today's tour/glossary/UI copy describes a Rule-One-shaped product with strings substituted; once Thesis Score, Valuation methods, and Full Story redesigns are locked, the copy will get a real rewrite. **Watch for**: semantic UI changes may propagate from any brainstorm pod outputs (new scoring rubric, new valuation methods, renamed Full Story stage). Don't write copy twice — wait for the methodology to settle.
+
+- ⏭️ **W3 — PDF/DOCX branding (logo, colors, wordmark).** File rename done (`thes1s_pdf.py` → `thesis_pdf.py`). **Branding kept as-is per user decision** — the teal-and-slate palette and fused-letterform logo style remain (now rendered as the "Thesis" wordmark instead of the T1 letterform). Not a deferred item; a closed decision.
+
+- ✅ **W4 — Web search re-enable on One Pager.** Verified already enabled and operational. `agents/one-pager/prompt.md:9` explicitly instructs *"Research first. Before emitting your structured output, perform at least 2–3 web searches"*. The dispatching `.claude/skills/generate-one-pager/SKILL.md` mirrors this instruction (lines 39, 60, 62). Claude Code subagents have `web_search` available by default through the Agent tool. No code change needed.
+
+### Phase 2B — Deferred work
+
+To be picked up after the brainstorm pods produce decisions on Thesis Score, Valuation methods, Guru list, and Full Story redesign:
+
+- [ ] **W2 (semantic rewrite of UI text + tour)** — rewrite tour, glossary, button labels, empty-state messages to match the methodology decisions from the brainstorm pods. Touches: `src/components/*`, `tourSteps.js`, glossary content. See [W2-PUNCHLIST.md](W2-PUNCHLIST.md) for the full inventory of methodology-laden strings, with `file:line` refs and per-pod (`POD-SCORE` / `POD-VAL` / `POD-GURU` / `POD-FS` / `INDEP`) dependency tags. Use it as the rewrite checklist once each brainstorm pod's output lands.
+- [ ] **W5 (code/doc cleanup, audit findings)** — `CLAUDE.md` (3-layer XBRL claim vs dormant Layers 2+3; 8-tab Toolbox claim vs 7 actual tabs); `src/schemas/dataPacket.js` + `src/utils/sliceDataPacket.js` (duplicated `sliceDataPacket()` — consolidate to utils version); `src/theme.js:1` comment cleanup ("value investing Toolbox teal accent" → "Toolbox teal accent"); cleanup of awkward sentence-start lowercase "value investing" / retained "Rulers" terminology in agent prompts.
 
 ### Brainstorm pods (run in parallel — each deserves its own session)
 
-- [ ] **Thesis Score** — algorithmically different, not just renamed. Just renaming Rule One Score is *more* derivative, not less. Brainstorm should produce a new scoring rubric.
+- [x] **Thesis Score — locked 2026-05-09.** 4-pillar Buffett-flavored rubric (Compounding / Capital Efficiency / Capital Allocation / Resilience) replaces R1's Big-5 + Management dichotomy. See [docs/specs/2026-05-09-thesis-score-redesign.md](docs/specs/2026-05-09-thesis-score-redesign.md) and [docs/plans/2026-05-09-thesis-score-redesign.md](docs/plans/2026-05-09-thesis-score-redesign.md).
 - [ ] **Valuation methods** — drop or rework. Equity Bond is from Buffettology (1997, public domain methodology) — safe to keep. Ten Cap and Payback Time are most R1-coded.
-- [ ] **Guru list** — current 43 are copy-pasted from R1. Rebuild from your own 13F screening criteria (AUM threshold, holding concentration, value-tilt heuristics).
-- [ ] **Full Story redesign** — rename + method changes. Candidate names: "Conviction Brief", "Investment Memo", "Final Thesis". Don't keep the 15/15/13-point checklists verbatim.
+- [ ] **Guru list** — current 43 are copy-pasted from R1. Rebuild from your own 13F screening criteria (AUM threshold, holding concentration, value-tilt heuristics). Phil Town stays in the list regardless (public 13F filer).
+- [x] **Final Thesis (formerly Full Story) — spec locked 2026-05-09.** See [docs/specs/2026-05-09-final-thesis-redesign.md](docs/specs/2026-05-09-final-thesis-redesign.md). Implementation pending; gates W2 semantic UI rewrite for Stage 3 components.
 
-These four can run as parallel pods right after the rename. Lock them before Phase 5.
+These four can run as parallel pods. Lock them before Phase 5. W2 (semantic UI rewrite) follows from their outputs.
 
 ---
 

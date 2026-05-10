@@ -35,8 +35,8 @@ describe('classifyField', () => {
     expect(classifyField('fcf')).toBe('important');
   });
 
-  it('classifies ruleOneScore as important', () => {
-    expect(classifyField('ruleOneScore')).toBe('important');
+  it('classifies thesisScore as important', () => {
+    expect(classifyField('thesisScore')).toBe('important');
   });
 
   it('classifies ttm as important', () => {
@@ -63,8 +63,8 @@ describe('field classification constants', () => {
     expect(CRITICAL_FIELDS).toEqual(['companyInfo', 'financials', 'filings']);
   });
 
-  it('IMPORTANT_FIELDS contains growthRates, returnMetrics, fcf, ruleOneScore, ttm', () => {
-    expect(IMPORTANT_FIELDS).toEqual(['growthRates', 'returnMetrics', 'fcf', 'ruleOneScore', 'ttm']);
+  it('IMPORTANT_FIELDS contains growthRates, returnMetrics, fcf, thesisScore, ttm', () => {
+    expect(IMPORTANT_FIELDS).toEqual(['growthRates', 'returnMetrics', 'fcf', 'thesisScore', 'ttm']);
   });
 
   it('NICE_TO_HAVE_FIELDS includes analystEstimates, gurus, insiders', () => {
@@ -91,7 +91,7 @@ describe('assessDataPacket', () => {
       debtMetrics: { debtToEquity: 1.2 },
       fcf: { fcfPerShare: 6.5 },
       keyMetrics: { peRatio: 28 },
-      ruleOneScore: { moat: 85, management: 78, composite: 80 },
+      thesisScore: { composite: 80, pillars: {} },
       gurus: { count: 0, holdings: [] },
       insiders: { transactions: [] },
       compensation: { executives: [] },

@@ -8,7 +8,7 @@ import { useEdgar } from '../hooks/useEdgar';
 import { computeAllGrowthRates } from '../engines/growthRates';
 import { computeReturnMetrics, computeDebtMetrics } from '../engines/returnMetrics';
 import { computeFreeCashFlow } from '../engines/freeCashFlow';
-import { computeMoatScore, computeManagementScore, computeRuleOneScore } from '../engines/ruleOneScore';
+import { computeThesisScoreV2 } from '../engines/thesisScoreV2';
 import { useGurus } from '../hooks/useGurus';
 import { useInsiders } from '../hooks/useInsiders';
 import { useCompensation } from '../hooks/useCompensation';
@@ -25,7 +25,7 @@ import Insiders from './Insiders';
 import Valuation from './Valuation';
 import CollapsibleSection from './CollapsibleSection';
 import ExecutiveCompensation from './ExecutiveCompensation';
-import { classifyCompany } from '../engines/thes1sClassification';
+import { classifyCompany } from '../engines/thesisClassification';
 import Competitors from './Competitors';
 import { useCompanyEvents } from '../hooks/useCompanyEvents';
 import CompanyEvents from './CompanyEvents';
@@ -88,8 +88,8 @@ export default function Toolbox({ getReport, updateReport, refreshReport, settin
     let cancelled = false;
     // Fetch stage availability and active pipeline status in parallel
     Promise.all([
-      fetch('/api/thes1s/reports').then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(`/api/thes1s/reports/${encodeURIComponent(ticker)}/progress`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch('/api/thesis/reports').then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`/api/thesis/reports/${encodeURIComponent(ticker)}/progress`).then(r => r.ok ? r.json() : null).catch(() => null),
     ]).then(([data, progress]) => {
       if (cancelled) return;
       if (data) {
@@ -161,20 +161,18 @@ export default function Toolbox({ getReport, updateReport, refreshReport, settin
     return computeDebtMetrics(edgarStatements);
   }, [edgarStatements]);
 
-  const moat = useMemo(() => {
-    if (!growthRates) return null;
-    return computeMoatScore(growthRates);
-  }, [growthRates]);
+  const thesisScoreV2 = useMemo(() => {
+    if (!edgarStatements || !growthRates || !returns) return null;
+    return computeThesisScoreV2({
+      statements: edgarStatements,
+      growthRates,
+      returnMetrics: returns,
+      debtMetrics: debt,
+    });
+  }, [edgarStatements, growthRates, returns, debt]);
 
-  const management = useMemo(() => {
-    if (!returns || !debt) return null;
-    return computeManagementScore(returns.averages, debt);
-  }, [returns, debt]);
-
-  const overallScore = useMemo(() => {
-    if (!moat || !management) return null;
-    return computeRuleOneScore(moat.moatScore, management.managementScore);
-  }, [moat, management]);
+  const overallScore = thesisScoreV2?.composite ?? null;
+  const pillars = thesisScoreV2?.pillars ?? null;
 
   if (!report) {
     // On hard refresh, reports haven't loaded from D1 yet.
@@ -182,50 +180,40 @@ export default function Toolbox({ getReport, updateReport, refreshReport, settin
     return <Navigate to="/research" replace />;
   }
 
-  // Build Moat rows (5 growth metrics)
-  const moatRows = [
-    { label: 'Book Value + Dividend + Buy Backs Growth', key: 'bvps' },
-    { label: 'Earnings Growth', key: 'earnings' },
-    { label: 'Total Revenue Growth', key: 'revenue' },
-    { label: 'Operating Cash Flow Growth', key: 'operatingCash' },
-    { label: 'Free Cash Flow Growth', key: 'fcf' },
-  ].map(m => ({
-    label: m.label,
-    rates: growthRates?.[m.key] || {},
-    score: moat?.metricScores?.[m.key],
-  }));
+  // Build per-pillar score table rows (4-pillar Thesis Score v2)
+  const compoundingRows = [
+    { label: 'Book Value + Div + Buybacks Growth', rates: growthRates?.bvps, score: pillars?.compounding?.metrics?.bvpsGrowth, thresholds: { full: 0.12, partial: 0.08 } },
+    { label: 'Operating Cash Flow Growth',         rates: growthRates?.operatingCash, score: pillars?.compounding?.metrics?.operatingCashGrowth, thresholds: { full: 0.12, partial: 0.08 } },
+    { label: 'Free Cash Flow Growth',              rates: growthRates?.fcf, score: pillars?.compounding?.metrics?.fcfGrowth, thresholds: { full: 0.10, partial: 0.06 } },
+  ];
 
-  // Build Management rows (3 return metrics + 2 debt metrics)
-  const mgmtRows = [
-    { label: 'Return On Equity', key: 'roe' },
-    { label: 'Return On Invested Capital', key: 'roic' },
-    { label: 'Return On Assets', key: 'roa' },
-  ].map(m => ({
-    label: m.label,
-    rates: {
-      '10yr': returns?.averages?.['10yr']?.[m.key],
-      '7yr': returns?.averages?.['7yr']?.[m.key],
-      '5yr': returns?.averages?.['5yr']?.[m.key],
-      '3yr': returns?.averages?.['3yr']?.[m.key],
-      '1yr': returns?.averages?.['1yr']?.[m.key],
+  const capEffRows = [
+    { label: 'Return On Invested Capital',
+      rates: {
+        '10yr': returns?.averages?.['10yr']?.roic,
+        '7yr':  returns?.averages?.['7yr']?.roic,
+        '5yr':  returns?.averages?.['5yr']?.roic,
+        '3yr':  returns?.averages?.['3yr']?.roic,
+        '1yr':  returns?.averages?.['1yr']?.roic,
+      },
+      score: pillars?.capitalEfficiency?.metrics?.roic,
+      thresholds: { full: 0.15, partial: 0.10 },
     },
-    score: management?.metricScores?.[m.key],
-  }));
+    { label: 'Cash quality (FCF / Net Income)', type: 'simple', score: pillars?.capitalEfficiency?.metrics?.cashQuality },
+    { label: 'Gross margin trend (5yr slope)',  type: 'simple', score: pillars?.capitalEfficiency?.metrics?.grossMarginTrend },
+  ];
 
-  mgmtRows.push({
-    label: 'Net Debt to Earnings',
-    type: 'debt',
-    debtValue: debt?.netDebtToEarnings,
-    isNetCash: debt?.isNetCash,
-    score: management?.metricScores?.netDebtToEarnings,
-  });
-  mgmtRows.push({
-    label: 'Net Debt to Free Cash Flow',
-    type: 'debt',
-    debtValue: debt?.netDebtToFCF,
-    isNetCash: debt?.isNetCash,
-    score: management?.metricScores?.netDebtToFCF,
-  });
+  const capAllocRows = [
+    { label: 'Buyback discipline (5yr shares trend)', type: 'simple', score: pillars?.capitalAllocation?.metrics?.buybackDiscipline },
+    { label: 'Dividend track record',                 type: 'simple', score: pillars?.capitalAllocation?.metrics?.dividendTrackRecord },
+    { label: 'Reinvestment effectiveness',            type: 'simple', score: pillars?.capitalAllocation?.metrics?.reinvestmentEffectiveness },
+  ];
+
+  const resilienceRows = [
+    { label: 'Net Debt / Free Cash Flow', type: 'debt', debtValue: debt?.netDebtToFCF, isNetCash: debt?.isNetCash, score: pillars?.resilience?.metrics?.netDebtToFCF },
+    { label: 'Interest coverage (EBIT / interest)', type: 'simple', score: pillars?.resilience?.metrics?.interestCoverage },
+    { label: 'Current ratio',                       type: 'simple', score: pillars?.resilience?.metrics?.currentRatio },
+  ];
 
   const loading = finLoading || priceLoading || edgarLoading;
   const error = finError || priceError || edgarError;
@@ -235,9 +223,7 @@ export default function Toolbox({ getReport, updateReport, refreshReport, settin
       <CompanyHeader
         company={company ? { ...company, ticker } : { ticker }}
         latest={latest}
-        moatScore={moat?.moatScore}
-        managementScore={management?.managementScore}
-        ruleOneScore={overallScore}
+        thesisScore={overallScore}
       />
 
       {/* Generate / View button — contextual per pipeline stage */}
@@ -358,12 +344,12 @@ export default function Toolbox({ getReport, updateReport, refreshReport, settin
               />
 
               <div style={{ marginTop: 24 }}>
-                <CollapsibleSection title="Rule One Scores" defaultOpen={false}>
+                <CollapsibleSection title="Thesis Scores" defaultOpen={false}>
                   <ScoreTable
-                    sectionTitle="MOAT: Compound Growth Rate"
-                    rows={moatRows}
-                    overallLabel="Rule One Moat Score"
-                    overallScore={moat?.moatScore}
+                    sectionTitle="Compounding"
+                    rows={compoundingRows}
+                    overallLabel="Compounding"
+                    overallScore={pillars?.compounding?.score}
                   />
                   {!growthRates?.fcf?.['10yr'] && !edgarLoading && (
                     <div style={{
@@ -375,10 +361,22 @@ export default function Toolbox({ getReport, updateReport, refreshReport, settin
                     </div>
                   )}
                   <ScoreTable
-                    sectionTitle="Management: Average Rate Of Return"
-                    rows={mgmtRows}
-                    overallLabel="Rule One Management Score"
-                    overallScore={management?.managementScore}
+                    sectionTitle="Capital Efficiency"
+                    rows={capEffRows}
+                    overallLabel="Capital Efficiency"
+                    overallScore={pillars?.capitalEfficiency?.score}
+                  />
+                  <ScoreTable
+                    sectionTitle="Capital Allocation"
+                    rows={capAllocRows}
+                    overallLabel="Capital Allocation"
+                    overallScore={pillars?.capitalAllocation?.score}
+                  />
+                  <ScoreTable
+                    sectionTitle="Resilience"
+                    rows={resilienceRows}
+                    overallLabel="Resilience"
+                    overallScore={pillars?.resilience?.score}
                   />
                 </CollapsibleSection>
 
@@ -668,7 +666,7 @@ function IndustryInformation({ company, ticker }) {
 
   return (
     <div>
-      {/* Core — matches Rule One Toolbox layout */}
+      {/* Core — matches value investing Toolbox layout */}
       <div style={{ display: 'flex', gap: 48 }}>
         <div style={{ flex: 1 }}>
           <InfoRow label="Sector" value={classification.sector} />
@@ -676,7 +674,7 @@ function IndustryInformation({ company, ticker }) {
           <InfoRow label="Industry" value={classification.industry} />
         </div>
         <div style={{ flex: 1 }}>
-          <InfoRow label="Thes1s Code" value={classification.thes1sCode} />
+          <InfoRow label="Thesis Code" value={classification.thesisCode} />
           <InfoRow label="CIK Number" value={cikDisplay} />
         </div>
       </div>

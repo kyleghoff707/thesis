@@ -8,12 +8,12 @@
 import { fetchEdgarStatements } from './edgarFinancials.js';
 import { fetchCompanyInfo, fetchFilings } from './edgar.js';
 import { classifyIndustryType } from './industryClassifier.js';
-import { classifyCompany } from './thes1sClassification.js';
+import { classifyCompany } from './thesisClassification.js';
 import { computeAllGrowthRates } from './growthRates.js';
 import { computeReturnMetrics, computeDebtMetrics } from './returnMetrics.js';
 import { computeFreeCashFlow } from './freeCashFlow.js';
 import { computeKeyMetrics } from './keyMetrics.js';
-import { computeMoatScore, computeManagementScore, computeRuleOneScore } from './ruleOneScore.js';
+import { computeThesisScoreV2 } from './thesisScoreV2.js';
 import { findGurusOwning, loadCachedPortfolios, fetchAllGuruHoldings } from './gurus.js';
 import { dataUrl } from './apiBase.js';
 import { fetchInsiderTransactions, computeInsiderSummary } from './insiders.js';
@@ -53,9 +53,9 @@ export async function assembleDataPacket(ticker) {
   const statements = statementsResult.status === 'fulfilled' ? statementsResult.value : null;
   let companyInfo = companyInfoResult.status === 'fulfilled' ? companyInfoResult.value : null;
 
-  // Classification from EDGAR SIC code + Thes1s taxonomy
+  // Classification from EDGAR SIC code + Thesis taxonomy
   const sicCode = companyInfo?.sic || statements?.industryType || '';
-  const thes1sClass = classifyCompany(
+  const thesisClass = classifyCompany(
     ticker,
     companyInfo?.cik || null,
     sicCode,
@@ -65,10 +65,10 @@ export async function assembleDataPacket(ticker) {
     industryType: statements?.industryType || classifyIndustryType(sicCode),
     sicCode: companyInfo?.sic || '',
     sicDescription: companyInfo?.sicDescription || '',
-    // Thes1s taxonomy fields needed by peers.js fetchPeersByTier
-    sector: thes1sClass?.sector || null,
-    industryGroup: thes1sClass?.industryGroup || null,
-    industry: thes1sClass?.industry || null,
+    // Thesis taxonomy fields needed by peers.js fetchPeersByTier
+    sector: thesisClass?.sector || null,
+    industryGroup: thesisClass?.industryGroup || null,
+    industry: thesisClass?.industry || null,
   };
 
   // ── Step 2: Computed metrics (parallel — depend only on financials) ──
@@ -142,34 +142,23 @@ export async function assembleDataPacket(ticker) {
     }
   }
 
-  // ── Step 5: Composite scores (depends on growth + returns) ──
+  // ── Step 5: Composite score (Thesis Score v2) ──
+  // See docs/specs/2026-05-09-thesis-score-redesign.md
 
-  let moatScore = null;
-  let managementScore = null;
-  let ruleOneScoreResult = null;
-
-  try {
-    if (growthRates) {
-      moatScore = computeMoatScore(growthRates);
-    }
-  } catch (err) {
-    errors.push(`moatScore: ${err.message}`);
-  }
+  let thesisScoreResult = { composite: null, pillars: null };
 
   try {
-    if (returnMetrics && debtMetrics) {
-      managementScore = computeManagementScore(returnMetrics.averages, debtMetrics);
+    if (statements && growthRates && returnMetrics) {
+      thesisScoreResult = computeThesisScoreV2({
+        statements,
+        growthRates,
+        returnMetrics,
+        fcf,
+        debtMetrics,
+      });
     }
   } catch (err) {
-    errors.push(`managementScore: ${err.message}`);
-  }
-
-  try {
-    if (moatScore && managementScore) {
-      ruleOneScoreResult = computeRuleOneScore(moatScore.moatScore, managementScore.managementScore);
-    }
-  } catch (err) {
-    errors.push(`ruleOneScore: ${err.message}`);
+    errors.push(`thesisScore: ${err.message}`);
   }
 
   // ── Derive debt metrics from financials ──
@@ -214,10 +203,10 @@ export async function assembleDataPacket(ticker) {
     debtMetrics: derivedDebtMetrics || debtMetrics || null,
     fcf,
     keyMetrics,
-    ruleOneScore: {
-      moat: moatScore?.moatScore ?? null,
-      management: managementScore?.managementScore ?? null,
-      composite: ruleOneScoreResult ?? null,
+    thesisScore: {
+      composite: thesisScoreResult.composite,
+      pillars: thesisScoreResult.pillars,
+      reason: thesisScoreResult.reason,
     },
     gurus,
     insiders,

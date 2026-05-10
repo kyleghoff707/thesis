@@ -50,10 +50,9 @@ vi.mock('../cache', () => ({
   cacheSet: () => {},
 }));
 
-vi.mock('../ruleOneScore', () => ({
-  computeMoatScore: (growthRates) => ({ moatScore: 50 }),
-  computeManagementScore: (returnAverages, debtMetrics) => ({ managementScore: 50 }),
-  computeRuleOneScore: (moat, mgmt) => Math.round((moat + mgmt) / 2),
+vi.mock('../thesisScoreV2', () => ({
+  scoreCompoundingPillar: () => ({ score: 50, metrics: {} }),
+  scoreCapitalEfficiencyPillar: () => ({ score: 50, metrics: {} }),
 }));
 
 import { fetchPeerFrameData, computePeerMetrics } from '../peerMetrics';

@@ -1,5 +1,5 @@
 import { C } from '../theme';
-import { badgeColor } from '../engines/ruleOneScore';
+import { badgeColor } from '../engines/thesisScoreV2';
 import { formatCompanyName } from '../engines/formatCompanyName';
 
 function ScoreBadge({ label, score, large = false }) {
@@ -38,7 +38,7 @@ function ScoreBadge({ label, score, large = false }) {
   );
 }
 
-export default function CompanyHeader({ company, latest, moatScore, managementScore, ruleOneScore }) {
+export default function CompanyHeader({ company, latest, thesisScore }) {
   const changeAmt = latest?.change;
   const changePct = latest?.changePct;
   const isPositive = changePct >= 0;
@@ -112,13 +112,9 @@ export default function CompanyHeader({ company, latest, moatScore, managementSc
         )}
       </div>
 
-      {/* Right: score badges */}
+      {/* Right: composite Thesis Score badge (per-pillar breakdown lives in Toolbox) */}
       <div data-tour="score-badges" style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginLeft: 24 }}>
-        <ScoreBadge label="Rule #1 Score" score={ruleOneScore} large />
-        <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
-          <ScoreBadge label="Moat" score={moatScore} />
-          <ScoreBadge label="Mgmt" score={managementScore} />
-        </div>
+        <ScoreBadge label="Thesis Score" score={thesisScore} large />
       </div>
     </div>
   );

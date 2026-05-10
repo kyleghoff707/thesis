@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { C } from '../theme';
-import { cellColor } from '../engines/ruleOneScore';
+import { cellColor } from '../engines/thesisScoreV2';
 
 const METRIC_LABELS = {
   bvps: 'BVPS + Dividends',
@@ -10,6 +10,18 @@ const METRIC_LABELS = {
   operatingCash: 'Operating Cash Flow',
   fcf: 'Free Cash Flow',
   retainedEarnings: 'Retained Earnings',
+};
+
+// Per-metric thresholds for cell coloring. Mirrors Compounding pillar cutoffs
+// where applicable; revenue/earnings/retained use the same 12%/8% bar so the
+// table stays visually consistent.
+const METRIC_THRESHOLDS = {
+  bvps:             { full: 0.12, partial: 0.08 },
+  earnings:         { full: 0.12, partial: 0.08 },
+  revenue:          { full: 0.10, partial: 0.05 },
+  operatingCash:    { full: 0.12, partial: 0.08 },
+  fcf:              { full: 0.10, partial: 0.06 },
+  retainedEarnings: { full: 0.10, partial: 0.05 },
 };
 
 const PERIOD_LABELS = ['10yr', '7yr', '5yr', '3yr', '1yr'];
@@ -139,7 +151,8 @@ function GrowthRateTable({ growthRates }) {
                 </td>
                 {PERIOD_LABELS.map(p => {
                   const rate = rates[p];
-                  const color = p === '1yr' ? 'gray' : cellColor(rate);
+                  const t = METRIC_THRESHOLDS[m];
+                  const color = (p === '1yr' || !t) ? 'gray' : cellColor(rate, t.full, t.partial);
                   const fgMap = { green: C.green, yellow: C.yellow, red: C.red, gray: C.textMuted };
 
                   return (
