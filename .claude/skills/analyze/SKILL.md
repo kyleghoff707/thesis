@@ -20,9 +20,9 @@ The ticker symbol is `$0`. Uppercase it and store as `TICKER`.
 
 - If `$0` is empty, print usage: `/analyze TICKER` and stop.
 - Create output directories:
-  - `.thesis/reports/{TICKER}/`
-  - `.thesis/reports/{TICKER}/sections/`
-  - `.thesis/reports/{TICKER}/quality/`
+  - `~/thesis/reports/{TICKER}/`
+  - `~/thesis/cache/{TICKER}/sections/`
+  - `~/thesis/cache/{TICKER}/quality/`
 
 ## Step 2: Run One Pager (Stage 1)
 
@@ -31,14 +31,14 @@ Invoke the skill:
 /generate-one-pager {TICKER}
 ```
 
-Wait for completion. When it finishes, read `.thesis/reports/{TICKER}/one-pager.json` and check `overallVerdict`.
+Wait for completion. When it finishes, read `~/thesis/reports/{TICKER}/one-pager.json` and check `overallVerdict`.
 
 **Gate check:**
 - If verdict is `PASS` or `WATCHLIST` → continue to Step 3 (WATCHLIST means "worth deeper research")
 - If verdict is `FAIL` → log the verdict and **stop**. Print:
   ```
   GATE FAILED: One Pager verdict is FAIL. Pipeline stopped at Stage 1.
-  Review: .thesis/reports/{TICKER}/one-pager.json
+  Review: ~/thesis/reports/{TICKER}/one-pager.json
   ```
 
 ## Step 3: Run Pitch Deck (Stage 2)
@@ -50,7 +50,7 @@ Invoke the skill:
 
 The pitch deck skill runs end-to-end without checkpoints — no PM interaction needed.
 
-When it finishes, verify `.thesis/reports/{TICKER}/pitch-deck.json` exists with sections.
+When it finishes, verify `~/thesis/reports/{TICKER}/pitch-deck.json` exists with sections.
 
 **Gate check:** If fewer than 10 sections were produced or the pipeline errored, log the issue and **stop**.
 
@@ -63,7 +63,7 @@ Invoke the skill:
 
 The final thesis skill runs end-to-end without checkpoints — no PM interaction needed.
 
-When it finishes, verify `.thesis/reports/{TICKER}/final-thesis.json` exists.
+When it finishes, verify `~/thesis/reports/{TICKER}/final-thesis.json` exists.
 
 ## Step 5: Report Results
 
@@ -77,10 +77,10 @@ Stage 1 (One Pager):  {verdict}
 Stage 2 (Pitch Deck): {sectionCount} sections
 Stage 3 (Final Thesis):  {sectionCount} sections + debate
 
-Output: .thesis/reports/{TICKER}/
+Output: ~/thesis/reports/{TICKER}/
 ```
 
-Each stage auto-archives its outputs to `.thesis/reports/{TICKER}/archive/{RUN_ID}/` so prior runs are preserved.
+Each stage auto-archives its outputs to `~/thesis/reports/{TICKER}/archive/{RUN_ID}/` so prior runs are preserved.
 
 ## Constraints
 

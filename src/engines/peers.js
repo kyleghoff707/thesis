@@ -1,14 +1,12 @@
 // ─── Peer Discovery Engine ─────────────────────────────────────────
 // Discovers peer companies using the Thesis taxonomy.
 // Instant in-memory lookup from prebuilt company assignments —
-// no HTTP requests needed. Replaces the old SIC-based approach
-// that required dozens of SEC requests per lookup.
+// no HTTP requests needed.
 //
 // Returns arrays of { cik, name, ticker } for use in competitor comparison.
 
 import { getCompaniesForTier } from './thesisClassification';
 import { getTickerSearchIndex } from './edgar';
-import { dataUrl } from './apiBase';
 
 // ─── Public API ─────────────────────────────────────────────
 
@@ -20,20 +18,6 @@ import { dataUrl } from './apiBase';
  * @returns {Array<{ cik, name, ticker }>}
  */
 export async function fetchPeersByTier(tier, classification, ticker) {
-  // Try D1 first (includes weekly-refreshed IPOs, reclassifications)
-  if (ticker && typeof window !== 'undefined') {
-    try {
-      const res = await fetch(dataUrl(`/taxonomy/peers/${ticker.toUpperCase()}?tier=${tier}`));
-      if (res.ok) {
-        const data = await res.json();
-        if (data.peers?.length > 0) {
-          return data.peers.map(p => ({ cik: p.cik, name: p.name, ticker: p.ticker || null }));
-        }
-      }
-    } catch { /* fall through to static JSON */ }
-  }
-
-  // Fallback: in-memory from static JSON (baked into build)
   if (!classification?.[tier]) return [];
   const companies = getCompaniesForTier(tier, classification[tier]);
   return companies.map(c => ({

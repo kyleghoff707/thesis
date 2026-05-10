@@ -145,13 +145,13 @@ If `$0` is empty, print usage `/generate-final-thesis TICKER` and stop.
 
 Clean stale section data (preserve pitch-deck.json + data-packet.json):
 ```bash
-rm -rf .thesis/reports/{TICKER}/sections/
-rm -rf .thesis/reports/{TICKER}/quality/
+rm -rf ~/thesis/cache/{TICKER}/sections/
+rm -rf ~/thesis/cache/{TICKER}/quality/
 ```
 
-Create `.thesis/reports/{TICKER}/sections/`.
+Create `~/thesis/cache/{TICKER}/sections/`.
 
-**Gate Check.** Read `.thesis/reports/{TICKER}/pitch-deck.json` and `.thesis/reports/{TICKER}/data-packet.json`. Verify:
+**Gate Check.** Read `~/thesis/reports/{TICKER}/pitch-deck.json` and `~/thesis/reports/{TICKER}/data-packet.json`. Verify:
 1. Both files exist
 2. `overallVerdict` is set
 3. `overallVerdict` is NOT `"FAIL"`
@@ -523,16 +523,16 @@ Wait. Extract COMPLETE JSON, save to `sections/trade_plan.json`. 5-30KB.
 }
 ```
 
-Write JSON to `.thesis/reports/{TICKER}/final-thesis.json`.
+Write JSON to `~/thesis/reports/{TICKER}/final-thesis.json`.
 
-Generate human-readable markdown at `.thesis/reports/{TICKER}/final-thesis.md`. Structure: title + verdict + Pitch Deck verdict + debate direction header → Executive Summary (Section 6 verdictRationale + debate outcome) → Phase 1 sections (1-5) with narrative + verdict + red flags → Section 6 (The Debate) narrative + debate scorecard table (per-exchange Bull/Bear/Outcome) → Section 7 (Trade Plan) narrative with position sizing, entry tranches, sell rules, PACE plan, and forcing question → Section verdicts table → All red flags aggregated → Citations.
+Generate human-readable markdown at `~/thesis/reports/{TICKER}/final-thesis.md`. Structure: title + verdict + Pitch Deck verdict + debate direction header → Executive Summary (Section 6 verdictRationale + debate outcome) → Phase 1 sections (1-5) with narrative + verdict + red flags → Section 6 (The Debate) narrative + debate scorecard table (per-exchange Bull/Bear/Outcome) → Section 7 (Trade Plan) narrative with position sizing, entry tranches, sell rules, PACE plan, and forcing question → Section verdicts table → All red flags aggregated → Citations.
 
 ## Step 10: Generate PDF
 
 The PDF reader expects `final-thesis-api.json`, so copy first:
 
 ```bash
-cp .thesis/reports/{TICKER}/final-thesis.json .thesis/reports/{TICKER}/final-thesis-api.json
+cp ~/thesis/reports/{TICKER}/final-thesis.json ~/thesis/reports/{TICKER}/final-thesis-api.json
 python3 scripts/pdf/generate_final_thesis_pdf.py {TICKER}
 ```
 
@@ -542,12 +542,12 @@ If it fails, print warning and continue.
 
 ```bash
 ARCHIVE_ID=$(date +%Y%m%d-%H%M%S)
-mkdir -p .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}
-cp .thesis/reports/{TICKER}/final-thesis.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
-cp .thesis/reports/{TICKER}/final-thesis-api.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
-cp .thesis/reports/{TICKER}/sections/debate-*.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
-cp .thesis/reports/{TICKER}/sections/trade_plan.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
-cp .thesis/reports/{TICKER}/*.pdf .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+mkdir -p ~/thesis/reports/{TICKER}/archive/${ARCHIVE_ID}
+cp ~/thesis/reports/{TICKER}/final-thesis.json ~/thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp ~/thesis/reports/{TICKER}/final-thesis-api.json ~/thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp ~/thesis/cache/{TICKER}/sections/debate-*.json ~/thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp ~/thesis/cache/{TICKER}/sections/trade_plan.json ~/thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp ~/thesis/reports/{TICKER}/*.pdf ~/thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
 ```
 
 Retry once on error.

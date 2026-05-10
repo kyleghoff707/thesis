@@ -1,6 +1,7 @@
 // Generation State Persistence — Tests
-// Validates CRUD operations on .thesis/reports/{TICKER}/progress.json
-// Uses a __TEST_PS__ ticker to avoid polluting real data
+// Validates CRUD operations on ~/thesis/cache/{TICKER}/progress.json (pipeline scratch)
+// and ~/thesis/reports/{TICKER}/generation-status.json (UI polling, final outputs).
+// Uses a __TEST_PS__ ticker to avoid polluting real data.
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { existsSync, rmSync, mkdirSync, readFileSync } from 'fs';
@@ -21,15 +22,20 @@ import {
   completeSection,
   updatePhaseStatus,
 } from '../progressState.js';
+import { thesisHome, reportsDir, cacheDir } from '../../utils/thesisDir.js';
 
 const TEST_TICKER = '__TEST_PS__';
-const THESIS_DIR = join(process.cwd(), '.thesis');
-const TEST_DIR = join(THESIS_DIR, 'reports', TEST_TICKER);
+const THESIS_DIR = thesisHome();
+const TEST_REPORTS_DIR = reportsDir(TEST_TICKER);
+const TEST_CACHE_DIR = cacheDir(TEST_TICKER);
 
 afterAll(() => {
-  // Clean up test artifacts
-  if (existsSync(TEST_DIR)) {
-    rmSync(TEST_DIR, { recursive: true });
+  // Clean up test artifacts in both reports/ and cache/
+  if (existsSync(TEST_REPORTS_DIR)) {
+    rmSync(TEST_REPORTS_DIR, { recursive: true });
+  }
+  if (existsSync(TEST_CACHE_DIR)) {
+    rmSync(TEST_CACHE_DIR, { recursive: true });
   }
 });
 
@@ -78,10 +84,10 @@ describe('progressState', () => {
   });
 
   describe('writeProgress + readProgress (round-trip)', () => {
-    it('should write progress JSON to .thesis/reports/{TICKER}/progress.json', () => {
+    it('should write progress JSON to ~/thesis/cache/{TICKER}/progress.json', () => {
       const progress = createProgress(TEST_TICKER, 'pitchDeck');
       writeProgress(TEST_TICKER, progress);
-      const progressPath = join(TEST_DIR, 'progress.json');
+      const progressPath = join(TEST_CACHE_DIR, 'progress.json');
       expect(existsSync(progressPath)).toBe(true);
     });
 
@@ -171,10 +177,10 @@ describe('progressState', () => {
   });
 
   describe('saveSectionOutput + readSectionOutput', () => {
-    it('should write section data to sections directory', () => {
+    it('should write section data to sections directory under cache/', () => {
       const sectionData = { key: 'radar', title: 'Radar', content: 'Test content', citations: [] };
       saveSectionOutput(TEST_TICKER, 'radar', sectionData);
-      const sectionsDir = join(TEST_DIR, 'sections');
+      const sectionsDir = join(TEST_CACHE_DIR, 'sections');
       expect(existsSync(join(sectionsDir, 'radar.json'))).toBe(true);
     });
 
@@ -207,9 +213,9 @@ describe('progressState', () => {
         }
       });
 
-      it('should write the file to disk', () => {
+      it('should write the file to disk under reports/ (UI-visible)', () => {
         initGenerationStatus(TEST_TICKER, 'pitchDeck');
-        const statusPath = join(TEST_DIR, 'generation-status.json');
+        const statusPath = join(TEST_REPORTS_DIR, 'generation-status.json');
         expect(existsSync(statusPath)).toBe(true);
       });
 
@@ -336,7 +342,7 @@ describe('progressState', () => {
         initGenerationStatus(TEST_TICKER, 'pitchDeck');
         advanceState(TEST_TICKER, 'DATA_ASSEMBLY');
 
-        const statusPath = join(TEST_DIR, 'generation-status.json');
+        const statusPath = join(TEST_REPORTS_DIR, 'generation-status.json');
         const raw = readFileSync(statusPath, 'utf-8');
         const status = JSON.parse(raw);
         expect(status.state).toBe('DATA_ASSEMBLY');

@@ -4,12 +4,14 @@
 // to flow through .env.local — keeps the bundle reproducible and avoids
 // tempting anyone to add VITE_*_KEY back into the build environment.
 
-export const API_BASE = import.meta.env.DEV ? '' : 'https://api.thesis-investing.com';
+// Browser-only: the React app reads this for connected-mode requests (Phase 4).
+// CLI/Node code paths must not import API_BASE — backend is unreachable in CLI mode.
+export const API_BASE = import.meta.env?.DEV ? '' : 'https://api.thesis-investing.com';
 
 // Production proxy base — prepended to external API paths.
 // Dev: Vite proxy routes (e.g. /api/sec/..., /api/edgar/...)
 // Production: Worker proxy routes (e.g. https://api.thesis.com/proxy/sec/...)
-const IS_DEV = import.meta.env.DEV;
+const IS_DEV = import.meta.env?.DEV;
 
 export function secBase() {
   return IS_DEV ? '/api/sec' : `${API_BASE}/proxy/sec`;
@@ -44,19 +46,9 @@ export function finvizUrl(ticker) {
     : `${API_BASE}/proxy/finviz/${ticker}`;
 }
 
-// Data endpoints (shared server data from D1/R2)
-export function dataUrl(path) {
-  return `${API_BASE}/data${path}`;
-}
-
 // Auth endpoints
 export function authUrl(path) {
   return `${API_BASE}/auth${path}`;
-}
-
-// Claude API proxy — dev calls Anthropic directly, prod goes through Worker
-export function claudeBaseUrl() {
-  return IS_DEV ? 'https://api.anthropic.com' : `${API_BASE}/proxy/claude`;
 }
 
 // User data endpoints

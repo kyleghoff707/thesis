@@ -4,7 +4,7 @@
 
 import { cacheGetAsync, cacheSet } from './cache';
 import { fetchFilings, lookupCIK } from './edgar';
-import { secBase, dataUrl } from './apiBase';
+import { secBase } from './apiBase';
 
 // ─── SEC URL helpers ────────────────────────────────────────
 
@@ -472,64 +472,8 @@ export function detectClusters(transactions, windowDays = 5) {
 
 // ─── Main Entry Point ────────────────────────────────────────
 
-// Map D1 snake_case row to frontend camelCase transaction shape
-function mapD1Trade(row) {
-  const code = row.transaction_code || '';
-  const codeInfo = TRANSACTION_CODES[code] || { label: code, isOpenMarket: false };
-  const shares = row.shares || 0;
-  const sharesAfter = row.shares_owned_after || 0;
-  // Compute pctChange: how much did their position change?
-  const sharesBefore = sharesAfter - shares;
-  const pctChange = sharesBefore > 0 ? (shares / sharesBefore) * 100 : (shares > 0 ? 100 : 0);
-  return {
-    ownerName: row.owner_name,
-    ownerCik: row.owner_cik,
-    isOfficer: !!row.is_officer,
-    isDirector: !!row.is_director,
-    officerTitle: row.officer_title || '',
-    transactionDate: row.transaction_date,
-    filingDate: row.filing_date,
-    accessionNumber: row.accession_number,
-    transactionCode: code,
-    transactionLabel: codeInfo.label,
-    isOpenMarket: !!row.is_open_market,
-    isDerivative: !!row.is_derivative,
-    shares,
-    pricePerShare: row.price_per_share,
-    totalValue: row.total_value,
-    sharesOwnedAfter: sharesAfter,
-    ownershipType: 'D',
-    pctChange,
-    isCluster: false,
-  };
-}
-
 export async function fetchInsiderTransactions(ticker, options = {}) {
   const { yearsBack = 1, onProgress } = options;
-
-  // Try D1 first (single API call vs 20-50 SEC EDGAR XML fetches)
-  if (typeof window !== 'undefined') {
-    try {
-      const res = await fetch(dataUrl(`/insiders/${ticker.toUpperCase()}?years=${yearsBack}`));
-      if (res.ok) {
-        const data = await res.json();
-        if (data.trades && data.trades.length > 0) {
-          const transactions = data.trades.map(mapD1Trade);
-          const monthlyAggregates = aggregateMonthly(transactions);
-          const summary = computeInsiderSummary(transactions);
-          const clusterDates = detectClusters(transactions);
-          for (const txn of transactions) {
-            txn.isCluster = clusterDates.has(txn.transactionDate);
-          }
-          // Signal that more history may be available if loading 1yr
-          const allForm4Filings = yearsBack <= 1
-            ? [...transactions, { stub: true }]
-            : transactions;
-          return { transactions, monthlyAggregates, summary, allForm4Filings };
-        }
-      }
-    } catch { /* fall through to SEC EDGAR */ }
-  }
 
   const cik = await lookupCIK(ticker);
   if (!cik) return { transactions: [], monthlyAggregates: [], summary: null, allForm4Filings: [] };

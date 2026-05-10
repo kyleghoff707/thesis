@@ -4,7 +4,7 @@
 
 import { cacheGetAsync, cacheSet, hydrateFromIDB } from './cache';
 import { getTickerSearchIndex } from './edgar';
-import { edgarBase, secBase, dataUrl } from './apiBase';
+import { edgarBase, secBase } from './apiBase';
 import {
   parseInfoTable as sharedParseInfoTable,
   aggregateShareClasses as sharedAggregateShareClasses,
@@ -575,44 +575,9 @@ export async function fetchGuruWithChanges(guru) {
   return activity;
 }
 
-// Fetch all guru activities from D1 (single API call).
-// Returns activities array or null if D1 is empty/unavailable.
-async function fetchActivitiesFromD1() {
-  try {
-    const res = await fetch(dataUrl('/gurus/all'));
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data.activities || data.activities.length === 0) return null;
-    return data.activities;
-  } catch {
-    return null;
-  }
-}
-
 // Fetch all gurus with change detection
 export async function fetchAllWithChanges(onProgress) {
-  // Try D1 first (single HTTP call vs 200+ SEC EDGAR calls)
-  const d1Activities = await fetchActivitiesFromD1();
-  if (d1Activities && d1Activities.length > 0) {
-    // Resolve tickers (D1 cron doesn't resolve CUSIP → ticker)
-    for (const activity of d1Activities) {
-      if (activity.holdings?.some(h => !h.ticker && h.cusip)) {
-        activity.holdings = await resolveTickersForHoldings(activity.holdings);
-      }
-      // Cache to IndexedDB for offline use / Stock Lookup compat
-      if (activity.guru?.cik) {
-        cacheSet(`guru-activity:${GURU_CACHE_V}:${activity.guru.cik}`, activity, 'guru');
-        cacheSet(`guru:${activity.guru.cik}`, {
-          guru: activity.guru, filing: activity.filing,
-          holdings: activity.holdings, totalValue: activity.totalValue,
-          positionCount: activity.positionCount,
-        }, 'guru');
-      }
-    }
-    return d1Activities;
-  }
-
-  // Fallback: fetch from SEC EDGAR (200+ calls, ~5 min)
+  // SEC EDGAR is the only path. (D1 supplement removed for OSS — see STEPS.md Phase 3.)
   const results = [];
   for (let i = 0; i < GURUS.length; i++) {
     const guru = GURUS[i];

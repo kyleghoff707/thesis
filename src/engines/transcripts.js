@@ -1,10 +1,8 @@
 // Earnings call transcript engine.
-// Production: R2 only (cron-synced server-side). AV keys are dev-only — see config.js.
-// Dev: tries R2, then falls back to direct Alpha Vantage (2-key failover, 50 calls/day).
+// Checks cache, then bundled transcripts (Node), then falls back to direct Alpha Vantage (2-key failover, 50 calls/day).
 // Caches in IndexedDB — transcripts are immutable once published.
 
 import { ALPHA_VANTAGE_KEY, ALPHA_VANTAGE_KEY_2 } from './config.js';
-import { dataUrl } from './apiBase.js';
 
 // Rotate between AV keys to double the daily rate limit (25 calls each)
 const AV_KEYS = [ALPHA_VANTAGE_KEY, ALPHA_VANTAGE_KEY_2].filter(Boolean);
@@ -59,21 +57,6 @@ export async function fetchTranscript(ticker, transcriptEntry) {
       return { found: true, text: local.text, meta: local.meta, fromCache: false, charCount: local.text.length };
     }
   }
-
-  // Try R2 (cron-cached transcripts — free, instant)
-  // Works in browser (relative URL) and Node.js (nodeAdapter resolves /data/ to production API)
-  try {
-    const r2Url = dataUrl(`/transcripts/${ticker.toUpperCase()}/${year}/Q${quarter}`);
-    const r2Res = await fetch(r2Url);
-    if (r2Res.ok) {
-      const r2Data = await r2Res.json();
-      if (r2Data.data?.text) {
-        const result = { text: r2Data.data.text, meta: r2Data.data.meta || { source: 'r2', year, quarterNum: quarter } };
-        cacheSet(cacheKey, result, 'transcript');
-        return { found: true, text: result.text, meta: result.meta, fromCache: false, charCount: result.text.length };
-      }
-    }
-  } catch { /* fall through to Alpha Vantage */ }
 
   // Try Alpha Vantage (try both keys if available)
   let text = null;

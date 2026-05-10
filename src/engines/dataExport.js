@@ -15,7 +15,6 @@ import { computeFreeCashFlow } from './freeCashFlow.js';
 import { computeKeyMetrics } from './keyMetrics.js';
 import { computeThesisScoreV2 } from './thesisScoreV2.js';
 import { findGurusOwning, loadCachedPortfolios, fetchAllGuruHoldings } from './gurus.js';
-import { dataUrl } from './apiBase.js';
 import { fetchInsiderTransactions, computeInsiderSummary } from './insiders.js';
 import { fetchCompensation } from './compensation.js';
 import { fetchPeersByTier } from './peers.js';
@@ -257,34 +256,7 @@ async function safeCall(fn, label, errors, { retry = false, backoffMs = 5000 } =
 // ─── Helper: Fetch gurus holding a ticker ───────────────────────
 
 async function fetchGurusForTicker(ticker) {
-  // Try D1 first in browser context (single targeted query)
-  if (typeof window !== 'undefined') {
-    try {
-      const res = await fetch(dataUrl(`/gurus/ticker/${ticker}`));
-      if (res.ok) {
-        const data = await res.json();
-        if (data.holders && data.holders.length > 0) {
-          return {
-            count: data.holders.length,
-            holdings: data.holders.map(h => ({
-              guru: { name: h.guru_name, cik: h.guru_cik, fund: h.fund_name },
-              positions: [{
-                issuer: h.issuer || ticker,
-                ticker,
-                shares: h.shares,
-                value: h.value_usd,
-                portfolioPct: h.portfolio_pct,
-                action: h.action,
-              }],
-              totalPortfolioValue: null,
-            })),
-          };
-        }
-      }
-    } catch { /* fall through to SEC EDGAR */ }
-  }
-
-  // Fallback: load all portfolios from cache/SEC
+  // Load all portfolios from cache/SEC EDGAR
   let portfolios = await loadCachedPortfolios();
   if (!portfolios || portfolios.filter(Boolean).length === 0) {
     portfolios = await fetchAllGuruHoldings();
@@ -393,5 +365,5 @@ export function buildCaveats(classification) {
   return caveats;
 }
 
-// Test-only exports (matches codebase convention — see companyAdapter.js, edgarFinancials.js)
+// Test-only exports (matches codebase convention — see edgarFinancials.js)
 export const _testExports = { safeCall };

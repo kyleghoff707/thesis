@@ -12,7 +12,7 @@ import {
   PROXY_MAP,
   createDOMParser,
   createNodeFetch,
-  SEC_HEADERS,
+  secHeaders,
   cacheGet,
   cacheSet,
   ensureCacheDir,
@@ -39,11 +39,6 @@ describe('resolveURL', () => {
   it('resolves /api/yahoo/ to https://query1.finance.yahoo.com/', () => {
     expect(resolveURL('/api/yahoo/v8/finance/chart/AAPL'))
       .toBe('https://query1.finance.yahoo.com/v8/finance/chart/AAPL');
-  });
-
-  it('resolves /api/finviz/ to https://finviz.com/', () => {
-    expect(resolveURL('/api/finviz/quote.ashx?t=AAPL'))
-      .toBe('https://finviz.com/quote.ashx?t=AAPL');
   });
 
   it('resolves /api/alpha/ to https://www.alphavantage.co/', () => {
@@ -192,23 +187,21 @@ describe('createNodeFetch', () => {
 // ─── Constants ───────────────────────────────────────────────
 
 describe('constants', () => {
-  it('PROXY_MAP has all 7 routes', () => {
-    expect(Object.keys(PROXY_MAP)).toHaveLength(7);
+  it('PROXY_MAP has all 5 routes', () => {
+    expect(Object.keys(PROXY_MAP)).toHaveLength(5);
     expect(PROXY_MAP['/api/sec/']).toBe('https://www.sec.gov/');
     expect(PROXY_MAP['/api/edgar/']).toBe('https://data.sec.gov/');
     expect(PROXY_MAP['/api/efts/']).toBe('https://efts.sec.gov/');
     expect(PROXY_MAP['/api/yahoo/']).toBe('https://query1.finance.yahoo.com/');
-    expect(PROXY_MAP['/api/finviz/']).toBe('https://finviz.com/');
     expect(PROXY_MAP['/api/alpha/']).toBe('https://www.alphavantage.co/');
-    expect(PROXY_MAP['/data/']).toBe('https://api.thesis-investing.com/data/');
   });
 
-  it('SEC_HEADERS includes User-Agent', () => {
-    expect(SEC_HEADERS['User-Agent']).toBe('Thesis/1.0 (contact@thesis.com)');
+  it('secHeaders() includes User-Agent', () => {
+    expect(secHeaders()['User-Agent']).toMatch(/^Thesis CLI/);
   });
 
-  it('SEC_HEADERS includes Accept', () => {
-    expect(SEC_HEADERS['Accept']).toBe('application/json');
+  it('secHeaders() includes Accept', () => {
+    expect(secHeaders()['Accept']).toBe('application/json');
   });
 });
 
@@ -338,15 +331,6 @@ describe('fetch interception', () => {
       'utf8'
     );
     expect(source).toContain("urlStr.startsWith('/api/yahoo-quotes/')");
-  });
-
-  it('does NOT hit localhost for /api/finviz/ URLs', () => {
-    const source = readFileSync(
-      resolve(__dirname, '..', 'nodeAdapter.js'),
-      'utf8'
-    );
-    expect(source).toContain("urlStr.startsWith('/api/finviz/')");
-    expect(source).toContain("import('./nodeFinviz.js')");
   });
 
   it('intercepts Yahoo v10 quoteSummary URLs (production path)', () => {

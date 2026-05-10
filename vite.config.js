@@ -434,7 +434,7 @@ function irEventsPlugin() {
 }
 
 // Thesis report file server middleware.
-// Serves generated One Pager / Pitch Deck / Final Thesis JSON from .thesis/reports/
+// Serves generated One Pager / Pitch Deck / Final Thesis JSON from ~/thesis/reports/
 // to the browser. Endpoints:
 //   GET /api/thesis/reports                    — list tickers with any report
 //   GET /api/thesis/reports/:ticker/one-pager  — serve one-pager.json
@@ -456,7 +456,8 @@ function thesisReportsPlugin() {
             path = await import('path');
           }
 
-          const reportsDir = path.join(process.cwd(), '.thesis', 'reports');
+          const { reportsDir: thesisReportsDir } = await import('./src/utils/thesisDir.js');
+          const reportsDir = thesisReportsDir();
 
           // Parse URL path: req.url is relative to the middleware mount point
           // e.g. "/" for listing, "/COST/one-pager" for report, "/COST/progress" for progress
@@ -530,7 +531,8 @@ function thesisReportsPlugin() {
             try {
               const { execFile } = await import('child_process');
               const scriptPath = path.join(process.cwd(), 'scripts', 'pdf', script);
-              execFile('python3', [scriptPath, ticker], { cwd: process.cwd(), timeout: 120000 }, (err, stdout, stderr) => {
+              const PYTHON = process.env.THESIS_PYTHON || (process.platform === 'win32' ? 'python' : 'python3');
+              execFile(PYTHON, [scriptPath, ticker], { cwd: process.cwd(), timeout: 120000 }, (err, stdout, stderr) => {
                 if (err) {
                   console.warn(`Export ${format} failed:`, stderr || err.message);
                   res.writeHead(500, { 'Content-Type': 'application/json' });

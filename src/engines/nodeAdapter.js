@@ -14,6 +14,7 @@ import { resolve, join } from 'path';
 import { mkdirSync, readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
 import { parseHTML } from 'linkedom';
 import { DOMParser as XmlDOMParser } from '@xmldom/xmldom';
+import { getUserAgent } from './userAgent.js';
 
 // ─── Load .env.local ─────────────────────────────────────────
 // CRITICAL: Load .env.local specifically, NOT bare `import 'dotenv/config'`.
@@ -61,9 +62,7 @@ export const PROXY_MAP = {
   '/api/edgar/': 'https://data.sec.gov/',
   '/api/efts/': 'https://efts.sec.gov/',
   '/api/yahoo/': 'https://query1.finance.yahoo.com/',
-  '/api/finviz/': 'https://finviz.com/',
   '/api/alpha/': 'https://www.alphavantage.co/',
-  '/data/': 'https://api.thesis-investing.com/data/',
 };
 
 /**
@@ -125,11 +124,17 @@ export function createDOMParser() {
 
 // ─── Fetch wrapper ───────────────────────────────────────────
 
-/** SEC-required headers for EDGAR API requests */
-export const SEC_HEADERS = {
-  'User-Agent': 'Thesis/1.0 (contact@thesis.com)',
-  'Accept': 'application/json',
-};
+/**
+ * SEC-required headers for EDGAR API requests.
+ * Returns a fresh object so callers spreading it pick up any
+ * post-startup userAgent overrides from ~/thesis/config.json.
+ */
+export function secHeaders() {
+  return {
+    'User-Agent': getUserAgent(),
+    'Accept': 'application/json',
+  };
+}
 
 /**
  * Create a fetch wrapper that auto-resolves proxy URLs and adds
@@ -140,7 +145,7 @@ export function createNodeFetch() {
   return async function nodeFetch(url, options = {}) {
     const resolvedURL = resolveURL(url);
     const headers = {
-      'User-Agent': 'Thesis/1.0 (contact@thesis.com)',
+      'User-Agent': getUserAgent(),
       ...options.headers,
     };
     return fetch(resolvedURL, { ...options, headers });
@@ -227,7 +232,7 @@ export function readBundledTranscript(ticker, year, quarter) {
 
 if (IS_NODE) {
   // 1. Global DOMParser via linkedom
-  // Engines (insiders.js, compensation.js, finviz.js, filingMarkdown.js)
+  // Engines (insiders.js, compensation.js, filingMarkdown.js)
   // use `new DOMParser()` directly — inject it globally.
   globalThis.DOMParser = class NodeDOMParser {
     parseFromString(content, type) {
@@ -390,26 +395,6 @@ if (IS_NODE) {
       }
     }
 
-    // Finviz middleware interception
-    if (urlStr.startsWith('/api/finviz/')) {
-      try {
-        const ticker = decodeURIComponent(
-          urlStr.replace('/api/finviz/', '').split('?')[0]
-        );
-        const { finvizData } = await import('./nodeFinviz.js');
-        const data = await finvizData(ticker);
-        return new Response(JSON.stringify(data), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      } catch (e) {
-        return new Response(JSON.stringify({ error: e.message }), {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-    }
-
     // Standard proxy resolution for SEC/EDGAR/Yahoo URLs
     const resolvedURL = resolveURL(urlStr);
     // Headers may be a Headers instance (e.g. from Anthropic SDK) — spread
@@ -418,7 +403,7 @@ if (IS_NODE) {
       ? Object.fromEntries(opts.headers.entries())
       : (opts.headers || {});
     const headers = {
-      'User-Agent': 'Thesis/1.0 (contact@thesis.com)',
+      'User-Agent': getUserAgent(),
       ...incomingHeaders,
     };
     return _origFetch(resolvedURL, { ...opts, headers });

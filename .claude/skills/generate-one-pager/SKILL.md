@@ -15,11 +15,11 @@ The ticker symbol is `$0`. Uppercase it and store as `TICKER`.
 
 If `$0` is empty, print usage `/generate-one-pager TICKER` and stop.
 
-Create `.thesis/reports/{TICKER}/` and clean stale data:
+Create `~/thesis/reports/{TICKER}/` and clean stale cache:
 
 ```bash
-rm -rf .thesis/reports/{TICKER}/sections/
-rm -rf .thesis/reports/{TICKER}/quality/
+rm -rf ~/thesis/cache/{TICKER}/sections/
+rm -rf ~/thesis/cache/{TICKER}/quality/
 ```
 
 ## Step 2: Assemble DataPacket
@@ -112,7 +112,7 @@ Wrap parsed output into the canonical schema:
 
 Map verdict → status: PASS → "pass", FAIL → "fail", WATCHLIST → "review".
 
-Write to `.thesis/reports/{TICKER}/one-pager.json`.
+Write to `~/thesis/reports/{TICKER}/one-pager.json`.
 
 ## Step 6: Generate PDF
 
@@ -126,10 +126,10 @@ If it fails, print warning and continue.
 
 ```bash
 ARCHIVE_ID=$(date +%Y%m%d-%H%M%S)
-mkdir -p .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}
-cp .thesis/reports/{TICKER}/one-pager.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
-cp .thesis/reports/{TICKER}/data-packet.json .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
-cp .thesis/reports/{TICKER}/*.pdf .thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+mkdir -p ~/thesis/reports/{TICKER}/archive/${ARCHIVE_ID}
+cp ~/thesis/reports/{TICKER}/one-pager.json ~/thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp ~/thesis/reports/{TICKER}/data-packet.json ~/thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
+cp ~/thesis/reports/{TICKER}/*.pdf ~/thesis/reports/{TICKER}/archive/${ARCHIVE_ID}/ 2>/dev/null
 ```
 
 ## Step 8: Print Summary

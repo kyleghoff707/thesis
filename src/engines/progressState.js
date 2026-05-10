@@ -1,13 +1,17 @@
 // Generation State Persistence
-// Manages .thesis/reports/{TICKER}/progress.json for crash recovery and progress tracking
-// Used by orchestrator to persist generation state across process restarts
+// Manages ~/thesis/cache/{TICKER}/progress.json for crash recovery and progress tracking
+// Used by orchestrator to persist generation state across process restarts.
+// Pipeline scratch (progress, sections, quality) lives under cache/; final stage outputs
+// (one-pager.json, *.pdf, *.docx, budget.json, generation-status.json for UI) live under reports/.
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
 import { join, dirname } from 'path';
 import { ProgressSchema, createInitialProgress } from '../schemas/progress.js';
+import { thesisHome, reportsDir, cacheDir } from '../utils/thesisDir.js';
 
-const THESIS_DIR = join(process.cwd(), '.thesis');
-const REPORTS_DIR = join(THESIS_DIR, 'reports');
+const THESIS_DIR = thesisHome();
+const REPORTS_DIR = reportsDir();
+const CACHE_DIR = cacheDir();
 
 // Section keys per stage — matches dispatch-table.json sectionKeys
 const SECTION_KEYS = {
@@ -31,14 +35,14 @@ const VALID_TRANSITIONS = {
   COMPLETE: [],
 };
 
-// Returns the path to progress.json for a ticker
+// Returns the path to progress.json for a ticker (cache — pipeline scratch)
 function getProgressPath(ticker) {
-  return join(REPORTS_DIR, ticker.toUpperCase(), 'progress.json');
+  return join(CACHE_DIR, ticker.toUpperCase(), 'progress.json');
 }
 
-// Returns the path to the sections directory for a ticker
+// Returns the path to the sections directory for a ticker (cache — per-section agent outputs)
 function getSectionsDir(ticker) {
-  return join(REPORTS_DIR, ticker.toUpperCase(), 'sections');
+  return join(CACHE_DIR, ticker.toUpperCase(), 'sections');
 }
 
 // Create a new progress object for a ticker + stage, write to disk, return it
@@ -131,7 +135,7 @@ export function deleteProgress(ticker) {
   }
 }
 
-// Save a completed section's output to .thesis/reports/{TICKER}/sections/{sectionKey}.json
+// Save a completed section's output to ~/thesis/cache/{TICKER}/sections/{sectionKey}.json
 export function saveSectionOutput(ticker, sectionKey, sectionData) {
   const sectionsDir = getSectionsDir(ticker);
   mkdirSync(sectionsDir, { recursive: true });
@@ -155,9 +159,9 @@ export function readSectionOutput(ticker, sectionKey) {
   }
 }
 
-// Returns the path to the quality directory for a ticker
+// Returns the path to the quality directory for a ticker (cache — quality scores are scratch)
 function getQualityDir(ticker) {
-  return join(REPORTS_DIR, ticker.toUpperCase(), 'quality');
+  return join(CACHE_DIR, ticker.toUpperCase(), 'quality');
 }
 
 // Returns the path to the reports directory for a ticker
@@ -165,7 +169,7 @@ function getTickerDir(ticker) {
   return join(REPORTS_DIR, ticker.toUpperCase());
 }
 
-// Save a quality report to .thesis/reports/{TICKER}/quality/one-pager.quality.json
+// Save a quality report to ~/thesis/cache/{TICKER}/quality/one-pager.quality.json
 export function saveQualityReport(ticker, qualityData) {
   const qualityDir = getQualityDir(ticker);
   mkdirSync(qualityDir, { recursive: true });
@@ -173,7 +177,7 @@ export function saveQualityReport(ticker, qualityData) {
   writeFileSync(filePath, JSON.stringify(qualityData, null, 2));
 }
 
-// Save a budget report to .thesis/reports/{TICKER}/budget.json
+// Save a budget report to ~/thesis/reports/{TICKER}/budget.json
 export function saveBudgetReport(ticker, budgetData) {
   const tickerDir = getTickerDir(ticker);
   mkdirSync(tickerDir, { recursive: true });
