@@ -992,10 +992,10 @@ const METHODOLOGY_CHECKS = {
       test: (s) => /integrit|promis|follow.?through|deliver|credib|trustworth|transparen|accountab/i.test(s.narrative || ''),
     },
     {
-      id: 'mgmt-bag',
-      label: 'B.A.G. (Big Audacious Goal) or strategic vision',
+      id: 'mgmt-strategic-vision',
+      label: 'Long-term strategic vision',
       critical: false,
-      test: (s) => /B\.?A\.?G\.?|big\s*audacious|strategic\s*vision|long.?term\s*(goal|vision|plan|strateg)/i.test(s.narrative || ''),
+      test: (s) => /strategic\s*vision|long.?term\s*(goal|vision|plan|strateg)/i.test(s.narrative || ''),
     },
   ],
 

@@ -779,7 +779,7 @@ describe('Methodology Scoring', () => {
 
   describe('Management (management)', () => {
     it('should check for CEO evaluation and insider ownership', () => {
-      const narrative = 'CEO Jack Sinclair has transformed the company since 2019 with a clear strategic vision. Insider ownership shows management has skin in the game with significant share purchases. The capital allocation strategy focuses on share buybacks and store expansion. Management integrity is demonstrated by delivering on their Big Audacious Goal of 10% operating margins.';
+      const narrative = 'CEO Jack Sinclair has transformed the company since 2019 with a clear strategic vision. Insider ownership shows management has skin in the game with significant share purchases. The capital allocation strategy focuses on share buybacks and store expansion. Management integrity is demonstrated by delivering on their long-term strategic vision of 10% operating margins.';
       const section = makeMethodSection('management', 6, narrative);
       const result = scoreMethodology(section);
       expect(result.score).toBeGreaterThanOrEqual(60);

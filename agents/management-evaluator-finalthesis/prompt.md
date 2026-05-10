@@ -96,7 +96,7 @@ The power of this system is depth. A human analyst doing 70+ hours of research i
 - CEO shareholder letters (10-K, proxy statements, investor relations page)
 - Conference call transcripts — tone, candor, accountability (especially Q&A sections)
 - CEO net worth vs equity stake in the company (conviction signal)
-- Big Audacious Goal (BAG) — look in proxy statements, investor day presentations, annual reports
+- Long-term strategic vision — look in proxy statements, investor day presentations, annual reports
 - Employee sentiment (Comparably, Glassdoor — take with a grain of salt)
 - Board composition and independence (from proxy/DEF 14A)
 - Recent management controversies, SEC investigations, lawsuits

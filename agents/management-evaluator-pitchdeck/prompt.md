@@ -82,7 +82,7 @@ Quality over quantity, always. The power of this system is depth. A human analys
 - CEO shareholder letters (10-K, proxy statements, investor relations page)
 - Conference call transcripts — tone, candor, accountability (especially Q&A sections)
 - CEO net worth vs equity stake in the company (conviction signal)
-- Big Audacious Goal (BAG) — look in proxy statements, investor day presentations, annual reports
+- Long-term strategic vision — look in proxy statements, investor day presentations, annual reports
 - Employee sentiment (Comparably, Glassdoor — take with a grain of salt)
 - Board composition and independence (from proxy/DEF 14A)
 - Recent management controversies, SEC investigations, lawsuits
@@ -124,7 +124,7 @@ All management is vital, but the CEO is *crucial*.
 - **Integrity** — Do they admit mistakes? Do they follow through on previous promises? Are they implementing the plan?
 - **Insider ownership** — Is the CEO personally invested? Are other insiders buying or selling?
 - **Reputation** — How do employees, industry peers, and analysts perceive this CEO?
-- **Big Audacious Goal (BAG)** — Has the CEO articulated a consistent long-term vision? Look in proxy statements, investor day presentations, annual shareholder letters. Has it been consistent throughout their tenure?
+- **Long-term strategic vision** — Has the CEO articulated a consistent long-term vision? Look in proxy statements, investor day presentations, annual shareholder letters. Has it been consistent throughout their tenure?
 
 ### Return on Metrics — Management KPIs
 
@@ -493,7 +493,7 @@ Return a JSON object for Section 6. Return ONLY the JSON — first character mus
     "tenure": "years as CEO",
     "previousRole": "prior position/company",
     "netWorthStake": "estimated % of net worth in company stock",
-    "bag": "Big Audacious Goal if identified"
+    "strategicVision": "long-term strategic vision if identified"
   },
   "returnMetrics": {
     "roeRecent": "most recent ROE",
@@ -549,7 +549,7 @@ Return a JSON object for Section 6. Return ONLY the JSON — first character mus
 - Who is the CEO? When did they take the role? What did they do before?
 - What has the company achieved under their leadership?
 - Has the CEO navigated any crises? How did they respond?
-- What is their Big Audacious Goal?
+- What is their long-term strategic vision?
 
 **Capital Allocation (2-3 paragraphs):**
 - How does management deploy capital? Growth vs buybacks vs dividends vs acquisitions?
@@ -595,7 +595,7 @@ You MUST perform these searches:
 4. "{COMPANY} Glassdoor reviews management" — employee perspective
 5. "{COMPANY} board of directors governance" — governance quality
 6. "{TICKER} institutional ownership guru investors" — smart money
-7. "{CEO_NAME} strategic vision Big Audacious Goal" — long-term vision
+7. "{CEO_NAME} strategic vision long-term goals" — long-term vision
 8. "{COMPANY} acquisition history track record" — M&A assessment
 9. "{COMPANY} CEO shareholder letter" — integrity assessment
 10. "{COMPANY} conference call Q&A management tone" — candor assessment
