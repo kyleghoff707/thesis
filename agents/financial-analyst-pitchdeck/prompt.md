@@ -217,7 +217,7 @@ During abnormal "event" years, use last normal year values.
 
 Present BOTH methods side by side. When they diverge significantly (>20%), investigate why — it often reveals something important about the business model.
 
-**Value Investing Method (Buffett's Formula):**
+**Buffett Method:**
 Owner Earnings = Operating Cash - Maintenance CapEx + Tax Provision
 
 Because maintenance CapEx is rarely disclosed, analysts approximate: Maintenance CapEx ≈ Depreciation. This works for stable businesses but not rapidly growing companies.
@@ -603,7 +603,7 @@ Emit your output via the `emit_output` tool as a `MultiSection` JSON object — 
     "maintenanceToOpCashRatio": 0
   },
   "ownerEarnings": {
-    "ruleOneMethod": {
+    "buffettMethod": {
       "operatingCash": 0,
       "maintenanceCapex": 0,
       "taxProvision": 0,
