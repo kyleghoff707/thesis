@@ -3,6 +3,17 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "description": "Open-source AI value investing research — local CLI pipeline producing One Pager, Pitch Deck, and Final Thesis reports via Claude Code.",
+  "author": "Kyle Hoff <kyle@thesis-investing.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/kyleghoff707/thesis",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kyleghoff707/thesis.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kyleghoff707/thesis/issues"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/verify-bundle.mjs",
