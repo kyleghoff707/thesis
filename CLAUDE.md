@@ -1,7 +1,7 @@
 # Thesis
 
 ## Project
-**Thesis** — open-source AI value investing research. Distributed as a free CLI; users plug in their own Claude Code subscription and run `/analyze TICKER` to get PDFs/DOCX in `~/.thesis/reports/`. Optional connected mode pushes reports to an account at thesis-investing.com.
+**Thesis** — open-source AI value investing research. Distributed as a free CLI; users plug in their own Claude Code subscription and run `/analyze TICKER` to get PDFs/DOCX in `~/thesis/reports/`. The CLI runs locally and contacts SEC EDGAR, Yahoo Finance, and Anthropic. Optional connected mode (Phase 4, future) will push reports to thesis-investing.com — that's not yet wired in this repo.
 
 The user is NOT a programmer — keep explanations in plain English.
 
@@ -24,7 +24,7 @@ The user is NOT a programmer — keep explanations in plain English.
 - `agents/` = production agent prompts; `.claude/skills/generate-*` = orchestration
 - SEC EDGAR + Yahoo Finance + Finviz for free data; Alpha Vantage optional (user-supplied key)
 - Reports: Python PDF/DOCX generators in `scripts/pdf/`
-- Optional Cloudflare Workers + D1 + R2 backend in `api/` for connected-mode account sync
+- Optional connected-mode backend (account sync) is maintained outside this repo
 
 ---
 
@@ -44,7 +44,6 @@ Each stage gates the next: user must approve the prior verdict before unlocking 
 ```
 agents/         — Agent prompts (production path)
 .claude/skills/    — generate-one-pager, generate-pitch-deck, generate-final-thesis, analyze
-api/               — Cloudflare Worker (optional connected-mode backend)
 scripts/           — CLI runners + PDF/DOCX toolkit
 src/
   components/      — React UI
@@ -64,7 +63,6 @@ STEPS.md           — Migration plan (private; gitignored before public release
 | `npm run dev` | Vite dev server |
 | `npm run build` | Production build |
 | `npm test` | Vitest |
-| `cd api && npx wrangler dev` | Worker locally (only if working on connected-mode backend) |
 
 ---
 

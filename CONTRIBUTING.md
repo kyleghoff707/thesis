@@ -25,6 +25,10 @@ The files under `agents/` are AI agent system prompts. They are dense, domain-sp
 
 This policy may relax over time as the project matures and prompt-quality tooling improves.
 
+## Worker source (`api/`)
+
+The Cloudflare Worker that powers the optional thesis-investing.com website is **not part of this repo**. It's maintained separately by the author. PRs to add or modify a Worker won't be accepted; if you need server functionality, propose it as an issue first.
+
 ## Code style
 
 - 2-space indentation, single quotes, semicolons, trailing commas.

@@ -144,15 +144,29 @@ All five pods are now resolved (4 original + Pitch Deck sibling). W2 (semantic U
 
 Current pipeline assumes Cloudflare D1 + R2 + Worker proxy + invite auth. Repo users have none of that.
 
-- [ ] Audit every engine for D1/R2 dependency. Confirm direct-fetch fallbacks (most already exist).
+- [x] (closed by docs/specs/2026-05-10-phase-3-portability.md) Audit every engine for D1/R2 dependency. Confirm direct-fetch fallbacks (most already exist).
 - [x] **Transcripts strategy — resolved 2026-05-10: ship the R2 mirror in-repo at `./transcripts/`.** ~1,677 markdown files, ~72 MB, 492/500 S&P companies covered. CLI users get transcripts with zero setup; no Alpha Vantage key needed. R2 + cron stay alive (powers the website + serves as the upstream source). Monthly refresh: `npm run dump:transcripts` → review diff → commit. Engine reads from local files first via `__nodeTranscriptRead` shim ([src/engines/nodeAdapter.js](src/engines/nodeAdapter.js)), falls through to R2 then Alpha Vantage. Switch to GitHub Releases tarball (Option C from the brainstorm) when user count justifies cleaning up history bloat.
-- [ ] **Cross-platform paths** — `~/.thesis/reports/{TICKER}/` via `os.homedir()`. Never hardcode `/Users/...`.
-- [ ] **Filename safety** — tickers like `BRK.B`, `RDS-A`. Sanitize for Windows (no dots/colons in directory names).
-- [ ] **Compensation scraper fate** (1,693 LOC, 94.8% accuracy on DEF 14A) — keep, simplify to top 3 fields only, or drop. Public exposure = user complaints when SEC formats change.
-- [ ] **Industry taxonomy refresh** — JSON is 8 weeks stale. Ship snapshot with "last updated" note, OR expose a public read-only endpoint that CLI hits on first run.
-- [ ] **Test on Mac, Windows, Linux**. Document Node version, Python version, Claude Code subscription tier required.
+- [x] **Cross-platform paths** — Migrated to `~/thesis/` via `src/utils/thesisDir.js`.
+- [x] **Filename safety** — `safeTickerDir.js` + `safe_ticker.py` sanitize tickers like `BRK.B`, `RDS-A` for cross-OS dir naming.
+- [x] **Compensation scraper fate** — Kept as-is.
+- [x] **Industry taxonomy refresh** — Bundled in-repo snapshot, refreshed monthly via PR.
+- [x] **Test on Mac, Windows, Linux** — Mac + Linux verified pre-ship; Windows additive (post-ship).
 - [ ] **Codex compatibility** — defer to Phase 7 unless trivial. Agent prompts are portable; orchestration mechanism is CC-specific.
-- [ ] **Privacy notice** — be explicit about what data leaves the user's machine: SEC fetches, Anthropic LLM calls, optional account sync.
+- [x] **Privacy notice** — `docs/privacy.md` + README + per-report banner.
+
+### Phase 3 closeout (2026-05-10)
+
+All Phase 3 items shipped. Spec: [docs/specs/2026-05-10-phase-3-portability.md](docs/specs/2026-05-10-phase-3-portability.md). Plan: [docs/plans/2026-05-10-phase-3-portability-plan.md](docs/plans/2026-05-10-phase-3-portability-plan.md).
+
+Changes:
+- `~/thesis/{reports,cache,config.json}` is the home folder layout (visible).
+- D1/R2/Worker calls stripped from local engines; CLI hits only SEC, Yahoo, Anthropic, and (optional) Alpha Vantage.
+- `api/` Worker source moved out of public repo (gitignored, on-disk only).
+- nodeFinviz, dormant Layer 2/3, and personal email removed.
+- Cross-platform safety helpers (ticker sanitizer, .gitattributes, Python invocation).
+- README rewritten; privacy notice in docs/privacy.md.
+
+Mac + Linux verified end-to-end. Windows verification additive — runs when the author's Windows machine is back.
 
 ---
 
@@ -236,9 +250,9 @@ Phase 5 (polish) ║ Phase 6 (GitHub readiness)   ← PARALLEL
 3. ~~Trademark on chosen name (Phase 0)~~ — **resolved: Thesis, no investing-space conflicts found**
 4. ~~Existing user migration plan (Phase 0)~~ — **resolved: fresh start, no users to migrate**
 5. ~~Observatory ship-or-not (Phase 1)~~ — **resolved: dropped entirely; scrubbed from operational repo**
-6. Alpha Vantage strategy (Phase 3)
-7. Compensation scraper fate (Phase 3)
-8. Industry taxonomy refresh strategy (Phase 3)
+6. ~~Alpha Vantage strategy~~ — resolved: optional fallback for missing transcripts. README documents.
+7. ~~Compensation scraper fate~~ — resolved: keep as-is.
+8. ~~Industry taxonomy refresh strategy~~ — resolved: bundled snapshot, refreshed monthly via PR.
 9. Account signup model (Phase 4)
 10. Telemetry (Phase 6)
 
