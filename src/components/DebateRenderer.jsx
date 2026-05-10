@@ -688,6 +688,47 @@ export default function DebateRenderer({ section, sectionId, debate, onCitationC
       {/* 7. Red Flags */}
       <RedFlagCallout flags={section.redFlags} />
 
+      {/* 7b. What we're monitoring — Bear inversions converted into trackable watchpoints.
+            Renders nothing if data.watchpoints is absent (graceful for legacy reports). */}
+      {Array.isArray(section?.data?.watchpoints) && section.data.watchpoints.length > 0 && (
+        <div style={{
+          marginTop: 16,
+          padding: '12px 16px',
+          border: '1px solid ' + C.border,
+          borderLeft: '4px solid ' + C.yellow,
+          borderRadius: '0 6px 6px 0',
+          background: C.bgHover,
+        }}>
+          <div style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: C.textMuted,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            marginBottom: 8,
+          }}>
+            What we're monitoring
+          </div>
+          <ul style={{ margin: 0, paddingLeft: 20 }}>
+            {section.data.watchpoints.map((wp, i) => {
+              const directionVerb = wp.direction === 'below' ? 'drops below' : 'rises above';
+              return (
+                <li key={i} style={{ fontSize: 13, color: C.text, marginBottom: 6, lineHeight: 1.5 }}>
+                  <strong>{wp.metric}.</strong>
+                  {wp.currentValue != null && <> Currently {wp.currentValue}.</>}
+                  {wp.threshold != null && <> Re-evaluate if {directionVerb} {wp.threshold}.</>}
+                  {wp.sourceInversionId !== undefined && wp.sourceInversionId !== null && (
+                    <span style={{ color: C.textMuted, fontSize: 12 }}>
+                      {' '}Source: Bear inversion #{wp.sourceInversionId}.
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       {/* 8. Citations */}
       {hasCitations && (
         <div style={{

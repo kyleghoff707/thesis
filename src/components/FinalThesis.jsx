@@ -7,7 +7,6 @@ import ConfirmGenerateDialog from './ConfirmGenerateDialog';
 import { useScrollSpy } from '../hooks/useScrollSpy';
 import { generateDeepDive } from '../engines/deepDive';
 import SectionRenderer from './SectionRenderer';
-import ChecklistRenderer from './ChecklistRenderer.jsx';
 import DebateRenderer from './DebateRenderer.jsx';
 import PromiseTracker from './PromiseTracker.jsx';
 import DeepDivePanel from './pitchDeck/DeepDivePanel.jsx';
@@ -20,61 +19,85 @@ import { formatTitle, formatRelativeTime, verdictDotColor } from './reportHelper
 import Spinner from './Spinner';
 import PsrSummaryCard from './PsrSummaryCard';
 
-// Map AI-produced key variants to canonical keys (mirrors KEY_NORMALIZATION in run-final-thesis.js)
+// Map AI-produced key variants to canonical keys.
+// Forwards both new agent variants AND legacy archived-report keys (the old
+// canonical names like meaning_checklist) to the new canonical keys, so old
+// final-thesis.json files continue to render under the new section structure.
 const KEY_ALIASES = {
-  // Section 1: Event Analysis
+  // Section 1: Event Analysis (key unchanged)
   event: 'event_analysis',
   eventAnalysis: 'event_analysis',
   'event-analysis': 'event_analysis',
   event_context: 'event_analysis',
   event_analysis_section: 'event_analysis',
 
-  // Section 2: Meaning Checklist
-  meaning: 'meaning_checklist',
-  meaningChecklist: 'meaning_checklist',
-  'meaning-checklist': 'meaning_checklist',
-  meaning_check: 'meaning_checklist',
-  meaning_analysis: 'meaning_checklist',
+  // Section 2: Business Analysis (was meaning_checklist)
+  meaning: 'business_analysis',
+  meaning_checklist: 'business_analysis',
+  meaningChecklist: 'business_analysis',
+  'meaning-checklist': 'business_analysis',
+  meaning_check: 'business_analysis',
+  meaning_analysis: 'business_analysis',
+  business: 'business_analysis',
+  businessAnalysis: 'business_analysis',
+  'business-analysis': 'business_analysis',
 
-  // Section 3: Moat Checklist
-  moat: 'moat_checklist',
-  moatChecklist: 'moat_checklist',
-  'moat-checklist': 'moat_checklist',
-  moat_check: 'moat_checklist',
-  moat_analysis: 'moat_checklist',
+  // Section 3: Moat Analysis (was moat_checklist)
+  moat: 'moat_analysis',
+  moat_checklist: 'moat_analysis',
+  moatChecklist: 'moat_analysis',
+  'moat-checklist': 'moat_analysis',
+  moat_check: 'moat_analysis',
+  moatAnalysis: 'moat_analysis',
+  'moat-analysis': 'moat_analysis',
 
-  // Section 4: Management Checklist
-  management: 'management_checklist',
-  managementChecklist: 'management_checklist',
-  'management-checklist': 'management_checklist',
-  management_check: 'management_checklist',
-  management_evaluation: 'management_checklist',
+  // Section 4: Management Analysis (was management_checklist)
+  management: 'management_analysis',
+  management_checklist: 'management_analysis',
+  managementChecklist: 'management_analysis',
+  'management-checklist': 'management_analysis',
+  management_check: 'management_analysis',
+  management_evaluation: 'management_analysis',
+  managementAnalysis: 'management_analysis',
+  'management-analysis': 'management_analysis',
 
-  // Section 5: Valuation Confirmation
-  valuation: 'valuation_confirmation',
-  valuationConfirmation: 'valuation_confirmation',
-  'valuation-confirmation': 'valuation_confirmation',
-  valuation_confirm: 'valuation_confirmation',
-  valuation_analysis: 'valuation_confirmation',
-  valuation_summary: 'valuation_confirmation',
+  // Section 5: Valuation Analysis (was valuation_confirmation)
+  valuation: 'valuation_analysis',
+  valuation_confirmation: 'valuation_analysis',
+  valuationConfirmation: 'valuation_analysis',
+  'valuation-confirmation': 'valuation_analysis',
+  valuation_confirm: 'valuation_analysis',
+  valuationAnalysis: 'valuation_analysis',
+  'valuation-analysis': 'valuation_analysis',
+  valuation_summary: 'valuation_analysis',
 
-  // Section 6: Inversion & Rebuttal
-  inversion: 'inversion_rebuttal',
-  rebuttal: 'inversion_rebuttal',
-  inversionRebuttal: 'inversion_rebuttal',
-  'inversion-rebuttal': 'inversion_rebuttal',
-  inversion_and_rebuttal: 'inversion_rebuttal',
-  debate: 'inversion_rebuttal',
+  // Section 6: The Debate (was inversion_rebuttal)
+  inversion: 'debate',
+  rebuttal: 'debate',
+  inversion_rebuttal: 'debate',
+  inversionRebuttal: 'debate',
+  'inversion-rebuttal': 'debate',
+  inversion_and_rebuttal: 'debate',
+  the_debate: 'debate',
+  theDebate: 'debate',
+  'the-debate': 'debate',
+
+  // Section 7: Trade Plan (new section — only canonical-key variants, no legacy)
+  tradePlan: 'trade_plan',
+  'trade-plan': 'trade_plan',
 };
 
-// --- Section definitions for the Final Thesis (7 sections: 6 original + Promise Tracker) ---
-const SECTION_DEFS = [
+// --- Section definitions for the Final Thesis ---
+// 7 canonical renderable sections (Event/Business/Moat/Management/Valuation/Debate/TradePlan)
+// + 1 'promise_tracker' pseudo-row that renders standalone (pulls promises[] from §4).
+export const SECTION_DEFS = [
   { key: 'event_analysis', label: 'Event Analysis', phase: 1 },
-  { key: 'meaning_checklist', label: 'Meaning Checklist', phase: 1 },
-  { key: 'moat_checklist', label: 'Moat Checklist', phase: 1 },
-  { key: 'management_checklist', label: 'Management Checklist', phase: 1 },
-  { key: 'valuation_confirmation', label: 'Valuation Confirmation', phase: 1 },
-  { key: 'inversion_rebuttal', label: 'Inversion & Rebuttal', phase: 2 },
+  { key: 'business_analysis', label: 'Business Analysis', phase: 1 },
+  { key: 'moat_analysis', label: 'Moat Analysis', phase: 1 },
+  { key: 'management_analysis', label: 'Management Analysis', phase: 1 },
+  { key: 'valuation_analysis', label: 'Valuation Analysis', phase: 1 },
+  { key: 'debate', label: 'The Debate', phase: 2 },
+  { key: 'trade_plan', label: 'Trade Plan', phase: 2 },
   { key: 'promise_tracker', label: 'Management Promise Tracker', phase: null },
 ];
 
@@ -110,11 +133,12 @@ function fmtElapsed(ms) {
 // Compute phase statuses from section completion + progress state
 // Returns ['complete'|'active'|'pending', 'complete'|'active'|'pending']
 function getPhaseStatuses(sectionMap, progressState) {
-  const phase1Keys = ['event_analysis', 'meaning_checklist', 'moat_checklist', 'management_checklist', 'valuation_confirmation'];
+  const phase1Keys = ['event_analysis', 'business_analysis', 'moat_analysis', 'management_analysis', 'valuation_analysis'];
   const phase1Done = phase1Keys.every(k => sectionMap[k]);
   const phase1Any = phase1Keys.some(k => sectionMap[k]);
 
-  const phase2Done = !!sectionMap['inversion_rebuttal'];
+  // Phase 2 = debate + trade_plan; consider it done when both are present.
+  const phase2Done = !!sectionMap['debate'] && !!sectionMap['trade_plan'];
 
   let p1 = 'pending', p2 = 'pending';
 
@@ -174,10 +198,215 @@ function QualityBadge({ mechanical, methodology }) {
   );
 }
 
+// --- Helper: Title-case a camelCase or snake_case verdict-field key ---
+function formatVerdictLabel(key) {
+  return String(key)
+    .replace(/_/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/^./, (s) => s.toUpperCase())
+    .trim();
+}
+
+// --- VerdictBox: small structured summary that closes prose sections (§§1-5).
+// Reads from section.data.verdict; renders nothing if missing — graceful
+// fallback for legacy reports generated before the prose-with-verdict-box rewrite.
+function VerdictBox({ section }) {
+  const verdict = section?.data?.verdict;
+  if (!verdict || typeof verdict !== 'object') return null;
+
+  const overall = verdict.overall;
+  const verdictColor =
+    overall === 'PASS' ? C.green
+    : overall === 'WATCHLIST' ? C.yellow
+    : overall === 'FAIL' ? C.red
+    : C.textMuted;
+
+  const labelText = section?.title ? `${section.title} verdict` : 'Verdict';
+
+  return (
+    <div style={{
+      marginTop: 12,
+      padding: '12px 16px',
+      border: '1px solid ' + verdictColor,
+      borderLeft: '4px solid ' + verdictColor,
+      borderRadius: 6,
+      background: C.bgHover,
+    }}>
+      <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6, color: verdictColor, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        {labelText}
+      </div>
+      {Object.entries(verdict).map(([k, value]) => {
+        if (k === 'overall') return null;
+        return (
+          <div key={k} style={{ fontSize: 13, color: C.text, marginBottom: 4, lineHeight: 1.5 }}>
+            <strong style={{ color: C.textSecondary }}>{formatVerdictLabel(k)}:</strong> {String(value)}
+          </div>
+        );
+      })}
+      {overall && (
+        <div style={{ fontSize: 13, marginTop: 8, fontWeight: 700, color: C.text }}>
+          Verdict: <span style={{ color: verdictColor }}>{overall}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- TradePlanRenderer: §7 Trade Plan.
+// Expected section.data shape:
+//   { positionSizing, tranches[], sellRules[], pacePlan, forcingQuestion }
+// Falls back to plain narrative render if structured data is missing.
+function TradePlanRenderer({ section, sectionId, onCitationClick }) {
+  if (!section) return null;
+  const data = section.data || {};
+  const hasStructured =
+    data.positionSizing
+    || (Array.isArray(data.tranches) && data.tranches.length > 0)
+    || (Array.isArray(data.sellRules) && data.sellRules.length > 0)
+    || data.pacePlan
+    || data.forcingQuestion;
+
+  return (
+    <div>
+      <SectionRenderer
+        section={section}
+        sectionId={sectionId}
+        onCitationClick={onCitationClick}
+      />
+      {hasStructured && (
+        <div style={{
+          border: '1px solid ' + C.border,
+          borderRadius: 8,
+          padding: '16px 20px',
+          marginTop: -12,
+          marginBottom: 20,
+          background: C.bgCard,
+        }}>
+          {data.positionSizing && (
+            <div style={{ marginBottom: 16 }}>
+              <h4 style={{ fontSize: 13, fontWeight: 700, color: C.text, margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Position Sizing
+              </h4>
+              <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6 }}>{data.positionSizing}</div>
+            </div>
+          )}
+
+          {Array.isArray(data.tranches) && data.tranches.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <h4 style={{ fontSize: 13, fontWeight: 700, color: C.text, margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Entry Tranches
+              </h4>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: C.badge }}>
+                    <th style={{ padding: '6px 8px', textAlign: 'left', color: C.badgeText, fontWeight: 700 }}>Tranche</th>
+                    <th style={{ padding: '6px 8px', textAlign: 'left', color: C.badgeText, fontWeight: 700 }}>Size</th>
+                    <th style={{ padding: '6px 8px', textAlign: 'left', color: C.badgeText, fontWeight: 700 }}>Trigger Price</th>
+                    <th style={{ padding: '6px 8px', textAlign: 'left', color: C.badgeText, fontWeight: 700 }}>Rationale</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.tranches.map((t, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid ' + C.borderLight }}>
+                      <td style={{ padding: '6px 8px', color: C.text }}>{t.tranche}</td>
+                      <td style={{ padding: '6px 8px', color: C.text }}>{t.size}</td>
+                      <td style={{ padding: '6px 8px', color: C.text }}>{t.triggerPrice}</td>
+                      <td style={{ padding: '6px 8px', color: C.textSecondary }}>{t.rationale}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {Array.isArray(data.sellRules) && data.sellRules.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <h4 style={{ fontSize: 13, fontWeight: 700, color: C.text, margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Sell Rules
+              </h4>
+              <ul style={{ margin: 0, paddingLeft: 20 }}>
+                {data.sellRules.map((r, i) => (
+                  <li key={i} style={{ fontSize: 13, color: C.text, marginBottom: 4, lineHeight: 1.5 }}>
+                    <strong style={{ color: C.textSecondary }}>{r.trigger}:</strong> {r.action}
+                    {r.threshold && (
+                      <span style={{ color: C.textMuted }}> (threshold: {r.threshold})</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {data.pacePlan && (
+            <div style={{ marginBottom: 16 }}>
+              <h4 style={{ fontSize: 13, fontWeight: 700, color: C.text, margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                PACE Plan
+              </h4>
+              <ul style={{ margin: 0, paddingLeft: 20 }}>
+                {data.pacePlan.primary && <li style={{ fontSize: 13, color: C.text, marginBottom: 4, lineHeight: 1.5 }}><strong style={{ color: C.textSecondary }}>Primary:</strong> {data.pacePlan.primary}</li>}
+                {data.pacePlan.alternative && <li style={{ fontSize: 13, color: C.text, marginBottom: 4, lineHeight: 1.5 }}><strong style={{ color: C.textSecondary }}>Alternative:</strong> {data.pacePlan.alternative}</li>}
+                {data.pacePlan.contingency && <li style={{ fontSize: 13, color: C.text, marginBottom: 4, lineHeight: 1.5 }}><strong style={{ color: C.textSecondary }}>Contingency:</strong> {data.pacePlan.contingency}</li>}
+                {data.pacePlan.emergency && <li style={{ fontSize: 13, color: C.text, marginBottom: 4, lineHeight: 1.5 }}><strong style={{ color: C.textSecondary }}>Emergency:</strong> {data.pacePlan.emergency}</li>}
+              </ul>
+            </div>
+          )}
+
+          {data.forcingQuestion && (
+            <div style={{
+              marginTop: 8,
+              padding: '12px 16px',
+              background: C.accentLight,
+              borderLeft: '4px solid ' + C.accent,
+              borderRadius: '0 6px 6px 0',
+              fontStyle: 'italic',
+              fontSize: 13,
+              color: C.text,
+              lineHeight: 1.6,
+            }}>
+              {data.forcingQuestion}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- PromiseTrackerRenderer: promoted standalone visual for §4's Promise Tracker.
+// Pulls promises[] from the management_analysis section's data.
+// Wraps the existing PromiseTracker visual component.
+function PromiseTrackerRenderer({ section, report, sectionId }) {
+  const managementSection = report?.sections?.find(
+    (s) => s.key === 'management_analysis' || s.key === 'management_checklist'
+  );
+  const promises =
+    managementSection?.data?.promises
+    || section?.data?.promises
+    || report?.promises
+    || [];
+
+  if (!promises.length) {
+    return (
+      <div id={sectionId} style={{
+        border: '1px solid ' + C.border,
+        borderRadius: 8,
+        padding: '16px 20px',
+        marginBottom: 20,
+        background: C.bgCard,
+        scrollMarginTop: 160,
+      }}>
+        <div style={{ fontSize: 13, fontStyle: 'italic', color: C.textMuted }}>
+          No trackable management promises identified for this period.
+        </div>
+      </div>
+    );
+  }
+
+  return <PromiseTracker promises={promises} sectionId={sectionId} />;
+}
+
 // --- Main component ---
 export default function FinalThesis({ getReport, updateReport }) {
-  const CHECKLIST_KEYS = new Set(['meaning_checklist', 'moat_checklist', 'management_checklist']);
-
   const { id } = useParams();
   const report = getReport ? getReport(id) : null;
   const ticker = report?.ticker;
@@ -230,11 +459,12 @@ export default function FinalThesis({ getReport, updateReport }) {
   }, [generationStatus, progress]);
 
   // Phase-based progress: Phase 1 = 0-50%, Phase 2 = 50-100%
-  const phase1Keys = ['event_analysis', 'meaning_checklist', 'moat_checklist', 'management_checklist', 'valuation_confirmation'];
+  const phase1Keys = ['event_analysis', 'business_analysis', 'moat_analysis', 'management_analysis', 'valuation_analysis'];
   const phase1Complete = phase1Keys.filter(k => sectionProgress[k] === 'complete').length;
-  const phase2Complete = sectionProgress['inversion_rebuttal'] === 'complete' ? 1 : 0;
+  const phase2Keys = ['debate', 'trade_plan'];
+  const phase2Complete = phase2Keys.filter(k => sectionProgress[k] === 'complete').length;
   const progressPct = isGenerating
-    ? Math.round((phase1Complete / phase1Keys.length) * 50 + phase2Complete * 50)
+    ? Math.round((phase1Complete / phase1Keys.length) * 50 + (phase2Complete / phase2Keys.length) * 50)
     : 0;
 
   const sectionIds = useMemo(() => SECTION_DEFS.map(d => d.key), []);
@@ -832,12 +1062,9 @@ export default function FinalThesis({ getReport, updateReport }) {
             const section = sectionMap[def.key];
             const qs = qualityMap[def.key];
 
-            // Promise Tracker — promises live in management_checklist section.data.promises
+            // Promise Tracker — promoted standalone visual; data lives in §4.
             if (def.key === 'promise_tracker') {
-              const promises = finalThesisData?.sections?.find(s => s.key === 'management_checklist')?.data?.promises
-                || finalThesisData?.promises
-                || [];
-              if (!promises.length && !finalThesisData) return null;
+              if (!finalThesisData) return null;
               return (
                 <div key={def.key} id={'section-' + def.key}>
                   {qs && (
@@ -845,7 +1072,11 @@ export default function FinalThesis({ getReport, updateReport }) {
                       <QualityBadge mechanical={qs.score} methodology={qs.methodology?.score} />
                     </div>
                   )}
-                  <PromiseTracker promises={promises} sectionId={'section-' + def.key} />
+                  <PromiseTrackerRenderer
+                    section={section}
+                    report={finalThesisData}
+                    sectionId={'section-' + def.key}
+                  />
                 </div>
               );
             }
@@ -888,15 +1119,7 @@ export default function FinalThesis({ getReport, updateReport }) {
             }
 
             let content;
-            if (CHECKLIST_KEYS.has(def.key)) {
-              content = (
-                <ChecklistRenderer
-                  section={section}
-                  sectionId={'section-' + def.key}
-                  onCitationClick={handleCitationClick}
-                />
-              );
-            } else if (def.key === 'inversion_rebuttal') {
+            if (def.key === 'debate') {
               content = (
                 <DebateRenderer
                   section={section}
@@ -905,17 +1128,29 @@ export default function FinalThesis({ getReport, updateReport }) {
                   onCitationClick={handleCitationClick}
                 />
               );
-            } else {
+            } else if (def.key === 'trade_plan') {
               content = (
-                <SectionRenderer
+                <TradePlanRenderer
                   section={section}
                   sectionId={'section-' + def.key}
                   onCitationClick={handleCitationClick}
-                  notableClaims={section.notableClaims}
-                  onDeepDiveClick={(claimIdx) => handleDeepDiveClick(def.key, claimIdx, section.notableClaims?.[claimIdx], section.narrative)}
-                  glossaryTerms={section.glossaryTerms}
-                  onGlossaryClick={handleGlossaryClick}
                 />
+              );
+            } else {
+              // §§1-5 all render as prose narrative + verdict box.
+              content = (
+                <>
+                  <SectionRenderer
+                    section={section}
+                    sectionId={'section-' + def.key}
+                    onCitationClick={handleCitationClick}
+                    notableClaims={section.notableClaims}
+                    onDeepDiveClick={(claimIdx) => handleDeepDiveClick(def.key, claimIdx, section.notableClaims?.[claimIdx], section.narrative)}
+                    glossaryTerms={section.glossaryTerms}
+                    onGlossaryClick={handleGlossaryClick}
+                  />
+                  <VerdictBox section={section} />
+                </>
               );
             }
 

@@ -1,32 +1,42 @@
 import { describe, it, expect } from 'vitest';
-
-// NOTE: These imports will fail until Plan 02 rewrites FinalThesis.jsx with _testExports.
-// This is intentional Wave 0 — tests define the contract before implementation.
-// For now, test the constants and helpers directly by defining expected values.
+import { SECTION_DEFS } from '../FinalThesis.jsx';
 
 describe('SECTION_DEFS', () => {
-  // Expected SECTION_DEFS from 20-CONTEXT.md D-20
+  // Expected canonical Final Thesis section keys (post-Phase-2 rewrite).
+  // Note: SECTION_DEFS may also include a 'promise_tracker' pseudo-row that is
+  // rendered standalone (it pulls data from the management section), so we
+  // filter it out for the order-equality assertion.
   const EXPECTED_KEYS = [
     'event_analysis',
-    'meaning_checklist',
-    'moat_checklist',
-    'management_checklist',
-    'valuation_confirmation',
-    'inversion_rebuttal',
+    'business_analysis',
+    'moat_analysis',
+    'management_analysis',
+    'valuation_analysis',
+    'debate',
+    'trade_plan',
   ];
 
-  it('has exactly 6 entries', () => {
-    // Will be replaced with import test once FinalThesis.jsx exports _testExports
-    expect(EXPECTED_KEYS).toHaveLength(6);
+  it('has exactly 7 entries', () => {
+    expect(EXPECTED_KEYS).toHaveLength(7);
   });
 
   it('contains all required section keys', () => {
     expect(EXPECTED_KEYS).toContain('event_analysis');
-    expect(EXPECTED_KEYS).toContain('meaning_checklist');
-    expect(EXPECTED_KEYS).toContain('moat_checklist');
-    expect(EXPECTED_KEYS).toContain('management_checklist');
-    expect(EXPECTED_KEYS).toContain('valuation_confirmation');
-    expect(EXPECTED_KEYS).toContain('inversion_rebuttal');
+    expect(EXPECTED_KEYS).toContain('business_analysis');
+    expect(EXPECTED_KEYS).toContain('moat_analysis');
+    expect(EXPECTED_KEYS).toContain('management_analysis');
+    expect(EXPECTED_KEYS).toContain('valuation_analysis');
+    expect(EXPECTED_KEYS).toContain('debate');
+    expect(EXPECTED_KEYS).toContain('trade_plan');
+  });
+
+  it('SECTION_DEFS contains the 7 Final Thesis section keys in order', () => {
+    // The promise_tracker pseudo-row is rendered standalone (pulls promises
+    // from the management section), so filter it out of the order check.
+    const renderableKeys = SECTION_DEFS
+      .map((d) => d.key)
+      .filter((k) => k !== 'promise_tracker');
+    expect(renderableKeys).toEqual(EXPECTED_KEYS);
   });
 });
 
