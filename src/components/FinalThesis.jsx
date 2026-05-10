@@ -18,74 +18,11 @@ import ExportButtons from './ExportButtons';
 import { formatTitle, formatRelativeTime, verdictDotColor } from './reportHelpers';
 import Spinner from './Spinner';
 import PsrSummaryCard from './PsrSummaryCard';
+import { normalizeKey } from '../utils/keyNormalization.js';
 
-// Map AI-produced key variants to canonical keys.
-// Forwards both new agent variants AND legacy archived-report keys (the old
-// canonical names like meaning_checklist) to the new canonical keys, so old
-// final-thesis.json files continue to render under the new section structure.
-const KEY_ALIASES = {
-  // Section 1: Event Analysis (key unchanged)
-  event: 'event_analysis',
-  eventAnalysis: 'event_analysis',
-  'event-analysis': 'event_analysis',
-  event_context: 'event_analysis',
-  event_analysis_section: 'event_analysis',
-
-  // Section 2: Business Analysis (was meaning_checklist)
-  meaning: 'business_analysis',
-  meaning_checklist: 'business_analysis',
-  meaningChecklist: 'business_analysis',
-  'meaning-checklist': 'business_analysis',
-  meaning_check: 'business_analysis',
-  meaning_analysis: 'business_analysis',
-  business: 'business_analysis',
-  businessAnalysis: 'business_analysis',
-  'business-analysis': 'business_analysis',
-
-  // Section 3: Moat Analysis (was moat_checklist)
-  moat: 'moat_analysis',
-  moat_checklist: 'moat_analysis',
-  moatChecklist: 'moat_analysis',
-  'moat-checklist': 'moat_analysis',
-  moat_check: 'moat_analysis',
-  moatAnalysis: 'moat_analysis',
-  'moat-analysis': 'moat_analysis',
-
-  // Section 4: Management Analysis (was management_checklist)
-  management: 'management_analysis',
-  management_checklist: 'management_analysis',
-  managementChecklist: 'management_analysis',
-  'management-checklist': 'management_analysis',
-  management_check: 'management_analysis',
-  management_evaluation: 'management_analysis',
-  managementAnalysis: 'management_analysis',
-  'management-analysis': 'management_analysis',
-
-  // Section 5: Valuation Analysis (was valuation_confirmation)
-  valuation: 'valuation_analysis',
-  valuation_confirmation: 'valuation_analysis',
-  valuationConfirmation: 'valuation_analysis',
-  'valuation-confirmation': 'valuation_analysis',
-  valuation_confirm: 'valuation_analysis',
-  valuationAnalysis: 'valuation_analysis',
-  'valuation-analysis': 'valuation_analysis',
-  valuation_summary: 'valuation_analysis',
-
-  // Section 6: The Debate (was inversion_rebuttal)
-  inversion: 'debate',
-  rebuttal: 'debate',
-  inversion_rebuttal: 'debate',
-  inversionRebuttal: 'debate',
-  'inversion-rebuttal': 'debate',
-  inversion_and_rebuttal: 'debate',
-  the_debate: 'debate',
-  theDebate: 'debate',
-  'the-debate': 'debate',
-
-  // Section 7: Trade Plan (new section — only canonical-key variants, no legacy)
-  tradePlan: 'trade_plan',
-  'trade-plan': 'trade_plan',
-};
+// Key-normalization map is shared with PitchDeck.jsx — see
+// src/utils/keyNormalization.js for the full migration table (legacy
+// pre-redesign keys + AI-emitted variants → current canonical keys).
 
 // --- Section definitions for the Final Thesis ---
 // 7 canonical renderable sections (Event/Business/Moat/Management/Valuation/Debate/TradePlan)
@@ -445,13 +382,13 @@ export default function FinalThesis({ getReport, updateReport }) {
     const result = {};
     if (generationStatus?.sections) {
       for (const key of Object.keys(generationStatus.sections)) {
-        const canonical = KEY_ALIASES[key] || key;
+        const canonical = normalizeKey(key);
         result[canonical] = generationStatus.sections[key].status;
       }
     }
     if (progress?.sections) {
       for (const key of Object.keys(progress.sections)) {
-        const canonical = KEY_ALIASES[key] || key;
+        const canonical = normalizeKey(key);
         if (!result[canonical]) result[canonical] = progress.sections[key].status;
       }
     }
@@ -476,14 +413,14 @@ export default function FinalThesis({ getReport, updateReport }) {
     if (generationStatus?.completedSections) {
       for (const s of generationStatus.completedSections) {
         if (s.key) {
-          const canonical = KEY_ALIASES[s.key] || s.key;
+          const canonical = normalizeKey(s.key);
           m[canonical] = { ...s, key: canonical };
         }
       }
     }
     if (finalThesisData?.sections) {
       for (const s of finalThesisData.sections) {
-        const canonical = KEY_ALIASES[s.key] || s.key;
+        const canonical = normalizeKey(s.key);
         m[canonical] = { ...s, key: canonical };
       }
     }

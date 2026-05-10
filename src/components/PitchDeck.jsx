@@ -17,20 +17,10 @@ import Spinner from './Spinner';
 import ConfirmGenerateDialog from './ConfirmGenerateDialog';
 import ExportButtons from './ExportButtons';
 import PsrSummaryCard from './PsrSummaryCard';
+import { normalizeKey } from '../utils/keyNormalization.js';
 
-// Map AI-produced key variants to canonical keys (mirrors KEY_NORMALIZATION in run-pipeline.js)
-const KEY_ALIASES = {
-  radar_section: 'radar', initial_awareness: 'radar', event_context: 'radar',
-  simple_and_predictable: 'simple_predictable', simple_predictability: 'simple_predictable', business_model: 'simple_predictable',
-  market_position_analysis: 'market_position', competitive_position: 'market_position', dominant_market_position: 'market_position',
-  barriers_and_moats: 'barriers_moats', moats: 'barriers_moats', moat_analysis: 'barriers_moats', barriers_to_entry: 'barriers_moats', barriers: 'barriers_moats',
-  fcf_analysis: 'fcf', free_cash_flow: 'fcf', owner_earnings: 'fcf', fcf_owner_earnings: 'fcf',
-  management_analysis: 'management', management_talent: 'management', management_integrity: 'management', management_evaluation: 'management',
-  roe_roic_roa_debt: 'roe_roic_debt', roe_roic: 'roe_roic_debt', capital_structure: 'roe_roic_debt', return_metrics: 'roe_roic_debt',
-  balance_sheet_analysis: 'balance_sheet', balance_sheet_deep_dive: 'balance_sheet',
-  pest_risks: 'pest', pest_analysis: 'pest', pest_risk_analysis: 'pest', risk_analysis: 'pest',
-  valuation_summary: 'valuation', valuation_analysis: 'valuation', valuation_section: 'valuation',
-};
+// Key-normalization map is shared with FinalThesis.jsx — see
+// src/utils/keyNormalization.js for the full migration table.
 
 // --- Section definitions for the Pitch Deck (9 content sections, 3 phases) ---
 // overall_verdict is rendered as a hero banner, not a numbered section
@@ -409,7 +399,7 @@ export default function PitchDeck({ getReport, updateReport }) {
     if (generationStatus?.completedSections) {
       for (const s of generationStatus.completedSections) {
         if (s.key) {
-          const canonical = KEY_ALIASES[s.key] || s.key;
+          const canonical = normalizeKey(s.key);
           map[canonical] = { ...s, key: canonical };
         }
       }
@@ -417,7 +407,7 @@ export default function PitchDeck({ getReport, updateReport }) {
     // Final report data overrides live data
     if (pitchDeckData?.sections) {
       for (const s of pitchDeckData.sections) {
-        const canonical = KEY_ALIASES[s.key] || s.key;
+        const canonical = normalizeKey(s.key);
         map[canonical] = { ...s, key: canonical };
       }
     }
@@ -437,13 +427,13 @@ export default function PitchDeck({ getReport, updateReport }) {
     if (!progress || !progress.sections) return {};
     const result = {};
     for (const key of Object.keys(progress.sections)) {
-      const canonical = KEY_ALIASES[key] || key;
+      const canonical = normalizeKey(key);
       result[canonical] = progress.sections[key].status;
     }
     // Also check generationStatus.sections for completed sections with variant keys
     if (generationStatus?.sections) {
       for (const key of Object.keys(generationStatus.sections)) {
-        const canonical = KEY_ALIASES[key] || key;
+        const canonical = normalizeKey(key);
         if (generationStatus.sections[key].status === 'complete') {
           result[canonical] = 'complete';
         }
