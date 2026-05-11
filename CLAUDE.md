@@ -5,7 +5,7 @@
 
 The user is NOT a programmer — keep explanations in plain English.
 
-**Status**: Mid-migration to public OSS. Phase 1 (foundation) and Phase 2 (rebrand) complete. Phase 3 (portability) is next. [STEPS.md](STEPS.md) is the authoritative phase plan.
+**Status**: Mid-migration to public OSS. Phases 1 (foundation), 2 (rebrand), and 3 (portability) complete. Phase 4 (two-mode wiring — connected-mode account sync) is next. [STEPS.md](STEPS.md) is the authoritative phase plan.
 
 ---
 
