@@ -15,6 +15,7 @@ from datetime import date
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from thesis_pdf import ThesisPDF
 from report_data_reader import ReportData
+from thesis_dir import reports_dir
 from section_renderers import (
     get_narrative, get_tables, get_red_flags, get_citations,
     get_verdict_color, format_currency, format_pct,
@@ -797,6 +798,7 @@ def render_accounting_red_flags(pdf, section):
             display_status = status or 'Issues Found'
 
         # Category header
+        pdf.set_x(pdf.l_margin)
         pdf.set_font('ArialUni', 'B', 11)
         pdf.set_text_color(*color)
         pdf.multi_cell(0, 6, f'{name}: {display_status}')
@@ -811,6 +813,7 @@ def render_accounting_red_flags(pdf, section):
                     txt = str(f)
                 pdf.add_bullet(txt)
         else:
+            pdf.set_x(pdf.l_margin)
             pdf.set_font('ArialUni', '', 9.5)
             pdf.set_text_color(80, 80, 90)
             pdf.multi_cell(0, 5, 'No issues identified in this category.')
@@ -909,11 +912,11 @@ def render_pre_decision_check(pdf, section):
 
 def generate_pitch_deck(ticker, base_dir=None):
     """Build the full visual Pitch Deck PDF."""
-    if base_dir is None:
-        base_dir = os.path.join(os.path.dirname(__file__), '..', '..')
-    report_dir = os.path.join(base_dir, '.thesis', 'reports', ticker)
+    # Phase 3: paths resolve via ~/thesis/; base_dir is accepted for backward
+    # compatibility but ignored.
+    report_dir = str(reports_dir(ticker))
 
-    data = ReportData(ticker, 'pitch-deck', base_dir=base_dir)
+    data = ReportData(ticker, 'pitch-deck')
     company_name = data.get_company_name()
     overall_verdict = data.get_overall_verdict()
 

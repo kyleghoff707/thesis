@@ -379,7 +379,7 @@ def _render_debate(doc, debate_outputs, temp_charts):
 def generate_final_thesis_docx(ticker, base_dir=None):
     """Generate Final Thesis Word document for the given ticker."""
 
-    data = ReportData(ticker, 'final-thesis', base_dir=base_dir)
+    data = ReportData(ticker, 'final-thesis')
     company_name = data.get_company_name()
 
     doc = create_thesis_doc()

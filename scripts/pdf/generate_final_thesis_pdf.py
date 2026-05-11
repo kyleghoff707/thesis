@@ -16,6 +16,7 @@ from datetime import date
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from thesis_pdf import ThesisPDF
 from report_data_reader import ReportData
+from thesis_dir import reports_dir
 from section_renderers import (
     get_narrative, get_tables, get_red_flags, get_citations,
     get_verdict_color, format_currency,
@@ -477,11 +478,11 @@ def _render_promise_status_grid(pdf, section):
 
 def generate_final_thesis(ticker, base_dir=None):
     """Build the Final Thesis PDF with checklists, debate, and evidence."""
-    if base_dir is None:
-        base_dir = os.path.join(os.path.dirname(__file__), '..', '..')
-    report_dir = os.path.join(base_dir, '.thesis', 'reports', ticker)
+    # Phase 3: paths resolve via ~/thesis/; base_dir is accepted for backward
+    # compatibility but ignored.
+    report_dir = str(reports_dir(ticker))
 
-    data = ReportData(ticker, 'final-thesis', base_dir=base_dir)
+    data = ReportData(ticker, 'final-thesis')
     company_name = data.get_company_name()
 
     # Final Thesis may not have a single overall verdict -- the debate IS the verdict

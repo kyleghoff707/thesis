@@ -38,17 +38,13 @@ class ReportData:
         Args:
             ticker: Stock ticker symbol (e.g., 'MNST')
             stage: 'one-pager' | 'pitch-deck' | 'final-thesis'
-            base_dir: Optional base directory override (defaults to project root)
+            base_dir: Deprecated, ignored. Paths resolve via ~/thesis/.
         """
         self.ticker = ticker
         self.stage = stage
 
-        if base_dir is not None:
-            # Caller-provided base_dir override (used by tests); legacy semantics
-            self.report_dir = os.path.join(base_dir, '.thesis', 'reports', ticker)
-        else:
-            from thesis_dir import reports_dir
-            self.report_dir = str(reports_dir(ticker))
+        from thesis_dir import reports_dir
+        self.report_dir = str(reports_dir(ticker))
 
         # Load the stage-specific report JSON
         report_file = STAGE_FILE_MAP.get(stage)

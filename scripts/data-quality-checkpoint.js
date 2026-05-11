@@ -6,6 +6,7 @@
 
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join } from 'path';
+import { reportsDir } from '../src/utils/thesisDir.js';
 
 // ── Field Classification Constants ──────────────────────────────────
 
@@ -152,7 +153,7 @@ async function main() {
     process.exit(1);
   }
 
-  const baseDir = join(process.cwd(), '.thesis', 'reports', ticker);
+  const baseDir = reportsDir(ticker);
   const dpPath = join(baseDir, 'data-packet.json');
 
   if (!existsSync(dpPath)) {

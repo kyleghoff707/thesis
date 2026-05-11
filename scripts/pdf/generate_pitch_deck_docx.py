@@ -370,7 +370,7 @@ def _add_price_range_chart(doc, data, temp_charts):
 def generate_pitch_deck_docx(ticker, base_dir=None):
     """Generate Pitch Deck Word document for the given ticker."""
 
-    data = ReportData(ticker, 'pitch-deck', base_dir=base_dir)
+    data = ReportData(ticker, 'pitch-deck')
     company_name = data.get_company_name()
     verdict = data.get_overall_verdict()
 

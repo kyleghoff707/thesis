@@ -15,6 +15,7 @@ from datetime import date
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from thesis_pdf import ThesisPDF
 from report_data_reader import ReportData
+from thesis_dir import reports_dir
 from section_renderers import (
     get_narrative, get_tables, get_red_flags, get_citations,
     get_verdict_color, format_currency, _clean_narrative
@@ -310,12 +311,12 @@ def _build_scorecard_rows(data):
 
 def generate_one_pager(ticker, base_dir=None):
     """Build the full visual PDF for a One Pager."""
-    if base_dir is None:
-        base_dir = os.path.join(os.path.dirname(__file__), '..', '..')
-    report_dir = os.path.join(base_dir, '.thesis', 'reports', ticker)
+    # Phase 3: paths resolve via ~/thesis/; base_dir is accepted for backward
+    # compatibility but ignored.
+    report_dir = str(reports_dir(ticker))
 
     # Load data through the unified reader
-    data = ReportData(ticker, 'one-pager', base_dir=base_dir)
+    data = ReportData(ticker, 'one-pager')
     company_name = data.get_company_name()
     overall_verdict = data.get_overall_verdict()
 
