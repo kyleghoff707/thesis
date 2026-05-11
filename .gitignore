@@ -75,3 +75,7 @@ api/
 # Engine HTTP cache + any legacy pipeline output that auto-regenerates.
 # Pipeline state lives in ~/thesis/; this directory is implementation detail.
 .thesis/
+
+# Private migration plan — gitignored before public release (per CLAUDE.md).
+# The author keeps it locally as the authoritative phase plan.
+STEPS.md
