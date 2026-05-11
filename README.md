@@ -25,10 +25,22 @@ When the pipeline finishes, open `~/thesis/reports/AAPL/` to see your reports.
 
 - **Node** 20 LTS or newer
 - **Python** 3.11 or newer
-- **Claude Code subscription** — Pro tier minimum, Max recommended (the Pitch Deck stage dispatches 10 subagents in parallel; Pro will throttle hard)
+- **Claude Code subscription** — see [Subscription tier](#subscription-tier) below
 - **Disk** ~5 GB for the repo (the bundled earnings transcripts are ~72 MB)
 
 Mac and Linux are tested. Windows works (file issues if not).
+
+## Subscription tier
+
+Thesis runs on your Claude Code subscription — your account, your rate limits, your token budget. Recommendation by stage:
+
+| Stage | Subagents | Tier |
+|---|---|---|
+| One Pager | 1 | **Pro** is fine |
+| Pitch Deck | 10 parallel (5 waves of ~2) | **Max** strongly recommended |
+| Final Thesis | 7 sequential with debate | **Pro** workable, **Max** smoother |
+
+The Pitch Deck stage is the bottleneck — it fans out 10 specialist subagents, and Pro-tier accounts will hit usage limits mid-run. If you're on Pro and want to try anyway, generate One Pagers first; only spend Pitch Deck/Final Thesis budget on tickers that pass.
 
 ## What you get
 
