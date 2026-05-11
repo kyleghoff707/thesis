@@ -71,3 +71,7 @@ _notes/
 # Worker source — kept out of the public OSS repo.
 # Lives on the author's local Desktop only. See docs/specs/2026-05-10-phase-3-portability.md.
 api/
+
+# Engine HTTP cache + any legacy pipeline output that auto-regenerates.
+# Pipeline state lives in ~/thesis/; this directory is implementation detail.
+.thesis/
