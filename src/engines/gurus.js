@@ -577,7 +577,7 @@ export async function fetchGuruWithChanges(guru) {
 
 // Fetch all gurus with change detection
 export async function fetchAllWithChanges(onProgress) {
-  // SEC EDGAR is the only path. (D1 supplement removed for OSS — see STEPS.md Phase 3.)
+  // SEC EDGAR is the only path.
   const results = [];
   for (let i = 0; i < GURUS.length; i++) {
     const guru = GURUS[i];
