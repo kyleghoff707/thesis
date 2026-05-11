@@ -245,6 +245,40 @@ class ReportPDF(FPDF):
             self.ln(5.5)
         self.ln(1)
 
+    def _estimate_bullet_height(self, text, indent=0):
+        """Approximate height in mm that add_bullet will take for given text/indent.
+        Slight overestimate so callers using it for page-break decisions stay safe.
+        """
+        self.set_font('ArialUni', '', 10)
+        x_start = self.l_margin + indent
+        bullet_width = 5
+        body_w = self.w - self.r_margin - x_start - bullet_width
+        if body_w <= 0:
+            return 5.5 + 1
+        text_w = self.get_string_width(text)
+        # 0.95 fudge factor: word-boundary wrapping is slightly less efficient
+        # than pure character-width division, so estimate ~5% more lines.
+        lines = max(1, math.ceil(text_w / (body_w * 0.95)))
+        return lines * 5.5 + 1
+
+    def add_citation_with_link(self, data_text, url, display, data_indent=2, url_indent=8):
+        """Render a citation as data bullet + URL sub-bullet, kept on the same page.
+
+        If both bullets would overflow the remaining page space, forces a page
+        break first so the citation doesn't split across pages — the data line
+        and its source link should always be visually paired.
+        """
+        data_h = self._estimate_bullet_height(data_text, indent=data_indent)
+        url_h = self._estimate_bullet_height(display, indent=url_indent)
+        needed = data_h + url_h + 2  # small buffer for spacing
+
+        remaining = self.h - self.get_y() - self.b_margin
+        if remaining < needed:
+            self.add_page()
+
+        self.add_bullet(data_text, indent=data_indent)
+        self.add_bullet(display, indent=url_indent, link=url, link_text=display)
+
     def add_numbered_item(self, number, text):
         """Add a numbered list item."""
         self.set_font('ArialUni', '', 10)

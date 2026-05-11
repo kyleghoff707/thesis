@@ -179,11 +179,9 @@ def _render_citations_page(pdf, all_citations):
             url_info = extract_url(source) if source else None
             if url_info:
                 url, display = url_info
-                # Two-bullet layout: data line wraps cleanly via multi_cell;
-                # URL link is a sub-bullet so the with-link branch of
-                # add_bullet never has long pre-text that overflows.
-                pdf.add_bullet(line, indent=2)
-                pdf.add_bullet(display, indent=8, link=url, link_text=display)
+                # Helper renders data + URL sub-bullet together, page-breaking
+                # first if both wouldn't fit on the remaining space.
+                pdf.add_citation_with_link(line, url, display)
             elif source and source != 'DataPacket':
                 line += f'  ({source})'
                 pdf.add_bullet(line, indent=2)
