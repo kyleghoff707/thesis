@@ -1,0 +1,302 @@
+#!/usr/bin/env python3
+"""
+One Pager Word Document Generator — Thesis-branded .docx export.
+
+Generates a professional Word document from any ticker's One Pager pipeline output
+with embedded chart images (verdict scorecard, financial trends), styled tables,
+and Thesis branding (teal headings, Arial font, alternating row shading).
+
+Usage:
+    python3 scripts/pdf/generate_one_pager_docx.py MNST
+"""
+
+import json
+import os
+import sys
+
+# Ensure scripts/pdf is importable
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+
+from scripts.pdf.report_data_reader import ReportData
+from scripts.pdf.safe_ticker import normalize_ticker
+from scripts.pdf.section_renderers import (
+    get_narrative, get_tables, get_red_flags, get_citations,
+)
+from scripts.pdf.chart_image_generator import (
+    generate_bar_chart, generate_verdict_scorecard, generate_trend_chart,
+    generate_pipeline_flow, generate_gate_grid, generate_sparkline_trio,
+    generate_metric_gauges,
+)
+from scripts.pdf.docx_helpers import (
+    create_thesis_doc, add_title_page, add_styled_table,
+    add_verdict_table, add_section_heading, add_body_paragraphs,
+    embed_chart, add_red_flags as render_red_flags, add_citations_section,
+    cleanup_temp_charts,
+)
+
+
+def generate_one_pager_docx(ticker, base_dir=None):
+    """Generate One Pager Word document for the given ticker."""
+
+    data = ReportData(ticker, 'one-pager')
+    company_name = data.get_company_name()
+    verdict = data.get_overall_verdict()
+
+    doc = create_thesis_doc()
+    temp_charts = []
+
+    # ── Title Page ───────────────────────────────────────────────────────────
+    add_title_page(
+        doc, ticker, company_name, 'One Pager',
+        subtitle='Investment Screening Analysis',
+        verdict=verdict,
+    )
+
+    # Pipeline flow on cover
+    try:
+        flow_path = generate_pipeline_flow('One Pager')
+        temp_charts.append(flow_path)
+        embed_chart(doc, flow_path)
+    except Exception:
+        pass
+
+    # ── Thesis Score 4-pillar gauge cluster (NEW) ────────────────────────────
+    try:
+        score = data.data_packet.get('thesisScore', {})
+        pillars = score.get('pillars') or score.get('pillarScores')
+        if isinstance(pillars, dict) and pillars:
+            label_map = {
+                'compounding': 'Compounding',
+                'capitalEfficiency': 'Capital Efficiency',
+                'capital_efficiency': 'Capital Efficiency',
+                'capitalAllocation': 'Capital Allocation',
+                'capital_allocation': 'Capital Allocation',
+                'resilience': 'Resilience',
+            }
+            gauges = []
+            for k, v in pillars.items():
+                if isinstance(v, dict):
+                    v = v.get('score')
+                if isinstance(v, (int, float)):
+                    gauges.append((label_map.get(k, k), float(v), 70.0, '%', True))
+            if gauges:
+                add_section_heading(doc, 'Thesis Score — 4 Pillars', level=2)
+                path = generate_metric_gauges(gauges, title='Thesis Score — 4 Pillars')
+                temp_charts.append(path)
+                embed_chart(doc, path)
+    except Exception:
+        pass
+
+    # ── Minimum Standards gate grid (NEW) ────────────────────────────────────
+    try:
+        ms = data.get_section('minimum_standards')
+        if ms:
+            raw = ms.get('data')
+            if isinstance(raw, str):
+                raw = json.loads(raw)
+            gates = raw.get('gates') if isinstance(raw, dict) else None
+            if isinstance(gates, dict) and gates:
+                gate_rows = []
+                if 'marketCap' in gates:
+                    g = gates['marketCap']
+                    gate_rows.append(('Market Cap', g.get('result', 'WARN'),
+                                      f"{g.get('estimated', '')} (req {g.get('threshold', '')})"))
+                if 'usHeadquarters' in gates:
+                    g = gates['usHeadquarters']
+                    gate_rows.append(('US Headquarters', g.get('result', 'WARN'),
+                                      str(g.get('value', ''))[:80]))
+                if 'publicHistory' in gates:
+                    g = gates['publicHistory']
+                    gate_rows.append(('Public History', g.get('result', 'WARN'),
+                                      f"IPO {g.get('ipoYear', '?')} "
+                                      f"({g.get('yearsPublic', '?')} yrs, req {g.get('threshold', '')})"))
+                if 'debtToEarnings' in gates:
+                    g = gates['debtToEarnings']
+                    gate_rows.append(('Debt / Earnings', g.get('result', 'WARN'),
+                                      f"{g.get('ratio', '?')} yrs (req {g.get('threshold', '')})"))
+                if gate_rows:
+                    add_section_heading(doc, 'Minimum Standards — Gate Audit', level=2)
+                    path = generate_gate_grid(gate_rows, title='')
+                    if path:
+                        temp_charts.append(path)
+                        embed_chart(doc, path)
+    except Exception:
+        pass
+
+    # ── Verdict Scorecard Chart ──────────────────────────────────────────────
+    try:
+        scorecard_sections = []
+        for key in data.get_section_keys():
+            if key == 'overall_verdict':
+                continue
+            section = data.get_section(key)
+            name = section.get('title', key.replace('_', ' ').title())
+            v = section.get('verdict', 'N/A')
+            conf = section.get('confidence', '')
+            signal = section.get('verdictRationale', '')[:60] if section.get('verdictRationale') else ''
+            scorecard_sections.append((name, v, conf, signal))
+
+        if scorecard_sections:
+            chart_path = generate_verdict_scorecard(
+                scorecard_sections, title=f'{ticker} One Pager Scorecard'
+            )
+            temp_charts.append(chart_path)
+            add_section_heading(doc, 'Verdict Scorecard', level=1)
+            embed_chart(doc, chart_path)
+
+            # Also add as a Word table for accessibility
+            add_verdict_table(doc, scorecard_sections)
+    except Exception:
+        pass
+
+    # ── Financial Overview Charts (from DataPacket) ──────────────────────────
+    years = data.get_financial_years(n=5)
+    if years:
+        add_section_heading(doc, 'Financial Overview', level=1)
+
+        # Revenue trend
+        try:
+            rev_data = data.get_financial_data('income', 'revenues', years)
+            if rev_data and len(rev_data) >= 2:
+                chart_years = [str(y) for y, _ in rev_data]
+                chart_values = [v / 1e9 for _, v in rev_data]
+                path = generate_bar_chart(
+                    chart_years, chart_values,
+                    title='Revenue Trend', unit='B',
+                )
+                temp_charts.append(path)
+                embed_chart(doc, path)
+        except Exception:
+            pass
+
+        # EPS trend (net income / shares as proxy)
+        try:
+            ni_data = data.get_financial_data('income', 'net_income_loss', years)
+            if ni_data and len(ni_data) >= 2:
+                chart_years = [str(y) for y, _ in ni_data]
+                chart_values = [v / 1e6 for _, v in ni_data]
+                path = generate_bar_chart(
+                    chart_years, chart_values,
+                    title='Net Income Trend', unit='M',
+                )
+                temp_charts.append(path)
+                embed_chart(doc, path)
+        except Exception:
+            pass
+
+        # Operating cash flow
+        try:
+            ocf_data = data.get_financial_data('cashFlow', 'operating_cash_flow', years)
+            if ocf_data and len(ocf_data) >= 2:
+                chart_years = [str(y) for y, _ in ocf_data]
+                chart_values = [v / 1e9 for _, v in ocf_data]
+                path = generate_bar_chart(
+                    chart_years, chart_values,
+                    title='Operating Cash Flow', unit='B',
+                )
+                temp_charts.append(path)
+                embed_chart(doc, path)
+        except Exception:
+            pass
+
+        # Margin trend sparkline trio (NEW)
+        try:
+            income_block = data.data_packet.get('financials', {}).get('income', {})
+            yrs = sorted([y for y in income_block.keys() if str(y).isdigit()])[-5:]
+
+            def _ratio(y, num_field):
+                rec = income_block.get(y) or income_block.get(str(y)) or {}
+                num = rec.get(num_field)
+                den = rec.get('revenues')
+                if num is None or den is None or den == 0:
+                    return None
+                return num / den * 100
+
+            gross_vals = [_ratio(y, 'gross_profit') for y in yrs]
+            op_vals = [_ratio(y, 'operating_income_loss') for y in yrs]
+            net_vals = [_ratio(y, 'net_income_loss') for y in yrs]
+
+            series = []
+            if all(v is not None for v in gross_vals) and len(gross_vals) >= 3:
+                series.append(('Gross Margin', gross_vals, '#0f766e'))
+            if all(v is not None for v in op_vals) and len(op_vals) >= 3:
+                series.append(('Operating Margin', op_vals, '#2dd4bf'))
+            if all(v is not None for v in net_vals) and len(net_vals) >= 3:
+                series.append(('Net Margin', net_vals, '#3b82f6'))
+
+            if series:
+                path = generate_sparkline_trio(series, title='Margin Trends (last 5 fiscal years)')
+                temp_charts.append(path)
+                embed_chart(doc, path)
+        except Exception:
+            pass
+
+    # ── Section Narratives ───────────────────────────────────────────────────
+    for key in data.get_section_keys():
+        if key == 'overall_verdict':
+            continue
+
+        section = data.get_section(key)
+        title = section.get('title', key.replace('_', ' ').title())
+
+        add_section_heading(doc, title, level=1)
+
+        # Verdict line for section
+        sec_verdict = section.get('verdict', '')
+        if sec_verdict:
+            from scripts.pdf.docx_helpers import VERDICT_COLORS_RGB, SLATE_600
+            from docx.shared import Pt
+            p = doc.add_paragraph()
+            run = p.add_run(f'Verdict: {sec_verdict}')
+            run.font.bold = True
+            run.font.size = Pt(10)
+            run.font.name = 'Arial'
+            run.font.color.rgb = VERDICT_COLORS_RGB.get(
+                str(sec_verdict).upper().strip(), SLATE_600
+            )
+
+        # Narrative
+        narrative = get_narrative(section)
+        if narrative:
+            add_body_paragraphs(doc, narrative)
+
+        # Tables
+        tables = get_tables(section)
+        for t in tables:
+            if t.get('title'):
+                add_section_heading(doc, t['title'], level=3)
+            add_styled_table(doc, t.get('headers', []), t.get('rows', []))
+
+        # Red flags
+        flags = get_red_flags(section)
+        if flags:
+            render_red_flags(doc, flags)
+
+    # ── Overall Verdict Section ──────────────────────────────────────────────
+    ov_section = data.get_section('overall_verdict')
+    if ov_section:
+        add_section_heading(doc, 'Overall Verdict', level=1)
+        narrative = get_narrative(ov_section)
+        if narrative:
+            add_body_paragraphs(doc, narrative)
+
+    # ── Save ─────────────────────────────────────────────────────────────────
+    output_path = os.path.join(data.report_dir, 'one-pager.docx')
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    doc.save(output_path)
+
+    cleanup_temp_charts(temp_charts)
+    print(f'One Pager Word doc saved: {output_path}')
+    return output_path
+
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print('Usage: python3 scripts/pdf/generate_one_pager_docx.py TICKER')
+        sys.exit(1)
+    try:
+        ticker = normalize_ticker(sys.argv[1])
+    except ValueError as error:
+        print(error)
+        sys.exit(1)
+    generate_one_pager_docx(ticker)

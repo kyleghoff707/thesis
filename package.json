@@ -1,0 +1,37 @@
+{
+  "name": "thesis-cli",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Open-source Thesis CLI pipeline producing One Pager, Pitch Deck, and Final Thesis reports via Claude Code.",
+  "author": "Kyle Hoff <kyle@thesis-investing.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/kghoff/thesis-cli",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kghoff/thesis-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kghoff/thesis-cli/issues"
+  },
+  "scripts": {
+    "setup": "node scripts/setup.js",
+    "lint:vocab": "node scripts/lint-vocab.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.99.0",
+    "dotenv": "^17.3.1",
+    "linkedom": "^0.18.12",
+    "turndown": "^7.2.2",
+    "turndown-plugin-gfm": "^1.0.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "vitest": "^4.1.0"
+  }
+}

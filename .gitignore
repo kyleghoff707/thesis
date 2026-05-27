@@ -1,0 +1,107 @@
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Knowledge folder (course curriculum, personal research — local only)
+knowledge/
+
+# Validation data (cached API responses, reports, bundled engines — local only)
+validation/cache/
+validation/data/
+validation/reports/
+validation/scripts/bundled-engines.mjs
+# Wrangler local state (D1 SQLite, etc.)
+.wrangler/
+api/.wrangler/
+
+# Hidden gstack runtime folder (recreated by skills)
+.gstack/
+
+# gstack project artifacts — track plans/reports, ignore screenshots/logs
+gstack/qa-reports/screenshots/
+gstack/design-reports/screenshots/
+gstack/canary-reports/baselines/
+gstack/canary-reports/screenshots/
+gstack/benchmark-reports/baselines/
+gstack/investigations/screenshots/
+gstack/browse-logs/
+gstack/deploy-reports/*.png
+
+# EDGAR API response cache for accuracy tests (regenerated on demand)
+src/engines/__tests__/fixtures/edgar-cache/
+
+.claude/worktrees/
+.claude/scheduled_tasks.lock
+.council/
+
+api/src/pipeline/curriculumBundle.js
+
+# Agent YAML sync backups (pre-migration snapshots, local-only)
+agents/.backup-*/
+agents/.staging-sync/
+
+# Personal notes / runbooks — not part of the public repo
+_notes/
+
+# Worker source — kept out of the public OSS repo.
+# Lives on the author's local Desktop only. See docs/specs/2026-05-10-phase-3-portability.md.
+api/
+!src/api/
+!src/api/**
+
+# Engine HTTP cache + any legacy pipeline output that auto-regenerates.
+# Pipeline state lives in ~/thesis/; this directory is implementation detail.
+.thesis/
+
+# Private migration plan — gitignored before public release (per CLAUDE.md).
+# The author keeps it locally as the authoritative phase plan.
+STEPS.md
+
+# Internal design specs + implementation plans — kept locally as a working
+# history of the migration, but not relevant to repo consumers. The privacy
+# notice that used to live here has been promoted to PRIVACY.md at the root.
+docs/
+
+# Skill library — only the four production investment-research skills are tracked
+# in this public repo. Everything else under .claude/skills/ is the author's local
+# skill collection (mostly symlinks into ~/.claude/skills/, broken for anyone
+# cloning). Keep README.md tracked so the in-repo skill set is documented.
+.claude/skills/*
+!.claude/skills/README.md
+!.claude/skills/analyze/
+!.claude/skills/generate-one-pager/
+!.claude/skills/generate-pitch-deck/
+!.claude/skills/generate-final-thesis/
+
+# Codex-local scratch dir; AGENTS.md itself is tracked (twin of CLAUDE.md).
+.agents/
+
+# Codex-local command approvals; translated from .claude/settings.local.json.
+.codex/
+# Local infrastructure/runbook notes for Claude/Codex agents
+INFRA.md

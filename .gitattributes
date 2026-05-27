@@ -1,0 +1,13 @@
+# Cross-platform line endings: LF everywhere.
+# Protects bundled transcripts and JSON data from CRLF mangling on Windows clones.
+* text=auto eol=lf
+
+# Binary files: never touch.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.docx binary
+*.xlsx binary
+*.zip binary
+*.gz binary

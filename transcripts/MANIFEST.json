@@ -1,0 +1,10208 @@
+{
+  "generatedAt": "2026-05-10T17:19:53.048Z",
+  "totalCount": 1548,
+  "totalBytes": 74550494,
+  "uniqueTickers": 492,
+  "tickers": [
+    {
+      "ticker": "A",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 49047
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 63279
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 59306
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55864
+        }
+      ]
+    },
+    {
+      "ticker": "AAPL",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 50038
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 44992
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44643
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47386
+        }
+      ]
+    },
+    {
+      "ticker": "ABBV",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 64374
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 68771
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47803
+        }
+      ]
+    },
+    {
+      "ticker": "ABNB",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52435
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 38396
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54272
+        }
+      ]
+    },
+    {
+      "ticker": "ABT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 61763
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 60213
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 34558
+        }
+      ]
+    },
+    {
+      "ticker": "ACGL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50236
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48668
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45326
+        }
+      ]
+    },
+    {
+      "ticker": "ACN",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 49099
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53030
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47342
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51074
+        }
+      ]
+    },
+    {
+      "ticker": "ADBE",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 54562
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 56039
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 56915
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 61955
+        }
+      ]
+    },
+    {
+      "ticker": "ADI",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 35172
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 33789
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 32696
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 31871
+        }
+      ]
+    },
+    {
+      "ticker": "ADM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49904
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51170
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 42809
+        }
+      ]
+    },
+    {
+      "ticker": "ADP",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 49446
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51056
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51684
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49287
+        }
+      ]
+    },
+    {
+      "ticker": "ADSK",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 60761
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 59401
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54909
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46368
+        }
+      ]
+    },
+    {
+      "ticker": "AEE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53965
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48253
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 36955
+        }
+      ]
+    },
+    {
+      "ticker": "AEP",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 40182
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49901
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54827
+        }
+      ]
+    },
+    {
+      "ticker": "AES",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 13096
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47101
+        }
+      ]
+    },
+    {
+      "ticker": "AFL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 40797
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48878
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 42557
+        }
+      ]
+    },
+    {
+      "ticker": "AIG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57914
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55119
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47171
+        }
+      ]
+    },
+    {
+      "ticker": "AIZ",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50164
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 36948
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 31816
+        }
+      ]
+    },
+    {
+      "ticker": "AJG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 17750
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 58571
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 35882
+        }
+      ]
+    },
+    {
+      "ticker": "AKAM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 56726
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 56321
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 42725
+        }
+      ]
+    },
+    {
+      "ticker": "ALB",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52010
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49234
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48128
+        }
+      ]
+    },
+    {
+      "ticker": "ALGN",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55308
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44523
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53197
+        }
+      ]
+    },
+    {
+      "ticker": "ALL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 59720
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 41335
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54748
+        }
+      ]
+    },
+    {
+      "ticker": "ALLE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 31290
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 30121
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 18136
+        }
+      ]
+    },
+    {
+      "ticker": "AMAT",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 13894
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50975
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47142
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50535
+        }
+      ]
+    },
+    {
+      "ticker": "AMCR",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 41541
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 40738
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52485
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 39872
+        }
+      ]
+    },
+    {
+      "ticker": "AMD",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51446
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47440
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48644
+        }
+      ]
+    },
+    {
+      "ticker": "AME",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 59386
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44805
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46044
+        }
+      ]
+    },
+    {
+      "ticker": "AMGN",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57747
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 59157
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54300
+        }
+      ]
+    },
+    {
+      "ticker": "AMP",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52789
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 36565
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 40861
+        }
+      ]
+    },
+    {
+      "ticker": "AMT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54639
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53490
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55317
+        }
+      ]
+    },
+    {
+      "ticker": "AMZN",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50171
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 42328
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51475
+        }
+      ]
+    },
+    {
+      "ticker": "ANET",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50407
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51617
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 14798
+        }
+      ]
+    },
+    {
+      "ticker": "AON",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51781
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52980
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53122
+        }
+      ]
+    },
+    {
+      "ticker": "AOS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55656
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 40902
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 38015
+        }
+      ]
+    },
+    {
+      "ticker": "APA",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48225
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48357
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53888
+        }
+      ]
+    },
+    {
+      "ticker": "APD",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 46921
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 46828
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 29668
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55906
+        }
+      ]
+    },
+    {
+      "ticker": "APH",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 12622
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 58733
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 26587
+        }
+      ]
+    },
+    {
+      "ticker": "APO",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 67951
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54387
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54688
+        }
+      ]
+    },
+    {
+      "ticker": "APP",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54939
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47689
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 44462
+        }
+      ]
+    },
+    {
+      "ticker": "APTV",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50517
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47197
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50052
+        }
+      ]
+    },
+    {
+      "ticker": "ARE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51144
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52885
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 34558
+        }
+      ]
+    },
+    {
+      "ticker": "ARES",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60893
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51906
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54819
+        }
+      ]
+    },
+    {
+      "ticker": "ATO",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 23592
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 28073
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 17268
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 25359
+        }
+      ]
+    },
+    {
+      "ticker": "AVB",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 45966
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45371
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52572
+        }
+      ]
+    },
+    {
+      "ticker": "AVGO",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 37481
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 39826
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 41181
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 31413
+        }
+      ]
+    },
+    {
+      "ticker": "AVY",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55540
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46429
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 42687
+        }
+      ]
+    },
+    {
+      "ticker": "AWK",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 22056
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 22040
+        }
+      ]
+    },
+    {
+      "ticker": "AXON",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 58062
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52148
+        }
+      ]
+    },
+    {
+      "ticker": "AXP",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51631
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47448
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52116
+        }
+      ]
+    },
+    {
+      "ticker": "AZO",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 53143
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 59228
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55612
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 59032
+        }
+      ]
+    },
+    {
+      "ticker": "BA",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53722
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48037
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 43791
+        }
+      ]
+    },
+    {
+      "ticker": "BAC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55580
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 40465
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46571
+        }
+      ]
+    },
+    {
+      "ticker": "BALL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48896
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 43476
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 44502
+        }
+      ]
+    },
+    {
+      "ticker": "BAX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54005
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49780
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49634
+        }
+      ]
+    },
+    {
+      "ticker": "BBY",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 58794
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57301
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 63608
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 58403
+        }
+      ]
+    },
+    {
+      "ticker": "BDX",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 53146
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 45683
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 33429
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45349
+        }
+      ]
+    },
+    {
+      "ticker": "BEN",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 57674
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52194
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49141
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56237
+        }
+      ]
+    },
+    {
+      "ticker": "BG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49264
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50072
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 36013
+        }
+      ]
+    },
+    {
+      "ticker": "BIIB",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57709
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51134
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41660
+        }
+      ]
+    },
+    {
+      "ticker": "BK",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 66505
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 68070
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 69097
+        }
+      ]
+    },
+    {
+      "ticker": "BKNG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49736
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53973
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53393
+        }
+      ]
+    },
+    {
+      "ticker": "BKR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52427
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52230
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51378
+        }
+      ]
+    },
+    {
+      "ticker": "BLDR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 45164
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 56689
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 60218
+        }
+      ]
+    },
+    {
+      "ticker": "BLK",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53340
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 58096
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53888
+        }
+      ]
+    },
+    {
+      "ticker": "BMY",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 61361
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 59132
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 61821
+        }
+      ]
+    },
+    {
+      "ticker": "BR",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 43158
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 42992
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45913
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47519
+        }
+      ]
+    },
+    {
+      "ticker": "BRO",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52288
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48006
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41639
+        }
+      ]
+    },
+    {
+      "ticker": "BSX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48349
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51727
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49775
+        }
+      ]
+    },
+    {
+      "ticker": "BX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 62200
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 58345
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50480
+        }
+      ]
+    },
+    {
+      "ticker": "BXP",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 60854
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55105
+        }
+      ]
+    },
+    {
+      "ticker": "C",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 11578
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 19853
+        }
+      ]
+    },
+    {
+      "ticker": "CAG",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 16640
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 37914
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 33666
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 18549
+        }
+      ]
+    },
+    {
+      "ticker": "CAH",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 47290
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 56360
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55200
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 66544
+        }
+      ]
+    },
+    {
+      "ticker": "CARR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51892
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 57330
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50308
+        }
+      ]
+    },
+    {
+      "ticker": "CASY",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 40713
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50219
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48935
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41493
+        }
+      ]
+    },
+    {
+      "ticker": "CAT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 56685
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55267
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51876
+        }
+      ]
+    },
+    {
+      "ticker": "CB",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 41032
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 41115
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 32434
+        }
+      ]
+    },
+    {
+      "ticker": "CBOE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54714
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 56177
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 42439
+        }
+      ]
+    },
+    {
+      "ticker": "CBRE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 41779
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 35459
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 30422
+        }
+      ]
+    },
+    {
+      "ticker": "CCI",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 44358
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 38563
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 42967
+        }
+      ]
+    },
+    {
+      "ticker": "CCL",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 46035
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49211
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52383
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51911
+        }
+      ]
+    },
+    {
+      "ticker": "CDNS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51242
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50325
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41108
+        }
+      ]
+    },
+    {
+      "ticker": "CDW",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47424
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47055
+        }
+      ]
+    },
+    {
+      "ticker": "CEG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48761
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41785
+        }
+      ]
+    },
+    {
+      "ticker": "CF",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 46384
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55171
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49913
+        }
+      ]
+    },
+    {
+      "ticker": "CFG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 67002
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 65617
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 62787
+        }
+      ]
+    },
+    {
+      "ticker": "CHD",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 13848
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50963
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 35505
+        }
+      ]
+    },
+    {
+      "ticker": "CHRW",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 58286
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 64488
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54195
+        }
+      ]
+    },
+    {
+      "ticker": "CHTR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 42769
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55272
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54140
+        }
+      ]
+    },
+    {
+      "ticker": "CI",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60184
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 39721
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 61965
+        }
+      ]
+    },
+    {
+      "ticker": "CIEN",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 45498
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53408
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55243
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50438
+        }
+      ]
+    },
+    {
+      "ticker": "CINF",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 34728
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 34605
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 34019
+        }
+      ]
+    },
+    {
+      "ticker": "CL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 46964
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51894
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 42932
+        }
+      ]
+    },
+    {
+      "ticker": "CLX",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 46577
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55759
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55842
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 24150
+        }
+      ]
+    },
+    {
+      "ticker": "CMCSA",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54248
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 42706
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48812
+        }
+      ]
+    },
+    {
+      "ticker": "CME",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 42425
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51317
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49081
+        }
+      ]
+    },
+    {
+      "ticker": "CMG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 58517
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54589
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56608
+        }
+      ]
+    },
+    {
+      "ticker": "CMI",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53745
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51915
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50388
+        }
+      ]
+    },
+    {
+      "ticker": "CMS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 65172
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 39886
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 29155
+        }
+      ]
+    },
+    {
+      "ticker": "CNC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57575
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54500
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 61496
+        }
+      ]
+    },
+    {
+      "ticker": "CNP",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 44980
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 28764
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50266
+        }
+      ]
+    },
+    {
+      "ticker": "COF",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 70588
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49597
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 64110
+        }
+      ]
+    },
+    {
+      "ticker": "COHR",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 52734
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50295
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54574
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51974
+        }
+      ]
+    },
+    {
+      "ticker": "COIN",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 41768
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44830
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 43202
+        }
+      ]
+    },
+    {
+      "ticker": "COO",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 60214
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60736
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 56366
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 59769
+        }
+      ]
+    },
+    {
+      "ticker": "COP",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54862
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49406
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 42462
+        }
+      ]
+    },
+    {
+      "ticker": "COR",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 53959
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53113
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45208
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47780
+        }
+      ]
+    },
+    {
+      "ticker": "COST",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 63593
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 65580
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 64274
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 59515
+        }
+      ]
+    },
+    {
+      "ticker": "CPAY",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 37042
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51287
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 21501
+        }
+      ]
+    },
+    {
+      "ticker": "CPB",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 48813
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54405
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50941
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49400
+        }
+      ]
+    },
+    {
+      "ticker": "CPRT",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 42697
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 42698
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 34685
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 34520
+        }
+      ]
+    },
+    {
+      "ticker": "CPT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51266
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52520
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47664
+        }
+      ]
+    },
+    {
+      "ticker": "CRH",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50117
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 40553
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52050
+        }
+      ]
+    },
+    {
+      "ticker": "CRL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 62301
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 57194
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56393
+        }
+      ]
+    },
+    {
+      "ticker": "CRM",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 14183
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 58908
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 40997
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 18704
+        }
+      ]
+    },
+    {
+      "ticker": "CRWD",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 49163
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55063
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54681
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54995
+        }
+      ]
+    },
+    {
+      "ticker": "CSCO",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 54679
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55933
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51237
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52880
+        }
+      ]
+    },
+    {
+      "ticker": "CSGP",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48341
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52538
+        }
+      ]
+    },
+    {
+      "ticker": "CSX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50929
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55314
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54915
+        }
+      ]
+    },
+    {
+      "ticker": "CTAS",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 47991
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55148
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50347
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46301
+        }
+      ]
+    },
+    {
+      "ticker": "CTRA",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51149
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54128
+        }
+      ]
+    },
+    {
+      "ticker": "CTSH",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57557
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49257
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54111
+        }
+      ]
+    },
+    {
+      "ticker": "CTVA",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52877
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55393
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51170
+        }
+      ]
+    },
+    {
+      "ticker": "CVNA",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55914
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52005
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56839
+        }
+      ]
+    },
+    {
+      "ticker": "CVS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52703
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50769
+        }
+      ]
+    },
+    {
+      "ticker": "CVX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49248
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 43367
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 44151
+        }
+      ]
+    },
+    {
+      "ticker": "D",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55217
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 41481
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 31773
+        }
+      ]
+    },
+    {
+      "ticker": "DAL",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 42649
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 66071
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46504
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 58955
+        }
+      ]
+    },
+    {
+      "ticker": "DASH",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48788
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46601
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46135
+        }
+      ]
+    },
+    {
+      "ticker": "DD",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 46373
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46633
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 44530
+        }
+      ]
+    },
+    {
+      "ticker": "DDOG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50857
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50187
+        }
+      ]
+    },
+    {
+      "ticker": "DE",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 61106
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 65064
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 61249
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 57242
+        }
+      ]
+    },
+    {
+      "ticker": "DECK",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 51322
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60489
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48701
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48590
+        }
+      ]
+    },
+    {
+      "ticker": "DELL",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 38999
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50011
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52915
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47311
+        }
+      ]
+    },
+    {
+      "ticker": "DG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57559
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 56112
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56195
+        }
+      ]
+    },
+    {
+      "ticker": "DGX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52097
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44516
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 42232
+        }
+      ]
+    },
+    {
+      "ticker": "DHI",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 56193
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 35999
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 57739
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 62654
+        }
+      ]
+    },
+    {
+      "ticker": "DHR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 46555
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 43461
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49560
+        }
+      ]
+    },
+    {
+      "ticker": "DIS",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 34486
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 39229
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 35190
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 33930
+        }
+      ]
+    },
+    {
+      "ticker": "DLR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57839
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53786
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 17246
+        }
+      ]
+    },
+    {
+      "ticker": "DLTR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51587
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53824
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45335
+        }
+      ]
+    },
+    {
+      "ticker": "DOC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49788
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50855
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56611
+        }
+      ]
+    },
+    {
+      "ticker": "DOV",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 46410
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 30954
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 43553
+        }
+      ]
+    },
+    {
+      "ticker": "DOW",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 56205
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52880
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51710
+        }
+      ]
+    },
+    {
+      "ticker": "DPZ",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48867
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55481
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 58525
+        }
+      ]
+    },
+    {
+      "ticker": "DRI",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 44571
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60929
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45691
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 44063
+        }
+      ]
+    },
+    {
+      "ticker": "DTE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 38080
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46377
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 14285
+        }
+      ]
+    },
+    {
+      "ticker": "DUK",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 43448
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 30801
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 31366
+        }
+      ]
+    },
+    {
+      "ticker": "DVA",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 35183
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 32486
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 38122
+        }
+      ]
+    },
+    {
+      "ticker": "DVN",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 36085
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44793
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54149
+        }
+      ]
+    },
+    {
+      "ticker": "DXCM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 44214
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 59009
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56736
+        }
+      ]
+    },
+    {
+      "ticker": "EA",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 40137
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51953
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48361
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 40248
+        }
+      ]
+    },
+    {
+      "ticker": "EBAY",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60688
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 60613
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56009
+        }
+      ]
+    },
+    {
+      "ticker": "ECL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 67514
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44647
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51605
+        }
+      ]
+    },
+    {
+      "ticker": "EFX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 43441
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 67108
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 70421
+        }
+      ]
+    },
+    {
+      "ticker": "EG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 35884
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51121
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50399
+        }
+      ]
+    },
+    {
+      "ticker": "EIX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 33973
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 42556
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50800
+        }
+      ]
+    },
+    {
+      "ticker": "EL",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 49775
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 58778
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 43392
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55526
+        }
+      ]
+    },
+    {
+      "ticker": "ELV",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 14858
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 59389
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50475
+        }
+      ]
+    },
+    {
+      "ticker": "EME",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 24041
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49206
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49260
+        }
+      ]
+    },
+    {
+      "ticker": "EMR",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 45706
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 46316
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 36894
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41112
+        }
+      ]
+    },
+    {
+      "ticker": "EOG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 58835
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 35814
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55615
+        }
+      ]
+    },
+    {
+      "ticker": "EPAM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52804
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 40666
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52473
+        }
+      ]
+    },
+    {
+      "ticker": "EQIX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51763
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51003
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47764
+        }
+      ]
+    },
+    {
+      "ticker": "EQR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49104
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 62971
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 61594
+        }
+      ]
+    },
+    {
+      "ticker": "EQT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 56385
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 66239
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 59855
+        }
+      ]
+    },
+    {
+      "ticker": "ERIE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 11198
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 13969
+        }
+      ]
+    },
+    {
+      "ticker": "ES",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 44630
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 36957
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41887
+        }
+      ]
+    },
+    {
+      "ticker": "ESS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49627
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 41721
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47662
+        }
+      ]
+    },
+    {
+      "ticker": "ETN",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50774
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55212
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45440
+        }
+      ]
+    },
+    {
+      "ticker": "ETR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 38932
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 41074
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48637
+        }
+      ]
+    },
+    {
+      "ticker": "EVRG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53267
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53835
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 39335
+        }
+      ]
+    },
+    {
+      "ticker": "EW",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49989
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47925
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52003
+        }
+      ]
+    },
+    {
+      "ticker": "EXC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49698
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 37852
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 34974
+        }
+      ]
+    },
+    {
+      "ticker": "EXE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47571
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49803
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41972
+        }
+      ]
+    },
+    {
+      "ticker": "EXPE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 46096
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 41290
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 42652
+        }
+      ]
+    },
+    {
+      "ticker": "EXR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 36317
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 41931
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 44519
+        }
+      ]
+    },
+    {
+      "ticker": "F",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49752
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 43259
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51528
+        }
+      ]
+    },
+    {
+      "ticker": "FANG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 46187
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 43678
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 37083
+        }
+      ]
+    },
+    {
+      "ticker": "FAST",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52130
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52648
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 20660
+        }
+      ]
+    },
+    {
+      "ticker": "FCX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54214
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 59386
+        }
+      ]
+    },
+    {
+      "ticker": "FDS",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 56858
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60569
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48165
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55328
+        }
+      ]
+    },
+    {
+      "ticker": "FDX",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 54640
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55897
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 60917
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 62538
+        }
+      ]
+    },
+    {
+      "ticker": "FE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 58411
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 40686
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 40224
+        }
+      ]
+    },
+    {
+      "ticker": "FFIV",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 60013
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55249
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 35088
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53126
+        }
+      ]
+    },
+    {
+      "ticker": "FICO",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 49202
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 38654
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52422
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 38194
+        }
+      ]
+    },
+    {
+      "ticker": "FIS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 44700
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48515
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 35917
+        }
+      ]
+    },
+    {
+      "ticker": "FITB",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 62507
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45558
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 39385
+        }
+      ]
+    },
+    {
+      "ticker": "FIX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 36485
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 34247
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 35065
+        }
+      ]
+    },
+    {
+      "ticker": "FOXA",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 26289
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 33894
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 32754
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 28577
+        }
+      ]
+    },
+    {
+      "ticker": "FRT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 41402
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 42575
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46305
+        }
+      ]
+    },
+    {
+      "ticker": "FSLR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 66143
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53374
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55270
+        }
+      ]
+    },
+    {
+      "ticker": "FTNT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 45544
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48533
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48940
+        }
+      ]
+    },
+    {
+      "ticker": "FTV",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 46388
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54604
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48828
+        }
+      ]
+    },
+    {
+      "ticker": "GD",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 46396
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 39897
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 43415
+        }
+      ]
+    },
+    {
+      "ticker": "GDDY",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52959
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51656
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45472
+        }
+      ]
+    },
+    {
+      "ticker": "GE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 36315
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 41613
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 44382
+        }
+      ]
+    },
+    {
+      "ticker": "GEHC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 12527
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52192
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53235
+        }
+      ]
+    },
+    {
+      "ticker": "GEN",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 44282
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47057
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 41563
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 38469
+        }
+      ]
+    },
+    {
+      "ticker": "GEV",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48956
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 61913
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49168
+        }
+      ]
+    },
+    {
+      "ticker": "GILD",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55305
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52216
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51722
+        }
+      ]
+    },
+    {
+      "ticker": "GIS",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 36843
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 30793
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 31494
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 24234
+        }
+      ]
+    },
+    {
+      "ticker": "GL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48925
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46671
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55544
+        }
+      ]
+    },
+    {
+      "ticker": "GLW",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49279
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 41876
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47003
+        }
+      ]
+    },
+    {
+      "ticker": "GM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60551
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55136
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 61793
+        }
+      ]
+    },
+    {
+      "ticker": "GNRC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60048
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48114
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 69327
+        }
+      ]
+    },
+    {
+      "ticker": "GOOGL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47941
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 40552
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48771
+        }
+      ]
+    },
+    {
+      "ticker": "GPC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 65595
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52894
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56630
+        }
+      ]
+    },
+    {
+      "ticker": "GPN",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 65878
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 62039
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 64185
+        }
+      ]
+    },
+    {
+      "ticker": "GRMN",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 40621
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 31864
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 32274
+        }
+      ]
+    },
+    {
+      "ticker": "GS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 16521
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50600
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56026
+        }
+      ]
+    },
+    {
+      "ticker": "GWW",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57750
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50697
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 43367
+        }
+      ]
+    },
+    {
+      "ticker": "HAL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50854
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50913
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 42457
+        }
+      ]
+    },
+    {
+      "ticker": "HAS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52804
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44882
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46193
+        }
+      ]
+    },
+    {
+      "ticker": "HBAN",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57421
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45005
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46832
+        }
+      ]
+    },
+    {
+      "ticker": "HCA",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55098
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 26151
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48581
+        }
+      ]
+    },
+    {
+      "ticker": "HD",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48034
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47793
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51825
+        }
+      ]
+    },
+    {
+      "ticker": "HIG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52987
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 34548
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48217
+        }
+      ]
+    },
+    {
+      "ticker": "HII",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 61983
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 38930
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 38940
+        }
+      ]
+    },
+    {
+      "ticker": "HLT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57056
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55198
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 39878
+        }
+      ]
+    },
+    {
+      "ticker": "HON",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 64750
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 57861
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50591
+        }
+      ]
+    },
+    {
+      "ticker": "HOOD",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54932
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 59503
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 15387
+        }
+      ]
+    },
+    {
+      "ticker": "HPE",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 53895
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52504
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52165
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51142
+        }
+      ]
+    },
+    {
+      "ticker": "HPQ",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 55286
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51254
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45959
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48294
+        }
+      ]
+    },
+    {
+      "ticker": "HRL",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 51253
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 58815
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54377
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49322
+        }
+      ]
+    },
+    {
+      "ticker": "HSIC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 56809
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47393
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48795
+        }
+      ]
+    },
+    {
+      "ticker": "HST",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 45380
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45191
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 43597
+        }
+      ]
+    },
+    {
+      "ticker": "HSY",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 63904
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 41698
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 42921
+        }
+      ]
+    },
+    {
+      "ticker": "HUBB",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53619
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 41936
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 43552
+        }
+      ]
+    },
+    {
+      "ticker": "HUM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55648
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46804
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 44342
+        }
+      ]
+    },
+    {
+      "ticker": "HWM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 42416
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 36404
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 44687
+        }
+      ]
+    },
+    {
+      "ticker": "IBKR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 34954
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 36193
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41161
+        }
+      ]
+    },
+    {
+      "ticker": "IBM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 59064
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 58884
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 44964
+        }
+      ]
+    },
+    {
+      "ticker": "ICE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54386
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50675
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48762
+        }
+      ]
+    },
+    {
+      "ticker": "IDXX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 56403
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 43682
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51314
+        }
+      ]
+    },
+    {
+      "ticker": "IEX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 58665
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55565
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 57780
+        }
+      ]
+    },
+    {
+      "ticker": "IFF",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 42207
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44702
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46821
+        }
+      ]
+    },
+    {
+      "ticker": "INCY",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60427
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 56449
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 58712
+        }
+      ]
+    },
+    {
+      "ticker": "INTC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52238
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45514
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51510
+        }
+      ]
+    },
+    {
+      "ticker": "INTU",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 60007
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47661
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 57400
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52909
+        }
+      ]
+    },
+    {
+      "ticker": "INVH",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 45605
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44709
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41449
+        }
+      ]
+    },
+    {
+      "ticker": "IP",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 59390
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54292
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52117
+        }
+      ]
+    },
+    {
+      "ticker": "IQV",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 37917
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 39598
+        }
+      ]
+    },
+    {
+      "ticker": "IR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 59146
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48260
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56141
+        }
+      ]
+    },
+    {
+      "ticker": "IRM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 43742
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 35038
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41833
+        }
+      ]
+    },
+    {
+      "ticker": "ISRG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53336
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49528
+        }
+      ]
+    },
+    {
+      "ticker": "IT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 56255
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46816
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52924
+        }
+      ]
+    },
+    {
+      "ticker": "ITW",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48697
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 43430
+        }
+      ]
+    },
+    {
+      "ticker": "IVZ",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 2017
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50137
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48916
+        }
+      ]
+    },
+    {
+      "ticker": "J",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 51004
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 38304
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 34834
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48931
+        }
+      ]
+    },
+    {
+      "ticker": "JBHT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60728
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 57515
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 59951
+        }
+      ]
+    },
+    {
+      "ticker": "JBL",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 40184
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 70379
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 40199
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 36810
+        }
+      ]
+    },
+    {
+      "ticker": "JCI",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 58264
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48722
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 43221
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46884
+        }
+      ]
+    },
+    {
+      "ticker": "JKHY",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 51704
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 59914
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 59432
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 44686
+        }
+      ]
+    },
+    {
+      "ticker": "JNJ",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 68380
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 70399
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 19008
+        }
+      ]
+    },
+    {
+      "ticker": "JPM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 63444
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54080
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 60013
+        }
+      ]
+    },
+    {
+      "ticker": "KDP",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51629
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45435
+        }
+      ]
+    },
+    {
+      "ticker": "KEY",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 63109
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 63569
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49757
+        }
+      ]
+    },
+    {
+      "ticker": "KEYS",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 37087
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52253
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 43813
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41876
+        }
+      ]
+    },
+    {
+      "ticker": "KHC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 29512
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 21572
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 20742
+        }
+      ]
+    },
+    {
+      "ticker": "KIM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 41882
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53730
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55653
+        }
+      ]
+    },
+    {
+      "ticker": "KKR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 66412
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 56066
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53553
+        }
+      ]
+    },
+    {
+      "ticker": "KLAC",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 52056
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49472
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50411
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48533
+        }
+      ]
+    },
+    {
+      "ticker": "KMB",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 39729
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 29825
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 23605
+        }
+      ]
+    },
+    {
+      "ticker": "KMI",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 35294
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 43872
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 32782
+        }
+      ]
+    },
+    {
+      "ticker": "KO",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50986
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52982
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52074
+        }
+      ]
+    },
+    {
+      "ticker": "KR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 58311
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 61746
+        }
+      ]
+    },
+    {
+      "ticker": "KVUE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51591
+        }
+      ]
+    },
+    {
+      "ticker": "LDOS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49640
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44928
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53019
+        }
+      ]
+    },
+    {
+      "ticker": "LEN",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 52833
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 16657
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 32314
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52924
+        }
+      ]
+    },
+    {
+      "ticker": "LH",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49970
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 42224
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49496
+        }
+      ]
+    },
+    {
+      "ticker": "LHX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48794
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46925
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51674
+        }
+      ]
+    },
+    {
+      "ticker": "LII",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 45854
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50046
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 61517
+        }
+      ]
+    },
+    {
+      "ticker": "LIN",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52109
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51688
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41385
+        }
+      ]
+    },
+    {
+      "ticker": "LITE",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 45471
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49494
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46291
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51128
+        }
+      ]
+    },
+    {
+      "ticker": "LLY",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 64852
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 57490
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52637
+        }
+      ]
+    },
+    {
+      "ticker": "LMT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52902
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54970
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50600
+        }
+      ]
+    },
+    {
+      "ticker": "LNT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 37383
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 35198
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 30291
+        }
+      ]
+    },
+    {
+      "ticker": "LOW",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 66908
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49983
+        }
+      ]
+    },
+    {
+      "ticker": "LRCX",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 57608
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50419
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 61409
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54038
+        }
+      ]
+    },
+    {
+      "ticker": "LULU",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51968
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51219
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52503
+        }
+      ]
+    },
+    {
+      "ticker": "LUV",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53561
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55214
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52435
+        }
+      ]
+    },
+    {
+      "ticker": "LVS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 38366
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46041
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 39440
+        }
+      ]
+    },
+    {
+      "ticker": "LYB",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53133
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46805
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51513
+        }
+      ]
+    },
+    {
+      "ticker": "LYV",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 23915
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 22077
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 32165
+        }
+      ]
+    },
+    {
+      "ticker": "MA",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 63113
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 43528
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54932
+        }
+      ]
+    },
+    {
+      "ticker": "MAA",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52464
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55590
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56999
+        }
+      ]
+    },
+    {
+      "ticker": "MAR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 56577
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44969
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49757
+        }
+      ]
+    },
+    {
+      "ticker": "MAS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 58721
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47316
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 17031
+        }
+      ]
+    },
+    {
+      "ticker": "MCD",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55553
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53078
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53097
+        }
+      ]
+    },
+    {
+      "ticker": "MCHP",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 55007
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 56199
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50992
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 44918
+        }
+      ]
+    },
+    {
+      "ticker": "MCK",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 50659
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57681
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54750
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 60325
+        }
+      ]
+    },
+    {
+      "ticker": "MCO",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55333
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54316
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 42287
+        }
+      ]
+    },
+    {
+      "ticker": "MDLZ",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 31577
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 30548
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 25283
+        }
+      ]
+    },
+    {
+      "ticker": "MDT",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 56277
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60138
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54282
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51393
+        }
+      ]
+    },
+    {
+      "ticker": "MET",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 45390
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47517
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49677
+        }
+      ]
+    },
+    {
+      "ticker": "META",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51022
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49468
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 43032
+        }
+      ]
+    },
+    {
+      "ticker": "MGM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 42618
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 39578
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 35142
+        }
+      ]
+    },
+    {
+      "ticker": "MKC",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 42992
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 71672
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 66908
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 58140
+        }
+      ]
+    },
+    {
+      "ticker": "MLM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 65916
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46397
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48194
+        }
+      ]
+    },
+    {
+      "ticker": "MMM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 62697
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 57222
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 61392
+        }
+      ]
+    },
+    {
+      "ticker": "MNST",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 41008
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 37323
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 34459
+        }
+      ]
+    },
+    {
+      "ticker": "MO",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 38321
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 32375
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 40014
+        }
+      ]
+    },
+    {
+      "ticker": "MOS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51740
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46702
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50140
+        }
+      ]
+    },
+    {
+      "ticker": "MPC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49082
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50048
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49450
+        }
+      ]
+    },
+    {
+      "ticker": "MPWR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 42328
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 32205
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 26409
+        }
+      ]
+    },
+    {
+      "ticker": "MRK",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55725
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49837
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 60988
+        }
+      ]
+    },
+    {
+      "ticker": "MRNA",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51193
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44427
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54054
+        }
+      ]
+    },
+    {
+      "ticker": "MRSH",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 44066
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53930
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49665
+        }
+      ]
+    },
+    {
+      "ticker": "MS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54058
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 26893
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 39136
+        }
+      ]
+    },
+    {
+      "ticker": "MSCI",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55060
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 57012
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 61363
+        }
+      ]
+    },
+    {
+      "ticker": "MSFT",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 49783
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47435
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50637
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53340
+        }
+      ]
+    },
+    {
+      "ticker": "MSI",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 61163
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52719
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 34562
+        }
+      ]
+    },
+    {
+      "ticker": "MTB",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51839
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53448
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55340
+        }
+      ]
+    },
+    {
+      "ticker": "MTD",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51996
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50110
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48809
+        }
+      ]
+    },
+    {
+      "ticker": "MU",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 49387
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 45226
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 42289
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45083
+        }
+      ]
+    },
+    {
+      "ticker": "NCLH",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48966
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54268
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45257
+        }
+      ]
+    },
+    {
+      "ticker": "NDAQ",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 58437
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48868
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53569
+        }
+      ]
+    },
+    {
+      "ticker": "NDSN",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 44182
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 45140
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 38745
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47502
+        }
+      ]
+    },
+    {
+      "ticker": "NEE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53438
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 41994
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41819
+        }
+      ]
+    },
+    {
+      "ticker": "NEM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48011
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45949
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 38945
+        }
+      ]
+    },
+    {
+      "ticker": "NFLX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 37584
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 39244
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 38420
+        }
+      ]
+    },
+    {
+      "ticker": "NI",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 37877
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46848
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 29384
+        }
+      ]
+    },
+    {
+      "ticker": "NKE",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 52846
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48787
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54446
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52269
+        }
+      ]
+    },
+    {
+      "ticker": "NOC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47613
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51021
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52506
+        }
+      ]
+    },
+    {
+      "ticker": "NOW",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 64608
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52896
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47746
+        }
+      ]
+    },
+    {
+      "ticker": "NRG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47802
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44076
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 31375
+        }
+      ]
+    },
+    {
+      "ticker": "NSC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55807
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51673
+        }
+      ]
+    },
+    {
+      "ticker": "NTAP",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 47419
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60333
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51085
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 57258
+        }
+      ]
+    },
+    {
+      "ticker": "NTRS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53774
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 59745
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 70029
+        }
+      ]
+    },
+    {
+      "ticker": "NUE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47528
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51265
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49902
+        }
+      ]
+    },
+    {
+      "ticker": "NVDA",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 47375
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 42757
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46652
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46101
+        }
+      ]
+    },
+    {
+      "ticker": "NWSA",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 31387
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 36363
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 33225
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 34160
+        }
+      ]
+    },
+    {
+      "ticker": "NXPI",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 38050
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44852
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47956
+        }
+      ]
+    },
+    {
+      "ticker": "O",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 59531
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 42317
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49315
+        }
+      ]
+    },
+    {
+      "ticker": "ODFL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57282
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51722
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49185
+        }
+      ]
+    },
+    {
+      "ticker": "OKE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53616
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 42248
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45484
+        }
+      ]
+    },
+    {
+      "ticker": "OMC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49415
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 36897
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55442
+        }
+      ]
+    },
+    {
+      "ticker": "ON",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 42250
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53083
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46070
+        }
+      ]
+    },
+    {
+      "ticker": "ORCL",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 35453
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 36546
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 31156
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 26757
+        }
+      ]
+    },
+    {
+      "ticker": "ORLY",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 58884
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 34170
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52294
+        }
+      ]
+    },
+    {
+      "ticker": "OTIS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 66674
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51229
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50210
+        }
+      ]
+    },
+    {
+      "ticker": "PANW",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 63520
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 59240
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51599
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 58483
+        }
+      ]
+    },
+    {
+      "ticker": "PAYX",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 50460
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52166
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 27787
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 57865
+        }
+      ]
+    },
+    {
+      "ticker": "PCAR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 44416
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 43030
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 25769
+        }
+      ]
+    },
+    {
+      "ticker": "PCG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 43794
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 32451
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47411
+        }
+      ]
+    },
+    {
+      "ticker": "PEG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55892
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45535
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 40388
+        }
+      ]
+    },
+    {
+      "ticker": "PEP",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 30253
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45438
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 35416
+        }
+      ]
+    },
+    {
+      "ticker": "PFE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50519
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 64666
+        }
+      ]
+    },
+    {
+      "ticker": "PFG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60228
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 58925
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 59249
+        }
+      ]
+    },
+    {
+      "ticker": "PG",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 50551
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 61756
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 58477
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 62824
+        }
+      ]
+    },
+    {
+      "ticker": "PGR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 62767
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47950
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 72335
+        }
+      ]
+    },
+    {
+      "ticker": "PH",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 42668
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47413
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53313
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46325
+        }
+      ]
+    },
+    {
+      "ticker": "PHM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57779
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50478
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54299
+        }
+      ]
+    },
+    {
+      "ticker": "PKG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47721
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 42722
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 34018
+        }
+      ]
+    },
+    {
+      "ticker": "PLD",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 41173
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53612
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49838
+        }
+      ]
+    },
+    {
+      "ticker": "PLTR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 41754
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 36862
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 39571
+        }
+      ]
+    },
+    {
+      "ticker": "PM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57170
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53253
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 59729
+        }
+      ]
+    },
+    {
+      "ticker": "PNC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47807
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55038
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52407
+        }
+      ]
+    },
+    {
+      "ticker": "PNR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54973
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 57819
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54581
+        }
+      ]
+    },
+    {
+      "ticker": "PNW",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 42994
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 34578
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 36107
+        }
+      ]
+    },
+    {
+      "ticker": "PODD",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55585
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48362
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52184
+        }
+      ]
+    },
+    {
+      "ticker": "POOL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47924
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 43546
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47079
+        }
+      ]
+    },
+    {
+      "ticker": "PPG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 66279
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55012
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48462
+        }
+      ]
+    },
+    {
+      "ticker": "PPL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 67947
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46046
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47201
+        }
+      ]
+    },
+    {
+      "ticker": "PRU",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 41443
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52728
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51801
+        }
+      ]
+    },
+    {
+      "ticker": "PSA",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 63276
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 35663
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53104
+        }
+      ]
+    },
+    {
+      "ticker": "PSKY",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 28688
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 34218
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 17820
+        }
+      ]
+    },
+    {
+      "ticker": "PSX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52058
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55226
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51957
+        }
+      ]
+    },
+    {
+      "ticker": "PTC",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 55801
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 39468
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50068
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 39585
+        }
+      ]
+    },
+    {
+      "ticker": "PWR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 46601
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45738
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47199
+        }
+      ]
+    },
+    {
+      "ticker": "PYPL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54321
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 60800
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 58318
+        }
+      ]
+    },
+    {
+      "ticker": "Q",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48789
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 34621
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 37914
+        }
+      ]
+    },
+    {
+      "ticker": "QCOM",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 41101
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 36597
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 33780
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 38643
+        }
+      ]
+    },
+    {
+      "ticker": "RCL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54907
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49386
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49816
+        }
+      ]
+    },
+    {
+      "ticker": "REG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47599
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46318
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48987
+        }
+      ]
+    },
+    {
+      "ticker": "REGN",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 62127
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 60915
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 58975
+        }
+      ]
+    },
+    {
+      "ticker": "RF",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49296
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47486
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 40748
+        }
+      ]
+    },
+    {
+      "ticker": "RJF",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 52686
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48881
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46505
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46628
+        }
+      ]
+    },
+    {
+      "ticker": "RL",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 49286
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55628
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53357
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54289
+        }
+      ]
+    },
+    {
+      "ticker": "RMD",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 48758
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 42818
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54849
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51950
+        }
+      ]
+    },
+    {
+      "ticker": "ROK",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 54952
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48447
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49968
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55060
+        }
+      ]
+    },
+    {
+      "ticker": "ROL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51674
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 42302
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 32024
+        }
+      ]
+    },
+    {
+      "ticker": "ROP",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 64757
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54815
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49740
+        }
+      ]
+    },
+    {
+      "ticker": "ROST",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51535
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 42431
+        }
+      ]
+    },
+    {
+      "ticker": "RSG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47898
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 42259
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45206
+        }
+      ]
+    },
+    {
+      "ticker": "RTX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57474
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47783
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46501
+        }
+      ]
+    },
+    {
+      "ticker": "RVTY",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 56478
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53061
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52590
+        }
+      ]
+    },
+    {
+      "ticker": "SATS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 26409
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45441
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 37996
+        }
+      ]
+    },
+    {
+      "ticker": "SBAC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49725
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 43935
+        }
+      ]
+    },
+    {
+      "ticker": "SBUX",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 61322
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49844
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 62047
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 57027
+        }
+      ]
+    },
+    {
+      "ticker": "SCHW",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 25386
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53948
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51276
+        }
+      ]
+    },
+    {
+      "ticker": "SHW",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54311
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 64620
+        }
+      ]
+    },
+    {
+      "ticker": "SJM",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 29512
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 35547
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 28987
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 36936
+        }
+      ]
+    },
+    {
+      "ticker": "SLB",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53199
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44823
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48499
+        }
+      ]
+    },
+    {
+      "ticker": "SMCI",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 35338
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 36734
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 35513
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 34336
+        }
+      ]
+    },
+    {
+      "ticker": "SNA",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 37009
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49266
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 62941
+        }
+      ]
+    },
+    {
+      "ticker": "SNDK",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 46307
+        }
+      ]
+    },
+    {
+      "ticker": "SNPS",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 45699
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51191
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47637
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45953
+        }
+      ]
+    },
+    {
+      "ticker": "SO",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51077
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 35977
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 43597
+        }
+      ]
+    },
+    {
+      "ticker": "SOLV",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 42710
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 39633
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47647
+        }
+      ]
+    },
+    {
+      "ticker": "SPG",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 41646
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 36198
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 19307
+        }
+      ]
+    },
+    {
+      "ticker": "SPGI",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 67235
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 65293
+        }
+      ]
+    },
+    {
+      "ticker": "SRE",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47657
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46041
+        }
+      ]
+    },
+    {
+      "ticker": "STE",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 24721
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 24514
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 28961
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 21777
+        }
+      ]
+    },
+    {
+      "ticker": "STLD",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54610
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 58126
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56797
+        }
+      ]
+    },
+    {
+      "ticker": "STT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 70033
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 59405
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53611
+        }
+      ]
+    },
+    {
+      "ticker": "STX",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 49771
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51056
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 42815
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45449
+        }
+      ]
+    },
+    {
+      "ticker": "STZ",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 21898
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 46642
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44130
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 40669
+        }
+      ]
+    },
+    {
+      "ticker": "SW",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 36816
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53527
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53599
+        }
+      ]
+    },
+    {
+      "ticker": "SWK",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51862
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50020
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 42749
+        }
+      ]
+    },
+    {
+      "ticker": "SWKS",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 36928
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 30266
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 31094
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41787
+        }
+      ]
+    },
+    {
+      "ticker": "SYF",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 68594
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 60614
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55058
+        }
+      ]
+    },
+    {
+      "ticker": "SYK",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50446
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 36990
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48503
+        }
+      ]
+    },
+    {
+      "ticker": "SYY",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 60055
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57628
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 57261
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 63045
+        }
+      ]
+    },
+    {
+      "ticker": "T",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 61898
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53289
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51502
+        }
+      ]
+    },
+    {
+      "ticker": "TAP",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 41048
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55982
+        }
+      ]
+    },
+    {
+      "ticker": "TDG",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 49075
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 46305
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45340
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56722
+        }
+      ]
+    },
+    {
+      "ticker": "TDY",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 33264
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 33256
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 40595
+        }
+      ]
+    },
+    {
+      "ticker": "TECH",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 47673
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49337
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48469
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53531
+        }
+      ]
+    },
+    {
+      "ticker": "TEL",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 37351
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 40324
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 30501
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51484
+        }
+      ]
+    },
+    {
+      "ticker": "TER",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48324
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 36577
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51185
+        }
+      ]
+    },
+    {
+      "ticker": "TFC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 18250
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52855
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50385
+        }
+      ]
+    },
+    {
+      "ticker": "TGT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57590
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 63283
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54374
+        }
+      ]
+    },
+    {
+      "ticker": "TJX",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 43055
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52239
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49006
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45852
+        }
+      ]
+    },
+    {
+      "ticker": "TKO",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51802
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47759
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50968
+        }
+      ]
+    },
+    {
+      "ticker": "TMO",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55069
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 56184
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53435
+        }
+      ]
+    },
+    {
+      "ticker": "TMUS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 66672
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 26802
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53366
+        }
+      ]
+    },
+    {
+      "ticker": "TPL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 29427
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 23976
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 24594
+        }
+      ]
+    },
+    {
+      "ticker": "TPR",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 52648
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 44963
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55966
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52600
+        }
+      ]
+    },
+    {
+      "ticker": "TRGP",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 49586
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49230
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45727
+        }
+      ]
+    },
+    {
+      "ticker": "TRMB",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47389
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47006
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49860
+        }
+      ]
+    },
+    {
+      "ticker": "TROW",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 35083
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41722
+        }
+      ]
+    },
+    {
+      "ticker": "TRV",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 58325
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 58564
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50461
+        }
+      ]
+    },
+    {
+      "ticker": "TSCO",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51408
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 58355
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54146
+        }
+      ]
+    },
+    {
+      "ticker": "TSLA",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 46822
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48717
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 35446
+        }
+      ]
+    },
+    {
+      "ticker": "TSN",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 60376
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54994
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52861
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 59847
+        }
+      ]
+    },
+    {
+      "ticker": "TT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 45693
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55286
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56827
+        }
+      ]
+    },
+    {
+      "ticker": "TTD",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60549
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 58075
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54165
+        }
+      ]
+    },
+    {
+      "ticker": "TTWO",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 34734
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 43088
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47250
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 46759
+        }
+      ]
+    },
+    {
+      "ticker": "TXN",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 43344
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 37356
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 38034
+        }
+      ]
+    },
+    {
+      "ticker": "TXT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 51277
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 30261
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 41461
+        }
+      ]
+    },
+    {
+      "ticker": "TYL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53721
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54767
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 44965
+        }
+      ]
+    },
+    {
+      "ticker": "UAL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48884
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 64741
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 60191
+        }
+      ]
+    },
+    {
+      "ticker": "UBER",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 32140
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44297
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 24159
+        }
+      ]
+    },
+    {
+      "ticker": "UDR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55178
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 54579
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 12764
+        }
+      ]
+    },
+    {
+      "ticker": "UHS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 46264
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 44230
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 48230
+        }
+      ]
+    },
+    {
+      "ticker": "ULTA",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55369
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55563
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51764
+        }
+      ]
+    },
+    {
+      "ticker": "UNH",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53679
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 59096
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55567
+        }
+      ]
+    },
+    {
+      "ticker": "UNP",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60161
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51452
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53195
+        }
+      ]
+    },
+    {
+      "ticker": "UPS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 58890
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50982
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 54052
+        }
+      ]
+    },
+    {
+      "ticker": "URI",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 35889
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 42319
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50233
+        }
+      ]
+    },
+    {
+      "ticker": "USB",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57896
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 56675
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50483
+        }
+      ]
+    },
+    {
+      "ticker": "V",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 59860
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55703
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55645
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56407
+        }
+      ]
+    },
+    {
+      "ticker": "VICI",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50420
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 51641
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45190
+        }
+      ]
+    },
+    {
+      "ticker": "VLO",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 63341
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48088
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52358
+        }
+      ]
+    },
+    {
+      "ticker": "VLTO",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48643
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47846
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47028
+        }
+      ]
+    },
+    {
+      "ticker": "VMC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 38648
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 37039
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 36329
+        }
+      ]
+    },
+    {
+      "ticker": "VRSK",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55440
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 43222
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47805
+        }
+      ]
+    },
+    {
+      "ticker": "VRSN",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 25963
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 21918
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 20158
+        }
+      ]
+    },
+    {
+      "ticker": "VRT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 54971
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 49475
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 33527
+        }
+      ]
+    },
+    {
+      "ticker": "VRTX",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52637
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52791
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53074
+        }
+      ]
+    },
+    {
+      "ticker": "VST",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 52249
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46718
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 47861
+        }
+      ]
+    },
+    {
+      "ticker": "VTR",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53454
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 41002
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 52089
+        }
+      ]
+    },
+    {
+      "ticker": "VTRS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50187
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 37663
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 37425
+        }
+      ]
+    },
+    {
+      "ticker": "VZ",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48358
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45350
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56963
+        }
+      ]
+    },
+    {
+      "ticker": "WAB",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57933
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 50404
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 40579
+        }
+      ]
+    },
+    {
+      "ticker": "WAT",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 43524
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 40342
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49860
+        }
+      ]
+    },
+    {
+      "ticker": "WBD",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 20918
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 36924
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 35708
+        }
+      ]
+    },
+    {
+      "ticker": "WDAY",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 53176
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47513
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 48184
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 50691
+        }
+      ]
+    },
+    {
+      "ticker": "WDC",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 44238
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 39201
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55999
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45218
+        }
+      ]
+    },
+    {
+      "ticker": "WEC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 40736
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 42216
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 30301
+        }
+      ]
+    },
+    {
+      "ticker": "WELL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 67759
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53372
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 57412
+        }
+      ]
+    },
+    {
+      "ticker": "WFC",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 62574
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 56563
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 67293
+        }
+      ]
+    },
+    {
+      "ticker": "WM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 60921
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 61337
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 56996
+        }
+      ]
+    },
+    {
+      "ticker": "WMB",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 53662
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 58917
+        }
+      ]
+    },
+    {
+      "ticker": "WMT",
+      "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 64428
+        },
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 62539
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 62807
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55393
+        }
+      ]
+    },
+    {
+      "ticker": "WRB",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 27836
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 46615
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45096
+        }
+      ]
+    },
+    {
+      "ticker": "WSM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 63254
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 57037
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 40113
+        }
+      ]
+    },
+    {
+      "ticker": "WST",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 35291
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 42147
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 40931
+        }
+      ]
+    },
+    {
+      "ticker": "WTW",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 56762
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47581
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55785
+        }
+      ]
+    },
+    {
+      "ticker": "WY",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 65610
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 58053
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 55309
+        }
+      ]
+    },
+    {
+      "ticker": "WYNN",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48901
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 38168
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 33524
+        }
+      ]
+    },
+    {
+      "ticker": "XEL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 50523
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 43945
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 34332
+        }
+      ]
+    },
+    {
+      "ticker": "XOM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 56774
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55928
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45156
+        }
+      ]
+    },
+    {
+      "ticker": "XYL",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 47062
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 35476
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 39788
+        }
+      ]
+    },
+    {
+      "ticker": "XYZ",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 53782
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 55480
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 38272
+        }
+      ]
+    },
+    {
+      "ticker": "YUM",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 48031
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 47327
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 49932
+        }
+      ]
+    },
+    {
+      "ticker": "ZBH",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 55668
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 52357
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 53739
+        }
+      ]
+    },
+    {
+      "ticker": "ZBRA",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 57281
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 45631
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 45766
+        }
+      ]
+    },
+    {
+      "ticker": "ZTS",
+      "quarters": [
+        {
+          "year": 2025,
+          "quarter": 4,
+          "bytes": 61368
+        },
+        {
+          "year": 2025,
+          "quarter": 3,
+          "bytes": 42574
+        },
+        {
+          "year": 2025,
+          "quarter": 2,
+          "bytes": 51489
+        }
+      ]
+    }
+  ]
+}
