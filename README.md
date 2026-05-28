@@ -47,7 +47,7 @@ Thesis CLI is free and open source. To use the canonical DataPacket — the reco
 > **Don't skip this step.** The DataPacket is what gives every research agent the same high-quality, SEC-verified starting point. Without it, research may fail or fall back to more expensive, lower-confidence web search.
 
 1. Go to **[thesis-investing.com](https://thesis-investing.com)** and create an account.
-2. Open your dashboard and copy your API key (it looks like `thesis_live_...`).
+2. Click the settings icon, generate a free Thesis API key, and copy it (it looks like `thesis_live_...`).
 
 ### 2. Install
 
