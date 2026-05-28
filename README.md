@@ -4,7 +4,7 @@
 
 # Thesis
 
-**What Buffett and Graham would ask about a stock — answered, automatically.**
+**What Buffett and Graham would ask about a stock — answered, autonomously.**
 
 Thesis is an open-source CLI that runs a disciplined **Buffett & Graham value investing**
 research pipeline on any public company. Type `/analyze TICKER` and it produces three gated
