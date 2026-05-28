@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 920" role="img" aria-labelledby="title desc">
+  <title id="title">Thesis /analyze agent wave diagram</title>
+  <desc id="desc">A flow diagram showing how Thesis uses gated One Pager, Pitch Deck, and Final Thesis agent waves to produce a comprehensive research report.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#020617" flood-opacity="0.28"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#14b8a6"/>
+    </marker>
+    <style>
+      .bg { fill: url(#bg); }
+      .card { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5; filter: url(#shadow); }
+      .stage { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.5; }
+      .accent { fill: #14b8a6; }
+      .accent2 { fill: #0f766e; }
+      .slate { fill: #1e293b; }
+      .muted { fill: #64748b; }
+      .line { stroke: #14b8a6; stroke-width: 4; fill: none; marker-end: url(#arrow); }
+      .softline { stroke: #94a3b8; stroke-width: 2.5; fill: none; stroke-dasharray: 7 7; }
+      .title { font: 700 34px Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; fill: #f8fafc; }
+      .subtitle { font: 500 17px Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; fill: #cbd5e1; }
+      .h { font: 700 18px Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; fill: #1e293b; }
+      .smallh { font: 700 14px Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; fill: #0f766e; letter-spacing: .02em; }
+      .body { font: 500 13px Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; fill: #334155; }
+      .tiny { font: 500 11px Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; fill: #64748b; }
+      .pillText { font: 700 12px Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; fill: #f8fafc; }
+      .num { font: 800 22px Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; fill: #ffffff; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="920" rx="28"/>
+
+  <g transform="translate(64 48)">
+    <circle cx="18" cy="16" r="10" class="accent"/>
+    <rect x="0" y="38" width="72" height="8" rx="4" fill="#cbd5e1"/>
+    <rect x="30" y="38" width="12" height="52" rx="5" class="accent"/>
+    <text x="96" y="28" class="title">How /analyze builds a Thesis report</text>
+    <text x="96" y="58" class="subtitle">Sequential gates + parallel specialist waves turn raw market data, filings, and transcripts into three research artifacts.</text>
+  </g>
+
+  <g transform="translate(70 145)">
+    <rect class="card" width="1060" height="92" rx="22"/>
+    <rect x="28" y="25" width="110" height="42" rx="21" class="accent"/>
+    <text x="50" y="52" class="pillText">START</text>
+    <text x="170" y="36" class="h">/analyze TICKER</text>
+    <text x="170" y="61" class="body">Validate ticker, create report/cache folders, fetch the canonical Thesis DataPacket, prepare SEC filing sections and bundled transcripts.</text>
+    <text x="850" y="41" class="smallh">Typical full run</text>
+    <text x="850" y="65" class="h">~1.5 hours</text>
+  </g>
+
+  <path class="line" d="M600 237 L600 280"/>
+
+  <g transform="translate(70 286)">
+    <rect class="card" width="1060" height="124" rx="22"/>
+    <circle cx="54" cy="62" r="28" class="accent"/>
+    <text x="47" y="70" class="num">1</text>
+    <text x="102" y="38" class="smallh">STAGE 1 · SCREEN</text>
+    <text x="102" y="65" class="h">One Pager</text>
+    <text x="102" y="91" class="body">One Sonnet subagent performs the fast value-investing screen: minimum standards, meaning, growth metrics, valuation summary, and an overall verdict.</text>
+    <rect x="820" y="34" width="182" height="56" rx="16" fill="#ecfeff" stroke="#99f6e4"/>
+    <text x="846" y="57" class="smallh">Gate</text>
+    <text x="846" y="78" class="body">PASS/WATCHLIST continues; FAIL stops.</text>
+  </g>
+
+  <path class="line" d="M600 410 L600 452"/>
+
+  <g transform="translate(70 458)">
+    <rect class="card" width="1060" height="248" rx="22"/>
+    <circle cx="54" cy="62" r="28" class="accent"/>
+    <text x="46" y="70" class="num">2</text>
+    <text x="102" y="38" class="smallh">STAGE 2 · RESEARCH CASE</text>
+    <text x="102" y="65" class="h">Pitch Deck: primary-source reading + 5 specialist waves</text>
+    <text x="102" y="91" class="body">Agents inside each wave run in parallel; waves run sequentially so later specialists inherit the evidence and conclusions they need.</text>
+
+    <g transform="translate(32 124)">
+      <rect class="stage" x="0" y="0" width="188" height="84" rx="16"/>
+      <text x="18" y="24" class="smallh">W0 · PSR</text>
+      <text x="18" y="47" class="body">Annual + quarterly readers</text>
+      <text x="18" y="67" class="tiny">10-Ks, 10-Qs, transcripts</text>
+
+      <rect class="stage" x="210" y="0" width="188" height="84" rx="16"/>
+      <text x="228" y="24" class="smallh">W1 · Business</text>
+      <text x="228" y="47" class="body">Setup, quality, market</text>
+      <text x="228" y="67" class="tiny">Business + competitive position</text>
+
+      <rect class="stage" x="420" y="0" width="188" height="84" rx="16"/>
+      <text x="438" y="24" class="smallh">W2 · Deep dive</text>
+      <text x="438" y="47" class="body">Moats, financials, mgmt</text>
+      <text x="438" y="67" class="tiny">Cash, returns, debt, allocation</text>
+
+      <rect class="stage" x="630" y="0" width="188" height="84" rx="16"/>
+      <text x="648" y="24" class="smallh">W3 · Risk/Val</text>
+      <text x="648" y="47" class="body">Risk profile + valuation</text>
+      <text x="648" y="67" class="tiny">FGR, buy ranges, red flags</text>
+
+      <rect class="stage" x="840" y="0" width="188" height="84" rx="16"/>
+      <text x="858" y="24" class="smallh">W4 · Synthesis</text>
+      <text x="858" y="47" class="body">Investment verdict</text>
+      <text x="858" y="67" class="tiny">12 sections assembled</text>
+
+      <path class="softline" d="M188 42 L210 42 M398 42 L420 42 M608 42 L630 42 M818 42 L840 42"/>
+    </g>
+  </g>
+
+  <path class="line" d="M600 706 L600 748"/>
+
+  <g transform="translate(70 754)">
+    <rect class="card" width="1060" height="124" rx="22"/>
+    <circle cx="54" cy="62" r="28" class="accent"/>
+    <text x="46" y="70" class="num">3</text>
+    <text x="102" y="38" class="smallh">STAGE 3 · CONVICTION</text>
+    <text x="102" y="65" class="h">Final Thesis: deep analysis → adversarial debate → trade plan</text>
+    <text x="102" y="91" class="body">Five specialists deepen the Pitch Deck in parallel, then Bull → Bear → Rebuttal → Judge → Compose pressure-tests the thesis before a final trade plan is written.</text>
+    <rect x="820" y="34" width="190" height="56" rx="16" fill="#f8fafc" stroke="#cbd5e1"/>
+    <text x="846" y="57" class="smallh">Output</text>
+    <text x="846" y="78" class="body">PDF · DOCX · JSON</text>
+  </g>
+
+  <path class="line" d="M600 878 L600 900"/>
+</svg>
