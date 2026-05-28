@@ -1,8 +1,0 @@
-**/__pycache__
-**/*.pyc
-**/.DS_Store
-.git
-.thesis
-node_modules
-dist
-api/node_modules
