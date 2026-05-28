@@ -120,7 +120,7 @@ Auto-sync happens automatically at the end of `/analyze` whenever an API key is 
 
 Thesis CLI is a thin orchestrator around Claude Code subagents. The `/analyze TICKER` command runs three gated stages in sequence, with each stage writing local artifacts before the next one starts.
 
-![Thesis agent waves](assets/agent-waves.svg?v=20260528)
+![Thesis agent waves](assets/agent-waves.svg?v=20260528-2)
 
 ### Agent team at a glance
 
