@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-05-10T17:19:53.048Z",
-  "totalCount": 1548,
-  "totalBytes": 74550494,
+  "generatedAt": "2026-05-28T05:17:28.386Z",
+  "totalCount": 1570,
+  "totalBytes": 75603357,
   "uniqueTickers": 492,
   "tickers": [
     {
@@ -58,6 +58,11 @@
       "ticker": "ABBV",
       "quarters": [
         {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 68182
+        },
+        {
           "year": 2025,
           "quarter": 4,
           "bytes": 64374
@@ -77,6 +82,11 @@
     {
       "ticker": "ABNB",
       "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 41053
+        },
         {
           "year": 2025,
           "quarter": 4,
@@ -98,6 +108,11 @@
       "ticker": "ABT",
       "quarters": [
         {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 45940
+        },
+        {
           "year": 2025,
           "quarter": 4,
           "bytes": 61763
@@ -117,6 +132,11 @@
     {
       "ticker": "ACGL",
       "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 41662
+        },
         {
           "year": 2025,
           "quarter": 4,
@@ -213,6 +233,11 @@
       "ticker": "ADM",
       "quarters": [
         {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 46166
+        },
+        {
           "year": 2025,
           "quarter": 4,
           "bytes": 49904
@@ -283,6 +308,11 @@
       "ticker": "AEE",
       "quarters": [
         {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 41869
+        },
+        {
           "year": 2025,
           "quarter": 4,
           "bytes": 53965
@@ -302,6 +332,11 @@
     {
       "ticker": "AEP",
       "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 65796
+        },
         {
           "year": 2025,
           "quarter": 4,
@@ -338,6 +373,11 @@
       "ticker": "AFL",
       "quarters": [
         {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 42370
+        },
+        {
           "year": 2025,
           "quarter": 4,
           "bytes": 40797
@@ -357,6 +397,11 @@
     {
       "ticker": "AIG",
       "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 48214
+        },
         {
           "year": 2025,
           "quarter": 4,
@@ -378,6 +423,11 @@
       "ticker": "AIZ",
       "quarters": [
         {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 35522
+        },
+        {
           "year": 2025,
           "quarter": 4,
           "bytes": 50164
@@ -397,6 +447,11 @@
     {
       "ticker": "AJG",
       "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 41144
+        },
         {
           "year": 2025,
           "quarter": 4,
@@ -418,6 +473,11 @@
       "ticker": "AKAM",
       "quarters": [
         {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 46069
+        },
+        {
           "year": 2025,
           "quarter": 4,
           "bytes": 56726
@@ -437,6 +497,11 @@
     {
       "ticker": "ALB",
       "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 41558
+        },
         {
           "year": 2025,
           "quarter": 4,
@@ -458,6 +523,11 @@
       "ticker": "ALGN",
       "quarters": [
         {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 55338
+        },
+        {
           "year": 2025,
           "quarter": 4,
           "bytes": 55308
@@ -478,6 +548,11 @@
       "ticker": "ALL",
       "quarters": [
         {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 46877
+        },
+        {
           "year": 2025,
           "quarter": 4,
           "bytes": 59720
@@ -497,6 +572,11 @@
     {
       "ticker": "ALLE",
       "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 34703
+        },
         {
           "year": 2025,
           "quarter": 4,
@@ -568,6 +648,11 @@
       "ticker": "AMD",
       "quarters": [
         {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 53757
+        },
+        {
           "year": 2025,
           "quarter": 4,
           "bytes": 51446
@@ -587,6 +672,11 @@
     {
       "ticker": "AME",
       "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 39879
+        },
         {
           "year": 2025,
           "quarter": 4,
@@ -608,6 +698,11 @@
       "ticker": "AMGN",
       "quarters": [
         {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 59559
+        },
+        {
           "year": 2025,
           "quarter": 4,
           "bytes": 57747
@@ -627,6 +722,11 @@
     {
       "ticker": "AMP",
       "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 50775
+        },
         {
           "year": 2025,
           "quarter": 4,
@@ -648,6 +748,11 @@
       "ticker": "AMT",
       "quarters": [
         {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 55899
+        },
+        {
           "year": 2025,
           "quarter": 4,
           "bytes": 54639
@@ -667,6 +772,11 @@
     {
       "ticker": "AMZN",
       "quarters": [
+        {
+          "year": 2026,
+          "quarter": 1,
+          "bytes": 50531
+        },
         {
           "year": 2025,
           "quarter": 4,
