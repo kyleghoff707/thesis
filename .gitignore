@@ -39,19 +39,6 @@ validation/scripts/bundled-engines.mjs
 .wrangler/
 api/.wrangler/
 
-# Hidden gstack runtime folder (recreated by skills)
-.gstack/
-
-# gstack project artifacts — track plans/reports, ignore screenshots/logs
-gstack/qa-reports/screenshots/
-gstack/design-reports/screenshots/
-gstack/canary-reports/baselines/
-gstack/canary-reports/screenshots/
-gstack/benchmark-reports/baselines/
-gstack/investigations/screenshots/
-gstack/browse-logs/
-gstack/deploy-reports/*.png
-
 # EDGAR API response cache for accuracy tests (regenerated on demand)
 src/engines/__tests__/fixtures/edgar-cache/
 
