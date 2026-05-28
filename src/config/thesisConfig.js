@@ -15,12 +15,17 @@ function normalizeApiKey(apiKey) {
   return typeof apiKey === 'string' ? apiKey.trim() : '';
 }
 
+function normalizeAccountEmail(accountEmail) {
+  return typeof accountEmail === 'string' ? accountEmail.trim() : '';
+}
+
 function normalizeConfig(config = {}) {
   return {
     ...config,
     apiBaseUrl: normalizeApiBaseUrl(config.apiBaseUrl),
     apiKey: normalizeApiKey(config.apiKey),
     defaultMode: config.defaultMode || DEFAULT_MODE,
+    accountEmail: normalizeAccountEmail(config.accountEmail),
   };
 }
 

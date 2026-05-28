@@ -20,11 +20,16 @@ function cleanApiKey(apiKey) {
   return typeof apiKey === 'string' ? apiKey.trim() : '';
 }
 
+function cleanAccountEmail(accountEmail) {
+  return typeof accountEmail === 'string' ? accountEmail.trim() : '';
+}
+
 export function createSetupConfig(options = {}) {
   return {
     apiBaseUrl: cleanApiBaseUrl(options.apiBaseUrl),
     apiKey: cleanApiKey(options.apiKey),
     defaultMode: options.defaultMode || DEFAULT_MODE,
+    accountEmail: cleanAccountEmail(options.accountEmail),
   };
 }
 
@@ -38,14 +43,19 @@ async function runSetup() {
   try {
     const apiBaseUrlAnswer = await rl.question(`Thesis Data API URL [${DEFAULT_API_BASE_URL}]: `);
     const apiKeyAnswer = await rl.question('Thesis Data API key (leave blank if key issuing is not enabled yet): ');
+    const accountEmailAnswer = await rl.question('Thesis account email (optional, used only in CLI log output): ');
     const result = writeSetupConfig({
       apiBaseUrl: apiBaseUrlAnswer,
       apiKey: apiKeyAnswer,
+      accountEmail: accountEmailAnswer,
     });
 
     console.log(`\nWrote ${result.path}`);
     console.log(`Data API URL: ${result.config.apiBaseUrl}`);
     console.log(`API key: ${maskApiKey(result.config.apiKey)}`);
+    if (result.config.accountEmail) {
+      console.log(`Account email: ${result.config.accountEmail}`);
+    }
 
     if (!result.config.apiKey) {
       console.log('No API key saved. Real hosted runs require a live key from thesis-investing.com once key issuing is enabled.');

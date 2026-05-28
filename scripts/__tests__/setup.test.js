@@ -29,6 +29,7 @@ describe('setup helper', () => {
       apiBaseUrl: 'https://api.example.test',
       apiKey: 'thesis_live_test_key',
       defaultMode: 'hosted-data',
+      accountEmail: '',
     });
   });
 
@@ -37,6 +38,7 @@ describe('setup helper', () => {
       apiBaseUrl: 'https://api.thesis-investing.com',
       apiKey: 'thesis_live_test_key',
       defaultMode: 'hosted-data',
+      accountEmail: '',
     });
   });
 
@@ -52,6 +54,30 @@ describe('setup helper', () => {
       apiBaseUrl: 'https://api.example.test',
       apiKey: 'thesis_live_test_key',
       defaultMode: 'hosted-data',
+      accountEmail: '',
+    });
+  });
+
+  it('passes accountEmail through to the written config', () => {
+    const result = writeSetupConfig({
+      apiKey: 'thesis_live_test_key',
+      accountEmail: '  user@example.com  ',
+    });
+
+    expect(JSON.parse(readFileSync(result.path, 'utf8'))).toEqual({
+      apiBaseUrl: 'https://api.thesis-investing.com',
+      apiKey: 'thesis_live_test_key',
+      defaultMode: 'hosted-data',
+      accountEmail: 'user@example.com',
+    });
+  });
+
+  it('defaults accountEmail to empty string', () => {
+    expect(createSetupConfig({ apiKey: 'thesis_live_test_key' })).toEqual({
+      apiBaseUrl: 'https://api.thesis-investing.com',
+      apiKey: 'thesis_live_test_key',
+      defaultMode: 'hosted-data',
+      accountEmail: '',
     });
   });
 });

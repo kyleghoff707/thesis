@@ -1,12 +1,13 @@
 # Thesis Skills
 
-Four Claude Code skills power the Thesis investment-research pipeline. They live here as real folders (each with a `SKILL.md`) so Claude Code can discover and invoke them.
+Claude Code skills power the Thesis investment-research pipeline and account injection flow. They live here as real folders (each with a `SKILL.md`) so Claude Code can discover and invoke them.
 
 ## The skills
 
 | Skill | Invocation | Purpose |
 |---|---|---|
 | **analyze** | `/analyze TICKER` | Runs the full 3-stage pipeline end-to-end (One Pager → Pitch Deck → Final Thesis). The normal entry point. |
+| **inject** | `/inject TICKER` | Pushes locally-generated reports for a ticker to the user's Thesis website account. |
 | **generate-one-pager** | `/generate-one-pager TICKER` | Stage 1 — single-agent quick screen with a pass/fail verdict. |
 | **generate-pitch-deck** | `/generate-pitch-deck TICKER` | Stage 2 — 12-section research case dispatched across 5 parallel waves of subagents. |
 | **generate-final-thesis** | `/generate-final-thesis TICKER` | Stage 3 — 7-section conviction document with adversarial bull/bear debate. |

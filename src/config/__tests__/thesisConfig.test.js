@@ -32,6 +32,7 @@ describe('thesisConfig', () => {
       apiBaseUrl: DEFAULT_API_BASE_URL,
       apiKey: '',
       defaultMode: 'hosted-data',
+      accountEmail: '',
     });
   });
 
@@ -48,12 +49,14 @@ describe('thesisConfig', () => {
       apiBaseUrl: 'https://example.com/api',
       apiKey: 'thesis_live_testkey',
       defaultMode: 'local-data',
+      accountEmail: '',
       userAgent: 'Thesis CLI/0.1 research@example.com',
     });
     expect(readThesisConfig()).toEqual({
       apiBaseUrl: 'https://example.com/api',
       apiKey: 'thesis_live_testkey',
       defaultMode: 'local-data',
+      accountEmail: '',
       userAgent: 'Thesis CLI/0.1 research@example.com',
     });
   });
@@ -68,6 +71,27 @@ describe('thesisConfig', () => {
     writeThesisConfig({ apiKey: '  thesis_live_key  ' });
 
     expect(readThesisConfig().apiKey).toBe('thesis_live_key');
+  });
+
+  it('preserves accountEmail and trims whitespace', () => {
+    writeThesisConfig({
+      apiKey: 'thesis_live_testkey',
+      accountEmail: '  user@example.com  ',
+    });
+
+    expect(readThesisConfig()).toEqual({
+      apiBaseUrl: DEFAULT_API_BASE_URL,
+      apiKey: 'thesis_live_testkey',
+      defaultMode: 'hosted-data',
+      accountEmail: 'user@example.com',
+    });
+  });
+
+  it('defaults accountEmail to empty string when absent', () => {
+    writeThesisConfig({ apiKey: 'thesis_live_testkey' });
+
+    const config = readThesisConfig();
+    expect(config.accountEmail).toBe('');
   });
 
   it('throws a helpful setup error when apiKey is missing', () => {

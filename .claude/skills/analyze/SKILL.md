@@ -83,6 +83,31 @@ Output: ~/thesis/reports/{TICKER}/
 
 Each stage auto-archives its outputs to `~/thesis/reports/{TICKER}/archive/{RUN_ID}/` so prior runs are preserved.
 
+## Step 6: Inject to Thesis account (auto-pilot)
+
+Before invoking `/inject`, check whether the user has configured a hosted account:
+
+- Read `~/thesis/config.json`.
+- If the file does not exist, or `apiKey` is missing or empty, skip Step 6 entirely with no output.
+- Only if `apiKey` is present and non-empty, invoke:
+  ```
+  /inject {TICKER}
+  ```
+
+On success from `/inject`, print one extra line:
+```
+✓ Injected to your Thesis account: https://thesis-investing.com/reports/{TICKER}
+```
+
+On failure (non-zero exit from `/inject`), print a warning and continue:
+```
+⚠ Auto-inject failed: <reason from /inject stdout>
+   Reports saved locally to ~/thesis/reports/{TICKER}/
+   Retry with: /inject {TICKER}
+```
+
+Inject is best-effort and must not derail `/analyze`. Either way, `/analyze` exits successfully because local artifacts are the source of truth.
+
 ## Constraints
 
 ### Auto-pilot Mode

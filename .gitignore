@@ -91,13 +91,14 @@ STEPS.md
 # notice that used to live here has been promoted to PRIVACY.md at the root.
 docs/
 
-# Skill library — only the four production investment-research skills are tracked
+# Skill library — only the production investment-research skills are tracked
 # in this public repo. Everything else under .claude/skills/ is the author's local
 # skill collection (mostly symlinks into ~/.claude/skills/, broken for anyone
 # cloning). Keep README.md tracked so the in-repo skill set is documented.
 .claude/skills/*
 !.claude/skills/README.md
 !.claude/skills/analyze/
+!.claude/skills/inject/
 !.claude/skills/generate-one-pager/
 !.claude/skills/generate-pitch-deck/
 !.claude/skills/generate-final-thesis/
