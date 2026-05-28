@@ -68,6 +68,10 @@ agents/.staging-sync/
 # Personal notes / runbooks — not part of the public repo
 _notes/
 
+# Local agent instructions — kept on the author's machine, not in public history.
+AGENTS.md
+CLAUDE.md
+
 # Worker source — kept out of the public OSS repo.
 # Lives on the author's local Desktop only. See docs/specs/2026-05-10-phase-3-portability.md.
 api/
@@ -98,7 +102,7 @@ docs/
 !.claude/skills/generate-pitch-deck/
 !.claude/skills/generate-final-thesis/
 
-# Codex-local scratch dir; AGENTS.md itself is tracked (twin of CLAUDE.md).
+# Codex-local scratch dir.
 .agents/
 
 # Codex-local command approvals; translated from .claude/settings.local.json.
