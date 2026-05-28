@@ -192,7 +192,7 @@
     <text x="104" y="65" class="h">Final Thesis: three sequential phases</text>
     <text x="104" y="94" class="body">The completed Pitch Deck is inherited first, then deep specialists run in parallel, debate runs sequentially, and the trade plan closes the loop.</text>
 
-    <g transform="translate(104 124)">
+    <g transform="translate(72 124)">
       <g transform="translate(0 0)">
         <rect class="panel" width="340" height="84" rx="18"/>
         <text x="18" y="29" class="label">PHASE 1 · DEEP ANALYSIS</text>
