@@ -49,14 +49,14 @@
       <rect x="27" y="25" width="8" height="28" rx="3" class="accent"/>
     </g>
     <text x="92" y="25" class="title">How /analyze runs research agents</text>
-    <text x="94" y="58" class="subtitle">Sequential waves. Parallel agents inside each wave. Evidence handed forward cleanly.</text>
+    <text x="94" y="58" class="subtitle">Sequential waves. Parallel agents. Evidence handed forward cleanly.</text>
   </g>
 
   <!-- Global runtime badge -->
-  <g transform="translate(1010 54)">
-    <rect width="318" height="78" rx="22" class="tealSoft"/>
-    <text x="30" y="32" class="label">TYPICAL FULL RUN</text>
-    <text x="30" y="58" class="h">About 1.5 hours end-to-end</text>
+  <g transform="translate(1018 54)">
+    <rect width="310" height="78" rx="22" class="tealSoft"/>
+    <text x="28" y="32" class="label">TYPICAL FULL RUN</text>
+    <text x="28" y="57" class="body">About 1.5 hours end-to-end</text>
   </g>
 
   <!-- Legend -->
@@ -68,7 +68,8 @@
     <g transform="translate(216 24)">
       <path class="thinFlow" d="M0 24 L112 24"/>
       <text x="136" y="20" class="h2">Sequential between waves</text>
-      <text x="136" y="43" class="small">A wave starts only after the prior wave has finished and been saved.</text>
+      <text x="136" y="43" class="small">A wave starts only after the prior wave</text>
+      <text x="136" y="61" class="small">has finished and been saved.</text>
     </g>
 
     <line x1="658" y1="23" x2="658" y2="73" class="divider"/>
@@ -101,9 +102,10 @@
     <text x="104" y="36" class="label">STAGE 1 · SCREEN</text>
     <text x="104" y="63" class="h">One Pager</text>
     <text x="104" y="91" class="body">A single Sonnet agent runs the fast value-investing screen and returns PASS, WATCHLIST, or FAIL.</text>
-    <rect x="940" y="30" width="248" height="56" rx="16" class="tealSoft"/>
-    <text x="966" y="53" class="label">GATE</text>
-    <text x="966" y="75" class="body">PASS/WATCHLIST continues · FAIL stops</text>
+    <rect x="910" y="28" width="298" height="60" rx="16" class="tealSoft"/>
+    <text x="936" y="52" class="label">GATE</text>
+    <text x="936" y="72" class="small">PASS/WATCHLIST continues</text>
+    <text x="936" y="86" class="small">FAIL stops</text>
   </g>
 
   <path class="flow" d="M700 542 L700 580"/>
@@ -127,7 +129,6 @@
         <text x="32" y="76" class="body">Annual Reader</text>
         <rect class="agent" x="18" y="102" width="160" height="38" rx="12"/>
         <text x="32" y="126" class="body">Quarterly Reader</text>
-        <text x="18" y="164" class="tiny">PARALLEL DISPATCH</text>
       </g>
       <path class="thinFlow" d="M204 92 L240 92"/>
 
@@ -139,7 +140,6 @@
         <text x="32" y="76" class="body">Business Analyst</text>
         <rect class="agent" x="18" y="102" width="160" height="38" rx="12"/>
         <text x="32" y="126" class="body">Market Position</text>
-        <text x="18" y="164" class="tiny">RUNS AFTER W0</text>
       </g>
       <path class="thinFlow" d="M452 92 L488 92"/>
 
@@ -153,7 +153,6 @@
         <text x="32" y="110" class="body">Financial Analyst</text>
         <rect class="agent" x="18" y="130" width="160" height="34" rx="11"/>
         <text x="32" y="152" class="body">Management Eval.</text>
-        <text x="18" y="176" class="tiny">PARALLEL DISPATCH</text>
       </g>
       <path class="thinFlow" d="M700 92 L736 92"/>
 
@@ -165,7 +164,6 @@
         <text x="32" y="76" class="body">Risk Analyst</text>
         <rect class="agent" x="18" y="102" width="160" height="38" rx="12"/>
         <text x="32" y="126" class="body">Valuation Specialist</text>
-        <text x="18" y="164" class="tiny">RUNS AFTER W2</text>
       </g>
       <path class="thinFlow" d="M948 92 L984 92"/>
 
@@ -176,7 +174,6 @@
         <rect class="agent" x="18" y="66" width="160" height="48" rx="12"/>
         <text x="38" y="86" class="body">Synthesis Writer</text>
         <text x="44" y="106" class="small">Investment verdict</text>
-        <text x="18" y="164" class="tiny">12 SECTIONS ASSEMBLED</text>
       </g>
     </g>
 
@@ -197,28 +194,28 @@
 
     <g transform="translate(104 124)">
       <g transform="translate(0 0)">
-        <rect class="panel" width="360" height="84" rx="18"/>
+        <rect class="panel" width="340" height="84" rx="18"/>
         <text x="18" y="29" class="label">PHASE 1 · DEEP ANALYSIS</text>
         <text x="18" y="54" class="body">5 specialists run in parallel</text>
-        <text x="18" y="73" class="small">Event · Business · Moat · Management · Valuation</text>
+        <text x="18" y="73" class="small">Event · Business · Moat · Management</text>
       </g>
 
-      <path class="thinFlow" d="M372 42 L406 42"/>
+      <path class="thinFlow" d="M352 42 L386 42"/>
 
-      <g transform="translate(418 0)">
-        <rect class="panel" width="438" height="84" rx="18"/>
+      <g transform="translate(398 0)">
+        <rect class="panel" width="398" height="84" rx="18"/>
         <text x="18" y="29" class="label">PHASE 2 · ADVERSARIAL DEBATE</text>
         <text x="18" y="54" class="body">Bull → Bear → Rebuttal → Judge → Compose</text>
-        <text x="18" y="73" class="small">Sequential pressure test; each step depends on the prior output.</text>
+        <text x="18" y="73" class="small">Sequential pressure test; each step depends on prior output.</text>
       </g>
 
-      <path class="thinFlow" d="M868 42 L902 42"/>
+      <path class="thinFlow" d="M808 42 L842 42"/>
 
-      <g transform="translate(914 0)">
-        <rect class="panel" width="274" height="84" rx="18"/>
+      <g transform="translate(854 0)">
+        <rect class="panel" width="300" height="84" rx="18"/>
         <text x="18" y="29" class="label">PHASE 3 · TRADE PLAN</text>
         <text x="18" y="54" class="body">Position sizing + rules</text>
-        <text x="18" y="73" class="small">Entry, sell, monitor, contingency.</text>
+        <text x="18" y="73" class="small">Entry · sell · monitor · contingency</text>
       </g>
     </g>
   </g>
