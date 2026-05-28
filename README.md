@@ -16,7 +16,7 @@ locally on your own Claude Code subscription.
 ![Python](https://img.shields.io/badge/Python-3.11%2B-14b8a6?style=flat-square&labelColor=1e293b)
 ![Reports](https://img.shields.io/badge/Reports-PDF%20%C2%B7%20DOCX%20%C2%B7%20JSON-1e293b?style=flat-square&labelColor=1e293b)
 
-[**thesis-investing.com**](https://thesis-investing.com) &nbsp;·&nbsp; [Quickstart](#quickstart) &nbsp;·&nbsp; [What you get](#what-you-get) &nbsp;·&nbsp; [Where your reports go](#where-your-reports-go) &nbsp;·&nbsp; [How it works](#how-it-works)
+[**thesis-investing.com**](https://thesis-investing.com) &nbsp;·&nbsp; [Quickstart](#quickstart) &nbsp;·&nbsp; [What you get](#what-you-get) &nbsp;·&nbsp; [DataPacket](#why-the-datapacket-matters) &nbsp;·&nbsp; [Where your reports go](#where-your-reports-go) &nbsp;·&nbsp; [How it works](#how-it-works)
 
 </div>
 
@@ -42,7 +42,9 @@ Every report is scored on the **4-pillar Thesis Score**: Compounding · Capital 
 
 ### 1. Create a free account and get your API key
 
-Thesis CLI is free and open source. To pull the canonical financial DataPackets it needs, you use a **free, rate-limited API key**.
+Thesis CLI is free and open source. To use the canonical DataPacket — the recommended data path for serious research — you need a **free, rate-limited API key**.
+
+> **Don't skip this step.** The DataPacket is what gives every research agent the same high-quality, SEC-verified starting point. Without it, research may fail or fall back to more expensive, lower-confidence web search.
 
 1. Go to **[thesis-investing.com](https://thesis-investing.com)** and create an account.
 2. Open your dashboard and copy your API key (it looks like `thesis_live_...`).
@@ -82,6 +84,25 @@ Open Claude Code in this folder and type:
 
 That's it. The full pipeline runs auto-pilot — no per-stage approvals.
 
+## Why the DataPacket matters
+
+The Thesis DataPacket is the structured financial dataset that powers the research pipeline. Think of it as the built-in replacement for wiring agents into external finance products like Morningstar, MarketWatch, or Yahoo Finance: those services ultimately source public-company fundamentals from SEC filings, and Thesis does the same, then packages the data into a consistent agent-ready format.
+
+A DataPacket includes the core inputs agents need before they read filings and transcripts:
+
+- Company identity and classification: ticker, CIK, SIC, exchange, sector, industry, and peer context.
+- SEC-derived financial statements: income statement, balance sheet, cash flow, TTM values, and filing provenance.
+- Quality and valuation inputs: growth rates, free cash flow, return metrics, debt metrics, key metrics, and Thesis Score pillars.
+- Market and ownership context: peer quotes/metrics, guru holdings, insider activity, executive compensation, and dividend-related data when available.
+- Source coverage: available filings, transcript availability, caveats, and timestamps so agents know what evidence exists.
+
+This matters because an agent's output is only as good as its inputs. The DataPacket ensures two things:
+
+1. **Consistency:** every pipeline starts from the same schema and the same type of data, so agents are not improvising different research foundations ticker by ticker.
+2. **Quality:** the numbers are grounded in, and checked against, actual SEC filings instead of whatever a web search happens to find.
+
+You can run the open-source CLI locally, but the intended workflow is to create a free account at **[thesis-investing.com](https://thesis-investing.com)** and import your Thesis API key during setup. Without the DataPacket, agents are effectively flying blind: they may miss critical facts, spend extra tokens searching the web, or produce lower-quality analysis.
+
 ## Where your reports go
 
 Every run delivers your reports to **two places at once**:
@@ -97,32 +118,46 @@ Auto-sync happens automatically at the end of `/analyze` whenever an API key is 
 
 ## How it works
 
-Thesis CLI is a thin orchestrator around Claude Code subagents:
+Thesis CLI is a thin orchestrator around Claude Code subagents. The `/analyze TICKER` command runs three gated stages in sequence, with each stage writing local artifacts before the next one starts.
 
-- A skill (`/analyze TICKER`) kicks off the pipeline.
-- The CLI fetches a canonical DataPacket from the hosted **Thesis Data API** using your free account key.
-- Local scripts slice the DataPacket for each agent, extract SEC filing sections, and load bundled earnings transcripts.
-- **Claude Code subagents run locally** on your own subscription.
-- Python renders each result to PDF and DOCX in `~/thesis/reports/{TICKER}/`.
+![Thesis agent waves](docs/assets/agent-waves.svg)
 
-Your subscription, your machine, your reports.
+### Agent team at a glance
+
+- **Data first:** the CLI fetches a canonical DataPacket from the hosted **Thesis Data API**, slices only the fields each agent needs, extracts SEC filing sections, and loads bundled earnings transcripts.
+- **Parallel where safe, sequential where necessary:** agents inside a wave run in parallel; later waves wait so they can inherit prior findings instead of duplicating work or contradicting earlier evidence.
+- **Gated progression:** One Pager `PASS` or `WATCHLIST` advances to the Pitch Deck; `FAIL` stops early. The Pitch Deck must complete with a usable verdict before the Final Thesis begins.
+- **Local generation:** Claude Code subagents run on your own subscription. Python renderers turn the final JSON into PDF and DOCX in `~/thesis/reports/{TICKER}/`.
+
+| Stage | Agent flow | Why it exists |
+|---|---|---|
+| **1. One Pager** | 1 screening subagent | Fast reject / continue decision before spending deeper research budget. |
+| **2. Pitch Deck** | Primary-source readers, then 5 waves: Business → Deep Analysis → Risk/Valuation → Synthesis | Builds the 12-section research case from filings, transcripts, market structure, financial quality, management, risk, and valuation. |
+| **3. Final Thesis** | 5 deep-analysis agents in parallel, then **Bull → Bear → Rebuttal → Judge → Compose**, then Trade Plan | Pressure-tests the case and turns it into a conviction-level thesis with practical buy/sell/watch rules. |
+
+A full `/analyze` run usually takes **about 1.5 hours** for a company that passes all gates. The Pitch Deck is normally the bottleneck because it fans out the most filing/transcript readers and specialist research agents.
 
 ```
 /analyze TICKER
     |
     v
-One Pager (1 subagent) ----------- PASS? --+
-                                           v
-Pitch Deck (10 subagents, 5 waves) --- verdict?
-                                           v
-Final Thesis (7 subagents, with debate)
-                                           v
-                          ~/thesis/reports/{TICKER}/
-                              one-pager.pdf
-                              pitch-deck.pdf
-                              final-thesis.pdf
-            + auto-synced to thesis-investing.com
+One Pager screen ── FAIL? stop
+    |
+    v
+Pitch Deck waves ── 12-section research case + verdict
+    |
+    v
+Final Thesis ── adversarial debate + trade plan
+    |
+    v
+~/thesis/reports/{TICKER}/
+    one-pager.pdf/.docx/.json
+    pitch-deck.pdf/.docx/.json
+    final-thesis.pdf/.docx/.json
+    + optional sync to thesis-investing.com
 ```
+
+Your subscription, your machine, your reports.
 
 ## Methodology
 
@@ -146,13 +181,13 @@ Mac and Linux are tested. Windows works (file issues if not).
 
 Thesis runs on your Claude Code subscription — your account, your rate limits, your token budget.
 
-| Stage | Subagents | Tier |
+| Stage | Subagent pattern | Tier |
 |---|---|---|
-| One Pager | 1 | **Pro** is fine |
-| Pitch Deck | 10 parallel (5 waves of ~2) | **Max** strongly recommended |
-| Final Thesis | 7 sequential with debate | **Pro** workable, **Max** smoother |
+| One Pager | 1 screening agent | **Pro** is fine |
+| Pitch Deck | Primary-source readers plus 8 specialist roles across 5 waves | **Max** strongly recommended |
+| Final Thesis | 11 dispatches across deep analysis, debate, compose, and trade plan | **Pro** workable, **Max** smoother |
 
-The Pitch Deck stage is the bottleneck — it fans out 10 specialist subagents, and Pro-tier accounts may hit usage limits mid-run. On Pro, generate One Pagers first and only spend Pitch Deck / Final Thesis budget on tickers that pass.
+The Pitch Deck stage is the bottleneck — it fans out the most filing/transcript readers and specialist research agents, and Pro-tier accounts may hit usage limits mid-run. On Pro, generate One Pagers first and only spend Pitch Deck / Final Thesis budget on tickers that pass.
 
 </details>
 
