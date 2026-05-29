@@ -141,7 +141,11 @@ export function inlineDebatePaths(raw, sourcePath) {
     for (const candidate of candidates) {
       if (!existsSync(candidate)) continue;
       try {
-        raw.debate[key] = { content: JSON.parse(readFileSync(candidate, 'utf8')) };
+        // Debate-step files are already enveloped as { step, role, ..., content }.
+        // Assign the parsed file directly so the wire shape is `stepXxx.content = <debate data>`,
+        // which is what the hosted renderer reads. Re-wrapping here would double-nest the data
+        // (stepXxx.content.content) and the renderer would show empty Bull/Bear/Rebuttal/Judge tabs.
+        raw.debate[key] = JSON.parse(readFileSync(candidate, 'utf8'));
         break;
       } catch {
         // Keep trying candidates; malformed or unreadable files should not crash inject.

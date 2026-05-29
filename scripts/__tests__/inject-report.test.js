@@ -161,14 +161,15 @@ describe('inlineDebatePaths', () => {
     tmp.cleanup();
   });
 
-  it('inlines all 4 debate steps when sibling files exist', () => {
+  it('inlines all 4 debate steps as the whole parsed file (renderer reads .content)', () => {
     const tickerDir = join(tmp.root, 'reports', 'AAPL');
     const sectionsDir = join(tickerDir, 'sections');
     mkdirSync(sectionsDir, { recursive: true });
-    writeFileSync(join(sectionsDir, 'debate-step-1-bull.json'), JSON.stringify({ side: 'bull' }));
-    writeFileSync(join(sectionsDir, 'debate-step-2-bear.json'), JSON.stringify({ side: 'bear' }));
-    writeFileSync(join(sectionsDir, 'debate-step-3-rebuttal.json'), JSON.stringify({ side: 'rebuttal' }));
-    writeFileSync(join(sectionsDir, 'debate-step-4-judge.json'), JSON.stringify({ side: 'judge' }));
+    // Debate-step files are enveloped: { step, role, ..., content: <debate data> } — match production shape.
+    writeFileSync(join(sectionsDir, 'debate-step-1-bull.json'), JSON.stringify({ step: 1, role: 'bull', content: { thesisPoints: ['p1'] } }));
+    writeFileSync(join(sectionsDir, 'debate-step-2-bear.json'), JSON.stringify({ step: 2, role: 'bear', content: { inversions: ['i1'] } }));
+    writeFileSync(join(sectionsDir, 'debate-step-3-rebuttal.json'), JSON.stringify({ step: 3, role: 'rebuttal', content: { rebuttals: ['r1'] } }));
+    writeFileSync(join(sectionsDir, 'debate-step-4-judge.json'), JSON.stringify({ step: 4, role: 'judge', content: { overallVerdict: { direction: 'Mixed' } } }));
 
     const result = inlineDebatePaths({
       debate: {
@@ -179,10 +180,14 @@ describe('inlineDebatePaths', () => {
       },
     }, join(tickerDir, 'final-thesis.json'));
 
-    expect(result.debate.step1Bull).toEqual({ content: { side: 'bull' } });
-    expect(result.debate.step2Bear).toEqual({ content: { side: 'bear' } });
-    expect(result.debate.step3Rebuttal).toEqual({ content: { side: 'rebuttal' } });
-    expect(result.debate.step4Judge).toEqual({ content: { side: 'judge' } });
+    // The whole parsed file is assigned directly — NOT re-wrapped in another { content: ... }.
+    expect(result.debate.step1Bull).toEqual({ step: 1, role: 'bull', content: { thesisPoints: ['p1'] } });
+    expect(result.debate.step4Judge).toEqual({ step: 4, role: 'judge', content: { overallVerdict: { direction: 'Mixed' } } });
+    // Renderer reads stepXxx.content and must find the debate data there, not metadata.
+    expect(result.debate.step1Bull.content).toEqual({ thesisPoints: ['p1'] });
+    expect(result.debate.step2Bear.content).toEqual({ inversions: ['i1'] });
+    // Regression guard: the data must NOT be double-nested at .content.content.
+    expect(result.debate.step1Bull.content.content).toBeUndefined();
   });
 
   it('leaves path strings intact when files are missing', () => {
@@ -211,7 +216,7 @@ describe('inlineDebatePaths', () => {
       debate: { step1Bull: 'debate-step-1-bull.json' },
     }, join(tickerDir, 'final-thesis.json'));
 
-    expect(result.debate.step1Bull).toEqual({ content: { side: 'bull' } });
+    expect(result.debate.step1Bull).toEqual({ side: 'bull' });
   });
 
   it('inlines debate files copied into the archive root', () => {
@@ -223,7 +228,7 @@ describe('inlineDebatePaths', () => {
       debate: { step1Bull: 'sections/debate-step-1-bull.json' },
     }, join(archiveDir, 'final-thesis.json'));
 
-    expect(result.debate.step1Bull).toEqual({ content: { side: 'bull' } });
+    expect(result.debate.step1Bull).toEqual({ side: 'bull' });
   });
 
   it('prefers archived debate files over current cache paths for archived final thesis', () => {
@@ -238,7 +243,7 @@ describe('inlineDebatePaths', () => {
       debate: { step1Bull: join(cacheSectionsDir, 'debate-step-1-bull.json') },
     }, join(archiveDir, 'final-thesis.json'));
 
-    expect(result.debate.step1Bull).toEqual({ content: { side: 'archived' } });
+    expect(result.debate.step1Bull).toEqual({ side: 'archived' });
   });
 
   it('leaves strings intact when every candidate is malformed', () => {
@@ -321,7 +326,7 @@ describe('loadStage', () => {
     }));
 
     const result = loadStage('AAPL', 'finalThesis');
-    expect(result.debate.step1Bull).toEqual({ content: { side: 'bull' } });
+    expect(result.debate.step1Bull).toEqual({ side: 'bull' });
   });
 });
 

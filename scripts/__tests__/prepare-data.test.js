@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { prepareData } from '../prepare-data.js';
+import { listBundledTranscripts } from '../../src/engines/transcripts.js';
 
 let tmpDir;
 let prevThesisDir;
@@ -74,13 +75,19 @@ describe('prepareData', () => {
     const packetPath = join(reportDir, 'data-packet.json');
     expect(existsSync(packetPath)).toBe(true);
     expect(JSON.parse(readFileSync(packetPath, 'utf8'))).toEqual(packet);
+    // AAPL is in the bundled transcript corpus, so prepareData loads every bundled
+    // quarter (the mocked fetcher returns "found" for each). Derive the expected
+    // count from the corpus rather than hardcoding it, so the test does not rebreak
+    // when transcripts are added to or removed from the corpus.
+    const bundledTranscriptCount = listBundledTranscripts('AAPL').length;
+    expect(bundledTranscriptCount).toBeGreaterThan(0);
     expect(summary).toMatchObject({
       ticker: 'AAPL',
       checkpointVerdict: 'PROCEED',
       onePagerVerdict: 'PASS',
       guruCount: 1,
-      transcriptsSaved: 2,
-      transcriptsTotal: 2,
+      transcriptsSaved: bundledTranscriptCount,
+      transcriptsTotal: bundledTranscriptCount,
     });
     expect(execFileSync).toHaveBeenCalledWith(
       'node',
