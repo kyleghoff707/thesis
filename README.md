@@ -76,7 +76,13 @@ Paste your API key when prompted. This writes `~/thesis/config.json`:
 
 ### 4. Analyze
 
-Open Claude Code in this folder and type:
+Open Claude Code in this folder. Thesis runs best with Claude Code's permission bypass enabled, because the pipeline launches many subagents and writes many local artifacts; otherwise you'll see a lot of approval prompts during a full run.
+
+```bash
+claude --dangerously-skip-permissions
+```
+
+Then type:
 
 ```
 /analyze AAPL
