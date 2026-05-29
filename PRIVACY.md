@@ -17,9 +17,14 @@ When you run `/analyze TICKER`, the following network calls happen:
 - Pipeline scratch state: `~/thesis/cache/`
 - Optional config (account email, AV key): `~/thesis/config.json`
 
-## Optional: account sync (Phase 4, future)
+## Account sync (optional)
 
-If you opt into the connected-mode website at thesis-investing.com, reports you choose to push will go to your account there. That's opt-in per report. Until you push a report manually, your data never reaches our servers.
+Account sync is off unless you configure a Thesis API key in `~/thesis/config.json` (via `npm run setup`). The key is what turns it on:
+
+- **No API key** — nothing is ever sent to thesis-investing.com. `/analyze` skips the sync step silently and your reports never leave your machine.
+- **API key configured** — at the end of each `/analyze TICKER` run, your generated reports are automatically pushed to your account at thesis-investing.com (`POST api.thesis-investing.com/v1/reports`). The ticker, company name, and report contents are sent. You can also push on demand with `/inject TICKER`.
+
+Re-running a ticker you've already synced updates the existing report on your account instead of creating a duplicate. To stop syncing, remove `apiKey` from `~/thesis/config.json`.
 
 ## Customizing your User-Agent
 
