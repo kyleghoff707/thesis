@@ -55,6 +55,9 @@ agents/.staging-sync/
 # Personal notes / runbooks — not part of the public repo
 _notes/
 
+# Private R2 transcript dump helper — contains local Cloudflare bucket/account assumptions.
+scripts/dump-transcripts.mjs
+
 # Local agent instructions — kept on the author's machine, not in public history.
 AGENTS.md
 CLAUDE.md
