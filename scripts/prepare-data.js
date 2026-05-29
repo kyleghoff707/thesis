@@ -25,7 +25,7 @@ import { execFileSync } from 'node:child_process';
 import { reportsDir, cacheDir } from '../src/utils/thesisDir.js';
 import { requireThesisApiConfig } from '../src/config/thesisConfig.js';
 import { fetchDataPacket } from '../src/api/thesisDataApi.js';
-import { fetchTranscript } from '../src/engines/transcripts.js';
+import { fetchTranscript, listBundledTranscripts } from '../src/engines/transcripts.js';
 import { normalizeTicker } from '../src/utils/ticker.js';
 
 const USAGE = 'Usage: node scripts/prepare-data.js <TICKER>';
@@ -204,7 +204,16 @@ export async function prepareData(ticker, options = {}) {
   const transcriptDir = join(reportDir, 'transcripts');
   mkdirSync(transcriptDir, { recursive: true });
 
-  const quarters = deriveTranscriptQuarters(packet);
+  // Bundled transcripts are the authoritative local source: scan the corpus
+  // directory directly so a ticker's fiscal-calendar quirks can never cause a
+  // bundled transcript to be skipped. Fall back to filing-derived calendar
+  // quarters (for the Alpha Vantage path) only when the ticker isn't bundled.
+  const bundledQuarters = listBundledTranscripts(symbol);
+  const usingBundled = bundledQuarters.length > 0;
+  const quarters = usingBundled ? bundledQuarters : deriveTranscriptQuarters(packet);
+  if (usingBundled) {
+    log(`  Source: bundled corpus (${bundledQuarters.length} transcript(s) on disk)`);
+  }
   let savedTranscripts = 0;
   for (const quarter of quarters) {
     try {

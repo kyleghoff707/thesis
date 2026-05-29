@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseHTML } from 'linkedom';
 
@@ -42,6 +42,41 @@ export function hasBundledTranscripts(ticker) {
   return existsSync(join(TRANSCRIPTS_DIR, ticker.toUpperCase()));
 }
 
+// List every bundled transcript on disk for a ticker by scanning the corpus
+// directory. Returns [{ year, quarter }] sorted newest-first. This reads the
+// actual files rather than guessing fiscal quarters from filing dates, so a
+// company's fiscal-calendar quirks can never cause a bundled transcript to be
+// missed — if it's in the folder, it gets found.
+export function listBundledTranscripts(ticker) {
+  if (!ticker || typeof ticker !== 'string') return [];
+  const dir = join(TRANSCRIPTS_DIR, ticker.toUpperCase());
+  if (!existsSync(dir)) return [];
+  const found = [];
+  let yearDirs;
+  try {
+    yearDirs = readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  for (const entry of yearDirs) {
+    if (!entry.isDirectory()) continue;
+    const year = Number(entry.name);
+    if (!Number.isInteger(year)) continue;
+    let files;
+    try {
+      files = readdirSync(join(dir, entry.name));
+    } catch {
+      continue;
+    }
+    for (const file of files) {
+      const match = /^Q([1-4])\.md$/.exec(file);
+      if (match) found.push({ year, quarter: Number(match[1]) });
+    }
+  }
+  found.sort((a, b) => b.year - a.year || b.quarter - a.quarter);
+  return found;
+}
+
 if (IS_NODE) {
   globalThis.DOMParser = class NodeDOMParser {
     parseFromString(content, type) {
@@ -51,4 +86,5 @@ if (IS_NODE) {
 
   globalThis.__nodeTranscriptRead = readBundledTranscript;
   globalThis.__nodeBundledTranscriptsExist = hasBundledTranscripts;
+  globalThis.__nodeListBundledTranscripts = listBundledTranscripts;
 }

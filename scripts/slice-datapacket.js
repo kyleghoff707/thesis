@@ -5,8 +5,9 @@
 // Usage: node scripts/slice-datapacket.js TICKER AGENT_ROLE
 // Output: Writes sliced JSON to stdout. Orchestrator pipes into agent prompt.
 //
-// Example:
-//   node scripts/slice-datapacket.js LULU business-analyst > /tmp/slice.json
+// Example (keep working data under the local Thesis cache, never /tmp):
+//   mkdir -p ~/thesis/cache/LULU/slices
+//   node scripts/slice-datapacket.js LULU business-analyst > ~/thesis/cache/LULU/slices/business-analyst.json
 //   # or inline:
 //   SLICE=$(node scripts/slice-datapacket.js LULU business-analyst)
 

@@ -44,6 +44,19 @@ export function getTranscriptAvailability(ticker) {
   };
 }
 
+/**
+ * List bundled transcripts available on disk for a ticker (Node only).
+ * Returns [{ year, quarter }] newest-first, or [] when none exist / not in Node.
+ * Drives transcript loading from the actual corpus rather than from
+ * fiscal-quarter guesses, guaranteeing bundled transcripts are always used.
+ */
+export function listBundledTranscripts(ticker) {
+  if (typeof globalThis.__nodeListBundledTranscripts === 'function') {
+    return globalThis.__nodeListBundledTranscripts(ticker) || [];
+  }
+  return [];
+}
+
 // ─── Fetch Single Transcript ────────────────────────────────
 
 /**

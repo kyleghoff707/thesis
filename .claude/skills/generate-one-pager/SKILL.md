@@ -42,10 +42,13 @@ If fetch or validation fails, print the error and stop.
 ## Step 3: Slice DataPacket
 
 ```bash
-node scripts/slice-datapacket.js {TICKER} one-pager > /tmp/{TICKER}-one-pager-slice.json
+mkdir -p ~/thesis/cache/{TICKER}/slices
+node scripts/slice-datapacket.js {TICKER} one-pager > ~/thesis/cache/{TICKER}/slices/one-pager-slice.json
 ```
 
 Keeps: companyInfo, classification, financials, ttm, growthRates, returnMetrics, debtMetrics, fcf, keyMetrics, gurus, caveats. Drops everything else — narrative context comes from web search.
+
+The slice is written under the local Thesis cache (`~/thesis/cache/{TICKER}/slices/`), not `/tmp` — the CLI keeps all working data on the user's disk, never in the OS scratch dir.
 
 ## Step 4: Dispatch One Pager Subagent
 
@@ -60,7 +63,7 @@ Dispatch a single Sonnet subagent via the **Agent tool** with:
 
   ## DataPacket (sliced — core value investing metrics only)
 
-  {contents of /tmp/{TICKER}-one-pager-slice.json}
+  {contents of ~/thesis/cache/{TICKER}/slices/one-pager-slice.json}
 
   ## Assignment
 
